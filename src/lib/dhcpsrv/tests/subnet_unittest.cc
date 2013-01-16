@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,28 +61,28 @@ TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
 
-    Pool4Ptr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
-    Pool4Ptr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
-    Pool4Ptr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
+    PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
+    PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
+    PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
 
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    Pool4Ptr mypool = subnet->getPool4();
+    PoolPtr mypool = subnet->getPool();
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool4(pool2);
-    subnet->addPool4(pool3);
+    subnet->addPool(pool2);
+    subnet->addPool(pool3);
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool4();
+    mypool = subnet->getPool();
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool4(IOAddress("192.1.2.195"));
+    mypool = subnet->getPool(IOAddress("192.1.2.195"));
 
     EXPECT_EQ(mypool, pool3);
 
@@ -94,16 +94,16 @@ TEST(Subnet4Test, Subnet4_Pool4_checks) {
 
     // this one is in subnet
     Pool4Ptr pool1(new Pool4(IOAddress("192.255.0.0"), 16));
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // this one is larger than the subnet!
     Pool4Ptr pool2(new Pool4(IOAddress("193.0.0.0"), 24));
 
-    EXPECT_THROW(subnet->addPool4(pool2), BadValue);
+    EXPECT_THROW(subnet->addPool(pool2), BadValue);
 
     // this one is totally out of blue
     Pool4Ptr pool3(new Pool4(IOAddress("1.2.3.4"), 16));
-    EXPECT_THROW(subnet->addPool4(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
 }
 
 TEST(Subnet4Test, addInvalidOption) {
@@ -115,13 +115,15 @@ TEST(Subnet4Test, addInvalidOption) {
     // Create option with invalid universe (V6 instead of V4).
     // Attempt to add this option should result in exception.
     OptionPtr option1(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-    EXPECT_THROW(subnet->addOption(option1), isc::BadValue);
+    EXPECT_THROW(subnet->addOption(option1, false, "dhcp4"),
+                 isc::BadValue);
 
     // Create NULL pointer option. Attempt to add NULL option
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->addOption(option2), isc::BadValue);
+    EXPECT_THROW(subnet->addOption(option2, false, "dhcp4"),
+                 isc::BadValue);
 }
 
 // This test verifies that inRange() and inPool() methods work properly.
@@ -130,7 +132,7 @@ TEST(Subnet4Test, inRangeinPool) {
 
     // this one is in subnet
     Pool4Ptr pool1(new Pool4(IOAddress("192.2.0.0"), 16));
-    subnet->addPool4(pool1);
+    subnet->addPool(pool1);
 
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("192.1.1.1")));
@@ -205,28 +207,28 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
-    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-    Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"), 64));
-    Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+    PoolPtr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
 
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    Pool6Ptr mypool = subnet->getPool6();
+    PoolPtr mypool = subnet->getPool();
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool6(pool2);
-    subnet->addPool6(pool3);
+    subnet->addPool(pool2);
+    subnet->addPool(pool3);
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool6();
+    mypool = subnet->getPool();
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool6(IOAddress("2001:db8:1:3::dead:beef"));
+    mypool = subnet->getPool(IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
 }
@@ -237,21 +239,21 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
 
     // this one is in subnet
     Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // this one is larger than the subnet!
     Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 48));
 
-    EXPECT_THROW(subnet->addPool6(pool2), BadValue);
+    EXPECT_THROW(subnet->addPool(pool2), BadValue);
 
 
     // this one is totally out of blue
     Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("3000::"), 16));
-    EXPECT_THROW(subnet->addPool6(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
 
 
     Pool6Ptr pool4(new Pool6(Pool6::TYPE_IA, IOAddress("4001:db8:1::"), 80));
-    EXPECT_THROW(subnet->addPool6(pool4), BadValue);
+    EXPECT_THROW(subnet->addPool(pool4), BadValue);
 }
 
 TEST(Subnet6Test, addOptions) {
@@ -261,26 +263,59 @@ TEST(Subnet6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->addOption(option));
+        ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp6 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addOption(option, false, "isc"));
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    Subnet::OptionContainer options = subnet->getOptions();
-    ASSERT_EQ(10, options.size());
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
 
-    // Validate codes of added options.
+    // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (Subnet::OptionContainer::const_iterator option_desc = options.begin();
-         option_desc != options.end(); ++option_desc) {
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
         ASSERT_TRUE(option_desc->option);
         EXPECT_EQ(expected_code, option_desc->option->getType());
         ++expected_code;
     }
 
+    options = subnet->getOptionDescriptors("isc");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = subnet->getOptionDescriptors("abcd");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    // Delete options from all spaces.
     subnet->delOptions();
 
-    options = subnet->getOptions();
-    EXPECT_EQ(0, options.size());
+    // Make sure that all options have been removed.
+    options = subnet->getOptionDescriptors("dhcp6");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    options = subnet->getOptionDescriptors("isc");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
 }
 
 TEST(Subnet6Test, addNonUniqueOptions) {
@@ -292,19 +327,19 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(subnet->addOption(option));
+            ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
         }
     }
 
     // Sanity check that all options are there.
-    Subnet::OptionContainer options = subnet->getOptions();
-    ASSERT_EQ(20, options.size());
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    ASSERT_EQ(20, options->size());
 
     // Use container index #1 to get the options by their codes.
-    Subnet::OptionContainerTypeIndex& idx = options.get<1>();
+    Subnet::OptionContainerTypeIndex& idx = options->get<1>();
     // Look for the codes 100-109.
     for (uint16_t code = 100; code < 110; ++ code) {
-        // For each code we should get two instances of options.
+        // For each code we should get two instances of options->
         std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
                   Subnet::OptionContainerTypeIndex::const_iterator> range =
             idx.equal_range(code);
@@ -329,8 +364,8 @@ TEST(Subnet6Test, addNonUniqueOptions) {
 
     subnet->delOptions();
 
-    options = subnet->getOptions();
-    EXPECT_EQ(0, options.size());
+    options = subnet->getOptionDescriptors("dhcp6");
+    EXPECT_EQ(0, options->size());
 }
 
 TEST(Subnet6Test, addInvalidOption) {
@@ -342,13 +377,13 @@ TEST(Subnet6Test, addInvalidOption) {
     // Create option with invalid universe (V4 instead of V6).
     // Attempt to add this option should result in exception.
     OptionPtr option1(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-    EXPECT_THROW(subnet->addOption(option1), isc::BadValue);
+    EXPECT_THROW(subnet->addOption(option1, false, "dhcp6"), isc::BadValue);
 
     // Create NULL pointer option. Attempt to add NULL option
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->addOption(option2), isc::BadValue);
+    EXPECT_THROW(subnet->addOption(option2, false, "dhcp6"), isc::BadValue);
 }
 
 TEST(Subnet6Test, addPersistentOption) {
@@ -367,24 +402,24 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(subnet->addOption(option, persistent));
+        ASSERT_NO_THROW(subnet->addOption(option, persistent, "dhcp6"));
     }
 
     // Get added options from the subnet.
-    Subnet::OptionContainer options = subnet->getOptions();
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
 
-    // options.get<2> returns reference to container index #2. This
+    // options->get<2> returns reference to container index #2. This
     // index is used to access options by the 'persistent' flag.
-    Subnet::OptionContainerPersistIndex& idx = options.get<2>();
+    Subnet::OptionContainerPersistIndex& idx = options->get<2>();
 
-    // Get all persistent options.
+    // Get all persistent options->
     std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
               Subnet::OptionContainerPersistIndex::const_iterator> range_persistent =
         idx.equal_range(true);
     // 3 out of 10 options have been flagged persistent.
     ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
 
-    // Get all non-persistent options.
+    // Get all non-persistent options->
     std::pair<Subnet::OptionContainerPersistIndex::const_iterator,
               Subnet::OptionContainerPersistIndex::const_iterator> range_non_persistent =
         idx.equal_range(false);
@@ -393,8 +428,33 @@ TEST(Subnet6Test, addPersistentOption) {
 
     subnet->delOptions();
 
-    options = subnet->getOptions();
-    EXPECT_EQ(0, options.size());
+    options = subnet->getOptionDescriptors("dhcp6");
+    EXPECT_EQ(0, options->size());
+}
+
+TEST(Subnet6Test, getOptionDescriptor) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 56, 1, 2, 3, 4));
+
+    // Add 10 options to a "dhcp6" option space in the subnet.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addOption(option, false, "dhcp6"));
+    }
+
+    // Check that we can get each added option descriptor using
+    // individually.
+    for (uint16_t code = 100; code < 110; ++code) {
+        std::ostringstream stream;
+        // First, try the invalid option space name.
+        Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("isc", code);
+        // Returned descriptor should contain NULL option ptr.
+        EXPECT_FALSE(desc.option);
+        // Now, try the valid option space.
+        desc = subnet->getOptionDescriptor("dhcp6", code);
+        // Test that the option code matches the expected code.
+        ASSERT_TRUE(desc.option);
+        EXPECT_EQ(code, desc.option->getType());
+    }
 }
 
 // This test verifies that inRange() and inPool() methods work properly.
@@ -404,7 +464,7 @@ TEST(Subnet6Test, inRangeinPool) {
     // this one is in subnet
     Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::10"),
                              IOAddress("2001:db8::20")));
-    subnet->addPool6(pool1);
+    subnet->addPool(pool1);
 
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));

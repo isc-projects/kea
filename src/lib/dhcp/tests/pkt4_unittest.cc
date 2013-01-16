@@ -69,8 +69,9 @@ TEST(Pkt4Test, constructor) {
         pkt = new Pkt4(DHCPDISCOVER, 0xffffffff);
     );
 
-    // DHCPv4 packet must be at least 236 bytes long
-    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
+    // DHCPv4 packet must be at least 236 bytes long, with Message Type
+    // Option taking extra 3 bytes it is 239
+    EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
     EXPECT_EQ(0xffffffff, pkt->getTransid());
     EXPECT_NO_THROW(
@@ -219,8 +220,10 @@ TEST(Pkt4Test, fixedFields) {
     EXPECT_EQ(dummySiaddr.toText(), pkt->getSiaddr().toText());
     EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
 
-    // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), 16));
+    // Chaddr contains link-layer addr (MAC). It is no longer always 16 bytes
+    // long and its length depends on hlen value (it is up to 16 bytes now).
+    ASSERT_EQ(pkt->getHWAddr()->hwaddr_.size(), dummyHlen);
+    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], 64));
 
@@ -237,7 +240,9 @@ TEST(Pkt4Test, fixedFieldsPack) {
         pkt->pack();
     );
 
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
+    // Minimum packet size is 236 bytes + 3 bytes of mandatory
+    // DHCP Message Type Option
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
 
     // redundant but MUCH easier for debug in gdb
     const uint8_t* exp = &expectedFormat[0];
@@ -282,7 +287,7 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, pkt->getChaddr(), Pkt4::MAX_CHADDR_LEN));
+    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
     ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_SNAME_LEN), pkt->getSname().size());
     EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
@@ -321,7 +326,7 @@ TEST(Pkt4Test, hwAddr) {
         pkt->setHWAddr(255-macLen*10, // just weird htype
                        macLen,
                        mac);
-        EXPECT_EQ(0, memcmp(expectedChaddr, pkt->getChaddr(),
+        EXPECT_EQ(0, memcmp(expectedChaddr, &pkt->getHWAddr()->hwaddr_[0],
                             Pkt4::MAX_CHADDR_LEN));
 
         EXPECT_NO_THROW(
@@ -469,7 +474,7 @@ TEST(Pkt4Test, file) {
 static uint8_t v4Opts[] = {
     12,  3, 0,   1,  2, // Hostname
     14,  3, 10, 11, 12, // Merit Dump File
-    53, 1, 1, // Message Type (required to not throw exception during unpack)
+    53, 1, 2, // Message Type (required to not throw exception during unpack)
     60,  3, 20, 21, 22, // Class Id
     128, 3, 30, 31, 32, // Vendor specific
     254, 3, 40, 41, 42, // Reserved
@@ -487,18 +492,15 @@ TEST(Pkt4Test, options) {
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
     boost::shared_ptr<Option> opt3(new Option(Option::V4, 14, payload[1]));
-    boost::shared_ptr<Option> optMsgType(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE));
     boost::shared_ptr<Option> opt2(new Option(Option::V4, 60, payload[2]));
     boost::shared_ptr<Option> opt5(new Option(Option::V4,128, payload[3]));
     boost::shared_ptr<Option> opt4(new Option(Option::V4,254, payload[4]));
-    optMsgType->setUint8(static_cast<uint8_t>(DHCPDISCOVER));
 
     pkt->addOption(opt1);
     pkt->addOption(opt2);
     pkt->addOption(opt3);
     pkt->addOption(opt4);
     pkt->addOption(opt5);
-    pkt->addOption(optMsgType);
 
     EXPECT_TRUE(pkt->getOption(12));
     EXPECT_TRUE(pkt->getOption(60));
@@ -529,6 +531,12 @@ TEST(Pkt4Test, options) {
     ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE); // rewind to end of fixed part
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
     EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
+
+    // delOption() checks
+    EXPECT_TRUE(pkt->getOption(12)); // Sanity check: option 12 is still there
+    EXPECT_TRUE(pkt->delOption(12)); // We should be able to remove it
+    EXPECT_FALSE(pkt->getOption(12)); // It should not be there anymore
+    EXPECT_FALSE(pkt->delOption(12)); // And removal should fail
 
     EXPECT_NO_THROW(
         delete pkt;
@@ -643,6 +651,23 @@ TEST(Pkt4Test, Timestamp) {
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
 }
 
+TEST(Pkt4Test, hwaddr) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
 
+    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+
+    // setting NULL hardware address is not allowed
+    EXPECT_THROW(pkt->setHWAddr(HWAddrPtr()), BadValue);
+
+    pkt->setHWAddr(hwaddr);
+
+    EXPECT_EQ(hw_type, pkt->getHtype());
+
+    EXPECT_EQ(sizeof(hw), pkt->getHlen());
+
+    EXPECT_TRUE(hwaddr == pkt->getHWAddr());
+}
 
 } // end of anonymous namespace

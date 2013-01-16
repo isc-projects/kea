@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
 
@@ -77,6 +78,9 @@ public:
         OptionDescriptor(bool persist)
             : option(OptionPtr()), persistent(persist) {};
     };
+
+    /// A pointer to option descriptor.
+    typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
 
     /// @brief Extractor class to extract key with another key.
     ///
@@ -198,6 +202,8 @@ public:
         >
     > OptionContainer;
 
+    // Pointer to the OptionContainer object.
+    typedef boost::shared_ptr<OptionContainer> OptionContainerPtr;
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
     /// Pair of iterators to represent the range of options having the
@@ -216,9 +222,11 @@ public:
     /// @param option option instance.
     /// @param persistent if true, send an option regardless if client
     /// requested it or not.
+    /// @param option_space name of the option space to add an option to.
     ///
     /// @throw isc::BadValue if invalid option provided.
-    void addOption(OptionPtr& option, bool persistent = false);
+    void addOption(OptionPtr& option, bool persistent,
+                   const std::string& option_space);
 
     /// @brief Delete all options configured for the subnet.
     void delOptions();
@@ -235,7 +243,7 @@ public:
     /// @param addr this address will be checked if it belongs to any pools in
     ///        that subnet
     /// @return true if the address is in any of the pools
-    virtual bool inPool(const isc::asiolink::IOAddress& addr) const = 0;
+    bool inPool(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
@@ -252,14 +260,24 @@ public:
         return (t2_);
     }
 
-    /// @brief Return a collection of options.
+    /// @brief Return a collection of option descriptors.
     ///
-    /// @return reference to collection of options configured for a subnet.
-    /// The returned reference is valid as long as the Subnet object which
-    /// returned it still exists.
-    const OptionContainer& getOptions() const {
-        return (options_);
-    }
+    /// @param option_space name of the option space.
+    ///
+    /// @return pointer to collection of options configured for a subnet.
+    OptionContainerPtr
+    getOptionDescriptors(const std::string& option_space) const;
+
+    /// @brief Return single option descriptor.
+    ///
+    /// @param option_space name of the option space.
+    /// @param option_code code of the option to be returned.
+    ///
+    /// @return option descriptor found for the specified option space
+    /// and option code.
+    OptionDescriptor
+    getOptionDescriptor(const std::string& option_space,
+                        const uint16_t option_code);
 
     /// @brief returns the last address that was tried from this pool
     ///
@@ -296,6 +314,37 @@ public:
     /// @return (prefix, prefix length) pair
     std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
         return (std::make_pair(prefix_, prefix_len_));
+    }
+
+    /// @brief Adds a new pool.
+    /// @param pool pool to be added
+    void addPool(const PoolPtr& pool);
+
+    /// @brief Returns a pool that specified address belongs to
+    ///
+    /// @param addr address that the returned pool should cover (optional)
+    /// @return Pointer to found Pool4 or Pool6 (or NULL)
+    PoolPtr getPool(isc::asiolink::IOAddress addr);
+
+    /// @brief Returns a pool without any address specified
+    /// @return returns one of the pools defined
+    PoolPtr getPool() {
+        return (getPool(default_pool()));
+    }
+
+    /// @brief Returns the default address that will be used for pool selection
+    ///
+    /// It must be implemented in derived classes (should return :: for Subnet6
+    /// and 0.0.0.0 for Subnet4)
+    virtual isc::asiolink::IOAddress default_pool() const = 0;
+
+    /// @brief returns all pools
+    ///
+    /// The reference is only valid as long as the object that returned it.
+    ///
+    /// @return a collection of all pools
+    const PoolCollection& getPools() const {
+        return pools_;
     }
 
     /// @brief returns textual representation of the subnet (e.g. "2001:db8::/64")
@@ -338,6 +387,9 @@ protected:
     /// a Subnet4 or Subnet6.
     SubnetID id_;
 
+    /// @brief collection of pools in that list
+    PoolCollection pools_;
+
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
 
@@ -353,9 +405,6 @@ protected:
     /// @brief a tripet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
 
-    /// @brief a collection of DHCP options configured for a subnet.
-    OptionContainer options_;
-
     /// @brief last allocated address
     ///
     /// This is the last allocated address that was previously allocated from
@@ -366,7 +415,18 @@ protected:
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
     isc::asiolink::IOAddress last_allocated_;
+
+private:
+
+    /// A collection of option spaces grouping option descriptors.
+    typedef OptionSpaceContainer<OptionContainer,
+                                 OptionDescriptor> OptionSpaceCollection;
+    OptionSpaceCollection option_spaces_;
+
 };
+
+/// @brief A generic pointer to either Subnet4 or Subnet6 object
+typedef boost::shared_ptr<Subnet> SubnetPtr;
 
 /// @brief A configuration holder for IPv4 subnet.
 ///
@@ -386,34 +446,6 @@ public:
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& valid_lifetime);
 
-    /// @brief Returns a pool that specified address belongs to
-    ///
-    /// @param hint address that the returned pool should cover (optional)
-    /// @return Pointer to found pool4 (or NULL)
-    Pool4Ptr getPool4(const isc::asiolink::IOAddress& hint =
-                      isc::asiolink::IOAddress("0.0.0.0"));
-
-    /// @brief Adds a new pool.
-    /// @param pool pool to be added
-    void addPool4(const Pool4Ptr& pool);
-
-    /// @brief returns all pools
-    ///
-    /// The reference is only valid as long as the object that returned it.
-    ///
-    /// @return a collection of all pools
-    const Pool4Collection& getPools() const {
-        return pools_;
-    }
-
-    /// @brief checks if the specified address is in pools
-    ///
-    /// See the description in \ref Subnet::inPool().
-    ///
-    /// @param addr this address will be checked if it belongs to any pools in that subnet
-    /// @return true if the address is in any of the pools
-    bool inPool(const isc::asiolink::IOAddress& addr) const;
-
 protected:
 
     /// @brief Check if option is valid and can be added to a subnet.
@@ -423,8 +455,11 @@ protected:
     /// @throw isc::BadValue if provided option is invalid.
     virtual void validateOption(const OptionPtr& option) const;
 
-    /// @brief collection of pools in that list
-    Pool4Collection pools_;
+    /// @brief Returns default address for pool selection
+    /// @return ANY IPv4 address
+    virtual isc::asiolink::IOAddress default_pool() const {
+        return (isc::asiolink::IOAddress("0.0.0.0"));
+    }
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -461,35 +496,6 @@ public:
         return (preferred_);
     }
 
-    /// @brief Returns a pool that specified address belongs to
-    ///
-    /// @param hint address that the returned pool should cover (optional)
-    /// @return Pointer to found pool6 (or NULL)
-    Pool6Ptr getPool6(const isc::asiolink::IOAddress& hint =
-                      isc::asiolink::IOAddress("::"));
-
-    /// @brief Adds a new pool.
-    /// @param pool pool to be added
-    void addPool6(const Pool6Ptr& pool);
-
-    /// @brief returns all pools
-    ///
-    /// The reference is only valid as long as the object that
-    /// returned it.
-    ///
-    /// @return a collection of all pools
-    const Pool6Collection& getPools() const {
-        return pools_;
-    }
-
-    /// @brief checks if the specified address is in pools
-    ///
-    /// See the description in \ref Subnet::inPool().
-    ///
-    /// @param addr this address will be checked if it belongs to any pools in that subnet
-    /// @return true if the address is in any of the pools
-    bool inPool(const isc::asiolink::IOAddress& addr) const;
-
 protected:
 
     /// @brief Check if option is valid and can be added to a subnet.
@@ -498,6 +504,12 @@ protected:
     ///
     /// @throw isc::BadValue if provided option is invalid.
     virtual void validateOption(const OptionPtr& option) const;
+
+    /// @brief Returns default address for pool selection
+    /// @return ANY IPv6 address
+    virtual isc::asiolink::IOAddress default_pool() const {
+        return (isc::asiolink::IOAddress("::"));
+    }
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;

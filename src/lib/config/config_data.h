@@ -110,11 +110,11 @@ public:
     isc::data::ConstElementPtr getItemList(const std::string& identifier = "",
                                            bool recurse = false) const;
 
-    /// Returns all current configuration settings (both non-default and default).
+    /// Returns a map of the top-level configuration items, as currently
+    /// set or their defaults
+    ///
     /// \return An ElementPtr pointing to a MapElement containing
-    ///         string->value elements, where the string is the
-    ///         full identifier of the configuration option and the
-    ///         value is an ElementPtr with the value.
+    ///         the top-level configuration items
     isc::data::ConstElementPtr getFullConfig() const;
 
 private:
@@ -126,6 +126,6 @@ private:
 }
 #endif
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

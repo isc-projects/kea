@@ -86,7 +86,7 @@ SERVFAIL will be returned.
 
 % RESLIB_NOTSINGLE_RESPONSE response to query for <%1> was not a response
 A debug message, the response to the specified query from an upstream
-nameserver was a CNAME that had mutiple RRs in the RRset.  This is
+nameserver was a CNAME that had multiple RRs in the RRset.  This is
 an invalid response according to the standards so a SERVFAIL will be
 returned to the system making the original query.
 
@@ -138,7 +138,7 @@ A debug message, the response to the specified query indicated an error
 that is not covered by a specific code path.  A SERVFAIL will be returned.
 
 % RESLIB_RECQ_CACHE_FIND found <%1> in the cache (resolve() instance %2)
-This is a debug message and indicates that a RecursiveQuery object found the
+This is a debug message and indicates that a RecursiveQuery object found
 the specified <name, class, type> tuple in the cache.  The instance number
 at the end of the message indicates which of the two resolve() methods has
 been called.
@@ -178,7 +178,7 @@ A debug message giving the round-trip time of the last query and response.
 This is a debug message and indicates that a RunningQuery object found
 the specified <name, class, type> tuple in the cache.
 
-% RESLIB_RUNQ_CACHE_LOOKUP looking up up <%1> in the cache
+% RESLIB_RUNQ_CACHE_LOOKUP looking up <%1> in the cache
 This is a debug message and indicates that a RunningQuery object has made
 a call to its doLookup() method to look up the specified <name, class, type>
 tuple, the first action of which will be to examine the cache.

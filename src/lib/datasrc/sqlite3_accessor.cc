@@ -79,7 +79,8 @@ enum StatementID {
     DEL_ZONE_NSEC3_RECORDS = 20,
     DEL_NSEC3_RECORD = 21,
     ADD_ZONE = 22,
-    NUM_STATEMENTS = 23
+    DELETE_ZONE = 23,
+    NUM_STATEMENTS = 24
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -165,7 +166,9 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "AND rdtype=?3 AND rdata=?4",
 
     // ADD_ZONE: add a zone to the zones table
-    "INSERT INTO zones (name, rdclass) VALUES (?1, ?2)" // ADD_ZONE
+    "INSERT INTO zones (name, rdclass) VALUES (?1, ?2)", // ADD_ZONE
+    // DELETE_ZONE: delete a zone from the zones table
+    "DELETE FROM zones WHERE id=?1" // DELETE_ZONE
 };
 
 struct SQLite3Parameters {
@@ -641,6 +644,19 @@ SQLite3Accessor::addZone(const std::string& name) {
     std::pair<bool, int> getzone_result = getZone(name);
     assert(getzone_result.first);
     return (getzone_result.second);
+}
+
+void
+SQLite3Accessor::deleteZone(int zone_id) {
+    // Transaction should have been started by the caller
+    if (!dbparameters_->in_transaction) {
+        isc_throw(InvalidOperation, "performing deleteZone on SQLite3 "
+                  "data source without transaction");
+    }
+
+    StatementProcessor proc(*dbparameters_, DELETE_ZONE, "delete zone");
+    proc.bindInt(1, zone_id);
+    proc.exec();
 }
 
 namespace {

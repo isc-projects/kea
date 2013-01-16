@@ -453,6 +453,66 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_TRUE(x == options.end()); // option 2 not found
 }
 
+TEST_F(LibDhcpTest, isStandardOption4) {
+    // Get all option codes that are not occupied by standard options.
+    const uint16_t unassigned_codes[] = { 84, 96, 102, 103, 104, 105, 106, 107, 108,
+                                          109, 110, 111, 115, 126, 127, 147, 148, 149,
+                                          178, 179, 180, 181, 182, 183, 184, 185, 186,
+                                          187, 188, 189, 190, 191, 192, 193, 194, 195,
+                                          196, 197, 198, 199, 200, 201, 202, 203, 204,
+                                          205, 206, 207, 214, 215, 216, 217, 218, 219,
+                                          222, 223 };
+    const size_t unassigned_num = sizeof(unassigned_codes) / sizeof(unassigned_codes[0]);
+
+    // Try all possible option codes.
+    for (size_t i = 0; i < 256; ++i) {
+        // Some ranges of option codes are unassigned and thus the isStandardOption
+        // should return false for them.
+        bool check_unassigned = false;
+        // Check the array of unassigned options to find out whether option code
+        // is assigned to standard option or unassigned.
+        for (size_t j = 0; j < unassigned_num; ++j) {
+            // If option code is found within the array of unassigned options
+            // we the isStandardOption function should return false.
+            if (unassigned_codes[j] == i) {
+                check_unassigned = true;
+                EXPECT_FALSE(LibDHCP::isStandardOption(Option::V4,
+                                                       unassigned_codes[j]))
+                    << "Test failed for option code " << unassigned_codes[j];
+                break;
+            }
+        }
+        // If the option code belongs to the standard option then the
+        // isStandardOption should return true.
+        if (!check_unassigned) {
+            EXPECT_TRUE(LibDHCP::isStandardOption(Option::V4, i))
+                << "Test failed for the option code " << i;
+        }
+    }
+}
+
+TEST_F(LibDhcpTest, isStandardOption6) {
+    // All option codes in the range from 0 to 78 (except 10 and 35)
+    // identify the standard options.
+    for (uint16_t code = 0; code < 79; ++code) {
+        if (code != 10 && code != 35) {
+            EXPECT_TRUE(LibDHCP::isStandardOption(Option::V6, code))
+                << "Test failed for option code " << code;
+        }
+    }
+
+    // Check the option codes 10 and 35. They are unassigned.
+    EXPECT_FALSE(LibDHCP::isStandardOption(Option::V6, 10));
+    EXPECT_FALSE(LibDHCP::isStandardOption(Option::V6, 35));
+
+    // Check a range of option codes above 78. Those are option codes
+    // identifying non-standard options.
+    for (uint16_t code = 79; code < 512; ++code) {
+        EXPECT_FALSE(LibDHCP::isStandardOption(Option::V6, code))
+            << "Test failed for option code " << code;
+    }
+}
+
 TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     // Create a buffer that holds dummy option data.

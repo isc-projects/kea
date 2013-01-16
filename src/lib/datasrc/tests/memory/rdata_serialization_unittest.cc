@@ -71,20 +71,20 @@ struct TestRdata {
 // unusual and corner cases).
 const TestRdata test_rdata_list[] = {
     {"IN", "A", "192.0.2.1", 0},
-    {"IN", "NS", "ns.example.com", 0},
-    {"IN", "CNAME", "cname.example.com", 0},
-    {"IN", "SOA", "ns.example.com root.example.com 0 0 0 0 0", 0},
-    {"IN", "PTR", "reverse.example.com", 0},
+    {"IN", "NS", "ns.example.com.", 0},
+    {"IN", "CNAME", "cname.example.com.", 0},
+    {"IN", "SOA", "ns.example.com. root.example.com. 0 0 0 0 0", 0},
+    {"IN", "PTR", "reverse.example.com.", 0},
     {"IN", "HINFO", "\"cpu-info\" \"OS-info\"", 1},
-    {"IN", "MINFO", "root.example.com mbox.example.com", 0},
-    {"IN", "MX", "10 mx.example.com", 0},
+    {"IN", "MINFO", "root.example.com. mbox.example.com.", 0},
+    {"IN", "MX", "10 mx.example.com.", 0},
     {"IN", "TXT", "\"test1\" \"test 2\"", 1},
-    {"IN", "RP", "root.example.com. rp-text.example.com", 0},
-    {"IN", "AFSDB", "1 afsdb.example.com", 0},
+    {"IN", "RP", "root.example.com. rp-text.example.com.", 0},
+    {"IN", "AFSDB", "1 afsdb.example.com.", 0},
     {"IN", "AAAA", "2001:db8::1", 0},
-    {"IN", "SRV", "1 0 10 target.example.com", 0},
-    {"IN", "NAPTR", "100 50 \"s\" \"http\" \"\" _http._tcp.example.com", 1},
-    {"IN", "DNAME", "dname.example.com", 0},
+    {"IN", "SRV", "1 0 10 target.example.com.", 0},
+    {"IN", "NAPTR", "100 50 \"s\" \"http\" \"\" _http._tcp.example.com.", 1},
+    {"IN", "DNAME", "dname.example.com.", 0},
     {"IN", "DS", "12892 5 2 5F0EB5C777586DE18DA6B5", 1},
     {"IN", "SSHFP", "1 1 dd465c09cfa51fb45020cc83316fff", 1},
     // We handle RRSIG separately, so it's excluded from the list
@@ -98,7 +98,7 @@ const TestRdata test_rdata_list[] = {
     {"IN", "TYPE65000", "\\# 3 010203", 1}, // some "custom" type
     {"IN", "TYPE65535", "\\# 0", 1},        // max RR type, 0-length RDATA
     {"CH", "A", "\\# 2 0102", 1}, // A RR for non-IN class; varlen data
-    {"CH", "NS", "ns.example.com", 0}, // class CH, generic data
+    {"CH", "NS", "ns.example.com.", 0}, // class CH, generic data
     {"CH", "TXT", "BIND10", 1},        // ditto
     {"HS", "A", "\\# 5 0102030405", 1}, // A RR for non-IN class; varlen data
     {NULL, NULL, NULL, 0}
@@ -409,6 +409,7 @@ public:
         reader.nextSig();
         reader.rewind();
         // Do the actual rendering
+        // cppcheck-suppress unreadVariable
         current = &renderer;
         reader.iterate();
         renderer.writeName(dummyName2());
@@ -484,6 +485,8 @@ public:
         current = NULL;
         reader.iterateAllSigs();
         // Now return the renderer and render the rest of the data
+        // cppcheck-suppress redundantAssignment
+        // cppcheck-suppress unreadVariable
         current = &renderer;
         reader.iterate();
         // Now, this should not break anything and should be valid, but should
