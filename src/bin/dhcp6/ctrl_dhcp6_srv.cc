@@ -46,19 +46,36 @@ namespace dhcp {
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
 ConstElementPtr
-ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
-              .arg(new_config->str());
+ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr) {
 
-    if (server_) {
-        return (configureDhcp6Server(*server_, new_config));
+    if (!server_ || !server_->config_session_) {
+        // That should never happen as we install config_handler
+        // after we instantiate the server.
+        ConstElementPtr answer =
+            isc::config::createAnswer(1, "Configuration rejected,"
+                                      " server is during startup/shutdown phase.");
+        return (answer);
     }
 
-    // That should never happen as we install config_handler after we instantiate
-    // the server.
-    ConstElementPtr answer = isc::config::createAnswer(1,
-           "Configuration rejected, server is during startup/shutdown phase.");
-    return (answer);
+    // The configuration passed to this handler function is partial.
+    // In other words, it just includes the values being modified.
+    // In the same time, there are dependencies between various
+    // DHCP configuration parsers. For example: the option value can
+    // be set if the definition of this option is set. If someone removes
+    // an existing option definition then the partial configuration that
+    // removes that definition is triggered while a relevant option value
+    // may remain configured. This eventually results in the DHCP server
+    // configuration being in the inconsistent state.
+    // In order to work around this problem we always get the full
+    // configuration for the server. This triggers all parsers to reset
+    // the configuration data and check the dependencies between values
+    // being set. Thus, the configuration passed to this function
+    // is ignored.
+    ConstElementPtr full_config = server_->config_session_->getFullConfig();
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
+              .arg(full_config->str());
+
+    return (configureDhcp6Server(*server_, full_config));
 }
 
 ConstElementPtr
