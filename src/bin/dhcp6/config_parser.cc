@@ -1227,8 +1227,9 @@ public:
 
         // We need to move option definitions from the temporary
         // storage to the global storage.
-        BOOST_FOREACH(std::string space_name,
-                      option_def_intermediate.getOptionSpaceNames()) {
+        std::list<std::string> space_names =
+            option_def_intermediate.getOptionSpaceNames();
+        BOOST_FOREACH(std::string space_name, space_names) {
 
             BOOST_FOREACH(OptionDefinitionPtr def,
                           *option_def_intermediate.getItems(space_name)) {
@@ -1419,7 +1420,8 @@ private:
         // Configured options reside in the container where options
         // are grouped by space names. Thus we need to get all space names
         // and iterate over all options that belong to them.
-        BOOST_FOREACH(std::string option_space, options_.getOptionSpaceNames()) {
+        std::list<std::string> space_names = options_.getOptionSpaceNames();
+        BOOST_FOREACH(std::string option_space, space_names) {
             // Get all options within a particular option space.
             BOOST_FOREACH(Subnet::OptionDescriptor desc,
                           *options_.getItems(option_space)) {
@@ -1446,8 +1448,8 @@ private:
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
         // the one configured in the subnet scope always takes precedence.
-        BOOST_FOREACH(std::string option_space,
-                      option_defaults.getOptionSpaceNames()) {
+        space_names = option_defaults.getOptionSpaceNames();
+        BOOST_FOREACH(std::string option_space, space_names) {
             // Get all global options for the particular option space.
             BOOST_FOREACH(Subnet::OptionDescriptor desc,
                           *option_defaults.getItems(option_space)) {
