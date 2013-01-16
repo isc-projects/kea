@@ -44,7 +44,7 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 void
-Subnet::addOption(OptionPtr& option, bool persistent,
+Subnet::addOption(const OptionPtr& option, bool persistent,
                   const std::string& option_space) {
     // @todo Once the #2313 is merged we need to use the OptionSpace object to
     // validate the option space name here. For now, let's check that the name
