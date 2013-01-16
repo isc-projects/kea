@@ -150,60 +150,50 @@ public:
     /// \throw None
     size_t getRRCount() const;
 
-    /// \brief Return the (estimated) total size of the entire zone.
+    /// \brief Return the current progress of the loader in percentage.
     ///
-    /// This method returns some hint on how large the zone will be when
-    /// completing the load.  The returned size is a conceptual value that
-    /// can internally mean anything.  The intended usage of the value is
-    /// to compare it to the return value of \c getPosition() to estimate
-    /// the progress of the load at the time of the call.
+    /// This method returns the current estimated progress of loader in
+    /// percentage; it's 0 before starting the load, and 100 at the
+    /// completion, and a value between 0 and 100 in the middle of loading.
+    /// It's an implementation detail how to calculate the progress, which
+    /// may vary depending on how the loader is constructed and may even be
+    /// impossible to detect effectively.
+    ///
+    /// If the progress cannot be determined, this method returns a special
+    /// value of PROGRESS_UNKNOWN, which is not included in the range between
+    /// 0 and 100.
+    ///
+    /// As such, the application should use the return value only for
+    /// informational purposes such as logging.  For example, it shouldn't
+    /// be used to determine whether loading is completed by comparing it
+    /// to 100.  It should also expect the possibility of getting
+    /// \c PROGRESS_UNKNOWN at any call to this method; it shouldn't assume
+    /// the specific way of internal implementation as described below (which
+    /// is provided for informational purposes only).
     ///
     /// In this implementation, if the loader is constructed with a file
-    /// name, the returned size is the size of the zone file.  If it includes
-    /// other files via the $INCLUDE directive, it will be the sum of the
-    /// file sizes of all such files that the loader has handled.
-    /// Note that it may be smaller than the final size if there are more
-    /// files to be included which the loader has not seen by the time of
-    /// the call.
+    /// name, the progress value is measured by the number of characters
+    /// read from the zone file divided by the size of the zone file
+    /// (with taking into account any included files).  Note that due to
+    /// the possibility of intermediate included files, the total file size
+    /// cannot be fully fixed until the completion of the load.  And, due to
+    /// this possibility, return values from this method may not always
+    /// increase monotonically.
     ///
-    /// Currently, if the loader is constructed with another data source
-    /// client, this method always returns 0.  In future, it may be possible
-    /// to return something more effective, e.g, the total number of RRs
-    /// if the underlying data source can provide that information efficiently.
-    ///
-    /// In any case, the caller shouldn't assume anything specific about the
-    /// meaning of the value other than for comparing it to the result of
-    /// \c getPosition().
+    /// If it's constructed with another data source client, this method
+    /// always returns \c PROGRESS_UNKNOWN; in future, however, it may become
+    /// possible to return something more useful, e.g, based on the result
+    /// of \c getRRCount() and the total number of RRs if the underlying data
+    /// source can provide the latter value efficiently.
     ///
     /// \throw None
-    size_t getSize() const;
+    int getProgress() const;
 
-    /// \brief Return the current position of the loader in the zone being
-    /// loaded.
+    /// \brief A special value for \c getProgress, meaning the progress is
+    /// unknown.
     ///
-    /// This method returns a conceptual "position" of this loader in the
-    /// loader relative to the return value of \c getSize().  Before starting
-    /// the load the position is set to 0; on successful completion,
-    /// it will be equal to the \c getSize() value; in the middle of the load,
-    /// it's expected to be between these values, which would give some
-    /// hint about the progress of the loader.
-    ///
-    /// In the current implementation, if the loader is constructed with a
-    /// file name, the returned value is the number of characters from the
-    /// zone file (and any included files) recognized by the underlying zone
-    /// file parser.
-    ///
-    /// If it's constructed with another data source client, it's always
-    /// 0 for now; however, if \c getPosition() is extended in this case
-    /// as documented (see the method description), the result of
-    /// \c getRRCount() could be used for the current position.
-    ///
-    /// Like \c getSize(), the value is conceptual and the caller shouldn't
-    /// assume any specific meaning of the value except for comparing it
-    /// to \c getSize() results.
-    ///
-    /// \throw None
-    size_t getPosition() const;
+    /// See the method description for details.
+    static const int PROGRESS_UNKNOWN;
 
 private:
     /// \brief The iterator used as source of data in case of the copy mode.

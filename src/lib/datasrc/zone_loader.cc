@@ -21,13 +21,19 @@
 #include <datasrc/zone.h>
 
 #include <dns/rrset.h>
+#include <dns/name.h>
+#include <dns/master_loader.h>
+#include <dns/master_lexer.h>
 
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
 using isc::dns::MasterLoader;
+using isc::dns::MasterLexer;
 
 namespace isc {
 namespace datasrc {
+
+const int ZoneLoader::PROGRESS_UNKNOWN = -1;
 
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        DataSourceClient& source) :
@@ -134,20 +140,30 @@ ZoneLoader::getRRCount() const {
     return (rr_count_);
 }
 
-size_t
-ZoneLoader::getSize() const {
+int
+ZoneLoader::getProgress() const {
     if (!loader_) {
-        return (0);
+        return (PROGRESS_UNKNOWN);
     }
-    return (loader_->getSize());
-}
 
-size_t
-ZoneLoader::getPosition() const {
-    if (!loader_) {
+    const size_t pos = loader_->getPosition();
+    const size_t total_size = loader_->getSize();
+
+    // If the current position is 0, progress should definitely be 0; we
+    // don't bother to check the total size even if it's "unknown".
+    if (pos == 0) {
         return (0);
     }
-    return (loader_->getPosition());
+
+    // These cases shouldn't happen with our usage of MasterLoader.  So, in
+    // theory, we could throw here; however, since this method is expected
+    // to be used for informational purposes only, that's probably too harsh.
+    // So we return "unknown" instead.
+    if (total_size == MasterLexer::SOURCE_SIZE_UNKNOWN || total_size == 0) {
+        return (PROGRESS_UNKNOWN);
+    }
+
+    return ((static_cast<double>(pos) / total_size) * 100);
 }
 
 } // end namespace datasrc
