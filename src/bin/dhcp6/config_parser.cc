@@ -778,27 +778,31 @@ private:
         // does not exceed range of uint16_t and is not zero.
         uint32_t option_code = getParam<uint32_t>("code", uint32_values_);
         if (option_code == 0) {
-            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
-                      << " be equal to zero. Option code '0' is reserved in"
-                      << " DHCPv6.");
+            isc_throw(DhcpConfigError, "option code must not be zero."
+                      << " Option code '0' is reserved in DHCPv6.");
         } else if (option_code > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
-                      << " exceed " << std::numeric_limits<uint16_t>::max());
+            isc_throw(DhcpConfigError, "invalid option code '" << option_code
+                      << "', it must not exceed '"
+                      << std::numeric_limits<uint16_t>::max() << "'");
         }
         // Check that the option name has been specified, is non-empty and does not
         // contain spaces.
-        // @todo possibly some more restrictions apply here?
         std::string option_name = getParam<std::string>("name", string_values_);
         if (option_name.empty()) {
-            isc_throw(DhcpConfigError, "Parser error: option name must not be"
-                      << " empty");
+            isc_throw(DhcpConfigError, "name of the option with code '"
+                      << option_code << "' is empty");
         } else if (option_name.find(" ") != std::string::npos) {
-            isc_throw(DhcpConfigError, "Parser error: option name must not contain"
-                      << " spaces");
+            isc_throw(DhcpConfigError, "invalid option name '" << option_name
+                      << "', space character is not allowed");
         }
 
         std::string option_space = getParam<std::string>("space", string_values_);
-        /// @todo Validate option space once #2313 is merged.
+        if (!OptionSpace::validateName(option_space)) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << option_space << "' specified for option '"
+                      << option_name << "' (code '" << option_code
+                      << "')");
+        }
 
         OptionDefinitionPtr def;
         if (option_space == "dhcp6" &&
@@ -1086,7 +1090,8 @@ public:
     /// @brief Stores the parsed option definition in the data store.
     void commit() {
         // @todo validate option space name once 2313 is merged.
-        if (storage_ && option_definition_) {
+        if (storage_ && option_definition_ &&
+            OptionSpace::validateName(option_space_name_)) {
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1108,11 +1113,10 @@ private:
     void createOptionDef() {
         // Get the option space name and validate it.
         std::string space = getParam<std::string>("space", string_values_);
-        // @todo uncomment the code below when the #2313 is merged.
-        /*        if (!OptionSpace::validateName()) {
+        if (!OptionSpace::validateName(space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << space << "'");
-                      } */
+        }
 
         // Get other parameters that are needed to create the
         // option definition.
