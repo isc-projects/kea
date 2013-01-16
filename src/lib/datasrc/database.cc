@@ -32,6 +32,7 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
+#include <datasrc/rrset_collection.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1807,7 +1808,7 @@ public:
                 arg(zone_).arg(rrclass_).arg(accessor_->getDBName());
             return (rrset);
         } catch (const Exception& ex) {
-            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADR_BADDATA).
+            LOG_ERROR(logger, DATASRC_DATABASE_JOURNALREADER_BADDATA).
                 arg(zone_).arg(rrclass_).arg(accessor_->getDBName()).
                 arg(begin_).arg(end_).arg(ex.what());
             isc_throw(DataSourceError, "Failed to create RRset from diff on "

@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 28, 2012</date>
+    <date>August 16, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -148,6 +148,8 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       address or special keyword.
       The <varname>key</varname> is a TSIG key name.
       The default configuration accepts queries from 127.0.0.1 and ::1.
+      The default action is REJECT for newly added
+      <varname>query_acl</varname> items.
     </para>
 
     <para>

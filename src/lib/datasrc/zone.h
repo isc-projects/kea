@@ -18,6 +18,7 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/rrset_collection_base.h>
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
