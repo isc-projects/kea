@@ -194,15 +194,9 @@ ZoneLoader_getRRCount(PyObject* po_self, PyObject*) {
 }
 
 PyObject*
-ZoneLoader_getSize(PyObject* po_self, PyObject*) {
+ZoneLoader_getProgress(PyObject* po_self, PyObject*) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
-    return (Py_BuildValue("I", self->cppobj->getSize()));
-}
-
-PyObject*
-ZoneLoader_getPosition(PyObject* po_self, PyObject*) {
-    s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
-    return (Py_BuildValue("I", self->cppobj->getPosition()));
+    return (Py_BuildValue("i", self->cppobj->getProgress()));
 }
 
 // This list contains the actual set of functions we have in
@@ -217,9 +211,8 @@ PyMethodDef ZoneLoader_methods[] = {
       ZoneLoader_loadIncremental_doc },
     { "get_rr_count", ZoneLoader_getRRCount, METH_NOARGS,
       ZoneLoader_getRRCount_doc },
-    { "get_size", ZoneLoader_getSize, METH_NOARGS, ZoneLoader_getSize_doc },
-    { "get_position", ZoneLoader_getPosition, METH_NOARGS,
-      ZoneLoader_getPosition_doc },
+    { "get_progress", ZoneLoader_getProgress, METH_NOARGS,
+      ZoneLoader_getProgress_doc },
     { NULL, NULL, 0, NULL }
 };
 
