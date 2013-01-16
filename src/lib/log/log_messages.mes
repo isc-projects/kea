@@ -97,7 +97,7 @@ There may be several reasons why this message may appear:
 - The message ID has been mis-spelled in the local message file.
 
 - The program outputting the message may not use that particular message
-(e.g. it originates in a module not used by the program.)
+(e.g. it originates in a module not used by the program).
 
 - The local file was written for an earlier version of the BIND 10 software
 and the later version no longer generates that message.
@@ -131,7 +131,7 @@ version of BIND 10.
 % LOG_READING_LOCAL_FILE reading local message file %1
 This is an informational message output by BIND 10 when it starts to read
 a local message file.  (A local message file may replace the text of
-one of more messages; the ID of the message will not be changed though.)
+one or more messages; the ID of the message will not be changed though.)
 
 % LOG_READ_ERROR error reading from message file %1: %2
 The specified error was encountered reading from the named message file.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,129 +27,25 @@ namespace dhcp {
 
 class Dhcpv6Srv;
 
-/// An exception that is thrown if an error occurs while configuring an
-/// \c Dhcpv6Srv object.
-class Dhcp6ConfigError : public isc::Exception {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param file name of the file, where exception occurred
-    /// @param line line of the file, where exception occurred
-    /// @param what text description of the issue that caused exception
-    Dhcp6ConfigError(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {}
-};
-
-/// @brief Base abstract class for all DHCPv6 parsers
+/// @brief Configures DHCPv6 server
 ///
-/// Each instance of a class derived from this class parses one specific config
-/// element. Sometimes elements are simple (e.g. a string) and sometimes quite
-/// complex (e.g. a subnet). In such case, it is likely that a parser will
-/// spawn child parsers to parse child elements in the configuration.
-/// @todo: Merge this class with Dhcp4ConfigParser in src/bin/dhcp4
-class DhcpConfigParser {
-    ///
-    /// \name Constructors and Destructor
-    ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private to make it explicit that this is a
-    /// pure base class.
-    //@{
-private:
-    DhcpConfigParser(const DhcpConfigParser& source);
-    DhcpConfigParser& operator=(const DhcpConfigParser& source);
-protected:
-    /// \brief The default constructor.
-    ///
-    /// This is intentionally defined as \c protected as this base class should
-    /// never be instantiated (except as part of a derived class).
-    DhcpConfigParser() {}
-public:
-    /// The destructor.
-    virtual ~DhcpConfigParser() {}
-    //@}
-
-    /// \brief Prepare configuration value.
-    ///
-    /// This method parses the "value part" of the configuration identifier
-    /// that corresponds to this derived class and prepares a new value to
-    /// apply to the server.
-    ///
-    /// This method must validate the given value both in terms of syntax
-    /// and semantics of the configuration, so that the server will be
-    /// validly configured at the time of \c commit().  Note: the given
-    /// configuration value is normally syntactically validated, but the
-    /// \c build() implementation must also expect invalid input.  If it
-    /// detects an error it may throw an exception of a derived class
-    /// of \c isc::Exception.
-    ///
-    /// Preparing a configuration value will often require resource
-    /// allocation.  If it fails, it may throw a corresponding standard
-    /// exception.
-    ///
-    /// This method is not expected to be called more than once in the
-    /// life of the object. Although multiple calls are not prohibited
-    /// by the interface, the behavior is undefined.
-    ///
-    /// \param config_value The configuration value for the identifier
-    /// corresponding to the derived class.
-    virtual void build(isc::data::ConstElementPtr config_value) = 0;
-
-    /// \brief Apply the prepared configuration value to the server.
-    ///
-    /// This method is expected to be exception free, and, as a consequence,
-    /// it should normally not involve resource allocation.
-    /// Typically it would simply perform exception free assignment or swap
-    /// operation on the value prepared in \c build().
-    /// In some cases, however, it may be very difficult to meet this
-    /// condition in a realistic way, while the failure case should really
-    /// be very rare.  In such a case it may throw, and, if the parser is
-    /// called via \c configureDhcp6Server(), the caller will convert the
-    /// exception as a fatal error.
-    ///
-    /// This method is expected to be called after \c build(), and only once.
-    /// The result is undefined otherwise.
-    virtual void commit() = 0;
-};
-
-/// @brief a pointer to configuration parser
-typedef boost::shared_ptr<DhcpConfigParser> ParserPtr;
-
-/// @brief a collection of parsers
+/// This function is called every time a new configuration is received. The extra
+/// parameter is a reference to DHCPv6 server component. It is currently not used
+/// and CfgMgr::instance() is accessed instead.
 ///
-/// This container is used to store pointer to parsers for a given scope.
-typedef std::vector<ParserPtr> ParserCollection;
-
-
-/// \brief Configure an \c Dhcpv6Srv object with a set of configuration values.
+/// This method does not throw. It catches all exceptions and returns them as
+/// reconfiguration statuses. It may return the following response codes:
+/// 0 - configuration successful
+/// 1 - malformed configuration (parsing failed)
+/// 2 - commit failed (parsing was successful, but the values could not be
+/// stored in the configuration).
 ///
-/// This function parses configuration information stored in \c config_set
-/// and configures the \c server by applying the configuration to it.
-/// It provides the strong exception guarantee as long as the underlying
-/// derived class implementations of \c DhcpConfigParser meet the assumption,
-/// that is, it ensures that either configuration is fully applied or the
-/// state of the server is intact.
-///
-/// If a syntax or semantics level error happens during the configuration
-/// (such as malformed configuration or invalid configuration parameter),
-/// this function throws an exception of class \c Dhcp6ConfigError.
-/// If the given configuration requires resource allocation and it fails,
-/// a corresponding standard exception will be thrown.
-/// Other exceptions may also be thrown, depending on the implementation of
-/// the underlying derived class of \c Dhcp6ConfigError.
-/// In any case the strong guarantee is provided as described above except
-/// in the very rare cases where the \c commit() method of a parser throws
-/// an exception.  If that happens this function converts the exception
-/// into a \c FatalError exception and rethrows it.  This exception is
-/// expected to be caught at the highest level of the application to terminate
-/// the program gracefully.
-///
-/// \param server The \c Dhcpv6Srv object to be configured.
-/// \param config_set A JSON style configuration to apply to \c server.
+/// @param server DHCPv6 server object.
+/// @param config_set a new configuration for DHCPv6 server.
+/// @return answer that contains result of the reconfiguration.
+/// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& server,
-                     isc::data::ConstElementPtr config_set);
+configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

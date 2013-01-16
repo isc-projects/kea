@@ -31,6 +31,15 @@ This critical error message indicates that the initial DHCPv4
 configuration has failed. The server will start, but nothing will be
 served until the configuration has been corrected.
 
+% DHCP4_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified IPv4 subnet.
+
+% DHCP4_CONFIG_OPTION_DUPLICATE multiple options with the code %1 added to the subnet %2
+This warning message is issued on an attempt to configure multiple options
+with the same option code for a particular subnet. Adding multiple options
+is uncommon for DHCPv4, but is not prohibited.
+
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the IPv4 DHCP server has received an
 updated configuration from the BIND 10 configuration system.
@@ -40,15 +49,38 @@ This is a debug message that is issued every time the server receives a
 configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
 
-% DHCP4_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified IPv4 subnet.
-
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
-new configuration. it is output during server startup, and when an updated
+new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
+
+% DHCP4_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
+This informational message is printed every time DHCPv4 server is started
+and gives both the type and name of the database being used to store
+lease and other information.
+
+% DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
+This debug message indicates that the server successfully advertised
+a lease. It is up to the client to choose one server out of othe advertised
+and continue allocation with that server. This is a normal behavior and
+indicates successful operation.
+
+% DHCP4_LEASE_ADVERT_FAIL failed to advertise a lease for client client-id %1, hwaddr %2
+This message indicates that the server has failed to offer a lease to
+the specified client after receiving a DISCOVER message from it. There are
+many possible reasons for such a failure.
+
+% DHCP4_LEASE_ALLOC lease %1 has been allocated for client-id %2, hwaddr %3
+This debug message indicates that the server successfully granted a lease
+in response to client's REQUEST message. This is a normal behavior and
+incicates successful operation.
+
+% DHCP4_LEASE_ALLOC_FAIL failed to grant a lease for client-id %1, hwaddr %2
+This message indicates that the server failed to grant a lease to the
+specified client after receiving a REQUEST message from it.  There are many
+possible reasons for such a failure. Additional messages will indicate the
+reason.
 
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -70,7 +102,7 @@ may well be a valid DHCP packet, just a type not expected by the server
 
 % DHCP4_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
 The IPv4 DHCP server tried to receive a packet but an error
-occured during this attempt. The reason for the error is included in
+occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
@@ -85,6 +117,43 @@ to be a programming error: please raise a bug report.
 
 % DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
+
+% DHCP4_RELEASE address %1 belonging to client-id %2, hwaddr %3 was released properly.
+This debug message indicates that an address was released properly. It
+is a normal operation during client shutdown.
+
+% DHCP4_RELEASE_EXCEPTION exception %1 while trying to release address %2
+This message is output when an error was encountered during an attempt
+to process a RELEASE message. The error will not affect the client,
+which does not expect any response from the server for RELEASE
+messages. Depending on the nature of problem, it may affect future
+server operation.
+
+% DHCP4_RELEASE_FAIL failed to remove lease for address %1 for duid %2, hwaddr %3
+This error message indicates that the software failed to remove a
+lease from the lease database. It is probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
+
+% DHCP4_RELEASE_FAIL_NO_LEASE client (client-id %2) tried to release address %1, but there is no lease for such address.
+This warning message is printed when client attempts to release a lease,
+but no such lease is known to the server.
+
+% DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID client (client-id %2) tried to release address %1, but it belongs to client (client-id %3)
+This warning message indicates that client tried to release an address
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the address will stop using it anyway, there
+is a good chance that the situation will correct itself.
+
+% DHCP4_RELEASE_FAIL_WRONG_HWADDR client (client-id %2) tried to release address %1, but sent from a wrong hardware address (%3)
+This warning message indicates that client tried to release an address
+that does belong to it, but the lease information was associated with
+a different hardware address. One possible reason for using different
+hardware address is that a cloned virtual machine was not updated and
+both clones use the same client-id.
 
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.
@@ -126,3 +195,13 @@ processed any command-line switches and is starting.
 This is a debug message issued during the IPv4 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.
+
+% DHCP4_SUBNET_SELECTED the %1 subnet was selected for client assignment
+This is a debug message noting the selection of a subnet to be used for
+address and option assignment.  Subnet selection is one of the early
+steps in the processing of incoming client message.
+
+% DHCP4_SUBNET_SELECTION_FAILED failed to select a subnet for incoming packet, src: %1, type: %2
+This warning message is output when a packet was received from a subnet
+for which the DHCPv4 server has not been configured. The most probable
+cause is a misconfiguration of the server.

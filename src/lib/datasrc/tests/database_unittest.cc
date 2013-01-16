@@ -55,6 +55,7 @@ namespace {
 
 // Imaginary zone IDs used in the mock accessor below.
 const int READONLY_ZONE_ID = 42;
+const int NEW_ZONE_ID = 420;
 const int WRITABLE_ZONE_ID = 4200;
 
 // Commonly used test data
@@ -257,26 +258,43 @@ const char* TEST_NSEC3_RECORDS[][5] = {
  */
 class NopAccessor : public DatabaseAccessor {
 public:
-    NopAccessor() : database_name_("mock_database")
-    { }
+    NopAccessor() : database_name_("mock_database") {
+        zones_["example.org."] = READONLY_ZONE_ID;
+        zones_["null.example.org."] = 13;
+        zones_["empty.example.org."] = 0;
+        zones_["bad.example.org."] = -1;
+    }
 
     virtual std::pair<bool, int> getZone(const std::string& name) const {
-        if (name == "example.org.") {
-            return (std::pair<bool, int>(true, READONLY_ZONE_ID));
-        } else if (name == "null.example.org.") {
-            return (std::pair<bool, int>(true, 13));
-        } else if (name == "empty.example.org.") {
-            return (std::pair<bool, int>(true, 0));
-        } else if (name == "bad.example.org.") {
-            return (std::pair<bool, int>(true, -1));
+        std::map<std::string, int>::const_iterator found = zones_.find(name);
+        if (found != zones_.end()) {
+            return (std::pair<bool, int>(true, found->second));
         } else {
             return (std::pair<bool, int>(false, 0));
         }
     }
 
-    virtual int addZone(const std::string&) {
-        isc_throw(isc::NotImplemented,
-                  "This database datasource can't add zones");
+    // A simple implementation of addZone.
+    virtual int addZone(const std::string& zone_name) {
+        if (zone_name == "example.com.") {
+            zones_[zone_name] = NEW_ZONE_ID;
+        }
+
+        // for simplicity we assume zone_name is in zones_ at this point
+        return (zones_[zone_name]);
+    }
+
+    // A simple implementation of deleteZone.
+    virtual void deleteZone(int zone_id) {
+        std::map<std::string, int>::iterator it = zones_.begin();
+        std::map<std::string, int>::iterator end = zones_.end();
+        while (it != end) {
+            if (it->second == zone_id) {
+                zones_.erase(it);
+                return;
+            }
+            ++it;
+        }
     }
 
     virtual boost::shared_ptr<DatabaseAccessor> clone() {
@@ -337,7 +355,7 @@ public:
 
 private:
     const std::string database_name_;
-
+    std::map<std::string, int> zones_;
 };
 
 /**
@@ -438,13 +456,21 @@ public:
 
         // Check any attempt of multiple transactions
         if (did_transaction_) {
-            isc_throw(isc::Unexpected, "MockAccessor::startTransaction() "
+            isc_throw(DataSourceError, "MockAccessor::startTransaction() "
                       "called multiple times - likely a bug in the test");
         }
 
         readonly_records_copy_ = *readonly_records_;
         readonly_records_ = &readonly_records_copy_;
         did_transaction_ = true;
+    }
+
+    // If the test needs multiple calls to startTransaction() and knows it's
+    // safe, it can use this method to disable the safeguard check in
+    // startTransaction(); the test can also use this method by emulating a
+    // lock conflict by setting is_allowed to false.
+    void allowMoreTransaction(bool is_allowed) {
+        did_transaction_ = !is_allowed;
     }
 
 private:
@@ -1290,6 +1316,17 @@ public:
             // actual data.
             EXPECT_TRUE(it == expected.end());
             ASSERT_FALSE(rrset);
+        }
+    }
+
+    // Mock-only; control whether to allow subsequent transaction.
+    void allowMoreTransaction(bool is_allowed) {
+        if (is_mock_) {
+            // Use a separate variable for MockAccessor&; some compilers
+            // would be confused otherwise.
+            MockAccessor& mock_accessor =
+                dynamic_cast<MockAccessor&>(*current_accessor_);
+            mock_accessor.allowMoreTransaction(is_allowed);
         }
     }
 
@@ -4110,51 +4147,86 @@ TYPED_TEST(DatabaseClientTest, createZone) {
         zone(this->client_->findZone(new_name));
     ASSERT_EQ(result::NOTFOUND, zone.code);
 
-    // The mock implementation does not do createZone,
-    // in which case it should throw NotImplemented (from
-    // the base class)
-    if (this->is_mock_) {
-        ASSERT_THROW(this->client_->createZone(new_name), isc::NotImplemented);
-    } else {
-        // But in the real case, it should work and return true
-        ASSERT_TRUE(this->client_->createZone(new_name));
-        const DataSourceClient::FindResult
-            zone2(this->client_->findZone(new_name));
-        ASSERT_EQ(result::SUCCESS, zone2.code);
-        // And the second call should return false since
-        // it already exists
-        ASSERT_FALSE(this->client_->createZone(new_name));
-    }
+    // Adding a new zone; it should work and return true
+    ASSERT_TRUE(this->client_->createZone(new_name));
+    const DataSourceClient::FindResult
+        zone2(this->client_->findZone(new_name));
+    ASSERT_EQ(result::SUCCESS, zone2.code);
+    // And the second call should return false since
+    // it already exists
+    this->allowMoreTransaction(true);
+    ASSERT_FALSE(this->client_->createZone(new_name));
 }
 
 TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
-    // skip test for mock
-    if (this->is_mock_) {
-        return;
-    }
-
     const Name new_name("example.com");
     isc::datasrc::ZoneUpdaterPtr updater =
         this->client_->getUpdater(this->zname_, true);
+    this->allowMoreTransaction(false);
     ASSERT_THROW(this->client_->createZone(new_name), DataSourceError);
     // createZone started a transaction as well, but since it failed,
     // it should have been rolled back. Roll back the other one as
     // well, and the next attempt should succeed
     updater.reset();
+    this->allowMoreTransaction(true);
     ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
 TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
-    // skip test for mock
-    if (this->is_mock_) {
-        return;
-    }
-
     const Name new_name("example.com");
     ASSERT_FALSE(this->client_->createZone(this->zname_));
-    // createZone started a transaction, but since it failed,
-    // it should have been rolled back, and the next attempt should succeed
+
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
+    this->allowMoreTransaction(true);
     ASSERT_TRUE(this->client_->createZone(new_name));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZone) {
+    // Check the zone currently exists.
+    EXPECT_EQ(result::SUCCESS, this->client_->findZone(this->zname_).code);
+
+    // Deleting an existing zone; it should work and return true (previously
+    // existed and is now deleted)
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
+
+    // Now it's not found by findZone
+    EXPECT_EQ(result::NOTFOUND, this->client_->findZone(this->zname_).code);
+
+    // And the second call should return false since it doesn't exist any more
+    this->allowMoreTransaction(true);
+    EXPECT_FALSE(this->client_->deleteZone(this->zname_));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZoneRollbackOnLocked) {
+    isc::datasrc::ZoneUpdaterPtr updater =
+        this->client_->getUpdater(this->zname_, true);
+
+    // updater locks the DB so deleteZone() will fail.
+    this->allowMoreTransaction(false);
+    EXPECT_THROW(this->client_->deleteZone(this->zname_), DataSourceError);
+
+    // deleteZone started a transaction as well, but since it failed,
+    // it should have been rolled back. Roll back the other one as
+    // well, and the next attempt should succeed
+    updater.reset();
+    this->allowMoreTransaction(true);
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
+    // attempt of deleting non-existent zone.  result in false
+    const Name new_name("example.com");
+    EXPECT_FALSE(this->client_->deleteZone(new_name));
+
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
+    this->allowMoreTransaction(true);
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
 }
 
 TYPED_TEST_CASE(RRsetCollectionTest, TestAccessorTypes);

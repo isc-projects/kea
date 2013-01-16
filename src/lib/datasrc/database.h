@@ -155,7 +155,7 @@ public:
     ///
     /// It is empty, but needs a virtual one, since we will use the derived
     /// classes in polymorphic way.
-    virtual ~DatabaseAccessor() { }
+    virtual ~DatabaseAccessor() {}
 
     /// \brief Retrieve a zone identifier
     ///
@@ -164,8 +164,8 @@ public:
     /// apex), as the DatabaseClient will loop trough the labels itself and
     /// find the most suitable zone.
     ///
-    /// It is not specified if and what implementation of this method may throw,
-    /// so code should expect anything.
+    /// It is not specified if and what implementation of this method may
+    /// throw, so code should expect anything.
     ///
     /// \param name The (fully qualified) domain name of the zone's apex to be
     ///             looked up.
@@ -195,6 +195,23 @@ public:
     ///         or was created by this call).
     virtual int addZone(const std::string& name) = 0;
 
+    /// \brief Delete a zone from the database
+    ///
+    /// Like for deleteRecordToZone, implementations are not required to
+    /// check for the existence of the given zone name, it is the
+    /// responsibility of the caller to do so.
+    ///
+    /// Callers must also start a transaction before calling this method.
+    /// Implementations should throw InvalidOperation if this has not been
+    /// done. Callers should also expect DataSourceError for other potential
+    /// problems specific to the database.
+    ///
+    /// \note This method does not delete other database records related to
+    /// the zone.  See \c DataSourceClient::deleteZone for the rationale.
+    ///
+    /// \param zone_id The ID of the zone, that would be returned by getZone().
+    virtual void deleteZone(int zone_id) = 0;
+
     /// \brief This holds the internal context of ZoneIterator for databases
     ///
     /// While the ZoneIterator implementation from DatabaseClient does all the
@@ -212,15 +229,15 @@ public:
         /// \brief Destructor
         ///
         /// Virtual destructor, so any descendand class is destroyed correctly.
-        virtual ~IteratorContext() { }
+        virtual ~IteratorContext() {}
 
         /// \brief Function to provide next resource record
         ///
         /// This function should provide data about the next resource record
         /// from the data that is searched. The data is not converted yet.
         ///
-        /// Depending on how the iterator was constructed, there is a difference
-        /// in behaviour; for a 'full zone iterator', created with
+        /// Depending on how the iterator was constructed, there is a
+        /// difference in behaviour; for a 'full zone iterator', created with
         /// getAllRecords(), all COLUMN_COUNT elements of the array are
         /// overwritten.
         /// For a 'name iterator', created with getRecords(), the column
@@ -1399,7 +1416,9 @@ public:
     /// does not, creates it, commits, and returns true. If the zone
     /// does exist already, it does nothing (except abort the transaction)
     /// and returns false.
-    virtual bool createZone(const isc::dns::Name& name);
+    virtual bool createZone(const isc::dns::Name& zone_name);
+
+    virtual bool deleteZone(const isc::dns::Name& zone_name);
 
     /// \brief Get the zone iterator
     ///

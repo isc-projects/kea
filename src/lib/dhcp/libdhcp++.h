@@ -55,6 +55,21 @@ public:
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
                                             const uint16_t code);
 
+    /// @brief Check if the specified option is a standard option.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param code option code.
+    ///
+    /// @return true if the specified option is a standard option.
+    /// @todo We arleady create option definitions for the subset if
+    /// standard options. We are aiming that this function checks
+    /// the presence of the standard option definition and if it finds
+    /// it, then the true value is returned. However, at this point
+    /// this is not doable because some of the definitions (for less
+    /// important options) are not created yet.
+    static bool isStandardOption(const Option::Universe u,
+                                 const uint16_t code);
+
     /// @brief Factory function to create instance of option.
     ///
     /// Factory method creates instance of specified option. The option

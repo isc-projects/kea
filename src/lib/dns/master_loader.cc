@@ -219,26 +219,26 @@ private:
             // after the RR class below.
         }
 
-        boost::scoped_ptr<RRClass> rrclass;
-        try {
-            rrclass.reset(new RRClass(rrparam_token.getString()));
+        const MaybeRRClass rrclass =
+            RRClass::createFromText(rrparam_token.getString());
+        if (rrclass) {
+            // FIXME: The following code re-parses the rrparam_token to
+            // make an RRClass instead of using the MaybeRRClass above,
+            // because some old versions of boost::optional (that we
+            // still want to support) have a bug (see trac #2593). This
+            // workaround should be removed at some point in the future.
+            if (RRClass(rrparam_token.getString()) != zone_class_) {
+                isc_throw(InternalException, "Class mismatch: " << *rrclass <<
+                          " vs. " << zone_class_);
+            }
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
-        } catch (const InvalidRRClass&) {
-            // If it's not an rrclass here, use the zone's class.
-            rrclass.reset(new RRClass(zone_class_));
         }
 
         // If we couldn't parse TTL earlier in the stream (above), try
         // again at current location.
-        if (!explicit_ttl &&
-            setCurrentTTL(rrparam_token.getString())) {
+        if (!explicit_ttl && setCurrentTTL(rrparam_token.getString())) {
             explicit_ttl = true;
             rrparam_token = lexer_.getNextToken(MasterToken::STRING);
-        }
-
-        if (*rrclass != zone_class_) {
-            isc_throw(InternalException, "Class mismatch: " << *rrclass <<
-                      "vs. " << zone_class_);
         }
 
         // Return the current string token's value as the RRType.
@@ -398,7 +398,7 @@ private:
     shared_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
-    AddRRCallback add_callback_;
+    const AddRRCallback add_callback_;
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
                                            // unspecified.  If NULL no default
                                            // is known.
