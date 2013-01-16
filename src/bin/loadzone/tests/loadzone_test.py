@@ -237,7 +237,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__check_zone_soa(None, zone_name=Name('example.com'))
 
     def __common_post_load_setup(self, zone_file):
-        '''Common setup procedure for post load tests.'''
+        '''Common setup procedure for post load tests which should fail.'''
         # replace the LoadZoneRunner's original _post_load_warning() for
         # inspection
         self.__warnings = []
@@ -248,26 +248,18 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__common_load_setup()
         self.__runner._zone_file = zone_file
         self.__check_zone_soa(ORIG_SOA_TXT)
-        self.__runner._do_load()
-        self.__runner._post_load_checks()
+        # It fails because there's problem with the zone data
+        self.assertRaises(LoadFailure, self.__runner._do_load)
 
     def test_load_post_check_fail_soa(self):
         '''Load succeeds but warns about missing SOA, should cause warn'''
-        self.__common_load_setup()
         self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
                                       '/example-nosoa.org.zone')
-        self.__check_zone_soa(False)
-        self.assertEqual(1, len(self.__warnings))
-        self.assertEqual('zone has no SOA', self.__warnings[0])
 
     def test_load_post_check_fail_ns(self):
         '''Load succeeds but warns about missing NS, should cause warn'''
-        self.__common_load_setup()
         self.__common_post_load_setup(LOCAL_TESTDATA_PATH +
                                       '/example-nons.org.zone')
-        self.__check_zone_soa(NEW_SOA_TXT)
-        self.assertEqual(1, len(self.__warnings))
-        self.assertEqual('zone has no NS', self.__warnings[0])
 
     def __interrupt_progress(self, loaded_rrs):
         '''A helper emulating a signal in the middle of loading.
