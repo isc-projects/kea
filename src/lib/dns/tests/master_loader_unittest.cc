@@ -156,7 +156,6 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     // The following three should be set to 0 initially in case the loader
     // is constructed from a file name.
-    EXPECT_EQ(0, loader_->getRRCount());
     EXPECT_EQ(0, loader_->getSize());
     EXPECT_EQ(0, loader_->getPosition());
 
@@ -168,7 +167,6 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     // Hardcode expected values taken from the test data file, assuming it
     // won't change too often.
-    EXPECT_EQ(4, loader_->getRRCount());
     EXPECT_EQ(549, loader_->getSize());
     EXPECT_EQ(549, loader_->getPosition());
 
@@ -323,7 +321,6 @@ TEST_F(MasterLoaderTest, popAfterError) {
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken RR
     EXPECT_EQ(1, warnings_.size()); // For missing EOLN
-    EXPECT_EQ(1, loader_->getRRCount()); // broken RR shouldn't be counted
 
     // The included file doesn't contain anything usable, but the
     // line after the include should be there.
@@ -342,7 +339,6 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     // Unlike the basicLoad test, if we construct the loader from a stream
     // getSize() returns the data size in the stream immediately after the
     // construction.
-    EXPECT_EQ(0, loader_->getRRCount());
     EXPECT_EQ(zone_data.size(), loader_->getSize());
     EXPECT_EQ(0, loader_->getPosition());
 
@@ -356,9 +352,7 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     checkRR("correct.example.org", RRType::A(), "192.0.2.2");
 
     // On completion of the load, both getSize() and getPosition() return the
-    // size of the data, and getRRCount() returns the number of loaded RRs,
-    // which is 2 in this case.
-    EXPECT_EQ(2, loader_->getRRCount());
+    // size of the data.
     EXPECT_EQ(zone_data.size(), loader_->getSize());
     EXPECT_EQ(zone_data.size(), loader_->getPosition());
 }
@@ -368,10 +362,8 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
-    EXPECT_EQ(0, loader_->getRRCount()); // initial count should be 2
     EXPECT_FALSE(loader_->loadedSucessfully());
     EXPECT_FALSE(loader_->loadIncremental(2));
-    EXPECT_EQ(2, loader_->getRRCount()); // number of loaded RR so far
     EXPECT_FALSE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
@@ -394,8 +386,6 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
 
     checkRR("www.example.org", RRType::A(), "192.0.2.1");
     checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
-
-    EXPECT_EQ(4, loader_->getRRCount()); // on completion it's # of zone's RRs.
 }
 
 // Try loading from file that doesn't exist. There should be single error

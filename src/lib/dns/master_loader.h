@@ -142,16 +142,6 @@ public:
     ///     finishing the load.
     bool loadedSucessfully() const;
 
-    /// \brief Return the number of RRs loaded.
-    ///
-    /// This method returns the number of RRs loaded via this loader by the
-    /// time of the call.  Before starting the load it will return 0.
-    /// It will return the total number of RRs of the zone on and after
-    /// completing the load.
-    ///
-    /// \throw None
-    size_t getRRCount() const;
-
     /// \brief Return the total size of the zone files and streams.
     ///
     /// This method returns the size of the source of the zone to be loaded
