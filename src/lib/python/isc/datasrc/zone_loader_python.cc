@@ -196,7 +196,7 @@ ZoneLoader_getRRCount(PyObject* po_self, PyObject*) {
 PyObject*
 ZoneLoader_getProgress(PyObject* po_self, PyObject*) {
     s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
-    return (Py_BuildValue("i", self->cppobj->getProgress()));
+    return (Py_BuildValue("d", self->cppobj->getProgress()));
 }
 
 // This list contains the actual set of functions we have in

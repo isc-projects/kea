@@ -201,7 +201,7 @@ initModulePart_ZoneLoader(PyObject* mod) {
 
     try {
         installClassVariable(zone_loader_type, "PROGRESS_UNKNOWN",
-                             Py_BuildValue("i", ZoneLoader::PROGRESS_UNKNOWN));
+                             Py_BuildValue("d", ZoneLoader::PROGRESS_UNKNOWN));
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in ZoneLoader initialization: " +

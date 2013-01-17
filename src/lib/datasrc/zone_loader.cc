@@ -35,7 +35,7 @@ using isc::dns::MasterLexer;
 namespace isc {
 namespace datasrc {
 
-const int ZoneLoader::PROGRESS_UNKNOWN = -1;
+const double ZoneLoader::PROGRESS_UNKNOWN = -1;
 
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        DataSourceClient& source) :
@@ -157,7 +157,7 @@ ZoneLoader::getRRCount() const {
     return (rr_count_);
 }
 
-int
+double
 ZoneLoader::getProgress() const {
     if (!loader_) {
         return (PROGRESS_UNKNOWN);
@@ -180,7 +180,7 @@ ZoneLoader::getProgress() const {
         return (PROGRESS_UNKNOWN);
     }
 
-    return ((static_cast<double>(pos) / total_size) * 100);
+    return (static_cast<double>(pos) / total_size);
 }
 
 } // end namespace datasrc
