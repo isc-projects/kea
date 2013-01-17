@@ -878,7 +878,6 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
