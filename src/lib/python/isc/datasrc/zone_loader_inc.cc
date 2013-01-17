@@ -129,25 +129,27 @@ Exceptions:\n\
 \n\
 ";
 
+// Modifications
+// - double => float
 const char* const ZoneLoader_getProgress_doc = "\
-get_progress() -> int\n\
+get_progress() -> float\n\
 \n\
-Return the current progress of the loader in percentage.\n\
+Return the current progress of the loader.\n\
 \n\
-This method returns the current estimated progress of loader in\n\
-percentage; it's 0 before starting the load, and 100 at the\n\
-completion, and a value between 0 and 100 in the middle of loading.\n\
-It's an implementation detail how to calculate the progress, which may\n\
-vary depending on how the loader is constructed and may even be\n\
-impossible to detect effectively.\n\
+This method returns the current estimated progress of loader as a\n\
+value between 0 and 1 (inclusive); it's 0 before starting the load,\n\
+and 1 at the completion, and a value between these (exclusive) in the\n\
+middle of loading. It's an implementation detail how to calculate the\n\
+progress, which may vary depending on how the loader is constructed\n\
+and may even be impossible to detect effectively.\n\
 \n\
 If the progress cannot be determined, this method returns a special\n\
 value of PROGRESS_UNKNOWN, which is not included in the range between\n\
-0 and 100.\n\
+0 and 1.\n\
 \n\
 As such, the application should use the return value only for\n\
 informational purposes such as logging. For example, it shouldn't be\n\
-used to determine whether loading is completed by comparing it to 100.\n\
+used to determine whether loading is completed by comparing it to 1.\n\
 It should also expect the possibility of getting PROGRESS_UNKNOWN at\n\
 any call to this method; it shouldn't assume the specific way of\n\
 internal implementation as described below (which is provided for\n\

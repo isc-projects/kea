@@ -323,9 +323,9 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
     EXPECT_EQ(34, destination_client_.rrsets_.size());
 
     // getRRCount should be identical of the RRs we've seen.  progress
-    // should reach 100%.
+    // should reach 100% (= 1).
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
-    EXPECT_EQ(100, loader.getProgress());
+    EXPECT_EQ(1, loader.getProgress());
 
     // Ensure known order.
     std::sort(destination_client_.rrsets_.begin(),
@@ -364,11 +364,13 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     // Check we can get intermediate counters.  expected progress is calculated
     // based on the size of the zone file and the offset to the end of 10th RR
     // (subject to future changes to the file, but we assume it's a rare
-    // event.).  This also involves floating point operation, which may
-    // cause a margin error depending on environments.  If it happens we
-    // should loosen the test condition to accept some margin.
+    // event.).  The expected value should be the exact expression that
+    // getProgress() should do internally, so EXPECT_EQ() should work here,
+    // but floating-point comparison can be always tricky we use
+    // EXPECT_DOUBLE_EQ just in case.
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
-    EXPECT_EQ(27, loader.getProgress()); // file size = 1541, offset = 428
+    // file size = 1541, offset = 428 (27.77%).
+    EXPECT_DOUBLE_EQ(static_cast<double>(428) / 1541, loader.getProgress());
 
     // We can finish the rest
     loader.loadIncremental(30);
@@ -377,7 +379,7 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
 
     // Counters are updated accordingly.  progress should reach 100%.
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
-    EXPECT_EQ(100, loader.getProgress());
+    EXPECT_EQ(1, loader.getProgress());
 
     // No more loading now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
