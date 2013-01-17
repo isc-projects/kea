@@ -67,10 +67,10 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
 namespace {
 // Unified callback to install RR and increment RR count at the same time.
 void
-addRR(const dns::Name& name, const dns::RRClass& rrclass,
+addRR(ZoneUpdater* updater, size_t* rr_count,
+      const dns::Name& name, const dns::RRClass& rrclass,
       const dns::RRType& type, const dns::RRTTL& ttl,
-      const dns::rdata::RdataPtr& data, ZoneUpdater* updater,
-      size_t* rr_count)
+      const dns::rdata::RdataPtr& data)
 {
     isc::dns::BasicRRset rrset(name, rrclass, type, ttl);
     rrset.addRdata(data);
@@ -96,8 +96,9 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                                    createMasterLoaderCallbacks(zone_name,
                                        updater_->getFinder().getClass(),
                                        &loaded_ok_),
-                                   boost::bind(addRR, _1, _2, _3, _4, _5,
-                                               updater_.get(), &rr_count_)));
+                                   boost::bind(addRR,
+                                               updater_.get(), &rr_count_,
+                                               _1, _2, _3, _4, _5)));
     }
 }
 
