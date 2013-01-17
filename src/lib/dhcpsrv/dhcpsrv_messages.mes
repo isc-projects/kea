@@ -226,6 +226,12 @@ a database backend, but where no 'type' keyword has been included in
 the access string.  The access string (less any passwords) is included
 in the message.
 
+% DHCPSRV_USING_MEMFILE_BACKEND using memfile database backend, leases will be lost after restart
+This warning message is issued when the server is configured to use default
+'memfile' backend to store leases. The leases held by this backend are
+lost on server's restart. Currently 'memfile' backend is usable for testing
+purposes mainly.
+
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
