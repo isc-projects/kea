@@ -30,8 +30,8 @@ namespace dhcp {
 
 /// @brief file name of a server-id file
 ///
-/// Server must store its duid in persistent storage that must not change
-/// between restarts. This is name of the file that is created in dataDir
+/// Server must store its server identifier in persistent storage that must not
+/// change between restarts. This is name of the file that is created in dataDir
 /// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
 /// regular IPv4 address, e.g. 192.0.2.1. Server will create it during
 /// first run and then use it afterwards.
