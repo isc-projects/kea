@@ -462,7 +462,8 @@ TEST_F(ZoneLoaderTest, loadCheck) {
 }
 
 // The same test, but for copying from other data source
-TEST_F(ZoneLoaderTest, copyCheck) {
+// Disabled by #2499. See the comment in prepareSource().
+TEST_F(ZoneLoaderTest, DISABLED_copyCheck) {
     prepareSource(Name("example.org"), "novalidate.zone");
     ZoneLoader loader(destination_client_, Name("example.org"),
                       source_client_);
