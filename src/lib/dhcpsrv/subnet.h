@@ -504,11 +504,12 @@ public:
     /// A subnet may be reachable directly (not via relays). In DHCPv6 it is not
     /// possible to decide that based on addresses assigned to network interfaces,
     /// as DHCPv6 operates on link-local (and site local) addresses.
+    /// @param iface_name name of the interface
     void setIface(const std::string& iface_name);
 
     /// @brief network interface name used to reach subnet (or "" for remote subnets)
     /// @return network interface name for directly attached subnets or ""
-    std::string getIface();
+    std::string getIface() const;
 
 protected:
 
