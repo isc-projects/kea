@@ -59,6 +59,7 @@ namespace {
 const char* rrset_data[] = {
     "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
     "68 3600 300 3600000 3600",
+    "example.org. 3600 IN NS ns1.example.org.",
     "a.example.org. 3600 IN A 192.168.0.1\n" // RRset containing 2 RRs
     "a.example.org. 3600 IN A 192.168.0.2",
     "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
@@ -225,7 +226,7 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
 
     EXPECT_THROW(client_->load(Name("."),
                                TEST_DATA_DIR "/empty.zone"),
-                 EmptyZone);
+                 ZoneValidationError);
 
     EXPECT_EQ(0, client_->getZoneCount());
 
@@ -254,6 +255,11 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     ConstRRsetPtr rrset(iterator->getNextRRset());
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // RRType::NS() RRset
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // RRType::MX() RRset
     rrset = iterator->getNextRRset();
@@ -377,6 +383,10 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(RRType::SOA(), set->type);
 
     set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::NS(), set->type);
+
+    set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 
     /* Check ns1.example.org */
@@ -400,6 +410,10 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
     EXPECT_EQ(RRType::SOA(), set->type);
+
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::NS(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
@@ -636,9 +650,14 @@ TEST_F(MemoryClientTest, getIterator) {
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
     // First we have the SOA
-    ConstRRsetPtr rrset_soa(iterator->getNextRRset());
-    EXPECT_TRUE(rrset_soa);
-    EXPECT_EQ(RRType::SOA(), rrset_soa->getType());
+    ConstRRsetPtr rrset(iterator->getNextRRset());
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // Then the NS
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
@@ -659,6 +678,11 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::SOA(), rrset->getType());
 
+    // Then, the NS
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+
     // Only one RRType::A() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
@@ -667,7 +691,6 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     // There's nothing else in this zone
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 
-
     // separate_rrs = true
     ZoneIteratorPtr iterator2(client_->getIterator(Name("example.org"), true));
 
@@ -675,6 +698,11 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     rrset = iterator2->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // Then, the NS
+    rrset = iterator2->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // First RRType::A() RRset
     rrset = iterator2->getNextRRset();
@@ -750,6 +778,11 @@ TEST_F(MemoryClientTest, findZoneData) {
     const RdataSet* set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
     EXPECT_EQ(RRType::SOA(), set->type);
+
+    /* Check NS */
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::NS(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
