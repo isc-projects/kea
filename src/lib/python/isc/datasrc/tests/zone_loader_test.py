@@ -117,9 +117,9 @@ class ZoneLoaderTests(unittest.TestCase):
         self.check_load()
 
         # Expected values are hardcoded, taken from the test zone file,
-        # assuming it won't change too often.  progress should reach 100%.
+        # assuming it won't change too often.  progress should reach 100% (=1).
         self.assertEqual(8, self.loader.get_rr_count())
-        self.assertEqual(100, self.loader.get_progress())
+        self.assertEqual(1, self.loader.get_progress())
 
     def test_load_from_client(self):
         self.source_client = isc.datasrc.DataSourceClient('sqlite3',
@@ -144,10 +144,16 @@ class ZoneLoaderTests(unittest.TestCase):
         self.check_zone_soa(ORIG_SOA_TXT)
 
         # In case it's from a zone file, get_progress should be in the middle
-        # of (0, 100).  expected value is taken from the test zone file
+        # of (0, 1).  expected value is taken from the test zone file
         # (total size = 422, current position = 288)
         if from_file:
-            self.assertEqual(int(288 * 100 / 422), self.loader.get_progress())
+            # To avoid any false positive due to rounding errors, we convert
+            # them to near integers between 0 and 100.
+            self.assertEqual(int((288 * 100) / 422),
+                             int(self.loader.get_progress() * 100))
+            # Also check the return value has higher precision.
+            self.assertNotEqual(int(288 * 100 / 422),
+                                100 * self.loader.get_progress())
 
         # After 5 more, it should return True (only having read 3)
         self.assertTrue(self.loader.load_incremental(5))
