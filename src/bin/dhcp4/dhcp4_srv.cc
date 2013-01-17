@@ -218,7 +218,7 @@ bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
     try {
         IOAddress addr(hex_string);
 
-        if (addr.getFamily() != AF_INET) {
+        if (!addr.isV4()) {
             return (false);
         }
 

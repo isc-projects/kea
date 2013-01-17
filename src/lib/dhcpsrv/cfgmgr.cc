@@ -249,7 +249,9 @@ std::string CfgMgr::getDataDir() {
 
 CfgMgr::CfgMgr()
     :datadir_(DHCP_DATA_DIR) {
-    // DHCP_DATA_DIR is set with -DDHCP_DATA_DIR in Makefile.am
+    // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
+    // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
+    // See AM_CPPFLAGS definition in Makefile.am
 }
 
 CfgMgr::~CfgMgr() {
