@@ -39,6 +39,9 @@ extern PyTypeObject rrset_collection_base_type;
 // Python type information for dns.RRsetCollection
 extern PyTypeObject rrset_collection_type;
 
+// Class specific exceptions
+extern PyObject* po_RRsetCollectionError;
+
 bool initModulePart_RRsetCollectionBase(PyObject* mod);
 bool initModulePart_RRsetCollection(PyObject* mod);
 
