@@ -48,27 +48,20 @@ SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              response_obuffer(new OutputBuffer(0))
 {}
 
-SrvTestBase::~SrvTestBase() {
-    delete io_message;
-    delete endpoint;
-}
-
 void
 SrvTestBase::createDataFromFile(const char* const datafile,
                                 const int protocol)
 {
-    delete io_message;
     data.clear();
 
-    delete endpoint;
-
-    endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS),
-                                  DEFAULT_REMOTE_PORT);
+    endpoint.reset(IOEndpoint::create(protocol,
+                                      IOAddress(DEFAULT_REMOTE_ADDRESS),
+                                      DEFAULT_REMOTE_PORT));
     UnitTestUtil::readWireData(datafile, data);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
-    io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
+    io_message.reset(new IOMessage(&data[0], data.size(), *io_sock,
+                                   *endpoint));
 }
 
 void
@@ -83,16 +76,14 @@ SrvTestBase::createRequestPacket(Message& message,
         message.toWire(request_renderer, *context);
     }
 
-    delete endpoint;
-    endpoint = IOEndpoint::create(protocol, IOAddress(remote_address),
-                                  remote_port);
+    endpoint.reset(IOEndpoint::create(protocol, IOAddress(remote_address),
+                                      remote_port));
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
 
-    delete io_message;
-    io_message = new IOMessage(request_renderer.getData(),
-                               request_renderer.getLength(),
-                               *io_sock, *endpoint);
+    io_message.reset(new IOMessage(request_renderer.getData(),
+                                   request_renderer.getLength(),
+                                   *io_sock, *endpoint));
 }
 
 // Unsupported requests.  Should result in NOTIMP.

@@ -1286,12 +1286,12 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
     createRequestPacket(request_message, IPPROTO_UDP);
 
     // Modify the message.
-    delete io_message;
-    endpoint = IOEndpoint::create(IPPROTO_UDP,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
-    io_message = new IOMessage(request_renderer.getData(),
-                               request_renderer.getLength(),
-                               getDummyUnknownSocket(), *endpoint);
+    endpoint.reset(IOEndpoint::create(IPPROTO_UDP,
+                                      IOAddress(DEFAULT_REMOTE_ADDRESS),
+                                      53210));
+    io_message.reset(new IOMessage(request_renderer.getData(),
+                                   request_renderer.getLength(),
+                                   getDummyUnknownSocket(), *endpoint));
 
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
@@ -1723,8 +1723,7 @@ checkAddrPort(const struct sockaddr& actual_sa,
     struct sockaddr_storage ss;
     memcpy(&ss, &actual_sa, sa_len);
 
-    struct sockaddr* sa =
-        static_cast<struct sockaddr*>(static_cast<void*>(&ss));
+    struct sockaddr* sa = convertSockAddr(&ss);
 #ifdef HAVE_SA_LEN
     sa->sa_len = sa_len;
 #endif
