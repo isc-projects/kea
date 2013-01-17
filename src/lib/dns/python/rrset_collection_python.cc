@@ -113,6 +113,9 @@ RRsetCollectionBase_find(PyObject* po_self, PyObject* args) {
             }
             Py_RETURN_NONE;
         }
+    } catch (const RRsetCollectionError& ex) {
+        PyErr_SetString(po_RRsetCollectionError, ex.what());
+        return (NULL);
     } catch (const std::exception& ex) {
         const string ex_what = "Unexpected failure in "
             "RRsetCollectionBase.find: " + string(ex.what());
@@ -142,6 +145,9 @@ PyMethodDef RRsetCollectionBase_methods[] = {
 namespace isc {
 namespace dns {
 namespace python {
+// Definition of class specific exception(s)
+PyObject* po_RRsetCollectionError;
+
 // This defines the complete type for reflection in python and
 // parsing of PyObject* to s_RRsetCollection
 // Most of the functions are not actually implemented and NULL here.
@@ -198,18 +204,27 @@ PyTypeObject rrset_collection_base_type = {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_RRsetCollectionBase(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrset_collection_base_type) < 0) {
+    if (!initClass(rrset_collection_base_type, "RRsetCollectionBase", mod)) {
         return (false);
     }
-    void* p = &rrset_collection_base_type;
-    if (PyModule_AddObject(mod, "RRsetCollectionBase",
-                           static_cast<PyObject*>(p)) < 0) {
+
+    try {
+        po_RRsetCollectionError =
+            PyErr_NewException("dns.RRsetCollectionError",
+                               po_IscException, NULL);
+        PyObjectContainer(po_RRsetCollectionError).installToModule(
+            mod, "RRsetCollectionError");
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in RRsetCollectionBase initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
+                        "RRsetCollectionBase initialization");
         return (false);
     }
-    Py_INCREF(&rrset_collection_base_type);
 
     return (true);
 }
@@ -410,18 +425,9 @@ PyTypeObject rrset_collection_type = {
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_RRsetCollection(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&rrset_collection_type) < 0) {
+    if (!initClass(rrset_collection_type, "RRsetCollection", mod)) {
         return (false);
     }
-    void* p = &rrset_collection_type;
-    if (PyModule_AddObject(mod, "RRsetCollection",
-                           static_cast<PyObject*>(p)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&rrset_collection_type);
 
     return (true);
 }
