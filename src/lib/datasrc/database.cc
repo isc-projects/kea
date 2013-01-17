@@ -32,7 +32,6 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
-#include <datasrc/rrset_collection.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
