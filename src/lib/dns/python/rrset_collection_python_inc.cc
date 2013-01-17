@@ -1,7 +1,7 @@
 namespace {
 // Modifications
 //   - libdns++ => isc.dns, libdatasrc => isc.datasrc
-//   - note about the constructor.
+//   - note about the direct construction.
 //   - add note about iteration
 const char* const RRsetCollectionBase_doc = "\
 Generic class to represent a set of RRsets.\n\
@@ -18,8 +18,8 @@ maybe class) and a way to iterate over all RRsets.\n\
 See RRsetCollection for a simple isc.dns implementation. Other modules\n\
 such as isc.datasrc will have another implementation.\n\
 \n\
-This base class cannot be directly instantiated, so no constructor is\n\
-defined.\n\
+This base class cannot be directly instantiated.  Such an attempt will\n\
+result in a TypeError exception.\n\
 \n\
 ";
 
