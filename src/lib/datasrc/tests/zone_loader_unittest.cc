@@ -180,7 +180,7 @@ protected:
 };
 
 // Use the loader to load an unsigned zone.
-TEST_F(ZoneLoaderTest , copyUnsigned) {
+TEST_F(ZoneLoaderTest, copyUnsigned) {
     prepareSource(Name::ROOT_NAME(), "root.zone");
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
     // It gets the updater directly in the constructor
@@ -201,7 +201,7 @@ TEST_F(ZoneLoaderTest , copyUnsigned) {
     EXPECT_EQ(34, destination_client_.rrsets_.size());
 
     // Check various counters.  getRRCount should be identical of the RRs
-    // we've seen.  progress is still "unknown" in the copy operation.
+    // we've seen. Progress is still "unknown" in the copy operation.
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
     EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
 
@@ -232,7 +232,7 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     // Not committed yet, we didn't complete the loading
     EXPECT_FALSE(destination_client_.commit_called_);
 
-    // Check we can get intermediate counters.  progress is always "unknown"
+    // Check we can get intermediate counters. Progress is always "unknown"
     // in case of copy.
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
     EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
@@ -361,7 +361,7 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     EXPECT_FALSE(destination_client_.commit_called_);
 
-    // Check we can get intermediate counters.  expected progress is calculated
+    // Check we can get intermediate counters. Expected progress is calculated
     // based on the size of the zone file and the offset to the end of 10th RR
     // (subject to future changes to the file, but we assume it's a rare
     // event.).  The expected value should be the exact expression that
@@ -377,7 +377,7 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
 
-    // Counters are updated accordingly.  progress should reach 100%.
+    // Counters are updated accordingly. Progress should reach 100%.
     EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
     EXPECT_EQ(1, loader.getProgress());
 
