@@ -55,10 +55,23 @@ setTypeError(PyObject* pobj, const char* var_name, const char* type_name) {
 }
 }
 
+// RRsetCollectionBase: the base RRsetCollection class in Python.
 //
-// RRsetCollectionBase
-//
-
+// Any derived RRsetCollection class is supposed to be inherited from this
+// class:
+// - If the derived class is implemented via a C++ wrapper (associated with
+//   a C++ implementation of RRsetCollection), its PyTypeObject should
+//   specify rrset_collection_base_type for tp_base.  Its C/C++-representation
+//   of objects should be compatible with s_RRsetCollection, and the wrapper
+//   should set its cppobj member to point to the corresponding C++
+//   RRsetCollection object.  Normally it doesn't have to provide Python
+//   wrapper of find(); the Python interpreter will then call find() on
+//   the base class, which ensures that the corresponding C++ version of
+//   find() will be used.
+// - If the derived class is implemented purely in Python, it must implement
+//   find() in Python within the class.  As explained in the first bullet,
+//   the base class method is generally expected to be used only for C++
+//   wrapper of RRsetCollection derived class.
 namespace {
 int
 RRsetCollectionBase_init(PyObject*, PyObject*, PyObject*) {
@@ -84,6 +97,9 @@ PyObject*
 RRsetCollectionBase_find(PyObject* po_self, PyObject* args) {
     s_RRsetCollection* self = static_cast<s_RRsetCollection*>(po_self);
 
+    // If this function is called with cppobj being NULL, this means
+    // a pure-Python derived class skips implementing its own find().
+    // This is an error (see general description above).
     if (self->cppobj == NULL) {
         PyErr_Format(PyExc_TypeError, "find() is not implemented in the "
                      "derived RRsetCollection class");
