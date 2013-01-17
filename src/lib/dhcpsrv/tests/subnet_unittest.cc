@@ -510,7 +510,7 @@ TEST(Subnet6Test, get) {
 TEST(Subnet6Test, iface) {
     Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
-    EXPECT_EQ("", subnet.getIface());
+    EXPECT_TRUE(subnet.getIface().empty());
 
     subnet.setIface("en1");
     EXPECT_EQ("en1", subnet.getIface());

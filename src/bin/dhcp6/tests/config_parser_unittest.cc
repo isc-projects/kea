@@ -17,6 +17,7 @@
 #include <config/ccsession.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -46,6 +47,16 @@ public:
         // srv_(0) means to not open any sockets. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
+
+        const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+        // There must be some interface detected
+        if (ifaces.empty()) {
+            ADD_FAILURE() << "No interfaces detected.";
+        }
+
+        valid_iface_ = ifaces.begin()->getName();
+        bogus_iface_ = "nonexisting0";
     }
 
     ~Dhcp6ParserTest() {
@@ -239,6 +250,9 @@ public:
 
     int rcode_;
     ConstElementPtr comment_;
+
+    string valid_iface_;
+    string bogus_iface_;
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -370,13 +384,15 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     ConstElementPtr status;
 
+    // There should be at least one interface
+
     string config = "{ \"interface\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
-        "    \"interface\": \"eth0\","
+        "    \"interface\": \"" + valid_iface_ + "\","
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
     cout << config << endl;
@@ -392,8 +408,41 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("eth0", subnet->getIface());
+    EXPECT_EQ(valid_iface_, subnet->getIface());
 }
+
+// This test checks if invalid interface name will be rejected in
+// Subnet6 definition.
+TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
+
+    ConstElementPtr status;
+
+    // There should be at least one interface
+
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface\": \"" + bogus_iface_ + "\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 1 (configuration error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    EXPECT_FALSE(subnet);
+}
+
 
 // This test checks if it is not allowed to define global interface
 // parameter.
@@ -405,7 +454,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"interface\": \"eth0\"," // Not valid. Can be defined in subnet only
+        "\"interface\": \"" + valid_iface_ + "\"," // Not valid. Can be defined in subnet only
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"

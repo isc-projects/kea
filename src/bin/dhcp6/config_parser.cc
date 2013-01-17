@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/pool.h>
@@ -1139,7 +1140,7 @@ private:
         // directly over specified network interface.
 
         string iface;
-        StringStorage::iterator iface_iter = string_values_.find("interface");
+        StringStorage::const_iterator iface_iter = string_values_.find("interface");
         if (iface_iter != string_values_.end()) {
             iface = iface_iter->second;
         }
@@ -1161,7 +1162,13 @@ private:
         }
 
         // Configure interface, if defined
-        if (iface.length()) {
+        if (!iface.empty()) {
+            if (!IfaceMgr::instance().getIface(iface)) {
+                isc_throw(Dhcp6ConfigError, "Specified interface name " << iface
+                          << " for subnet " << subnet_->toText() << " is not present"
+                          << " in the system.");
+            }
+
             subnet_->setIface(iface);
         }
 

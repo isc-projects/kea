@@ -207,7 +207,7 @@ void Subnet6::setIface(const std::string& iface_name) {
     iface_ = iface_name;
 }
 
-std::string Subnet6::getIface() {
+std::string Subnet6::getIface() const {
     return (iface_);
 }
 
