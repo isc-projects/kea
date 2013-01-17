@@ -1,8 +1,9 @@
 5XX.	[func]		tomek
-	b10-dhcp4: Server identifier is now generated automatically and
-	stored to a file. It is also read during server start.
-	b10-dhcp6: Server identifier is now stores to a file and read
-	during server start.
+	b10-dhcp4: The DHCPv4 server now generates a server identifier
+	the first time it is run. The identifier is preserved in a file
+	across server restarts.
+	b10-dhcp6: The server identifier is now preserved in a file across
+	server restarts.
 	(Trac #2597, git TBD)
 
 545.	[func]		jinmei
