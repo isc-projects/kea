@@ -25,6 +25,7 @@
 #include <dns/rrtype.h>
 
 #include "mockups.h"
+#include <boost/scoped_ptr.hpp>
 
 namespace asiolink {
 class IOSocket;
@@ -52,7 +53,7 @@ extern const unsigned int CD_FLAG;
 class SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase();
-    virtual ~SrvTestBase();
+    virtual ~SrvTestBase() {};
 
     /// Let the server process a DNS message.
     ///
@@ -104,8 +105,8 @@ protected:
     const isc::dns::RRClass qclass;
     const isc::dns::RRType qtype;
     asiolink::IOSocket* io_sock;
-    asiolink::IOMessage* io_message;
-    const asiolink::IOEndpoint* endpoint;
+    boost::scoped_ptr<asiolink::IOMessage> io_message;
+    boost::scoped_ptr<const asiolink::IOEndpoint> endpoint;
     isc::dns::MessageRenderer request_renderer;
     isc::util::OutputBufferPtr response_obuffer;
     std::vector<uint8_t> data;
@@ -114,6 +115,6 @@ protected:
 } // end of namespace isc
 #endif  // ISC_TESTUTILS_SRVTEST_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
