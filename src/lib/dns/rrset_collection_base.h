@@ -27,7 +27,7 @@ namespace dns {
 
 /// \brief Error during RRsetCollectionBase find() operation
 ///
-/// This exception is thrown when an calling implementation of
+/// This exception is thrown when calling an implementation of
 /// \c RRsetCollectionBase::find() results in an error which is not due
 /// to unmatched data, but because of some other underlying error
 /// condition.
