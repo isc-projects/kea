@@ -1095,7 +1095,7 @@ class XfroutServer:
             # The log level is here set to debug in order to avoid
             # that a log becomes too verbose. Because the b10-stats
             # daemon is periodically asking to the b10-xfrout daemon.
-            answer = create_answer(0, self._counters.dump_statistics())
+            answer = create_answer(0, self._counters.get_statistics())
             logger.debug(DBG_XFROUT_TRACE, \
                              XFROUT_RECEIVED_GETSTATS_COMMAND, \
                              str(answer))
