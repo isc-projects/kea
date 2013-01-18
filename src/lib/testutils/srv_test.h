@@ -53,7 +53,6 @@ extern const unsigned int CD_FLAG;
 class SrvTestBase : public ::testing::Test {
 protected:
     SrvTestBase();
-    virtual ~SrvTestBase() {}
 
     /// Let the server process a DNS message.
     ///
