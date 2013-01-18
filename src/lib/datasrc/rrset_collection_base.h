@@ -109,13 +109,6 @@ private:
     bool disabled_;
 };
 
-/// \brief A pointer-like type pointing to an
-/// \c isc::datasrc::RRsetCollectionBase object.
-///
-/// This type is used to handle RRsetCollections in a polymorphic manner
-/// in libdatasrc.
-typedef boost::shared_ptr<isc::datasrc::RRsetCollectionBase> RRsetCollectionPtr;
-
 } // end of namespace datasrc
 } // end of namespace isc
 
