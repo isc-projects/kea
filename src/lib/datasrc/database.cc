@@ -1385,7 +1385,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
     return (iterator);
 }
 
-/// \brief datasrc implementation of RRsetCollectionBase.
+/// \brief Database implementation of RRsetCollectionBase.
 class RRsetCollection : public isc::datasrc::RRsetCollectionBase {
 public:
     /// \brief Constructor.
