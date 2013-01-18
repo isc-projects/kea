@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -150,7 +150,7 @@ lease from the memory file database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
-% DHCPSRV_MEMFILE_WARNING using early version of memfile - leases will be lost after a restart
+% DHCPSRV_MEMFILE_WARNING using early version of memfile lease database - leases will be lost after a restart
 This warning message is issued when the 'memfile' lease database is
 opened.  The current version of memfile does not store anything
 to disk, so lease information will be lost in the event of a restart.

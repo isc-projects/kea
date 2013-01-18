@@ -51,7 +51,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     map<string, string> values_copy = values_;
 
     // 2. Update the copy with the passed keywords.
-    BOOST_FOREACH(DbAccessParser::ConfigPair param, config_value->mapValue()) {
+    BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         values_copy[param.first] = param.second->stringValue();
     }
 
@@ -71,15 +71,16 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype);
     }
 
-    // 4. If all is OK, update the stored keyword/value pairs.
-    values_ = values_copy;
+    // 4. If all is OK, update the stored keyword/value pairs.  We do this by
+    // swapping contents - values_copy is destroyed immediately after the
+    // operation (when the method exits), so we are not interested in its new
+    // value.
+    values_.swap(values_copy);
 }
 
-// Commit the changes - reopen the database with the new parameters
-void
-DbAccessParser::commit() {
-    // Close current lease manager.
-    LeaseMgrFactory::destroy();
+// Create the database access string
+std::string
+DbAccessParser::getDbAccessString() const {
 
     // Construct the database access string from all keywords and values in the
     // parameter map where the value is not null.
@@ -88,7 +89,7 @@ DbAccessParser::commit() {
         if (!keyval.second.empty()) {
 
             // Separate keyword/value pair from predecessor (if there is one).
-            if (! dbaccess.empty()) {
+            if (!dbaccess.empty()) {
                 dbaccess += std::string(" ");
             }
 
@@ -97,8 +98,17 @@ DbAccessParser::commit() {
         }
     }
 
-    // ... and open the database using that access string.
-    LeaseMgrFactory::create(dbaccess);
+    return (dbaccess);
+}
+
+// Commit the changes - reopen the database with the new parameters
+void
+DbAccessParser::commit() {
+    // Close current lease manager database.
+    LeaseMgrFactory::destroy();
+
+    // ... and open the new database using the access string.
+    LeaseMgrFactory::create(getDbAccessString());
 }
 
 };  // namespace dhcp
