@@ -1,7 +1,16 @@
+248.	[func]		vorner
+	The message queue daemon now appears on the bus. This has two
+	effects, one is it obeys logging configuration and logs to the
+	correct place like the rest of the modules. The other is it
+	appears in bindctl as module (but it doesn't have any commands or
+	configuration yet).
+	(Trac #2582, git ced31d8c5a0f2ca930b976d3caecfc24fc04634e)
+
 547.	[func]*		vorner
 	The b10-loadzone now performs more thorough sanity check on the
 	loaded data.  Some of the checks are now fatal and zone failing
 	them will be rejected.
+	(Trac #2436, git 48d999f1cb59f308f9f30ba2639521d2a5a85baa)
 
 546.	[func]		marcin
 	DHCP option definitions can be now created using the
