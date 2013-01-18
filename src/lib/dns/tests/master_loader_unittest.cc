@@ -153,11 +153,22 @@ TEST_F(MasterLoaderTest, basicLoad) {
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     EXPECT_FALSE(loader_->loadedSucessfully());
+
+    // The following three should be set to 0 initially in case the loader
+    // is constructed from a file name.
+    EXPECT_EQ(0, loader_->getSize());
+    EXPECT_EQ(0, loader_->getPosition());
+
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
+
+    // Hardcode expected values taken from the test data file, assuming it
+    // won't change too often.
+    EXPECT_EQ(549, loader_->getSize());
+    EXPECT_EQ(549, loader_->getPosition());
 
     checkBasicRRs();
 }
@@ -193,6 +204,47 @@ TEST_F(MasterLoaderTest, include) {
         checkBasicRRs();
         checkRR("www.example.org", RRType::AAAA(), "2001:db8::1");
     }
+}
+
+TEST_F(MasterLoaderTest, includeAndIncremental) {
+    // Check getSize() and getPosition() are adjusted before and after
+    // $INCLUDE.
+    const string first_rr = "before.example.org. 0 A 192.0.2.1\n";
+    const string include_str = "$INCLUDE " TEST_DATA_SRCDIR "/example.org";
+    const string zone_data = first_rr + include_str + "\n" +
+        "www 3600 IN AAAA 2001:db8::1\n";
+    stringstream ss(zone_data);
+    setLoader(ss, Name("example.org."), RRClass::IN(), MasterLoader::DEFAULT);
+
+    // On construction, getSize() returns the size of the data (exclude the
+    // the file to be included); position is set to 0.
+    EXPECT_EQ(zone_data.size(), loader_->getSize());
+    EXPECT_EQ(0, loader_->getPosition());
+
+    // Read the first RR.  getSize() doesn't change; position should be
+    // at the end of the first line.
+    loader_->loadIncremental(1);
+    EXPECT_EQ(zone_data.size(), loader_->getSize());
+    EXPECT_EQ(first_rr.size(), loader_->getPosition());
+
+    // Read next 4.  It includes $INCLUDE processing.  Magic number of 549
+    // is the size of the test zone file (see above); 506 is the position in
+    // the file at the end of 4th RR (due to extra comments it's smaller than
+    // the file size).
+    loader_->loadIncremental(4);
+    EXPECT_EQ(zone_data.size() + 549, loader_->getSize());
+    EXPECT_EQ(first_rr.size() + include_str.size() + 506,
+              loader_->getPosition());
+
+    // Read the last one.  At this point getSize and getPosition return
+    // the same value, indicating progress of 100%.
+    loader_->loadIncremental(1);
+    EXPECT_EQ(zone_data.size() + 549, loader_->getSize());
+    EXPECT_EQ(zone_data.size() + 549, loader_->getPosition());
+
+    // we were not interested in checking RRs in this test.  clear them to
+    // not confuse TearDown().
+    rrsets_.clear();
 }
 
 // A commonly used helper to check callback message.
@@ -260,7 +312,7 @@ TEST_F(MasterLoaderTest, popAfterError) {
     const string include_str = "$include " TEST_DATA_SRCDIR
         "/broken.zone\nwww 3600 IN AAAA 2001:db8::1\n";
     stringstream ss(include_str);
-    // We don't test without MANY_ERRORS, we want to see what happens
+    // We perform the test with MANY_ERRORS, we want to see what happens
     // after the error.
     setLoader(ss, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
@@ -277,11 +329,19 @@ TEST_F(MasterLoaderTest, popAfterError) {
 
 // Check it works the same when created based on a stream, not filename
 TEST_F(MasterLoaderTest, streamConstructor) {
-    stringstream zone_stream(prepareZone("", true));
+    const string zone_data(prepareZone("", true));
+    stringstream zone_stream(zone_data);
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
 
     EXPECT_FALSE(loader_->loadedSucessfully());
+
+    // Unlike the basicLoad test, if we construct the loader from a stream
+    // getSize() returns the data size in the stream immediately after the
+    // construction.
+    EXPECT_EQ(zone_data.size(), loader_->getSize());
+    EXPECT_EQ(0, loader_->getPosition());
+
     loader_->load();
     EXPECT_TRUE(loader_->loadedSucessfully());
 
@@ -290,6 +350,11 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
     checkRR("correct.example.org", RRType::A(), "192.0.2.2");
+
+    // On completion of the load, both getSize() and getPosition() return the
+    // size of the data.
+    EXPECT_EQ(zone_data.size(), loader_->getSize());
+    EXPECT_EQ(zone_data.size(), loader_->getPosition());
 }
 
 // Try loading data incrementally.
