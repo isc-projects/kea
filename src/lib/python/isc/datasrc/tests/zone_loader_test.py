@@ -38,7 +38,7 @@ ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
 NEW_SOA_TXT = 'example.com. 1000 IN SOA a.dns.example.com. ' +\
               'mail.example.com. 1 1 1 1 1\n'
-
+PROGRESS_UNKNOWN = isc.datasrc.ZoneLoader.PROGRESS_UNKNOWN
 
 class ZoneLoaderTests(unittest.TestCase):
     def setUp(self):
@@ -111,21 +111,49 @@ class ZoneLoaderTests(unittest.TestCase):
     def test_load_from_file(self):
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.test_file)
+        self.assertEqual(0, self.loader.get_rr_count())
+        self.assertEqual(0, self.loader.get_progress())
+
         self.check_load()
+
+        # Expected values are hardcoded, taken from the test zone file,
+        # assuming it won't change too often.  progress should reach 100% (=1).
+        self.assertEqual(8, self.loader.get_rr_count())
+        self.assertEqual(1, self.loader.get_progress())
 
     def test_load_from_client(self):
         self.source_client = isc.datasrc.DataSourceClient('sqlite3',
                                     DB_SOURCE_CLIENT_CONFIG)
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.source_client)
+
+        self.assertEqual(0, self.loader.get_rr_count())
+        self.assertEqual(PROGRESS_UNKNOWN, self.loader.get_progress())
+
         self.check_load()
 
-    def check_load_incremental(self):
+        # In case of loading from another data source, progress is unknown.
+        self.assertEqual(8, self.loader.get_rr_count())
+        self.assertEqual(PROGRESS_UNKNOWN, self.loader.get_progress())
+
+    def check_load_incremental(self, from_file=True):
         # New zone has 8 RRs
         # After 5, it should return False
         self.assertFalse(self.loader.load_incremental(5))
         # New zone should not have been loaded yet
         self.check_zone_soa(ORIG_SOA_TXT)
+
+        # In case it's from a zone file, get_progress should be in the middle
+        # of (0, 1).  expected value is taken from the test zone file
+        # (total size = 422, current position = 288)
+        if from_file:
+            # To avoid any false positive due to rounding errors, we convert
+            # them to near integers between 0 and 100.
+            self.assertEqual(int((288 * 100) / 422),
+                             int(self.loader.get_progress() * 100))
+            # Also check the return value has higher precision.
+            self.assertNotEqual(int(288 * 100 / 422),
+                                100 * self.loader.get_progress())
 
         # After 5 more, it should return True (only having read 3)
         self.assertTrue(self.loader.load_incremental(5))
@@ -147,7 +175,7 @@ class ZoneLoaderTests(unittest.TestCase):
                                             DB_SOURCE_CLIENT_CONFIG)
         self.loader = isc.datasrc.ZoneLoader(self.client, self.test_name,
                                              self.source_client)
-        self.check_load_incremental()
+        self.check_load_incremental(False)
 
     def test_bad_file(self):
         self.check_zone_soa(ORIG_SOA_TXT)

@@ -246,6 +246,11 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
+
+    // Counter is initialized to 0, progress is "unknown" in case of copy.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
+
     // Now load the whole zone
     loader.load();
     EXPECT_TRUE(destination_client_.commit_called_);
@@ -254,6 +259,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // Check various counters.  getRRCount should be identical of the RRs
+    // we've seen. Progress is still "unknown" in the copy operation.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
+
     // Ensure known order.
     std::sort(destination_client_.rrset_texts_.begin(),
               destination_client_.rrset_texts_.end());
@@ -280,6 +291,11 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     // Not committed yet, we didn't complete the loading
     EXPECT_FALSE(destination_client_.commit_called_);
+
+    // Check we can get intermediate counters. Progress is always "unknown"
+    // in case of copy.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
 
     // This is unusual, but allowed. Check it doesn't do anything
     loader.loadIncremental(0);
@@ -349,6 +365,11 @@ TEST_F(ZoneLoaderTest, classMismatch) {
 TEST_F(ZoneLoaderTest, loadUnsigned) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
+
+    // Counter and progress are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getProgress());
+
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -360,6 +381,12 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // getRRCount should be identical of the RRs we've seen.  progress
+    // should reach 100% (= 1).
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1, loader.getProgress());
+
     // Ensure known order.
     std::sort(destination_client_.rrset_texts_.begin(),
               destination_client_.rrset_texts_.end());
@@ -380,6 +407,10 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
 
+    // Counters are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getProgress());
+
     // Try loading few RRs first.
     loader.loadIncremental(10);
     // We should get the 10 we asked for
@@ -390,10 +421,25 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     EXPECT_FALSE(destination_client_.commit_called_);
 
+    // Check we can get intermediate counters. Expected progress is calculated
+    // based on the size of the zone file and the offset to the end of 10th RR
+    // (subject to future changes to the file, but we assume it's a rare
+    // event.).  The expected value should be the exact expression that
+    // getProgress() should do internally, so EXPECT_EQ() should work here,
+    // but floating-point comparison can be always tricky we use
+    // EXPECT_DOUBLE_EQ just in case.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    // file size = 1541, offset = 428 (27.77%).
+    EXPECT_DOUBLE_EQ(static_cast<double>(428) / 1541, loader.getProgress());
+
     // We can finish the rest
     loader.loadIncremental(30);
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
+
+    // Counters are updated accordingly. Progress should reach 100%.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1, loader.getProgress());
 
     // No more loading now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
