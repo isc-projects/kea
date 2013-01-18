@@ -1286,12 +1286,12 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
     createRequestPacket(request_message, IPPROTO_UDP);
 
     // Modify the message.
-    delete io_message;
-    endpoint = IOEndpoint::create(IPPROTO_UDP,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
-    io_message = new IOMessage(request_renderer.getData(),
-                               request_renderer.getLength(),
-                               getDummyUnknownSocket(), *endpoint);
+    endpoint.reset(IOEndpoint::create(IPPROTO_UDP,
+                                      IOAddress(DEFAULT_REMOTE_ADDRESS),
+                                      53210));
+    io_message.reset(new IOMessage(request_renderer.getData(),
+                                   request_renderer.getLength(),
+                                   getDummyUnknownSocket(), *endpoint));
 
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
@@ -1716,9 +1716,20 @@ void
 checkAddrPort(const struct sockaddr& actual_sa,
               const string& expected_addr, uint16_t expected_port)
 {
+    // ASIO does not set as_len, which is not a problem on most
+    // systems, but it will make getnameinfo() fail on NetBSD 4
+    // So we make a copy and if the field is available, we set it
+    const socklen_t sa_len = getSALength(actual_sa);
+    struct sockaddr_storage ss;
+    memcpy(&ss, &actual_sa, sa_len);
+
+    struct sockaddr* sa = convertSockAddr(&ss);
+#ifdef HAVE_SA_LEN
+    sa->sa_len = sa_len;
+#endif
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-    const int error = getnameinfo(&actual_sa, getSALength(actual_sa), hbuf,
-                                  sizeof(hbuf), sbuf, sizeof(sbuf),
+    const int error = getnameinfo(sa, sa_len, hbuf, sizeof(hbuf),
+                                  sbuf, sizeof(sbuf),
                                   NI_NUMERICHOST | NI_NUMERICSERV);
     if (error != 0) {
         isc_throw(isc::Unexpected, "getnameinfo failed: " <<
