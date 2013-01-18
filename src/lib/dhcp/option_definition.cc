@@ -411,14 +411,8 @@ OptionDefinition::writeToBuffer(const std::string& value,
         OptionDataTypeUtil::writeString(value, buf);
         return;
     case OPT_FQDN_TYPE:
-        {
-            // FQDN implementation is not terribly complicated but will require
-            // creation of some additional logic (maybe object) that will parse
-            // the fqdn into labels.
-            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
-                      " is not supported yet");
-            return;
-        }
+        OptionDataTypeUtil::writeFqdn(value, buf);
+        return;
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been
