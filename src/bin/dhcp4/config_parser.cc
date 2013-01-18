@@ -38,9 +38,6 @@ using namespace isc::asiolink;
 
 namespace {
 
-/// @brief auxiliary type used for storing element name and its parser
-typedef pair<string, ConstElementPtr> ConfigPair;
-
 /// @brief a factory method that will create a parser for a given element name
 typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id);
 

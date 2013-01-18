@@ -177,6 +177,10 @@ public:
     virtual ~TestDbAccessParser()
     {}
 
+    /// Allow use of superclass's protected functions.
+    using DbAccessParser::getDbAccessParameters;
+    using DbAccessParser::getDbAccessString;
+
     /// @brief Get database access parameters
     ///
     /// Used in testing to check that the configuration information has been
