@@ -46,7 +46,22 @@ namespace dhcp {
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
 ConstElementPtr
-ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr) {
+ControlledDhcpv6Srv::dhcp6StubConfigHandler(ConstElementPtr) {
+    // This configuration handler is intended to be used only
+    // when the initial configuration comes in. To receive this
+    // configuration a pointer to this handler must be passed
+    // using ModuleCCSession constructor. This constructor will
+    // invoke the handler and will store the configuration for
+    // the configuration session when the handler returns success.
+    // Since this configuration is partial we just pretend to
+    // parse it and always return success. The function that
+    // initiates the session must get the configuration on its
+    // own using getFullConfig.
+    return (isc::config::createAnswer(0, "Configuration accepted."));
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
 
     if (!server_ || !server_->config_session_) {
         // That should never happen as we install config_handler
@@ -66,16 +81,27 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr) {
     // removes that definition is triggered while a relevant option value
     // may remain configured. This eventually results in the DHCP server
     // configuration being in the inconsistent state.
-    // In order to work around this problem we always get the full
-    // configuration for the server. This triggers all parsers to reset
-    // the configuration data and check the dependencies between values
-    // being set. Thus, the configuration passed to this function
-    // is ignored.
-    ConstElementPtr full_config = server_->config_session_->getFullConfig();
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
-              .arg(full_config->str());
+    // In order to work around this problem we need to merge the new
+    // configuration with the existing (full) configuration.
 
-    return (configureDhcp6Server(*server_, full_config));
+    // Let's create a new object that will hold the merged configuration.
+    boost::shared_ptr<MapElement> merged_config(new MapElement());
+    // Let's get the existing configuration.
+    ConstElementPtr full_config = server_->config_session_->getFullConfig();
+    // The full_config and merged_config should be always non-NULL
+    // but to provide some level of exception safety we check that they
+    // really are (in case we go out of memory).
+    if (full_config && merged_config) {
+        merged_config->setValue(full_config->mapValue());
+
+        // Merge an existing and new configuration.
+        isc::data::merge(merged_config, new_config);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_UPDATE)
+            .arg(merged_config->str());
+    }
+
+    // Configure the server.
+    return (configureDhcp6Server(*server_, merged_config));
 }
 
 ConstElementPtr
@@ -126,18 +152,26 @@ void ControlledDhcpv6Srv::establishSession() {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_CCSESSION_STARTING)
               .arg(specfile);
     cc_session_ = new Session(io_service_.get_io_service());
+    // Create a session with the dummy configuration handler.
+    // Dumy configuration handler is internally invoked by the
+    // constructor and on success the constructor updates
+    // the current session with the configuration that had been
+    // commited in the previous session. If we did not install
+    // the dummy handler, the previous configuration would have
+    // been lost.
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
-                                          NULL,
+                                          dhcp6StubConfigHandler,
                                           dhcp6CommandHandler, false);
     config_session_->start();
 
-    // We initially create ModuleCCSession() without configHandler, as
-    // the session module is too eager to send partial configuration.
-    // We want to get the full configuration, so we explicitly call
-    // getFullConfig() and then pass it to our configHandler.
+    // The constructor already pulled the configuration that had
+    // been created in the previous session thanks to the dummy
+    // handler. We can switch to the handler that will be
+    // parsing future changes to the configuration.
     config_session_->setConfigHandler(dhcp6ConfigHandler);
 
     try {
+        // Pull the full configuration out from the session.
         configureDhcp6Server(*this, config_session_->getFullConfig());
     } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
