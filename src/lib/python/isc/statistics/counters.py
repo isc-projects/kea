@@ -126,6 +126,10 @@ def _stop_timer(start_time, element, spec, identifier):
     the element, which is in seconds between start_time and the
     current time and is float-type."""
     delta = datetime.now() - start_time
+    # FIXME: The following statement can be replaced by:
+    # sec = delta.total_seconds()
+    # but total_seconds() is not available in Python 3.1. Please update
+    # this code when we depend on Python 3.2.
     sec = round(delta.days * 86400 + delta.seconds + \
                     delta.microseconds * 1E-6, 6)
     _set_counter(element, spec, identifier, sec)
