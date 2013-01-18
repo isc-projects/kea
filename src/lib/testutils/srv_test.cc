@@ -27,6 +27,8 @@
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::asiolink;
