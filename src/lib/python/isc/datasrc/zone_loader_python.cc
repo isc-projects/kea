@@ -187,6 +187,18 @@ ZoneLoader_loadIncremental(PyObject* po_self, PyObject* args) {
     }
 }
 
+PyObject*
+ZoneLoader_getRRCount(PyObject* po_self, PyObject*) {
+    s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
+    return (Py_BuildValue("I", self->cppobj->getRRCount()));
+}
+
+PyObject*
+ZoneLoader_getProgress(PyObject* po_self, PyObject*) {
+    s_ZoneLoader* self = static_cast<s_ZoneLoader*>(po_self);
+    return (Py_BuildValue("d", self->cppobj->getProgress()));
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -197,6 +209,10 @@ PyMethodDef ZoneLoader_methods[] = {
     { "load", ZoneLoader_load, METH_NOARGS, ZoneLoader_load_doc },
     { "load_incremental", ZoneLoader_loadIncremental, METH_VARARGS,
       ZoneLoader_loadIncremental_doc },
+    { "get_rr_count", ZoneLoader_getRRCount, METH_NOARGS,
+      ZoneLoader_getRRCount_doc },
+    { "get_progress", ZoneLoader_getProgress, METH_NOARGS,
+      ZoneLoader_getProgress_doc },
     { NULL, NULL, 0, NULL }
 };
 
