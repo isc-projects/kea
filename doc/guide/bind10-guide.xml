@@ -3839,32 +3839,6 @@ Dhcp6/subnet6	         []     list    (default)</screen>
           and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
         </para>
       </note>
-      <section id="dhcp6-config-subnets">
-        <title>Subnet selection</title>
-        <para>
-          DHCPv6 server may receive requests from local (connected to the same
-          subnet as the server) and remote (connecting via relays)
-          clients. Server may have many subnet configurations defined, so it
-          must select appropriate subnet for a given request. Server first
-          checks if there is only one subnet defined and source of the packet is
-          link-local. If this is the case server assumes that the only subnet
-          defined is local and client is indeed connected to it. This check
-          simplifies small deployments.
-        </para>
-        <para>If there are two or more subnets defined, server can not assume
-        which of those (if any) subnets are local. Therefore an optional
-        "interface" parameter has been defined to designate that a given subnet
-        is local, i.e. reachable directly over specified interface. For example
-        the server that is intended to serve local subnet over eth0 may be configured
-        as follows:
-        <screen>
-&gt; <userinput>config add Dhcp6/subnet6</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[1]/interface "eth0"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        </para>
-      </section>
     </section>
 
     <section id="dhcp6-std">
