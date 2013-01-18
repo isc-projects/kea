@@ -1393,9 +1393,6 @@ public:
         isc::datasrc::RRsetCollectionBase(updater, rrclass)
     {}
 
-    /// \brief Destructor
-    virtual ~RRsetCollection() {}
-
     /// \brief A wrapper around \c disable() so that it can be used as a
     /// public method. \c disable() is protected.
     void disableWrapper() {
