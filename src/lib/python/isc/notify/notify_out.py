@@ -25,7 +25,7 @@ from isc.datasrc import DataSourceClient
 from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
-from isc.statistics import Counter
+from isc.statistics import Counters
 
 logger = isc.log.Logger("notify_out")
 
@@ -143,7 +143,7 @@ class NotifyOut:
         # Use nonblock event to eliminate busy loop
         # If there are no notifying zones, clear the event bit and wait.
         self._nonblock_event = threading.Event()
-        self._counter = Counter()
+        self._counters = Counters()
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address.
@@ -482,10 +482,10 @@ class NotifyOut:
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
             if zone_notify_info.get_socket().family == socket.AF_INET:
-                self._counter.inc('zones', zone_notify_info.zone_name,
+                self._counters.inc('zones', zone_notify_info.zone_name,
                                   'notifyoutv4')
             elif zone_notify_info.get_socket().family == socket.AF_INET6:
-                self._counter.inc('zones', zone_notify_info.zone_name,
+                self._counters.inc('zones', zone_notify_info.zone_name,
                                   'notifyoutv6')
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
                         addrinfo[1])
