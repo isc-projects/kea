@@ -61,8 +61,8 @@ public:
 
         if (IfaceMgr::instance().getIface(bogus_iface_)) {
             ADD_FAILURE() << "The '" << bogus_iface_ << "' exists on this system"
-                          << " while the test assumes that it doesn't to execute"
-                          << " some negative scenarios. Can't continue this test";
+                          << " while the test assumes that it doesn't, to execute"
+                          << " some negative scenarios. Can't continue this test.";
         }
     }
 
