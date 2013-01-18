@@ -347,6 +347,34 @@ class TestConfigCommands(unittest.TestCase):
         precmd('EOF')
         self.assertRaises(socket.error, precmd, 'continue')
 
+    def test_try_login(self):
+        # Make sure __try_login raises the correct exception
+        # upon failure of either send_POST or the read() on the
+        # response
+
+        orig_send_POST = self.tool.send_POST
+        try:
+            def send_POST_raiseImmediately(self, params):
+                raise socket.error("test error")
+
+            self.tool.send_POST = send_POST_raiseImmediately
+            self.assertRaises(FailToLogin,
+                              self.tool._BindCmdInterpreter__try_login,
+                              "foo", "bar")
+
+            def send_POST_raiseOnRead(self, params):
+                class MyResponse:
+                    def read(self):
+                        raise socket.error("read error")
+                return MyResponse()
+
+            self.tool.send_POST = send_POST_raiseOnRead
+            self.assertRaises(FailToLogin,
+                              self.tool._BindCmdInterpreter__try_login,
+                              "foo", "bar")
+        finally:
+            self.tool.send_POST = orig_send_POST
+
     def test_run(self):
         def login_to_cmdctl():
             return True

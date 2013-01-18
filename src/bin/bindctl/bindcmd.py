@@ -209,9 +209,19 @@ WARNING: Python readline module isn't available, so the command line editor
         return True
 
     def __try_login(self, username, password):
+        '''
+        Attempts to log in to bindctl by sending a POST with
+        the given username and password.
+        On success of the POST (mind, not the login, only the network
+        operation), returns a tuple (response, data).
+        On failure, raises a FailToLogin exception, and prints some
+        information on the failure.
+        '''
         param = {'username': username, 'password' : password}
         try:
-            return self.send_POST('/login', param)
+            response = self.send_POST('/login', param)
+            data = response.read().decode()
+            return (response, data)
         except socket.error as err:
             print("Socket error while sending login information: ", err)
             if err.errno == errno.ECONNRESET:
@@ -230,8 +240,8 @@ WARNING: Python readline module isn't available, so the command line editor
         # Look at existing username/password combinations and try to log in
         users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
-            response = self.__try_login(row[0], row[1])
-            data = response.read().decode()
+            response, data = self.__try_login(row[0], row[1])
+
             if response.status == http.client.OK:
                 # Is interactive?
                 if sys.stdin.isatty():
@@ -252,8 +262,7 @@ WARNING: Python readline module isn't available, so the command line editor
             username = input("Username: ")
             passwd = getpass.getpass()
 
-            response = self.__try_login(username, passwd)
-            data = response.read().decode()
+            response, data = self.__try_login(username, passwd)
             print(data)
 
             if response.status == http.client.OK:
