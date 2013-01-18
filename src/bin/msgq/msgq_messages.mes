@@ -31,8 +31,8 @@ The message queue received a command from other module, but it doesn't
 recognize it. This is probably either a coding error or inconsistency between
 the message queue version and version of the module.
 
-% MSGQ_CONFIG_DATA Received configuration for the msgq: %1
-Debug message. The message queue received a configuration, handling it.
+% MSGQ_CONFIG_DATA Received configuration update for the msgq: %1
+Debug message. The message queue received a configuration update, handling it.
 
 % MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
