@@ -76,7 +76,7 @@
             "item_default": False
           },
 
-          { "item_name": "record_types",
+          { "item_name": "record-types",
             "item_type": "string",
             "item_optional": false,
             "item_default": ""
