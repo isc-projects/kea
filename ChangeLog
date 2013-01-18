@@ -1,4 +1,10 @@
-248.	[func]		vorner
+549.	[func]		tomek
+	b10-dhcp6: It is now possible to specify that a configured subnet
+	is reachable locally over specified interface (see "interface"
+	parameter in Subnet6 configuration).
+	(Trac #2596, git a70f6172194a976b514cd7d67ce097bbca3c2798)
+
+548.	[func]		vorner
 	The message queue daemon now appears on the bus. This has two
 	effects, one is it obeys logging configuration and logs to the
 	correct place like the rest of the modules. The other is it
