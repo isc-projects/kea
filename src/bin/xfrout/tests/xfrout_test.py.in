@@ -291,7 +291,7 @@ class TestXfroutSessionBase(unittest.TestCase):
         # the XfroutSession object.  We check the condition here.
         self.assertEqual(0, self.xfrsess._server.transfer_counter)
         # clear statistics counters
-        self.xfrsess._counters.clear_counters()
+        self.xfrsess._counters.clear_all()
 
 class TestXfroutSession(TestXfroutSessionBase):
     def test_quota_error(self):
@@ -1578,7 +1578,7 @@ class TestUnixSockServerForCounter(unittest.TestCase):
             super,
             self.orig_process_request,
             self.orig_select )
-        self.unix._counters.clear_counters()
+        self.unix._counters.clear_all()
 
     def test_open(self):
         # open
