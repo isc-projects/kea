@@ -740,6 +740,15 @@ as a dependency earlier -->
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>--with-dhcp-mysql</term>
+            <listitem>
+              <simpara>Enable MySQL support for BIND 10 DHCP. For notes on configuring
+              and building DHCP with MySQL see <xref linkend="dhcp-install-configure">.</xref>
+              </simpara>
+            </listitem>
+          </varlistentry>
+
           </variablelist>
 
         </para>
@@ -761,9 +770,7 @@ as a dependency earlier -->
           dependencies.
         </para>
 
-        <note>
-          <para>For notes on configuring and building DHCPv6 with MySQL see <xref linkend="dhcp6-install">.</xref></para>
-        </note>
+
       </section>
 
       <section>
@@ -3317,9 +3324,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
   </chapter>
 
-  <chapter id="dhcp4">
-    <title>DHCPv4 Server</title>
-    <para>Dynamic Host Configuration Protocol for IPv4 (DHCP or
+  <chapter id="dhcp">
+  <title>DHCP</title>
+     <para>The Dynamic Host Configuration Protocol for IPv4 (DHCP or
     DHCPv4) and Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
     are protocols that allow one node (server) to provision
     configuration parameters to many hosts and devices (clients). To
@@ -3327,54 +3334,108 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     be deployed that facilitate communication between servers and
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
-    protocols. BIND 10 offers server implementations for both DHCPv4
-    and DHCPv6. This chapter is about DHCP for IPv4. For a description
-    of the DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
-
-    <para>The DHCPv4 server component is currently under intense
-    development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
-    and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
-    developers mailing list</ulink>.</para>
-
-    <para>The DHCPv4 and DHCPv6 components in BIND 10 architecture are
-    internally code named <quote>Kea</quote>.</para>
-
-    <note>
+    protocols. BIND 10 offers server implementations, one for DHCPv4
+    and one for DHCPv6.</para>
+    <para>This chapter covers those parts of BIND 10 that are common to
+    both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
+    while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
+    </para>
+    
+    <section id="dhcp-install-configure">
+      <title>DHCP Database Installation and Configuration</title>
       <para>
-        As of January 2013, the DHCPv4 component is a work in progress.
-        That means that while it is capable of performing DHCP configuration,
-        it is not fully functional.  The server is able to offer,
-        assign, renew, release and reuse expired leases, but some of the
-        options are not configurable yet. In particular Router option is hardcoded.
-        This means that the server is not really usable in actual deployments
-        yet. See <xref linkend="dhcp4-limit"/> for a detailed description.
+      The current version of BIND 10 DHCP stores lease information in a MySQL
+      database.  This section covers the building of BIND 10 with MySQL and the
+      creation of the lease database.
       </para>
-    </note>
+      <section>
+        <title>Install MySQL</title>
+        <para>
+          Install MySQL according to the instructions for your system.  The client development
+          libraries must be installed.
+        </para>
+      </section>
+      <section>
+        <title>Build and Install BIND 10</title>
+        <para>
+          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          the following modification: to enable the MySQL database code, the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          ...if MySQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-database-create">
+        <title>Create MySQL Database and BIND 10 User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into MySQL as "root":
+          <screen>$ <userinput>mysql -u root -p</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+mysql></screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+         <para>
+          3. Create the database tables:
+          <screen>mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
+mysql> <userinput>SOURCE <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which BIND 10 will access the database (and give it a password), then grant it access to the database tables:
+          <screen>mysql> <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
+mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput></screen>
+        </para>
+        <para>
+          5. Exit MySQL:
+          <screen>mysql> <userinput>quit</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+     </section>
+   </section>
 
-    <section id="dhcp4-usage">
-      <title>DHCPv4 Server Usage</title>
-      <para>BIND 10 has provided the DHCPv4 server component since December
-      2011. It is current experimental implementation and is not fully functional
-      yet. It is mature enough to conduct tests in lab environment, but it has
-      significant limitations. See <xref linkend="dhcp4-limit"/> for
-      details.
-      </para>
+  </chapter>
+  
+  <chapter id="dhcp4">
+    <title>The DHCPv4 Server</title>
+
+    <section id="dhcp4-start-stop">
+      <title>Starting and Stopping the DHCPv4 Server</title>
 
       <para>
-        <command>b10-dhcp4</command> is a BIND 10 component and is being
-        run under BIND 10 framework. To add a DHCPv4 process to the set of running
-        BIND 10 services, you can use following commands in <command>bindctl</command>:
-        <screen>&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
+        <command>b10-dhcp4</command> is the BIND 10 DHCPv4 server and, like other
+        parts of BIND 10, is configured through the <command>bindctl</command>
+        program.
+      </para>
+      <para>
+        After starting BIND 10 and entering bindctl, the first step
+        in configuring the server is to add it to the list of running BIND 10 services.
+<screen>
+&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
 &gt; <userinput>config set Boss/components/b10-dhcp4/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
-
-       <para>
-         To stop running <command>b10-dhcp4</command>, please use the
-         following command:
-         <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+         To remove <command>b10-dhcp4</command> from the set of running services,
+         the <command>b10-dhcp4</command> is removed from list of Boss components:
+<screen>
+&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
 
       <para>
         During start-up the server will detect available network interfaces
@@ -3392,23 +3453,29 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     </section>
 
-    <section id="dhcp4-config">
-      <title>DHCPv4 Server Configuration</title>
+    <section id="dhcp4-configuration">
+      <title>Configuring the DHCPv4 Server</title>
       <para>
         Once the server is started, it can be configured. To view the
         current configuration, use the following command in <command>bindctl</command>:
         <screen>
 &gt; <userinput>config show Dhcp4</userinput></screen>
-        When starting Dhcp4 daemon for the first time, the default configuration
+        When starting the DHCPv4 daemon for the first time, the default configuration
         will be available. It will look similar to this:
-        <screen>
+<screen>
 &gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/interface/                list    (default)
-Dhcp4/renew-timer        1000   integer	(default)
-Dhcp4/rebind-timer       2000   integer	(default)
-Dhcp4/preferred-lifetime 3000   integer	(default)
-Dhcp4/valid-lifetime	 4000   integer	(default)
-Dhcp4/subnet4	         []     list    (default)</screen>
+Dhcp4/interface/	list	(default)
+Dhcp4/renew-timer	1000	integer	(default)
+Dhcp4/rebind-timer	2000	integer	(default)
+Dhcp4/valid-lifetime	4000	integer	(default)
+Dhcp4/option-data	[]	list	(default)
+Dhcp4/lease-database/type	"memfile"	string	(default)
+Dhcp4/lease-database/name	""	string	(default)
+Dhcp4/lease-database/user	""	string	(default)
+Dhcp4/lease-database/host	""	string	(default)
+Dhcp4/lease-database/password	""	string	(default)
+Dhcp4/subnet4	[]	list	(default)
+</screen>
       </para>
 
       <para>
@@ -3423,6 +3490,61 @@ Dhcp4/subnet4	         []     list    (default)</screen>
         per-subnet basis.
       </para>
 
+      <section>
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database.  Currently,
+      the only supported database is MySQL, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+        <note>
+            <para>
+            Database access information must be configured for the DHCPv4 server, even if
+            it has already been configured for the DHCPv6 server.  The servers store their
+            information independently, and the databases used by the server need not be the
+            same.
+            </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp4/lease-database parameters.
+      The type of the database must be set to MySQL (although the string entered is "mysql"):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv4 server, the
+      database host name must also be specified: note however that this configuration
+      may have a severe impact on server performance:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
+      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      </note>
+      </section>
+      
+      <section id="dhcp4-address-config">
+      <title>Configuration of Address Pools</title>
       <para>
         The essential role of DHCPv4 server is address assignment. The server
         has to be configured with at least one subnet and one pool of dynamic
@@ -3476,45 +3598,23 @@ Dhcp4/subnet4	         []     list    (default)</screen>
         192.0.3.255 addresses may be assigned as well. This may be invalid in some
         network configurations. If you want to avoid this, please use min-max notation.
       </para>
-
-      <para>
-        Note: Although configuration is now accepted, some parts of it is not internally used
-        by they server yet. Address pools are used, but option definitons are not.
-        The only way to alter some options (e.g. Router Option or DNS servers and Domain name)
-        is to modify source code. To do so, please edit
-        src/bin/dhcp6/dhcp4_srv.cc file, modify the following parameters and
-        recompile:
-        <screen>
-const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
-const std::string HARDCODED_NETMASK = "255.255.255.0";
-const uint32_t    HARDCODED_LEASE_TIME = 60; // in seconds
-const std::string HARDCODED_GATEWAY = "192.0.2.1";
-const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
-const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
-
-        Lease database and configuration support is planned for end of 2012.
-      </para>
+      </section>
     </section>
 
     <section id="dhcp4-std">
-      <title>Supported standards</title>
+      <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC2131: Supported messages are DISCOVER, OFFER,
-            REQUEST, ACK, NAK, RELEASE.</simpara>
+            <simpara>RFC 2131: Supported messages are DISCOVER, OFFER,
+            REQUEST, and ACK.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC2132: Supported options are: PAD (0),
+            <simpara>RFC 2132: Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
-          </listitem>
-          <listitem>
-            <simpara>RFC6842: Server responses include client-id option
-            if client sent it in its message.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3522,12 +3622,12 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp4-limit">
       <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
-      software. Most of them are reflections of the early stage of
+      software. Most of them are reflections of the current stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
           <listitem>
-            <simpara>During initial IPv4 node configuration, the
+            <simpara>During the initial IPv4 node configuration, the
             server is expected to send packets to a node that does not
             have IPv4 address assigned yet. The server requires
             certain tricks (or hacks) to transmit such packets. This
@@ -3535,18 +3635,15 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             relayed traffic only (that is, normal point to point
             communication).</simpara>
           </listitem>
+
           <listitem>
             <simpara>Upon start, the server will open sockets on all
             interfaces that are not loopback, are up and running and
             have IPv4 address.</simpara>
           </listitem>
+
           <listitem>
-            <simpara>PRL (Parameter Request List, a list of options
-            requested by a client) is currently ignored and server
-            assigns DNS SERVER and DOMAIN NAME options.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>b10-dhcp4</command> does not support
+            <simpara>The DHCPv4 server does not support
             BOOTP. That is a design choice. This limitation is
             permanent. If you have legacy nodes that can't use DHCP and
             require BOOTP support, please use the latest version of ISC DHCP
@@ -3557,145 +3654,64 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             only. See <xref linkend="iface-detect"/> for details.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>b10-dhcp4</command> does not verify that
-            assigned address is unused. According to RFC2131, the
+            <simpara>The DHCPv4 server does not  verify that
+            assigned address is unused. According to RFC 2131, the
             allocating server should verify that address is no used by
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address rebinding (REQUEST/Rebinding), confirmation
-            (CONFIRM) and duplication report (DECLINE) are not supported
-            yet.</simpara>
+            <simpara>Address rebinding (REBIND),
+            confirmation (CONFIRM), duplication report (DECLINE) and
+            release (RELEASE) are not supported yet.</simpara>
           </listitem>
           <listitem>
             <simpara>DNS Update is not supported yet.</simpara>
           </listitem>
-          <listitem>
-            <simpara>-v (verbose) command line option is currently
-            the default, and cannot be disabled.</simpara>
-          </listitem>
+
       </itemizedlist>
     </section>
 
   </chapter>
 
   <chapter id="dhcp6">
-    <title>DHCPv6 Server</title>
-    <para>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
-    specified in RFC3315. BIND 10 provides a DHCPv6 server implementation
-    that is described in this chapter. For a description of the DHCPv4
-    server implementation, see <xref linkend="dhcp4"/>.
-    </para>
+    <title>The DHCPv6 Server</title>
 
-    <para>The DHCPv6 server component is currently under intense
-    development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
-    and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
-    developers mailing list</ulink>.</para>
+    <section id="dhcp6-start-stop">
+      <title>Starting and Stopping the DHCPv6 Server</title>
 
-    <note>
       <para>
-        As of November 2012, the DHCPv6 component is partially functioning,
-        having the following capabilities:
+        <command>b10-dhcp6</command> is the BIND 10 DHCPv6 server and, like other
+        parts of BIND 10, is configured through the <command>bindctl</command>
+        program.
       </para>
-      <itemizedlist>
-          <listitem>
-            <simpara>DHCPv6 server able to allocate leases (but not renew them).</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Some configuration available through the BIND 10 configuration mechanism.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Lease storage in a MySQL database.</simpara>
-          </listitem>
-      </itemizedlist>
-    </note>
-
-    <section id="dhcp6-install">
-      <title>DHCPv6 Server Build and Installation</title>
       <para>
-      DHCPv6 is part of the BIND 10 suite of programs and is built as part of
-      the build of BIND 10.  With the use of MySQL, some additional
-      installation steps are needed:
-      </para>
-      <section>
-        <title>Install MySQL</title>
-        <para>
-          Install MySQL according to the instructions for your system.  The client development
-          libraries must be installed.
-        </para>
-      </section>
-      <section>
-        <title>Build and Install BIND 10</title>
-        <para>
-          Build and install BIND 10 as described in <xref linkend="installation"/>, with
-          the following modification: to enable the MySQL database code, the
-          "configure" step (see <xref linkend="configure"/>), specify the location of the
-          MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
-          i.e.
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
-          ...if MySQL was installed in the default location, or:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>&lt;path-to-mysql_config&gt;</replaceable></userinput></screen>
-          ...if not.
-        </para>
-      </section>
-      <section>
-        <title>Create MySQL Database and BIND 10 User</title>
-        <para>
-          The next task is to create both the DHCPv6 lease database and the user under which the DHCPv6 server will
-          access it.  Although the intention is to have the name of the database and the user configurable,
-          at the moment they are hard-coded as "kea", as is the associated password.  ("kea" is an internal
-          code name for BIND 10 DHCP.) There are a number of steps required:
-        </para>
-        <para>
-          1. Log into MySQL as "root":
-          <screen>$ <userinput>mysql -u root -p</userinput>
-Enter password:<userinput/>
-   :<userinput/>
-mysql></screen>
-        </para>
-        <para>
-          2. Create the database:
-          <screen>mysql> <userinput>CREATE DATABASE kea;</userinput></screen>
-        </para>
-         <para>
-          3. Create the database tables:
-          <screen>mysql> <userinput>CONNECT kea;</userinput>
-mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
-        </para>
-         <para>
-          4. Create the user under which BIND 10 will access the database and grant it access to the database tables:
-          <screen>mysql> <userinput>CREATE USER 'kea'@'localhost' IDENTIFIED BY 'kea';</userinput>
-mysql> <userinput>GRANT ALL ON kea.* TO 'kea'@'localhost';</userinput></screen>
-        </para>
-        <para>
-          5. Exit MySQL:
-          <screen>mysql> <userinput>quit</userinput>
-Bye<userinput/>
-$</screen>
-       </para>
-     </section>
-   </section>
-
-    <section id="dhcp6-usage">
-      <title>DHCPv6 Server Usage</title>
-
-      <para>
-        <command>b10-dhcp6</command> is a BIND 10 component and is being
-        run under BIND 10 framework. To add a DHCPv6 process to the set of running
-        BIND 10 services, you can use following commands in <command>bindctl</command>:
-        <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
+        After starting BIND 10 and entering bindctl, the first step
+        in configuring the server is to add it to the list of running BIND 10 services.
+<screen>
+&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
 &gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput></screen>
+&gt; <userinput>config commit</userinput>
+</screen>
       </para>
-
-       <para>
-         To stop running <command>b10-dhcp6</command>, use the
-         following command:
-         <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+      <para>
+         To remove <command>b10-dhcp6</command> from the set of running services,
+         the <command>b10-dhcp4</command> is removed from list of Boss components:
+<screen>
+&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+        To change one of the parameters, simply follow
+        the usual <command>bindctl</command> procedure. For example, to make the
+        leases longer, change their valid-lifetime parameter:
+        <screen>
+&gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
 &gt; <userinput>config commit</userinput></screen>
-       </para>
+        Please note that most Dhcp6 parameters are of global scope
+        and apply to all defined subnets, unless they are overridden on a
+        per-subnet basis.
+      </para>
 
       <para>
         During start-up the server will detect available network interfaces
@@ -3712,7 +3728,7 @@ $</screen>
 
     </section>
 
-    <section id="dhcp6-config">
+    <section id="dhcp6-configuration">
       <title>DHCPv6 Server Configuration</title>
       <para>
         Once the server has been started, it can be configured. To view the
@@ -3720,16 +3736,22 @@ $</screen>
         <screen>&gt; <userinput>config show Dhcp6</userinput></screen>
         When starting the Dhcp6 daemon for the first time, the default configuration
         will be available. It will look similar to this:
-        <screen>
+<screen>
 &gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/interface	         "eth0" string	(default)
-Dhcp6/renew-timer        1000   integer	(default)
-Dhcp6/rebind-timer       2000   integer	(default)
-Dhcp6/preferred-lifetime 3000   integer	(default)
-Dhcp6/valid-lifetime	 4000   integer	(default)
-Dhcp6/subnet6	         []     list    (default)</screen>
+Dhcp6/interface/	list	(default)
+Dhcp6/renew-timer	1000	integer	(default)
+Dhcp6/rebind-timer	2000	integer	(default)
+Dhcp6/preferred-lifetime	3000	integer	(default)
+Dhcp6/valid-lifetime	4000	integer	(default)
+Dhcp6/option-data	[]	list	(default)
+Dhcp6/lease-database/type	"mysql"	string	
+Dhcp6/lease-database/name	"kea"	string	
+Dhcp6/lease-database/user	"kea"	string	
+Dhcp6/lease-database/host	""	string	(default)
+Dhcp6/lease-database/password	""	string	(modified)
+Dhcp6/subnet6/	list	
+</screen>
       </para>
-
       <para>
         To change one of the parameters, simply follow
         the usual <command>bindctl</command> procedure. For example, to make the
@@ -3741,7 +3763,69 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         and apply to all defined subnets, unless they are overridden on a
         per-subnet basis.
       </para>
+      <note>
+        <para>
+          With this version of BIND 10, there are a number of known limitations
+          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
+        </para>
+      </note>
 
+      <section>
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database.  Currently,
+      the only supported database is MySQL, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+      <note>
+        <para>
+          Database access information must be configured for the DHCPv6 server, even if
+          it has already been configured for the DHCPv4 server.  The servers store their
+          information independently, and the databases used by the server need not be the
+          same.
+          </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp6/lease-database parameters.
+      The type of the database must be set to MySQL (although the string entered is "mysql"):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv6 server, the
+      database host name must also be specified: note however that this configuration
+      may have a severe impact on server performance:
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp6/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
+      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      </note>
+      </section>
+
+
+    <section>
+      <title>Subnet and Address Pool</title>
       <para>
         The essential role of a DHCPv6 server is address assignment. For this,
         the server has to be configured with at least one subnet and one pool of dynamic
@@ -3762,7 +3846,19 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <para>It is possible to define more than one pool in a
         subnet: continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
-        2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
+        2001:db8:1:0:5:: tDhcp6/interface/	list	(default)
+Dhcp6/renew-timer	1000	integer	(default)
+Dhcp6/rebind-timer	2000	integer	(default)
+Dhcp6/preferred-lifetime	3000	integer	(default)
+Dhcp6/valid-lifetime	4000	integer	(default)
+Dhcp6/option-data	[]	list	(default)
+Dhcp6/lease-database/type	""	string	(default)
+Dhcp6/lease-database/name	""	string	(default)
+Dhcp6/lease-database/user	""	string	(default)
+Dhcp6/lease-database/host	""	string	(default)
+Dhcp6/lease-database/password	""	string	(default)
+Dhcp6/subnet6	[]	list	(default)
+o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
         formats are supported by Dhcp6 and can be mixed in the pool list.
         For example, one could define the following pools:
@@ -3833,13 +3929,38 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         (As before, the setting of the "data" element has been split across two
         lines for clarity.)
       </para>
-      <note>
-        <para>
-          With this version of BIND 10, there are a number of known limitations
-          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
-        </para>
-      </note>
     </section>
+       
+      <section id="dhcp6-config-subnets">
+        <title>Subnet Selection</title>
+          <para>
+          The DHCPv6 server may receive requests from local (connected to the same
+          subnet as the server) and remote (connecting via relays)
+          clients. As it may have many subnet configurations defined, it
+          must select appropriate subnet for a given request. To do this, the server first
+          checks if there is only one subnet defined and source of the packet is
+          link-local. If this is the case, the server assumes that the only subnet
+          defined is local and client is indeed connected to it. This check
+          simplifies small deployments.
+          </para>
+          <para>
+          If there are two or more subnets defined, the server can not assume
+          which of those (if any) subnets are local. Therefore an optional
+          "interface" parameter is available within a subnet definition to designate that a given subnet
+          is local, i.e. reachable directly over specified interface. For example
+          the server that is intended to serve a local subnet over eth0 may be configured
+          as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/interface "eth0"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        </para>
+      </section>    
+    
+   </section>
 
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
@@ -3847,12 +3968,12 @@ Dhcp6/subnet6	         []     list    (default)</screen>
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC3315: Supported messages are SOLICIT,
+            <simpara>RFC 3315: Supported messages are SOLICIT,
             ADVERTISE, REQUEST, and REPLY. Supported options are
             SERVER_ID, CLIENT_ID, IA_NA, and IAADDRESS.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC3646: Supported option is DNS_SERVERS.</simpara>
+            <simpara>RFC 3646: Supported option is DNS_SERVERS.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3874,10 +3995,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         <listitem>
           <para>Relayed traffic is not supported.</para>
         </listitem>
-       <listitem>
-          <para><command>b10-dhcp6</command> only supports
-          a limited number of configuration options.</para>
-        </listitem>
+
         <listitem>
           <para>
             On startup, the DHCPv6 server does not get the full configuration from
