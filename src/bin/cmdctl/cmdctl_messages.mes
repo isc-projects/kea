@@ -43,9 +43,6 @@ specific error is printed in the message.
 This debug message indicates that the given command has been sent to
 the given module.
 
-% CMDCTL_FATAL_EXCEPTION A fatal error occured: %1
-While running, b10-cmdctl encountered a fatal exception and it will shut down
-
 % CMDCTL_NO_SUCH_USER username not found in user database: %1
 A login attempt was made to b10-cmdctl, but the username was not known.
 Users can be added with the tool b10-cmdctl-usermgr.
@@ -64,7 +61,6 @@ the given module.
 % CMDCTL_SSL_SETUP_FAILURE_READING_CERT failed to read certificate or key: %1
 The b10-cmdctl daemon is unable to read either the certificate file or
 the private key file, and is therefore unable to accept any SSL connections.
-This is a fatal error, as b10-cmdctl cannot be of any use in this state.
 The specific error is printed in the message.
 The administrator should solve the issue with the files, or recreate them
 with the b10-certgen tool.

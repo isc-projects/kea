@@ -82,13 +82,6 @@ SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
 class CmdctlException(Exception):
     pass
 
-class CmdctlFatalException(Exception):
-    """
-    Exception for fatal errors, which should not be caught anywhere but on
-    the highest level.
-    """
-    pass
-
 def check_file(file_name):
     # TODO: Check contents of certificate file
     if not os.path.exists(file_name):
@@ -561,9 +554,10 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error
-        except CmdctlException as cce:
-            logger.fatal(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
-            raise CmdctlFatalException("Unable to accept SSL connections")
+        except (CmdctlException, IOError) as cce:
+            logger.error(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
+            # raise socket error to finish the request
+            raise socket.error
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''
@@ -652,8 +646,6 @@ if __name__ == '__main__':
         logger.info(CMDCTL_STOPPED_BY_KEYBOARD)
     except CmdctlException as err:
         logger.fatal(CMDCTL_UNCAUGHT_EXCEPTION, err);
-    except CmdctlFatalException as fe:
-        logger.fatal(CMDCTL_FATAL_EXCEPTION, fe)
 
     if httpd:
         httpd.shutdown()
