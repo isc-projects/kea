@@ -52,11 +52,18 @@ public:
 
         // There must be some interface detected
         if (ifaces.empty()) {
+            // We can't use ASSERT in constructor
             ADD_FAILURE() << "No interfaces detected.";
         }
 
         valid_iface_ = ifaces.begin()->getName();
         bogus_iface_ = "nonexisting0";
+
+        if (IfaceMgr::instance().getIface(bogus_iface_)) {
+            ADD_FAILURE() << "The '" << bogus_iface_ << "' exists on this system"
+                          << " while the test assumes that it doesn't to execute"
+                          << " some negative scenarios. Can't continue this test";
+        }
     }
 
     ~Dhcp6ParserTest() {
