@@ -201,7 +201,7 @@ class MsgQ:
     def wait_cfgmgr(self):
         """Wait for msgq to subscribe.
 
-           When this returs, the config manager is either subscribed, or
+           When this returns, the config manager is either subscribed, or
            msgq gave up waiting for it. Success is signified by the return
            value.
         """
@@ -219,7 +219,7 @@ class MsgQ:
             self.poller = select.poll()
 
     def add_kqueue_socket(self, socket, write_filter=False):
-        """Add a kquque filter for a socket.  By default the read
+        """Add a kqueue filter for a socket.  By default the read
         filter is used; if write_filter is set to True, the write
         filter is used.  We use a boolean value instead of a specific
         filter constant, because kqueue filter values do not seem to
