@@ -32,6 +32,9 @@ typedef boost::shared_ptr<DhcpConfigParser> ParserPtr;
 /// This container is used to store pointer to parsers for a given scope.
 typedef std::vector<ParserPtr> ParserCollection;
 
+/// @brief Combination of parameter name and configuration contents
+typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
+
 /// @brief Base abstract class for all DHCP parsers
 ///
 /// Each instance of a class derived from this class parses one specific config

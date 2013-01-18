@@ -44,16 +44,13 @@ public:
 /// depend on the datbase chosen.
 class DbAccessParser: public DhcpConfigParser {
 public:
-    /// @brief Combination of parameter name and configuration contents
-    typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
-
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;
 
     /// @brief Keyword/value collection of database access parameters
     typedef std::map<std::string, std::string> StringPairMap;
 
-    /// @brief Default constructor
+    /// @brief Constructor
     ///
     /// @param param_name Name of the parameter under which the database
     ///        access details are held.
@@ -105,16 +102,25 @@ public:
         return (new DbAccessParser(param_name));
     }
 
+protected:
     /// @brief Get database access parameters
     ///
     /// Used in testing to check that the configuration information has been
-    /// parsed corrected.
+    /// parsed correctly.
     ///
-    /// @return Map of keyword/value pairs representing database access
-    ///         information.
+    /// @return Reference to the internal map of keyword/value pairs
+    ///         representing database access information.  This is valid only
+    ///         for so long as the the parser remains in existence.
     const StringPairMap& getDbAccessParameters() const {
         return (values_);
     }
+
+    /// @brief Construct dbtabase access string
+    ///
+    /// Constructs the database access string from the stored parameters.
+    ///
+    /// @return Database access string
+    std::string getDbAccessString() const;
 
 private:
     std::map<std::string, std::string> values_; ///< Stored parameter values

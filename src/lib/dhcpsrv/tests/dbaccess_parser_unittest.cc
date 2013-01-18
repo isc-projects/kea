@@ -19,13 +19,8 @@
 #include <config/ccsession.h>
 #include <gtest/gtest.h>
 
-#include <fstream>
-#include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
-
-#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -38,7 +33,22 @@ namespace {
 /// @brief Database Access Parser test fixture class
 class DbAccessParserTest : public ::testing::Test {
 public:
-    /// @ Build JSON String
+    /// @brief Constructor
+    ///
+    /// Just make sure that the lease database is closed before every test
+    /// (the first in particular).
+    DbAccessParserTest() {
+        LeaseMgrFactory::destroy();
+    }
+    /// @brief Destructor
+    ///
+    /// Just make sure that the lease database is closed after every test
+    /// (the last in particular).
+    ~DbAccessParserTest() {
+        LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Build JSON String
     ///
     /// Given a array of "const char*" strings representing in order, keyword,
     /// value, keyword, value, ... and terminated by a NULL, return a string
@@ -147,6 +157,47 @@ public:
     }
 };
 
+
+/// @brief Version of parser with protected methods public
+///
+/// Some of the methods in DbAccessParser are not required to be public in
+/// BIND 10.  Instead of being declared "private", they are declared "protected"
+/// so that they can be accessed through a derived class in the unit tests.
+class TestDbAccessParser : public DbAccessParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @brief Keyword/value collection of ddatabase access parameters
+    TestDbAccessParser(const std::string& param_name)
+        : DbAccessParser(param_name)
+    {}
+
+    /// @brief Destructor
+    virtual ~TestDbAccessParser()
+    {}
+
+    /// @brief Get database access parameters
+    ///
+    /// Used in testing to check that the configuration information has been
+    /// parsed corrected.
+    ///
+    /// @return Map of keyword/value pairs representing database access
+    ///         information.
+    const StringPairMap& getDbAccessParameters() const {
+        return (DbAccessParser::getDbAccessParameters());
+    }
+
+    /// @brief Construct database access string
+    ///
+    /// Constructs the database access string from the stored parameters.
+    ///
+    /// @return Database access string
+    std::string getDbAccessString() const {
+        return (DbAccessParser::getDbAccessString());
+    }
+};
+
 // Check that the parser works with a simple configuration.
 TEST_F(DbAccessParserTest, validTypeMemfile) {
     const char* config[] = {"type", "memfile",
@@ -156,7 +207,7 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -172,7 +223,7 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -190,7 +241,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database");
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid mysql", parser.getDbAccessParameters(), config);
 }
@@ -207,46 +258,19 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    DbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database");
     EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
-}
-
-// If the value of the "type" keyword is unknown, a BadValue exception should
-// be thrown.
-TEST_F(DbAccessParserTest, badTypeKeyword) {
-    const char* config[] = {"type",     "invalid",
-                            "host",     "erewhon",
-                            "user",     "kea",
-                            "password", "keapassword",
-                            "name",     "keatest",
-                            NULL};
-
-    string json_config = toJson(config);
-    ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
-
-    DbAccessParser parser("lease-database");
-    EXPECT_THROW(parser.build(json_elements), BadValue);
 }
 
 // Check that the factory function works.
 TEST_F(DbAccessParserTest, factory) {
-    const char* config[] = {"type", "memfile",
-                            NULL};
-
-    string json_config = toJson(config);
-    ConstElementPtr json_elements = Element::fromJSON(json_config);
-    EXPECT_TRUE(json_elements);
 
     // Check that the parser is built through the factory.
     boost::scoped_ptr<DhcpConfigParser> parser(
         DbAccessParser::factory("lease-database"));
-    EXPECT_NO_THROW(parser->build(json_elements));
-
-    // Access the "raw" parser.
+    EXPECT_TRUE(parser);
     DbAccessParser* dbap = dynamic_cast<DbAccessParser*>(parser.get());
     EXPECT_NE(static_cast<DbAccessParser*>(NULL), dbap);
-    checkAccessString("Valid mysql", dbap->getDbAccessParameters(), config);
 }
 
 // Check reconfiguration.  Checks that incremental changes applied to the
@@ -293,7 +317,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                              "name",     "keatest",
                              NULL};
 
-    DbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database");
 
     // First configuration string should cause a representation of that string
     // to be held.
@@ -344,6 +368,63 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Compatible incremental change", parser.getDbAccessParameters(),
                       config4);
+}
+
+// Check that the database access string is constructed correctly.
+TEST_F(DbAccessParserTest, getDbAccessString) {
+    const char* config[] = {"type",     "mysql",
+                            "host",     "" ,
+                            "name",     "keatest",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database");
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    // Get the database access string
+    std::string dbaccess = parser.getDbAccessString();
+
+    // String should be either "type=mysql name=keatest" or
+    // "name=keatest type=mysql". The "host" entry is null, so should not be
+    // output.
+    EXPECT_TRUE((dbaccess == "type=mysql name=keatest") ||
+                (dbaccess == "name=keatest type=mysql"));
+}
+
+// Check that the "commit" function actually opens the database.  We will
+// only do this for the "memfile" database, as that does not assume that the
+// test has been built with MySQL support.
+TEST_F(DbAccessParserTest, commit) {
+
+    // Verify that no lease database is open
+    EXPECT_THROW({
+            LeaseMgr& manager = LeaseMgrFactory::instance();
+            manager.getType();  // Never executed but satisfies compiler
+            }, isc::dhcp::NoLeaseManager);
+
+    // Set up the parser to open the memfile database.
+    const char* config[] = {"type", "memfile",
+                            NULL};
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database");
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    // Ensure that the access string is as expected.
+    EXPECT_EQ(std::string("type=memfile"), parser.getDbAccessString());
+
+    // Committal of the parser changes should open the database.
+    EXPECT_NO_THROW(parser.commit());
+
+    // Verify by checking the type of database open.
+    std::string dbtype;
+    EXPECT_NO_THROW(dbtype = LeaseMgrFactory::instance().getType());
+    EXPECT_EQ(std::string("memfile"), dbtype);
 }
 
 };  // Anonymous namespace
