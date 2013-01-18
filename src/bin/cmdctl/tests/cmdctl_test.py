@@ -513,9 +513,7 @@ class TestSecureHTTPServer(unittest.TestCase):
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
 
-        # Test exception is Fatal here (all specific cases are tested
-        # in test_check_key_and_cert())
-        self.assertRaises(CmdctlFatalException,
+        self.assertRaises(socket.error,
                           self.server._wrap_socket_in_ssl_context,
                           sock,
                           'no_such_file', 'no_such_file')
