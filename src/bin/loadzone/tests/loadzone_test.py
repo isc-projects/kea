@@ -175,6 +175,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         # be 3 RRs
         self.assertEqual([1, 2, 3], self.__reports)
         self.__check_zone_soa(NEW_SOA_TXT)
+        self.assertEqual(3, self.__runner._loaded_rrs)
 
     def test_load_update_skipped_report(self):
         '''successful loading, with reports for every 2 RRs'''
@@ -182,6 +183,8 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._report_interval = 2
         self.__runner._do_load()
         self.assertEqual([2], self.__reports)
+        # total RRs should still be set the actual value
+        self.assertEqual(3, self.__runner._loaded_rrs)
 
     def test_load_update_no_report(self):
         '''successful loading, without progress reports'''
@@ -190,6 +193,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._do_load()
         self.assertEqual([], self.__reports) # no report
         self.__check_zone_soa(NEW_SOA_TXT)   # but load is completed
+        self.assertEqual(3, self.__runner._loaded_rrs)
 
     def test_create_and_load(self):
         '''successful case to loading contents to a new zone (created).'''
