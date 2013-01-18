@@ -112,7 +112,7 @@ class TestNotifyOut(unittest.TestCase):
         com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
-        self._notify._counters.clear_counters()
+        self._notify._counters.clear_all()
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
