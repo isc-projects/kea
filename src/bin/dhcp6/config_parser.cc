@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/pool.h>
@@ -1400,6 +1401,15 @@ private:
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
+        // Get interface name. If it is defined, then the subnet is available
+        // directly over specified network interface.
+
+        string iface;
+        StringStorage::const_iterator iface_iter = string_values_.find("interface");
+        if (iface_iter != string_values_.end()) {
+            iface = iface_iter->second;
+        }
+
         /// @todo: Convert this to logger once the parser is working reliably
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
@@ -1414,6 +1424,17 @@ private:
         // Add pools to it.
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
             subnet_->addPool(*it);
+        }
+
+        // Configure interface, if defined
+        if (!iface.empty()) {
+            if (!IfaceMgr::instance().getIface(iface)) {
+                isc_throw(DhcpConfigError, "Specified interface name " << iface
+                          << " for subnet " << subnet_->toText() << " is not present"
+                          << " in the system.");
+            }
+
+            subnet_->setIface(iface);
         }
 
         // We are going to move configured options to the Subnet object.
@@ -1489,6 +1510,7 @@ private:
         factories["subnet"] = StringParser::factory;
         factories["pool"] = PoolParser::factory;
         factories["option-data"] = OptionDataListParser::factory;
+        factories["interface"] = StringParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
