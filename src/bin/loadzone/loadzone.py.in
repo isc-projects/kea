@@ -87,7 +87,6 @@ class LoadZoneRunner:
     '''
     def __init__(self, command_args):
         self.__command_args = command_args
-        self.__loaded_rrs = 0
         self.__interrupted = False # will be set to True on receiving signal
 
         # system-wide log configuration.  We need to configure logging this
@@ -103,8 +102,9 @@ class LoadZoneRunner:
                                           [{"output": "stderr",
                                             "destination": "console"}]}]}
 
-        # These are essentially private, and defined as "protected" for the
+        # These are essentially private, but defined as "protected" for the
         # convenience of tests inspecting them
+        self._loaded_rrs = 0
         self._zone_class = None
         self._zone_name = None
         self._zone_file = None
@@ -239,17 +239,19 @@ class LoadZoneRunner:
                 limit = LOAD_INTERVAL_DEFAULT
             while (not self.__interrupted and
                    not loader.load_incremental(limit)):
-                self.__loaded_rrs += self._report_interval
+                self._loaded_rrs += self._report_interval
                 if self._report_interval > 0:
-                    self._report_progress(self.__loaded_rrs)
+                    self._report_progress(self._loaded_rrs)
             if self.__interrupted:
                 raise LoadFailure('loading interrupted by signal')
 
             # On successful completion, add final '\n' to the progress
             # report output (on failure don't bother to make it prettier).
             if (self._report_interval > 0 and
-                self.__loaded_rrs >= self._report_interval):
+                self._loaded_rrs >= self._report_interval):
                 sys.stdout.write('\n')
+            # record the final count of the loaded RRs for logging
+            self._loaded_rrs = loader.get_rr_count()
         except Exception as ex:
             # release any remaining lock held in the loader
             loader = None
@@ -274,7 +276,7 @@ class LoadZoneRunner:
             self._parse_args()
             self._do_load()
             total_elapsed_txt = "%.2f" % (time.time() - self.__start_time)
-            logger.info(LOADZONE_DONE, self.__loaded_rrs, self._zone_name,
+            logger.info(LOADZONE_DONE, self._loaded_rrs, self._zone_name,
                         self._zone_class, total_elapsed_txt)
             return 0
         except BadArgument as ex:
