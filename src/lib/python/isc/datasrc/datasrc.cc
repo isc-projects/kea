@@ -21,6 +21,7 @@
 #include <datasrc/client.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/zone_loader.h>
 
 #include "datasrc.h"
 #include "client_python.h"
@@ -33,6 +34,9 @@
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
+
+#include <stdexcept>
+#include <string>
 
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
@@ -194,6 +198,21 @@ initModulePart_ZoneLoader(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&zone_loader_type);
+
+    try {
+        installClassVariable(zone_loader_type, "PROGRESS_UNKNOWN",
+                             Py_BuildValue("d", ZoneLoader::PROGRESS_UNKNOWN));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ZoneLoader initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in ZoneLoader initialization");
+        return (false);
+    }
 
     return (true);
 }
