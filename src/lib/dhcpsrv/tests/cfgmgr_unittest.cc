@@ -351,4 +351,8 @@ TEST_F(CfgMgrTest, optionSpace6) {
     // @todo decide if a duplicate vendor space is allowed.
 }
 
+// No specific tests for getSubnet6. That method (2 overloaded versions) is tested
+// in Dhcpv6SrvTest.selectSubnetAddr and Dhcpv6SrvTest.selectSubnetIface
+// (see src/bin/dhcp6/tests/dhcp6_srv_unittest.cc)
+
 } // end of anonymous namespace
