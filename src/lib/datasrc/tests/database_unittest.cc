@@ -4389,7 +4389,12 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
     // Now setup a new updater and call getRRsetCollection() on it.
     this->updater_.reset();
     this->updater_ = this->client_->getUpdater(this->zname_, false);
-    (void) this->updater_->getRRsetCollection();
+
+    // Just call getRRsetCollection() here. The .find() is unnecessary,
+    // but we have it to use the result of getRRsetCollection().
+    this->updater_->getRRsetCollection().find(Name("www.example.org"),
+                                              RRClass::IN(),
+                                              RRType::MX());
 
     // addRRset() must throw isc::InvalidOperation here.
     EXPECT_THROW(this->updater_->addRRset(*this->rrset_),
@@ -4407,7 +4412,12 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
     this->updater_.reset();
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->updater_->addRRset(*this->rrset_);
-    (void) this->updater_->getRRsetCollection();
+
+    // Just call getRRsetCollection() here. The .find() is unnecessary,
+    // but we have it to use the result of getRRsetCollection().
+    this->updater_->getRRsetCollection().find(Name("www.example.org"),
+                                              RRClass::IN(),
+                                              RRType::MX());
 
     // deleteRRset() must throw isc::InvalidOperation here.
     EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_),
