@@ -38,7 +38,7 @@ class TestModuleSpec(unittest.TestCase):
 
     def spec1(self, dd):
         module_spec = dd.get_full_spec()
-        self.assert_('module_name' in module_spec)
+        self.assertIn('module_name', module_spec)
         self.assertEqual(module_spec['module_name'], "Spec1")
         
     def test_open_file_name(self):
