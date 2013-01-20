@@ -693,12 +693,15 @@ class TestMultiConfigData(unittest.TestCase):
                            'name': 'Spec32', 'value': None,
                            'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec32/named_set_item")
-        self.assertEqual([{'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_set_item/a',
-                           'value': 1, 'modified': False},
-                          {'default': True, 'type': 'integer',
-                           'name': 'Spec32/named_set_item/b',
-                           'value': 2, 'modified': False}], maps)
+        self.assertEqual(len(maps), 2)
+        self.assertIn({'default': True, 'type': 'integer',
+                       'name': 'Spec32/named_set_item/a',
+                       'value': 1, 'modified': False},
+                      maps)
+        self.assertIn({'default': True, 'type': 'integer',
+                       'name': 'Spec32/named_set_item/b',
+                       'value': 2, 'modified': False},
+                      maps)
         maps = self.mcd.get_value_maps("/Spec32/named_set_item/a")
         self.assertEqual([{'default': True, 'type': 'integer',
                            'name': 'Spec32/named_set_item/a',
@@ -829,10 +832,10 @@ class TestMultiConfigData(unittest.TestCase):
                                                       "bbbb": 6})
         config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
                                                      True)
-        self.assertEqual(['Spec32/named_set_item/aaaa',
-                          'Spec32/named_set_item/aabb',
-                          'Spec32/named_set_item/bbbb',
-                         ], config_items)
+        self.assertEqual(len(config_items), 3)
+        self.assertIn('Spec32/named_set_item/aaaa', config_items)
+        self.assertIn('Spec32/named_set_item/aabb', config_items)
+        self.assertIn('Spec32/named_set_item/bbbb', config_items)
 
         self.mcd.set_value('Spec32/named_set_item', {})
         config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
