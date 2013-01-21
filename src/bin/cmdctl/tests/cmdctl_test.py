@@ -513,15 +513,28 @@ class TestSecureHTTPServer(unittest.TestCase):
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
 
+        # Bad files should result in a socket.error raised by our own
+        # code in the basic file checks
         self.assertRaises(socket.error,
                           self.server._wrap_socket_in_ssl_context,
                           sock,
                           'no_such_file', 'no_such_file')
 
-        sock1 = socket.socket()
-        self.server._wrap_socket_in_ssl_context(sock1,
-                          BUILD_FILE_PATH + 'cmdctl-keyfile.pem',
+        # Using a non-certificate file would cause an SSLError, which
+        # is caught by our code which then raises a basic socket.error
+        self.assertRaises(socket.error,
+                          self.server._wrap_socket_in_ssl_context,
+                          sock,
+                          BUILD_FILE_PATH + 'cmdctl.py',
                           BUILD_FILE_PATH + 'cmdctl-certfile.pem')
+
+        # Should succeed
+        sock1 = socket.socket()
+        ssl_sock = self.server._wrap_socket_in_ssl_context(sock1,
+                                   BUILD_FILE_PATH + 'cmdctl-keyfile.pem',
+                                   BUILD_FILE_PATH + 'cmdctl-certfile.pem')
+        self.assertIsInstance(ssl_sock, ssl.SSLSocket)
+
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
