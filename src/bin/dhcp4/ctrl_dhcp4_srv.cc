@@ -101,7 +101,7 @@ ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
     }
 
     // Configure the server.
-    return (configureDhcp4Server(*server_, full_config));
+    return (configureDhcp4Server(*server_, merged_config));
 }
 
 ConstElementPtr
