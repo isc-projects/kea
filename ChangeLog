@@ -1,4 +1,10 @@
-5XX.	[func]		tomek
+551.    [bug]       shane
+	Kill msgq if we cannot connect to it on startup.
+	When the boss process was unable to connect to the msgq, it would
+	exit. However, it would leave the msgq process running. This has
+	been fixed, and the msgq is now stopped in this case.
+
+550.	[func]		tomek
 	b10-dhcp4: The DHCPv4 server now generates a server identifier
 	the first time it is run. The identifier is preserved in a file
 	across server restarts.
