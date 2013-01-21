@@ -234,14 +234,14 @@ public:
     /// @brief Return name of the encapsulated option space.
     ///
     /// @return name of the encapsulated option space.
-    const std::string& getEncapsulatedSpace() const {
+    std::string getEncapsulatedSpace() const {
         return (encapsulated_space_);
     }
 
     /// @brief Return option name.
     ///
     /// @return option name.
-    const std::string& getName() const { return (name_); }
+    std::string getName() const { return (name_); }
 
     /// @brief Return list of record fields.
     ///
