@@ -282,7 +282,10 @@ AC_SUBST(PYTHON_LOGMSGPKG_DIR)
 
 # This is python package paths commonly used in python tests.  See
 # README of log_messages for why it's included.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+# lib/dns/python/.libs is necessary because __init__.py of isc package
+# automatically imports isc.datasrc, which then requires the DNS loadable
+# module.  #2145 should eliminate the need for it.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
 AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
