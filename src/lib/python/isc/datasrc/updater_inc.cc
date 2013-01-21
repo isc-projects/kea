@@ -76,6 +76,10 @@ This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
+Implementations of ZoneUpdater may not allow adding or deleting RRsets\n\
+after get_rrset_collection() is called. In this case, implementations\n\
+throw an InvalidOperation exception.\n\
+\n\
 Todo As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\
 \n\
@@ -133,6 +137,10 @@ This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
+Implementations of ZoneUpdater may not allow adding or deleting RRsets\n\
+after get_rrset_collection() is called. In this case, implementations\n\
+throw an InvalidOperation exception.\n\
+\n\
 Todo: As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\
 \n\
@@ -176,6 +184,34 @@ must result in a isc.datasrc.Error exception.\n\
 Exceptions:\n\
   isc.datasrc.Error Duplicate call of the method, internal data source\n\
              error, or wrapper error\n\\n\
+\n\
+";
+
+// Modifications
+// - isc.datasrc.RRsetCollectionBase => isc.dns.RRsetCollectionBase
+//   (in the Python wrapper, the former is completely invisible)
+// - remove other reference to isc.datasrc.RRsetCollectionBase
+const char* const ZoneUpdater_getRRsetCollection_doc = "\
+get_rrset_collection() -> isc.dns.RRsetCollectionBase \n\
+\n\
+Return an RRsetCollection for the updater.\n\
+\n\
+This method returns an RRsetCollection for the updater, implementing\n\
+the isc.dns.RRsetCollectionBase interface. Typically, the returned\n\
+RRsetCollection is a singleton for its ZoneUpdater. The returned\n\
+RRsetCollection object must not be used after its corresponding\n\
+ZoneUpdater has been destroyed. The returned RRsetCollection object\n\
+may be used to search RRsets from the ZoneUpdater. The actual\n\
+RRsetCollection returned has a behavior dependent on the ZoneUpdater\n\
+implementation.\n\
+\n\
+The behavior of the RRsetCollection is similar to the behavior of the\n\
+Zonefinder returned by get_finder(). Implementations of ZoneUpdater\n\
+may not allow adding or deleting RRsets after get_rrset_collection()\n\
+is called. Implementations of ZoneUpdater may disable a previously\n\
+returned RRsetCollection after commit() is called. If an\n\
+RRsetCollection is disabled, using methods such as find() and using\n\
+its iterator would cause an exception to be thrown.\n\
 \n\
 ";
 } // unnamed namespace
