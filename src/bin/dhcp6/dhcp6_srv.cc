@@ -36,11 +36,16 @@
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
+#include <util/encode/hex.h>
 
 #include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
 #include <stdlib.h>
 #include <time.h>
+#include <iomanip>
+#include <fstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -70,7 +75,22 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port, const char* dbconfig)
             IfaceMgr::instance().openSockets6(port);
         }
 
-        setServerID();
+        string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
+        if (loadServerID(duid_file)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_SERVERID_LOADED)
+                .arg(duid_file);
+        } else {
+            generateServerID();
+            LOG_INFO(dhcp6_logger, DHCP6_SERVERID_GENERATED)
+                .arg(duidToString(getServerID()))
+                .arg(duid_file);
+
+            if (!writeServerID(duid_file)) {
+                LOG_WARN(dhcp6_logger, DHCP6_SERVERID_WRITE_FAIL)
+                    .arg(duid_file);
+            }
+
+        }
 
         // Instantiate LeaseMgr
         LeaseMgrFactory::create(dbconfig);
@@ -209,10 +229,67 @@ bool Dhcpv6Srv::run() {
     return (true);
 }
 
-void Dhcpv6Srv::setServerID() {
+bool Dhcpv6Srv::loadServerID(const std::string& file_name) {
 
-    /// @todo: DUID should be generated once and then stored, rather
-    /// than generated each time
+    // load content of the file into a string
+    fstream f(file_name.c_str(), ios::in);
+    if (!f.is_open()) {
+        return (false);
+    }
+
+    string hex_string;
+    f >> hex_string;
+    f.close();
+
+    // remove any spaces
+    boost::algorithm::erase_all(hex_string, " ");
+
+    // now remove :
+    /// @todo: We should check first if the format is sane.
+    /// Otherwise 1:2:3:4 will be converted to 0x12, 0x34
+    boost::algorithm::erase_all(hex_string, ":");
+
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    // Now create server-id option
+    serverid_.reset(new Option(Option::V6, D6O_SERVERID, bin));
+
+    return (true);
+}
+
+std::string Dhcpv6Srv::duidToString(const OptionPtr& opt) {
+    stringstream tmp;
+
+    OptionBuffer data = opt->getData();
+
+    bool colon = false;
+    for (OptionBufferConstIter it = data.begin(); it != data.end(); ++it) {
+        if (colon) {
+            tmp << ":";
+        }
+        tmp << hex << setw(2) << setfill('0') << static_cast<uint16_t>(*it);
+        if (!colon) {
+            colon = true;
+        }
+    }
+
+    return tmp.str();
+}
+
+bool Dhcpv6Srv::writeServerID(const std::string& file_name) {
+    fstream f(file_name.c_str(), ios::out | ios::trunc);
+    if (!f.good()) {
+        return (false);
+    }
+    f << duidToString(getServerID());
+    f.close();
+}
+
+void Dhcpv6Srv::generateServerID() {
 
     /// @todo: This code implements support for DUID-LLT (the recommended one).
     /// We should eventually add support for other DUID types: DUID-LL, DUID-EN
