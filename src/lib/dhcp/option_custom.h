@@ -249,6 +249,11 @@ public:
     void writeString(const std::string& text,
                      const uint32_t index = 0);
 
+    /// @brief Writes DHCP option in a wire format to a buffer.
+    ///
+    /// @param buf output buffer (option will be stored there).
+    virtual void pack(isc::util::OutputBuffer& buf);
+
     /// @brief Parses received buffer.
     ///
     /// @param begin iterator to first byte of option data
@@ -277,18 +282,6 @@ public:
     /// @param last iterator pointing to end of buffer to copy.
     void setData(const OptionBufferConstIter first,
                  const OptionBufferConstIter last);
-
-protected:
-
-    /// @brief Writes DHCPv4 option in a wire format to a buffer.
-    ///
-    /// @param buf output buffer (option will be stored there).
-    virtual void pack4(isc::util::OutputBuffer& buf);
-
-    /// @brief Writes DHCPv6 option in a wire format to a buffer.
-    ///
-    /// @param buf output buffer (built options will be stored here)
-    virtual void pack6(isc::util::OutputBuffer& buf);
 
 private:
 
