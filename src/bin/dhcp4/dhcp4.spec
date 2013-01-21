@@ -55,13 +55,13 @@
           { "item_name": "code",
             "item_type": "integer",
             "item_optional": false,
-            "item_default": 0,
+            "item_default": 0
           },
 
           { "item_name": "type",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "",
+            "item_default": ""
           },
 
           { "item_name": "array",
@@ -73,7 +73,7 @@
           { "item_name": "record_types",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "",
+            "item_default": ""
           },
 
           { "item_name": "space",
