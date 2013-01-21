@@ -87,11 +87,8 @@ public:
     ///
     /// Method will throw if option storing fails for some reason.
     ///
-    /// TODO Once old (DHCPv6) implementation is rewritten,
-    /// unify pack4() and pack6() and rename them to just pack().
-    ///
     /// @param buf output buffer (option will be stored there)
-    virtual void pack4(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf);
 
     /// Returns string representation of the option.
     ///
