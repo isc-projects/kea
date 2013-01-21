@@ -132,16 +132,18 @@ A debug message output during a configuration update of the IPv4 DHCP
 server, notifying that the parser for the specified configuration element
 has been successfully created.
 
-% DHCP4_PARSER_CREATE_FAIL failed to create parser for configuration element %1: %2
-On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents of the
-named configuration element.  The reason for the failure is given in the
-message.
-
-% DHCP4_PARSER_CREATE_EXCEPTION failed to create parser for configuration element %1
+% DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,
 the IPv4 DHCP server failed to create a parser to decode the contents
-of the named configuration element.  The message has been output in
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
+% DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents of
+the named configuration element, or the creation succeeded but the parsing
+actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
 may give further information.
 
