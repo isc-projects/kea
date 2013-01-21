@@ -1706,7 +1706,7 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
         }
 
     } catch (const isc::Exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_CREATE_FAIL)
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1,
                      string("Configuration parsing failed: ") + ex.what());
@@ -1716,8 +1716,7 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
-        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_CREATE_EXCEPTION)
-                  .arg(config_pair.first);
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(config_pair.first);
         answer = isc::config::createAnswer(1,
                      string("Configuration parsing failed"));
 
