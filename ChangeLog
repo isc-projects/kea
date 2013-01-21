@@ -3,6 +3,7 @@
 	When the boss process was unable to connect to the msgq, it would
 	exit. However, it would leave the msgq process running. This has
 	been fixed, and the msgq is now stopped in this case.
+	(Trac #2608, git 016925ef2437e0396127e135c937d3a55539d224)
 
 550.	[func]		tomek
 	b10-dhcp4: The DHCPv4 server now generates a server identifier
