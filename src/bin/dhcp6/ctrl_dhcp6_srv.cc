@@ -42,7 +42,6 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
 ConstElementPtr

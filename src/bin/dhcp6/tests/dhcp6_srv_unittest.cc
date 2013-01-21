@@ -35,7 +35,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
-
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -64,10 +64,16 @@ public:
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
+    using Dhcpv6Srv::loadServerID;
+    using Dhcpv6Srv::writeServerID;
 };
+
+static const char* DUID_FILE = "server-id-test.txt";
 
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
+    /// Name of the server-id file (used in server-id tests)
+
     // these are empty for now, but let's keep them around
     Dhcpv6SrvTest() : rcode_(-1) {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
@@ -77,6 +83,9 @@ public:
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
+
+        // it's ok if that fails. There should not be such a file anyway
+        unlink(DUID_FILE);
     }
 
     // Generate IA_NA option with specified parameters
@@ -246,6 +255,9 @@ public:
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
+
+        // Let's clean up if there is such a file.
+        unlink(DUID_FILE);
     };
 
     // A subnet used in most tests
@@ -1407,7 +1419,38 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     pkt->setIface("wifi1");
     EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+}
 
+// This test verifies if the server-id disk operations (read, write) are
+// working properly.
+TEST_F(Dhcpv6SrvTest, ServerID) {
+    NakedDhcpv6Srv srv(0);
+
+    string duid1_text = "01:ff:02:03:06:80:90:ab:cd:ef";
+    uint8_t duid1[] = { 0x01, 0xff, 2, 3, 6, 0x80, 0x90, 0xab, 0xcd, 0xef };
+    OptionBuffer expected_duid1(duid1, duid1 + sizeof(duid1));
+
+    fstream file1(DUID_FILE, ios::out | ios::trunc);
+    file1 << duid1_text;
+    file1.close();
+
+    // Test reading from a file
+    EXPECT_TRUE(srv.loadServerID(DUID_FILE));
+    ASSERT_TRUE(srv.getServerID());
+    ASSERT_EQ(sizeof(duid1) + Option::OPTION6_HDR_LEN, srv.getServerID()->len());
+    ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
+
+    // Now test writing to a file
+    EXPECT_EQ(0, unlink(DUID_FILE));
+    EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
+
+    fstream file2(DUID_FILE, ios::in);
+    ASSERT_TRUE(file2.good());
+    string text;
+    file2 >> text;
+    file2.close();
+
+    EXPECT_EQ(duid1_text, text);
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
