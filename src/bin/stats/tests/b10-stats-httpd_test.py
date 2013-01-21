@@ -42,6 +42,7 @@ except ImportError:
     lxml_etree = None
 
 import isc
+import isc.log
 import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats,\
@@ -1066,4 +1067,5 @@ class TestStatsHttpd(unittest.TestCase):
             imp.reload(stats_httpd)
 
 if __name__ == "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

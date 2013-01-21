@@ -322,7 +322,6 @@ class MsgQ:
             logger.error(MSGQ_READ_UNKNOWN_FD, fd)
             return
         sock = self.sockets[fd]
-#        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
     def kill_socket(self, fd, sock):
@@ -650,6 +649,18 @@ class MsgQ:
         logger.debug(TRACE_START, MSGQ_SHUTDOWN)
         self.listen_socket.close()
         self.cleanup_signalsock()
+        # Close all the sockets too. In real life, there should be none now,
+        # as Msgq should be the last one. But some tests don't adhere to this
+        # and create a new Msgq for each test, which led to huge socket leaks.
+        # Some other threads put some other things in instead of sockets, so
+        # we catch whatever exceptions there we can. This should be safe,
+        # because in real operation, we will terminate now anyway, implicitly
+        # closing anything anyway.
+        for sock in self.sockets.values():
+            try:
+                sock.close()
+            except Exception:
+                pass
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
 

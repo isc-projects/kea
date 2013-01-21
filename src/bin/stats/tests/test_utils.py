@@ -103,20 +103,9 @@ class ThreadingServerManager:
         else:
             self.server._thread.join(0) # timeout is 0
 
-def do_nothing(*args, **kwargs): pass
-
-class dummy_sys:
-    """Dummy for sys"""
-    class dummy_io:
-        write = do_nothing
-    stdout = stderr = dummy_io()
-
 class MockMsgq:
     def __init__(self):
         self._started = threading.Event()
-        # suppress output to stdout and stderr
-        msgq.sys = dummy_sys()
-        msgq.print = do_nothing
         self.msgq = msgq.MsgQ(verbose=False)
         result = self.msgq.setup()
         if result:
@@ -124,10 +113,15 @@ class MockMsgq:
 
     def run(self):
         self._started.set()
-        self.msgq.run()
+        try:
+            self.msgq.run()
+        finally:
+            # Make sure all the sockets, etc, are removed once it stops.
+            self.msgq.shutdown()
 
     def shutdown(self):
-        self.msgq.shutdown()
+        # Ask it to terminate nicely
+        self.msgq.stop()
 
 class MockCfgmgr:
     def __init__(self):
@@ -554,15 +548,20 @@ class BaseModules:
 
 
     def shutdown(self):
+        # MockMsgq. We need to wait (blocking) for it, otherwise it'll wipe out
+        # a socket for another test during its shutdown.
+        self.msgq.shutdown(True)
+
+        # We also wait for the others, but these are just so we don't create
+        # too many threads in parallel.
+
         # MockAuth
-        self.auth2.shutdown()
-        self.auth.shutdown()
+        self.auth2.shutdown(True)
+        self.auth.shutdown(True)
         # MockBoss
-        self.boss.shutdown()
+        self.boss.shutdown(True)
         # MockCfgmgr
-        self.cfgmgr.shutdown()
-        # MockMsgq
-        self.msgq.shutdown()
+        self.cfgmgr.shutdown(True)
         # remove the unused socket file
         socket_file = self.msgq.server.msgq.socket_file
         try:
