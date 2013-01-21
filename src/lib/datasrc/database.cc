@@ -1398,18 +1398,6 @@ public:
     void disableWrapper() {
         disable();
     }
-
-protected:
-    // TODO: RRsetCollectionBase::Iter is not implemented and the
-    // following two methods just throw.
-
-    virtual RRsetCollectionBase::IterPtr getBeginning() {
-        isc_throw(NotImplemented, "This method is not implemented.");
-    }
-
-    virtual RRsetCollectionBase::IterPtr getEnd() {
-        isc_throw(NotImplemented, "This method is not implemented.");
-    }
 };
 
 //
