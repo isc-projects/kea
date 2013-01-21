@@ -200,29 +200,6 @@ class LoadZoneRunner:
         logger.info(LOADZONE_SQLITE3_USING_DEFAULT_CONFIG, default_db_file)
         return '{"database_file": "' + default_db_file + '"}'
 
-    def __cancel_create(self):
-        '''sqlite3-only hack: delete the zone just created on load failure.
-
-        This should eventually be done via generic datasrc API, but right now
-        we don't have that interface.  Leaving the zone in this situation
-        is too bad, so we handle it with a workaround.
-
-        '''
-        if self._datasrc_type is not 'sqlite3':
-            return
-
-        import sqlite3          # we need the module only here
-        import json
-
-        # If we are here, the following should basically succeed; since
-        # this is considered a temporary workaround we don't bother to catch
-        # and recover rare failure cases.
-        dbfile = json.loads(self._datasrc_config)['database_file']
-        with sqlite3.connect(dbfile) as conn:
-            cur = conn.cursor()
-            cur.execute("DELETE FROM zones WHERE name = ?",
-                        [self._zone_name.to_text()])
-
     def _report_progress(self, loaded_rrs):
         '''Dump the current progress report to stdout.
 
@@ -274,35 +251,13 @@ class LoadZoneRunner:
                 self.__loaded_rrs >= self._report_interval):
                 sys.stdout.write('\n')
         except Exception as ex:
-            # release any remaining lock held in the client/loader
-            loader, datasrc_client = None, None
+            # release any remaining lock held in the loader
+            loader = None
             if created:
-                self.__cancel_create()
+                datasrc_client.delete_zone(self._zone_name)
                 logger.error(LOADZONE_CANCEL_CREATE_ZONE, self._zone_name,
                              self._zone_class)
             raise LoadFailure(str(ex))
-
-    def _post_load_checks(self):
-        '''Perform minimal validity checks on the loaded zone.
-
-        We do this ourselves because the underlying library currently
-        doesn't do any checks.  Once the library support post-load validation
-        this check should be removed.
-
-        '''
-        datasrc_client = DataSourceClient(self._datasrc_type,
-                                          self._datasrc_config)
-        _, finder = datasrc_client.find_zone(self._zone_name) # should succeed
-        result = finder.find(self._zone_name, RRType.SOA())[0]
-        if result is not finder.SUCCESS:
-            self._post_load_warning('zone has no SOA')
-        result = finder.find(self._zone_name, RRType.NS())[0]
-        if result is not finder.SUCCESS:
-            self._post_load_warning('zone has no NS')
-
-    def _post_load_warning(self, msg):
-        logger.warn(LOADZONE_POSTLOAD_ISSUE, self._zone_name,
-                    self._zone_class, msg)
 
     def _set_signal_handlers(self):
         signal.signal(signal.SIGINT, self._interrupt_handler)
@@ -321,7 +276,6 @@ class LoadZoneRunner:
             total_elapsed_txt = "%.2f" % (time.time() - self.__start_time)
             logger.info(LOADZONE_DONE, self.__loaded_rrs, self._zone_name,
                         self._zone_class, total_elapsed_txt)
-            self._post_load_checks()
             return 0
         except BadArgument as ex:
             logger.error(LOADZONE_ARGUMENT_ERROR, ex)

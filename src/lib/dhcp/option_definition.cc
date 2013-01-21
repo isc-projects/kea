@@ -23,6 +23,8 @@
 #include <dhcp/option_int_array.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
 using namespace isc::util;
@@ -207,16 +209,29 @@ OptionDefinition::sanityCheckUniverse(const Option::Universe expected_universe,
 
 void
 OptionDefinition::validate() const {
+
+    using namespace boost::algorithm;
+
     std::ostringstream err_str;
-    if (name_.empty()) {
-        // Option name must not be empty.
-        err_str << "option name must not be empty.";
-    } else if (name_.find(" ") != string::npos) {
-        // Option name must not contain spaces.
-        err_str << "option name must not contain spaces.";
+
+    // Allowed characters in the option name are: lower or
+    // upper case letters, digits, underscores and hyphens.
+    // Empty option spaces are not allowed.
+    if (!all(name_, boost::is_from_range('a', 'z') ||
+             boost::is_from_range('A', 'Z') ||
+             boost::is_digit() ||
+             boost::is_any_of(std::string("-_"))) ||
+        name_.empty() ||
+        // Hyphens and underscores are not allowed at the beginning
+        // and at the end of the option name.
+        all(find_head(name_, 1), boost::is_any_of(std::string("-_"))) ||
+        all(find_tail(name_, 1), boost::is_any_of(std::string("-_")))) {
+        err_str << "invalid option name '" << name_ << "'";
+
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
         // Option definition must be of a known type.
         err_str << "option type value " << type_ << " is out of range.";
+
     } else if (array_type_) {
         if (type_ == OPT_STRING_TYPE) {
             // Array of strings is not allowed because there is no way
@@ -225,9 +240,12 @@ OptionDefinition::validate() const {
             err_str << "array of strings is not a valid option definition.";
         } else if (type_ == OPT_BINARY_TYPE) {
             err_str << "array of binary values is not a valid option definition.";
+
         } else if (type_ == OPT_EMPTY_TYPE) {
             err_str << "array of empty value is not a valid option definition.";
+
         }
+
     } else if (type_ == OPT_RECORD_TYPE) {
         // At least two data fields should be added to the record. Otherwise
         // non-record option definition could be used.
@@ -235,6 +253,7 @@ OptionDefinition::validate() const {
             err_str << "invalid number of data fields: " << getRecordFields().size()
                     << " specified for the option of type 'record'. Expected at"
                     << " least 2 fields.";
+
         } else {
             // If the number of fields is valid we have to check if their order
             // is valid too. We check that string or binary data fields are not

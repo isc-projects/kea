@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -39,9 +39,13 @@ namespace {
 class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
+        // make sure we start with a clean configuration
+        CfgMgr::instance().deleteSubnets4();
+        CfgMgr::instance().deleteSubnets6();
     }
 
     ~CfgMgrTest() {
+        // clean up after the test
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
@@ -346,5 +350,9 @@ TEST_F(CfgMgrTest, optionSpace6) {
 
     // @todo decide if a duplicate vendor space is allowed.
 }
+
+// No specific tests for getSubnet6. That method (2 overloaded versions) is tested
+// in Dhcpv6SrvTest.selectSubnetAddr and Dhcpv6SrvTest.selectSubnetIface
+// (see src/bin/dhcp6/tests/dhcp6_srv_unittest.cc)
 
 } // end of anonymous namespace

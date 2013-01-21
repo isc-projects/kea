@@ -46,14 +46,6 @@ in the zone file.  When this happens, the RRs loaded so far are
 effectively deleted from the zone, and the old version (if exists)
 will still remain valid for operations.
 
-% LOADZONE_POSTLOAD_ISSUE New version of zone %1/%2 has an issue: %3
-b10-loadzone detected a problem after a successful load of zone:
-either or both of SOA and NS records are missing at the zone origin.
-In the current implementation the load will not be canceled for such
-problems.  The operator will need to fix the issues and reload the
-zone; otherwise applications (such as b10-auth) that use this data
-source will not work as expected.
-
 % LOADZONE_SQLITE3_USING_DEFAULT_CONFIG Using default configuration with SQLite3 DB file %1
 The SQLite3 data source is specified as the data source type without a
 data source configuration.  b10-loadzone uses the default

@@ -38,12 +38,12 @@ OptionSpace::validateName(const std::string& name) {
     if (all(name, boost::is_from_range('a', 'z') ||
             boost::is_from_range('A', 'Z') ||
             boost::is_digit() ||
-            boost::is_any_of("-_")) &&
+            boost::is_any_of(std::string("-_"))) &&
         !name.empty() &&
         // Hyphens and underscores are not allowed at the beginning
         // and at the end of the option space name.
-        !all(find_head(name, 1), boost::is_any_of("-_")) &&
-        !all(find_tail(name, 1), boost::is_any_of("-_"))) {
+        !all(find_head(name, 1), boost::is_any_of(std::string("-_"))) &&
+        !all(find_tail(name, 1), boost::is_any_of(std::string("-_")))) {
         return (true);
 
     }

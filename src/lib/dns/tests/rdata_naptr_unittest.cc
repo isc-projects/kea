@@ -99,10 +99,12 @@ TEST_F(Rdata_NAPTR_Test, badText) {
     // Order or preference cannot be missed
     EXPECT_THROW(const NAPTR naptr("10 \"S\" SIP \"\" _sip._udp.example.com."),
                  InvalidRdataText);
-    // Fields must be seperated by spaces
+    // Unquoted fields must be seperated by spaces
     EXPECT_THROW(const NAPTR naptr("100 10S SIP \"\" _sip._udp.example.com."),
                  InvalidRdataText);
-    EXPECT_THROW(const NAPTR naptr("100 10 \"S\"\"SIP\" \"\" _sip._udp.example.com."),
+    EXPECT_THROW(const NAPTR naptr("10010 \"S\" \"SIP\" \"\" _sip._udp.example.com."),
+                 InvalidRdataText);
+    EXPECT_THROW(const NAPTR naptr("100 10 SSIP \"\" _sip._udp.example.com."),
                  InvalidRdataText);
     // Field cannot be missing
     EXPECT_THROW(const NAPTR naptr("100 10 \"S\""), InvalidRdataText);
@@ -126,6 +128,26 @@ TEST_F(Rdata_NAPTR_Test, createFromWire) {
     EXPECT_EQ(string("SIP+D2U"), naptr.getServices());
     EXPECT_EQ(string(""), naptr.getRegexp());
     EXPECT_EQ(Name("_sip._udp.example.com."), naptr.getReplacement());
+}
+
+TEST_F(Rdata_NAPTR_Test, createFromWireTooLongDataLen) {
+    static uint8_t naptr_rdata_long[] = {
+    0x00,0x0a,0x00,0x64,0x01,0x53,0x07,0x53,0x49,0x50,0x2b,0x44,0x32,0x55,
+    0x00,0x04,0x5f,0x73,0x69,0x70,0x04,0x5f,0x75,0x64,0x70,0x07,0x65,0x78,
+    0x61,0x6d,0x70,0x6c,0x65,0x03,0x63,0x6f,0x6d,0x00,0xff,0xff,0xff,0xff};
+    InputBuffer input_buffer(naptr_rdata_long, sizeof(naptr_rdata_long));
+    EXPECT_THROW(NAPTR naptr(input_buffer, sizeof(naptr_rdata_long)),
+                 isc::dns::DNSMessageFORMERR);
+}
+
+TEST_F(Rdata_NAPTR_Test, createFromWireTooShortDataLen) {
+    // missing data (just set rdata_len too low)
+    for (size_t i = 0; i < sizeof(naptr_rdata); ++i) {
+        // Just use existing correct buffer but set rdata_len too low
+        InputBuffer input_buffer(naptr_rdata, sizeof(naptr_rdata));
+        EXPECT_THROW(NAPTR naptr(input_buffer, i),
+                     isc::dns::DNSMessageFORMERR);
+    }
 }
 
 TEST_F(Rdata_NAPTR_Test, createFromLexer) {
@@ -161,6 +183,14 @@ TEST_F(Rdata_NAPTR_Test, toWireRenderer) {
 TEST_F(Rdata_NAPTR_Test, toText) {
     NAPTR naptr(naptr_str);
     EXPECT_EQ(naptr_str, naptr.toText());
+
+    // will add quotes even if they were not in the original input
+    EXPECT_EQ("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.",
+              NAPTR("10 100 S SIP+D2U .* _sip._udp.example.com.").toText());
+    // will not add additional quotes
+    EXPECT_EQ("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.",
+              NAPTR("10 100 \"S\" \"SIP+D2U\" \".*\" _sip._udp.example.com.")
+                .toText());
 }
 
 TEST_F(Rdata_NAPTR_Test, compare) {
@@ -177,16 +207,38 @@ TEST_F(Rdata_NAPTR_Test, compare) {
     NAPTR naptr_large5(naptr_str_large5);
 
     EXPECT_EQ(0, naptr.compare(NAPTR(naptr_str)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small1)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small2)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small3)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small4)));
-    EXPECT_EQ(1, naptr.compare(NAPTR(naptr_str_small5)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large1)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large2)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large3)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large4)));
-    EXPECT_EQ(-1, naptr.compare(NAPTR(naptr_str_large5)));
+    EXPECT_EQ(1, naptr.compare(naptr_small1));
+    EXPECT_EQ(1, naptr.compare(naptr_small2));
+    EXPECT_EQ(1, naptr.compare(naptr_small3));
+    EXPECT_EQ(1, naptr.compare(naptr_small4));
+    EXPECT_EQ(1, naptr.compare(naptr_small5));
+    EXPECT_EQ(-1, naptr.compare(naptr_large1));
+    EXPECT_EQ(-1, naptr.compare(naptr_large2));
+    EXPECT_EQ(-1, naptr.compare(naptr_large3));
+    EXPECT_EQ(-1, naptr.compare(naptr_large4));
+    EXPECT_EQ(-1, naptr.compare(naptr_large5));
+    EXPECT_EQ(-1, naptr_small1.compare(naptr));
+    EXPECT_EQ(-1, naptr_small2.compare(naptr));
+    EXPECT_EQ(-1, naptr_small3.compare(naptr));
+    EXPECT_EQ(-1, naptr_small4.compare(naptr));
+    EXPECT_EQ(-1, naptr_small5.compare(naptr));
+    EXPECT_EQ(1, naptr_large1.compare(naptr));
+    EXPECT_EQ(1, naptr_large2.compare(naptr));
+    EXPECT_EQ(1, naptr_large3.compare(naptr));
+    EXPECT_EQ(1, naptr_large4.compare(naptr));
+    EXPECT_EQ(1, naptr_large5.compare(naptr));
+}
+
+TEST_F(Rdata_NAPTR_Test, copy) {
+    NAPTR naptr(naptr_str);
+    NAPTR naptr2(naptr);
+    NAPTR naptr3 = naptr;
+
+    EXPECT_EQ(0, naptr.compare(naptr2));
+    EXPECT_EQ(0, naptr.compare(naptr3));
+
+    naptr3 = naptr;
+    EXPECT_EQ(0, naptr.compare(naptr3));
 }
 
 }

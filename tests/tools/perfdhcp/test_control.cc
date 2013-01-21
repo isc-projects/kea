@@ -1284,6 +1284,10 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     if (!pkt4) {
         isc_throw(Unexpected, "failed to create DISCOVER packet");
     }
+
+    // Delete the default Message Type option set by Pkt4
+    pkt4->delOption(DHO_DHCP_MESSAGE_TYPE);
+
     // Set options: DHCP_MESSAGE_TYPE and DHCP_PARAMETER_REQUEST_LIST
     OptionBuffer buf_msg_type;
     buf_msg_type.push_back(DHCPDISCOVER);
@@ -1371,11 +1375,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     const uint32_t transid = generateTransid();
     Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, transid));
-    OptionBuffer buf_msg_type;
-    buf_msg_type.push_back(DHCPREQUEST);
-    OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
-                                             buf_msg_type);
-    pkt4->addOption(opt_msg_type);
+
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
     if (CommandOptions::instance().isUseFirst() &&
@@ -1414,9 +1414,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     setDefaults4(socket, pkt4);
 
     // Set hardware address
-    const uint8_t* chaddr = offer_pkt4->getChaddr();
-    std::vector<uint8_t> mac_address(chaddr, chaddr + HW_ETHER_LEN);
-    pkt4->setHWAddr(HTYPE_ETHER, mac_address.size(), mac_address);
+    pkt4->setHWAddr(offer_pkt4->getHWAddr());
     // Set elapsed time.
     uint32_t elapsed_time = getElapsedTime<Pkt4Ptr>(discover_pkt4, offer_pkt4);
     pkt4->setSecs(static_cast<uint16_t>(elapsed_time / 1000));
@@ -1461,8 +1459,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                                   transid));
 
      // Set hardware address from OFFER packet received.
-    const uint8_t* chaddr = offer_pkt4->getChaddr();
-    std::vector<uint8_t> mac_address(chaddr, chaddr + HW_ETHER_LEN);
+    HWAddrPtr hwaddr = offer_pkt4->getHWAddr();
+    std::vector<uint8_t> mac_address(HW_ETHER_LEN, 0);
+    uint8_t hw_len = hwaddr->hwaddr_.size();
+    memcpy(&mac_address[0], &hwaddr->hwaddr_[0], hw_len > 16 ? 16 : hw_len);
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
     // Set elapsed time.

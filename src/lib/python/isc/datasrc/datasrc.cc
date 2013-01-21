@@ -21,6 +21,7 @@
 #include <datasrc/client.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/zone_loader.h>
 
 #include "datasrc.h"
 #include "client_python.h"
@@ -33,6 +34,9 @@
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
+
+#include <stdexcept>
+#include <string>
 
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
@@ -195,22 +199,20 @@ initModulePart_ZoneLoader(PyObject* mod) {
     }
     Py_INCREF(&zone_loader_type);
 
-    return (true);
-}
-
-bool
-initModulePart_ZoneUpdater(PyObject* mod) {
-    // We initialize the static description object with PyType_Ready(),
-    // then add it to the module. This is not just a check! (leaving
-    // this out results in segmentation faults)
-    if (PyType_Ready(&zoneupdater_type) < 0) {
+    try {
+        installClassVariable(zone_loader_type, "PROGRESS_UNKNOWN",
+                             Py_BuildValue("d", ZoneLoader::PROGRESS_UNKNOWN));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ZoneLoader initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in ZoneLoader initialization");
         return (false);
     }
-    void* zip = &zoneupdater_type;
-    if (PyModule_AddObject(mod, "ZoneUpdater", static_cast<PyObject*>(zip)) < 0) {
-        return (false);
-    }
-    Py_INCREF(&zoneupdater_type);
 
     return (true);
 }

@@ -48,6 +48,17 @@ public:
     {}
 };
 
+/// \brief Exception thrown when the zone doesn't pass post-load check.
+///
+/// This is thrown by the ZoneLoader when the zone is loaded, but it
+/// doesn't pass basic sanity checks.
+class ZoneContentError : public DataSourceError {
+public:
+    ZoneContentError(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what)
+    {}
+};
+
 /// \brief Class to load data into a data source client.
 ///
 /// This is a small wrapper class that is able to load data into a data source.
@@ -107,6 +118,7 @@ public:
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     /// \throw MasterFileError when the master_file is badly formatted or some
     ///     similar problem is found when loading the master file.
+    /// \throw ZoneContentError when the zone doesn't pass sanity check.
     void load() {
         while (!loadIncremental(1000)) { // 1000 is arbitrary largish number
             // Body intentionally left blank.
@@ -123,6 +135,12 @@ public:
     /// pauses in the loading for some purposes (for example reporting
     /// progress).
     ///
+    /// After the last RR is loaded, a sanity check of the zone is performed by
+    /// isc::dns::validateZone. It reports errors and warnings by logging them
+    /// directly. If there are any errors, a ZoneContentError exception is
+    /// thrown and the load is aborted (preserving the old version of zone, if
+    /// any).
+    ///
     /// \param limit The maximum allowed number of RRs to be loaded during this
     ///     call.
     /// \return True in case the loading is completed, false if there's more
@@ -133,12 +151,69 @@ public:
     /// \throw DataSourceError in case some error (possibly low-level) happens.
     /// \throw MasterFileError when the master_file is badly formatted or some
     ///     similar problem is found when loading the master file.
+    /// \throw ZoneContentError when the zone doesn't pass sanity check.
     /// \note If the limit is exactly the number of RRs available to be loaded,
     ///     the method still returns false and true'll be returned on the next
-    ///     call (which will load 0 RRs). This is because the end of iterator or
-    ///     master file is detected when reading past the end, not when the last
-    ///     one is read.
+    ///     call (which will load 0 RRs). This is because the end of iterator
+    ///     or master file is detected when reading past the end, not when the
+    ///     last one is read.
     bool loadIncremental(size_t limit);
+
+    /// \brief Return the number of RRs loaded.
+    ///
+    /// This method returns the number of RRs loaded via this loader by the
+    /// time of the call.  Before starting the load it will return 0.
+    /// It will return the total number of RRs of the zone on and after
+    /// completing the load.
+    ///
+    /// \throw None
+    size_t getRRCount() const;
+
+    /// \brief Return the current progress of the loader.
+    ///
+    /// This method returns the current estimated progress of loader as a
+    /// value between 0 and 1 (inclusive); it's 0 before starting the load,
+    /// and 1 at the completion, and a value between these (exclusive) in the
+    /// middle of loading.  It's an implementation detail how to calculate
+    /// the progress, which may vary depending on how the loader is
+    /// constructed and may even be impossible to detect effectively.
+    ///
+    /// If the progress cannot be determined, this method returns a special
+    /// value of PROGRESS_UNKNOWN, which is not included in the range between
+    /// 0 and 1.
+    ///
+    /// As such, the application should use the return value only for
+    /// informational purposes such as logging.  For example, it shouldn't
+    /// be used to determine whether loading is completed by comparing it
+    /// to 1.  It should also expect the possibility of getting
+    /// \c PROGRESS_UNKNOWN at any call to this method; it shouldn't assume
+    /// the specific way of internal implementation as described below (which
+    /// is provided for informational purposes only).
+    ///
+    /// In this implementation, if the loader is constructed with a file
+    /// name, the progress value is measured by the number of characters
+    /// read from the zone file divided by the size of the zone file
+    /// (with taking into account any included files).  Note that due to
+    /// the possibility of intermediate included files, the total file size
+    /// cannot be fully fixed until the completion of the load.  And, due to
+    /// this possibility, return values from this method may not always
+    /// increase monotonically.
+    ///
+    /// If it's constructed with another data source client, this method
+    /// always returns \c PROGRESS_UNKNOWN; in future, however, it may become
+    /// possible to return something more useful, e.g, based on the result
+    /// of \c getRRCount() and the total number of RRs if the underlying data
+    /// source can provide the latter value efficiently.
+    ///
+    /// \throw None
+    double getProgress() const;
+
+    /// \brief A special value for \c getProgress, meaning the progress is
+    /// unknown.
+    ///
+    /// See the method description for details.
+    static const double PROGRESS_UNKNOWN;
+
 private:
     /// \brief The iterator used as source of data in case of the copy mode.
     const ZoneIteratorPtr iterator_;
@@ -150,9 +225,14 @@ private:
     bool complete_;
     /// \brief Was the loading successful?
     bool loaded_ok_;
+    size_t rr_count_;
 };
 
 }
 }
 
-#endif
+#endif  // DATASRC_ZONE_LOADER_H
+
+// Local Variables:
+// mode: c++
+// End:
