@@ -22,13 +22,13 @@ import sys
 from cmdctl import *
 import isc.log
 
-SPEC_FILE_PATH = '..' + os.sep
-if 'CMDCTL_SPEC_PATH' in os.environ:
-    SPEC_FILE_PATH = os.environ['CMDCTL_SPEC_PATH'] + os.sep
-
 SRC_FILE_PATH = '..' + os.sep
 if 'CMDCTL_SRC_PATH' in os.environ:
     SRC_FILE_PATH = os.environ['CMDCTL_SRC_PATH'] + os.sep
+
+BUILD_FILE_PATH = '..' + os.sep
+if 'CMDCTL_BUILD_PATH' in os.environ:
+    BUILD_FILE_PATH = os.environ['CMDCTL_BUILD_PATH'] + os.sep
 
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
@@ -302,7 +302,7 @@ class MyCommandControl(CommandControl):
         return {}
 
     def _setup_session(self):
-        spec_file = SPEC_FILE_PATH + 'cmdctl.spec'
+        spec_file = BUILD_FILE_PATH + 'cmdctl.spec'
         module_spec = isc.config.module_spec_from_file(spec_file)
         config = isc.config.config_data.ConfigData(module_spec)
         self._module_name = 'Cmdctl'
@@ -472,7 +472,7 @@ class TestSecureHTTPServer(unittest.TestCase):
 
     def test_check_file(self):
         # Just some file that we know exists
-        file_name = SRC_FILE_PATH + 'cmdctl-keyfile.pem'
+        file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
         check_file(file_name)
         with UnreadableFile(file_name):
             self.assertRaises(CmdctlException, check_file, file_name)
@@ -481,8 +481,8 @@ class TestSecureHTTPServer(unittest.TestCase):
 
 
     def test_check_key_and_cert(self):
-        keyfile = SRC_FILE_PATH + 'cmdctl-keyfile.pem'
-        certfile = SRC_FILE_PATH + 'cmdctl-certfile.pem'
+        keyfile = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
+        certfile = BUILD_FILE_PATH + 'cmdctl-certfile.pem'
 
         # no exists
         self.assertRaises(CmdctlException, self.server._check_key_and_cert,
@@ -520,8 +520,8 @@ class TestSecureHTTPServer(unittest.TestCase):
 
         sock1 = socket.socket()
         self.server._wrap_socket_in_ssl_context(sock1,
-                          SRC_FILE_PATH + 'cmdctl-keyfile.pem',
-                          SRC_FILE_PATH + 'cmdctl-certfile.pem')
+                          BUILD_FILE_PATH + 'cmdctl-keyfile.pem',
+                          BUILD_FILE_PATH + 'cmdctl-certfile.pem')
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
