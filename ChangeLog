@@ -1,3 +1,11 @@
+5XX.	[func]		tomek
+	b10-dhcp4: The DHCPv4 server now generates a server identifier
+	the first time it is run. The identifier is preserved in a file
+	across server restarts.
+	b10-dhcp6: The server identifier is now preserved in a file across
+	server restarts.
+	(Trac #2597, git fa342a994de5dbefe32996be7eebe58f6304cff7)
+
 549.	[func]		tomek
 	b10-dhcp6: It is now possible to specify that a configured subnet
 	is reachable locally over specified interface (see "interface"
