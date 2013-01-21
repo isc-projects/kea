@@ -1,4 +1,19 @@
-5XX.	[func]		tomek
+552.    [bug]       shane
+    Build on Raspberry PI.
+	The main issue was use of char for reading from input streams,
+	which is incorrect, as EOF is returned as an int -1, which would
+	then get cast into a char -1.
+	A number of other minor issues were also fixed.
+	(Trac #2571, git 525333e187cc4bbbbde288105c9582c1024caa4a)
+
+551.    [bug]       shane
+	Kill msgq if we cannot connect to it on startup.
+	When the boss process was unable to connect to the msgq, it would
+	exit. However, it would leave the msgq process running. This has
+	been fixed, and the msgq is now stopped in this case.
+	(Trac #2608, git 016925ef2437e0396127e135c937d3a55539d224)
+
+550.	[func]		tomek
 	b10-dhcp4: The DHCPv4 server now generates a server identifier
 	the first time it is run. The identifier is preserved in a file
 	across server restarts.
