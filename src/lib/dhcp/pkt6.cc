@@ -90,7 +90,7 @@ Pkt6::packUDP() {
         bufferOut_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions6(bufferOut_, options_);
+        LibDHCP::packOptions(bufferOut_, options_);
     }
     catch (const Exception& e) {
         /// @todo: throw exception here once we turn this function to void.
