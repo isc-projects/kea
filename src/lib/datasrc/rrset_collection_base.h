@@ -27,9 +27,8 @@ class ZoneUpdater;
 
 /// \brief datasrc derivation of \c isc::dns::RRsetCollectionBase.
 ///
-/// This is an abstract class that adds datasrc related detail to
-/// \c isc::dns::RRsetCollectionBase. Derived classes need to complete
-/// the implementation (add iterator support, etc.) before using it.
+/// This is a default datasrc implementation of
+/// \c isc::dns::RRsetCollectionBase that adds datasrc related detail.
 class RRsetCollectionBase : public isc::dns::RRsetCollectionBase {
 public:
     /// \brief Constructor.
@@ -93,7 +92,10 @@ protected:
     /// \throw isc::dns::RRsetCollectionError if using the iterator
     /// results in some underlying datasrc error, or if \c disable() was
     /// called.
-    virtual IterPtr getBeginning() = 0;
+    /// \throw isc::NotImplemented as it's not implemented currently.
+    virtual IterPtr getBeginning() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
 
     /// \brief See \c isc::dns::RRsetCollectionBase::getEnd() for
     /// documentation.
@@ -101,7 +103,10 @@ protected:
     /// \throw isc::dns::RRsetCollectionError if using the iterator
     /// results in some underlying datasrc error, or if \c disable() was
     /// called.
-    virtual IterPtr getEnd() = 0;
+    /// \throw isc::NotImplemented as it's not implemented currently.
+    virtual IterPtr getEnd() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
 
 private:
     ZoneUpdater& updater_;
