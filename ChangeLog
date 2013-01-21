@@ -1,3 +1,8 @@
+553.    [func]      stephen
+	Values of the parameters to access the DHCP server lease database
+	can now be set through the BIND 10 configuration mechanism.
+	(Trac #2559, git 6c6f405188cc02d2358e114c33daff58edabd52a)
+
 552.    [bug]       shane
     Build on Raspberry PI.
 	The main issue was use of char for reading from input streams,
