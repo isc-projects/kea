@@ -14,66 +14,105 @@
 
 #include <config.h>
 
-#include <string>
-
-#include <boost/lexical_cast.hpp>
-
 #include <exceptions/exceptions.h>
-
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
+#include <dns/exceptions.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/character_string.h>
-#include <util/strutil.h>
+#include <dns/rdata/generic/detail/char_string.h>
+#include <util/buffer.h>
 
 using namespace std;
-using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::dns;
-using namespace isc::dns::characterstr;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+class HINFOImpl {
+public:
+    HINFOImpl(const std::string& hinfo_str) {
+        std::istringstream ss(hinfo_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-HINFO::HINFO(const std::string& hinfo_str) {
-    string::const_iterator input_iterator = hinfo_str.begin();
-
-    bool quoted;
-    cpu_ = getNextCharacterString(hinfo_str, input_iterator, &quoted);
-
-    skipLeftSpaces(hinfo_str, input_iterator, quoted);
-
-    os_ = getNextCharacterString(hinfo_str, input_iterator);
-
-    // Skip whitespace at the end.
-    while (input_iterator < hinfo_str.end() && isspace(*input_iterator)) {
-        ++input_iterator;
+        try {
+            parseHINFOData(lexer);
+            // Should be at end of data now
+            if (lexer.getNextToken(MasterToken::QSTRING, true).getType() !=
+                MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText,
+                          "Invalid HINFO text format: too many fields.");
+            }
+        } catch (const MasterLexer::LexerError& ex) {
+            isc_throw(InvalidRdataText, "Failed to construct HINFO RDATA from "
+                                        << hinfo_str << "': " << ex.what());
+        }
     }
-    if (input_iterator < hinfo_str.end()) {
-        isc_throw(InvalidRdataText,
-                  "Invalid HINFO text format: too many fields.");
-    }
-}
 
-HINFO::HINFO(InputBuffer& buffer, size_t rdata_len) {
-    cpu_ = getNextCharacterString(buffer, rdata_len);
-    os_ = getNextCharacterString(buffer, rdata_len);
-}
+    HINFOImpl(InputBuffer& buffer, size_t rdata_len) {
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, cpu);
+        rdata_len -= detail::bufferToCharString(buffer, rdata_len, os);
+        if (rdata_len != 0) {
+            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing " <<
+                      "HINFO RDATA: bytes left at end: " <<
+                      static_cast<int>(rdata_len));
+        }
+    }
+
+    HINFOImpl(MasterLexer& lexer)
+    {
+        parseHINFOData(lexer);
+    }
+
+private:
+    void
+    parseHINFOData(MasterLexer& lexer) {
+        MasterToken token = lexer.getNextToken(MasterToken::QSTRING);
+        stringToCharString(token.getStringRegion(), cpu);
+        token = lexer.getNextToken(MasterToken::QSTRING);
+        stringToCharString(token.getStringRegion(), os);
+    }
+
+public:
+    detail::CharString cpu;
+    detail::CharString os;
+};
+
+HINFO::HINFO(const std::string& hinfo_str) : impl_(new HINFOImpl(hinfo_str))
+{}
+
+
+HINFO::HINFO(InputBuffer& buffer, size_t rdata_len) :
+    impl_(new HINFOImpl(buffer, rdata_len))
+{}
 
 HINFO::HINFO(const HINFO& source):
-    Rdata(), cpu_(source.cpu_), os_(source.os_)
+    Rdata(), impl_(new HINFOImpl(*source.impl_))
 {
+}
+
+HINFO::HINFO(MasterLexer& lexer, const Name*,
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(new HINFOImpl(lexer))
+{}
+
+HINFO&
+HINFO::operator=(const HINFO& source)
+{
+    impl_.reset(new HINFOImpl(*source.impl_));
+    return (*this);
+}
+
+HINFO::~HINFO() {
 }
 
 std::string
 HINFO::toText() const {
     string result;
     result += "\"";
-    result += cpu_;
+    result += detail::charStringToString(impl_->cpu);
     result += "\" \"";
-    result += os_;
+    result += detail::charStringToString(impl_->os);
     result += "\"";
     return (result);
 }
@@ -92,49 +131,28 @@ int
 HINFO::compare(const Rdata& other) const {
     const HINFO& other_hinfo = dynamic_cast<const HINFO&>(other);
 
-    if (cpu_ < other_hinfo.cpu_) {
-        return (-1);
-    } else if (cpu_ > other_hinfo.cpu_) {
-        return (1);
+    const int cmp = compareCharStrings(impl_->cpu, other_hinfo.impl_->cpu);
+    if (cmp != 0) {
+        return (cmp);
     }
-
-    if (os_ < other_hinfo.os_) {
-        return (-1);
-    } else if (os_ > other_hinfo.os_) {
-        return (1);
-    }
-
-    return (0);
+    return (compareCharStrings(impl_->os, other_hinfo.impl_->os));
 }
 
-const std::string&
+const std::string
 HINFO::getCPU() const {
-    return (cpu_);
+    return (detail::charStringToString(impl_->cpu));
 }
 
-const std::string&
+const std::string
 HINFO::getOS() const {
-    return (os_);
+    return (detail::charStringToString(impl_->os));
 }
 
+template <typename T>
 void
-HINFO::skipLeftSpaces(const std::string& input_str,
-                      std::string::const_iterator& input_iterator,
-                      bool optional)
-{
-    if (input_iterator >= input_str.end()) {
-        isc_throw(InvalidRdataText,
-                  "Invalid HINFO text format: field is missing.");
-    }
-
-    if (!isspace(*input_iterator) && !optional) {
-        isc_throw(InvalidRdataText,
-            "Invalid HINFO text format: fields are not separated by space.");
-    }
-    // Skip white spaces
-    while (input_iterator < input_str.end() && isspace(*input_iterator)) {
-        ++input_iterator;
-    }
+HINFO::toWireHelper(T& outputer) const {
+    outputer.writeData(&impl_->cpu[0], impl_->cpu.size());
+    outputer.writeData(&impl_->os[0], impl_->os.size());
 }
 
 // END_RDATA_NAMESPACE

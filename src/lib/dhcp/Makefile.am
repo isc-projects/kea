@@ -16,6 +16,7 @@ lib_LTLIBRARIES = libb10-dhcp++.la
 libb10_dhcp___la_SOURCES  =
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += duid.cc duid.h
+libb10_dhcp___la_SOURCES += hwaddr.cc hwaddr.h
 libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc

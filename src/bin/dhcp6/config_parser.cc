@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
@@ -41,11 +42,23 @@
 #include <stdint.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
+
+// Forward declarations of some of the parser classes.
+// They are used to define pointer types for these classes.
+class BooleanParser;
+class StringParser;
+class Uint32Parser;
+
+// Pointers to various parser objects.
+typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
+typedef boost::shared_ptr<StringParser> StringParserPtr;
+typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 
 /// @brief Factory method that will create a parser for a given element name
 typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id);
@@ -62,18 +75,20 @@ typedef std::map<string, uint32_t> Uint32Storage;
 /// @brief Collection of elements that store string values.
 typedef std::map<string, string> StringStorage;
 
+/// @brief Storage for option definitions.
+typedef OptionSpaceContainer<OptionDefContainer,
+                             OptionDefinitionPtr> OptionDefStorage;
+
 /// @brief Collection of address pools.
 ///
 /// This type is used as intermediate storage, when pools are parsed, but there is
 /// no subnet object created yet to store them.
 typedef std::vector<isc::dhcp::Pool6Ptr> PoolStorage;
 
-/// @brief Collection of option descriptors.
-///
-/// This container allows to search options using an option code
-/// or a persistency flag. This is useful when merging existing
-/// options with newly configured options.
-typedef isc::dhcp::Subnet::OptionContainer OptionStorage;
+/// Collection of containers holding option spaces. Each container within
+/// a particular option space holds so-called option descriptors.
+typedef OptionSpaceContainer<Subnet::OptionContainer,
+                             Subnet::OptionDescriptor> OptionStorage;
 
 /// @brief Global uint32 parameters that will be used as defaults.
 Uint32Storage uint32_defaults;
@@ -83,6 +98,10 @@ StringStorage string_defaults;
 
 /// @brief Global storage for options that will be used as defaults.
 OptionStorage option_defaults;
+
+/// @brief Global storage for option definitions.
+OptionDefStorage option_def_intermediate;
+
 
 /// @brief a dummy configuration parser
 ///
@@ -159,7 +178,7 @@ public:
           value_(false) {
         // Empty parameter name is invalid.
         if (param_name_.empty()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser logic error:"
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
     }
@@ -170,7 +189,7 @@ public:
     ///
     /// @throw isc::InvalidOperation if a storage has not been set
     ///        prior to calling this function
-    /// @throw isc::dhcp::Dhcp6ConfigError if a provided parameter's
+    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
     ///        name is empty.
     virtual void build(ConstElementPtr value) {
         if (storage_ == NULL) {
@@ -178,7 +197,7 @@ public:
                       << " storage for the " << param_name_
                       << " value has not been set");
         } else if (param_name_.empty()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser logic error:"
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
         // The Config Manager checks if user specified a
@@ -247,7 +266,7 @@ public:
           param_name_(param_name) {
         // Empty parameter name is invalid.
         if (param_name_.empty()) {
-            isc_throw(Dhcp6ConfigError, "parser logic error:"
+            isc_throw(DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
     }
@@ -255,11 +274,11 @@ public:
     /// @brief Parses configuration configuration parameter as uint32_t.
     ///
     /// @param value pointer to the content of parsed values
-    /// @throw isc::dhcp::Dhcp6ConfigError if failed to parse
+    /// @throw isc::dhcp::DhcpConfigError if failed to parse
     ///        the configuration parameter as uint32_t value.
     virtual void build(ConstElementPtr value) {
         if (param_name_.empty()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser logic error:"
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
 
@@ -289,7 +308,7 @@ public:
         }
         // Invalid value provided.
         if (parse_error) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "Failed to parse value " << value->str()
+            isc_throw(isc::dhcp::DhcpConfigError, "Failed to parse value " << value->str()
                       << " as unsigned 32-bit integer.");
         }
     }
@@ -350,7 +369,7 @@ public:
           param_name_(param_name) {
         // Empty parameter name is invalid.
         if (param_name_.empty()) {
-            isc_throw(Dhcp6ConfigError, "parser logic error:"
+            isc_throw(DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
     }
@@ -360,10 +379,10 @@ public:
     /// Parses configuration parameter's value as string.
     ///
     /// @param value pointer to the content of parsed values
-    /// @throws Dhcp6ConfigError if the parsed parameter's name is empty.
+    /// @throws DhcpConfigError if the parsed parameter's name is empty.
     virtual void build(ConstElementPtr value) {
         if (param_name_.empty()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser logic error:"
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                       << "empty parameter name provided");
         }
         value_ = value->str();
@@ -526,7 +545,7 @@ public:
                     // be checked in Pool6 constructor.
                     len = boost::lexical_cast<int>(prefix_len);
                 } catch (...)  {
-                    isc_throw(Dhcp6ConfigError, "failed to parse pool "
+                    isc_throw(DhcpConfigError, "failed to parse pool "
                               "definition: " << text_pool->stringValue());
                 }
 
@@ -548,7 +567,7 @@ public:
                 continue;
             }
 
-            isc_throw(Dhcp6ConfigError, "failed to parse pool definition:"
+            isc_throw(DhcpConfigError, "failed to parse pool definition:"
                       << text_pool->stringValue() <<
                       ". Does not contain - (for min-max) nor / (prefix/len)");
         }
@@ -598,15 +617,20 @@ private:
 ///
 /// This parser parses configuration entries that specify value of
 /// a single option. These entries include option name, option code
-/// and data carried by the option. If parsing is successful then an
-/// instance of an option is created and added to the storage provided
-/// by the calling class.
-///
-/// @todo This class parses and validates the option name. However it is
-/// not used anywhere until support for option spaces is implemented
-/// (see tickets #2319, #2314). When option spaces are implemented
-/// there will be a way to reference the particular option using
-/// its type (code) or option name.
+/// and data carried by the option. The option data can be specified
+/// in one of the two available formats: binary value represented as
+/// a string of hexadecimal digits or a list of comma separated values.
+/// The format being used is controlled by csv-format configuration
+/// parameter. When setting this value to True, the latter format is
+/// used. The subsequent values in the CSV format apply to relevant
+/// option data fields in the configured option. For example the
+/// configuration: "data" : "192.168.2.0, 56, hello world" can be
+/// used to set values for the option comprising IPv4 address,
+/// integer and string data field. Note that order matters. If the
+/// order of values does not match the order of data fields within
+/// an option the configuration will not be accepted. If parsing
+/// is successful then an instance of an option is created and
+/// added to the storage provided by the calling class.
 class OptionDataParser : public DhcpConfigParser {
 public:
 
@@ -630,11 +654,10 @@ public:
     ///
     /// @param option_data_entries collection of entries that define value
     /// for a particular option.
-    /// @throw Dhcp6ConfigError if invalid parameter specified in
+    /// @throw DhcpConfigError if invalid parameter specified in
     /// the configuration.
     /// @throw isc::InvalidOperation if failed to set storage prior to
     /// calling build.
-    /// @throw isc::BadValue if option data storage is invalid.
     virtual void build(ConstElementPtr option_data_entries) {
 
         if (options_ == NULL) {
@@ -643,7 +666,8 @@ public:
         }
         BOOST_FOREACH(ConfigPair param, option_data_entries->mapValue()) {
             ParserPtr parser;
-            if (param.first == "name") {
+            if (param.first == "name" || param.first == "data" ||
+                param.first == "space") {
                 boost::shared_ptr<StringParser>
                     name_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
                 if (name_parser) {
@@ -657,13 +681,6 @@ public:
                     code_parser->setStorage(&uint32_values_);
                     parser = code_parser;
                 }
-            } else if (param.first == "data") {
-                boost::shared_ptr<StringParser>
-                    value_parser(dynamic_cast<StringParser*>(StringParser::factory(param.first)));
-                if (value_parser) {
-                    value_parser->setStorage(&string_values_);
-                    parser = value_parser;
-                }
             } else if (param.first == "csv-format") {
                 boost::shared_ptr<BooleanParser>
                     value_parser(dynamic_cast<BooleanParser*>(BooleanParser::factory(param.first)));
@@ -672,7 +689,7 @@ public:
                     parser = value_parser;
                 }
             } else {
-                isc_throw(Dhcp6ConfigError,
+                isc_throw(DhcpConfigError,
                           "parser error: option-data parameter not supported: "
                           << param.first);
             }
@@ -708,17 +725,22 @@ public:
                       " thus there is nothing to commit. Has build() been called?");
         }
         uint16_t opt_type = option_descriptor_.option->getType();
-        isc::dhcp::Subnet::OptionContainerTypeIndex& idx = options_->get<1>();
+        Subnet::OptionContainerPtr options = options_->getItems(option_space_);
+        // The getItems() should never return NULL pointer. If there are no
+        // options configured for the particular option space a pointer
+        // to an empty container should be returned.
+        assert(options);
+        Subnet::OptionContainerTypeIndex& idx = options->get<1>();
         // Try to find options with the particular option code in the main
         // storage. If found, remove these options because they will be
         // replaced with new one.
-        isc::dhcp::Subnet::OptionContainerTypeRange range =
+        Subnet::OptionContainerTypeRange range =
             idx.equal_range(opt_type);
         if (std::distance(range.first, range.second) > 0) {
             idx.erase(range.first, range.second);
         }
         // Append new option to the main storage.
-        options_->push_back(option_descriptor_);
+        options_->addItem(option_descriptor_, option_space_);
     }
 
     /// @brief Set storage for the parser.
@@ -746,39 +768,77 @@ private:
     /// is intitialized but this check is not needed here because it is done
     /// in the \ref build function.
     ///
-    /// @throw Dhcp6ConfigError if parameters provided in the configuration
+    /// @throw DhcpConfigError if parameters provided in the configuration
     /// are invalid.
     void createOption() {
 
         // Option code is held in the uint32_t storage but is supposed to
         // be uint16_t value. We need to check that value in the configuration
         // does not exceed range of uint16_t and is not zero.
-        uint32_t option_code = getUint32Param("code");
+        uint32_t option_code = getParam<uint32_t>("code", uint32_values_);
         if (option_code == 0) {
-            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
+            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
                       << " be equal to zero. Option code '0' is reserved in"
                       << " DHCPv6.");
         } else if (option_code > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(Dhcp6ConfigError, "Parser error: value of 'code' must not"
+            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
                       << " exceed " << std::numeric_limits<uint16_t>::max());
         }
         // Check that the option name has been specified, is non-empty and does not
         // contain spaces.
         // @todo possibly some more restrictions apply here?
-        std::string option_name = getStringParam("name");
+        std::string option_name = getParam<std::string>("name", string_values_);
         if (option_name.empty()) {
-            isc_throw(Dhcp6ConfigError, "Parser error: option name must not be"
+            isc_throw(DhcpConfigError, "Parser error: option name must not be"
                       << " empty");
         } else if (option_name.find(" ") != std::string::npos) {
-            isc_throw(Dhcp6ConfigError, "Parser error: option name must not contain"
+            isc_throw(DhcpConfigError, "Parser error: option name must not contain"
                       << " spaces");
         }
 
+        std::string option_space = getParam<std::string>("space", string_values_);
+        /// @todo Validate option space once #2313 is merged.
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp6" &&
+            LibDHCP::isStandardOption(Option::V6, option_code)) {
+            def = LibDHCP::getOptionDef(Option::V6, option_code);
+
+        } else if (option_space == "dhcp4") {
+            isc_throw(DhcpConfigError, "'dhcp4' option space name is reserved"
+                      << " for DHCPv4 server");
+        } else {
+            // If we are not dealing with a standard option then we
+            // need to search for its definition among user-configured
+            // options. They are expected to be in the global storage
+            // already.
+            OptionDefContainerPtr defs = option_def_intermediate.getItems(option_space);
+            // The getItems() should never return the NULL pointer. If there are
+            // no option definitions for the particular option space a pointer
+            // to an empty container should be returned.
+            assert(defs);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            OptionDefContainerTypeRange range = idx.equal_range(option_code);
+            if (std::distance(range.first, range.second) > 0) {
+                def = *range.first;
+            }
+            if (!def) {
+                isc_throw(DhcpConfigError, "definition for the option '"
+                          << option_space << "." << option_name
+                          << "' having code '" <<  option_code
+                          << "' does not exist");
+            }
+
+        }
+
         // Get option data from the configuration database ('data' field).
-        const std::string option_data = getStringParam("data");
-        const bool csv_format = getBooleanParam("csv-format");
+        const std::string option_data = getParam<std::string>("data", string_values_);
+        const bool csv_format = getParam<bool>("csv-format", boolean_values_);
+
+        // Transform string of hexadecimal digits into binary format.
         std::vector<uint8_t> binary;
         std::vector<std::string> data_tokens;
+
         if (csv_format) {
             // If the option data is specified as a string of comma
             // separated values then we need to split this string into
@@ -789,36 +849,22 @@ private:
             // Otherwise, the option data is specified as a string of
             // hexadecimal digits that we have to turn into binary format.
             try {
-                isc::util::encode::decodeHex(option_data, binary);
+                util::encode::decodeHex(option_data, binary);
             } catch (...) {
-                isc_throw(Dhcp6ConfigError, "Parser error: option data is not a valid"
+                isc_throw(DhcpConfigError, "Parser error: option data is not a valid"
                           << " string of hexadecimal digits: " << option_data);
             }
         }
-        // Get all existing DHCPv6 option definitions. The one that matches
-        // our option will be picked and used to create it.
-        OptionDefContainer option_defs = LibDHCP::getOptionDefs(Option::V6);
-        // Get search index #1. It allows searching for options definitions
-        // using option type value.
-        const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-        // Get all option definitions matching option code we want to create.
-        const OptionDefContainerTypeRange& range = idx.equal_range(option_code);
-        size_t num_defs = std::distance(range.first, range.second);
+
         OptionPtr option;
-        // Currently we do not allow duplicated definitions and if there are
-        // any duplicates we issue internal server error.
-        if (num_defs > 1) {
-            isc_throw(Dhcp6ConfigError, "Internal error: currently it is not"
-                      << " supported to initialize multiple option definitions"
-                      << " for the same option code. This will be supported once"
-                      << " there option spaces are implemented.");
-        } else if (num_defs == 0) {
+        if (!def) {
             if (csv_format) {
-                isc_throw(Dhcp6ConfigError, "the CSV option data format can be"
+                isc_throw(DhcpConfigError, "the CSV option data format can be"
                           " used to specify values for an option that has a"
                           " definition. The option with code " << option_code
                           << " does not have a definition.");
             }
+
             // @todo We have a limited set of option definitions intiialized at the moment.
             // In the future we want to initialize option definitions for all options.
             // Consequently an error will be issued if an option definition does not exist
@@ -832,9 +878,21 @@ private:
             option_descriptor_.option = option;
             option_descriptor_.persistent = false;
         } else {
-            // We have exactly one option definition for the particular option code
-            // use it to create the option instance.
-            const OptionDefinitionPtr& def = *(range.first);
+
+            // Option name should match the definition. The option name
+            // may seem to be redundant but in the future we may want
+            // to reference options and definitions using their names
+            // and/or option codes so keeping the option name in the
+            // definition of option value makes sense.
+            if (def->getName() != option_name) {
+                isc_throw(DhcpConfigError, "specified option name '"
+                          << option_name << " does not match the "
+                          << "option definition: '" << option_space
+                          << "." << def->getName() << "'");
+            }
+
+            // Option definition has been found so let's use it to create
+            // an instance of our option.
             try {
                 OptionPtr option = csv_format ?
                     def->optionFactory(Option::V6, option_code, data_tokens) :
@@ -843,56 +901,14 @@ private:
                 option_descriptor_.option = option;
                 option_descriptor_.persistent = false;
             } catch (const isc::Exception& ex) {
-                isc_throw(Dhcp6ConfigError, "Parser error: option data does not match"
-                          << " option definition (code " << option_code << "): "
+                isc_throw(DhcpConfigError, "option data does not match"
+                          << " option definition (space: " << option_space
+                          << ", code: " << option_code << "): "
                           << ex.what());
             }
         }
-    }
-
-    /// @brief Get a parameter from the strings storage.
-    ///
-    /// @param param_id parameter identifier.
-    ///
-    /// @throw Dhcp6ConfigError if a parameter has not been found.
-    /// @return a value of the string parameter.
-    std::string getStringParam(const std::string& param_id) const {
-        StringStorage::const_iterator param = string_values_.find(param_id);
-        if (param == string_values_.end()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser error: option-data parameter"
-                      << " '" << param_id << "' not specified");
-        }
-        return (param->second);
-    }
-
-    /// @brief Get a parameter from the uint32 values storage.
-    ///
-    /// @param param_id parameter identifier.
-    ///
-    /// @throw Dhcp6ConfigError if a parameter has not been found.
-    /// @return a value of the uint32_t parameter.
-    uint32_t getUint32Param(const std::string& param_id) const {
-        Uint32Storage::const_iterator param = uint32_values_.find(param_id);
-        if (param == uint32_values_.end()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser error: option-data parameter"
-                      << " '" << param_id << "' not specified");
-        }
-        return (param->second);
-    }
-
-    /// @brief Get a parameter from the boolean values storage.
-    ///
-    /// @param param_id parameter identifier.
-    ///
-    /// @throw isc::dhcp::Dhcp6ConfigError if a parameter has not been found.
-    /// @return a value of the boolean parameter.
-    bool getBooleanParam(const std::string& param_id) const {
-        BooleanStorage::const_iterator param = boolean_values_.find(param_id);
-        if (param == boolean_values_.end()) {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "parser error: option-data parameter"
-                      << " '" << param_id << "' not specified");
-        }
-        return (param->second);
+        // All went good, so we can set the option space name.
+        option_space_ = option_space;
     }
 
     /// Storage for uint32 values (e.g. option code).
@@ -906,6 +922,8 @@ private:
     OptionStorage* options_;
     /// Option descriptor holds newly configured option.
     isc::dhcp::Subnet::OptionDescriptor option_descriptor_;
+    /// Option space name where the option belongs to.
+    std::string option_space_;
 };
 
 /// @brief Parser for option data values within a subnet.
@@ -931,7 +949,7 @@ public:
     /// for options within a single subnet and creates options' instances.
     ///
     /// @param option_data_list pointer to a list of options' data sets.
-    /// @throw Dhcp6ConfigError if option parsing failed.
+    /// @throw DhcpConfigError if option parsing failed.
     void build(ConstElementPtr option_data_list) {
         BOOST_FOREACH(ConstElementPtr option_value, option_data_list->listValue()) {
             boost::shared_ptr<OptionDataParser> parser(new OptionDataParser("option-data"));
@@ -986,6 +1004,254 @@ public:
     ParserCollection parsers_;
 };
 
+/// @brief Parser for a single option definition.
+///
+/// This parser creates an instance of a single option definition.
+class OptionDefParser: DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor sets the pointer to the option definitions
+    /// storage to NULL. It must be set to point to the actual storage
+    /// before \ref build is called.
+    OptionDefParser(const std::string&)
+        : storage_(NULL) {
+    }
+
+    /// @brief Parses an entry that describes single option definition.
+    ///
+    /// @param option_def a configuration entry to be parsed.
+    ///
+    /// @throw DhcpConfigError if parsing was unsuccessful.
+    void build(ConstElementPtr option_def) {
+        if (storage_ == NULL) {
+            isc_throw(DhcpConfigError, "parser logic error: storage must be set"
+                      " before parsing option definition data");
+        }
+        // Parse the elements that make up the option definition.
+        BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
+            std::string entry(param.first);
+            ParserPtr parser;
+            if (entry == "name" || entry == "type" ||
+                entry == "record-types" || entry == "space") {
+                StringParserPtr
+                    str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
+                if (str_parser) {
+                    str_parser->setStorage(&string_values_);
+                    parser = str_parser;
+                }
+            } else if (entry == "code") {
+                Uint32ParserPtr
+                    code_parser(dynamic_cast<Uint32Parser*>(Uint32Parser::factory(entry)));
+                if (code_parser) {
+                    code_parser->setStorage(&uint32_values_);
+                    parser = code_parser;
+                }
+            } else if (entry == "array") {
+                BooleanParserPtr
+                    array_parser(dynamic_cast<BooleanParser*>(BooleanParser::factory(entry)));
+                if (array_parser) {
+                    array_parser->setStorage(&boolean_values_);
+                    parser = array_parser;
+                }
+            } else {
+                isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+            }
+
+            parser->build(param.second);
+            parser->commit();
+        }
+
+        // Create an instance of option definition.
+        createOptionDef();
+
+        // Get all items we collected so far for the particular option space.
+        OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
+        // Check if there are any items with option code the same as the
+        // one specified for the definition we are now creating.
+        const OptionDefContainerTypeIndex& idx = defs->get<1>();
+        const OptionDefContainerTypeRange& range =
+            idx.equal_range(option_definition_->getCode());
+        // If there are any items with this option code already we need
+        // to issue an error because we don't allow duplicates for
+        // option definitions within an option space.
+        if (std::distance(range.first, range.second) > 0) {
+            isc_throw(DhcpConfigError, "duplicated option definition for"
+                      << " code '" << option_definition_->getCode() << "'");
+        }
+    }
+
+    /// @brief Stores the parsed option definition in the data store.
+    void commit() {
+        // @todo validate option space name once 2313 is merged.
+        if (storage_ && option_definition_) {
+            storage_->addItem(option_definition_, option_space_name_);
+        }
+    }
+
+    /// @brief Sets a pointer to the data store.
+    ///
+    /// The newly created instance of an option definition will be
+    /// added to the data store given by the argument.
+    ///
+    /// @param storage pointer to the data store where the option definition
+    /// will be added to.
+    void setStorage(OptionDefStorage* storage) {
+        storage_ = storage;
+    }
+
+private:
+
+    /// @brief Create option definition from the parsed parameters.
+    void createOptionDef() {
+        // Get the option space name and validate it.
+        std::string space = getParam<std::string>("space", string_values_);
+        // @todo uncomment the code below when the #2313 is merged.
+        /*        if (!OptionSpace::validateName()) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << space << "'");
+                      } */
+
+        // Get other parameters that are needed to create the
+        // option definition.
+        std::string name = getParam<std::string>("name", string_values_);
+        uint32_t code = getParam<uint32_t>("code", uint32_values_);
+        std::string type = getParam<std::string>("type", string_values_);
+        bool array_type = getParam<bool>("array", boolean_values_);
+
+        OptionDefinitionPtr def(new OptionDefinition(name, code,
+                                                     type, array_type));
+        // The record-types field may carry a list of comma separated names
+        // of data types that form a record.
+        std::string record_types = getParam<std::string>("record-types",
+                                                         string_values_);
+        // Split the list of record types into tokens.
+        std::vector<std::string> record_tokens =
+            isc::util::str::tokens(record_types, ",");
+        // Iterate over each token and add a record type into
+        // option definition.
+        BOOST_FOREACH(std::string record_type, record_tokens) {
+            try {
+                boost::trim(record_type);
+                if (!record_type.empty()) {
+                    def->addRecordField(record_type);
+                }
+            } catch (const Exception& ex) {
+                isc_throw(DhcpConfigError, "invalid record type values"
+                          << " specified for the option  definition: "
+                          << ex.what());
+            }
+        }
+
+        // Check the option definition parameters are valid.
+        try {
+            def->validate();
+        } catch (const isc::Exception& ex) {
+            isc_throw(DhcpConfigError, "invalid option definition"
+                      << " parameters: " << ex.what());
+        }
+        // Option definition has been created successfully.
+        option_space_name_ = space;
+        option_definition_ = def;
+    }
+
+    /// Instance of option definition being created by this parser.
+    OptionDefinitionPtr option_definition_;
+    /// Name of the space the option definition belongs to.
+    std::string option_space_name_;
+
+    /// Pointer to a storage where the option definition will be
+    /// added when \ref commit is called.
+    OptionDefStorage* storage_;
+
+    /// Storage for boolean values.
+    BooleanStorage boolean_values_;
+    /// Storage for string values.
+    StringStorage string_values_;
+    /// Storage for uint32 values.
+    Uint32Storage uint32_values_;
+};
+
+/// @brief Parser for a list of option definitions.
+///
+/// This parser iterates over all configuration entries that define
+/// option definitions and creates instances of these definitions.
+/// If the parsing is successful, the collection of created definitions
+/// is put into the provided storage.
+class OptionDefListParser : DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor initializes the pointer to option definitions
+    /// storage to NULL value. This pointer has to be set to point to
+    /// the actual storage before the \ref build function is called.
+    OptionDefListParser(const std::string&) {
+    }
+
+    /// @brief Parse configuration entries.
+    ///
+    /// This function parses configuration entries and creates instances
+    /// of option definitions.
+    ///
+    /// @param option_def_list pointer to an element that holds entries
+    /// that define option definitions.
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void build(ConstElementPtr option_def_list) {
+        // Clear existing items in the global storage.
+        // We are going to replace all of them.
+        option_def_intermediate.clearItems();
+
+        if (!option_def_list) {
+            isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
+                      << " option definitions is NULL");
+        }
+
+        BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
+            boost::shared_ptr<OptionDefParser>
+                parser(new OptionDefParser("single-option-def"));
+            parser->setStorage(&option_def_intermediate);
+            parser->build(option_def);
+            parser->commit();
+        }
+    }
+
+    /// @brief Stores option definitions in the CfgMgr.
+    void commit() {
+
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+
+        cfg_mgr.deleteOptionDefs();
+
+        // We need to move option definitions from the temporary
+        // storage to the global storage.
+        std::list<std::string> space_names =
+            option_def_intermediate.getOptionSpaceNames();
+        BOOST_FOREACH(std::string space_name, space_names) {
+
+            BOOST_FOREACH(OptionDefinitionPtr def,
+                          *option_def_intermediate.getItems(space_name)) {
+                // All option definitions should be initialized to non-NULL
+                // values. The validation is expected to be made by the
+                // OptionDefParser when creating an option definition.
+                assert(def);
+                cfg_mgr.addOptionDef(def, space_name);
+            }
+        }
+    }
+
+    /// @brief Create an OptionDefListParser object.
+    ///
+    /// @param param_name configuration entry holding option definitions.
+    ///
+    /// @return OptionDefListParser object.
+    static DhcpConfigParser* factory(const std::string& param_name) {
+        return (new OptionDefListParser(param_name));
+    }
+
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
@@ -1003,7 +1269,7 @@ public:
     ///
     /// @param subnet pointer to the content of subnet definition
     ///
-    /// @throw isc::Dhcp6ConfigError if subnet configuration parsing failed.
+    /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
     void build(ConstElementPtr subnet) {
 
         BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
@@ -1029,7 +1295,7 @@ public:
                 // Appropriate parsers are created in the createSubnet6ConfigParser
                 // and they should be limited to those that we check here for. Thus,
                 // if we fail to find a matching parser here it is a programming error.
-                isc_throw(Dhcp6ConfigError, "failed to find suitable parser");
+                isc_throw(DhcpConfigError, "failed to find suitable parser");
             }
         }
 
@@ -1094,13 +1360,13 @@ private:
 
     /// @brief Create a new subnet using a data from child parsers.
     ///
-    /// @throw isc::dhcp::Dhcp6ConfigError if subnet configuration parsing failed.
+    /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing failed.
     void createSubnet() {
-        
+
         // Find a subnet string.
         StringStorage::const_iterator it = string_values_.find("subnet");
         if (it == string_values_.end()) {
-            isc_throw(Dhcp6ConfigError,
+            isc_throw(DhcpConfigError,
                       "Mandatory subnet definition in subnet missing");
         }
         // Remove any spaces or tabs.
@@ -1114,7 +1380,7 @@ private:
         // need to get all characters preceding "/".
         size_t pos = subnet_txt.find("/");
         if (pos == string::npos) {
-            isc_throw(Dhcp6ConfigError,
+            isc_throw(DhcpConfigError,
                       "Invalid subnet syntax (prefix/len expected):" << it->second);
         }
 
@@ -1133,6 +1399,15 @@ private:
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
+        // Get interface name. If it is defined, then the subnet is available
+        // directly over specified network interface.
+
+        string iface;
+        StringStorage::const_iterator iface_iter = string_values_.find("interface");
+        if (iface_iter != string_values_.end()) {
+            iface = iface_iter->second;
+        }
+
         /// @todo: Convert this to logger once the parser is working reliably
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
@@ -1146,42 +1421,72 @@ private:
 
         // Add pools to it.
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
-            subnet_->addPool6(*it);
+            subnet_->addPool(*it);
         }
 
-        Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");
-        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-
-        // Add subnet specific options.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, options_) {
-            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
-            if (std::distance(range.first, range.second) > 0) {
-                LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
-                    .arg(desc.option->getType()).arg(addr.toText());
+        // Configure interface, if defined
+        if (!iface.empty()) {
+            if (!IfaceMgr::instance().getIface(iface)) {
+                isc_throw(DhcpConfigError, "Specified interface name " << iface
+                          << " for subnet " << subnet_->toText() << " is not present"
+                          << " in the system.");
             }
-            subnet_->addOption(desc.option, false, "dhcp6");
+
+            subnet_->setIface(iface);
+        }
+
+        // We are going to move configured options to the Subnet object.
+        // Configured options reside in the container where options
+        // are grouped by space names. Thus we need to get all space names
+        // and iterate over all options that belong to them.
+        std::list<std::string> space_names = options_.getOptionSpaceNames();
+        BOOST_FOREACH(std::string option_space, space_names) {
+            // Get all options within a particular option space.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc,
+                          *options_.getItems(option_space)) {
+                // The pointer should be non-NULL. The validation is expected
+                // to be performed by the OptionDataParser before adding an
+                // option descriptor to the container.
+                assert(desc.option);
+                // We want to check whether an option with the particular
+                // option code has been already added. If so, we want
+                // to issue a warning.
+                Subnet::OptionDescriptor existing_desc =
+                    subnet_->getOptionDescriptor("option_space",
+                                                 desc.option->getType());
+                if (existing_desc.option) {
+                    LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
+                        .arg(desc.option->getType()).arg(addr.toText());
+                }
+                // In any case, we add the option to the subnet.
+                subnet_->addOption(desc.option, false, option_space);
+            }
         }
 
         // Check all global options and add them to the subnet object if
         // they have been configured in the global scope. If they have been
         // configured in the subnet scope we don't add global option because
         // the one configured in the subnet scope always takes precedence.
-        BOOST_FOREACH(Subnet::OptionDescriptor desc, option_defaults) {
-            // Get all options specified locally in the subnet and having
-            // code equal to global option's code.
-            Subnet::OptionContainerPtr options = subnet_->getOptionDescriptors("dhcp6");
-            const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
-            Subnet::OptionContainerTypeRange range = idx.equal_range(desc.option->getType());
-            // @todo: In the future we will be searching for options using either
-            // an option code or namespace. Currently we have only the option
-            // code available so if there is at least one option found with the
-            // specific code we don't add the globally configured option.
-            // @todo with this code the first globally configured option
-            // with the given code will be added to a subnet. We may
-            // want to issue a warning about dropping the configuration of
-            // a global option if one already exsists.
-            if (std::distance(range.first, range.second) == 0) {
-                subnet_->addOption(desc.option, false, "dhcp6");
+        space_names = option_defaults.getOptionSpaceNames();
+        BOOST_FOREACH(std::string option_space, space_names) {
+            // Get all global options for the particular option space.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc,
+                          *option_defaults.getItems(option_space)) {
+                // The pointer should be non-NULL. The validation is expected
+                // to be performed by the OptionDataParser before adding an
+                // option descriptor to the container.
+                assert(desc.option);
+                // Check if the particular option has been already added.
+                // This would mean that it has been configured in the
+                // subnet scope. Since option values configured in the
+                // subnet scope take precedence over globally configured
+                // values we don't add option from the global storage
+                // if there is one already.
+                Subnet::OptionDescriptor existing_desc =
+                    subnet_->getOptionDescriptor(option_space, desc.option->getType());
+                if (!existing_desc.option) {
+                    subnet_->addOption(desc.option, false, option_space);
+                }
             }
         }
     }
@@ -1191,7 +1496,7 @@ private:
     /// @param config_id name od the entry
     ///
     /// @return parser object for specified entry name
-    /// @throw isc::dhcp::Dhcp6ConfigError if trying to create a parser
+    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
     ///        for unknown config element
     DhcpConfigParser* createSubnet6ConfigParser(const std::string& config_id) {
         FactoryMap factories;
@@ -1203,13 +1508,14 @@ private:
         factories["subnet"] = StringParser::factory;
         factories["pool"] = PoolParser::factory;
         factories["option-data"] = OptionDataListParser::factory;
+        factories["interface"] = StringParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
             // Used for debugging only.
             // return new DebugParser(config_id);
 
-            isc_throw(isc::dhcp::Dhcp6ConfigError,
+            isc_throw(isc::dhcp::DhcpConfigError,
                       "parser error: subnet6 parameter not supported: "
                       << config_id);
         }
@@ -1224,7 +1530,7 @@ private:
     ///
     /// @param name name of the parameter
     /// @return triplet with the parameter name
-    /// @throw Dhcp6ConfigError when requested parameter is not present
+    /// @throw DhcpConfigError when requested parameter is not present
     isc::dhcp::Triplet<uint32_t> getParam(const std::string& name) {
         uint32_t value = 0;
         bool found = false;
@@ -1243,7 +1549,7 @@ private:
         if (found) {
             return (isc::dhcp::Triplet<uint32_t>(value));
         } else {
-            isc_throw(isc::dhcp::Dhcp6ConfigError, "Mandatory parameter " << name
+            isc_throw(isc::dhcp::DhcpConfigError, "Mandatory parameter " << name
                       << " missing (no global default and no subnet-"
                       << "specific value)");
         }
@@ -1353,6 +1659,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     factories["interface"] = InterfaceListConfigParser::factory;
     factories["subnet6"] = Subnets6ListConfigParser::factory;
     factories["option-data"] = OptionDataListParser::factory;
+    factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
     factories["lease-database"] = DbAccessParser::factory;
 
@@ -1369,7 +1676,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
 }
 
 ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
+configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -1382,18 +1689,18 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START).arg(config_set->str());
 
     // Some of the values specified in the configuration depend on
-    // other values. Typically, the values in the subnet6 structure
-    // depend on the global values. Thus we need to make sure that
-    // the global values are processed first and that they can be
-    // accessed by the subnet6 parsers. We separate parsers that
-    // should process data first (independent_parsers) from those
-    // that must process data when the independent data is already
-    // processed (dependent_parsers).
+    // other values. Typically, the values in the subnet4 structure
+    // depend on the global values. Also, option values configuration
+    // must be performed after the option definitions configurations.
+    // Thus we group parsers and will fire them in the right order:
+    // all parsers other than subnet4 and option-data parser,
+    // option-data parser, subnet4 parser.
     ParserCollection independent_parsers;
-    ParserCollection dependent_parsers;
+    ParserPtr subnet_parser;
+    ParserPtr option_parser;
 
     // The subnet parsers implement data inheritance by directly
-    // accessing global storages. For this reason the global data
+    // accessing global storage. For this reason the global data
     // parsers must store the parsed data into global storages
     // immediately. This may cause data inconsistency if the
     // parsing operation fails after the global storage has been
@@ -1402,25 +1709,35 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     Uint32Storage uint32_local(uint32_defaults);
     StringStorage string_local(string_defaults);
     OptionStorage option_local(option_defaults);
+    OptionDefStorage option_def_local(option_def_intermediate);
 
     // answer will hold the result.
     ConstElementPtr answer;
     // rollback informs whether error occured and original data
     // have to be restored to global storages.
     bool rollback = false;
-    // config_pair holds the details of the current parser when iterating over
-    // parser.  It is declared outside the loops so in case of an error, the
-    // name of the failing parser can be retrieved in the "catch" clause.
+    // config_pair holds ther details of the current parser when iterating over
+    // the parsers.  It is declared outside the loop so in case of error, the
+    // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;
     try {
-        // Iterate over all independent parsers first (all but subnet6)
-        // and try to parse the data.
-        BOOST_FOREACH(config_pair, config_set->mapValue()) {
-            if (config_pair.first != "subnet6") {
-                ParserPtr parser(createGlobalDhcpConfigParser(
-                                     config_pair.first));
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED1)
-                          .arg(config_pair.first);
+
+        // Make parsers grouping.
+        const std::map<std::string, ConstElementPtr>& values_map =
+            config_set->mapValue();
+        BOOST_FOREACH(config_pair, values_map) {
+            ParserPtr parser(createGlobalDhcpConfigParser(config_pair.first));
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
+                      .arg(config_pair.first);
+            if (config_pair.first == "subnet6") {
+                subnet_parser = parser;
+
+            } else if (config_pair.first == "option-data") {
+                option_parser = parser;
+
+            } else {
+                // Those parsers should be started before other
+                // parsers so we can call build straight away.
                 independent_parsers.push_back(parser);
                 parser->build(config_pair.second);
                 // The commit operation here may modify the global storage
@@ -1430,16 +1747,19 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
             }
         }
 
-        // Process dependent configuration data.
-        BOOST_FOREACH(config_pair, config_set->mapValue()) {
-            if (config_pair.first == "subnet6") {
-                ParserPtr parser(createGlobalDhcpConfigParser(
-                                     config_pair.first));
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED2)
-                          .arg(config_pair.first);
-                dependent_parsers.push_back(parser);
-                parser->build(config_pair.second);
-            }
+        // The option values parser is the next one to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator option_config =
+            values_map.find("option-data");
+        if (option_config != values_map.end()) {
+            option_parser->build(option_config->second);
+            option_parser->commit();
+        }
+
+        // The subnet parser is the last one to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
+            values_map.find("subnet6");
+        if (subnet_config != values_map.end()) {
+            subnet_parser->build(subnet_config->second);
         }
 
     } catch (const isc::Exception& ex) {
@@ -1466,22 +1786,21 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            BOOST_FOREACH(ParserPtr parser, dependent_parsers) {
-                parser->commit();
+            if (subnet_parser) {
+                subnet_parser->commit();
             }
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed:") 
-                                          + ex.what());
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed:") + ex.what());
             // An error occured, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed"));
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed"));
             // An error occured, so make sure to restore the original data.
             rollback = true;
         }
@@ -1492,6 +1811,7 @@ configureDhcp6Server(Dhcpv6Srv& , ConstElementPtr config_set) {
         std::swap(uint32_defaults, uint32_local);
         std::swap(string_defaults, string_local);
         std::swap(option_defaults, option_local);
+        std::swap(option_def_intermediate, option_def_local);
         return (answer);
     }
 

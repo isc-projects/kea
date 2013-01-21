@@ -25,6 +25,19 @@
 namespace isc {
 namespace dns {
 
+/// \brief Error during RRsetCollectionBase find() operation
+///
+/// This exception is thrown when an calling implementation of
+/// \c RRsetCollectionBase::find() results in an error which is not due
+/// to unmatched data, but because of some other underlying error
+/// condition.
+class RRsetCollectionError : public Exception {
+public:
+    RRsetCollectionError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
+
 /// \brief Generic class to represent a set of RRsets.
 ///
 /// This is a generic container and the stored set of RRsets does not
@@ -44,6 +57,17 @@ public:
     /// given \c name, \c rrclass and \c rrtype.  If no matching RRset
     /// is found, \c NULL is returned.
     ///
+    /// This method's implementations currently are not specified to
+    /// handle \c RRTypes such as RRSIG and NSEC3. RRSIGs are attached
+    /// to their corresponding \c RRset and it is not straightforward to
+    /// search for them. Searching for RRSIGs will return \c false
+    /// always. Support for RRSIGs may be added in the future.
+    ///
+    /// Non-concrete types such as ANY and AXFR are unsupported and will
+    /// return \c false always.
+    ///
+    /// \throw RRsetCollectionError if find() results in some
+    /// implementation-specific error.
     /// \param name The name of the RRset to search for.
     /// \param rrtype The type of the RRset to search for.
     /// \param rrclass The class of the RRset to search for.
@@ -72,6 +96,8 @@ protected:
     /// iterator only.
     class Iter {
     public:
+        virtual ~Iter() {};
+
         /// \brief Returns the \c AbstractRRset currently pointed to by
         /// the iterator.
         virtual const isc::dns::AbstractRRset& getValue() = 0;
@@ -94,10 +120,16 @@ protected:
 
     /// \brief Returns an \c IterPtr wrapping an Iter pointing to the
     /// beginning of the collection.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error.
     virtual IterPtr getBeginning() = 0;
 
     /// \brief Returns an \c IterPtr wrapping an Iter pointing past the
     /// end of the collection.
+    ///
+    /// \throw isc::dns::RRsetCollectionError if using the iterator
+    /// results in some underlying datasrc error.
     virtual IterPtr getEnd() = 0;
 
 public:
@@ -152,6 +184,8 @@ public:
       return Iterator(getEnd());
     }
 };
+
+typedef boost::shared_ptr<RRsetCollectionBase> RRsetCollectionPtr;
 
 } // end of namespace dns
 } // end of namespace isc

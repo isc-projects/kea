@@ -41,7 +41,8 @@ namespace isc {
 namespace dns {
 namespace rdata {
 RdataTest::RdataTest() :
-    obuffer(0), rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
+    obuffer(0), rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0")),
+    loader_cb(MasterLoaderCallbacks::getNullCallbacks())
 {}
 
 RdataPtr

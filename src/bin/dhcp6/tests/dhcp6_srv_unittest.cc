@@ -29,12 +29,13 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
-
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -72,18 +73,28 @@ public:
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
+    using Dhcpv6Srv::loadServerID;
+    using Dhcpv6Srv::writeServerID;
 };
+
+static const char* DUID_FILE = "server-id-test.txt";
 
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
+    /// Name of the server-id file (used in server-id tests)
+
     // these are empty for now, but let's keep them around
     Dhcpv6SrvTest() : rcode_(-1) {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
         pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-        subnet_->addPool6(pool_);
+        subnet_->addPool(pool_);
 
+        CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
+
+        // it's ok if that fails. There should not be such a file anyway
+        unlink(DUID_FILE);
     }
 
     // Generate IA_NA option with specified parameters
@@ -253,6 +264,9 @@ public:
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
+
+        // Let's clean up if there is such a file.
+        unlink(DUID_FILE);
     };
 
     // A subnet used in most tests
@@ -377,14 +391,16 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "    \"pool\": [ \"2001:db8:1::/64\" ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"OPTION_DNS_SERVERS\","
+        "          \"name\": \"dns-servers\","
+        "          \"space\": \"dhcp6\","
         "          \"code\": 23,"
         "          \"data\": \"2001:db8:1234:FFFF::1, 2001:db8:1234:FFFF::2\","
         "          \"csv-format\": True"
         "        },"
         "        {"
-        "          \"name\": \"OPTION_FOO\","
-        "          \"code\": 1000,"
+        "          \"name\": \"subscriber-id\","
+        "          \"space\": \"dhcp6\","
+        "          \"code\": 38,"
         "          \"data\": \"1234\","
         "          \"csv-format\": False"
         "        } ]"
@@ -413,18 +429,18 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // check if we get response at all
     ASSERT_TRUE(adv);
 
-    // We have not requested option with code 1000 so it should not
+    // We have not requested any options so they should not
     // be included in the response.
-    ASSERT_FALSE(adv->getOption(1000));
+    ASSERT_FALSE(adv->getOption(D6O_SUBSCRIBER_ID));
     ASSERT_FALSE(adv->getOption(D6O_NAME_SERVERS));
 
-    // Let's now request option with code 1000.
-    // We expect that server will include this option in its reply.
+    // Let's now request some options. We expect that the server
+    // will include them in its response.
     boost::shared_ptr<OptionIntArray<uint16_t> >
         option_oro(new OptionIntArray<uint16_t>(Option::V6, D6O_ORO));
     // Create vector with two option codes.
     std::vector<uint16_t> codes(2);
-    codes[0] = 1000;
+    codes[0] = D6O_SUBSCRIBER_ID;
     codes[1] = D6O_NAME_SERVERS;
     // Pass this code to option.
     option_oro->setValues(codes);
@@ -449,7 +465,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // There is a dummy option with code 1000 we requested from a server.
     // Expect that this option is in server's response.
-    tmp = adv->getOption(1000);
+    tmp = adv->getOption(D6O_SUBSCRIBER_ID);
     ASSERT_TRUE(tmp);
 
     // Check that the option contains valid data (from configuration).
@@ -616,7 +632,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
 
 // This test checks that the server is offering different addresses to different
 // clients in ADVERTISEs. Please note that ADVERTISE is not a guarantee that such
-// and address will be assigned. Had the pool was very small and contained only
+// an address will be assigned. Had the pool was very small and contained only
 // 2 addresses, the third client would get the same advertise as the first one
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. ADVERTISE is basically saying "if you send me a request, you will
@@ -1299,6 +1315,151 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// source address.
+TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    // CASE 1: We have only one subnet defined and we received local traffic.
+    // The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and we received relayed traffic.
+    // We should NOT select it.
+
+    // Identical steps as in case 1, but repeated for clarity
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have three subnets defined and we received local traffic.
+    // Nothing should be selected.
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 4: We have three subnets defined and we received relayed traffic
+    // that came out of subnet 2. We should select subnet2 then
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:2::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 5: We have three subnets defined and we received relayed traffic
+    // that came out of undefined subnet. We should select nothing
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// network interface name.
+TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    subnet1->setIface("eth0");
+    subnet3->setIface("wifi1");
+
+    // CASE 1: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth0. The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setIface("eth0");
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    pkt->setIface("eth1");
+
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have only 3 subnets defined, one over eth0, one remote and
+    // one over wifi1.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+
+    pkt->setIface("eth0");
+    EXPECT_EQ(subnet1, srv.selectSubnet(pkt));
+
+    pkt->setIface("eth3"); // no such interface
+    EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt)); // nothing selected
+
+    pkt->setIface("wifi1");
+    EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+}
+
+// This test verifies if the server-id disk operations (read, write) are
+// working properly.
+TEST_F(Dhcpv6SrvTest, ServerID) {
+    NakedDhcpv6Srv srv(0);
+
+    string duid1_text = "01:ff:02:03:06:80:90:ab:cd:ef";
+    uint8_t duid1[] = { 0x01, 0xff, 2, 3, 6, 0x80, 0x90, 0xab, 0xcd, 0xef };
+    OptionBuffer expected_duid1(duid1, duid1 + sizeof(duid1));
+
+    fstream file1(DUID_FILE, ios::out | ios::trunc);
+    file1 << duid1_text;
+    file1.close();
+
+    // Test reading from a file
+    EXPECT_TRUE(srv.loadServerID(DUID_FILE));
+    ASSERT_TRUE(srv.getServerID());
+    ASSERT_EQ(sizeof(duid1) + Option::OPTION6_HDR_LEN, srv.getServerID()->len());
+    ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
+
+    // Now test writing to a file
+    EXPECT_EQ(0, unlink(DUID_FILE));
+    EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
+
+    fstream file2(DUID_FILE, ios::in);
+    ASSERT_TRUE(file2.good());
+    string text;
+    file2 >> text;
+    file2.close();
+
+    EXPECT_EQ(duid1_text, text);
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

@@ -19,6 +19,7 @@
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
@@ -117,13 +118,25 @@ DatabaseClient::findZone(const Name& name) const {
 }
 
 bool
-DatabaseClient::createZone(const Name& name) {
+DatabaseClient::createZone(const Name& zone_name) {
     TransactionHolder transaction(*accessor_);
-    std::pair<bool, int> zone(accessor_->getZone(name.toText()));
+    const std::pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
     if (zone.first) {
         return (false);
     }
-    accessor_->addZone(name.toText());
+    accessor_->addZone(zone_name.toText());
+    transaction.commit();
+    return (true);
+}
+
+bool
+DatabaseClient::deleteZone(const Name& zone_name) {
+    TransactionHolder transaction(*accessor_);
+    const std::pair<bool, int> zinfo(accessor_->getZone(zone_name.toText()));
+    if (!zinfo.first) {         // if it doesn't exist just return false
+        return (false);
+    }
+    accessor_->deleteZone(zinfo.second);
     transaction.commit();
     return (true);
 }
@@ -1372,6 +1385,36 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
     return (iterator);
 }
 
+/// \brief datasrc implementation of RRsetCollectionBase.
+class RRsetCollection : public isc::datasrc::RRsetCollectionBase {
+public:
+    /// \brief Constructor.
+    RRsetCollection(ZoneUpdater& updater, const isc::dns::RRClass& rrclass) :
+        isc::datasrc::RRsetCollectionBase(updater, rrclass)
+    {}
+
+    /// \brief Destructor
+    virtual ~RRsetCollection() {}
+
+    /// \brief A wrapper around \c disable() so that it can be used as a
+    /// public method. \c disable() is protected.
+    void disableWrapper() {
+        disable();
+    }
+
+protected:
+    // TODO: RRsetCollectionBase::Iter is not implemented and the
+    // following two methods just throw.
+
+    virtual RRsetCollectionBase::IterPtr getBeginning() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
+
+    virtual RRsetCollectionBase::IterPtr getEnd() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
+};
+
 //
 // Zone updater using some database system as the underlying data source.
 //
@@ -1411,6 +1454,15 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
+    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
+        if (!rrset_collection_) {
+            // This is only assigned the first time and remains for the
+            // lifetime of the DatabaseUpdater.
+            rrset_collection_.reset(new RRsetCollection(*this, zone_class_));
+        }
+        return (*rrset_collection_);
+    }
+
     virtual void addRRset(const AbstractRRset& rrset);
     virtual void deleteRRset(const AbstractRRset& rrset);
     virtual void commit();
@@ -1435,6 +1487,7 @@ private:
     DiffPhase diff_phase_;
     Serial serial_;
     boost::scoped_ptr<DatabaseClient::Finder> finder_;
+    boost::shared_ptr<isc::datasrc::RRsetCollection> rrset_collection_;
 
     // This is a set of validation checks commonly used for addRRset() and
     // deleteRRset to minimize duplicate code logic and to make the main
@@ -1565,6 +1618,14 @@ isNSEC3KindType(RRType rrtype, const Rdata& rdata) {
 
 void
 DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
+    if (rrset_collection_) {
+        isc_throw(InvalidOperation,
+                  "Cannot add RRset after an RRsetCollection has been "
+                  "requested for ZoneUpdater for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+
     validateAddOrDelete("add", rrset, DELETE, ADD);
 
     // It's guaranteed rrset has at least one RDATA at this point.
@@ -1615,6 +1676,14 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
 
 void
 DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
+    if (rrset_collection_) {
+        isc_throw(InvalidOperation,
+                  "Cannot delete RRset after an RRsetCollection has been "
+                  "requested for ZoneUpdater for "
+                  << zone_name_ << "/" << zone_class_ << " on "
+                  << db_name_);
+    }
+
     // If this is the first operation, pretend we are starting a new delete
     // sequence after adds.  This will simplify the validation below.
     if (diff_phase_ == NOT_STARTED) {
@@ -1668,6 +1737,11 @@ DatabaseUpdater::commit() {
     }
     accessor_->commit();
     committed_ = true; // make sure the destructor won't trigger rollback
+
+    // Disable the RRsetCollection if it exists.
+    if (rrset_collection_) {
+        rrset_collection_->disableWrapper();
+    }
 
     // We release the accessor immediately after commit is completed so that
     // we don't hold the possible internal resource any longer.

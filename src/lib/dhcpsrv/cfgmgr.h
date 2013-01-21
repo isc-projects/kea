@@ -19,6 +19,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/option_space.h>
+#include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <util/buffer.h>
@@ -66,6 +67,7 @@ namespace dhcp {
 /// Parameter inheritance is likely to be implemented in configuration handling
 /// routines, so there is no storage capability in a global scope for
 /// subnet-specific parameters.
+///
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
 /// @todo: Implement parameter inheritance
@@ -153,8 +155,17 @@ public:
     ///
     /// @param hint an address that belongs to a searched subnet
     ///
-    /// @return a subnet object
+    /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
+
+    /// @brief get IPv6 subnet by interface name
+    ///
+    /// Finds a matching local subnet, based on interface name. This
+    /// is used for selecting subnets that were explicitly marked by the
+    /// user as reachable over specified network interface.
+    /// @param iface_name interface name
+    /// @return a subnet object (or NULL if no suitable match was fount)
+    Subnet6Ptr getSubnet6(const std::string& iface_name);
 
     /// @brief get IPv6 subnet by interface-id
     ///
@@ -219,6 +230,14 @@ public:
     /// completely new?
     void deleteSubnets4();
 
+
+    /// @brief returns path do the data directory
+    ///
+    /// This method returns a path to writeable directory that DHCP servers
+    /// can store data in.
+    /// @return data directory
+    std::string getDataDir();
+
 protected:
 
     /// @brief Protected constructor.
@@ -250,15 +269,12 @@ protected:
 
 private:
 
-    /// A map containing option definitions for various option spaces.
-    /// They key of this map is the name of the option space. The
-    /// value is the the option container holding option definitions
-    /// for the particular option space.
-    typedef std::map<std::string, OptionDefContainerPtr> OptionDefsMap;
-
-    /// A map containing option definitions for different option spaces.
-    /// The map key holds an option space name.
-    OptionDefsMap option_def_spaces_;
+    /// @brief A collection of option definitions.
+    ///
+    /// A collection of option definitions that can be accessed
+    /// using option space name they belong to.
+    OptionSpaceContainer<OptionDefContainer,
+                         OptionDefinitionPtr> option_def_spaces_;
 
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;
@@ -266,6 +282,8 @@ private:
     /// @brief Container for defined DHCPv4 option spaces.
     OptionSpaceCollection spaces4_;
 
+    /// @brief directory where data files (e.g. server-id) are stored
+    std::string datadir_;
 };
 
 } // namespace isc::dhcp

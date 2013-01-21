@@ -23,10 +23,13 @@ class RRsetCollectionBase;
 
 namespace python {
 
-// The s_* Class simply covers one instantiation of the object
+// The s_* Class simply covers one instantiation of the object.
 // This structure will be commonly used for all derived classes of
 // RRsetCollectionBase.  cppobj will point to an instance of the specific
-// derived class.
+// derived class of (C++) RRsetCollectionBase.
+//
+// A C++ wrapper for Python version of RRsetCollection should set this
+// variable, and skip the implementation of C++ wrapper of find() method.
 class s_RRsetCollection : public PyObject {
 public:
     s_RRsetCollection() : cppobj(NULL) {}
@@ -38,6 +41,9 @@ extern PyTypeObject rrset_collection_base_type;
 
 // Python type information for dns.RRsetCollection
 extern PyTypeObject rrset_collection_type;
+
+// Class specific exceptions
+extern PyObject* po_RRsetCollectionError;
 
 bool initModulePart_RRsetCollectionBase(PyObject* mod);
 bool initModulePart_RRsetCollection(PyObject* mod);

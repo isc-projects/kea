@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(localstatedir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
@@ -37,7 +37,6 @@ libb10_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libb10_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libb10_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libb10_dhcpsrv_la_SOURCES += dhcp_config_parser.h
-libb10_dhcpsrv_la_SOURCES += hwaddr.cc hwaddr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libb10_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
@@ -45,9 +44,11 @@ if HAVE_MYSQL
 libb10_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 endif
 libb10_dhcpsrv_la_SOURCES += option_space.cc option_space.h
+libb10_dhcpsrv_la_SOURCES += option_space_container.h
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
 libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
 libb10_dhcpsrv_la_SOURCES += triplet.h
+libb10_dhcpsrv_la_SOURCES += utils.h
 
 nodist_libb10_dhcpsrv_la_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 

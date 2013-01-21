@@ -76,7 +76,8 @@ public:
         previous_name_(false),
         complete_(false),
         seen_error_(false),
-        warn_rfc1035_ttl_(true)
+        warn_rfc1035_ttl_(true),
+        rr_count_(0)
     {}
 
     void pushSource(const std::string& filename, const Name& current_origin) {
@@ -102,6 +103,9 @@ public:
     }
 
     bool loadIncremental(size_t count_limit);
+
+    size_t getSize() const { return (lexer_.getTotalSourceSize()); }
+    size_t getPosition() const { return (lexer_.getPosition()); }
 
 private:
     void reportError(const std::string& filename, size_t line,
@@ -222,7 +226,12 @@ private:
         const MaybeRRClass rrclass =
             RRClass::createFromText(rrparam_token.getString());
         if (rrclass) {
-            if (*rrclass != zone_class_) {
+            // FIXME: The following code re-parses the rrparam_token to
+            // make an RRClass instead of using the MaybeRRClass above,
+            // because some old versions of boost::optional (that we
+            // still want to support) have a bug (see trac #2593). This
+            // workaround should be removed at some point in the future.
+            if (RRClass(rrparam_token.getString()) != zone_class_) {
                 isc_throw(InternalException, "Class mismatch: " << *rrclass <<
                           " vs. " << zone_class_);
             }
@@ -413,12 +422,14 @@ private:
     vector<IncludeInfo> include_info_;
     bool previous_name_; // True if there was a previous name in this file
                          // (false at the beginning or after an $INCLUDE line)
+
 public:
     bool complete_;             // All work done.
     bool seen_error_;           // Was there at least one error during the
                                 // load?
     bool warn_rfc1035_ttl_;     // should warn if implicit TTL determination
                                 // from the previous RR is used.
+    size_t rr_count_;    // number of RRs successfully loaded
 };
 
 // A helper method of loadIncremental, parsing the first token of a new line.
@@ -549,6 +560,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                               rdata);
                 // Good, we loaded another one
                 ++count;
+                ++rr_count_;
             } else {
                 seen_error_ = true;
                 if (!many_errors_) {
@@ -623,6 +635,16 @@ MasterLoader::loadIncremental(size_t count_limit) {
 bool
 MasterLoader::loadedSucessfully() const {
     return (impl_->complete_ && !impl_->seen_error_);
+}
+
+size_t
+MasterLoader::getSize() const {
+    return (impl_->getSize());
+}
+
+size_t
+MasterLoader::getPosition() const {
+    return (impl_->getPosition());
 }
 
 } // end namespace dns

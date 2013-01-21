@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/libdhcp++.h>
-#include <dhcp/dhcp6.h>
+#include <dhcp/dhcp4.h>
 
 #include "perf_pkt4.h"
 
