@@ -1,3 +1,11 @@
+552.    [bug]       shane
+    Build on Raspberry PI.
+	The main issue was use of char for reading from input streams,
+	which is incorrect, as EOF is returned as an int -1, which would
+	then get cast into a char -1.
+	A number of other minor issues were also fixed.
+	(Trac #2571, git 525333e187cc4bbbbde288105c9582c1024caa4a)
+
 551.    [bug]       shane
 	Kill msgq if we cannot connect to it on startup.
 	When the boss process was unable to connect to the msgq, it would
