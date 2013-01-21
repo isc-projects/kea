@@ -825,9 +825,11 @@ public:
     /// because iterating the collection may result in unexpected
     /// behavior if the underlying data is updated.  Implementations of
     /// \c ZoneUpdater may disable a previously returned
-    /// \c RRsetCollection after \c commit() is called. If an
-    /// \c RRsetCollection is disabled, using methods such as \c find() and
-    /// using its iterator would cause an exception to be thrown. See
+    /// \c RRsetCollection after \c commit() is called. Even in this
+    /// case, using existing iterators may result in unexpected behavior
+    /// after \c commit() is called. If an \c RRsetCollection is
+    /// disabled, using methods such as \c find() and using its iterator
+    /// would cause an exception to be thrown. See
     /// \c isc::datasrc::RRsetCollectionBase for details.
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
