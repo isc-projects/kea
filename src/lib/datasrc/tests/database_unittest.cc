@@ -55,6 +55,7 @@ namespace {
 
 // Imaginary zone IDs used in the mock accessor below.
 const int READONLY_ZONE_ID = 42;
+const int NEW_ZONE_ID = 420;
 const int WRITABLE_ZONE_ID = 4200;
 
 // Commonly used test data
@@ -257,26 +258,43 @@ const char* TEST_NSEC3_RECORDS[][5] = {
  */
 class NopAccessor : public DatabaseAccessor {
 public:
-    NopAccessor() : database_name_("mock_database")
-    { }
+    NopAccessor() : database_name_("mock_database") {
+        zones_["example.org."] = READONLY_ZONE_ID;
+        zones_["null.example.org."] = 13;
+        zones_["empty.example.org."] = 0;
+        zones_["bad.example.org."] = -1;
+    }
 
     virtual std::pair<bool, int> getZone(const std::string& name) const {
-        if (name == "example.org.") {
-            return (std::pair<bool, int>(true, READONLY_ZONE_ID));
-        } else if (name == "null.example.org.") {
-            return (std::pair<bool, int>(true, 13));
-        } else if (name == "empty.example.org.") {
-            return (std::pair<bool, int>(true, 0));
-        } else if (name == "bad.example.org.") {
-            return (std::pair<bool, int>(true, -1));
+        std::map<std::string, int>::const_iterator found = zones_.find(name);
+        if (found != zones_.end()) {
+            return (std::pair<bool, int>(true, found->second));
         } else {
             return (std::pair<bool, int>(false, 0));
         }
     }
 
-    virtual int addZone(const std::string&) {
-        isc_throw(isc::NotImplemented,
-                  "This database datasource can't add zones");
+    // A simple implementation of addZone.
+    virtual int addZone(const std::string& zone_name) {
+        if (zone_name == "example.com.") {
+            zones_[zone_name] = NEW_ZONE_ID;
+        }
+
+        // for simplicity we assume zone_name is in zones_ at this point
+        return (zones_[zone_name]);
+    }
+
+    // A simple implementation of deleteZone.
+    virtual void deleteZone(int zone_id) {
+        std::map<std::string, int>::iterator it = zones_.begin();
+        std::map<std::string, int>::iterator end = zones_.end();
+        while (it != end) {
+            if (it->second == zone_id) {
+                zones_.erase(it);
+                return;
+            }
+            ++it;
+        }
     }
 
     virtual boost::shared_ptr<DatabaseAccessor> clone() {
@@ -337,7 +355,7 @@ public:
 
 private:
     const std::string database_name_;
-
+    std::map<std::string, int> zones_;
 };
 
 /**
@@ -438,13 +456,21 @@ public:
 
         // Check any attempt of multiple transactions
         if (did_transaction_) {
-            isc_throw(isc::Unexpected, "MockAccessor::startTransaction() "
+            isc_throw(DataSourceError, "MockAccessor::startTransaction() "
                       "called multiple times - likely a bug in the test");
         }
 
         readonly_records_copy_ = *readonly_records_;
         readonly_records_ = &readonly_records_copy_;
         did_transaction_ = true;
+    }
+
+    // If the test needs multiple calls to startTransaction() and knows it's
+    // safe, it can use this method to disable the safeguard check in
+    // startTransaction(); the test can also use this method by emulating a
+    // lock conflict by setting is_allowed to false.
+    void allowMoreTransaction(bool is_allowed) {
+        did_transaction_ = !is_allowed;
     }
 
 private:
@@ -1290,6 +1316,17 @@ public:
             // actual data.
             EXPECT_TRUE(it == expected.end());
             ASSERT_FALSE(rrset);
+        }
+    }
+
+    // Mock-only; control whether to allow subsequent transaction.
+    void allowMoreTransaction(bool is_allowed) {
+        if (is_mock_) {
+            // Use a separate variable for MockAccessor&; some compilers
+            // would be confused otherwise.
+            MockAccessor& mock_accessor =
+                dynamic_cast<MockAccessor&>(*current_accessor_);
+            mock_accessor.allowMoreTransaction(is_allowed);
         }
     }
 
@@ -2181,6 +2218,12 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                isc::dns::Name("dname.example.org."));
     doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
                isc::dns::RRType::AAAA(), isc::dns::RRType::DNAME(),
+               this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               isc::dns::Name("dname.example.org."));
+    // below.dname.example.org. has an A record
+    doFindTest(*finder, isc::dns::Name("below.dname.example.org."),
+               isc::dns::RRType::A(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::DNAME, this->expected_rdatas_,
                this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("dname.example.org."));
@@ -4104,51 +4147,289 @@ TYPED_TEST(DatabaseClientTest, createZone) {
         zone(this->client_->findZone(new_name));
     ASSERT_EQ(result::NOTFOUND, zone.code);
 
-    // The mock implementation does not do createZone,
-    // in which case it should throw NotImplemented (from
-    // the base class)
-    if (this->is_mock_) {
-        ASSERT_THROW(this->client_->createZone(new_name), isc::NotImplemented);
-    } else {
-        // But in the real case, it should work and return true
-        ASSERT_TRUE(this->client_->createZone(new_name));
-        const DataSourceClient::FindResult
-            zone2(this->client_->findZone(new_name));
-        ASSERT_EQ(result::SUCCESS, zone2.code);
-        // And the second call should return false since
-        // it already exists
-        ASSERT_FALSE(this->client_->createZone(new_name));
-    }
+    // Adding a new zone; it should work and return true
+    ASSERT_TRUE(this->client_->createZone(new_name));
+    const DataSourceClient::FindResult
+        zone2(this->client_->findZone(new_name));
+    ASSERT_EQ(result::SUCCESS, zone2.code);
+    // And the second call should return false since
+    // it already exists
+    this->allowMoreTransaction(true);
+    ASSERT_FALSE(this->client_->createZone(new_name));
 }
 
 TYPED_TEST(DatabaseClientTest, createZoneRollbackOnLocked) {
-    // skip test for mock
-    if (this->is_mock_) {
-        return;
-    }
-
     const Name new_name("example.com");
     isc::datasrc::ZoneUpdaterPtr updater =
         this->client_->getUpdater(this->zname_, true);
+    this->allowMoreTransaction(false);
     ASSERT_THROW(this->client_->createZone(new_name), DataSourceError);
     // createZone started a transaction as well, but since it failed,
     // it should have been rolled back. Roll back the other one as
     // well, and the next attempt should succeed
     updater.reset();
+    this->allowMoreTransaction(true);
     ASSERT_TRUE(this->client_->createZone(new_name));
 }
 
 TYPED_TEST(DatabaseClientTest, createZoneRollbackOnExists) {
-    // skip test for mock
-    if (this->is_mock_) {
-        return;
-    }
-
     const Name new_name("example.com");
     ASSERT_FALSE(this->client_->createZone(this->zname_));
-    // createZone started a transaction, but since it failed,
-    // it should have been rolled back, and the next attempt should succeed
+
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
+    this->allowMoreTransaction(true);
     ASSERT_TRUE(this->client_->createZone(new_name));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZone) {
+    // Check the zone currently exists.
+    EXPECT_EQ(result::SUCCESS, this->client_->findZone(this->zname_).code);
+
+    // Deleting an existing zone; it should work and return true (previously
+    // existed and is now deleted)
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
+
+    // Now it's not found by findZone
+    EXPECT_EQ(result::NOTFOUND, this->client_->findZone(this->zname_).code);
+
+    // And the second call should return false since it doesn't exist any more
+    this->allowMoreTransaction(true);
+    EXPECT_FALSE(this->client_->deleteZone(this->zname_));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZoneRollbackOnLocked) {
+    isc::datasrc::ZoneUpdaterPtr updater =
+        this->client_->getUpdater(this->zname_, true);
+
+    // updater locks the DB so deleteZone() will fail.
+    this->allowMoreTransaction(false);
+    EXPECT_THROW(this->client_->deleteZone(this->zname_), DataSourceError);
+
+    // deleteZone started a transaction as well, but since it failed,
+    // it should have been rolled back. Roll back the other one as
+    // well, and the next attempt should succeed
+    updater.reset();
+    this->allowMoreTransaction(true);
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
+}
+
+TYPED_TEST(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
+    // attempt of deleting non-existent zone.  result in false
+    const Name new_name("example.com");
+    EXPECT_FALSE(this->client_->deleteZone(new_name));
+
+    // deleteZone started a transaction, but since the zone didn't even exist
+    // the transaction was not committed but should have been rolled back.
+    // The first transaction shouldn't leave any state, lock, etc, that
+    // would hinder the second attempt.
+    this->allowMoreTransaction(true);
+    EXPECT_TRUE(this->client_->deleteZone(this->zname_));
+}
+
+TYPED_TEST_CASE(RRsetCollectionTest, TestAccessorTypes);
+
+// This test fixture is templated so that we can share (most of) the test
+// cases with different types of data sources.  Note that in test cases
+// we need to use 'this' to refer to member variables of the test class.
+template <typename ACCESSOR_TYPE>
+class RRsetCollectionTest : public DatabaseClientTest<ACCESSOR_TYPE> {
+public:
+    RRsetCollectionTest() :
+        DatabaseClientTest<ACCESSOR_TYPE>(),
+        updater(this->client_->getUpdater(this->zname_, false)),
+        collection(updater->getRRsetCollection())
+    {}
+
+    ZoneUpdaterPtr updater;
+    isc::datasrc::RRsetCollectionBase& collection;
+};
+
+TYPED_TEST(RRsetCollectionTest, find) {
+    // Test the find() that returns ConstRRsetPtr
+    ConstRRsetPtr rrset = this->collection.find(Name("www.example.org."),
+                                                RRClass::IN(), RRType::A());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRTTL(3600), rrset->getTTL());
+    EXPECT_EQ(RRClass("IN"), rrset->getClass());
+    EXPECT_EQ(Name("www.example.org"), rrset->getName());
+
+    // foo.example.org doesn't exist
+    rrset = this->collection.find(Name("foo.example.org"), this->qclass_,
+                                  RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // www.example.org exists, but not with MX
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::MX());
+    EXPECT_FALSE(rrset);
+
+    // www.example.org exists, with AAAA
+    rrset = this->collection.find(Name("www.example.org"), this->qclass_,
+                                  RRType::AAAA());
+    EXPECT_TRUE(rrset);
+
+    // www.example.org with AAAA does not exist in RRClass::CH()
+    rrset = this->collection.find(Name("www.example.org"), RRClass::CH(),
+                                  RRType::AAAA());
+    EXPECT_FALSE(rrset);
+
+    // Out-of-zone find()s must not throw.
+    rrset = this->collection.find(Name("www.example.com"), this->qclass_,
+                                  RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // "cname.example.org." with type CNAME should return the CNAME RRset
+    rrset = this->collection.find(Name("cname.example.org"), this->qclass_,
+                                  RRType::CNAME());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::CNAME(), rrset->getType());
+    EXPECT_EQ(Name("cname.example.org"), rrset->getName());
+
+    // "cname.example.org." with type A should return nothing
+    rrset = this->collection.find(Name("cname.example.org"), this->qclass_,
+                                  RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // "dname.example.org." with type DNAME should return the DNAME RRset
+    rrset = this->collection.find(Name("dname.example.org"), this->qclass_,
+                                  RRType::DNAME());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::DNAME(), rrset->getType());
+    EXPECT_EQ(Name("dname.example.org"), rrset->getName());
+
+    // "below.dname.example.org." with type AAAA should return nothing
+    rrset = this->collection.find(Name("below.dname.example.org"),
+                                  this->qclass_, RRType::AAAA());
+    EXPECT_FALSE(rrset);
+
+    // "below.dname.example.org." with type A does not return the record
+    // (see top of file). See \c isc::datasrc::RRsetCollectionBase::find()
+    // documentation for details.
+    rrset = this->collection.find(Name("below.dname.example.org"),
+                                  this->qclass_, RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // With the FIND_GLUE_OK option passed to ZoneFinder's find(),
+    // searching for "delegation.example.org." with type NS should
+    // return the NS record. Without FIND_GLUE_OK, ZoneFinder's find()
+    // would return DELEGATION and the find() below would return
+    // nothing.
+    rrset = this->collection.find(Name("delegation.example.org"),
+                                  this->qclass_, RRType::NS());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(Name("delegation.example.org"), rrset->getName());
+
+    // With the NO_WILDCARD option passed to ZoneFinder's find(),
+    // searching for some "foo.wildcard.example.org." would make
+    // ZoneFinder's find() return NXDOMAIN, and the find() below should
+    // return nothing.
+    rrset = this->collection.find(Name("foo.wild.example.org"),
+                                  this->qclass_, RRType::A());
+    EXPECT_FALSE(rrset);
+
+    // Searching directly for "*.wild.example.org." should return the
+    // record.
+    rrset = this->collection.find(Name("*.wild.example.org"),
+                                  this->qclass_, RRType::A());
+    ASSERT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(Name("*.wild.example.org"), rrset->getName());
+}
+
+TYPED_TEST(RRsetCollectionTest, iteratorTest) {
+    // Iterators are currently not implemented.
+    EXPECT_THROW(this->collection.begin(), isc::NotImplemented);
+    EXPECT_THROW(this->collection.end(), isc::NotImplemented);
+}
+
+typedef RRsetCollectionTest<MockAccessor> MockRRsetCollectionTest;
+
+TEST_F(MockRRsetCollectionTest, findError) {
+    // A test using the MockAccessor for checking that FindError is
+    // thrown properly if a find attempt using ZoneFinder results in a
+    // DataSourceError.
+    //
+    // The "dsexception.example.org." name is rigged by the MockAccessor
+    // to throw a DataSourceError.
+    EXPECT_THROW({
+        this->collection.find(Name("dsexception.example.org"), this->qclass_,
+                              RRType::A());
+    }, RRsetCollectionError);
+}
+
+TYPED_TEST_CASE(RRsetCollectionAndUpdaterTest, TestAccessorTypes);
+
+// This test fixture is templated so that we can share (most of) the test
+// cases with different types of data sources.  Note that in test cases
+// we need to use 'this' to refer to member variables of the test class.
+template <typename ACCESSOR_TYPE>
+class RRsetCollectionAndUpdaterTest : public DatabaseClientTest<ACCESSOR_TYPE> {
+public:
+    RRsetCollectionAndUpdaterTest() :
+        DatabaseClientTest<ACCESSOR_TYPE>(),
+        updater_(this->client_->getUpdater(this->zname_, false))
+    {}
+
+    ZoneUpdaterPtr updater_;
+};
+
+// Test that using addRRset() or deleteRRset() on the ZoneUpdater throws
+// after an RRsetCollection is created.
+TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
+    // 1. Addition test
+
+    // addRRset() must not throw.
+    this->updater_->addRRset(*this->rrset_);
+
+    // Now setup a new updater and call getRRsetCollection() on it.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    (void) this->updater_->getRRsetCollection();
+
+    // addRRset() must throw isc::InvalidOperation here.
+    EXPECT_THROW(this->updater_->addRRset(*this->rrset_),
+                 isc::InvalidOperation);
+
+    // 2. Deletion test
+
+    // deleteRRset() must not throw.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->addRRset(*this->rrset_);
+    this->updater_->deleteRRset(*this->rrset_);
+
+    // Now setup a new updater and call getRRsetCollection() on it.
+    this->updater_.reset();
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->addRRset(*this->rrset_);
+    (void) this->updater_->getRRsetCollection();
+
+    // deleteRRset() must throw isc::InvalidOperation here.
+    EXPECT_THROW(this->updater_->deleteRRset(*this->rrset_),
+                 isc::InvalidOperation);
+}
+
+// Test that using an RRsetCollection after calling commit() on the
+// ZoneUpdater throws, as the RRsetCollection is disabled.
+TYPED_TEST(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
+     isc::datasrc::RRsetCollectionBase& collection =
+         this->updater_->getRRsetCollection();
+
+     // find() must not throw here.
+     collection.find(Name("foo.wild.example.org"), this->qclass_, RRType::A());
+
+     this->updater_->commit();
+
+     // find() must throw RRsetCollectionError here, as the
+     // RRsetCollection is disabled.
+     EXPECT_THROW(collection.find(Name("foo.wild.example.org"),
+                                  this->qclass_, RRType::A()),
+                  RRsetCollectionError);
 }
 
 }

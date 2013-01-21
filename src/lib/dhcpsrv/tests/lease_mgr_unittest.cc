@@ -272,7 +272,7 @@ TEST(Lease4, Lease4Constructor) {
 
         // Create the lease
         Lease4 lease(ADDRESS[i], HWADDR, sizeof(HWADDR),
-                     CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                     CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
                      SUBNET_ID);
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
@@ -312,10 +312,10 @@ TEST(Lease4, OperatorEquals) {
 
     // Check when the leases are equal.
     Lease4 lease1(ADDRESS, HWADDR, sizeof(HWADDR),
-                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
                   SUBNET_ID);
     Lease4 lease2(ADDRESS, HWADDR, sizeof(HWADDR),
-                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time,
+                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
                   SUBNET_ID);
     EXPECT_TRUE(lease1 == lease2);
     EXPECT_FALSE(lease1 != lease2);

@@ -164,29 +164,55 @@ TEST_F(OptionDefinitionTest, validate) {
     EXPECT_THROW(opt_def5.validate(), MalformedOptionDefinition);
 
     // Option name must not contain spaces.
-    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string", true);
+    OptionDefinition opt_def6("OPTION CLIENTID", D6O_CLIENTID, "string");
     EXPECT_THROW(opt_def6.validate(), MalformedOptionDefinition);
+
+    // Option name may contain lower case letters.
+    OptionDefinition opt_def7("option_clientid", D6O_CLIENTID, "string");
+    EXPECT_NO_THROW(opt_def7.validate());
+
+    // Using digits in option name is legal.
+    OptionDefinition opt_def8("option_123", D6O_CLIENTID, "string");
+    EXPECT_NO_THROW(opt_def8.validate());
+
+    // Using hyphen is legal.
+    OptionDefinition opt_def9("option-clientid", D6O_CLIENTID, "string");
+    EXPECT_NO_THROW(opt_def9.validate());
+
+    // Using hyphen or undescore at the beginning or at the end
+    // of the option name is not allowed.
+    OptionDefinition opt_def10("-option-clientid", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def10.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def11("_option-clientid", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def11.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def12("option-clientid_", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def12.validate(), MalformedOptionDefinition);
+
+    OptionDefinition opt_def13("option-clientid-", D6O_CLIENTID, "string");
+    EXPECT_THROW(opt_def13.validate(), MalformedOptionDefinition);
 
     // Having array of strings does not make sense because there is no way
     // to determine string's length.
-    OptionDefinition opt_def7("OPTION_CLIENTID", D6O_CLIENTID, "string", true);
-    EXPECT_THROW(opt_def7.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def14("OPTION_CLIENTID", D6O_CLIENTID, "string", true);
+    EXPECT_THROW(opt_def14.validate(), MalformedOptionDefinition);
 
     // It does not make sense to have string field within the record before
     // other fields because there is no way to determine the length of this
     // string and thus there is no way to determine where the other field
     // begins.
-    OptionDefinition opt_def8("OPTION_STATUS_CODE", D6O_STATUS_CODE,
-                              "record");
-    opt_def8.addRecordField("string");
-    opt_def8.addRecordField("uint16");
-    EXPECT_THROW(opt_def8.validate(), MalformedOptionDefinition);
+    OptionDefinition opt_def15("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               "record");
+    opt_def15.addRecordField("string");
+    opt_def15.addRecordField("uint16");
+    EXPECT_THROW(opt_def15.validate(), MalformedOptionDefinition);
 
     // ... but it is ok if the string value is the last one.
-    OptionDefinition opt_def9("OPTION_STATUS_CODE", D6O_STATUS_CODE,
-                              "record");
-    opt_def9.addRecordField("uint8");
-    opt_def9.addRecordField("string");
+    OptionDefinition opt_def16("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               "record");
+    opt_def16.addRecordField("uint8");
+    opt_def16.addRecordField("string");
 }
 
 

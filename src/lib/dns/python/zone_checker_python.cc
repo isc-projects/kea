@@ -65,12 +65,17 @@ namespace dns {
 namespace python {
 namespace internal {
 
-namespace {
+// Place the exception class in a named namespace to avoid weird run time
+// failure with clang++.  See isc.log Python wrapper.
+namespace clang_unnamed_namespace_workaround {
 // This is used to abort check_zone() and go back to the top level.
 // We use a separate exception so it won't be caught in the middle.
 class InternalException : public std::exception {
 };
+}
+using namespace clang_unnamed_namespace_workaround;
 
+namespace {
 // This is a "wrapper" RRsetCollection subclass.  It's constructed with
 // a Python RRsetCollection object, and its find() calls the Python version
 // of RRsetCollection.find().  This way, the check_zone() wrapper will work

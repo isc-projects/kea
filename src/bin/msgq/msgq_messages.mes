@@ -19,6 +19,21 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
+% MSGQ_CFGMGR_SUBSCRIBED The config manager subscribed to message queue
+This is a debug message. The message queue has little bit of special handling
+for the configuration manager. This special handling is happening now.
+
+% MSGQ_COMMAND Running command %1 with arguments %2
+Debug message. The message queue received a command and it is running it.
+
+% MSGQ_COMMAND_UNKNOWN Unknown command '%1'
+The message queue received a command from other module, but it doesn't
+recognize it. This is probably either a coding error or inconsistency between
+the message queue version and version of the module.
+
+% MSGQ_CONFIG_DATA Received configuration update for the msgq: %1
+Debug message. The message queue received a configuration update, handling it.
+
 % MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
 possible to decode the routing header of the packet. The packet is ignored.
@@ -68,6 +83,9 @@ incompatible version of a module and message queue daemon.
 % MSGQ_SEND_ERR Error while sending to socket %1: %2
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
+
+% MSGQ_SHUTDOWN Stopping Msgq
+Debug message. The message queue is shutting down.
 
 % MSGQ_SOCK_CLOSE Closing socket fd %1
 Debug message. Closing the mentioned socket.

@@ -86,30 +86,15 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
                   << option_space << "'.");
 
     }
-    // Get existing option definitions for the option space.
-    OptionDefContainerPtr defs = getOptionDefs(option_space);
-    // getOptionDefs always returns a valid pointer to
-    // the container. Let's make an assert to make sure.
-    assert(defs);
-    // Actually add the new definition.
-    defs->push_back(def);
-    option_def_spaces_[option_space] = defs;
+    // Actually add a new item.
+    option_def_spaces_.addItem(def, option_space);
 }
 
 OptionDefContainerPtr
 CfgMgr::getOptionDefs(const std::string& option_space) const {
     // @todo Validate the option space once the #2313 is implemented.
 
-    // Get all option definitions for the particular option space.
-    const OptionDefsMap::const_iterator& defs =
-        option_def_spaces_.find(option_space);
-    // If there are no option definitions for the particular option space
-    // then return empty container.
-    if (defs == option_def_spaces_.end()) {
-        return (OptionDefContainerPtr(new OptionDefContainer()));
-    }
-    // If option definitions found, return them.
-    return (defs->second);
+    return (option_def_spaces_.getItems(option_space));
 }
 
 OptionDefinitionPtr
@@ -138,6 +123,26 @@ CfgMgr::getOptionDef(const std::string& option_space,
 }
 
 Subnet6Ptr
+CfgMgr::getSubnet6(const std::string& iface) {
+
+    if (!iface.length()) {
+        return (Subnet6Ptr());
+    }
+
+    // If there is more than one, we need to choose the proper one
+    for (Subnet6Collection::iterator subnet = subnets6_.begin();
+         subnet != subnets6_.end(); ++subnet) {
+        if (iface == (*subnet)->getIface()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6_IFACE)
+                .arg((*subnet)->toText()).arg(iface);
+            return (*subnet);
+        }
+    }
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
 
     // If there's only one subnet configured, let's just use it
@@ -158,6 +163,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6)
@@ -229,7 +235,7 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
 }
 
 void CfgMgr::deleteOptionDefs() {
-    option_def_spaces_.clear();
+    option_def_spaces_.clearItems();
 }
 
 void CfgMgr::deleteSubnets4() {
@@ -242,7 +248,16 @@ void CfgMgr::deleteSubnets6() {
     subnets6_.clear();
 }
 
-CfgMgr::CfgMgr() {
+std::string CfgMgr::getDataDir() {
+    return (datadir_);
+}
+
+
+CfgMgr::CfgMgr()
+    :datadir_(DHCP_DATA_DIR) {
+    // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
+    // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
+    // See AM_CPPFLAGS definition in Makefile.am
 }
 
 CfgMgr::~CfgMgr() {

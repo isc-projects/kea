@@ -16,9 +16,24 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_int.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcpsrv/utils.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/utils.h>
+#include <dhcpsrv/addr_utilities.h>
+
+#include <boost/algorithm/string/erase.hpp>
+
+#include <iomanip>
+#include <fstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -28,25 +43,48 @@ using namespace std;
 
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
-const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
-const std::string HARDCODED_NETMASK = "255.255.255.0";
-const uint32_t    HARDCODED_LEASE_TIME = 60; // in seconds
 const std::string HARDCODED_GATEWAY = "192.0.2.1";
 const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
 const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
+Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
         // it may throw something if things go wrong
         IfaceMgr::instance();
 
-        /// @todo: instantiate LeaseMgr here once it is imlpemented.
-        IfaceMgr::instance().openSockets4(port);
+        if (port) {
+            // open sockets only if port is non-zero. Port 0 is used
+            // for non-socket related testing.
+            IfaceMgr::instance().openSockets4(port);
+        }
 
-        setServerID();
+        string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
+        if (loadServerID(srvid_file)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
+                .arg(srvid_file);
+        } else {
+            generateServerID();
+            LOG_INFO(dhcp4_logger, DHCP4_SERVERID_GENERATED)
+                .arg(srvidToString(getServerID()))
+                .arg(srvid_file);
+
+            if (!writeServerID(srvid_file)) {
+                LOG_WARN(dhcp4_logger, DHCP4_SERVERID_WRITE_FAIL)
+                    .arg(srvid_file);
+            }
+
+        }
+
+        // Instantiate LeaseMgr
+        LeaseMgrFactory::create(dbconfig);
+        LOG_INFO(dhcp4_logger, DHCP4_DB_BACKEND_STARTED)
+            .arg(LeaseMgrFactory::instance().getType())
+            .arg(LeaseMgrFactory::instance().getName());
+
+        // Instantiate allocation engine
+        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
@@ -157,27 +195,109 @@ Dhcpv4Srv::run() {
                 }
             }
         }
-
-        // TODO add support for config session (see src/bin/auth/main.cc)
-        //      so this daemon can be controlled from bob
     }
 
     return (true);
 }
 
-void
-Dhcpv4Srv::setServerID() {
-    /// TODO implement this for real once interface detection (ticket 1237)
-    /// is done. Use hardcoded server-id for now.
+bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
 
-#if 0
-    // uncomment this once ticket 1350 is merged.
-    IOAddress srvId("127.0.0.1");
-    serverid_ = OptionPtr(
-      new Option4AddrLst(Option::V4, DHO_DHCP_SERVER_IDENTIFIER, srvId));
-#endif
+    // load content of the file into a string
+    fstream f(file_name.c_str(), ios::in);
+    if (!f.is_open()) {
+        return (false);
+    }
+
+    string hex_string;
+    f >> hex_string;
+    f.close();
+
+    // remove any spaces
+    boost::algorithm::erase_all(hex_string, " ");
+
+    try {
+        IOAddress addr(hex_string);
+
+        if (!addr.isV4()) {
+            return (false);
+        }
+
+        // Now create server-id option
+        serverid_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, addr));
+
+    } catch(...) {
+        // any kind of malformed input (empty string, IPv6 address, complete
+        // garbate etc.)
+        return (false);
+    }
+
+    return (true);
 }
 
+void Dhcpv4Srv::generateServerID() {
+
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+    // Let's find suitable interface.
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+
+        // Let's don't use loopback.
+        if (iface->flag_loopback_) {
+            continue;
+        }
+
+        // Let's skip downed interfaces. It is better to use working ones.
+        if (!iface->flag_up_) {
+            continue;
+        }
+
+        const IfaceMgr::AddressCollection addrs = iface->getAddresses();
+
+        for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+             addr != addrs.end(); ++addr) {
+            if (addr->getFamily() != AF_INET) {
+                continue;
+            }
+
+            serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                     *addr));
+            return;
+        }
+
+
+    }
+
+    isc_throw(BadValue, "No suitable interfaces for server-identifier found");
+}
+
+bool Dhcpv4Srv::writeServerID(const std::string& file_name) {
+    fstream f(file_name.c_str(), ios::out | ios::trunc);
+    if (!f.good()) {
+        return (false);
+    }
+    f << srvidToString(getServerID());
+    f.close();
+}
+
+string Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
+    if (!srvid) {
+        isc_throw(BadValue, "NULL pointer passed to srvidToString()");
+    }
+    boost::shared_ptr<Option4AddrLst> generated =
+        boost::dynamic_pointer_cast<Option4AddrLst>(srvid);
+    if (!srvid) {
+        isc_throw(BadValue, "Pointer to invalid option passed to srvidToString()");
+    }
+
+    Option4AddrLst::AddressContainer addrs = generated->getAddresses();
+    if (addrs.size() != 1) {
+        isc_throw(BadValue, "Malformed option passed to srvidToString(). "
+                  << "Expected to contain a single IPv4 address.");
+    }
+
+    return (addrs[0].toText());
+}
 
 void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
@@ -188,9 +308,7 @@ void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setHops(question->getHops());
 
     // copy MAC address
-    vector<uint8_t> mac(question->getChaddr(),
-                        question->getChaddr() + Pkt4::MAX_CHADDR_LEN);
-    answer->setHWAddr(question->getHtype(), question->getHlen(), mac);
+    answer->setHWAddr(question->getHWAddr());
 
     // relay address
     answer->setGiaddr(question->getGiaddr());
@@ -203,21 +321,21 @@ void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         answer->setRemoteAddr(question->getRemoteAddr());
     }
 
+    // Let's copy client-id to response. See RFC6842.
+    OptionPtr client_id = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_id) {
+        answer->addOption(client_id);
+    }
 }
 
 void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
     OptionPtr opt;
 
     // add Message Type Option (type 53)
-    std::vector<uint8_t> tmp;
-    tmp.push_back(static_cast<uint8_t>(msg_type));
-    opt = OptionPtr(new Option(Option::V4, DHO_DHCP_MESSAGE_TYPE, tmp));
-    msg->addOption(opt);
+    msg->setType(msg_type);
 
     // DHCP Server Identifier (type 54)
-    opt = OptionPtr
-        (new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, IOAddress(HARDCODED_SERVER_ID)));
-    msg->addOption(opt);
+    msg->addOption(getServerID());
 
     // more options will be added here later
 }
@@ -237,25 +355,109 @@ void Dhcpv4Srv::appendRequestedOptions(Pkt4Ptr& msg) {
     msg->addOption(opt);
 }
 
-void Dhcpv4Srv::tryAssignLease(Pkt4Ptr& msg) {
-    OptionPtr opt;
+void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
-    // TODO: Implement actual lease assignment here
-    msg->setYiaddr(IOAddress(HARDCODED_LEASE));
+    // We need to select a subnet the client is connected in.
+    Subnet4Ptr subnet = selectSubnet(question);
+    if (!subnet) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays). We will continue to
+        // process this message, but our response will be almost useless: no
+        // addresses or prefixes, no subnet specific configuration etc. The only
+        // thing this client can get is some global information (like DNS
+        // servers).
 
-    // IP Address Lease time (type 51)
-    opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
-    opt->setUint32(HARDCODED_LEASE_TIME);
-    msg->addOption(opt);
-    // TODO: create Option_IntArray that holds list of integers, similar to Option4_AddrLst
+        // perhaps this should be logged on some higher level? This is most likely
+        // configuration bug.
+        LOG_ERROR(dhcp4_logger, DHCP4_SUBNET_SELECTION_FAILED)
+            .arg(question->getRemoteAddr().toText())
+            .arg(serverReceivedPacketName(question->getType()));
+        answer->setType(DHCPNAK);
+        answer->setYiaddr(IOAddress("0.0.0.0"));
+        return;
+    }
 
-    // Subnet mask (type 1)
-    opt = OptionPtr(new Option4AddrLst(DHO_SUBNET_MASK, IOAddress(HARDCODED_NETMASK)));
-    msg->addOption(opt);
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
+        .arg(subnet->toText());
 
-    // Router (type 3)
-    opt = OptionPtr(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
-    msg->addOption(opt);
+    // Get client-id option
+    ClientIdPtr client_id;
+    OptionPtr opt = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (opt) {
+        client_id = ClientIdPtr(new ClientId(opt->getData()));
+    }
+    // client-id is not mandatory in DHCPv4
+
+    IOAddress hint = question->getYiaddr();
+
+    HWAddrPtr hwaddr = question->getHWAddr();
+
+    // "Fake" allocation is processing of DISCOVER message. We pretend to do an
+    // allocation, but we do not put the lease in the database. That is ok,
+    // because we do not guarantee that the user will get that exact lease. If
+    // the user selects this server to do actual allocation (i.e. sends REQUEST)
+    // it should include this hint. That will help us during the actual lease
+    // allocation.
+    bool fake_allocation = (question->getType() == DHCPDISCOVER);
+
+    // Use allocation engine to pick a lease for this client. Allocation engine
+    // will try to honour the hint, but it is just a hint - some other address
+    // may be used instead. If fake_allocation is set to false, the lease will
+    // be inserted into the LeaseMgr as well.
+    Lease4Ptr lease = alloc_engine_->allocateAddress4(subnet, client_id, hwaddr,
+                                                      hint, fake_allocation);
+
+    if (lease) {
+        // We have a lease! Let's set it in the packet and send it back to
+        // the client.
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
+                  DHCP4_LEASE_ADVERT:DHCP4_LEASE_ALLOC)
+            .arg(lease->addr_.toText())
+            .arg(client_id?client_id->toText():"(no client-id)")
+            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
+
+        answer->setYiaddr(lease->addr_);
+
+        // IP Address Lease time (type 51)
+        opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
+        opt->setUint32(lease->valid_lft_);
+        answer->addOption(opt);
+
+        // @todo: include real router information here
+        // Router (type 3)
+        opt = OptionPtr(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
+        answer->addOption(opt);
+
+        // Subnet mask (type 1)
+        answer->addOption(getNetmaskOption(subnet));
+
+        // @todo: send renew timer option (T1, option 58)
+        // @todo: send rebind timer option (T2, option 59)
+
+    } else {
+        // Allocation engine did not allocate a lease. The engine logged
+        // cause of that failure. The only thing left is to insert
+        // status code to pass the sad news to the client.
+
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, fake_allocation?
+                  DHCP4_LEASE_ADVERT_FAIL:DHCP4_LEASE_ALLOC_FAIL)
+            .arg(client_id?client_id->toText():"(no client-id)")
+            .arg(hwaddr?hwaddr->toText():"(no hwaddr info)")
+            .arg(hint.toText());
+
+        answer->setType(DHCPNAK);
+        answer->setYiaddr(IOAddress("0.0.0.0"));
+    }
+}
+
+OptionPtr Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
+    uint32_t netmask = getNetmask4(subnet->get().second);
+
+    OptionPtr opt(new OptionInt<uint32_t>(Option::V4,
+                  DHO_SUBNET_MASK, netmask));
+
+    return (opt);
 }
 
 Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
@@ -266,7 +468,7 @@ Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     appendDefaultOptions(offer, DHCPOFFER);
     appendRequestedOptions(offer);
 
-    tryAssignLease(offer);
+    assignLease(discover, offer);
 
     return (offer);
 }
@@ -279,13 +481,77 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(ack);
 
-    tryAssignLease(ack);
+    assignLease(request, ack);
 
     return (ack);
 }
 
 void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
-    /// TODO: Implement this.
+
+    // Try to find client-id
+    ClientIdPtr client_id;
+    OptionPtr opt = release->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (opt) {
+        client_id = ClientIdPtr(new ClientId(opt->getData()));
+    }
+
+    try {
+        // Do we have a lease for that particular address?
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getYiaddr());
+
+        if (!lease) {
+            // No such lease - bogus release
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
+                .arg(release->getYiaddr().toText())
+                .arg(release->getHWAddr()->toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)");
+            return;
+        }
+
+        // Does the hardware address match? We don't want one client releasing
+        // second client's leases.
+        if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
+            // @todo: Print hwaddr from lease as part of ticket #2589
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
+                .arg(release->getYiaddr().toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+            return;
+        }
+
+        // Does the lease have client-id info? If it has, then check it with what
+        // the client sent us.
+        if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
+                .arg(release->getYiaddr().toText())
+                .arg(client_id->toText())
+                .arg(lease->client_id_->toText());
+            return;
+        }
+
+        // Ok, hw and client-id match - let's release the lease.
+        if (LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+
+            // Release successful - we're done here
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                .arg(lease->addr_.toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+        } else {
+
+            // Release failed -
+            LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
+                .arg(lease->addr_.toText())
+                .arg(client_id ? client_id->toText() : "(no client-id)")
+                .arg(release->getHWAddr()->toText());
+        }
+    } catch (const isc::Exception& ex) {
+        // Rethrow the exception with a bit more data.
+        LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_EXCEPTION)
+            .arg(ex.what())
+            .arg(release->getYiaddr());
+    }
+
 }
 
 void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
@@ -326,4 +592,43 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
         ;
     }
     return (UNKNOWN);
+}
+
+Subnet4Ptr Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
+
+    // Is this relayed message?
+    IOAddress relay = question->getGiaddr();
+    if (relay.toText() == "0.0.0.0") {
+
+        // Yes: Use relay address to select subnet
+        return (CfgMgr::instance().getSubnet4(relay));
+    } else {
+
+        // No: Use client's address to select subnet
+        return (CfgMgr::instance().getSubnet4(question->getRemoteAddr()));
+    }
+}
+
+void Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
+    OptionPtr server_id = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    switch (serverid) {
+    case FORBIDDEN:
+        if (server_id) {
+            isc_throw(RFCViolation, "Server-id option was not expected, but "
+                      << "received in " << serverReceivedPacketName(pkt->getType()));
+        }
+        break;
+
+    case MANDATORY:
+        if (!server_id) {
+            isc_throw(RFCViolation, "Server-id option was expected, but not "
+                      " received in message "
+                      << serverReceivedPacketName(pkt->getType()));
+        }
+        break;
+
+    case OPTIONAL:
+        // do nothing here
+        ;
+    }
 }

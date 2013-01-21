@@ -19,6 +19,7 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
@@ -40,7 +41,6 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
-
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
@@ -121,7 +121,7 @@ void ControlledDhcpv6Srv::establishSession() {
 
     try {
         configureDhcp6Server(*this, config_session_->getFullConfig());
-    } catch (const Dhcp6ConfigError& ex) {
+    } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
     }
 

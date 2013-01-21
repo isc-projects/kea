@@ -16,6 +16,7 @@
 #include <config.h>
 
 #include <dhcpsrv/addr_utilities.h>
+#include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -27,6 +28,8 @@
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+
+namespace {
 
 // This test verifies that lastAddrInPrefix is able to handle IPv4 operations.
 TEST(AddrUtilitiesTest, lastAddrInPrefix4) {
@@ -154,3 +157,47 @@ TEST(AddrUtilitiesTest, firstAddrInPrefix6) {
     EXPECT_EQ("2001::ff80", firstAddrInPrefix(addr2, 121).toText());
     EXPECT_EQ("2001::ff00", firstAddrInPrefix(addr2, 120).toText());
 }
+
+// Checks if IPv4 netmask is generated properly
+TEST(AddrUtilitiesTest, getNetmask4) {
+    EXPECT_EQ("0.0.0.0", getNetmask4(0).toText());
+    EXPECT_EQ("128.0.0.0", getNetmask4(1).toText());
+    EXPECT_EQ("192.0.0.0", getNetmask4(2).toText());
+    EXPECT_EQ("224.0.0.0", getNetmask4(3).toText());
+    EXPECT_EQ("240.0.0.0", getNetmask4(4).toText());
+    EXPECT_EQ("248.0.0.0", getNetmask4(5).toText());
+    EXPECT_EQ("252.0.0.0", getNetmask4(6).toText());
+    EXPECT_EQ("254.0.0.0", getNetmask4(7).toText());
+    EXPECT_EQ("255.0.0.0", getNetmask4(8).toText());
+
+    EXPECT_EQ("255.128.0.0", getNetmask4(9).toText());
+    EXPECT_EQ("255.192.0.0", getNetmask4(10).toText());
+    EXPECT_EQ("255.224.0.0", getNetmask4(11).toText());
+    EXPECT_EQ("255.240.0.0", getNetmask4(12).toText());
+    EXPECT_EQ("255.248.0.0", getNetmask4(13).toText());
+    EXPECT_EQ("255.252.0.0", getNetmask4(14).toText());
+    EXPECT_EQ("255.254.0.0", getNetmask4(15).toText());
+    EXPECT_EQ("255.255.0.0", getNetmask4(16).toText());
+
+    EXPECT_EQ("255.255.128.0", getNetmask4(17).toText());
+    EXPECT_EQ("255.255.192.0", getNetmask4(18).toText());
+    EXPECT_EQ("255.255.224.0", getNetmask4(19).toText());
+    EXPECT_EQ("255.255.240.0", getNetmask4(20).toText());
+    EXPECT_EQ("255.255.248.0", getNetmask4(21).toText());
+    EXPECT_EQ("255.255.252.0", getNetmask4(22).toText());
+    EXPECT_EQ("255.255.254.0", getNetmask4(23).toText());
+    EXPECT_EQ("255.255.255.0", getNetmask4(24).toText());
+
+    EXPECT_EQ("255.255.255.128", getNetmask4(25).toText());
+    EXPECT_EQ("255.255.255.192", getNetmask4(26).toText());
+    EXPECT_EQ("255.255.255.224", getNetmask4(27).toText());
+    EXPECT_EQ("255.255.255.240", getNetmask4(28).toText());
+    EXPECT_EQ("255.255.255.248", getNetmask4(29).toText());
+    EXPECT_EQ("255.255.255.252", getNetmask4(30).toText());
+    EXPECT_EQ("255.255.255.254", getNetmask4(31).toText());
+    EXPECT_EQ("255.255.255.255", getNetmask4(32).toText());
+
+    EXPECT_THROW(getNetmask4(33), isc::BadValue);
+}
+
+}; // end of anonymous namespace

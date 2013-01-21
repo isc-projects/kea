@@ -14,8 +14,10 @@
 
 #include <util/unittests/wiredata.h>
 
+#include <dns/exceptions.h>
 #include <dns/rdata.h>
 #include <dns/rdata/generic/detail/char_string.h>
+#include <util/buffer.h>
 
 #include <gtest/gtest.h>
 
@@ -25,8 +27,10 @@
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using isc::dns::rdata::generic::detail::CharString;
+using isc::dns::rdata::generic::detail::bufferToCharString;
 using isc::dns::rdata::generic::detail::stringToCharString;
 using isc::dns::rdata::generic::detail::charStringToString;
+using isc::dns::rdata::generic::detail::compareCharStrings;
 using isc::util::unittests::matchWireData;
 
 namespace {
@@ -169,6 +173,80 @@ TEST_F(CharStringTest, charStringToString) {
         const CharString test_data(idata, idata + length + 1);
         EXPECT_EQ(cur->expected, charStringToString(test_data));
     }
+}
+
+TEST_F(CharStringTest, bufferToCharString) {
+    const size_t chstr_size = sizeof(test_charstr);
+    isc::util::InputBuffer buf(test_charstr, chstr_size);
+    size_t read = bufferToCharString(buf, chstr_size, chstr);
+
+    EXPECT_EQ(chstr_size, read);
+    EXPECT_EQ("Test String", charStringToString(chstr));
+}
+
+TEST_F(CharStringTest, bufferToCharString_bad) {
+    const size_t chstr_size = sizeof(test_charstr);
+    isc::util::InputBuffer buf(test_charstr, chstr_size);
+    // Set valid data in both so we can make sure the charstr is not
+    // modified
+    bufferToCharString(buf, chstr_size, chstr);
+    ASSERT_EQ("Test String", charStringToString(chstr));
+
+    // Should be at end of buffer now, so it should fail
+    EXPECT_THROW(bufferToCharString(buf, chstr_size - 1, chstr),
+                 DNSMessageFORMERR);
+    EXPECT_EQ("Test String", charStringToString(chstr));
+
+    // reset and try to read with too low rdata_len
+    buf.setPosition(0);
+    EXPECT_THROW(bufferToCharString(buf, chstr_size - 1, chstr),
+                 DNSMessageFORMERR);
+    EXPECT_EQ("Test String", charStringToString(chstr));
+
+    // set internal charstring len too high
+    const uint8_t test_charstr_err[] = {
+        sizeof("Test String") + 1,
+        'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
+    };
+    buf = isc::util::InputBuffer(test_charstr_err, sizeof(test_charstr_err));
+    EXPECT_THROW(bufferToCharString(buf, chstr_size, chstr),
+                 DNSMessageFORMERR);
+    EXPECT_EQ("Test String", charStringToString(chstr));
+
+}
+
+
+
+TEST_F(CharStringTest, compareCharString) {
+    CharString charstr;
+    CharString charstr2;
+    CharString charstr_small1;
+    CharString charstr_small2;
+    CharString charstr_large1;
+    CharString charstr_large2;
+    CharString charstr_empty;
+
+    stringToCharString(createStringRegion("test string"), charstr);
+    stringToCharString(createStringRegion("test string"), charstr2);
+    stringToCharString(createStringRegion("test strin"), charstr_small1);
+    stringToCharString(createStringRegion("test strina"), charstr_small2);
+    stringToCharString(createStringRegion("test stringa"), charstr_large1);
+    stringToCharString(createStringRegion("test strinz"), charstr_large2);
+
+    EXPECT_EQ(0, compareCharStrings(charstr, charstr2));
+    EXPECT_EQ(0, compareCharStrings(charstr2, charstr));
+    EXPECT_EQ(1, compareCharStrings(charstr, charstr_small1));
+    EXPECT_EQ(1, compareCharStrings(charstr, charstr_small2));
+    EXPECT_EQ(-1, compareCharStrings(charstr, charstr_large1));
+    EXPECT_EQ(-1, compareCharStrings(charstr, charstr_large2));
+    EXPECT_EQ(-1, compareCharStrings(charstr_small1, charstr));
+    EXPECT_EQ(-1, compareCharStrings(charstr_small2, charstr));
+    EXPECT_EQ(1, compareCharStrings(charstr_large1, charstr));
+    EXPECT_EQ(1, compareCharStrings(charstr_large2, charstr));
+
+    EXPECT_EQ(-1, compareCharStrings(charstr_empty, charstr));
+    EXPECT_EQ(1, compareCharStrings(charstr, charstr_empty));
+    EXPECT_EQ(0, compareCharStrings(charstr_empty, charstr_empty));
 }
 
 } // unnamed namespace

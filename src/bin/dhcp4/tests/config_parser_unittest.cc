@@ -78,8 +78,8 @@ public:
     /// @brief Create the simple configuration with single option.
     ///
     /// This function allows to set one of the parameters that configure
-    /// option value. These parameters are: "name", "code", "data" and
-    /// "csv-format".
+    /// option value. These parameters are: "name", "code", "data",
+    /// "csv-format" and "space".
     ///
     /// @param param_value string holiding option parameter value to be
     /// injected into the configuration string.
@@ -92,21 +92,31 @@ public:
         std::map<std::string, std::string> params;
         if (parameter == "name") {
             params["name"] = param_value;
+            params["space"] = "dhcp4";
+            params["code"] = "56";
+            params["data"] = "AB CDEF0105";
+            params["csv-format"] = "False";
+        } else if (parameter == "space") {
+            params["name"] = "dhcp-message";
+            params["space"] = param_value;
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = param_value;
             params["data"] = "AB CDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = "56";
             params["data"] = param_value;
             params["csv-format"] = "False";
         } else if (parameter == "csv-format") {
-            params["name"] = "option_foo";
+            params["name"] = "dhcp-message";
+            params["space"] = "dhcp4";
             params["code"] = "56";
             params["data"] = "AB CDEF0105";
             params["csv-format"] = param_value;
@@ -142,6 +152,8 @@ public:
             }
             if (param.first == "name") {
                 stream << "\"name\": \"" << param.second << "\"";
+            } else if (param.first == "space") {
+                stream << "\"space\": \"" << param.second << "\"";
             } else if (param.first == "code") {
                 stream << "\"code\": " << param.second << "";
             } else if (param.first == "data") {
@@ -234,6 +246,7 @@ public:
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet4\": [ ], "
+            "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
 
         try {
@@ -436,6 +449,363 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+// The goal of this test is to check whether an option definition
+// that defines an option carrying an IPv4 address can be created.
+TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Verify that the option definition data is valid.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+}
+
+// The goal of this test is to check whether an option definiiton
+// that defines an option carrying a record of data fields can
+// be created.
+TEST_F(Dhcp4ParserTest, optionDefRecord) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"record\","
+        "      \"array\": False,"
+        "      \"record-types\": \"uint16, ipv4-address, ipv6-address, string\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+
+    // The option comprises the record of data fields. Verify that all
+    // fields are present and they are of the expected types.
+    const OptionDefinition::RecordFieldsCollection& record_fields =
+        def->getRecordFields();
+    ASSERT_EQ(4, record_fields.size());
+    EXPECT_EQ(OPT_UINT16_TYPE, record_fields[0]);
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, record_fields[1]);
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, record_fields[2]);
+    EXPECT_EQ(OPT_STRING_TYPE, record_fields[3]);
+}
+
+// The goal of this test is to verify that multiple option definitions
+// can be created.
+TEST_F(Dhcp4ParserTest, optionDefMultiple) {
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  },"
+        "  {"
+        "      \"name\": \"foo-2\","
+        "      \"code\": 101,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the option definitions do not exist yet.
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 101));
+
+    // Use the configuration string to create new option definitions.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Check the first definition we have created.
+    OptionDefinitionPtr def1 = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def1);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def1->getName());
+    EXPECT_EQ(100, def1->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def1->getType());
+    EXPECT_FALSE(def1->getArrayType());
+
+    // Check the second option definition we have created.
+    OptionDefinitionPtr def2 = CfgMgr::instance().getOptionDef("isc", 101);
+    ASSERT_TRUE(def2);
+
+    // Check the option data.
+    EXPECT_EQ("foo-2", def2->getName());
+    EXPECT_EQ(101, def2->getCode());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def2->getType());
+    EXPECT_FALSE(def2->getArrayType());
+}
+
+// The goal of this test is to verify that the duplicated option
+// definition is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
+
+    // Configuration string. Both option definitions have
+    // the same code and belong to the same option space.
+    // This configuration should not be accepted.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  },"
+        "  {"
+        "      \"name\": \"foo-2\","
+        "      \"code\": 100,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the option definition does not exist yet.
+    ASSERT_FALSE(CfgMgr::instance().getOptionDef("isc", 100));
+
+    // Use the configuration string to create new option definitions.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+}
+
+// The goal of this test is to verify that the option definition
+// comprising an array of uint32 values can be created.
+TEST_F(Dhcp4ParserTest, optionDefArray) {
+
+    // Configuration string. Created option definition should
+    // comprise an array of uint32 values.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
+    EXPECT_TRUE(def->getArrayType());
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid name is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
+    // Configuration string. The option name is invalid as it
+    // contains the % character.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"invalid%name\","
+        "      \"code\": 100,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid type is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
+    // Configuration string. The option type is invalid. It is
+    // "sting" instead of "string".
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"sting\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The purpose of this test is to verify that the option definition
+/// with invalid type is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
+    // Configuration string. The third of the record fields
+    // is invalid. It is "sting" instead of "string".
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"record\","
+        "      \"array\": False,"
+        "      \"record-types\": \"uint32,uint8,sting\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+
+/// The purpose of this test is to verify that it is not allowed
+/// to override the standard option (that belongs to dhcp4 option
+/// space) and that it is allowed to define option in the dhcp4
+/// option space that has a code which is not used by any of the
+/// standard options.
+TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
+
+    // Configuration string. The option code 109 is unassigned
+    // so it can be used for a custom option definition in
+    // dhcp4 option space.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 109,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp4\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("dhcp4", 109);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(109, def->getCode());
+    EXPECT_EQ(OPT_STRING_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+
+    // The combination of option space and code is
+    // invalid. The 'dhcp4' option space groups
+    // standard options and the code 100 is reserved
+    // for one of them.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp4\""
+        "  } ]"
+        "}";
+    json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
 // Goal of this test is to verify that global option
 // data is configured for the subnet if the subnet
 // configuration does not include options configuration.
@@ -445,13 +815,15 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
-        "    \"name\": \"option_foo\","
+        "    \"name\": \"dhcp-message\","
+        "    \"space\": \"dhcp4\","
         "    \"code\": 56,"
         "    \"data\": \"AB CDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
-        "    \"name\": \"option_foo2\","
+        "    \"name\": \"default-ip-ttl\","
+        "    \"space\": \"dhcp4\","
         "    \"code\": 23,"
         "    \"data\": \"01\","
         "    \"csv-format\": False"
@@ -500,6 +872,74 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
 }
 
+/// The goal of this test is to verify that two options having the same
+/// option code can be added to different option spaces.
+TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
+
+    // This configuration string is to configure two options
+    // sharing the code 56 and having different definitions
+    // and belonging to the different option spaces.
+    // The option definition must be provided for the
+    // option that belongs to the 'isc' option space.
+    // The definition is not required for the option that
+    // belongs to the 'dhcp4' option space as it is the
+    // standard option.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"dhcp-message\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 56,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 56,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 56,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now availabe for the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    // Try to get the option from the space dhcp4.
+    Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp4", 56);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(56, desc1.option->getType());
+    // Try to get the option from the space isc.
+    Subnet::OptionDescriptor desc2 = subnet->getOptionDescriptor("isc", 56);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(56, desc1.option->getType());
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 56);
+    ASSERT_FALSE(desc3.option);
+}
+
 // Goal of this test is to verify options configuration
 // for a single subnet. In particular this test checks
 // that local options configuration overrides global
@@ -510,7 +950,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
-        "      \"name\": \"option_foo\","
+        "      \"name\": \"dhcp-message\","
+        "      \"space\": \"dhcp4\","
         "      \"code\": 56,"
         "      \"data\": \"AB\","
         "      \"csv-format\": False"
@@ -519,13 +960,15 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
+        "          \"name\": \"dhcp-message\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 56,"
         "          \"data\": \"AB CDEF0105\","
         "          \"csv-format\": False"
         "        },"
         "        {"
-        "          \"name\": \"option_foo2\","
+        "          \"name\": \"default-ip-ttl\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 23,"
         "          \"data\": \"01\","
         "          \"csv-format\": False"
@@ -582,7 +1025,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo\","
+        "          \"name\": \"dhcp-message\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 56,"
         "          \"data\": \"0102030405060708090A\","
         "          \"csv-format\": False"
@@ -592,7 +1036,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"option-data\": [ {"
-        "          \"name\": \"option_foo2\","
+        "          \"name\": \"default-ip-ttl\","
+        "          \"space\": \"dhcp4\","
         "          \"code\": 23,"
         "          \"data\": \"FF\","
         "          \"csv-format\": False"
@@ -745,6 +1190,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     ConstElementPtr x;
     std::map<std::string, std::string> params;
     params["name"] = "nis-servers";
+    params["space"] = "dhcp4";
     // Option code 41 means nis-servers.
     params["code"] = "41";
     // Specify option values in a CSV (user friendly) format.
