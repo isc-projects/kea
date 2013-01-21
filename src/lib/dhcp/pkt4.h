@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
+#include <dhcp/hwaddr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -217,16 +218,15 @@ public:
     /// @return transaction-id
     uint32_t getTransid() const { return (transid_); };
 
-    /// @brief Returns message type (e.g. 1 = DHCPDISCOVER).
+    /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @return message type
-    uint8_t
-    getType() const { return (msg_type_); }
+    uint8_t getType() const;
 
-    /// @brief Sets message type (e.g. 1 = DHCPDISCOVER).
+    /// @brief Sets DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
     /// @param type message type to be set
-    void setType(uint8_t type) { msg_type_=type; };
+    void setType(uint8_t type);
 
     /// @brief Returns sname field
     ///
@@ -273,27 +273,28 @@ public:
     void setHWAddr(uint8_t hType, uint8_t hlen,
                    const std::vector<uint8_t>& mac_addr);
 
+    /// @brief Sets hardware address
+    ///
+    /// Sets hardware address, based on existing HWAddr structure
+    /// @param addr already filled in HWAddr structure
+    /// @throw BadValue if addr is null
+    void setHWAddr(const HWAddrPtr& addr);
+
     /// Returns htype field
     ///
     /// @return hardware type
     uint8_t
-    getHtype() const { return (htype_); };
+    getHtype() const;
 
     /// Returns hlen field
     ///
     /// @return hardware address length
     uint8_t
-    getHlen() const { return (hlen_); };
+    getHlen() const;
 
-    /// @brief Returns chaddr field.
-    ///
-    /// Note: This is 16 bytes long field. It doesn't have to be
-    /// null-terminated. Do no use strlen() or similar on it.
-    ///
-    /// @return pointer to hardware address
-    const uint8_t*
-    getChaddr() const { return (chaddr_); };
-
+    /// @brief returns hardware address information
+    /// @return hardware address structure
+    HWAddrPtr getHWAddr() const { return (hwaddr_); }
 
     /// @brief Returns reference to output buffer.
     ///
@@ -321,7 +322,12 @@ public:
     /// @return returns option of requested type (or NULL)
     ///         if no such option is present
     boost::shared_ptr<Option>
-    getOption(uint8_t opt_type);
+    getOption(uint8_t opt_type) const;
+
+    /// @brief Deletes specified option
+    /// @param type option type to be deleted
+    /// @return true if anything was deleted, false otherwise
+    bool delOption(uint8_t type);
 
     /// @brief Returns interface name.
     ///
@@ -454,11 +460,11 @@ protected:
     /// type is kept in message type option).
     uint8_t op_;
 
-    /// link-layer address type
-    uint8_t htype_;
-
-    /// link-layer address length
-    uint8_t hlen_;
+    /// @brief link-layer address and hardware information
+    /// represents 3 fields: htype (hardware type, 1 byte), hlen (length of the
+    /// hardware address, up to 16) and chaddr (hardware address field,
+    /// 16 bytes)
+    HWAddrPtr hwaddr_;
 
     /// Number of relay agents traversed
     uint8_t hops_;
@@ -483,9 +489,6 @@ protected:
 
     /// giaddr field (32 bits): Gateway IP address
     isc::asiolink::IOAddress giaddr_;
-
-    /// Hardware address field (16 bytes)
-    uint8_t chaddr_[MAX_CHADDR_LEN];
 
     /// sname field (64 bytes)
     uint8_t sname_[MAX_SNAME_LEN];
@@ -518,16 +521,11 @@ protected:
     /// data format change etc.
     std::vector<uint8_t> data_;
 
-    /// message type (e.g. 1=DHCPDISCOVER)
-    /// @todo this will eventually be replaced with DHCP Message Type
-    /// option (option 53)
-    uint8_t msg_type_;
-
     /// collection of options present in this message
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt4. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.

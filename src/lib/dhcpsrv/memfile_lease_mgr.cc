@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <exceptions/exceptions.h>
 
 #include <iostream>
 
@@ -27,11 +29,22 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
-bool Memfile_LeaseMgr::addLease(const Lease4Ptr&) {
-    return (false);
+bool Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_ADD_ADDR4).arg(lease->addr_.toText());
+
+    if (getLease4(lease->addr_)) {
+        // there is a lease with specified address already
+        return (false);
+    }
+    storage4_.insert(lease);
+    return (true);
 }
 
 bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
+
     if (getLease6(lease->addr_)) {
         // there is a lease with specified address already
         return (false);
@@ -40,30 +53,71 @@ bool Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     return (true);
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress&) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
+
+    Lease4Storage::iterator l = storage4_.find(addr);
+    if (l == storage4_.end()) {
+        return (Lease4Ptr());
+    } else {
+        return (*l);
+    }
+}
+
+Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
+
+    isc_throw(NotImplemented, "getLease4(HWaddr x) method not implemented yet");
+}
+
+Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
+                                      SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
+        .arg(hwaddr.toText());
+
+    Lease4Storage::iterator l;
+    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
+        if ( ((*l)->hwaddr_ == hwaddr.hwaddr_) &&
+             ((*l)->subnet_id_ == subnet_id)) {
+            return (*l);
+        }
+    }
+
+    // not found
     return (Lease4Ptr());
 }
 
-Lease4Collection Memfile_LeaseMgr::getLease4(const HWAddr& ) const {
-    return (Lease4Collection());
+Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_CLIENTID).arg(clientid.toText());
+    isc_throw(NotImplemented, "getLease4(ClientId) not implemented");
 }
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr&,
-                                      SubnetID) const {
+Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& client_id,
+                                      SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
+              .arg(client_id.toText());
+    Lease4Storage::iterator l;
+    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
+        if ( (*(*l)->client_id_ == client_id) &&
+             ((*l)->subnet_id_ == subnet_id)) {
+            return (*l);
+        }
+    }
+
+    // not found
     return (Lease4Ptr());
 }
 
+Lease6Ptr Memfile_LeaseMgr::getLease6(
+        const isc::asiolink::IOAddress& addr) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_ADDR6).arg(addr.toText());
 
-Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId&,
-                                      SubnetID) const {
-    return (Lease4Ptr());
-}
-
-Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& ) const {
-    return (Lease4Collection());
-}
-
-Lease6Ptr Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
         return (Lease6Ptr());
@@ -72,12 +126,20 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) cons
     }
 }
 
-Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& , uint32_t ) const {
+Lease6Collection Memfile_LeaseMgr::getLease6(const DUID& duid,
+                                             uint32_t iaid) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_IAID_DUID).arg(iaid).arg(duid.toText());
+
     return (Lease6Collection());
 }
 
 Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
                                       SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID)
+              .arg(iaid).arg(subnet_id).arg(duid.toText());
+
     /// @todo: Slow, naive implementation. Write it using additional indexes
     for (Lease6Storage::iterator l = storage6_.begin(); l != storage6_.end(); ++l) {
         if ( (*((*l)->duid_) == duid) &&
@@ -89,20 +151,35 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     return (Lease6Ptr());
 }
 
-void Memfile_LeaseMgr::updateLease4(const Lease4Ptr& ) {
+void Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
+
 }
 
-void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& ) {
+void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
+
 
 }
 
 bool Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
     if (addr.isV4()) {
-        // V4 not implemented yet
-        return (false);
+        // v4 lease
+        Lease4Storage::iterator l = storage4_.find(addr);
+        if (l == storage4_.end()) {
+            // No such lease
+            return (false);
+        } else {
+            storage4_.erase(l);
+            return (true);
+        }
 
     } else {
-        // V6 lease
+        // v6 lease
         Lease6Storage::iterator l = storage6_.find(addr);
         if (l == storage6_.end()) {
             // No such lease
@@ -122,8 +199,11 @@ std::string Memfile_LeaseMgr::getDescription() const {
 
 void
 Memfile_LeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_COMMIT);
 }
 
 void
 Memfile_LeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_ROLLBACK);
 }

@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <util/buffer.h>
@@ -26,6 +28,8 @@
 // END_COMMON_DECLARATIONS
 
 // BEGIN_RDATA_NAMESPACE
+
+class NAPTRImpl;
 
 /// \brief \c NAPTR class represents the NAPTR rdata defined in
 /// RFC2915, RFC2168 and RFC3403
@@ -39,37 +43,24 @@ public:
     // END_COMMON_MEMBERS
 
     // NAPTR specific methods
+    ~NAPTR();
+
+    NAPTR& operator=(const NAPTR& source);
+
     uint16_t getOrder() const;
     uint16_t getPreference() const;
-    const std::string& getFlags() const;
-    const std::string& getServices() const;
-    const std::string& getRegexp() const;
+    const std::string getFlags() const;
+    const std::string getServices() const;
+    const std::string getRegexp() const;
     const Name& getReplacement() const;
 private:
     /// Helper template function for toWire()
     ///
     /// \param outputer Where to write data in
     template <typename T>
-    void toWireHelper(T& outputer) const {
-        outputer.writeUint16(order_);
-        outputer.writeUint16(preference_);
+    void toWireHelper(T& outputer) const;
 
-        outputer.writeUint8(flags_.size());
-        outputer.writeData(flags_.c_str(), flags_.size());
-
-        outputer.writeUint8(services_.size());
-        outputer.writeData(services_.c_str(), services_.size());
-
-        outputer.writeUint8(regexp_.size());
-        outputer.writeData(regexp_.c_str(), regexp_.size());
-    }
-
-    uint16_t order_;
-    uint16_t preference_;
-    std::string flags_;
-    std::string services_;
-    std::string regexp_;
-    Name replacement_;
+    boost::scoped_ptr<NAPTRImpl> impl_;
 };
 
 // END_RDATA_NAMESPACE

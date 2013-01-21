@@ -17,6 +17,7 @@ EXTRA_DIST += libxfrin_messages.py
 EXTRA_DIST += loadzone_messages.py
 EXTRA_DIST += server_common_messages.py
 EXTRA_DIST += dbutil_messages.py
+EXTRA_DIST += msgq_messages.py
 
 CLEANFILES = __init__.pyc
 CLEANFILES += bind10_messages.pyc
@@ -35,6 +36,7 @@ CLEANFILES += libxfrin_messages.pyc
 CLEANFILES += loadzone_messages.pyc
 CLEANFILES += server_common_messages.pyc
 CLEANFILES += dbutil_messages.pyc
+CLEANFILES += msgq_messages.pyc
 
 CLEANDIRS = __pycache__
 

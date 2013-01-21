@@ -29,34 +29,74 @@ import errno
 import time
 import select
 import random
+import threading
+import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.log
+from isc.log_messages.msgq_messages import *
 
 import isc.cc
 
 isc.util.process.rename()
+
+isc.log.init("b10-msgq", buffer=True)
+# Logger that is used in the actual msgq handling - startup, shutdown and the
+# poller thread.
+logger = isc.log.Logger("msgq")
+# A separate copy for the master/config thread when the poller thread runs.
+# We use a separate instance, since the logger itself doesn't have to be
+# thread safe.
+config_logger = isc.log.Logger("msgq")
+TRACE_START = logger.DBGLVL_START_SHUT
+TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+TRACE_DETAIL = logger.DBGLVL_TRACE_DETAIL
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 
+# If B10_FROM_BUILD is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/msgq"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
+
 class MsgQReceiveError(Exception): pass
 
 class SubscriptionManager:
-    def __init__(self):
+    def __init__(self, cfgmgr_ready):
+        """
+        Initialize the subscription manager.
+        parameters:
+        * cfgmgr_ready: A callable object run once the config manager
+            subscribes. This is a hackish solution, but we can't read
+            the configuration sooner.
+        """
         self.subscriptions = {}
+        self.__cfgmgr_ready = cfgmgr_ready
+        self.__cfgmgr_ready_called = False
 
     def subscribe(self, group, instance, socket):
         """Add a subscription."""
         target = ( group, instance )
         if target in self.subscriptions:
-            print("[b10-msgq] Appending to existing target")
+            logger.debug(TRACE_BASIC, MSGQ_SUBS_APPEND_TARGET, group, instance)
             if socket not in self.subscriptions[target]:
                 self.subscriptions[target].append(socket)
         else:
-            print("[b10-msgq] Creating new target")
+            logger.debug(TRACE_BASIC, MSGQ_SUBS_NEW_TARGET, group, instance)
             self.subscriptions[target] = [ socket ]
+        if group == "ConfigManager" and not self.__cfgmgr_ready_called:
+            logger.debug(TRACE_BASIC, MSGQ_CFGMGR_SUBSCRIBED)
+            self.__cfgmgr_ready_called = True
+            self.__cfgmgr_ready()
 
     def unsubscribe(self, group, instance, socket):
         """Remove the socket from the one specific subscription."""
@@ -124,10 +164,52 @@ class MsgQ:
         self.sockets = {}
         self.connection_counter = random.random()
         self.hostname = socket.gethostname()
-        self.subs = SubscriptionManager()
+        self.subs = SubscriptionManager(self.cfgmgr_ready)
         self.lnames = {}
         self.sendbuffs = {}
         self.running = False
+        self.__cfgmgr_ready = None
+        self.__cfgmgr_ready_cond = threading.Condition()
+        # A lock used when the message queue does anything more complicated.
+        # It is mostly a safety measure, the threads doing so should be mostly
+        # independent, and the one with config session should be read only,
+        # but with threads, one never knows. We use threads for concurrency,
+        # not for performance, so we use wide lock scopes to be on the safe
+        # side.
+        self.__lock = threading.Lock()
+
+    def cfgmgr_ready(self, ready=True):
+        """Notify that the config manager is either subscribed, or
+           that the msgq is shutting down and it won't connect, but
+           anybody waiting for it should stop anyway.
+
+           The ready parameter signifies if the config manager is subscribed.
+
+           This method can be called multiple times, but second and any
+           following call is simply ignored. This means the "abort" version
+           of the call can be used on any stop unconditionally, even when
+           the config manager already connected.
+        """
+        with self.__cfgmgr_ready_cond:
+            if self.__cfgmgr_ready is not None:
+                # This is a second call to this method. In that case it does
+                # nothing.
+                return
+            self.__cfgmgr_ready = ready
+            self.__cfgmgr_ready_cond.notify_all()
+
+    def wait_cfgmgr(self):
+        """Wait for msgq to subscribe.
+
+           When this returns, the config manager is either subscribed, or
+           msgq gave up waiting for it. Success is signified by the return
+           value.
+        """
+        with self.__cfgmgr_ready_cond:
+            # Wait until it either aborts or subscribes
+            while self.__cfgmgr_ready is None:
+                self.__cfgmgr_ready_cond.wait()
+            return self.__cfgmgr_ready
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -137,7 +219,7 @@ class MsgQ:
             self.poller = select.poll()
 
     def add_kqueue_socket(self, socket, write_filter=False):
-        """Add a kquque filter for a socket.  By default the read
+        """Add a kqueue filter for a socket.  By default the read
         filter is used; if write_filter is set to True, the write
         filter is used.  We use a boolean value instead of a specific
         filter constant, because kqueue filter values do not seem to
@@ -162,9 +244,7 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Setting up socket at %s\n" %
-                             self.socket_file)
+        logger.debug(TRACE_BASIC, MSGQ_LISTENER_SETUP, self.socket_file)
 
         self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -179,14 +259,27 @@ class MsgQ:
             if os.path.exists(self.socket_file):
                 os.remove(self.socket_file)
             self.listen_socket.close()
-            sys.stderr.write("[b10-msgq] failed to setup listener on %s: %s\n"
-                             % (self.socket_file, str(e)))
+            logger.fatal(MSGQ_LISTENER_FAILED, self.socket_file, e)
             raise e
 
         if self.poller:
             self.poller.register(self.listen_socket, select.POLLIN)
         else:
             self.add_kqueue_socket(self.listen_socket)
+
+    def setup_signalsock(self):
+        """Create a socket pair used to signal when we want to finish.
+           Using a socket is easy and thread/signal safe way to signal
+           the termination.
+        """
+        # The __poller_sock will be the end in the poller. When it is
+        # closed, we should shut down.
+        (self.__poller_sock, self.__control_sock) = socket.socketpair()
+
+        if self.poller:
+            self.poller.register(self.__poller_sock, select.POLLIN)
+        else:
+            self.add_kqueue_socket(self.__poller_sock)
 
     def setup(self):
         """Configure listener socket, polling, etc.
@@ -195,10 +288,10 @@ class MsgQ:
         """
 
         self.setup_poller()
+        self.setup_signalsock()
         self.setup_listener()
 
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Listening\n")
+        logger.debug(TRACE_START, MSGQ_LISTENER_STARTED);
 
         self.runnable = True
 
@@ -226,10 +319,9 @@ class MsgQ:
     def process_socket(self, fd):
         """Process a read on a socket."""
         if not fd in self.sockets:
-            sys.stderr.write("[b10-msgq] Got read on Strange Socket fd %d\n" % fd)
+            logger.error(MSGQ_READ_UNKNOWN_FD, fd)
             return
         sock = self.sockets[fd]
-#        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
     def kill_socket(self, fd, sock):
@@ -243,7 +335,7 @@ class MsgQ:
         del self.sockets[fd]
         if fd in self.sendbuffs:
             del self.sendbuffs[fd]
-        sys.stderr.write("[b10-msgq] Closing socket fd %d\n" % fd)
+        logger.debug(TRACE_BASIC, MSGQ_SOCK_CLOSE, fd)
 
     def getbytes(self, fd, sock, length):
         """Get exactly the requested bytes, or raise an exception if
@@ -285,15 +377,15 @@ class MsgQ:
         try:
             routing, data = self.read_packet(fd, sock)
         except MsgQReceiveError as err:
+            logger.error(MSGQ_RECV_ERR, fd, err)
             self.kill_socket(fd, sock)
-            sys.stderr.write("[b10-msgq] Receive error: %s\n" % err)
             return
 
         try:
             routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
+            logger.error(MSGQ_HDR_DECODE_ERR, fd, err)
             return
 
         self.process_command(fd, sock, routingmsg, data)
@@ -301,9 +393,7 @@ class MsgQ:
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
            other functions."""
-        # TODO: A print statement got removed here (one that prints the
-        # routing envelope). When we have logging with multiple levels,
-        # we might want to re-add that on a high debug verbosity.
+        logger.debug(TRACE_DETAIL, MSGQ_RECV_HDR, routing)
         cmd = routing["type"]
         if cmd == 'send':
             self.process_command_send(sock, routing, data)
@@ -319,7 +409,7 @@ class MsgQ:
         elif cmd == 'stop':
             self.stop()
         else:
-            sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
+            logger.error(MSGQ_INVALID_CMD, cmd)
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
@@ -363,8 +453,8 @@ class MsgQ:
             elif e.errno in [ errno.EPIPE,
                               errno.ECONNRESET,
                               errno.ENOBUFS ]:
-                print("[b10-msgq] " + errno.errorcode[e.errno] +
-                      " on send, dropping message and closing connection")
+                logger.error(MSGQ_SEND_ERR, sock.fileno(),
+                             errno.errorcode[e.errno])
                 self.kill_socket(sock.fileno(), sock)
                 return None
             else:
@@ -491,18 +581,23 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    sys.stderr.write("[b10-msgq] Error with poll(): %s\n" % err)
+                    logger.fatal(MSGQ_POLL_ERR, err)
                     break
-            for (fd, event) in events:
-                if fd == self.listen_socket.fileno():
-                    self.process_accept()
-                else:
-                    if event & select.POLLOUT:
-                        self.__process_write(fd)
-                    elif event & select.POLLIN:
-                        self.process_socket(fd)
+            with self.__lock:
+                for (fd, event) in events:
+                    if fd == self.listen_socket.fileno():
+                        self.process_accept()
+                    elif fd == self.__poller_sock.fileno():
+                        # If it's the signal socket, we should terminate now.
+                        self.running = False
+                        break
                     else:
-                        print("[b10-msgq] Error: Unknown even in run_poller()")
+                        if event & select.POLLOUT:
+                            self.__process_write(fd)
+                        elif event & select.POLLIN:
+                            self.process_socket(fd)
+                        else:
+                            logger.error(MSGQ_POLL_UNKNOWN_EVENT, fd, event)
 
     def run_kqueue(self):
         while self.running:
@@ -512,38 +607,95 @@ class MsgQ:
             if not events:
                 raise RuntimeError('serve: kqueue returned no events')
 
-            for event in events:
-                if event.ident == self.listen_socket.fileno():
-                    self.process_accept()
-                else:
-                    if event.filter == select.KQ_FILTER_WRITE:
-                        self.__process_write(event.ident)
-                    if event.filter == select.KQ_FILTER_READ and \
-                            event.data > 0:
-                        self.process_socket(event.ident)
-                    elif event.flags & select.KQ_EV_EOF:
-                        self.kill_socket(event.ident,
-                                         self.sockets[event.ident])
+            with self.__lock:
+                for event in events:
+                    if event.ident == self.listen_socket.fileno():
+                        self.process_accept()
+                    elif event.ident == self.__poller_sock.fileno():
+                        # If it's the signal socket, we should terminate now.
+                        self.running = False
+                        break;
+                    else:
+                        if event.filter == select.KQ_FILTER_WRITE:
+                            self.__process_write(event.ident)
+                        if event.filter == select.KQ_FILTER_READ and \
+                                event.data > 0:
+                            self.process_socket(event.ident)
+                        elif event.flags & select.KQ_EV_EOF:
+                            self.kill_socket(event.ident,
+                                             self.sockets[event.ident])
 
     def stop(self):
-        self.running = False
+        # Signal it should terminate.
+        self.__control_sock.close()
+        self.__control_sock = None
+        # Abort anything waiting on the condition, just to make sure it's not
+        # blocked forever
+        self.cfgmgr_ready(False)
+
+    def cleanup_signalsock(self):
+        """Close the signal sockets. We could do it directly in shutdown,
+           but this part is reused in tests.
+        """
+        if self.__poller_sock:
+            self.__poller_sock.close()
+            self.__poller_sock = None
+        if self.__control_sock:
+            self.__control_sock.close()
+            self.__control_sock = None
 
     def shutdown(self):
         """Stop the MsgQ master."""
-        if self.verbose:
-            sys.stdout.write("[b10-msgq] Stopping the server.\n")
+        logger.debug(TRACE_START, MSGQ_SHUTDOWN)
         self.listen_socket.close()
+        self.cleanup_signalsock()
+        # Close all the sockets too. In real life, there should be none now,
+        # as Msgq should be the last one. But some tests don't adhere to this
+        # and create a new Msgq for each test, which led to huge socket leaks.
+        # Some other threads put some other things in instead of sockets, so
+        # we catch whatever exceptions there we can. This should be safe,
+        # because in real operation, we will terminate now anyway, implicitly
+        # closing anything anyway.
+        for sock in self.sockets.values():
+            try:
+                sock.close()
+            except Exception:
+                pass
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
 
-# can signal handling and calling a destructor be done without a
-# global variable?
-msgq = None
+    def config_handler(self, new_config):
+        """The configuration handler (run in a separate thread).
+           Not tested, currently effectively empty.
+        """
+        config_logger.debug(TRACE_DETAIL, MSGQ_CONFIG_DATA, new_config)
 
-def signal_handler(signal, frame):
+        with self.__lock:
+            if not self.running:
+                return
+
+            # TODO: Any config handlig goes here.
+
+            return isc.config.create_answer(0)
+
+    def command_handler(self, command, args):
+        """The command handler (run in a separate thread).
+           Not tested, currently effectively empty.
+        """
+        config_logger.debug(TRACE_DETAIL, MSGQ_COMMAND, command, args)
+
+        with self.__lock:
+            if not self.running:
+                return
+
+            # TODO: Any commands go here
+
+            config_logger.error(MSGQ_COMMAND_UNKNOWN, command)
+            return isc.config.create_answer(1, 'unknown command: ' + command)
+
+def signal_handler(msgq, signal, frame):
     if msgq:
-        msgq.shutdown()
-    sys.exit(0)
+        msgq.stop()
 
 if __name__ == "__main__":
     def check_port(option, opt_str, value, parser):
@@ -556,6 +708,7 @@ if __name__ == "__main__":
 
     # Parse any command-line options.
     parser = OptionParser(version=VERSION)
+    # TODO: Should we remove the option?
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
     parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
@@ -563,22 +716,46 @@ if __name__ == "__main__":
                       help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
 
-    signal.signal(signal.SIGTERM, signal_handler)
-
     # Announce startup.
-    if options.verbose:
-        sys.stdout.write("[b10-msgq] %s\n" % VERSION)
+    logger.debug(TRACE_START, MSGQ_START, VERSION)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
+
+    signal.signal(signal.SIGTERM,
+                  lambda signal, frame: signal_handler(msgq, signal, frame))
 
     try:
         msgq.setup()
     except Exception as e:
-        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % str(e))
+        logger.fatal(MSGQ_START_FAIL, e)
         sys.exit(1)
 
+    # We run the processing in a separate thread. This is because we want to
+    # connect to the msgq ourself. But the cc library is unfortunately blocking
+    # in many places and waiting for the processing part to answer, it would
+    # deadlock.
+    poller_thread = threading.Thread(target=msgq.run)
+    poller_thread.daemon = True
     try:
-        msgq.run()
+        poller_thread.start()
+        if msgq.wait_cfgmgr():
+            # Once we get the config manager, we can read our own config.
+            session = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                                 msgq.config_handler,
+                                                 msgq.command_handler,
+                                                 None, True,
+                                                 msgq.socket_file)
+            session.start()
+            # And we create a thread that'll just wait for commands and
+            # handle them. We don't terminate the thread, we set it to
+            # daemon. Once the main thread terminates, it'll just die.
+            def run_session():
+                while True:
+                    session.check_command(False)
+            background_thread = threading.Thread(target=run_session)
+            background_thread.daemon = True
+            background_thread.start()
+        poller_thread.join()
     except KeyboardInterrupt:
         pass
 

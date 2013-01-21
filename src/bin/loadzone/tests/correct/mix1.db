@@ -1,7 +1,5 @@
 $ORIGIN mix1.
-; this needs #2500
-;@			IN SOA	ns hostmaster (
-@			IN SOA	ns.mix1. hostmaster.mix1. (
+@			IN SOA	ns hostmaster (
 				1        ; serial
 				3600
 				1800

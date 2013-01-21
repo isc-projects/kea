@@ -29,6 +29,7 @@ import time
 import imp
 
 import stats
+import isc.log
 import isc.cc.session
 from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
 from isc.testutils.ccsession_mock import MockModuleCCSession
@@ -1254,8 +1255,6 @@ class TestOSEnv(unittest.TestCase):
         os.environ["B10_FROM_SOURCE"] = path
         imp.reload(stats)
 
-def test_main():
-    unittest.main()
-
 if __name__ == "__main__":
-    test_main()
+    isc.log.resetUnitTestRootLogger()
+    unittest.main()

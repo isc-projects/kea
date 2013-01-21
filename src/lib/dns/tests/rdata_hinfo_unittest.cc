@@ -51,10 +51,9 @@ TEST_F(Rdata_HINFO_Test, createFromText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(string("Pentium"), hinfo.getCPU());
     EXPECT_EQ(string("Linux"), hinfo.getOS());
-
     // Test the text with double quotes in the middle of string
     HINFO hinfo1(hinfo_str1);
-    EXPECT_EQ(string("Pen\"tium"), hinfo1.getCPU());
+    EXPECT_EQ(string("Pen\\\"tium"), hinfo1.getCPU());
 }
 
 TEST_F(Rdata_HINFO_Test, badText) {
@@ -96,11 +95,20 @@ TEST_F(Rdata_HINFO_Test, createFromLexer) {
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
                                              "\"Pentium\" \"Linux\" "
                                              "\"Computer\""));
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::HINFO(), RRClass::IN(),
+                                             "\"Pentium\""));
 }
 
 TEST_F(Rdata_HINFO_Test, toText) {
     HINFO hinfo(hinfo_str);
     EXPECT_EQ(hinfo_str, hinfo.toText());
+
+    // will add quotes even if they were not in the original input
+    EXPECT_EQ("\"a\" \"b\"", HINFO("a b").toText());
+    // will not add additional quotes
+    EXPECT_EQ("\"a\" \"b\"", HINFO("\"a\" \"b\"").toText());
+    // And make sure escaped quotes and spaces are left intact
+    EXPECT_EQ("\"a\\\"\" \"b c\"", HINFO("\"a\\\"\" \"b c\"").toText());
 }
 
 TEST_F(Rdata_HINFO_Test, toWire) {
@@ -133,6 +141,19 @@ TEST_F(Rdata_HINFO_Test, compare) {
     EXPECT_EQ(1, hinfo.compare(HINFO(hinfo_str_small2)));
     EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large1)));
     EXPECT_EQ(-1, hinfo.compare(HINFO(hinfo_str_large2)));
+}
+
+// Copy/assign test
+TEST_F(Rdata_HINFO_Test, copy) {
+    HINFO hinfo(hinfo_str);
+    HINFO hinfo2(hinfo);
+    HINFO hinfo3 = hinfo;
+
+    EXPECT_EQ(0, hinfo.compare(hinfo2));
+    EXPECT_EQ(0, hinfo.compare(hinfo3));
+
+    hinfo3 = hinfo;
+    EXPECT_EQ(0, hinfo.compare(hinfo3));
 }
 
 }

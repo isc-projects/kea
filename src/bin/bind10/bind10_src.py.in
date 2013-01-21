@@ -103,7 +103,30 @@ VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 # This is for boot_time of Boss
 _BASETIME = time.gmtime()
 
+# Detailed error message commonly used on startup failure, possibly due to
+# permission issue regarding log lock file.  We dump verbose message because
+# it may not be clear exactly what to do if it simply says
+# "failed to open <filename>: permission denied"
+NOTE_ON_LOCK_FILE = """\
+TIP: if this is about permission error for a lock file, check if the directory
+of the file is writable for the user of the bind10 process; often you need
+to start bind10 as a super user.  Also, if you specify the -u option to
+change the user and group, the directory must be writable for the group,
+and the created lock file must be writable for that user. Finally, make sure
+the lock file is not left in the directly before restarting.
+"""
+
 class ProcessInfoError(Exception): pass
+
+class ChangeUserError(Exception):
+    '''Exception raised when setuid/setgid fails.
+
+    When raised, it's expected to be propagated via underlying component
+    management modules to the top level so that it will help provide useful
+    fatal error message.
+
+    '''
+    pass
 
 class ProcessInfo:
     """Information about a process"""
@@ -206,8 +229,8 @@ class BoB:
         # restart. Components manage their own restart schedule now
         self.components_to_restart = []
         self.runnable = False
-        self.uid = setuid
-        self.gid = setgid
+        self.__uid = setuid
+        self.__gid = setgid
         self.username = username
         self.verbose = verbose
         self.nokill = nokill
@@ -268,6 +291,31 @@ class BoB:
             comps[comp] = self.__core_components[comp]
         # Update the configuration
         self._component_configurator.reconfigure(comps)
+
+    def change_user(self):
+        '''Change the user and group to those specified on construction.
+
+        This method is expected to be called by a component on initial
+        startup when the system is ready to switch the user and group
+        (i.e., once all components that need the privilege of the original
+        user have started).
+        '''
+        try:
+            if self.__gid is not None:
+                logger.info(BIND10_SETGID, self.__gid)
+                posix.setgid(self.__gid)
+        except Exception as ex:
+            raise ChangeUserError('failed to change group: ' + str(ex))
+
+        try:
+            if self.__uid is not None:
+                posix.setuid(self.__uid)
+                # We use one-shot logger after setuid here.  This will
+                # detect any permission issue regarding logging due to the
+                # result of setuid at the earliest opportunity.
+                isc.log.Logger("boss").info(BIND10_SETUID, self.__uid)
+        except Exception as ex:
+            raise ChangeUserError('failed to change user: ' + str(ex))
 
     def config_handler(self, new_config):
         # If this is initial update, don't do anything now, leave it to startup
@@ -443,6 +491,8 @@ class BoB:
 
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > self.msgq_timeout:
+                if msgq_proc.process:
+                    msgq_proc.process.kill()
                 logger.error(BIND10_CONNECTING_TO_CC_FAIL)
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 
@@ -578,8 +628,6 @@ class BoB:
             are pure speculation.  As with the auth daemon, they should be
             read from the configuration database.
         """
-        if self.uid is not None and self.__started:
-            logger.warn(BIND10_START_AS_NON_ROOT_RESOLVER)
         self.curproc = "b10-resolver"
         # XXX: this must be read from the configuration manager in the future
         resargs = ['b10-resolver']
@@ -646,6 +694,9 @@ class BoB:
         try:
             self.c_channel_env = c_channel_env
             self.start_all_components()
+        except ChangeUserError as e:
+            self.kill_started_components()
+            return str(e) + '; ' + NOTE_ON_LOCK_FILE.replace('\n', ' ')
         except Exception as e:
             self.kill_started_components()
             return "Unable to start " + self.curproc + ": " + str(e)
@@ -1155,7 +1206,19 @@ def remove_lock_files():
     for f in lockfiles:
         fname = lpath + '/' + f
         if os.path.isfile(fname):
-            os.unlink(fname)
+            try:
+                os.unlink(fname)
+            except OSError as e:
+                # We catch and ignore permission related error on unlink.
+                # This can happen if bind10 started with -u, created a lock
+                # file as a privileged user, but the directory is not writable
+                # for the changed user.  This setup will cause immediate
+                # start failure, and we leave verbose error message including
+                # the leftover lock file, so it should be acceptable to ignore
+                # it (note that it doesn't make sense to log this event at
+                # this poitn)
+                if e.errno != errno.EPERM and e.errno != errno.EACCES:
+                    raise
 
     return
 
@@ -1173,13 +1236,7 @@ def main():
     except RuntimeError as e:
         sys.stderr.write('ERROR: failed to write the initial log: %s\n' %
                          str(e))
-        sys.stderr.write("""\
-TIP: if this is about permission error for a lock file, check if the directory
-of the file is writable for the user of the bind10 process; often you need
-to start bind10 as a super user.  Also, if you specify the -u option to
-change the user and group, the directory must be writable for the group,
-and the created lock file must be writable for that user.
-""")
+        sys.stderr.write(NOTE_ON_LOCK_FILE)
         sys.exit(1)
 
     # Check user ID.
