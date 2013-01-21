@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,13 +66,12 @@ OptionDefinition::OptionDefinition(const std::string& name,
                                    const char* encapsulated_space)
     : name_(name),
       code_(code),
-      type_(OPT_UNKNOWN_TYPE),
+      // Data type is held as enum value by this class.
+      // Use the provided option type string to get the
+      // corresponding enum value.
+      type_(OptionDataTypeUtil::getDataType(type)),
       array_type_(false),
       encapsulated_space_(encapsulated_space) {
-    // Data type is held as enum value by this class.
-    // Use the provided option type string to get the
-    // corresponding enum value.
-    type_ = OptionDataTypeUtil::getDataType(type);
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
