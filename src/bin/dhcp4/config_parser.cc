@@ -1366,10 +1366,9 @@ private:
     /// @param option_space a name of the encapsulated option space.
     /// @param option option instance to append sub-options to.
     void appendSubOptions(const std::string& option_space, OptionPtr& option) {
-        // If invalid pointer there is nothing to do.
-        if (!option) {
-            return;
-        }
+        // Only non-NULL options are stored in option container.
+        // If this option pointer is NULL this is a serious error.
+        assert(option);
 
         OptionDefinitionPtr def;
         if (option_space == "dhcp4" &&
@@ -1398,7 +1397,7 @@ private:
             assert(def);
         }
 
-        // We need to get option definition fo the particular option space
+        // We need to get option definition for the particular option space
         // and code. This definition holds the information whether our
         // option encapsulates any option space.
         // Get the encapsulated option space name.
