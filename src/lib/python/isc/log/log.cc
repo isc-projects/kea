@@ -40,7 +40,7 @@ using boost::bind;
 // (tags/RELEASE_28 115909)) on OSX, where unwinding the stack
 // segfaults the moment this exception was thrown and caught.
 //
-// Placing it in a named namespace instead of the originalRecommend
+// Placing it in a named namespace instead of the original
 // unnamed namespace appears to solve this, so as a temporary
 // workaround, we create a local randomly named namespace here
 // to solve this issue.

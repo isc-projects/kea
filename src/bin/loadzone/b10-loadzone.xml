@@ -67,7 +67,7 @@
 
     <para>
     Some control entries (aka directives) are supported.
-    $ORIGIN is followed by a domain name, and sets the the origin
+    $ORIGIN is followed by a domain name, and sets the origin
     that will be used for relative domain names in subsequent records.
     $INCLUDE is followed by a filename to load.
     The previous origin is restored after the file is included.
@@ -224,21 +224,7 @@
   <refsect1>
     <title>BUGS</title>
     <para>
-      As of the initial implementation, the underlying library that
-      this tool uses does not fully validate the loaded zone; for
-      example, loading will succeed even if it doesn't have the SOA or
-      NS record at its origin name.  Such checks will be implemented
-      in a near future version, but until then, the
-      <command>b10-loadzone</command> performs the existence of the
-      SOA and NS records by itself.  However, <command>b10-loadzone</command>
-      only warns about it, and does not cancel the load itself.
-      If this warning message is produced, it's the user's
-      responsibility to fix the errors and reload it.  When the
-      library is updated with the post load checks, it will be more
-      sophisticated and the such zone won't be successfully loaded.
-    </para>
-    <para>
-      There are some other issues noted in the DESCRIPTION section.
+      There are some issues noted in the DESCRIPTION section.
     </para>
   </refsect1>
 </refentry><!--

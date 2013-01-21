@@ -7,7 +7,8 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DAUTH_OBJ_DIR=\"$(abs_top_builddir)/src/bin/auth\"
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
-AM_CPPFLAGS += -DTEST_OWN_DATA_DIR=\"$(abs_top_srcdir)/src/bin/auth/tests/testdata\"
+AM_CPPFLAGS += -DTEST_OWN_DATA_DIR=\"$(abs_srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_OWN_DATA_BUILDDIR=\"$(abs_builddir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DDSRC_DIR=\"$(abs_top_builddir)/src/lib/datasrc\"
 AM_CPPFLAGS += -DPLUGIN_DATA_PATH=\"$(abs_top_builddir)/src/bin/cfgmgr/plugins\"
@@ -50,7 +51,6 @@ run_unittests_SOURCES += config_syntax_unittest.cc
 run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
-run_unittests_SOURCES += query_inmemory_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += test_datasrc_clients_mgr.h test_datasrc_clients_mgr.cc
 run_unittests_SOURCES += datasrc_clients_builder_unittest.cc
@@ -80,6 +80,39 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
+
+# The following are definitions for auto-generating test data for query
+# tests.
+BUILT_SOURCES = example_base_inc.cc example_nsec3_inc.cc
+BUILT_SOURCES += testdata/example-base.sqlite3
+BUILT_SOURCES += testdata/example-nsec3.sqlite3
+
+EXTRA_DIST = gen-query-testdata.py
+
+CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
+
+example_base_inc.cc: $(srcdir)/testdata/example-base-inc.zone
+	$(PYTHON) $(srcdir)/gen-query-testdata.py \
+		$(srcdir)/testdata/example-base-inc.zone example_base_inc.cc
+
+example_nsec3_inc.cc: $(srcdir)/testdata/example-nsec3-inc.zone
+	$(PYTHON) $(srcdir)/gen-query-testdata.py \
+		$(srcdir)/testdata/example-nsec3-inc.zone example_nsec3_inc.cc
+
+testdata/example-common-inc.zone: $(srcdir)/testdata/example-common-inc-template.zone
+	$(top_srcdir)/install-sh -c \
+		$(srcdir)/testdata/example-common-inc-template.zone \
+		testdata/example-common-inc.zone
+
+testdata/example-base.sqlite3: testdata/example-base.zone testdata/example-common-inc.zone
+	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
+		-c "{\"database_file\": \"$(builddir)/testdata/example-base.sqlite3\"}" \
+		example.com testdata/example-base.zone
+
+testdata/example-nsec3.sqlite3: testdata/example-nsec3.zone testdata/example-common-inc.zone
+	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
+		-c "{\"database_file\": \"$(builddir)/testdata/example-nsec3.sqlite3\"}" \
+		example.com testdata/example-nsec3.zone
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests

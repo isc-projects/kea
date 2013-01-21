@@ -123,6 +123,36 @@ DataSourceClient_createZone(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+DataSourceClient_deleteZone(PyObject* po_self, PyObject* args) {
+    s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
+    PyObject* po_name;
+    if (PyArg_ParseTuple(args, "O!", &name_type, &po_name)) {
+        try {
+            if (self->client->deleteZone(PyName_ToName(po_name))) {
+                Py_RETURN_TRUE;
+            } else {
+                Py_RETURN_FALSE;
+            }
+        } catch (const DataSourceError& dse) {
+            PyErr_SetString(getDataSourceException("Error"), dse.what());
+            return (NULL);
+        } catch (const isc::NotImplemented& ni) {
+            PyErr_SetString(getDataSourceException("NotImplemented"),
+                            ni.what());
+            return (NULL);
+        } catch (const std::exception& exc) {
+            PyErr_SetString(getDataSourceException("Error"), exc.what());
+            return (NULL);
+        } catch (...) {
+            PyErr_SetString(getDataSourceException("Error"),
+                            "Unexpected exception");
+            return (NULL);
+        }
+    }
+    return (NULL);
+}
+
+PyObject*
 DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     PyObject* name_obj;
@@ -263,6 +293,8 @@ PyMethodDef DataSourceClient_methods[] = {
       DataSourceClient_findZone_doc },
     { "create_zone", DataSourceClient_createZone, METH_VARARGS,
       DataSourceClient_createZone_doc },
+    { "delete_zone", DataSourceClient_deleteZone, METH_VARARGS,
+      DataSourceClient_deleteZone_doc },
     { "get_iterator",
       DataSourceClient_getIterator, METH_VARARGS,
       DataSourceClient_getIterator_doc },

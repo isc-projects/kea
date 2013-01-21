@@ -74,6 +74,34 @@ LibDHCP::getOptionDef(const Option::Universe u, const uint16_t code) {
     return (OptionDefinitionPtr());
 }
 
+bool
+LibDHCP::isStandardOption(const Option::Universe u, const uint16_t code) {
+    if (u == Option::V6) {
+        if (code < 79 &&
+            code != 10 &&
+            code != 35) {
+            return (true);
+        }
+
+    } else if (u == Option::V4) {
+        if (!(code == 84 ||
+              code == 96 ||
+              (code > 101 && code < 112) ||
+              code == 115 ||
+              code == 126 ||
+              code == 127 ||
+              (code > 146 && code < 150) ||
+              (code > 177  && code < 208) ||
+              (code > 213 && code <  220) ||
+              (code > 221 && code < 224))) {
+                return (true);
+            }
+
+    }
+
+    return (false);
+}
+
 OptionPtr
 LibDHCP::optionFactory(Option::Universe u,
                        uint16_t type,

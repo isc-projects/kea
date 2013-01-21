@@ -14,6 +14,7 @@
 
 #include "config.h"
 
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #ifdef HAVE_MYSQL
@@ -43,17 +44,17 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 }
 
 LeaseMgr::ParameterMap
-LeaseMgrFactory::parse(const std::string& dbconfig) {
+LeaseMgrFactory::parse(const std::string& dbaccess) {
     LeaseMgr::ParameterMap mapped_tokens;
 
-    if (!dbconfig.empty()) {
+    if (!dbaccess.empty()) {
         vector<string> tokens;
 
         // We need to pass a string to is_any_of, not just char*. Otherwise
         // there are cryptic warnings on Debian6 running g++ 4.4 in
         // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
         // array bounds"
-        boost::split(tokens, dbconfig, boost::is_any_of( string("\t ") ));
+        boost::split(tokens, dbaccess, boost::is_any_of(string("\t ")));
         BOOST_FOREACH(std::string token, tokens) {
             size_t pos = token.find("=");
             if (pos != string::npos) {
@@ -61,6 +62,7 @@ LeaseMgrFactory::parse(const std::string& dbconfig) {
                 string value = token.substr(pos + 1);
                 mapped_tokens.insert(make_pair(name, value));
             } else {
+                LOG_ERROR(dhcpsrv_logger, DHCPSRV_INVALID_ACCESS).arg(dbaccess);
                 isc_throw(InvalidParameter, "Cannot parse " << token
                           << ", expected format is name=value");
             }
@@ -70,31 +72,70 @@ LeaseMgrFactory::parse(const std::string& dbconfig) {
     return (mapped_tokens);
 }
 
+std::string
+LeaseMgrFactory::redactedAccessString(const LeaseMgr::ParameterMap& parameters) {
+    // Reconstruct the access string: start of with an empty string, then
+    // work through all the parameters in the original string and add them.
+    std::string access;
+    for (LeaseMgr::ParameterMap::const_iterator i = parameters.begin();
+         i != parameters.end(); ++i) {
+
+        // Separate second and subsequent tokens are preceded by a space.
+        if (!access.empty()) {
+            access += " ";
+        }
+
+        // Append name of parameter...
+        access += i->first;
+        access += "=";
+
+        // ... and the value, except in the case of the password, where a
+        // redacted value is appended.
+        if (i->first == std::string("password")) {
+            access += "*****";
+        } else {
+            access += i->second;
+        }
+    }
+
+    return (access);
+}
+
 void
-LeaseMgrFactory::create(const std::string& dbconfig) {
+LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
+    // Parse the access string and create a redacted string for logging.
+    LeaseMgr::ParameterMap parameters = parse(dbaccess);
+    std::string redacted = redactedAccessString(parameters);
+
     // Is "type" present?
-    LeaseMgr::ParameterMap parameters = parse(dbconfig);
     if (parameters.find(type) == parameters.end()) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
         isc_throw(InvalidParameter, "Database configuration parameters do not "
                   "contain the 'type' keyword");
     }
 
+
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_DB)
+            .arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
         return;
     }
 #endif
     if (parameters[type] == string("memfile")) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_DB)
+            .arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
         return;
     }
 
     // Get here on no match
-    isc_throw(InvalidType, "Database configuration parameter 'type' does "
+    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
+    isc_throw(InvalidType, "Database access parameter 'type' does "
               "not specify a supported database backend");
 }
 

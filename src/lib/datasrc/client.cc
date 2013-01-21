@@ -28,20 +28,22 @@ namespace datasrc {
 
 ZoneIteratorPtr
 DataSourceClient::getIterator(const isc::dns::Name&, bool) const {
-    isc_throw(isc::NotImplemented,
-              "Data source doesn't support iteration");
+    isc_throw(isc::NotImplemented, "Data source doesn't support iteration");
 }
 
 unsigned int
 DataSourceClient::getZoneCount() const {
-    isc_throw(isc::NotImplemented,
-              "Data source doesn't support getZoneCount");
+    isc_throw(isc::NotImplemented, "Data source doesn't support getZoneCount");
 }
 
 bool
 DataSourceClient::createZone(const dns::Name&) {
-    isc_throw(isc::NotImplemented,
-              "Data source doesn't support addZone");
+    isc_throw(isc::NotImplemented, "Data source doesn't support createZone");
+}
+
+bool
+DataSourceClient::deleteZone(const dns::Name&) {
+    isc_throw(isc::NotImplemented, "Data source doesn't support deleteZone");
 }
 
 } // end namespace datasrc

@@ -630,13 +630,10 @@ private:
     boost::shared_ptr<Pkt4>
     createOfferPkt4(uint32_t transid) const {
         boost::shared_ptr<Pkt4> offer(new Pkt4(DHCPOFFER, transid));
-        OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
-                                                 OptionBuffer(DHCPOFFER));
         OptionPtr opt_serverid = Option::factory(Option::V4,
                                                  DHO_DHCP_SERVER_IDENTIFIER,
                                                  OptionBuffer(4, 1));
         offer->setYiaddr(asiolink::IOAddress("127.0.0.1"));
-        offer->addOption(opt_msg_type);
         offer->addOption(opt_serverid);
         offer->updateTimestamp();
         return (offer);

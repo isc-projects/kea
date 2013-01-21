@@ -17,11 +17,7 @@ from isc.bind10.component import Component, BaseComponent
 import isc.bind10.sockcreator
 from bind10_config import LIBEXECPATH
 import os
-import posix
 import isc.log
-from isc.log_messages.bind10_messages import *
-
-logger = isc.log.Logger("boss")
 
 class SockCreator(BaseComponent):
     """
@@ -36,8 +32,6 @@ class SockCreator(BaseComponent):
     def __init__(self, process, boss, kind, address=None, params=None):
         BaseComponent.__init__(self, boss, kind)
         self.__creator = None
-        self.__uid = boss.uid
-        self.__gid = boss.gid
 
     def _start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
@@ -46,12 +40,9 @@ class SockCreator(BaseComponent):
         self._boss.register_process(self.pid(), self)
         self._boss.set_creator(self.__creator)
         self._boss.log_started(self.pid())
-        if self.__gid is not None:
-            logger.info(BIND10_SETGID, self.__gid)
-            posix.setgid(self.__gid)
-        if self.__uid is not None:
-            logger.info(BIND10_SETUID, self.__uid)
-            posix.setuid(self.__uid)
+
+        # We are now ready for switching user.
+        self._boss.change_user()
 
     def _stop_internal(self):
         self.__creator.terminate()
