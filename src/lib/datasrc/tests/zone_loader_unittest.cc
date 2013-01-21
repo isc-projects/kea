@@ -79,8 +79,8 @@ public:
     };
     class Iterator : public ZoneIterator {
     public:
-        Iterator() :
-            origin_("example.org"),
+        Iterator(const Name& origin) :
+            origin_(origin),
             soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(),
                            RRTTL(3600)))
         {
@@ -125,7 +125,7 @@ public:
         if (name != Name("example.org")) {
             isc_throw(DataSourceError, "No such zone");
         }
-        return (ZoneIteratorPtr(new Iterator()));
+        return (ZoneIteratorPtr(new Iterator(Name("example.org"))));
     }
     virtual FindResult findZone(const Name& name) const {
         const Name origin("example.org");
