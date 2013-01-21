@@ -289,7 +289,8 @@ class CommandControl():
             if key == 'version':
                 continue
             elif key in ['key_file', 'cert_file']:
-                #TODO, only check whether the file exist,
+                # TODO, only check whether the file exist, is a
+                # file, and is readable
                 # further check need to be done: eg. whether
                 # the private/certificate is valid.
                 path = new_config[key]
