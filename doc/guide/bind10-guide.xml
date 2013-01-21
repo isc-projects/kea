@@ -1872,7 +1872,7 @@ tsig_keys/keys[0]   "example.key.:c2VjcmV0" string  (modified)
         Each rule is a name-value mapping (a dictionary, in the JSON
         terminology). Each rule must contain exactly one mapping called
         "action", which describes what should happen if the rule applies.
-        There may be more mappings, calld matches, which describe the
+        There may be more mappings, called matches, which describe the
         conditions under which the rule applies.
       </para>
 
@@ -3343,23 +3343,21 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <note>
       <para>
-        As of November 2012, the DHCPv4 component is a
-        skeleton server. That means that while it is capable of
-        performing DHCP configuration, it is not fully functional.
-        In particular, it does not have a functional lease
-        database. This means that they will assign the same, fixed,
-        hardcoded addresses to any client that will ask. See <xref
-        linkend="dhcp4-limit"/> for a
-        detailed description.
+        As of January 2013, the DHCPv4 component is a work in progress.
+        That means that while it is capable of performing DHCP configuration,
+        it is not fully functional.  The server is able to offer,
+        assign, renew, release and reuse expired leases, but some of the
+        options are not configurable yet. In particular Router option is hardcoded.
+        This means that the server is not really usable in actual deployments
+        yet. See <xref linkend="dhcp4-limit"/> for a detailed description.
       </para>
     </note>
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
       <para>BIND 10 has provided the DHCPv4 server component since December
-      2011. It is a skeleton server and can be described as an early
-      prototype that is not fully functional yet. It is mature enough
-      to conduct first tests in lab environment, but it has
+      2011. It is current experimental implementation and is not fully functional
+      yet. It is mature enough to conduct tests in lab environment, but it has
       significant limitations. See <xref linkend="dhcp4-limit"/> for
       details.
       </para>
@@ -3480,21 +3478,38 @@ Dhcp4/subnet4	         []     list    (default)</screen>
       </para>
 
       <para>
-        Note: Although configuration is now accepted, it is not internally used
-        by they server yet.  At this stage of development, the only way to alter
-        server configuration is to modify its source code. To do so, please edit
+        Note: Although configuration is now accepted, some parts of it is not internally used
+        by they server yet. Address pools are used, but option definitons are not.
+        The only way to alter some options (e.g. Router Option or DNS servers and Domain name)
+        is to modify source code. To do so, please edit
         src/bin/dhcp6/dhcp4_srv.cc file, modify the following parameters and
         recompile:
         <screen>
-const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
-const std::string HARDCODED_NETMASK = "255.255.255.0";
-const uint32_t    HARDCODED_LEASE_TIME = 60; // in seconds
 const std::string HARDCODED_GATEWAY = "192.0.2.1";
 const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
-const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
+const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";</screen>
 
         Lease database and configuration support is planned for end of 2012.
+      </para>
+    </section>
+
+    <section id="dhcp4-serverid">
+      <title>Server Identifier in DHCPv4</title>
+      <para>The DHCPv4 protocol uses a "server identifier" for clients to be able
+      to discriminate between several servers present on the same link: this
+      value is an IPv4 address of the server. When started for the first time,
+      the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
+      and store the chosen value to a file. (The file is named b10-dhcp4-serverid and is
+      stored in the "local state directory".  This is set during installation
+      when "configure" is run, and can be changed by using "--localstatedir"
+      on the "configure" command line.)  That file will be read by the server
+      and the contained value used whenever the server is subsequently started.
+      </para>
+      <para>
+        It is unlikely that this parameter needs to be changed. If such a need
+        arises, please stop the server, edit the file and restart the server.
+        It is a text file that should contain an IPv4 address. Spaces are
+        ignored.  No extra characters are allowed in this file.
       </para>
     </section>
 
@@ -3505,13 +3520,17 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <itemizedlist>
           <listitem>
             <simpara>RFC2131: Supported messages are DISCOVER, OFFER,
-            REQUEST, and ACK.</simpara>
+            REQUEST, ACK, NAK, RELEASE.</simpara>
           </listitem>
           <listitem>
             <simpara>RFC2132: Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
+          </listitem>
+          <listitem>
+            <simpara>RFC6842: Server responses include client-id option
+            if client sent it in its message.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3531,20 +3550,6 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             is not implemented yet, therefore DHCPv4 server supports
             relayed traffic only (that is, normal point to point
             communication).</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>b10-dhcp4</command> provides a single,
-            fixed, hardcoded lease to any client that asks.  There is
-            no lease manager implemented. If two clients request
-            addresses, they will both get the same fixed
-            address.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>b10-dhcp4</command> does not support any
-            configuration mechanisms yet. The whole configuration is
-            currently hardcoded. The only way to tweak configuration
-            is to directly modify source code. See see <xref
-            linkend="dhcp4-config"/> for details.</simpara>
           </listitem>
           <listitem>
             <simpara>Upon start, the server will open sockets on all
@@ -3574,9 +3579,9 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address renewal (RENEW), rebinding (REBIND),
-            confirmation (CONFIRM), duplication report (DECLINE) and
-            release (RELEASE) are not supported yet.</simpara>
+            <simpara>Address rebinding (REQUEST/Rebinding), confirmation
+            (CONFIRM) and duplication report (DECLINE) are not supported
+            yet.</simpara>
           </listitem>
           <listitem>
             <simpara>DNS Update is not supported yet.</simpara>
@@ -3852,6 +3857,31 @@ Dhcp6/subnet6	         []     list    (default)</screen>
       </note>
     </section>
 
+    <section id="dhcp6-serverid">
+      <title>Server Identifier in DHCPv6</title>
+      <para>The DHCPv6 protocol uses a "server identifier" (also known
+      as a DUID) for clients to be able to discriminate between several
+      servers present on the same link.  There are several types of
+      DUIDs defined, but RFC 3315 instructs servers to use DUID-LLT if
+      possible. This format consists of a link-layer (MAC) address and a
+      timestamp. When started for the first time, the DHCPv6 server will
+      automatically generate such a DUID and store the chosen value to
+      a file (The file is named b10-dhcp6-serverid and is stored in the
+      "local state directory".  This is set during installation when
+      "configure" is run, and can be changed by using "--localstatedir"
+      on the "configure" command line.)  That file will be read by the server
+      and the contained value used whenever the server is subsequently started.
+      </para>
+      <para>
+        It is unlikely that this parameter needs to be changed. If such a need
+        arises, please stop the server, edit the file and start the server
+        again. It is a text file that contains double digit hexadecimal values
+        separated by colons. This format is similar to typical MAC address
+        format. Spaces are ignored. No extra characters are allowed in this
+        file.
+      </para>
+    </section>
+
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards and draft standards are currently
@@ -3871,7 +3901,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
     <section id="dhcp6-limit">
       <title>DHCPv6 Server Limitations</title>
       <para> These are the current limitations and known problems
-      with the the DHCPv6 server
+      with the DHCPv6 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
@@ -4156,7 +4186,7 @@ specify module-wide logging and see what appears...
           If there are multiple logger specifications in the
           configuration that might match a particular logger, the
           specification with the more specific logger name takes
-          precedence. For example, if there are entries for for
+          precedence. For example, if there are entries for
           both <quote>*</quote> and <quote>Resolver</quote>, the
           resolver module &mdash; and all libraries it uses &mdash;
           will log messages according to the configuration in the

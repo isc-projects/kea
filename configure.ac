@@ -166,8 +166,6 @@ fi
 
 fi				dnl GXX = yes
 
-AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
 AC_ARG_ENABLE([static-link],
@@ -284,7 +282,10 @@ AC_SUBST(PYTHON_LOGMSGPKG_DIR)
 
 # This is python package paths commonly used in python tests.  See
 # README of log_messages for why it's included.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+# lib/dns/python/.libs is necessary because __init__.py of isc package
+# automatically imports isc.datasrc, which then requires the DNS loadable
+# module.  #2145 should eliminate the need for it.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
 AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
@@ -838,57 +839,22 @@ LIBS=$LIBS_SAVED
 #
 # Configure Boost header path
 #
-# If explicitly specified, use it.
-AC_ARG_WITH([boost-include],
-  AC_HELP_STRING([--with-boost-include=PATH],
-    [specify exact directory for Boost headers]),
-    [boost_include_path="$withval"])
-# If not specified, try some common paths.
-if test -z "$with_boost_include"; then
-	boostdirs="/usr/local /usr/pkg /opt /opt/local"
-	for d in $boostdirs
-	do
-		if test -f $d/include/boost/shared_ptr.hpp; then
-			boost_include_path=$d/include
-			break
-		fi
-	done
+AX_BOOST_FOR_BIND10
+# Boost offset_ptr is required in one library and not optional right now, so
+# we unconditionally fail here if it doesn't work.
+if test "$BOOST_OFFSET_PTR_FAILURE" = "yes"; then
+    AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])
 fi
-CPPFLAGS_SAVES="$CPPFLAGS"
-if test "${boost_include_path}" ; then
-	BOOST_INCLUDES="-I${boost_include_path}"
-	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
+
+# There's a known bug in FreeBSD ports for Boost that would trigger a false
+# warning in build with g++ and -Werror (we exclude clang++ explicitly to
+# avoid unexpected false positives).
+if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGPP = "no"; then
+    AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
-  AC_MSG_ERROR([Missing required header files.]))
 
-# Detect whether Boost tries to use threads by default, and, if not,
-# make it sure explicitly.  In some systems the automatic detection
-# may depend on preceding header files, and if inconsistency happens
-# it could lead to a critical disruption.
-AC_MSG_CHECKING([whether Boost tries to use threads])
-AC_TRY_COMPILE([
-#include <boost/config.hpp>
-#ifdef BOOST_HAS_THREADS
-#error "boost will use threads"
-#endif],,
-[AC_MSG_RESULT(no)
- CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
-[AC_MSG_RESULT(yes)])
-
-# Boost offset_ptr is required in one library (not optional right now), and
-# it's known it doesn't compile on some platforms, depending on boost version,
-# its local configuration, and compiler.
-AC_MSG_CHECKING([Boost offset_ptr compiles])
-AC_TRY_COMPILE([
-#include <boost/interprocess/offset_ptr.hpp>
-],,
-[AC_MSG_RESULT(yes)],
-[AC_MSG_RESULT(no)
- AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])])
-
-CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
-AC_SUBST(BOOST_INCLUDES)
+# Add some default CPP flags needed for Boost, identified by the AX macro.
+CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
 # I can't get some of the #include <asio.hpp> right without this
 # TODO: find the real cause of asio/boost wanting pthreads
@@ -1251,6 +1217,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/server_common/tests/Makefile
                  src/lib/python/isc/sysinfo/Makefile
                  src/lib/python/isc/sysinfo/tests/Makefile
+                 src/lib/python/isc/statistics/Makefile
+                 src/lib/python/isc/statistics/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -1354,10 +1322,12 @@ AC_OUTPUT([doc/version.ent
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py
-           src/bin/msgq/tests/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/auth/tests/testdata/example.zone
+           src/bin/auth/tests/testdata/example-base.zone
+           src/bin/auth/tests/testdata/example-nsec3.zone
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
@@ -1420,7 +1390,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
-           chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh

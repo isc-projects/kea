@@ -27,6 +27,8 @@
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::asiolink;
@@ -48,27 +50,20 @@ SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              response_obuffer(new OutputBuffer(0))
 {}
 
-SrvTestBase::~SrvTestBase() {
-    delete io_message;
-    delete endpoint;
-}
-
 void
 SrvTestBase::createDataFromFile(const char* const datafile,
                                 const int protocol)
 {
-    delete io_message;
     data.clear();
 
-    delete endpoint;
-
-    endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS),
-                                  DEFAULT_REMOTE_PORT);
+    endpoint.reset(IOEndpoint::create(protocol,
+                                      IOAddress(DEFAULT_REMOTE_ADDRESS),
+                                      DEFAULT_REMOTE_PORT));
     UnitTestUtil::readWireData(datafile, data);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
-    io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
+    io_message.reset(new IOMessage(&data[0], data.size(), *io_sock,
+                                   *endpoint));
 }
 
 void
@@ -83,16 +78,14 @@ SrvTestBase::createRequestPacket(Message& message,
         message.toWire(request_renderer, *context);
     }
 
-    delete io_message;
-
-    endpoint = IOEndpoint::create(protocol, IOAddress(remote_address),
-                                  remote_port);
+    endpoint.reset(IOEndpoint::create(protocol, IOAddress(remote_address),
+                                      remote_port));
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
 
-    io_message = new IOMessage(request_renderer.getData(),
-                               request_renderer.getLength(),
-                               *io_sock, *endpoint);
+    io_message.reset(new IOMessage(request_renderer.getData(),
+                                   request_renderer.getLength(),
+                                   *io_sock, *endpoint));
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -151,7 +144,7 @@ SrvTestBase::shortMessage() {
 // or malformed or could otherwise cause a protocol error.
 void
 SrvTestBase::response() {
-    // A valid (although unusual) response 
+    // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire.wire");
     processMessage();
     EXPECT_FALSE(dnsserv.hasAnswer());
@@ -242,6 +235,6 @@ SrvTestBase::axfrOverUDP() {
 } // end of namespace isc
 
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

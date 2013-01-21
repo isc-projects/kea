@@ -18,16 +18,27 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <bitset>
 #include <cassert>
+#include <limits>
 #include <string>
 #include <vector>
 
 namespace isc {
 namespace dns {
+
+// The definition of SOURCE_SIZE_UNKNOWN.  Note that we initialize it using
+// a method of another library.  Technically, this could trigger a static
+// initialization fiasco.  But in this particular usage it's very unlikely
+// to happen because this value is expected to be used only as a return
+// value of a MasterLexer's method, and its constructor needs definitions
+// here.
+const size_t MasterLexer::SOURCE_SIZE_UNKNOWN =
+    std::numeric_limits<size_t>::max();
 
 namespace {
 typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
@@ -37,6 +48,7 @@ using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
+                        total_size_(0), popped_size_(0),
                         paren_count_(0), last_was_eol_(true),
                         has_previous_(false),
                         previous_paren_count_(0),
@@ -80,10 +92,27 @@ struct MasterLexer::MasterLexerImpl {
                 separators_.test(c & 0x7f));
     }
 
+    void setTotalSize() {
+        assert(source_ != NULL);
+        if (total_size_ != SOURCE_SIZE_UNKNOWN) {
+            const size_t current_size = source_->getSize();
+            if (current_size != SOURCE_SIZE_UNKNOWN) {
+                total_size_ += current_size;
+            } else {
+                total_size_ = SOURCE_SIZE_UNKNOWN;
+            }
+        }
+    }
+
     std::vector<InputSourcePtr> sources_;
     InputSource* source_;       // current source (NULL if sources_ is empty)
     MasterToken token_;         // currently recognized token (set by a state)
     std::vector<char> data_;    // placeholder for string data
+
+    // Keep track of the total size of all sources and characters that have
+    // been read from sources already popped.
+    size_t total_size_;         // accumulated size (# of chars) of sources
+    size_t popped_size_;        // total size of sources that have been popped
 
     // These are used in states, and defined here only as a placeholder.
     // The main lexer class does not need these members.
@@ -128,15 +157,23 @@ MasterLexer::pushSource(const char* filename, std::string* error) {
     impl_->source_ = impl_->sources_.back().get();
     impl_->has_previous_ = false;
     impl_->last_was_eol_ = true;
+    impl_->setTotalSize();
     return (true);
 }
 
 void
 MasterLexer::pushSource(std::istream& input) {
-    impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+    try {
+        impl_->sources_.push_back(InputSourcePtr(new InputSource(input)));
+    } catch (const InputSource::OpenError& ex) {
+        // Convert the "internal" exception to public one.
+        isc_throw(Unexpected, "Failed to push a stream to lexer: " <<
+                  ex.what());
+    }
     impl_->source_ = impl_->sources_.back().get();
     impl_->has_previous_ = false;
     impl_->last_was_eol_ = true;
+    impl_->setTotalSize();
 }
 
 void
@@ -145,6 +182,7 @@ MasterLexer::popSource() {
         isc_throw(InvalidOperation,
                   "MasterLexer::popSource on an empty source");
     }
+    impl_->popped_size_ += impl_->source_->getPosition();
     impl_->sources_.pop_back();
     impl_->source_ = impl_->sources_.empty() ? NULL :
         impl_->sources_.back().get();
@@ -170,6 +208,20 @@ MasterLexer::getSourceLine() const {
         return (0);
     }
     return (impl_->sources_.back()->getCurrentLine());
+}
+
+size_t
+MasterLexer::getTotalSourceSize() const {
+    return (impl_->total_size_);
+}
+
+size_t
+MasterLexer::getPosition() const {
+    size_t position = impl_->popped_size_;
+    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+        position += src->getPosition();
+    }
+    return (position);
 }
 
 const MasterToken&

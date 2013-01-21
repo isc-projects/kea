@@ -20,6 +20,8 @@
 
 #include <dns/rrclass.h>
 
+#include <exceptions/exceptions.h>
+
 #include <sqlite3.h>
 
 #include <gtest/gtest.h>
@@ -1613,6 +1615,52 @@ TEST_F(SQLite3Update, addZoneWhileLocked) {
     accessor->rollback();
     // New zone should not exist
     EXPECT_FALSE(accessor->getZone(new_zone).first);
+}
+
+//
+// Tests for deleteZone() follow.
+//
+TEST_F(SQLite3Update, deleteZone) {
+    const std::pair<bool, int> zone_info(accessor->getZone("example.com."));
+    ASSERT_TRUE(zone_info.first);
+    zone_id = zone_info.second;
+
+    // Calling deleteZone without transaction should fail
+    EXPECT_THROW(accessor->deleteZone(zone_info.first), isc::InvalidOperation);
+
+    // Delete the zone.  Then confirm it, both before and after commit.
+    accessor->startTransaction();
+    accessor->deleteZone(zone_info.second);
+    EXPECT_FALSE(accessor->getZone("example.com.").first);
+    accessor->commit();
+    EXPECT_FALSE(accessor->getZone("example.com.").first);
+
+    // Records are not deleted.
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_TRUE(accessor->getRecords("example.com.", zone_id, false)
+                ->getNext(data));
+}
+
+TEST_F(SQLite3Update, deleteZoneWhileLocked) {
+    const std::pair<bool, int> zone_info(accessor->getZone("example.com."));
+    ASSERT_TRUE(zone_info.first);
+    zone_id = zone_info.second;
+
+    // Adding another (not commit yet), it should lock the db
+    const std::string new_zone = "new.example.com.";
+    accessor->startTransaction();
+    zone_id = accessor->addZone(new_zone);
+
+    // deleteZone should throw an exception that it is locked
+    another_accessor->startTransaction();
+    EXPECT_THROW(another_accessor->deleteZone(zone_id), DataSourceError);
+    // Commit should do nothing, but not fail
+    another_accessor->commit();
+
+    accessor->rollback();
+
+    // The zone should still exist.
+    EXPECT_TRUE(accessor->getZone("example.com.").first);
 }
 
 } // end anonymous namespace

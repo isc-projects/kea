@@ -10,6 +10,7 @@ import errno
 import threading
 import isc.cc
 import collections
+import isc.log
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -18,7 +19,12 @@ import collections
 
 class TestSubscriptionManager(unittest.TestCase):
     def setUp(self):
-        self.sm = SubscriptionManager()
+        self.__cfgmgr_ready_called = 0
+        self.sm = SubscriptionManager(self.cfgmgr_ready)
+
+    def cfgmgr_ready(self):
+        # Called one more time
+        self.__cfgmgr_ready_called += 1
 
     def test_subscription_add_delete_manager(self):
         self.sm.subscribe("a", "*", 'sock1')
@@ -100,7 +106,7 @@ class TestSubscriptionManager(unittest.TestCase):
         try:
             msgq.setup()
             self.assertTrue(os.path.exists(socket_file))
-            msgq.shutdown();
+            msgq.shutdown()
             self.assertFalse(os.path.exists(socket_file))
         except socket.error:
             # ok, the install path doesn't exist at all,
@@ -114,6 +120,25 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_open_socket_bad(self):
         msgq = MsgQ("/does/not/exist")
         self.assertRaises(socket.error, msgq.setup)
+        # But we can clean up after that.
+        msgq.shutdown()
+
+    def test_subscribe_cfgmgr(self):
+        """Test special handling of the config manager. Once it subscribes,
+           the message queue needs to connect and read the config. But not
+           before and only once.
+        """
+        self.assertEqual(0, self.__cfgmgr_ready_called)
+        # Not called when something else subscribes
+        self.sm.subscribe('SomethingElse', '*', 's1')
+        self.assertEqual(0, self.__cfgmgr_ready_called)
+        # Called whenever the config manager subscribes
+        self.sm.subscribe('ConfigManager', '*', 's2')
+        self.assertEqual(1, self.__cfgmgr_ready_called)
+        # But not called again when it subscribes again (should not
+        # happen in practice, but we make sure anyway)
+        self.sm.subscribe('ConfigManager', '*', 's3')
+        self.assertEqual(1, self.__cfgmgr_ready_called)
 
 class DummySocket:
     """
@@ -192,7 +217,6 @@ class MsgQThread(threading.Thread):
 
     def stop(self):
         self.msgq_.stop()
-
 
 class SendNonblock(unittest.TestCase):
     """
@@ -281,8 +305,10 @@ class SendNonblock(unittest.TestCase):
             if queue_pid == 0:
                 signal.alarm(120)
                 msgq.setup_poller()
+                msgq.setup_signalsock()
                 msgq.register_socket(queue)
                 msgq.run()
+                msgq.cleanup_signalsock()
             else:
                 try:
                     def killall(signum, frame):
@@ -356,6 +382,7 @@ class SendNonblock(unittest.TestCase):
         # Don't need a listen_socket
         msgq.listen_socket = DummySocket
         msgq.setup_poller()
+        msgq.setup_signalsock()
         msgq.register_socket(write)
         msgq.register_socket(control_write)
         # Queue the message for sending
@@ -382,6 +409,10 @@ class SendNonblock(unittest.TestCase):
         msgq_thread.join(60)
         # Fail the test if it didn't stop
         self.assertFalse(msgq_thread.isAlive(), "Thread did not stop")
+
+        # Clean up some internals of msgq (usually called as part of
+        # shutdown, but we skip that one here)
+        msgq.cleanup_signalsock()
 
         # Check the exception from the thread, if any
         # First, if we didn't expect it; reraise it (to make test fail and
@@ -455,6 +486,81 @@ class SendNonblock(unittest.TestCase):
         self.do_send_with_send_error(3, sockerr, False, sockerr)
         self.do_send_with_send_error(23, sockerr, False, sockerr)
 
+class ThreadTests(unittest.TestCase):
+    """Test various things around thread synchronization."""
+
+    def setUp(self):
+        self.__msgq = MsgQ()
+        self.__abort_wait = False
+        self.__result = None
+        self.__notify_thread = threading.Thread(target=self.__notify)
+        self.__wait_thread = threading.Thread(target=self.__wait)
+        # Make sure the threads are killed if left behind by the test.
+        self.__notify_thread.daemon = True
+        self.__wait_thread.daemon = True
+
+    def __notify(self):
+        """Call the cfgmgr_ready."""
+        if self.__abort_wait:
+            self.__msgq.cfgmgr_ready(False)
+        else:
+            self.__msgq.cfgmgr_ready()
+
+    def __wait(self):
+        """Wait for config manager and store the result."""
+        self.__result = self.__msgq.wait_cfgmgr()
+
+    def test_wait_cfgmgr(self):
+        """One thread signals the config manager subscribed, the other
+           waits for it. We then check it terminated correctly.
+        """
+        self.__notify_thread.start()
+        self.__wait_thread.start()
+        # Timeout to ensure the test terminates even on failure
+        self.__wait_thread.join(60)
+        self.assertTrue(self.__result)
+
+    def test_wait_cfgmgr_2(self):
+        """Same as test_wait_cfgmgr, but starting the threads in reverse order
+           (the result should be the same).
+        """
+        self.__wait_thread.start()
+        self.__notify_thread.start()
+        # Timeout to ensure the test terminates even on failure
+        self.__wait_thread.join(60)
+        self.assertTrue(self.__result)
+
+    def test_wait_abort(self):
+        """Similar to test_wait_cfgmgr, but the config manager is never
+           subscribed and it is aborted.
+        """
+        self.__abort_wait = True
+        self.__wait_thread.start()
+        self.__notify_thread.start()
+        # Timeout to ensure the test terminates even on failure
+        self.__wait_thread.join(60)
+        self.assertIsNotNone(self.__result)
+        self.assertFalse(self.__result)
+
+    def __check_ready_and_abort(self):
+        """Check that when we first say the config manager is ready and then
+           try to abort, it uses the first result.
+        """
+        self.__msgq.cfgmgr_ready()
+        self.__msgq.cfgmgr_ready(False)
+        self.__result = self.__msgq.wait_cfgmgr()
+
+    def test_ready_and_abort(self):
+        """Perform the __check_ready_and_abort test, but in a separate thread,
+           so in case something goes wrong with the synchronisation and it
+           deadlocks, the test will terminate anyway.
+        """
+        test_thread = threading.Thread(target=self.__check_ready_and_abort)
+        test_thread.daemon = True
+        test_thread.start()
+        test_thread.join(60)
+        self.assertTrue(self.__result)
 
 if __name__ == '__main__':
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

@@ -21,6 +21,7 @@
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <utility>
 #include <vector>
@@ -740,6 +741,9 @@ typedef boost::shared_ptr<ZoneFinder::Context> ZoneFinderContextPtr;
 /// \c ZoneFinder::Context object.
 typedef boost::shared_ptr<ZoneFinder::Context> ConstZoneFinderContextPtr;
 
+/// \brief A forward declaration
+class RRsetCollectionBase;
+
 /// The base class to make updates to a single zone.
 ///
 /// On construction, each derived class object will start a "transaction"
@@ -802,6 +806,29 @@ public:
     /// \return A reference to a \c ZoneFinder for the updated zone
     virtual ZoneFinder& getFinder() = 0;
 
+    /// Return an RRsetCollection for the updater.
+    ///
+    /// This method returns an \c RRsetCollection for the updater,
+    /// implementing the \c isc::datasrc::RRsetCollectionBase
+    /// interface. Typically, the returned \c RRsetCollection is a
+    /// singleton for its \c ZoneUpdater. The returned RRsetCollection
+    /// object must not be used after its corresponding \c ZoneUpdater
+    /// has been destroyed. The returned RRsetCollection object may be
+    /// used to search RRsets from the ZoneUpdater. The actual
+    /// \c RRsetCollection returned has a behavior dependent on the
+    /// \c ZoneUpdater implementation.
+    ///
+    /// The behavior of the RRsetCollection is similar to the behavior
+    /// of the \c Zonefinder returned by \c getFinder().
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called.
+    /// Implementations of \c ZoneUpdater may disable a previously
+    /// returned \c RRsetCollection after \c commit() is called. If an
+    /// \c RRsetCollection is disabled, using methods such as \c find()
+    /// and using its iterator would cause an exception to be
+    /// thrown. See \c isc::datasrc::RRsetCollectionBase for details.
+    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
+
     /// Add an RRset to a zone via the updater
     ///
     /// This may be revisited in a future version, but right now the intended
@@ -848,6 +875,10 @@ public:
     /// This method must not be called once commit() is performed.  If it
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
+    ///
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called. In this
+    /// case, implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
@@ -919,6 +950,10 @@ public:
     /// This method must not be called once commit() is performed.  If it
     /// calls after \c commit() the implementation must throw a
     /// \c DataSourceError exception.
+    ///
+    /// Implementations of \c ZoneUpdater may not allow adding or
+    /// deleting RRsets after \c getRRsetCollection() is called. In this
+    /// case, implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see

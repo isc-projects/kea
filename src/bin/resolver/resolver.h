@@ -200,14 +200,14 @@ public:
     /**
      * \short Get info about timeouts.
      *
-     * \returns Timeout and retries (as described in setTimeouts).
+     * \return Timeout and retries (as described in setTimeouts).
      */
     std::pair<int, unsigned> getTimeouts() const;
 
     /**
      * \brief Get the timeout for outgoing queries
      *
-     * \returns Timeout for outgoing queries
+     * \return Timeout for outgoing queries
      */
     int getQueryTimeout() const;
 
@@ -218,7 +218,7 @@ public:
      * (internal resolving on the query will continue, see
      * \c getLookupTimeout())
      * 
-     * \returns Timeout for outgoing queries
+     * \return Timeout for outgoing queries
      */
     int getClientTimeout() const;
 
