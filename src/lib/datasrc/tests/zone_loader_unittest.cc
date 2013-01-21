@@ -564,19 +564,17 @@ TEST_F(ZoneLoaderTest, copyCheckWarn) {
 }
 
 // Test there's validation of the data in the zone loader when copying
-// from another data source.  Currently, this test doesn't require
-// creating a fixture as it uses almost nothing in existing fixtures.
-TEST(ZoneLoaderMockSourceTest, copyCheck) {
-    // In this test, source_client provides a zone that does not
+// from another data source.
+TEST_F(ZoneLoaderTest, copyCheck) {
+    // In this test, my_source_client provides a zone that does not
     // validate (no NS).
-    MockClient source_client;
-    MockClient destination_client;
-    ZoneLoader loader(destination_client, Name("example.org"),
-                      source_client);
+    MockClient my_source_client;
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      my_source_client);
 
     EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
     // The messages go to the log. We don't have an easy way to examine them.
-    EXPECT_FALSE(destination_client.commit_called_);
+    EXPECT_FALSE(destination_client_.commit_called_);
 }
 
 }
