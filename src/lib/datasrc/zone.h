@@ -821,12 +821,14 @@ public:
     /// The behavior of the RRsetCollection is similar to the behavior
     /// of the \c Zonefinder returned by \c getFinder().
     /// Implementations of \c ZoneUpdater may not allow adding or
-    /// deleting RRsets after \c getRRsetCollection() is called.
-    /// Implementations of \c ZoneUpdater may disable a previously
-    /// returned \c RRsetCollection after \c commit() is called. If an
-    /// \c RRsetCollection is disabled, using methods such as \c find()
-    /// and using its iterator would cause an exception to be
-    /// thrown. See \c isc::datasrc::RRsetCollectionBase for details.
+    /// deleting RRsets after \c getRRsetCollection() is called. This is
+    /// because iterating the collection may result in unexpected
+    /// behavior if the underlying data is updated.  Implementations of
+    /// \c ZoneUpdater may disable a previously returned
+    /// \c RRsetCollection after \c commit() is called. If an
+    /// \c RRsetCollection is disabled, using methods such as \c find() and
+    /// using its iterator would cause an exception to be thrown. See
+    /// \c isc::datasrc::RRsetCollectionBase for details.
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
@@ -877,8 +879,10 @@ public:
     /// \c DataSourceError exception.
     ///
     /// Implementations of \c ZoneUpdater may not allow adding or
-    /// deleting RRsets after \c getRRsetCollection() is called. In this
-    /// case, implementations throw an \c InvalidOperation exception.
+    /// deleting RRsets after \c getRRsetCollection() is called. This is
+    /// because iterating the collection may result in unexpected
+    /// behavior if the underlying data is updated. In this case,
+    /// implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
@@ -952,8 +956,10 @@ public:
     /// \c DataSourceError exception.
     ///
     /// Implementations of \c ZoneUpdater may not allow adding or
-    /// deleting RRsets after \c getRRsetCollection() is called. In this
-    /// case, implementations throw an \c InvalidOperation exception.
+    /// deleting RRsets after \c getRRsetCollection() is called. This is
+    /// because iterating the collection may result in unexpected
+    /// behavior if the underlying data is updated. In this case,
+    /// implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
     /// to add the RRset if the squence doesn't look like and IXFR (see
