@@ -124,6 +124,13 @@ public:
         unpack(begin, end);
     }
 
+    /// @brief Adds a new value to the array.
+    ///
+    /// @param value a value being added.
+    void addValue(const T value) {
+        values_.push_back(value);
+    }
+
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///

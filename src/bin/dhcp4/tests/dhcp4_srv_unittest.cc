@@ -70,12 +70,16 @@ public:
 
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().addSubnet4(subnet_);
+
+        // Add Router option.
+        Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
+        opt_routers->setAddress(IOAddress("192.0.2.2"));
+        subnet_->addOption(opt_routers, false, "dhcp4");
     }
 
-    /// @brief Add 'Paramter Request List' option to the packet.
+    /// @brief Add 'Parameter Request List' option to the packet.
     ///
-    /// This function PRL option comprising the following
-    /// option codes:
+    /// This function PRL option comprising the following option codes:
     /// - 5 - Name Server
     /// - 15 - Domain Name
     /// - 7 - Log Server
@@ -91,15 +95,13 @@ public:
 
         std::vector<uint8_t> opts;
         // Let's request options that have been configured for the subnet.
-        opts.push_back(DHO_DOMAIN_NAME_SERVERS);
-        opts.push_back(DHO_DOMAIN_NAME);
-        opts.push_back(DHO_LOG_SERVERS);
-        opts.push_back(DHO_COOKIE_SERVERS);
+        option_prl->addValue(DHO_DOMAIN_NAME_SERVERS);
+        option_prl->addValue(DHO_DOMAIN_NAME);
+        option_prl->addValue(DHO_LOG_SERVERS);
+        option_prl->addValue(DHO_COOKIE_SERVERS);
         // Let's also request the option that hasn't been configured. In such
         // case server should ignore request for this particular option.
-        opts.push_back(DHO_LPR_SERVERS);
-        // Put the requested option codes into the 'Parameter Request List'.
-        option_prl->setValues(opts);
+        option_prl->addValue(DHO_LPR_SERVERS);
         // And add 'Parameter Request List' option into the DISCOVER packet.
         pkt->addOption(option_prl);
     }
@@ -160,7 +162,6 @@ public:
         EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
         EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
         EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-        EXPECT_TRUE(a->getOption(DHO_ROUTERS));
 
         // Check that something is offered
         EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
@@ -424,10 +425,13 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 
     messageCheck(pkt, offer);
 
+    // There are some options that are always present in the
+    // message, even if not requested.
+    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME));
+    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME_SERVERS));
+
     // We did not request any options so they should not be present
     // in the OFFER.
-    EXPECT_FALSE(offer->getOption(DHO_DOMAIN_NAME));
-    EXPECT_FALSE(offer->getOption(DHO_DOMAIN_NAME_SERVERS));
     EXPECT_FALSE(offer->getOption(DHO_LOG_SERVERS));
     EXPECT_FALSE(offer->getOption(DHO_COOKIE_SERVERS));
     EXPECT_FALSE(offer->getOption(DHO_LPR_SERVERS));
@@ -523,10 +527,13 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
 
     messageCheck(req, ack);
 
-    // We did not request any options so they should not be present
+    // There are some options that are always present in the
+    // message, even if not requested.
+    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME));
+    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME_SERVERS));
+
+    // We did not request any options so these should not be present
     // in the ACK.
-    EXPECT_FALSE(ack->getOption(DHO_DOMAIN_NAME));
-    EXPECT_FALSE(ack->getOption(DHO_DOMAIN_NAME_SERVERS));
     EXPECT_FALSE(ack->getOption(DHO_LOG_SERVERS));
     EXPECT_FALSE(ack->getOption(DHO_COOKIE_SERVERS));
     EXPECT_FALSE(ack->getOption(DHO_LPR_SERVERS));

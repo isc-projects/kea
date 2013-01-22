@@ -187,6 +187,19 @@ protected:
     /// @param answer OFFER or ACK/NAK message (lease options will be added here)
     void assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer);
 
+    /// @brief Append basic options if they are not present.
+    ///
+    /// This function adds the following basic options if they
+    /// are not yet added to the message:
+    /// - Subnet Mask,
+    /// - Router,
+    /// - Name Server,
+    /// - Domain Name.
+    ///
+    /// @param question DISCOVER or REQUEST message from a client.
+    /// @param msg the message to add options to.
+    void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
