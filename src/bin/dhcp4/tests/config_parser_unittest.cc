@@ -69,7 +69,6 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
-        std::cout << comment_->str() << std::endl;
         EXPECT_EQ(expected_code, rcode_);
     }
 
