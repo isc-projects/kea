@@ -96,3 +96,9 @@ configuration is unknown. The new configuration is ignored, and an
 error is sent back. As possible cause is that there was an upgrade
 problem, and the stats-httpd version is out of sync with the rest of
 the system.
+
+% STATHTTPD_HTTPLOG %1 %2
+Debug HTTP log message. These are the messages logged by the http server
+instance. For most logs, the message shows HTTP client and query
+information like HTTP method, URI, and status code, but the http server
+can also log other information, such as extended status reports.
