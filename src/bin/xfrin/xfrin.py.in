@@ -46,7 +46,7 @@ DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 try:
-    from pydnspp import *
+    from isc.dns import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrin process
     # must keep running, so we warn about it and move forward.
@@ -803,12 +803,24 @@ class XfrinConnection(asyncore.dispatcher):
                 raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
                                          'message')
 
+    def __validate_error(reason):
+        # TODO: Log
+        pass
+
+    def __validate_warning(reason):
+        # TODO: Log
+        pass
+
     def _finish_transfer(self):
         """
         Perform any necessary checks after a transfer. Then complete the
         transfer by commiting the transaction into the data source.
         """
         self._check_response_tsig_last()
+        if not check_zone(self._zone_name, self._rrclass,
+                          self._diff.get_rrset_collection(),
+                          (self.__validate_error, self.__validate_warning)):
+            raise XfrinProtocolError('Validation of the new zone failed')
         self._diff.commit()
 
     def __parse_soa_response(self, msg, response_data):

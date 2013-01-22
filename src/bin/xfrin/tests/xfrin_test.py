@@ -153,13 +153,19 @@ class MockCC(MockModuleCCSession):
     def remove_remote_config(self, module_name):
         pass
 
+class MockRRsetCollection:
+    '''
+    A mock RRset collection. We don't use it really (we mock the method that
+    it is passed to too), so it's empty.
+    '''
+    pass
+
 class MockDataSourceClient():
     '''A simple mock data source client.
 
     This class provides a minimal set of wrappers related the data source
     API that would be used by Diff objects.  For our testing purposes they
-    only keep truck of the history of the changes.
-
+    only keep track of the history of the changes.
     '''
     def __init__(self):
         self.force_fail = False # if True, raise an exception on commit
@@ -216,6 +222,12 @@ class MockDataSourceClient():
     def get_updater(self, zone_name, replace, journaling=False):
         self._journaling_enabled = journaling
         return self
+
+    def get_rrset_collection(self):
+        '''
+        Pretend to be a zone updater and provide a (dummy) rrset collection.
+        '''
+        return MockRRsetCollection()
 
     def add_rrset(self, rrset):
         self.diffs.append(('add', rrset))
@@ -726,11 +738,23 @@ class TestXfrinConnection(unittest.TestCase):
             'tsig_1st': None,
             'tsig_2nd': None
             }
+        self.__orig_check_zone = xfrin.check_zone
+        xfrin.check_zone = self.__check_zone
+        self._check_zone_result = True
+        self._check_zone_params = None
 
     def tearDown(self):
         self.conn.close()
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
+        xfrin.check_zone = self.__orig_check_zone
+
+    def __check_zone(self, name, rrclass, rrsets, callbacks):
+        '''
+        A mock function used instead of dns.check_zone.
+        '''
+        self._check_zone_params = (name, rrclass, rrsets, callbacks)
+        return self._check_zone_result
 
     def _create_normal_response_data(self):
         # This helper method creates a simple sequence of DNS messages that
@@ -825,6 +849,7 @@ class TestAXFR(TestXfrinConnection):
 
     def tearDown(self):
         time.time = self.orig_time_time
+        super().tearDown()
 
     def __create_mock_tsig(self, key, error, has_last_signature=True):
         # This helper function creates a MockTSIGContext for a given key
@@ -1297,10 +1322,9 @@ class TestAXFR(TestXfrinConnection):
                     [[('add', ns_rr), ('add', a_rr), ('add', soa_rrset)]],
                     self.conn._datasrc_client.committed_diffs)
 
-    def test_axfr_response_missing_ns(self):
+    def test_axfr_response_fail_validation(self):
         """
-        Test with transfering an invalid zone. We are missing a NS record
-        (missing a SOA is hard to do with XFR). It should be rejected.
+        Test we reject a zone transfer if it fails the check_zone validation.
         """
         a_rr = self._create_a('192.0.2.1')
         self.conn._send_query(RRType.AXFR())
@@ -1309,10 +1333,17 @@ class TestAXFR(TestXfrinConnection):
                                 RRType.AXFR())],
             # begin serial=1230, end serial=1234. end will be used.
             answers=[begin_soa_rrset, a_rr, soa_rrset])
+        # Make it fail the validation
+        self._check_zone_result = False
         self.assertRaises(XfrinProtocolError,
                           self.conn._handle_xfrin_responses)
         self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
         self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+        # Check the validation is called with the correct parameters
+        self.assertEqual(TEST_ZONE_NAME, self._check_zone_params[0])
+        self.assertEqual(TEST_RRCLASS, self._check_zone_params[1])
+        self.assertTrue(isinstance(self._check_zone_params[2],
+                                   MockRRsetCollection))
 
     def test_axfr_response_extra(self):
         '''Test with an extra RR after the end of AXFR session.
