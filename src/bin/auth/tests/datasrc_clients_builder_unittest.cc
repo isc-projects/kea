@@ -329,7 +329,7 @@ TEST_F(DataSrcClientsBuilderTest,
     // Prepare the database first
     const std::string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
     std::stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n"
-                         "example.org. 3600 IN NS ns1.example.org.");
+                         "example.org. 3600 IN NS ns1.example.org.\n");
     createSQLite3DB(rrclass, Name("example.org"), test_db.c_str(), ss);
     // This describes the data source in the configuration
     const ConstElementPtr config(Element::fromJSON("{"
