@@ -48,7 +48,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // 4. If all is OK, update the stored keyword/value pairs.
 
     // 1. Take a copy of the stored keyword/value pairs.
-    map<string, string> values_copy = values_;
+    std::map<string, string> values_copy = values_;
 
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {

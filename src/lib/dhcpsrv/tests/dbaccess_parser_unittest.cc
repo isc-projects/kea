@@ -120,7 +120,7 @@ public:
         SCOPED_TRACE(trace_string);
 
         // Construct a map of keyword value pairs.
-        map<string, string> expected;
+        std::map<string, string> expected;
         size_t expected_count = 0;
         for (size_t i = 0; keyval[i] != NULL; i += 2) {
             // Get the value.  This should not be NULL
@@ -147,7 +147,7 @@ public:
              actual != parameters.end(); ++actual) {
 
             // Does the keyword exist in the set of expected keywords?
-            map<string, string>::iterator corresponding =
+            std::map<string, string>::iterator corresponding =
                 expected.find(actual->first);
             ASSERT_TRUE(corresponding != expected.end());
 
