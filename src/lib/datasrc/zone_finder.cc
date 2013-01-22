@@ -17,7 +17,7 @@
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 
 using namespace std;
 using namespace isc::dns;
