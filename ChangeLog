@@ -1,3 +1,9 @@
+555.	[func]		marcin
+	The encapsulated option space name can be specified for
+	a DHCP option. It comprises sub-options being sent within
+	an option that encapsulates this option space.
+	(Trac #2314, git 27e6119093723a1e46a239ec245a8b4b10677635)
+
 554.	[func]		jinmei
 	b10-loadzone: improved completion log message and intermediate
 	reports: It now logs the precise number of loaded RRs on
