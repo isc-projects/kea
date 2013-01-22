@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,9 +41,7 @@ public:
     /// @brief Constructor
     ///
     /// @param port UDP port to be opened for DHCP traffic
-    /// @param dbconfig Lease manager database configuration string
-    ControlledDhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
-                        const char* dbconfig = "type=memfile");
+    ControlledDhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Destructor.
     ~ControlledDhcpv6Srv();

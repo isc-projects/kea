@@ -91,6 +91,10 @@ TEST(Element, from_and_to_json) {
     sv.push_back("-1");
     sv.push_back("-1.234");
     sv.push_back("-123.456");
+    // We should confirm that our string handling is 8-bit clean.
+    // At one point we were using char-length data and comparing to EOF,
+    // which means that character '\xFF' would not parse properly.
+    sv.push_back("\"\xFF\"");
 
     BOOST_FOREACH(const std::string& s, sv) {
         // test << operator, which uses Element::str()

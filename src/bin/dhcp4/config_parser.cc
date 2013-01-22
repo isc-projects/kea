@@ -18,6 +18,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <util/encode/hex.h>
@@ -48,9 +49,6 @@ class Uint32Parser;
 typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
 typedef boost::shared_ptr<StringParser> StringParserPtr;
 typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
-/// @brief auxiliary type used for storing element name and its parser
-typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief a factory method that will create a parser for a given element name
 typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id);
@@ -1607,6 +1605,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     factories["option-data"] = OptionDataListParser::factory;
     factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
+    factories["lease-database"] = DbAccessParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
@@ -1661,13 +1660,18 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
     // rollback informs whether error occured and original data
     // have to be restored to global storages.
     bool rollback = false;
-
+    // config_pair holds the details of the current parser when iterating over
+    // the parsers.  It is declared outside the loops so in case of an error,
+    // the name of the failing parser can be retrieved in the "catch" clause.
+    ConfigPair config_pair;
     try {
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
             config_set->mapValue();
-        BOOST_FOREACH(ConfigPair config_pair, values_map) {
+        BOOST_FOREACH(config_pair, values_map) {
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
+                      .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
                 subnet_parser = parser;
 
@@ -1702,16 +1706,19 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
         }
 
     } catch (const isc::Exception& ex) {
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed: ") + ex.what());
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
+                  .arg(config_pair.first).arg(ex.what());
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed: ") + ex.what());
 
         // An error occured, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed"));
+        LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(config_pair.first);
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed"));
 
         // An error occured, so make sure that we restore original data.
         rollback = true;
@@ -1728,14 +1735,16 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
             }
         }
         catch (const isc::Exception& ex) {
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed: ") + ex.what());
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed: ") + ex.what());
             rollback = true;
 
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed"));
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed"));
             rollback = true;
 
         }
