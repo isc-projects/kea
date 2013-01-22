@@ -1344,6 +1344,11 @@ class TestAXFR(TestXfrinConnection):
         self.assertEqual(TEST_RRCLASS, self._check_zone_params[1])
         self.assertTrue(isinstance(self._check_zone_params[2],
                                    MockRRsetCollection))
+        # Check we can safely call the callbacks. They have no sideeffects
+        # we can check (checking logging is hard), but we at least check
+        # they don't crash.
+        self._check_zone_params[3][0]("Test error")
+        self._check_zone_params[3][1]("Test warning")
 
     def test_axfr_response_extra(self):
         '''Test with an extra RR after the end of AXFR session.
