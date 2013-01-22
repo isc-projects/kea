@@ -16,7 +16,7 @@
 import isc.log
 import unittest
 from isc.datasrc import ZoneFinder
-from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
+from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata, RRsetCollection
 from isc.xfrin.diff import Diff, NoSuchZone
 
 class TestError(Exception):
@@ -1086,6 +1086,38 @@ class DiffTest(unittest.TestCase):
                                        rcode)
             self.__check_find_all_call(diff.find_all, self.__rrset3,
                                        rcode)
+
+    class Collection:
+        '''
+        Our own mock RRsetCollection. We don't use it, just pass it through.
+        This is to implement the below method.
+        '''
+        # Any idea why python doesn't agree with inheriting from
+        # dns.RRsetCollection?
+        pass
+
+    def get_rrset_collection(self):
+        '''
+        Part of pretending to be the zone updater. This returns the rrset
+        collection (a mock one, unuseable) for the updater.
+        '''
+        return self.Collection()
+
+    def test_get_rrset_collection(self):
+        '''
+        Test the diff can return corresponding rrset collection. Test
+        it applies the data first.
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        collection = diff.get_rrset_collection()
+        # Check it is commited
+        self.assertEqual(1, len(self.__data_operations))
+        self.assertEqual('add', self.__data_operations[0][0])
+        # Check the returned one is actually RRsetCollection
+        self.assertTrue(collection, self.Collection)
+        # We don't call anything on the collection. It's just the mock from
+        # above, so it wouldn't be any good.
 
 if __name__ == "__main__":
     isc.log.init("bind10")
