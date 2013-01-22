@@ -86,6 +86,12 @@
             "item_type": "string",
             "item_optional": false,
             "item_default": ""
+          },
+
+          { "item_name": "encapsulate",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
           } ]
         }
       },

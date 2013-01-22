@@ -21,6 +21,8 @@
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/config_parser.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
@@ -61,7 +63,7 @@ public:
         EXPECT_EQ(expected_value, it->second);
     }
 
-    // Checks if config_result (result of DHCP server configuration) has
+    // Checks if the result of DHCP server configuration has
     // expected code (0 for success, other for failures).
     // Also stores result in rcode_ and comment_.
     void checkResult(ConstElementPtr status, int expected_code) {
@@ -461,7 +463,8 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -474,6 +477,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
+    checkResult(status, 0);
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getOptionDef("isc", 100);
@@ -484,6 +488,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 }
 
 // The goal of this test is to check whether an option definiiton
@@ -499,7 +504,8 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
         "      \"type\": \"record\","
         "      \"array\": False,"
         "      \"record-types\": \"uint16, ipv4-address, ipv6-address, string\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -523,6 +529,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 
     // The option comprises the record of data fields. Verify that all
     // fields are present and they are of the expected types.
@@ -546,7 +553,8 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "      \"type\": \"uint32\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
@@ -554,7 +562,8 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -578,6 +587,7 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     EXPECT_EQ(100, def1->getCode());
     EXPECT_EQ(OPT_UINT32_TYPE, def1->getType());
     EXPECT_FALSE(def1->getArrayType());
+    EXPECT_TRUE(def1->getEncapsulatedSpace().empty());
 
     // Check the second option definition we have created.
     OptionDefinitionPtr def2 = CfgMgr::instance().getOptionDef("isc", 101);
@@ -588,6 +598,7 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
     EXPECT_EQ(101, def2->getCode());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def2->getType());
     EXPECT_FALSE(def2->getArrayType());
+    EXPECT_TRUE(def2->getEncapsulatedSpace().empty());
 }
 
 // The goal of this test is to verify that the duplicated option
@@ -604,7 +615,8 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
         "      \"type\": \"uint32\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
@@ -612,7 +624,8 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -640,7 +653,8 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "      \"type\": \"uint32\","
         "      \"array\": True,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -664,6 +678,48 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
     EXPECT_EQ(100, def->getCode());
     EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+}
+
+// The purpose of this test to verify that encapsulated option
+// space name may be specified.
+TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
+
+    // Configuration string. Included the encapsulated
+    // option space name.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"sub-opts-space\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ("sub-opts-space", def->getEncapsulatedSpace());
 }
 
 /// The purpose of this test is to verify that the option definition
@@ -678,7 +734,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -703,7 +760,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
         "      \"type\": \"sting\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -728,7 +786,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
         "      \"type\": \"record\","
         "      \"array\": False,"
         "      \"record-types\": \"uint32,uint8,sting\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -741,6 +800,85 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
     checkResult(status, 1);
 }
 
+/// The goal of this test is to verify that the invalid encapsulated
+/// option space name is not accepted.
+TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
+    // Configuration string. The encapsulated option space
+    // name is invalid (% character is not allowed).
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"invalid%space%name\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The goal of this test is to verify that the encapsulated
+/// option space name can't be specified for the option that
+/// comprises an array of data fields.
+TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
+    // Configuration string. The encapsulated option space
+    // name is set to non-empty value and the array flag
+    // is set.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"valid-space-name\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The goal of this test is to verify that the option may not
+/// encapsulate option space it belongs to.
+TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
+    // Configuration string. Option is set to encapsulate
+    // option space it belongs to.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
 
 /// The purpose of this test is to verify that it is not allowed
 /// to override the standard option (that belongs to dhcp4 option
@@ -759,7 +897,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"dhcp4\""
+        "      \"space\": \"dhcp4\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -794,7 +933,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"dhcp4\""
+        "      \"space\": \"dhcp4\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     json = Element::fromJSON(config);
@@ -907,7 +1047,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "    \"type\": \"uint32\","
         "    \"array\": False,"
         "    \"record-types\": \"\","
-        "    \"space\": \"isc\""
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
@@ -938,6 +1079,166 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // option space and  expect that option is not returned.
     Subnet::OptionDescriptor desc3 = subnet->getOptionDescriptor("non-existing", 56);
     ASSERT_FALSE(desc3.option);
+}
+
+// The goal of this test is to verify that it is possible to
+// encapsulate option space containing some options with
+// another option. In this test we create base option that
+// encapsulates option space 'isc' that comprises two other
+// options. Also, for all options their definitions are
+// created.
+TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
+
+    // @todo DHCP configurations has many dependencies between
+    // parameters. First of all, configuration for subnet is
+    // inherited from the global values. Thus subnet has to be
+    // configured when all global values have been configured.
+    // Also, an option can encapsulate another option only
+    // if the latter has been configured. For this reason in this
+    // test we created two-stage configuration where first we
+    // created options that belong to encapsulated option space.
+    // In the second stage we add the base option. Also, the Subnet
+    // object is configured in the second stage so it is created
+    // at the very end (when all other parameters are configured).
+
+    // Starting stage 1. Configure sub-options and their definitions.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Stage 2. Configure base option and a subnet. Please note that
+    // the configuration from the stage 2 is repeated because BIND
+    // configuration manager sends whole configuration for the lists
+    // where at least one element is being modified or added.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 222,"
+        "    \"data\": \"11\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"code\": 222,"
+        "    \"type\": \"uint8\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"dhcp4\","
+        "    \"encapsulate\": \"isc\""
+        "},"
+        "{"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("dhcp4", 222);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(222, desc.option->getType());
+
+    // This opton should comprise two sub-options.
+    // One of them is 'foo' with code 1.
+    OptionPtr option_foo = desc.option->getOption(1);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+
+    // ...another one 'foo2' with code 2.
+    OptionPtr option_foo2 = desc.option->getOption(2);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(2, option_foo2->getType());
 }
 
 // Goal of this test is to verify options configuration
@@ -1289,5 +1590,166 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
 }
+
+// The goal of this test is to verify that the standard option can
+// be configured to encapsulate multiple other options.
+TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
+
+    // The configuration is two stage process in this test.
+    // In the first stahe we create definitions of suboptions
+    // that we will add to the base option.
+    // Let's create some dummy options: foo and foo2.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Once the definitions have been added we can configure the
+    // standard option #17. This option comprises an enterprise
+    // number and sub options. By convention (introduced in
+    // std_option_defs.h) option named 'vendor-opts'
+    // encapsulates the option space named 'vendor-opts-space'.
+    // We add our dummy options to this option space and thus
+    // they should be included as sub-options in the 'vendor-opts'
+    // option.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"vendor-encapsulated-options\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 43,"
+        "    \"data\": \"\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 1,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"code\": 2,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 1,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 2,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-encapsulated-options-space\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc =
+        subnet->getOptionDescriptor("dhcp4", DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, desc.option->getType());
+
+    // Option with the code 1 should be added as a sub-option.
+    OptionPtr option_foo = desc.option->getOption(1);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    // This option comprises a single uint32_t value thus it is
+    // represented by OptionInt<uint32_t> class. Let's get the
+    // object of this type.
+    boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
+    ASSERT_TRUE(option_foo_uint32);
+    // Validate the value according to the configuration.
+    EXPECT_EQ(1234, option_foo_uint32->getValue());
+
+    // Option with the code 2 should be added as a sub-option.
+    OptionPtr option_foo2 = desc.option->getOption(2);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(2, option_foo2->getType());
+    // This option comprises the IPV4 address. Such option is
+    // represented by OptionCustom object.
+    OptionCustomPtr option_foo2_v4 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
+    ASSERT_TRUE(option_foo2_v4);
+    // Get the IP address carried by this option and validate it.
+    EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
+
+    // Option with the code 3 should not be added.
+    EXPECT_FALSE(desc.option->getOption(3));
+}
+
 
 };
