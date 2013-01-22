@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,6 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
-
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
@@ -150,8 +149,8 @@ void ControlledDhcpv6Srv::disconnectSession() {
     IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port, const char* dbconfig)
-    : Dhcpv6Srv(port, dbconfig), cc_session_(NULL), config_session_(NULL) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
+    : Dhcpv6Srv(port), cc_session_(NULL), config_session_(NULL) {
     server_ = this; // remember this instance for use in callback
 }
 

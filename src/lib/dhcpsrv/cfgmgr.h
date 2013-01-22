@@ -155,8 +155,17 @@ public:
     ///
     /// @param hint an address that belongs to a searched subnet
     ///
-    /// @return a subnet object
+    /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
+
+    /// @brief get IPv6 subnet by interface name
+    ///
+    /// Finds a matching local subnet, based on interface name. This
+    /// is used for selecting subnets that were explicitly marked by the
+    /// user as reachable over specified network interface.
+    /// @param iface_name interface name
+    /// @return a subnet object (or NULL if no suitable match was fount)
+    Subnet6Ptr getSubnet6(const std::string& iface_name);
 
     /// @brief get IPv6 subnet by interface-id
     ///
@@ -221,6 +230,14 @@ public:
     /// completely new?
     void deleteSubnets4();
 
+
+    /// @brief returns path do the data directory
+    ///
+    /// This method returns a path to writeable directory that DHCP servers
+    /// can store data in.
+    /// @return data directory
+    std::string getDataDir();
+
 protected:
 
     /// @brief Protected constructor.
@@ -265,6 +282,8 @@ private:
     /// @brief Container for defined DHCPv4 option spaces.
     OptionSpaceCollection spaces4_;
 
+    /// @brief directory where data files (e.g. server-id) are stored
+    std::string datadir_;
 };
 
 } // namespace isc::dhcp

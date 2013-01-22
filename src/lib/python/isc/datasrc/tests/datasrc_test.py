@@ -528,6 +528,41 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
+    def test_updater_rrset_collection(self):
+        dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
+        updater = dsc.get_updater(isc.dns.Name("example.com"), False)
+        updater_refs = sys.getrefcount(updater)
+
+        # Get (internally create) updater's RRset collection
+        rrsets = updater.get_rrset_collection()
+
+        # From this point we cannot make further updates
+        rrset = RRset(isc.dns.Name('www.example.com'), isc.dns.RRClass.IN(),
+                      isc.dns.RRType.AAAA(), isc.dns.RRTTL(10))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.AAAA(),
+                                      isc.dns.RRClass.IN(), '2001:db8::1'))
+        self.assertRaises(isc.datasrc.Error, updater.add_rrset, rrset)
+
+        # Checks basic API
+        found = rrsets.find(isc.dns.Name("www.example.com"),
+                            isc.dns.RRClass.IN(), isc.dns.RRType.A())
+        self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
+                         found.to_text())
+        self.assertEqual(None, rrsets.find(isc.dns.Name("www.example.com"),
+                                           isc.dns.RRClass.IN(),
+                                           isc.dns.RRType.AAAA()))
+
+        # Once committed collection cannot be used any more.
+        updater.commit()
+        self.assertRaises(isc.dns.RRsetCollectionError,
+                          rrsets.find, isc.dns.Name("www.example.com"),
+                          isc.dns.RRClass.IN(), isc.dns.RRType.A())
+
+        # When we destroy the RRsetCollection it should release the refcount
+        # to the updater.
+        rrsets = None
+        self.assertEqual(updater_refs, sys.getrefcount(updater))
+
     def test_two_modules(self):
         # load two modules, and check if they don't interfere
         mem_cfg = { "type": "memory", "class": "IN", "zones": [] };
