@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 
 /// \file
 /// Datasource clients

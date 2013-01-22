@@ -25,6 +25,7 @@
 
 #include <datasrc/database.h>
 #include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 #include <datasrc/sqlite3_accessor.h>
