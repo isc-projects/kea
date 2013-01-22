@@ -36,6 +36,7 @@ from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
 from isc.server_common.tsig_keyring import init_keyring, get_keyring
 from isc.log_messages.xfrin_messages import *
+from isc.dns import *
 
 isc.log.init("b10-xfrin", buffer=True)
 logger = isc.log.Logger("xfrin")
@@ -44,13 +45,6 @@ logger = isc.log.Logger("xfrin")
 # use here are hardcoded for now
 DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
-
-try:
-    from isc.dns import *
-except ImportError as e:
-    # C++ loadable module may not be installed; even so the xfrin process
-    # must keep running, so we warn about it and move forward.
-    logger.error(XFRIN_IMPORT_DNS, str(e))
 
 isc.util.process.rename()
 
