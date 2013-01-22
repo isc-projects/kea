@@ -3334,7 +3334,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     be deployed that facilitate communication between servers and
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
-    protocols. BIND 10 offers server implementations, one for DHCPv4
+    protocols. BIND 10 offers two server implementations, one for DHCPv4
     and one for DHCPv6.</para>
     <para>This chapter covers those parts of BIND 10 that are common to
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
@@ -3344,9 +3344,11 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
-      The current version of BIND 10 DHCP stores lease information in a MySQL
-      database.  This section covers the building of BIND 10 with MySQL and the
-      creation of the lease database.
+      BIND 10 DHCP stores its leases in a lease database.  The software has been written in
+      a way that makes it possible to choose which database product should be used to
+      store the lease information.  At present, only support for MySQL is provided, and that support must
+      be explicitly included when BIND 10 is built.  This section covers the building of
+      BIND 10 with MySQL and the creation of the lease database.
       </para>
       <section>
         <title>Install MySQL</title>
@@ -3359,7 +3361,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         <title>Build and Install BIND 10</title>
         <para>
           Build and install BIND 10 as described in <xref linkend="installation"/>, with
-          the following modification: to enable the MySQL database code, the
+          the following modification: to enable the MySQL database code, at the
           "configure" step (see <xref linkend="configure"/>), specify the location of the
           MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
           i.e.
@@ -3438,7 +3440,7 @@ $</screen>
       </para>
 
       <para>
-        During start-up the server will detect available network interfaces
+        On start-up, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
         assigned.
@@ -3494,15 +3496,23 @@ Dhcp4/subnet4	[]	list	(default)
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL, and so the server must be configured to
+      the only supported database is MySQL
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted. 
+      </para>
+      </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
       </para>
         <note>
             <para>
             Database access information must be configured for the DHCPv4 server, even if
             it has already been configured for the DHCPv6 server.  The servers store their
-            information independently, and the databases used by the server need not be the
-            same.
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
             </para>
         </note>
       <para>
@@ -3517,8 +3527,8 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
       If the database is located on a different system to the DHCPv4 server, the
-      database host name must also be specified: note however that this configuration
-      may have a severe impact on server performance:
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
 </screen>
@@ -3584,7 +3594,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.3.0/24" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Arrays are counted from 0. subnet[0] refers to the subnet defined in the
-        previous example.  The <command>config add Dhcp4/subnet4</command> adds
+        previous example.  The <command>config add Dhcp4/subnet4</command> command adds
         another (second) subnet. It can be referred to as
         <command>Dhcp4/subnet4[1]</command>. In this example, we allow server to
         dynamically assign all addresses available in the whole subnet.
@@ -3596,7 +3606,7 @@ Dhcp4/subnet4	[]	list	(default)
         address) and the last (typically broadcast address) address from that pool.
         In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
         192.0.3.255 addresses may be assigned as well. This may be invalid in some
-        network configurations. If you want to avoid this, please use min-max notation.
+        network configurations. If you want to avoid this, please use the "min-max" notation.
       </para>
       </section>
     </section>
@@ -3607,11 +3617,11 @@ Dhcp4/subnet4	[]	list	(default)
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC 2131: Supported messages are DISCOVER, OFFER,
-            REQUEST, and ACK.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
+            REQUEST, RELEASE, ACK, and NAK.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC 2132: Supported options are: PAD (0),
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>: Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
@@ -3626,6 +3636,18 @@ Dhcp4/subnet4	[]	list	(default)
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
+          <listitem>
+          <para>
+            On startup, the DHCPv4 server does not get the full configuration from
+            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
+            and commit the changes, e.g.
+            <screen>
+&gt; <userinput>config show Dhcp4/renew-timer</userinput>
+Dhcp4/renew-timer	1000	integer	(default)
+&gt; <userinput>config set Dhcp4/renew-timer 1001</userinput>
+&gt; <userinput>config commit</userinput></screen>
+          </para>
+        </listitem>
           <listitem>
             <simpara>During the initial IPv4 node configuration, the
             server is expected to send packets to a node that does not
@@ -3644,10 +3666,10 @@ Dhcp4/subnet4	[]	list	(default)
 
           <listitem>
             <simpara>The DHCPv4 server does not support
-            BOOTP. That is a design choice. This limitation is
+            BOOTP. That is a design choice and the limitation is
             permanent. If you have legacy nodes that can't use DHCP and
-            require BOOTP support, please use the latest version of ISC DHCP
-            via <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+            require BOOTP support, please use the latest version of ISC DHCP,
+            available from <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
             <simpara>Interface detection is currently working on Linux
@@ -3655,17 +3677,13 @@ Dhcp4/subnet4	[]	list	(default)
           </listitem>
           <listitem>
             <simpara>The DHCPv4 server does not  verify that
-            assigned address is unused. According to RFC 2131, the
-            allocating server should verify that address is no used by
+            assigned address is unused. According to <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>, the
+            allocating server should verify that address is not used by
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address rebinding (REBIND),
-            confirmation (CONFIRM), duplication report (DECLINE) and
-            release (RELEASE) are not supported yet.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>DNS Update is not supported yet.</simpara>
+            <simpara>Address rebinding (REBIND) and duplication report (DECLINE)
+            are not supported yet.</simpara>
           </listitem>
 
       </itemizedlist>
@@ -3685,8 +3703,8 @@ Dhcp4/subnet4	[]	list	(default)
         program.
       </para>
       <para>
-        After starting BIND 10 and entering bindctl, the first step
-        in configuring the server is to add it to the list of running BIND 10 services.
+        After starting BIND 10 and starting <command>bindctl</command>, the first step
+        in configuring the server is to add <command>b10-dhcp6</command> to the list of running BIND 10 services.
 <screen>
 &gt; <userinput>config add Boss/components b10-dhcp6</userinput>
 &gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
@@ -3717,14 +3735,9 @@ Dhcp4/subnet4	[]	list	(default)
         During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
-        have IPv6 address assigned. It will then listen to incoming traffic. The
-        currently supported client messages are SOLICIT and REQUEST. The server
-        will respond to them with ADVERTISE and REPLY, respectively.
+        have IPv6 address assigned. It will then listen to incoming traffic.
       </para>
-      <para>
-        Since the DHCPv6 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.
-      </para>
+
 
     </section>
 
@@ -3744,11 +3757,11 @@ Dhcp6/rebind-timer	2000	integer	(default)
 Dhcp6/preferred-lifetime	3000	integer	(default)
 Dhcp6/valid-lifetime	4000	integer	(default)
 Dhcp6/option-data	[]	list	(default)
-Dhcp6/lease-database/type	"mysql"	string	
-Dhcp6/lease-database/name	"kea"	string	
-Dhcp6/lease-database/user	"kea"	string	
+Dhcp6/lease-database/type	"memfile"	string	(default)
+Dhcp6/lease-database/name	""	string	(default)
+Dhcp6/lease-database/user	""	string	(default)
 Dhcp6/lease-database/host	""	string	(default)
-Dhcp6/lease-database/password	""	string	(modified)
+Dhcp6/lease-database/password	""	string	(default)
 Dhcp6/subnet6/	list	
 </screen>
       </para>
@@ -3774,15 +3787,23 @@ Dhcp6/subnet6/	list
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL, and so the server must be configured to
+      the only supported database is MySQL
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted. 
+      </para>
+      </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
       </para>
       <note>
         <para>
-          Database access information must be configured for the DHCPv6 server, even if
-          it has already been configured for the DHCPv4 server.  The servers store their
-          information independently, and the databases used by the server need not be the
-          same.
+            Database access information must be configured for the DHCPv6 server, even if
+            it has already been configured for the DHCPv4 server.  The servers store their
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
           </para>
         </note>
       <para>
@@ -3797,13 +3818,13 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
       If the database is located on a different system to the DHCPv6 server, the
-      database host name must also be specified: note however that this configuration
-      may have a severe impact on server performance:
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
 </screen>
       The usual state of affairs will be to have the database on the same machine as the
-      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+      DHCPv6 server.  In this case, set the value to the empty string (this is the default):
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/host ""</userinput>
 </screen>
@@ -3846,19 +3867,7 @@ Dhcp6/subnet6/	list
         <para>It is possible to define more than one pool in a
         subnet: continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should be also be managed by the server. It could be written as
-        2001:db8:1:0:5:: tDhcp6/interface/	list	(default)
-Dhcp6/renew-timer	1000	integer	(default)
-Dhcp6/rebind-timer	2000	integer	(default)
-Dhcp6/preferred-lifetime	3000	integer	(default)
-Dhcp6/valid-lifetime	4000	integer	(default)
-Dhcp6/option-data	[]	list	(default)
-Dhcp6/lease-database/type	""	string	(default)
-Dhcp6/lease-database/name	""	string	(default)
-Dhcp6/lease-database/user	""	string	(default)
-Dhcp6/lease-database/host	""	string	(default)
-Dhcp6/lease-database/password	""	string	(default)
-Dhcp6/subnet6	[]	list	(default)
-o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
+        2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
         formats are supported by Dhcp6 and can be mixed in the pool list.
         For example, one could define the following pools:
@@ -3877,7 +3886,7 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
 &gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Arrays are counted from 0. subnet[0] refers to the subnet defined in the
-        previous example.  The <command>config add Dhcp6/subnet6</command> adds
+        previous example.  The <command>config add Dhcp6/subnet6</command> command adds
         another (second) subnet. It can be referred to as
         <command>Dhcp6/subnet6[1]</command>. In this example, we allow server to
         dynamically assign all addresses available in the whole subnet. Although
@@ -3890,7 +3899,7 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         a given pool, it will be able to allocate also first (typically network
         address) address from that pool. For example for pool 2001:db8::/64 the
         2001:db8:: address may be assigned as well. If you want to avoid this,
-        please use min-max notation.
+        please use the "min-max" notation.
       </para>
       <para>
         Options can also be configured: the following commands configure
@@ -3905,7 +3914,7 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
 &gt; <userinput>config commit</userinput>
         </screen>
        (The value for the setting of the "data" element is split across two
-        lines in this document for clarity: when entering the command, all the
+        lines in this document for clarity: when entering the command, the whole
         string should be entered on the same line.)
       </para>
       <para>
@@ -3936,7 +3945,14 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
           <para>
           The DHCPv6 server may receive requests from local (connected to the same
           subnet as the server) and remote (connecting via relays)
-          clients. As it may have many subnet configurations defined, it
+          clients.
+          <note>
+          <para>
+          Currently relayed DHCPv6 traffic is not supported.  The server will
+          only respond to local DHCPv6 requests - see <xref linkend="dhcp6-limit"/>
+          </para>
+          </note>
+          As it may have many subnet configurations defined, it
           must select appropriate subnet for a given request. To do this, the server first
           checks if there is only one subnet defined and source of the packet is
           link-local. If this is the case, the server assumes that the only subnet
@@ -3968,12 +3984,11 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC 3315: Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, and REPLY. Supported options are
-            SERVER_ID, CLIENT_ID, IA_NA, and IAADDRESS.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
+            ADVERTISE, REQUEST, RELEASE, RENEW, and REPLY.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC 3646: Supported option is DNS_SERVERS.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3985,16 +4000,7 @@ o 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
-      <para>
       <itemizedlist>
-        <listitem>
-          <para>The DHCPv6 server has only been tested on Debian
-          operating systems.  There are known problems with the
-          handling of packets in CentOS and RHEL.</para>
-        </listitem>
-        <listitem>
-          <para>Relayed traffic is not supported.</para>
-        </listitem>
 
         <listitem>
           <para>
@@ -4009,40 +4015,26 @@ Dhcp6/renew-timer	1000	integer	(default)
           </para>
         </listitem>
         <listitem>
-          <para>Upon start, the server will open sockets on all
-          interfaces that are not loopback, are up, running and are
-          multicast capable and have IPv6 address.  Support for
-          multiple interfaces is not coded in reception routines yet,
-          so if you are running this code on a machine that has many
-          interfaces and <command>b10-dhcp6</command> happens to
-          listen on wrong interface, the easiest way to work around
-          this problem is to turn down other interfaces. This
-          limitation will be fixed shortly.</para>
+          <simpara>Relayed traffic is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>ORO (Option Request Option, a list of options
-          requested by a client) is currently unsupported.</para>
+          <simpara>Temporary addresses are not supported.</simpara>
         </listitem>
         <listitem>
-          <para>Temporary addresses are not supported.</para>
+          <simpara>Prefix delegation is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>Prefix delegation is not supported.</para>
+          <simpara>Rebinding (REBIND), confirmation (CONFIRM),
+          and duplication report (DECLINE) are not yet supported.</simpara>
         </listitem>
         <listitem>
-          <para>Address renewal (RENEW), rebinding (REBIND),
-          confirmation (CONFIRM), duplication report (DECLINE) and
-          release (RELEASE) are not supported.</para>
+          <simpara>DNS Update is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>DNS Update is not supported.</para>
-        </listitem>
-        <listitem>
-          <para>Interface detection is currently working on Linux
-          only. See <xref linkend="iface-detect"/> for details.</para>
+          <simpara>Interface detection is currently working on Linux
+          only. See <xref linkend="iface-detect"/> for details.</simpara>
         </listitem>
       </itemizedlist>
-      </para>
     </section>
 
   </chapter>
@@ -4051,7 +4043,7 @@ Dhcp6/renew-timer	1000	integer	(default)
     <title>libdhcp++ library</title>
     <para>
       libdhcp++ is a common library written in C++ that handles
-      many DHCP-related tasks, including
+      many DHCP-related tasks, including:
       <itemizedlist>
         <listitem>
           <simpara>DHCPv4 and DHCPv6 packets parsing, manipulation and assembly</simpara>
@@ -4069,10 +4061,8 @@ Dhcp6/renew-timer	1000	integer	(default)
     </para>
 
     <para>
-    While this library is currently used by
-    <command>b10-dhcp4</command> and <command>b10-dhcp6</command>
-    only, it is designed to be a portable, universal library, useful for
-    any kind of DHCP-related software.
+    While this library is currently used by BIND 10 DHCP, it is designed to
+    be a portable, universal library, useful for any kind of DHCP-related software.
     </para>
 
 <!-- TODO: point to doxygen docs -->
