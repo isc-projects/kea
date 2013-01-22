@@ -115,6 +115,8 @@ class LoadZoneRunner:
         self._log_debuglevel = 0
         self._report_interval = LOAD_INTERVAL_DEFAULT
         self._start_time = None
+        # This one will be used in (rare) cases where we want to allow tests to
+        # fake time.time()
         self._get_time = time.time
 
         self._config_log()
