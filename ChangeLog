@@ -1,3 +1,11 @@
+554.	[func]		jinmei
+	b10-loadzone: improved completion log message and intermediate
+	reports: It now logs the precise number of loaded RRs on
+	completion, and intermediate reports show additional information
+	such as the estimated progress in percentage and estimated time
+	to complete.
+	(Trac #2574, git 5b8a824054313bdecb8988b46e55cb2e94cb2d6c)
+
 553.    [func]      stephen
 	Values of the parameters to access the DHCP server lease database
 	can now be set through the BIND 10 configuration mechanism.
