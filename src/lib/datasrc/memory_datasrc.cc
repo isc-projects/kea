@@ -29,6 +29,7 @@
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
+#include <datasrc/zone_finder.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
