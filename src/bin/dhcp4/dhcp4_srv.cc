@@ -39,9 +39,6 @@ using namespace std;
 
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
-const std::string HARDCODED_GATEWAY = "192.0.2.1";
-const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
-const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
 const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
@@ -271,6 +268,40 @@ void Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     }
 }
 
+void
+Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+    // Identify options that we always want to send to the
+    // client (if they are configured).
+    static const uint16_t required_options[] = {
+        DHO_SUBNET_MASK,
+        DHO_ROUTERS,
+        DHO_DOMAIN_NAME_SERVERS,
+        DHO_DOMAIN_NAME };
+
+    static size_t required_options_size =
+        sizeof(required_options) / sizeof(required_options[0]);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = selectSubnet(question);
+    if (!subnet) {
+        return;
+    }
+
+    // Try to find all 'required' options in the outgoing
+    // message. Those that are not present will be added.
+    for (int i = 0; i < required_options_size; ++i) {
+        OptionPtr opt = msg->getOption(required_options[i]);
+        if (!opt) {
+            // Check whether option has been configured.
+            Subnet::OptionDescriptor desc =
+                subnet->getOptionDescriptor("dhcp4", required_options[i]);
+            if (desc.option) {
+                msg->addOption(desc.option);
+            }
+        }
+    }
+}
+
 void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // We need to select a subnet the client is connected in.
@@ -340,10 +371,12 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         opt->setUint32(lease->valid_lft_);
         answer->addOption(opt);
 
-        // @todo: include real router information here
         // Router (type 3)
-        opt = OptionPtr(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
-        answer->addOption(opt);
+        Subnet::OptionDescriptor opt_routers =
+            subnet->getOptionDescriptor("dhcp4", DHO_ROUTERS);
+        if (opt_routers.option) {
+            answer->addOption(opt_routers.option);
+        }
 
         // Subnet mask (type 1)
         answer->addOption(getNetmaskOption(subnet));
@@ -386,6 +419,11 @@ Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     assignLease(discover, offer);
 
+    // There are a few basic options that we always want to
+    // include in the response. If client did not request
+    // them we append them for him.
+    appendBasicOptions(discover, offer);
+
     return (offer);
 }
 
@@ -398,6 +436,11 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     appendRequestedOptions(request, ack);
 
     assignLease(request, ack);
+
+    // There are a few basic options that we always want to
+    // include in the response. If client did not request
+    // them we append them for him.
+    appendBasicOptions(request, ack);
 
     return (ack);
 }
