@@ -1729,6 +1729,61 @@ TYPED_TEST(DatabaseClientTest, updateAfterDeleteIterator) {
 }
 
 void
+findTestCommon(ZoneFinder& finder, const isc::dns::Name& name,
+               const isc::dns::RRType& type,
+               ConstZoneFinderContextPtr actual_result,
+               const isc::dns::RRType& expected_type,
+               const isc::dns::RRTTL expected_ttl,
+               ZoneFinder::Result expected_result,
+               const std::vector<string>& expected_rdatas,
+               const std::vector<string>& expected_sig_rdatas,
+               ZoneFinder::FindResultFlags expected_flags,
+               const isc::dns::Name& expected_name,
+               const ZoneFinder::FindOptions options)
+{
+    ASSERT_EQ(expected_result, actual_result->code) << name << " " << type;
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+              actual_result->isWildcard());
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+              actual_result->isNSECSigned());
+    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+              actual_result->isNSEC3Signed());
+    if (!expected_rdatas.empty() && actual_result->rrset) {
+        checkRRset(actual_result->rrset,
+                   expected_name != Name::ROOT_NAME() ? expected_name :
+                   name, finder.getClass(), expected_type, expected_ttl,
+                   expected_rdatas);
+        if ((options & ZoneFinder::FIND_DNSSEC) == ZoneFinder::FIND_DNSSEC) {
+            if (!expected_sig_rdatas.empty() &&
+                actual_result->rrset->getRRsig()) {
+                checkRRset(actual_result->rrset->getRRsig(),
+                           expected_name != Name::ROOT_NAME() ?
+                           expected_name : name,
+                           finder.getClass(),
+                           isc::dns::RRType::RRSIG(), expected_ttl,
+                           expected_sig_rdatas);
+            } else if (expected_sig_rdatas.empty()) {
+                EXPECT_EQ(isc::dns::RRsetPtr(),
+                          actual_result->rrset->getRRsig()) <<
+                    "Unexpected RRSIG: " <<
+                    actual_result->rrset->getRRsig()->toText();
+            } else {
+                ADD_FAILURE() << "Missing RRSIG";
+            }
+        } else if (actual_result->rrset->getRRsig()) {
+            EXPECT_EQ(isc::dns::RRsetPtr(), actual_result->rrset->getRRsig())
+                << "Unexpected RRSIG: "
+                << actual_result->rrset->getRRsig()->toText();
+        }
+    } else if (expected_rdatas.empty()) {
+        EXPECT_EQ(isc::dns::RRsetPtr(), actual_result->rrset) <<
+            "Unexpected RRset: " << actual_result->rrset->toText();
+    } else {
+        ADD_FAILURE() << "Missing result";
+    }
+}
+
+void
 doFindTest(ZoneFinder& finder,
            const isc::dns::Name& name,
            const isc::dns::RRType& type,
@@ -1744,40 +1799,9 @@ doFindTest(ZoneFinder& finder,
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
     ConstZoneFinderContextPtr result = finder.find(name, type, options);
-    ASSERT_EQ(expected_result, result->code) << name << " " << type;
-    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-              result->isWildcard());
-    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
-              result->isNSECSigned());
-    EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
-              result->isNSEC3Signed());
-    if (!expected_rdatas.empty() && result->rrset) {
-        checkRRset(result->rrset, expected_name != Name(".") ? expected_name :
-                   name, finder.getClass(), expected_type, expected_ttl,
-                   expected_rdatas);
-        if ((options & ZoneFinder::FIND_DNSSEC) == ZoneFinder::FIND_DNSSEC) {
-            if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
-                checkRRset(result->rrset->getRRsig(),
-                           expected_name != Name(".") ? expected_name : name,
-                           finder.getClass(),
-                           isc::dns::RRType::RRSIG(), expected_ttl,
-                           expected_sig_rdatas);
-            } else if (expected_sig_rdatas.empty()) {
-                EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
-                    "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
-            } else {
-                ADD_FAILURE() << "Missing RRSIG";
-            }
-        } else if (result->rrset->getRRsig()) {
-            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
-                "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
-        }
-    } else if (expected_rdatas.empty()) {
-        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
-            "Unexpected RRset: " << result->rrset->toText();
-    } else {
-        ADD_FAILURE() << "Missing result";
-    }
+    findTestCommon(finder, name, type, result, expected_type, expected_ttl,
+                   expected_result, expected_rdatas, expected_sig_rdatas,
+                   expected_flags, expected_name, options);
 }
 
 void
