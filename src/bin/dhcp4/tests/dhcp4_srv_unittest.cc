@@ -93,7 +93,6 @@ public:
             OptionUint8ArrayPtr(new OptionUint8Array(Option::V4,
                                                      DHO_DHCP_PARAMETER_REQUEST_LIST));
 
-        std::vector<uint8_t> opts;
         // Let's request options that have been configured for the subnet.
         option_prl->addValue(DHO_DOMAIN_NAME_SERVERS);
         option_prl->addValue(DHO_DOMAIN_NAME);
