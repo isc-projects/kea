@@ -18,7 +18,9 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -57,9 +59,6 @@ class Uint32Parser;
 typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
 typedef boost::shared_ptr<StringParser> StringParserPtr;
 typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
-/// @brief Auxiliary type used for storing an element name and its parser.
-typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief Factory method that will create a parser for a given element name
 typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id);
@@ -1400,6 +1399,15 @@ private:
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
+        // Get interface name. If it is defined, then the subnet is available
+        // directly over specified network interface.
+
+        string iface;
+        StringStorage::const_iterator iface_iter = string_values_.find("interface");
+        if (iface_iter != string_values_.end()) {
+            iface = iface_iter->second;
+        }
+
         /// @todo: Convert this to logger once the parser is working reliably
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
@@ -1414,6 +1422,17 @@ private:
         // Add pools to it.
         for (PoolStorage::iterator it = pools_.begin(); it != pools_.end(); ++it) {
             subnet_->addPool(*it);
+        }
+
+        // Configure interface, if defined
+        if (!iface.empty()) {
+            if (!IfaceMgr::instance().getIface(iface)) {
+                isc_throw(DhcpConfigError, "Specified interface name " << iface
+                          << " for subnet " << subnet_->toText() << " is not present"
+                          << " in the system.");
+            }
+
+            subnet_->setIface(iface);
         }
 
         // We are going to move configured options to the Subnet object.
@@ -1489,6 +1508,7 @@ private:
         factories["subnet"] = StringParser::factory;
         factories["pool"] = PoolParser::factory;
         factories["option-data"] = OptionDataListParser::factory;
+        factories["interface"] = StringParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {
@@ -1641,6 +1661,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     factories["option-data"] = OptionDataListParser::factory;
     factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
+    factories["lease-database"] = DbAccessParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
@@ -1695,13 +1716,19 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
     // rollback informs whether error occured and original data
     // have to be restored to global storages.
     bool rollback = false;
+    // config_pair holds ther details of the current parser when iterating over
+    // the parsers.  It is declared outside the loop so in case of error, the
+    // name of the failing parser can be retrieved within the "catch" clause.
+    ConfigPair config_pair;
     try {
 
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
             config_set->mapValue();
-        BOOST_FOREACH(ConfigPair config_pair, values_map) {
+        BOOST_FOREACH(config_pair, values_map) {
             ParserPtr parser(createGlobalDhcpConfigParser(config_pair.first));
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
+                      .arg(config_pair.first);
             if (config_pair.first == "subnet6") {
                 subnet_parser = parser;
 
@@ -1736,15 +1763,18 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
         }
 
     } catch (const isc::Exception& ex) {
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed: ") + ex.what());
+        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
+                  .arg(config_pair.first).arg(ex.what());
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed: ") + ex.what());
         // An error occured, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed"));
+        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed"));
         // An error occured, so make sure that we restore original data.
         rollback = true;
     }
@@ -1760,15 +1790,16 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
             }
         }
         catch (const isc::Exception& ex) {
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed:") 
-                                          + ex.what());
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed:") + ex.what());
             // An error occured, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed"));
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed"));
             // An error occured, so make sure to restore the original data.
             rollback = true;
         }

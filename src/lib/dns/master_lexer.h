@@ -401,6 +401,22 @@ public:
     /// The behavior of the lexer is undefined if the caller builds or adds
     /// data in \c input after pushing it.
     ///
+    /// Except for rare case system errors such as memory allocation failure,
+    /// this method is generally expected to be exception free.  However,
+    /// it can still throw if it encounters an unexpected failure when it
+    /// tries to identify the "size" of the input source (see
+    /// \c getTotalSourceSize()).  It's an unexpected result unless the
+    /// caller intentionally passes a broken stream; otherwise it would mean
+    /// some system-dependent unexpected behavior or possibly an internal bug.
+    /// In these cases it throws an \c Unexpected exception.  Note that
+    /// this version of the method doesn't return a boolean unlike the
+    /// other version that takes a file name; since this failure is really
+    /// unexpected and can be critical, it doesn't make sense to give the
+    /// caller an option to continue (other than by explicitly catching the
+    /// exception).
+    ///
+    /// \throw Unexpected An unexpected failure happens in initialization.
+    ///
     /// \param input An input stream object that produces textual
     /// representation of DNS RRs.
     void pushSource(std::istream& input);
@@ -461,7 +477,7 @@ public:
     ///
     /// This method returns the sum of the size of sources that have been
     /// pushed to the lexer by the time of the call.  It would give the
-    /// caller of some hint about the amount of data the lexer is working on.
+    /// caller some hint about the amount of data the lexer is working on.
     ///
     /// The size of a normal file is equal to the file size at the time of
     /// the source is pushed.  The size of other type of input stream is
@@ -472,25 +488,42 @@ public:
     /// stream is unknown.  It happens, for example, if the standard input
     /// is associated with a pipe from the output of another process and it's
     /// specified as an input source.  If the size of some of the pushed
-    /// pushed source is unknown, this method returns SOURCE_SIZE_UNKNOWN.
+    /// source is unknown, this method returns SOURCE_SIZE_UNKNOWN.
     ///
-    /// If there is no source pushed in the lexer, it returns 0.
+    /// The total size won't change when a source is popped.  So the return
+    /// values of this method will monotonically increase or
+    /// \c SOURCE_SIZE_UNKNOWN; once it returns \c SOURCE_SIZE_UNKNOWN,
+    /// any subsequent call will also result in that value, by the above
+    /// definition.
+    ///
+    /// Before pushing any source, it returns 0.
     ///
     /// \throw None
     size_t getTotalSourceSize() const;
 
-    /// \brief Return the position of lexer in the currently pushed sources.
+    /// \brief Return the position of lexer in the pushed sources so far.
     ///
     /// This method returns the position in terms of the number of recognized
-    /// characters from all sources.  Roughly speaking, the position in a
-    /// single source is the offset from the beginning of the file or stream
-    /// to the current "read cursor" of the lexer, and the return value of
-    /// this method is the sum of the position in all the pushed sources.
+    /// characters from all sources that have been pushed by the time of the
+    /// call.  Conceptually, the position in a single source is the offset
+    /// from the beginning of the file or stream to the current "read cursor"
+    /// of the lexer.  The return value of this method is the sum of the
+    /// positions in all the pushed sources.  If any of the sources has
+    /// already been popped, the position of the source at the time of the
+    /// pop operation will be used for the calculation.
     ///
     /// If the lexer reaches the end for each of all the pushed sources,
     /// the return value should be equal to that of \c getTotalSourceSize().
+    /// It's generally expected that a source is popped when the lexer
+    /// reaches the end of the source.  So, when the application of this
+    /// class parses all contents of all sources, possibly with multiple
+    /// pushes and pops, the return value of this method and
+    /// \c getTotalSourceSize() should be identical (unless the latter
+    /// returns SOURCE_SIZE_UNKNOWN).  But this is not necessarily
+    /// guaranteed as the application can pop a source in the middle of
+    /// parsing it.
     ///
-    /// If there is no source pushed in the lexer, it returns 0.
+    /// Before pushing any source, it returns 0.
     ///
     /// The return values of this method and \c getTotalSourceSize() would
     /// give the caller an idea of the progress of the lexer at the time of
@@ -499,11 +532,10 @@ public:
     /// this way may not make much sense; it can only give an informational
     /// hint of the progress.
     ///
-    /// Note also that if a source is popped, this method will normally return
-    /// a smaller number by definition (and so will \c getTotalSourceSize()).
-    /// Likewise, the conceptual "read cursor" would move backward after a
+    /// Note that the conceptual "read cursor" would move backward after a
     /// call to \c ungetToken(), in which case this method will return a
-    /// smaller value, too.
+    /// smaller value.  That is, unlike \c getTotalSourceSize(), return
+    /// values of this method may not always monotonically increase.
     ///
     /// \throw None
     size_t getPosition() const;
