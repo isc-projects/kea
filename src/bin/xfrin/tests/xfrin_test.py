@@ -1297,6 +1297,23 @@ class TestAXFR(TestXfrinConnection):
                     [[('add', ns_rr), ('add', a_rr), ('add', soa_rrset)]],
                     self.conn._datasrc_client.committed_diffs)
 
+    def test_axfr_response_missing_ns(self):
+        """
+        Test with transfering an invalid zone. We are missing a NS record
+        (missing a SOA is hard to do with XFR). It should be rejected.
+        """
+        a_rr = self._create_a('192.0.2.1')
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                RRType.AXFR())],
+            # begin serial=1230, end serial=1234. end will be used.
+            answers=[begin_soa_rrset, a_rr, soa_rrset])
+        self.assertRaises(XfrinProtocolError,
+                          self.conn._handle_xfrin_responses)
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+
     def test_axfr_response_extra(self):
         '''Test with an extra RR after the end of AXFR session.
 
