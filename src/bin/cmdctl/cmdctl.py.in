@@ -550,7 +550,7 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                                       keyfile = key,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
             return ssl_sock
-        except ssl.SSLError as err :
+        except ssl.SSLError as err:
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
             self.close_request(sock)
             # raise socket error to finish the request
