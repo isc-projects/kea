@@ -423,7 +423,7 @@ class XfrinIXFRAdd(XfrinState):
             if soa_serial == conn._end_serial:
                 # The final part is there. Check all was signed
                 # and commit it to the database.
-                conn._finish_transfer()
+                conn.finish_transfer()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
             elif soa_serial != conn._current_serial:
@@ -500,7 +500,7 @@ class XfrinAXFREnd(XfrinState):
         indicating there will be no more message to receive.
 
         """
-        conn._finish_transfer()
+        conn.finish_transfer()
         return False
 
 class XfrinTransferStats:
@@ -797,15 +797,20 @@ class XfrinConnection(asyncore.dispatcher):
                 raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
                                          'message')
 
-    def __validate_error(reason):
-        # TODO: Log
-        pass
+    def __validate_error(self, reason):
+        '''
+        Used as error callback below.
+        '''
+        logger.error(XFRIN_ZONE_INVALID, self._zone_name, self._rrclass,
+                     reason)
 
-    def __validate_warning(reason):
-        # TODO: Log
-        pass
+    def __validate_warning(self, reason):
+        '''
+        Used as warning callback below.
+        '''
+        logger.warn(XFRIN_ZONE_WARN, self._zone_name, self._rrclass, reason)
 
-    def _finish_transfer(self):
+    def finish_transfer(self):
         """
         Perform any necessary checks after a transfer. Then complete the
         transfer by commiting the transaction into the data source.
