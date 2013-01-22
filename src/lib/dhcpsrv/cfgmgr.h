@@ -18,7 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/option_space.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>

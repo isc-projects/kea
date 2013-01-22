@@ -146,10 +146,10 @@ public:
     /// @param type option data type as string.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
-    OptionDefinition(const std::string& name,
-                     const uint16_t code,
-                     const std::string& type,
-                     const bool array_type = false);
+    explicit OptionDefinition(const std::string& name,
+                              const uint16_t code,
+                              const std::string& type,
+                              const bool array_type = false);
 
     /// @brief Constructor.
     ///
@@ -158,10 +158,49 @@ public:
     /// @param type option data type.
     /// @param array_type array indicator, if true it indicates that the
     /// option fields are the array.
-    OptionDefinition(const std::string& name,
-                     const uint16_t code,
-                     const OptionDataType type,
-                     const bool array_type = false);
+    explicit OptionDefinition(const std::string& name,
+                              const uint16_t code,
+                              const OptionDataType type,
+                              const bool array_type = false);
+
+    /// @brief Constructor.
+    ///
+    /// This constructor sets the name of the option space that is
+    /// encapsulated by this option. The encapsulated option space
+    /// indentifies sub-options that are carried within this option.
+    /// This constructor does not allow to set array indicator
+    /// because options comprising an array of data fields must
+    /// not be used with sub-options.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type given as string.
+    /// @param encapsulated_space name of the option space being
+    /// encapsulated by this option.
+    explicit OptionDefinition(const std::string& name,
+                              const uint16_t code,
+                              const std::string& type,
+                              const char* encapsulated_space);
+
+    /// @brief Constructor.
+    ///
+    /// This constructor sets the name of the option space that is
+    /// encapsulated by this option. The encapsulated option space
+    /// indentifies sub-options that are carried within this option.
+    /// This constructor does not allow to set array indicator
+    /// because options comprising an array of data fields must
+    /// not be used with sub-options.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type.
+    /// @param encapsulated_space name of the option space being
+    /// encapsulated by this option.
+    explicit OptionDefinition(const std::string& name,
+                              const uint16_t code,
+                              const OptionDataType type,
+                              const char* encapsulated_space);
+
 
     /// @brief Adds data field to the record.
     ///
@@ -192,10 +231,17 @@ public:
     /// @return option code.
     uint16_t getCode() const { return (code_); }
 
+    /// @brief Return name of the encapsulated option space.
+    ///
+    /// @return name of the encapsulated option space.
+    std::string getEncapsulatedSpace() const {
+        return (encapsulated_space_);
+    }
+
     /// @brief Return option name.
     ///
     /// @return option name.
-    const std::string& getName() const { return (name_); }
+    std::string getName() const { return (name_); }
 
     /// @brief Return list of record fields.
     ///
@@ -456,6 +502,8 @@ private:
     OptionDataType type_;
     /// Indicates wheter option is a single value or array.
     bool array_type_;
+    /// Name of the space being encapsulated by this option.
+    std::string encapsulated_space_;
     /// Collection of data fields within the record.
     RecordFieldsCollection record_fields_;
 };

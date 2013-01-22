@@ -102,7 +102,6 @@ OptionStorage option_defaults;
 /// @brief Global storage for option definitions.
 OptionDefStorage option_def_intermediate;
 
-
 /// @brief a dummy configuration parser
 ///
 /// This is a debugging parser. It does not configure anything,
@@ -797,7 +796,10 @@ private:
         }
 
         std::string option_space = getParam<std::string>("space", string_values_);
-        /// @todo Validate option space once #2313 is merged.
+        if (!OptionSpace::validateName(option_space)) {
+            isc_throw(DhcpConfigError, "invalid option space name'"
+                      << option_space << "'");
+        }
 
         OptionDefinitionPtr def;
         if (option_space == "dhcp6" &&
@@ -886,7 +888,7 @@ private:
             // definition of option value makes sense.
             if (def->getName() != option_name) {
                 isc_throw(DhcpConfigError, "specified option name '"
-                          << option_name << " does not match the "
+                          << option_name << "' does not match the "
                           << "option definition: '" << option_space
                           << "." << def->getName() << "'");
             }
@@ -1033,8 +1035,8 @@ public:
         BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
             std::string entry(param.first);
             ParserPtr parser;
-            if (entry == "name" || entry == "type" ||
-                entry == "record-types" || entry == "space") {
+            if (entry == "name" || entry == "type" || entry == "record-types" ||
+                entry == "space" || entry == "encapsulate") {
                 StringParserPtr
                     str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
                 if (str_parser) {
@@ -1084,8 +1086,8 @@ public:
 
     /// @brief Stores the parsed option definition in the data store.
     void commit() {
-        // @todo validate option space name once 2313 is merged.
-        if (storage_ && option_definition_) {
+        if (storage_ && option_definition_ &&
+            OptionSpace::validateName(option_space_name_)) {
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1107,11 +1109,10 @@ private:
     void createOptionDef() {
         // Get the option space name and validate it.
         std::string space = getParam<std::string>("space", string_values_);
-        // @todo uncomment the code below when the #2313 is merged.
-        /*        if (!OptionSpace::validateName()) {
+        if (!OptionSpace::validateName(space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << space << "'");
-                      } */
+        }
 
         // Get other parameters that are needed to create the
         // option definition.
@@ -1119,9 +1120,36 @@ private:
         uint32_t code = getParam<uint32_t>("code", uint32_values_);
         std::string type = getParam<std::string>("type", string_values_);
         bool array_type = getParam<bool>("array", boolean_values_);
+        std::string encapsulates = getParam<std::string>("encapsulate",
+                                                         string_values_);
 
-        OptionDefinitionPtr def(new OptionDefinition(name, code,
-                                                     type, array_type));
+        // Create option definition.
+        OptionDefinitionPtr def;
+        // We need to check if user has set encapsulated option space
+        // name. If so, different constructor will be used.
+        if (!encapsulates.empty()) {
+            // Arrays can't be used together with sub-options.
+            if (array_type) {
+                isc_throw(DhcpConfigError, "option '" << space << "."
+                          << "name" << "', comprising an array of data"
+                          << " fields may not encapsulate any option space");
+
+            } else if (encapsulates == space) {
+                isc_throw(DhcpConfigError, "option must not encapsulate"
+                          << " an option space it belongs to: '"
+                          << space << "." << name << "' is set to"
+                          << " encapsulate '" << space << "'");
+
+            } else {
+                def.reset(new OptionDefinition(name, code, type,
+                                               encapsulates.c_str()));
+            }
+
+        } else {
+            def.reset(new OptionDefinition(name, code, type, array_type));
+
+        }
+
         // The record-types field may carry a list of comma separated names
         // of data types that form a record.
         std::string record_types = getParam<std::string>("record-types",
@@ -1139,7 +1167,7 @@ private:
                 }
             } catch (const Exception& ex) {
                 isc_throw(DhcpConfigError, "invalid record type values"
-                          << " specified for the option  definition: "
+                          << " specified for the option definition: "
                           << ex.what());
             }
         }
@@ -1358,6 +1386,63 @@ private:
         return (false);
     }
 
+    /// @brief Append sub-options to an option.
+    ///
+    /// @param option_space a name of the encapsulated option space.
+    /// @param option option instance to append sub-options to.
+    void appendSubOptions(const std::string& option_space, OptionPtr& option) {
+        // Only non-NULL options are stored in option container.
+        // If this option pointer is NULL this is a serious error.
+        assert(option);
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp6" &&
+            LibDHCP::isStandardOption(Option::V6, option->getType())) {
+            def = LibDHCP::getOptionDef(Option::V6, option->getType());
+            // Definitions for some of the standard options hasn't been
+            // implemented so it is ok to leave here.
+            if (!def) {
+                return;
+            }
+        } else {
+            const OptionDefContainerPtr defs =
+                option_def_intermediate.getItems(option_space);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            const OptionDefContainerTypeRange& range =
+                idx.equal_range(option->getType());
+            // There is no definition so we have to leave.
+            if (std::distance(range.first, range.second) == 0) {
+                return;
+            }
+
+            def = *range.first;
+
+            // If the definition exists, it must be non-NULL.
+            // Otherwise it is a programming error.
+            assert(def);
+        }
+
+        // We need to get option definition for the particular option space
+        // and code. This definition holds the information whether our
+        // option encapsulates any option space.
+        // Get the encapsulated option space name.
+        std::string encapsulated_space = def->getEncapsulatedSpace();
+        // If option space name is empty it means that our option does not
+        // encapsulate any option space (does not include sub-options).
+        if (!encapsulated_space.empty()) {
+            // Get the sub-options that belong to the encapsulated
+            // option space.
+            const Subnet::OptionContainerPtr sub_opts =
+                option_defaults.getItems(encapsulated_space);
+            // Append sub-options to the option.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc, *sub_opts) {
+                if (desc.option) {
+                    option->addOption(desc.option);
+                }
+            }
+        }
+    }
+
     /// @brief Create a new subnet using a data from child parsers.
     ///
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing failed.
@@ -1458,6 +1543,8 @@ private:
                     LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
                         .arg(desc.option->getType()).arg(addr.toText());
                 }
+                // Add sub-options (if any).
+                appendSubOptions(option_space, desc.option);
                 // In any case, we add the option to the subnet.
                 subnet_->addOption(desc.option, false, option_space);
             }
@@ -1485,6 +1572,9 @@ private:
                 Subnet::OptionDescriptor existing_desc =
                     subnet_->getOptionDescriptor(option_space, desc.option->getType());
                 if (!existing_desc.option) {
+                    // Add sub-options (if any).
+                    appendSubOptions(option_space, desc.option);
+
                     subnet_->addOption(desc.option, false, option_space);
                 }
             }
