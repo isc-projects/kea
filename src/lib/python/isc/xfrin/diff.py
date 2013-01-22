@@ -584,3 +584,16 @@ class Diff:
             if rr.get_name() == name:
                 new_rrsets.append(rr)
         return result, new_rrsets, flags
+
+    def get_rrset_collection(self):
+        '''
+        This first applies all changes to the data source. Then it creates
+        and returns an RRsetCollection on top of the corresponding zone
+        updater and returns it. Notice it might be impossible to apply more
+        changes after that.
+
+        This must not be called after a commit, or it'd throw ValueError.
+        '''
+        # Apply itself will check it is not yet commited.
+        self.apply()
+        return self.__updater.get_rrset_collection()
