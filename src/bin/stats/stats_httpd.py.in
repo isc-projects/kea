@@ -201,6 +201,14 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return body
 
+    def log_message(self, format, *args):
+        """overrides the parent method log_message()
+        to use the bind10 logging framework.
+        """
+        logger.debug(DBG_STATHTTPD_MESSAGING, STATHTTPD_HTTPLOG,
+                     self.address_string(),
+                     format%args)
+
 class HttpServerError(Exception):
     """Exception class for HttpServer class. It is intended to be
     passed from the HttpServer object to the StatsHttpd object."""
