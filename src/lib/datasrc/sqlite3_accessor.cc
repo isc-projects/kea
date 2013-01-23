@@ -44,7 +44,7 @@ namespace {
 // program may not be taking advantage of features (possibly performance
 // improvements) added to the database.
 const int SQLITE_SCHEMA_MAJOR_VERSION = 2;
-const int SQLITE_SCHEMA_MINOR_VERSION = 1;
+const int SQLITE_SCHEMA_MINOR_VERSION = 2;
 }
 
 namespace isc {
@@ -338,7 +338,7 @@ public:
 const char* const SCHEMA_LIST[] = {
     "CREATE TABLE schema_version (version INTEGER NOT NULL, "
         "minor INTEGER NOT NULL DEFAULT 0)",
-    "INSERT INTO schema_version VALUES (2, 1)",
+    "INSERT INTO schema_version VALUES (2, 2)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
     "name TEXT NOT NULL COLLATE NOCASE, "
     "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
