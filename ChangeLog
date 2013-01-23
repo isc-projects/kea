@@ -1,3 +1,7 @@
+557.	[func]		stephen
+	Update DHCP sections of the BIND 10 guide.
+	(Trac #2642, git e5faeb5fa84b7218fde486347359504cf692510e)
+
 556.	[bug]		marcin
 	Fixed DHCP servers configuration whereby the servers did not
 	receive a configuration stored in the database on their startup.
