@@ -1,3 +1,11 @@
+558.	[func]		marcin
+	b10-dhcp4: server now adds configured options to its
+	responses to a client when client requests them.
+	A few basic options: Routers, Domain Name, Domain
+	Name Servers and Subnet Mask are added regardless
+	if client requested them or not.
+	(Trac #2591, git aeec2dc1b9c511d17971ac63138576c37e7c5164)
+
 557.	[func]		stephen
 	Update DHCP sections of the BIND 10 guide.
 	(Trac #2642, git e5faeb5fa84b7218fde486347359504cf692510e)
