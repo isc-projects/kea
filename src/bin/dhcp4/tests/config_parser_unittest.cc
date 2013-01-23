@@ -347,7 +347,6 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -381,7 +380,6 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
         "    \"valid-lifetime\": 4,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -410,7 +408,6 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
         "    \"pool\": [ \"192.0.4.0/28\" ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -435,7 +432,6 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
         "    \"pool\": [ \"192.0.2.128/28\" ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 

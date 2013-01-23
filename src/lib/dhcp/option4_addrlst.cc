@@ -64,7 +64,7 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const IOAddress& addr)
 }
 
 void
-Option4AddrLst::pack4(isc::util::OutputBuffer& buf) {
+Option4AddrLst::pack(isc::util::OutputBuffer& buf) {
 
     if (addrs_.size() * V4ADDRESS_LEN > 255) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_ << " is too big."

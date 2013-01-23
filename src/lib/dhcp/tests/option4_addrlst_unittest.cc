@@ -155,7 +155,7 @@ TEST_F(Option4AddrLstTest, assembly1) {
 
     OutputBuffer buf(100);
     EXPECT_NO_THROW(
-        opt->pack4(buf);
+        opt->pack(buf);
     );
 
     ASSERT_EQ(6, opt->len());
@@ -198,7 +198,7 @@ TEST_F(Option4AddrLstTest, assembly4) {
 
     OutputBuffer buf(100);
     EXPECT_NO_THROW(
-        opt->pack4(buf);
+        opt->pack(buf);
     );
 
     ASSERT_EQ(18, opt->len()); // 2(header) + 4xsizeof(IPv4addr)

@@ -214,8 +214,8 @@ protected:
     /// @param clientid client identifier
     /// @param hwaddr client's hardware address
     /// @param lease lease to be renewed
-    /// @param renewed lease (typically the same passed as lease parameter)
-    ///        or NULL if the lease cannot be renewed
+    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    ///        an address for DISCOVER that is not really allocated (true)
     Lease4Ptr
     renewLease4(const SubnetPtr& subnet,
                 const ClientIdPtr& clientid,
