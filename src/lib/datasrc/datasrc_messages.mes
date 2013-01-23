@@ -197,6 +197,16 @@ modify the database). This is what the client would do when such RRs
 were given in a DNS response according to RFC2181. The data in
 database should be checked and fixed.
 
+% DATASRC_DATABASE_JOURNALREADER_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
+
 % DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
 This is a debug message indicating that the program (successfully)
 reaches the end of sequences of a zone's differences.  The zone's name
@@ -214,16 +224,6 @@ This is a debug message indicating that the program starts reading
 a zone's difference sequences from a database-based data source.  The
 zone's name and class, database name, and the start and end serials
 are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
-This is an error message indicating that a zone's diff is broken and
-the data source library failed to convert it to a valid RRset.  The
-most likely cause of this is that someone has manually modified the
-zone's diff in the database and inserted invalid data as a result.
-The zone's name and class, database name, and the start and end
-serials, and an additional detail of the error are shown in the
-message.  The administrator should examine the diff in the database
-to find any invalid data and fix it.
 
 % DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
 No match (not even a wildcard) was found in the named data source for the given
@@ -442,6 +442,10 @@ shown name, the search tries the superdomain name that share the shown
 www.example.com. with shown label count of 3, example.com. is being
 tried).
 
+% DATASRC_MEM_FIND_TYPE_AT_ORIGIN origin query for type %1 in in-memory zone %2/%3 successful
+Debug information.  A specific type RRset is requested at a zone origin
+of an in-memory zone and it is found.
+
 % DATASRC_MEM_FIND_ZONE looking for zone '%1'
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
@@ -485,10 +489,6 @@ Some resource types are singletons -- only one is allowed in a domain
 
 % DATASRC_MEM_SUCCESS query for '%1/%2' successful
 Debug information. The requested record was found.
-
-% DATASRC_MEM_FIND_TYPE_AT_ORIGIN origin query for type %1 in in-memory zone %2/%3 successful
-Debug information.  A specific type RRset is requested at a zone origin
-of an in-memory zone and it is found.
 
 % DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty
 Debug information. The search stopped because the requested domain was
