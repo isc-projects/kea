@@ -115,6 +115,38 @@ This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The cause is most likely
 to be a programming error: please raise a bug report.
 
+% DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
+On receipt of message containing details to a change of the IPv4 DHCP
+server configuration, a set of parsers were successfully created, but one
+of them failed to commit its changes due to a low-level system exception
+being raised.  Additional messages may be output indicating the reason.
+
+% DHCP4_PARSER_COMMIT_FAIL parser failed to commit changes: %1
+On receipt of message containing details to a change of the IPv4 DHCP
+server configuration, a set of parsers were successfully created, but
+one of them failed to commit its changes.  The reason for the failure
+is given in the message.
+
+% DHCP4_PARSER_CREATED created parser for configuration element %1
+A debug message output during a configuration update of the IPv4 DHCP
+server, notifying that the parser for the specified configuration element
+has been successfully created.
+
+% DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
+% DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents of
+the named configuration element, or the creation succeeded but the parsing
+actions and committal of changes failed.  The message has been output in
+response to a non-BIND 10 exception being raised.  Additional messages
+may give further information.
+
 % DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
 
@@ -161,6 +193,26 @@ A debug message listing the data returned to the client.
 % DHCP4_SERVER_FAILED server failed: %1
 The IPv4 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
+
+% DHCP4_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
+This informational messages indicates that the server was not able to
+read its server identifier and has generated a new one. This server-id
+will be stored in a file and will be read (and used) whenever the server
+is restarted. This is normal behavior when the server is started for the
+first time. If this message is printed every time the server is started,
+please check that the server has sufficient permission to write its
+server-id file and that the file is not corrupt.
+
+% DHCP4_SERVERID_LOADED server-id %1 has been loaded from file %2
+This debug message indicates that the server loaded its server identifier.
+That value is sent in all server responses and clients use it to
+discriminate between servers. This is a part of normal startup or
+reconfiguration procedure.
+
+% DHCP4_SERVERID_WRITE_FAIL server was not able to write its ID to file %1
+This warning message indicates that server was not able to write its
+server identifier to a file. The most likely cause is is that the server
+does not have permissions to write the server id file.
 
 % DHCP4_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND

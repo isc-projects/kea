@@ -49,8 +49,14 @@ public:
     using Dhcpv4Srv::processDecline;
     using Dhcpv4Srv::processInform;
     using Dhcpv4Srv::getServerID;
+    using Dhcpv4Srv::loadServerID;
+    using Dhcpv4Srv::generateServerID;
+    using Dhcpv4Srv::writeServerID;
     using Dhcpv4Srv::sanityCheck;
+    using Dhcpv4Srv::srvidToString;
 };
+
+static const char* SRVID_FILE = "server-id-test.txt";
 
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
@@ -67,6 +73,9 @@ public:
 
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().addSubnet4(subnet_);
+
+        // it's ok if that fails. There should not be such a file anyway
+        unlink(SRVID_FILE);
     }
 
     /// @brief checks that the response matches request
@@ -245,6 +254,9 @@ public:
 
     ~Dhcpv4SrvTest() {
         CfgMgr::instance().deleteSubnets4();
+
+        // Let's clean up if there is such a file.
+        unlink(SRVID_FILE);
     };
 
     /// @brief A subnet used in most tests
@@ -691,7 +703,7 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     checkAddressParams(offer2, subnet_);
     checkAddressParams(offer3, subnet_);
 
-    // Check DUIDs
+    // Check server-ids
     checkServerId(offer1, srv->getServerID());
     checkServerId(offer2, srv->getServerID());
     checkServerId(offer3, srv->getServerID());
@@ -878,7 +890,6 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,
@@ -1124,6 +1135,36 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // Check that the lease is not there
     l = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_FALSE(l);
+}
+
+// This test verifies if the server-id disk operations (read, write) are
+// working properly.
+TEST_F(Dhcpv4SrvTest, ServerID) {
+    NakedDhcpv4Srv srv(0);
+
+    string srvid_text = "192.0.2.100";
+    IOAddress srvid(srvid_text);
+
+    fstream file1(SRVID_FILE, ios::out | ios::trunc);
+    file1 << srvid_text;
+    file1.close();
+
+    // Test reading from a file
+    EXPECT_TRUE(srv.loadServerID(SRVID_FILE));
+    ASSERT_TRUE(srv.getServerID());
+    EXPECT_EQ(srvid_text, srv.srvidToString(srv.getServerID()));
+
+    // Now test writing to a file
+    EXPECT_EQ(0, unlink(SRVID_FILE));
+    EXPECT_NO_THROW(srv.writeServerID(SRVID_FILE));
+
+    fstream file2(SRVID_FILE, ios::in);
+    ASSERT_TRUE(file2.good());
+    string text;
+    file2 >> text;
+    file2.close();
+
+    EXPECT_EQ(srvid_text, text);
 }
 
 } // end of anonymous namespace

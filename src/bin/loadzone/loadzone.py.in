@@ -25,6 +25,7 @@ from isc.datasrc import *
 import isc.util.process
 import isc.log
 from isc.log_messages.loadzone_messages import *
+from datetime import timedelta
 
 isc.util.process.rename()
 
@@ -87,7 +88,6 @@ class LoadZoneRunner:
     '''
     def __init__(self, command_args):
         self.__command_args = command_args
-        self.__loaded_rrs = 0
         self.__interrupted = False # will be set to True on receiving signal
 
         # system-wide log configuration.  We need to configure logging this
@@ -103,8 +103,9 @@ class LoadZoneRunner:
                                           [{"output": "stderr",
                                             "destination": "console"}]}]}
 
-        # These are essentially private, and defined as "protected" for the
+        # These are essentially private, but defined as "protected" for the
         # convenience of tests inspecting them
+        self._loaded_rrs = 0
         self._zone_class = None
         self._zone_name = None
         self._zone_file = None
@@ -113,6 +114,10 @@ class LoadZoneRunner:
         self._log_severity = 'INFO'
         self._log_debuglevel = 0
         self._report_interval = LOAD_INTERVAL_DEFAULT
+        self._start_time = None
+        # This one will be used in (rare) cases where we want to allow tests to
+        # fake time.time()
+        self._get_time = time.time
 
         self._config_log()
 
@@ -200,16 +205,37 @@ class LoadZoneRunner:
         logger.info(LOADZONE_SQLITE3_USING_DEFAULT_CONFIG, default_db_file)
         return '{"database_file": "' + default_db_file + '"}'
 
-    def _report_progress(self, loaded_rrs):
+    def _report_progress(self, loaded_rrs, progress, dump=True):
         '''Dump the current progress report to stdout.
 
         This is essentially private, but defined as "protected" for tests.
+        Normally dump is True, but tests will set it False to get the
+        text to be reported.  Tests may also fake self._get_time (which
+        is set to time.time() by default) and self._start_time for control
+        time related conditions.
 
         '''
-        elapsed = time.time() - self.__start_time
-        sys.stdout.write("\r" + (80 * " "))
-        sys.stdout.write("\r%d RRs loaded in %.2f seconds" %
-                         (loaded_rrs, elapsed))
+        elapsed = self._get_time() - self._start_time
+        speed = int(loaded_rrs / elapsed) if elapsed > 0 else 0
+        etc = None            # calculate estimated time of completion
+        if progress != ZoneLoader.PROGRESS_UNKNOWN:
+            etc = (1 - progress) * (elapsed / progress)
+
+        # Build report text
+        report_txt = '\r%d RRs' % loaded_rrs
+        if progress != ZoneLoader.PROGRESS_UNKNOWN:
+            report_txt += ' (%.1f%%)' % (progress * 100)
+        report_txt += ' in %s, %d RRs/sec' % \
+            (str(timedelta(seconds=int(elapsed))), speed)
+        if etc is not None:
+            report_txt += ', %s ETC' % str(timedelta(seconds=int(etc)))
+
+        # Dump or return the report text.
+        if dump:
+            sys.stdout.write("\r" + (80 * " "))
+            sys.stdout.write(report_txt)
+        else:
+            return report_txt
 
     def _do_load(self):
         '''Main part of the load logic.
@@ -230,7 +256,7 @@ class LoadZoneRunner:
                             self._zone_class)
             loader = ZoneLoader(datasrc_client, self._zone_name,
                                 self._zone_file)
-            self.__start_time = time.time()
+            self._start_time = time.time()
             if self._report_interval > 0:
                 limit = self._report_interval
             else:
@@ -239,17 +265,20 @@ class LoadZoneRunner:
                 limit = LOAD_INTERVAL_DEFAULT
             while (not self.__interrupted and
                    not loader.load_incremental(limit)):
-                self.__loaded_rrs += self._report_interval
+                self._loaded_rrs += self._report_interval
                 if self._report_interval > 0:
-                    self._report_progress(self.__loaded_rrs)
+                    self._report_progress(self._loaded_rrs,
+                                          loader.get_progress())
             if self.__interrupted:
                 raise LoadFailure('loading interrupted by signal')
 
             # On successful completion, add final '\n' to the progress
             # report output (on failure don't bother to make it prettier).
             if (self._report_interval > 0 and
-                self.__loaded_rrs >= self._report_interval):
+                self._loaded_rrs >= self._report_interval):
                 sys.stdout.write('\n')
+            # record the final count of the loaded RRs for logging
+            self._loaded_rrs = loader.get_rr_count()
         except Exception as ex:
             # release any remaining lock held in the loader
             loader = None
@@ -273,8 +302,8 @@ class LoadZoneRunner:
             self._set_signal_handlers()
             self._parse_args()
             self._do_load()
-            total_elapsed_txt = "%.2f" % (time.time() - self.__start_time)
-            logger.info(LOADZONE_DONE, self.__loaded_rrs, self._zone_name,
+            total_elapsed_txt = "%.2f" % (time.time() - self._start_time)
+            logger.info(LOADZONE_DONE, self._loaded_rrs, self._zone_name,
                         self._zone_class, total_elapsed_txt)
             return 0
         except BadArgument as ex:

@@ -134,7 +134,7 @@ CommandOptions::parse(int argc, char** const argv) {
 
 bool
 CommandOptions::initialize(int argc, char** argv) {
-    char opt = 0;               // Subsequent options returned by getopt()
+    int opt = 0;                // Subsequent options returned by getopt()
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
     double drop_percent = 0;    // % value (1..100) in -D<value%>
