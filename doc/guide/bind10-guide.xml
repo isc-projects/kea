@@ -3617,7 +3617,7 @@ Dhcp4/subnet4	[]	list	(default)
         One of the major features of DHCPv4 server is to provide configuration
         options to clients. Although there are several options that require
         special behavior, most options are sent by the server only if the client
-        explicitely requested them.  The following example shows how to
+        explicitly requested them.  The following example shows how to
         configure DNS servers, which is one of the most frequently used
         options. Numbers in the first column are added for easier reference and
         will not appear on screen. Options specified in this way are considered
@@ -3638,16 +3638,16 @@ Dhcp4/subnet4	[]	list	(default)
       contains information on all global options that the server is
       supposed to configure in all subnets. The second line specifies
       option name. For a complete list of currently supported names,
-      see the list <xref linkend="dhcp4-std-options-list"/> below.
-      The third line specified option code. It must match values from
-      the list. Fourth line specifies option space, which must always
+      see <xref linkend="dhcp4-std-options-list"/> below.
+      The third line specifies option code, which must match one of the
+      values from that list. Line 4 specifies option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
       other option spaces, including custom option spaces, see <xref
-      linkend="dhcp4-option-spaces"/>. Fifth line specifies format in
-      which data will be specified. It is recommended to use CSV (coma
-      separated values). The sixth list specifies the actual value to
-      be sent to clients. Data is specified as a normal text with
-      values separated with comas, if more than one value is
+      linkend="dhcp4-option-spaces"/>. The fifth line specfies the format in
+      which the data will be entered: use of CSV (comma
+      separated values) is recommended. The sixth line gives the actual value to
+      be sent to clients. Data is specified as a normal text, with
+      values separated by commas if more than one value is
       allowed.
     </para>
 
@@ -3668,22 +3668,24 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config commit</userinput>
         </screen>
        (The value for the setting of the "data" element is split across two
-        lines in this document for clarity: when entering the command, all the
+        lines in this document for clarity: when entering the command, the
         string should be entered on the same line.)
       </para>
 
       <para>
-        As with global settings, it is also possible to override options
-        on a per-subnet basis. The following commands override the
-        global DNS servers option for a particular subnet, setting a
-        single DNS server with address 192.0.2.3. It is convenient
-        to use global options when clients connected to most of your
-        subnets are expected to get the same values of a given
-        option. You can then override specific values for small number
-        of subnets. If you use different values in each subnet, it does
-        not make sense to specify global option values
-        (Dhcp4/option-data), but rather use only subnet-specific values
+        It is possible to override options on a per-subnet basis.  If
+        clients connected to most of your subnets are expected to get the
+        same values of a given option, you should use global options: you
+        can then override specific values for a small number of subnets.
+        On the other hand, if you use different values in each subnet,
+        it does not make sense to specify global option values
+        (Dhcp4/option-data), rather you should set only subnet-specific values
         (Dhcp4/subnet[X]/option-data[Y]).
+      </para>
+      <para>
+        The following commands override the global
+        DNS servers option for a particular subnet, setting a single DNS
+        server with address 2001:db8:1::3.
         <screen>
 &gt; <userinput>config add Dhcp4/subnet4[0]/option-data</userinput>
 &gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/name "domain-name-servers"</userinput>
@@ -3701,106 +3703,114 @@ Dhcp4/subnet4	[]	list	(default)
       </note>
 
       <para>
-        This is the list of currently supported standard DHCPv4 options. Name and code
+        Below is a list of currently supported standard DHCPv4 options. The name and code
         specify name and code that should be used as a name in option-data
-        structures. Type designates the actual format of the data. Uint8 means 8 bit
-        unsigned integer with allowed values 0 to 255. Uint16 means 16 bit unsinged
-        integer with allowed values 0 to 65535. Uint32 means 32 bit unsigned integer with
-        allowed values 0 to 4294967295. ipv4-address means a normal IPv4 address. Fqdn means
-        fully qualified domain name. String means any text. Some options are designated
-        as arrays. This means that more than one value is allowed in such an option. For example
-        the option domain-name-servers allows conveying more than one IPv4 addresses,
-        so clients will get multiple DNS servers if needed.
+        structures. Type designates the actual format of the data:
       </para>
 
       <!-- @todo: describe record types -->
 
 <para>
-        <itemizedlist id="dhcp4-std-options-list">
-          <title>List of standard DHCPv4 options</title>
-<listitem><para>name: subnet-mask, code: 1, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: time-offset, code: 2, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: routers, code: 3, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: time-servers, code: 4, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: name-servers, code: 5, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: domain-name-servers, code: 6, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: log-servers, code: 7, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: cookie-servers, code: 8, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: lpr-servers, code: 9, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: impress-servers, code: 10, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: resource-location-servers, code: 11, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: host-name, code: 12, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: boot-size, code: 13, csv-format: true, type: uint16, array: false</para></listitem>
-<listitem><para>name: merit-dump, code: 14, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: domain-name, code: 15, csv-format: true, type: fqdn, array: false</para></listitem>
-<listitem><para>name: swap-server, code: 16, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: root-path, code: 17, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: extensions-path, code: 18, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: ip-forwarding, code: 19, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: non-local-source-routing, code: 20, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: policy-filter, code: 21, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: max-dgram-reassembly, code: 22, csv-format: true, type: uint16, array: false</para></listitem>
-<listitem><para>name: default-ip-ttl, code: 23, csv-format: true, type: uint8, array: false</para></listitem>
-<listitem><para>name: path-mtu-aging-timeout, code: 24, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: path-mtu-plateau-table, code: 25, csv-format: true, type: uint16, array true</para></listitem>
-<listitem><para>name: interface-mtu, code: 26, csv-format: true, type: uint16, array: false</para></listitem>
-<listitem><para>name: all-subnets-local, code: 27, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: broadcast-address, code: 28, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: perform-mask-discovery, code: 29, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: mask-supplier, code: 30, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: router-discovery, code: 31, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: router-solicitation-address, code: 32, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: static-routes, code: 33, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: trailer-encapsulation, code: 34, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: arp-cache-timeout, code: 35, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: ieee802-3-encapsulation, code: 36, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: default-tcp-ttl, code: 37, csv-format: true, type: uint8, array: false</para></listitem>
-<listitem><para>name: tcp-keepalive-internal, code: 38, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: tcp-keepalive-garbage, code: 39, csv-format: true, type: boolean, array: false</para></listitem>
-<listitem><para>name: nis-domain, code: 40, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: nis-servers, code: 41, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: ntp-servers, code: 42, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: vendor-encapsulated-options, code: 43, csv-format: true, type: empty, array: false</para></listitem>
-<listitem><para>name: netbios-name-servers, code: 44, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: netbios-dd-server, code: 45, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: netbios-node-type, code: 46, csv-format: true, type: uint8, array: false</para></listitem>
-<listitem><para>name: netbios-scope, code: 47, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: font-servers, code: 48, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: x-display-manager, code: 49, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: dhcp-requested-address, code: 50, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: dhcp-lease-time, code: 51, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: dhcp-option-overload, code: 52, csv-format: true, type: uint8, array: false</para></listitem>
-<listitem><para>name: dhcp-message-type, code: 53, csv-format: true, type: uint8, array: false</para></listitem>
-<listitem><para>name: dhcp-server-identifier, code: 54, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: dhcp-parameter-request-list, code: 55, csv-format: true, type: uint8, array true</para></listitem>
-<listitem><para>name: dhcp-message, code: 56, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: dhcp-max-message-size, code: 57, csv-format: true, type: uint16, array: false</para></listitem>
-<listitem><para>name: dhcp-renewal-time, code: 58, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: dhcp-rebinding-time, code: 59, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: vendor-class-identifier, code: 60, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: dhcp-client-identifier, code: 61, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: nwip-domain-name, code: 62, csv-format: true, type: string, array: false</para></listitem>
-<listitem><para>name: nwip-suboptions, code: 63, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: user-class, code: 77, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: fqdn, code: 81, csv-format: true, type: record, array: false</para></listitem>
-<listitem><para>name: dhcp-agent-options, code: 82, csv-format: true, type: empty, array: false</para></listitem>
-<listitem><para>name: authenticate, code: 90, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: client-last-transaction-time, code: 91, csv-format: true, type: uint32, array: false</para></listitem>
-<listitem><para>name: associated-ip, code: 92, csv-format: true, type: ipv4-address, array true</para></listitem>
-<listitem><para>name: subnet-selection, code: 118, csv-format: true, type: ipv4-address, array: false</para></listitem>
-<listitem><para>name: domain-search, code: 119, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: vivco-suboptions, code: 124, csv-format: true, type: binary, array: false</para></listitem>
-<listitem><para>name: vivso-suboptions, code: 125, csv-format: true, type: binary, array: false</para></listitem>
-</itemizedlist></para>
-</section>
+<table border="1" cellpadding="5%" id="dhcp4-std-options-list">
+          <caption>List of standard DHCPv4 options</caption>
+          <thead>
+          <tr><td>Name</td><td>Code</td><td>Type</td><td>Array?</td></tr>
+          <tr></tr>
+          </thead>
+          <tbody>
+<tr><td>subnet-mask</td><td>1</td><td>true</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>time-offset</td><td>2</td><td>true</td><td>uint32</td><td>false</td></tr>
+<tr><td>routers</td><td>3</td><td>true</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>time-servers</td><td>4</td><td>true</td><td>ipv4-address</td><td>array true</td></tr>
+<tr><td>name-servers</td><td>5</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>domain-name-servers</td><td>6</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>log-servers</td><td>7</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>cookie-servers</td><td>8</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>lpr-servers</td><td>9</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>impress-servers</td><td>10</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>resource-location-servers</td><td>11</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>host-name</td><td>12</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>boot-size</td><td>13</td><td>true</td><td>type: uint16</td><td>false</td></tr>
+<tr><td>merit-dump</td><td>14</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>domain-name</td><td>15</td><td>true</td><td>type: fqdn</td><td>false</td></tr>
+<tr><td>swap-server</td><td>16</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>root-path</td><td>17</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>extensions-path</td><td>18</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>ip-forwarding</td><td>19</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>non-local-source-routing</td><td>20</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>policy-filter</td><td>21</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>max-dgram-reassembly</td><td>22</td><td>true</td><td>type: uint16</td><td>false</td></tr>
+<tr><td>default-ip-ttl</td><td>23</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<tr><td>path-mtu-aging-timeout</td><td>24</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>path-mtu-plateau-table</td><td>25</td><td>true</td><td>type: uint16</td><td>array true</td></tr>
+<tr><td>interface-mtu</td><td>26</td><td>true</td><td>type: uint16</td><td>false</td></tr>
+<tr><td>all-subnets-local</td><td>27</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>broadcast-address</td><td>28</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>perform-mask-discovery</td><td>29</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>mask-supplier</td><td>30</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>router-discovery</td><td>31</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>router-solicitation-address</td><td>32</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>static-routes</td><td>33</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>trailer-encapsulation</td><td>34</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>arp-cache-timeout</td><td>35</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>ieee802-3-encapsulation</td><td>36</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>default-tcp-ttl</td><td>37</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<tr><td>tcp-keepalive-internal</td><td>38</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>tcp-keepalive-garbage</td><td>39</td><td>true</td><td>type: boolean</td><td>false</td></tr>
+<tr><td>nis-domain</td><td>40</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>nis-servers</td><td>41</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>ntp-servers</td><td>42</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>vendor-encapsulated-options</td><td>43</td><td>true</td><td>type: empty</td><td>false</td></tr>
+<tr><td>netbios-name-servers</td><td>44</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>netbios-dd-server</td><td>45</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>netbios-node-type</td><td>46</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<tr><td>netbios-scope</td><td>47</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>font-servers</td><td>48</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>x-display-manager</td><td>49</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>dhcp-requested-address</td><td>50</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<!-- Lease time should not be configured by a user.
+<tr><td>dhcp-lease-time</td><td>51</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+-->
+<tr><td>dhcp-option-overload</td><td>52</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
+<tr><td>dhcp-message-type</td><td>53</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<tr><td>dhcp-server-identifier</td><td>54</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>dhcp-parameter-request-list</td><td>55</td><td>true</td><td>type: uint8</td><td>array true</td></tr>
+-->
+<tr><td>dhcp-message</td><td>56</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>dhcp-max-message-size</td><td>57</td><td>true</td><td>type: uint16</td><td>false</td></tr>
+<!-- Renewal and rebinding time should not be configured by a user.
+<tr><td>dhcp-renewal-time</td><td>58</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>dhcp-rebinding-time</td><td>59</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+-->
+<tr><td>vendor-class-identifier</td><td>60</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<!-- Client identifier should not be configured by a user.
+<tr><td>dhcp-client-identifier</td><td>61</td><td>true</td><td>type: binary</td><td>false</td></tr>
+-->
+<tr><td>nwip-domain-name</td><td>62</td><td>true</td><td>type: string</td><td>false</td></tr>
+<tr><td>nwip-suboptions</td><td>63</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>user-class</td><td>77</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>fqdn</td><td>81</td><td>true</td><td>type: record</td><td>false</td></tr>
+<tr><td>dhcp-agent-options</td><td>82</td><td>true</td><td>type: empty</td><td>false</td></tr>
+<tr><td>authenticate</td><td>90</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>client-last-transaction-time</td><td>91</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>associated-ip</td><td>92</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
+<tr><td>subnet-selection</td><td>118</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>domain-search</td><td>119</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>vivco-suboptions</td><td>124</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>vivso-suboptions</td><td>125</td><td>true</td><td>type: binary</td><td>false</td></tr>
+</tbody>
+</table>
+</para>
+    </section>
 
     <section id="dhcp4-custom-options">
       <title>Custom DHCPv4 options</title>
       <para>It is also possible to define new options that are
       currently not supported out of the box. Let's assume that we
-      want to define a new DHCPv4 option called foo. It will have code 222
+      want to define a new DHCPv4 option called "foo". It will have code 222
       and will convey a single unsigned 32 bit integer value. We can define
-      such option format by using the following commands:
+      such an option by using the following commands:
       <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
@@ -3814,22 +3824,24 @@ Dhcp4/subnet4	[]	list	(default)
       Note that this specifies new option format, not the values conveyed in
       that option.
       </para>
-      <para>Once the new option format is specified, concrete values can then
+      <para>Once the new option format is defined, concrete values can then
       be specified in the same way as standard options. For example the following
       commands may be used to define global values that apply to all subnets.
         <screen>
-1. &gt; <userinput>config add Dhcp4/option-data</userinput>
-2. &gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
-3. &gt; <userinput>config set Dhcp4/option-data[0]/code 222</userinput>
-4. &gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-5. &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-6. &gt; <userinput>config set Dhcp4/option-data[0]/data "12345"</userinput>
-7. &gt; <userinput>config commit</userinput></screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
       </para>
 
       <para>New options can take more complex forms than simple use of
       primitives (uint8, string, ipv4-address etc).  It is possible to
-      define composition of existing primitives. Let's assume that we
+      define an option comprising a number of existing primitives.
+      </para>
+      <para>Assume we
       want to define a new option that will consist of an IPv4
       address, followed by unsigned 16 bit integer, followed by a text
       string. Such an option could be defined in the following way:
@@ -3851,19 +3863,19 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/code 223</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, Hello World"</userinput>
-7. &gt; <userinput>config commit</userinput></screen>
+&gt; <userinput>config commit</userinput></screen>
       </para>
 
     </section>
 
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 vendor specific options</title>
-      <para>Currently there are two option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon) and dhcp4. There is also vendor-opts-space,
+      <para>Currently there are three option spaces defined: dhcp4 (to
+      be used in DHCPv4 daemon) and dhcp4; there is also vendor-opts-space,
       which is empty by default, but options can be defined in it. Those options
       are called vendor-specific information options. The following examples
-      show how to define an option foo with code 1 that consists of IPv4 address,
-      unsigned 16 bit integer and a string. The foo option is conveyed in
+      show how to define an option "foo" with code 1 that consists of IPv4 address,
+      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
       vendor specific information option.
       <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
@@ -3909,63 +3921,66 @@ Dhcp4/subnet4	[]	list	(default)
       codes 1 and 2. This could be achieved with the following examples.
       First we need to define those new sub-options:
 <screen>
-config add Dhcp4/option-def
-config set Dhcp4/option-def[0]/name "subopt1"
-config set Dhcp4/option-def[0]/code 1
-config set Dhcp4/option-def[0]/space "isc"
-config set Dhcp4/option-def[0]/type "ipv4-address"
-config set Dhcp4/option-def[0]/record-types ""
-config set Dhcp4/option-def[0]/array false
-config set Dhcp4/option-def[0]/encapsulate ""
-config commit
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "ipv4-address"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
 
-config add Dhcp4/option-def
-config set Dhcp4/option-def[1]/name "subopt2"
-config set Dhcp4/option-def[1]/code 2
-config set Dhcp4/option-def[1]/space "isc"
-config set Dhcp4/option-def[1]/type "string"
-config set Dhcp4/option-def[1]/record-types ""
-config set Dhcp4/option-def[1]/array false
-config set Dhcp4/option-def[1]/encapsulate ""
-config commit</screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/type "string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
 The next step is to define a regular DHCPv6 option and specify that it
 should include options from isc option space:
 <screen>
-config add Dhcp4/option-def
-config set Dhcp4/option-def[2]/name "container"
-config set Dhcp4/option-def[2]/code 222
-config set Dhcp4/option-def[2]/space "dhcp4"
-config set Dhcp4/option-def[2]/type "uint16"
-config set Dhcp4/option-def[2]/array false
-config set Dhcp4/option-def[2]/record-types ""
-config set Dhcp4/option-def[2]/encapsulate "isc"
-config commit</screen>
+&gt; <userinput>add Dhcp4/option-def</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/code 222</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/space "dhcp4"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/type "uint16"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/array false</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/record-types ""</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
+&gt; <userinput>commit</userinput>
+</screen>
 
 Finally, we should specify values for those new options:
 <screen>
-config add Dhcp4/option-data
-config set Dhcp4/option-data[0]/name "subopt1"
-config set Dhcp4/option-data[0]/space "isc"
-config set Dhcp4/option-data[0]/code 1
-config set Dhcp4/option-data[0]/csv-format true
-config set Dhcp4/option-data[0]/data "192.0.2.3"
-config commit
-
-config add Dhcp4/option-data
-config set Dhcp4/option-data[1]/name "subopt2"
-config set Dhcp4/option-data[1]/space "isc"
-config set Dhcp4/option-data[1]/code 2
-config set Dhcp4/option-data[1]/csv-format true
-config set Dhcp4/option-data[1]/data "Hello world"
-config commit
-
-config add Dhcp4/option-data
-config set Dhcp4/option-data[2]/name "container"
-config set Dhcp4/option-data[2]/space "dhcp4"
-config set Dhcp4/option-data[2]/code 222
-config set Dhcp4/option-data[2]/csv-format true
-config set Dhcp4/option-data[2]/data "123"
-config commit</screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data "Hello world"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/data "123"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
       </para>
     </section>
 
@@ -4347,7 +4362,7 @@ Dhcp6/subnet6/	list
     <para>
       It is possible to override options on a per-subnet basis.  If
       clients connected to most of your subnets are expected to get the
-      same values of a given option, youu should use global options: you
+      same values of a given option, you should use global options: you
       can then override specific values for a small number of subnets.
       On the other hand, if you use different values in each subnet,
       it does not make sense to specify global option values
@@ -4493,7 +4508,7 @@ Dhcp6/subnet6/	list
 
       <para>New options can take more complex forms than simple use of
       primitives (uint8, string, ipv6-address etc).  It is possible to
-      define an option comprising a a number of existing primitives.
+      define an option comprising a number of existing primitives.
       </para>
       <para>
       Assume we
