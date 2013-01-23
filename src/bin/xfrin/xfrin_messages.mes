@@ -175,6 +175,10 @@ exception message is printed in the log message.
 The XFR transfer for the given zone has failed due to a problem outside
 of the xfrin module.  Possible reasons are a broken DNS message or failure
 in database connection.  The error is shown in the log message.
+One common cause of this error could be a locked database; especially when
+using sqlite3 where a single transaction involving write operations blocks
+any other read or write transactions. This is not a critical error, and
+the transfer will be attempted again at the next retry time.
 
 % XFRIN_XFR_PROCESS_FAILURE %1 transfer of zone %2/%3 failed: %4
 An XFR session failed outside the main protocol handling.  This
