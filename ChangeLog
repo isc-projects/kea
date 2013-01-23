@@ -1,4 +1,61 @@
-248.	[func]		vorner
+556.	[bug]		marcin
+	Fixed DHCP servers configuration whereby the servers did not
+	receive a configuration stored in the database on their startup.
+	Also, the configuration handler function now uses full configuration
+	instead of partial to configure the server. This guarantees that
+	dependencies between various configuration parameters are
+	fulfilled.
+	(Trac #2637, git 91aa998226f1f91a232f2be59a53c9568c4ece77)
+
+555.	[func]		marcin
+	The encapsulated option space name can be specified for
+	a DHCP option. It comprises sub-options being sent within
+	an option that encapsulates this option space.
+	(Trac #2314, git 27e6119093723a1e46a239ec245a8b4b10677635)
+
+554.	[func]		jinmei
+	b10-loadzone: improved completion log message and intermediate
+	reports: It now logs the precise number of loaded RRs on
+	completion, and intermediate reports show additional information
+	such as the estimated progress in percentage and estimated time
+	to complete.
+	(Trac #2574, git 5b8a824054313bdecb8988b46e55cb2e94cb2d6c)
+
+553.    [func]      stephen
+	Values of the parameters to access the DHCP server lease database
+	can now be set through the BIND 10 configuration mechanism.
+	(Trac #2559, git 6c6f405188cc02d2358e114c33daff58edabd52a)
+
+552.    [bug]       shane
+    Build on Raspberry PI.
+	The main issue was use of char for reading from input streams,
+	which is incorrect, as EOF is returned as an int -1, which would
+	then get cast into a char -1.
+	A number of other minor issues were also fixed.
+	(Trac #2571, git 525333e187cc4bbbbde288105c9582c1024caa4a)
+
+551.    [bug]       shane
+	Kill msgq if we cannot connect to it on startup.
+	When the boss process was unable to connect to the msgq, it would
+	exit. However, it would leave the msgq process running. This has
+	been fixed, and the msgq is now stopped in this case.
+	(Trac #2608, git 016925ef2437e0396127e135c937d3a55539d224)
+
+550.	[func]		tomek
+	b10-dhcp4: The DHCPv4 server now generates a server identifier
+	the first time it is run. The identifier is preserved in a file
+	across server restarts.
+	b10-dhcp6: The server identifier is now preserved in a file across
+	server restarts.
+	(Trac #2597, git fa342a994de5dbefe32996be7eebe58f6304cff7)
+
+549.	[func]		tomek
+	b10-dhcp6: It is now possible to specify that a configured subnet
+	is reachable locally over specified interface (see "interface"
+	parameter in Subnet6 configuration).
+	(Trac #2596, git a70f6172194a976b514cd7d67ce097bbca3c2798)
+
+548.	[func]		vorner
 	The message queue daemon now appears on the bus. This has two
 	effects, one is it obeys logging configuration and logs to the
 	correct place like the rest of the modules. The other is it

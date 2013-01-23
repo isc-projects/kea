@@ -116,7 +116,7 @@ TEST_F(OptionTest, v4_data1) {
     // now store that option into a buffer
     OutputBuffer buf(100);
     EXPECT_NO_THROW(
-        opt->pack4(buf);
+        opt->pack(buf);
     );
 
     // check content of that buffer
@@ -173,7 +173,7 @@ TEST_F(OptionTest, v4_data2) {
     // now store that option into a buffer
     OutputBuffer buf(100);
     EXPECT_NO_THROW(
-        opt->pack4(buf);
+        opt->pack(buf);
     );
 
     // check content of that buffer
@@ -471,7 +471,7 @@ TEST_F(OptionTest, setUintX) {
     // verify setUint8
     opt1->setUint8(255);
     EXPECT_EQ(255, opt1->getUint8());
-    opt1->pack4(outBuf_);
+    opt1->pack(outBuf_);
     EXPECT_EQ(3, opt1->len());
     EXPECT_EQ(3, outBuf_.getLength());
     uint8_t exp1[] = {125, 1, 255};
@@ -480,7 +480,7 @@ TEST_F(OptionTest, setUintX) {
     // verify getUint16
     outBuf_.clear();
     opt2->setUint16(12345);
-    opt2->pack4(outBuf_);
+    opt2->pack(outBuf_);
     EXPECT_EQ(12345, opt2->getUint16());
     EXPECT_EQ(4, opt2->len());
     EXPECT_EQ(4, outBuf_.getLength());
@@ -490,7 +490,7 @@ TEST_F(OptionTest, setUintX) {
     // verify getUint32
     outBuf_.clear();
     opt4->setUint32(0x12345678);
-    opt4->pack4(outBuf_);
+    opt4->pack(outBuf_);
     EXPECT_EQ(0x12345678, opt4->getUint32());
     EXPECT_EQ(6, opt4->len());
     EXPECT_EQ(6, outBuf_.getLength());
@@ -505,7 +505,7 @@ TEST_F(OptionTest, setData) {
                               buf_.begin(), buf_.begin() + 10));
     buf_.resize(20, 1);
     opt1->setData(buf_.begin(), buf_.end());
-    opt1->pack4(outBuf_);
+    opt1->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
     const uint8_t* test_data = static_cast<const uint8_t*>(outBuf_.getData());
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
@@ -518,7 +518,7 @@ TEST_F(OptionTest, setData) {
     outBuf_.clear();
     buf_.resize(5, 1);
     opt2->setData(buf_.begin(), buf_.end());
-    opt2->pack4(outBuf_);
+    opt2->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
     test_data = static_cast<const uint8_t*>(outBuf_.getData());
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),

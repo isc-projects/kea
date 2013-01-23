@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -249,6 +249,11 @@ public:
     void writeString(const std::string& text,
                      const uint32_t index = 0);
 
+    /// @brief Writes DHCP option in a wire format to a buffer.
+    ///
+    /// @param buf output buffer (option will be stored there).
+    virtual void pack(isc::util::OutputBuffer& buf);
+
     /// @brief Parses received buffer.
     ///
     /// @param begin iterator to first byte of option data
@@ -277,18 +282,6 @@ public:
     /// @param last iterator pointing to end of buffer to copy.
     void setData(const OptionBufferConstIter first,
                  const OptionBufferConstIter last);
-
-protected:
-
-    /// @brief Writes DHCPv4 option in a wire format to a buffer.
-    ///
-    /// @param buf output buffer (option will be stored there).
-    virtual void pack4(isc::util::OutputBuffer& buf);
-
-    /// @brief Writes DHCPv6 option in a wire format to a buffer.
-    ///
-    /// @param buf output buffer (built options will be stored here)
-    virtual void pack6(isc::util::OutputBuffer& buf);
 
 private:
 
@@ -351,6 +344,9 @@ private:
     /// fields.
     std::vector<OptionBuffer> buffers_;
 };
+
+/// A pointer to the OptionCustom object.
+typedef boost::shared_ptr<OptionCustom> OptionCustomPtr;
 
 } // namespace isc::dhcp
 } // namespace isc

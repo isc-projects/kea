@@ -30,6 +30,11 @@
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/addr_utilities.h>
 
+#include <boost/algorithm/string/erase.hpp>
+
+#include <iomanip>
+#include <fstream>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -41,7 +46,6 @@ using namespace std;
 const std::string HARDCODED_GATEWAY = "192.0.2.1";
 const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
 const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
@@ -56,7 +60,22 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
             IfaceMgr::instance().openSockets4(port);
         }
 
-        setServerID();
+        string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
+        if (loadServerID(srvid_file)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
+                .arg(srvid_file);
+        } else {
+            generateServerID();
+            LOG_INFO(dhcp4_logger, DHCP4_SERVERID_GENERATED)
+                .arg(srvidToString(getServerID()))
+                .arg(srvid_file);
+
+            if (!writeServerID(srvid_file)) {
+                LOG_WARN(dhcp4_logger, DHCP4_SERVERID_WRITE_FAIL)
+                    .arg(srvid_file);
+            }
+
+        }
 
         // Instantiate LeaseMgr
         LeaseMgrFactory::create(dbconfig);
@@ -176,19 +195,108 @@ Dhcpv4Srv::run() {
                 }
             }
         }
-
-        // TODO add support for config session (see src/bin/auth/main.cc)
-        //      so this daemon can be controlled from bob
     }
 
     return (true);
 }
 
-void
-Dhcpv4Srv::setServerID() {
-    /// @todo: implement this for real (see ticket #2588)
-    serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                             IOAddress(HARDCODED_SERVER_ID)));
+bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
+
+    // load content of the file into a string
+    fstream f(file_name.c_str(), ios::in);
+    if (!f.is_open()) {
+        return (false);
+    }
+
+    string hex_string;
+    f >> hex_string;
+    f.close();
+
+    // remove any spaces
+    boost::algorithm::erase_all(hex_string, " ");
+
+    try {
+        IOAddress addr(hex_string);
+
+        if (!addr.isV4()) {
+            return (false);
+        }
+
+        // Now create server-id option
+        serverid_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, addr));
+
+    } catch(...) {
+        // any kind of malformed input (empty string, IPv6 address, complete
+        // garbate etc.)
+        return (false);
+    }
+
+    return (true);
+}
+
+void Dhcpv4Srv::generateServerID() {
+
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+    // Let's find suitable interface.
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+
+        // Let's don't use loopback.
+        if (iface->flag_loopback_) {
+            continue;
+        }
+
+        // Let's skip downed interfaces. It is better to use working ones.
+        if (!iface->flag_up_) {
+            continue;
+        }
+
+        const IfaceMgr::AddressCollection addrs = iface->getAddresses();
+
+        for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+             addr != addrs.end(); ++addr) {
+            if (addr->getFamily() != AF_INET) {
+                continue;
+            }
+
+            serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                     *addr));
+            return;
+        }
+
+
+    }
+
+    isc_throw(BadValue, "No suitable interfaces for server-identifier found");
+}
+
+bool Dhcpv4Srv::writeServerID(const std::string& file_name) {
+    fstream f(file_name.c_str(), ios::out | ios::trunc);
+    if (!f.good()) {
+        return (false);
+    }
+    f << srvidToString(getServerID());
+    f.close();
+}
+
+string Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
+    if (!srvid) {
+        isc_throw(BadValue, "NULL pointer passed to srvidToString()");
+    }
+    boost::shared_ptr<Option4AddrLst> generated =
+        boost::dynamic_pointer_cast<Option4AddrLst>(srvid);
+    if (!srvid) {
+        isc_throw(BadValue, "Pointer to invalid option passed to srvidToString()");
+    }
+
+    Option4AddrLst::AddressContainer addrs = generated->getAddresses();
+    if (addrs.size() != 1) {
+        isc_throw(BadValue, "Malformed option passed to srvidToString(). "
+                  << "Expected to contain a single IPv4 address.");
+    }
+
+    return (addrs[0].toText());
 }
 
 void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {

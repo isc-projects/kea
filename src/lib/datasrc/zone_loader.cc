@@ -34,9 +34,12 @@
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
 using isc::dns::MasterLoader;
+using isc::dns::MasterLexer;
 
 namespace isc {
 namespace datasrc {
+
+const double ZoneLoader::PROGRESS_UNKNOWN = -1;
 
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        DataSourceClient& source) :
@@ -44,7 +47,7 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
     // have to aggregate them) and also because our limit semantics.
     iterator_(source.getIterator(zone_name, true)),
     updater_(destination.getUpdater(zone_name, true, false)),
-    complete_(false)
+    complete_(false), rr_count_(0)
 {
     // The getIterator should never return NULL. So we check it.
     // Or should we throw instead?
@@ -65,11 +68,25 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
     }
 }
 
+namespace {
+// Unified callback to install RR and increment RR count at the same time.
+void
+addRR(ZoneUpdater* updater, size_t* rr_count,
+      const dns::Name& name, const dns::RRClass& rrclass,
+      const dns::RRType& type, const dns::RRTTL& ttl,
+      const dns::rdata::RdataPtr& data)
+{
+    isc::dns::BasicRRset rrset(name, rrclass, type, ttl);
+    rrset.addRdata(data);
+    updater->addRRset(rrset);
+    ++*rr_count;
+}
+}
+
 ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                        const char* filename) :
     updater_(destination.getUpdater(zone_name, true, false)),
-    complete_(false),
-    loaded_ok_(true)
+    complete_(false), loaded_ok_(true), rr_count_(0)
 {
     if (updater_ == ZoneUpdaterPtr()) {
         isc_throw(DataSourceError, "Zone " << zone_name << " not found in "
@@ -83,7 +100,9 @@ ZoneLoader::ZoneLoader(DataSourceClient& destination, const Name& zone_name,
                                    createMasterLoaderCallbacks(zone_name,
                                        updater_->getFinder().getClass(),
                                        &loaded_ok_),
-                                   createMasterLoaderAddCallback(*updater_)));
+                                   boost::bind(addRR,
+                                               updater_.get(), &rr_count_,
+                                               _1, _2, _3, _4, _5)));
     }
 }
 
@@ -92,7 +111,7 @@ namespace {
 // Copy up to limit RRsets from source to destination
 bool
 copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
-           size_t limit)
+           size_t limit, size_t& rr_count_)
 {
     size_t loaded = 0;
     while (loaded < limit) {
@@ -104,6 +123,7 @@ copyRRsets(const ZoneUpdaterPtr& destination, const ZoneIteratorPtr& source,
             destination->addRRset(*rrset);
         }
         ++loaded;
+        rr_count_ += rrset->getRdataCount();
     }
     return (false); // Not yet, there may be more
 }
@@ -133,8 +153,8 @@ ZoneLoader::loadIncremental(size_t limit) {
                   "Loading has been completed previously");
     }
 
-    if (iterator_ == ZoneIteratorPtr()) {
-        assert(loader_.get() != NULL);
+    if (!iterator_) {
+        assert(loader_);
         try {
             complete_ = loader_->loadIncremental(limit);
         } catch (const isc::dns::MasterLoaderError& e) {
@@ -144,7 +164,7 @@ ZoneLoader::loadIncremental(size_t limit) {
             isc_throw(MasterFileError, "Error while loading master file");
         }
     } else {
-        complete_ = copyRRsets(updater_, iterator_, limit);
+        complete_ = copyRRsets(updater_, iterator_, limit, rr_count_);
     }
 
     if (complete_) {
@@ -164,6 +184,37 @@ ZoneLoader::loadIncremental(size_t limit) {
         updater_->commit();
     }
     return (complete_);
+}
+
+size_t
+ZoneLoader::getRRCount() const {
+    return (rr_count_);
+}
+
+double
+ZoneLoader::getProgress() const {
+    if (!loader_) {
+        return (PROGRESS_UNKNOWN);
+    }
+
+    const size_t pos = loader_->getPosition();
+    const size_t total_size = loader_->getSize();
+
+    // If the current position is 0, progress should definitely be 0; we
+    // don't bother to check the total size even if it's "unknown".
+    if (pos == 0) {
+        return (0);
+    }
+
+    // These cases shouldn't happen with our usage of MasterLoader.  So, in
+    // theory, we could throw here; however, since this method is expected
+    // to be used for informational purposes only, that's probably too harsh.
+    // So we return "unknown" instead.
+    if (total_size == MasterLexer::SOURCE_SIZE_UNKNOWN || total_size == 0) {
+        return (PROGRESS_UNKNOWN);
+    }
+
+    return (static_cast<double>(pos) / total_size);
 }
 
 } // end namespace datasrc

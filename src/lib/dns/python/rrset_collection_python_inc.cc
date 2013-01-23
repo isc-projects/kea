@@ -1,7 +1,7 @@
 namespace {
 // Modifications
 //   - libdns++ => isc.dns, libdatasrc => isc.datasrc
-//   - note about the constructor.
+//   - note about the direct construction.
 //   - add note about iteration
 const char* const RRsetCollectionBase_doc = "\
 Generic class to represent a set of RRsets.\n\
@@ -18,8 +18,8 @@ maybe class) and a way to iterate over all RRsets.\n\
 See RRsetCollection for a simple isc.dns implementation. Other modules\n\
 such as isc.datasrc will have another implementation.\n\
 \n\
-This base class cannot be directly instantiated, so no constructor is\n\
-defined.\n\
+This base class cannot be directly instantiated.  Such an attempt will\n\
+result in a TypeError exception.\n\
 \n\
 ";
 
@@ -79,18 +79,18 @@ RRsetCollection(filename, origin, rrclass)\n\
       origin     (isc.dns.Name) The zone origin.\n\
       rrclass    (isc.dns.RRClass) The zone class.\n\
 \n\
-RRsetCollection(input_stream, origin, rrclass)\n\
+RRsetCollection(input, origin, rrclass)\n\
 \n\
     Constructor.\n\
 \n\
     This constructor is similar to the previous one, but instead of\n\
-    taking a filename to load a zone from, it takes a byte object,\n\
+    taking a filename to load a zone from, it takes a bytes object,\n\
     representing the zone contents in text.\n\
     The constructor throws IscException if there is an error\n\
     during loading.\n\
 \n\
     Parameters:\n\
-      input      (byte) Textual representation of the zone.\n\
+      input      (bytes) Textual representation of the zone.\n\
       origin     (isc.dns.Name) The zone origin.\n\
       rrclass    (isc.dns.RRClass) The zone class.\n\
 \n\

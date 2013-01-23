@@ -21,6 +21,7 @@
 #include <dns/rrclass.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
+#include <dns/rdataclass.h>
 #include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
 
@@ -32,15 +33,11 @@
 #include <string>
 #include <vector>
 
-using isc::dns::RRClass;
-using isc::dns::Name;
-using isc::dns::RRType;
-using isc::dns::ConstRRsetPtr;
-using isc::dns::RRsetPtr;
+using namespace isc::dns;
+using namespace isc::datasrc;
+using boost::shared_ptr;
 using std::string;
 using std::vector;
-using boost::shared_ptr;
-using namespace isc::datasrc;
 
 namespace {
 
@@ -51,8 +48,97 @@ public:
         missing_zone_(false),
         rrclass_(RRClass::IN())
     {}
-    virtual FindResult findZone(const Name&) const {
-        isc_throw(isc::NotImplemented, "Method not used in tests");
+    class Finder : public ZoneFinder {
+    public:
+        Finder(const Name& origin) :
+            origin_(origin)
+        {}
+        Name getOrigin() const {
+            return (origin_);
+        }
+        RRClass getClass() const {
+            return (RRClass::IN());
+        }
+        // The rest is not to be called, so they throw.
+        shared_ptr<Context> find(const Name&, const RRType&,
+                                 const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        shared_ptr<Context> findAll(const Name&,
+                                    vector<ConstRRsetPtr>&,
+                                    const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        FindNSEC3Result findNSEC3(const Name&, bool) {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+    private:
+        Name origin_;
+    };
+    class Iterator : public ZoneIterator {
+    public:
+        Iterator(const Name& origin) :
+            origin_(origin),
+            soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(),
+                           RRTTL(3600)))
+        {
+            // The RData here is bogus, but it is not used to anything. There
+            // just needs to be some.
+            soa_->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
+                                               Name::ROOT_NAME(),
+                                               0, 0, 0, 0, 0));
+            rrsets_.push_back(soa_);
+
+            // There is no NS record on purpose here.
+
+            // Dummy A rrset. This is used for checking zone data after
+            // reload.
+            RRsetPtr rrset(new RRset(Name("tstzonedata").concatenate(origin_),
+                                     RRClass::IN(), RRType::A(),
+                                     RRTTL(3600)));
+            rrset->addRdata(rdata::in::A("192.0.2.1"));
+            rrsets_.push_back(rrset);
+
+            rrsets_.push_back(ConstRRsetPtr());
+
+            it_ = rrsets_.begin();
+        }
+        virtual isc::dns::ConstRRsetPtr getNextRRset() {
+            ConstRRsetPtr result = *it_;
+            ++it_;
+            return (result);
+        }
+        virtual isc::dns::ConstRRsetPtr getSOA() const {
+            return (soa_);
+        }
+    private:
+        const Name origin_;
+        const RRsetPtr soa_;
+        std::vector<ConstRRsetPtr> rrsets_;
+        std::vector<ConstRRsetPtr>::const_iterator it_;
+    };
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool) const
+    {
+        if (name != Name("example.org")) {
+            isc_throw(DataSourceError, "No such zone");
+        }
+        return (ZoneIteratorPtr(new Iterator(Name("example.org"))));
+    }
+    virtual FindResult findZone(const Name& name) const {
+        const Name origin("example.org");
+        const ZoneFinderPtr finder(new Finder(origin));
+        NameComparisonResult compar(origin.compare(name));
+        switch (compar.getRelation()) {
+            case NameComparisonResult::EQUAL:
+                return (FindResult(result::SUCCESS, finder));
+            case NameComparisonResult::SUPERDOMAIN:
+                return (FindResult(result::PARTIALMATCH, finder));
+            default:
+                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
     };
     virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
         getJournalReader(const Name&, uint32_t, uint32_t) const
@@ -214,13 +300,6 @@ protected:
         source_client_(ztable_segment_, rrclass_)
     {}
     void prepareSource(const Name& zone, const char* filename) {
-        // TODO:
-        // Currently, source_client_ is of InMemoryClient and its load()
-        // uses a different code than the ZoneLoader (so we can cross-check
-        // the implementations). Currently, the load() doesn't perform any
-        // post-load checks. It will change in #2499, at which point the
-        // loading may start failing depending on details of the test data. We
-        // should prepare the data by some different method then.
         source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
     }
 private:
@@ -246,6 +325,11 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
+
+    // Counter is initialized to 0, progress is "unknown" in case of copy.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
+
     // Now load the whole zone
     loader.load();
     EXPECT_TRUE(destination_client_.commit_called_);
@@ -254,6 +338,12 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // Check various counters.  getRRCount should be identical of the RRs
+    // we've seen. Progress is still "unknown" in the copy operation.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
+
     // Ensure known order.
     std::sort(destination_client_.rrset_texts_.begin(),
               destination_client_.rrset_texts_.end());
@@ -280,6 +370,11 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     // Not committed yet, we didn't complete the loading
     EXPECT_FALSE(destination_client_.commit_called_);
+
+    // Check we can get intermediate counters. Progress is always "unknown"
+    // in case of copy.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(ZoneLoader::PROGRESS_UNKNOWN, loader.getProgress());
 
     // This is unusual, but allowed. Check it doesn't do anything
     loader.loadIncremental(0);
@@ -349,6 +444,11 @@ TEST_F(ZoneLoaderTest, classMismatch) {
 TEST_F(ZoneLoaderTest, loadUnsigned) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
+
+    // Counter and progress are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getProgress());
+
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -360,6 +460,12 @@ TEST_F(ZoneLoaderTest, loadUnsigned) {
 
     // The count is 34 because we expect the RRs to be separated.
     EXPECT_EQ(34, destination_client_.rrsets_.size());
+
+    // getRRCount should be identical of the RRs we've seen.  progress
+    // should reach 100% (= 1).
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1, loader.getProgress());
+
     // Ensure known order.
     std::sort(destination_client_.rrset_texts_.begin(),
               destination_client_.rrset_texts_.end());
@@ -380,6 +486,10 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     ZoneLoader loader(destination_client_, Name::ROOT_NAME(),
                       TEST_DATA_DIR "/root.zone");
 
+    // Counters are initialized to 0.
+    EXPECT_EQ(0, loader.getRRCount());
+    EXPECT_EQ(0, loader.getProgress());
+
     // Try loading few RRs first.
     loader.loadIncremental(10);
     // We should get the 10 we asked for
@@ -390,10 +500,25 @@ TEST_F(ZoneLoaderTest, loadUnsignedIncremental) {
     EXPECT_EQ(10, destination_client_.rrsets_.size());
     EXPECT_FALSE(destination_client_.commit_called_);
 
+    // Check we can get intermediate counters. Expected progress is calculated
+    // based on the size of the zone file and the offset to the end of 10th RR
+    // (subject to future changes to the file, but we assume it's a rare
+    // event.).  The expected value should be the exact expression that
+    // getProgress() should do internally, so EXPECT_EQ() should work here,
+    // but floating-point comparison can be always tricky we use
+    // EXPECT_DOUBLE_EQ just in case.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    // file size = 1541, offset = 428 (27.77%).
+    EXPECT_DOUBLE_EQ(static_cast<double>(428) / 1541, loader.getProgress());
+
     // We can finish the rest
     loader.loadIncremental(30);
     EXPECT_EQ(34, destination_client_.rrsets_.size());
     EXPECT_TRUE(destination_client_.commit_called_);
+
+    // Counters are updated accordingly. Progress should reach 100%.
+    EXPECT_EQ(destination_client_.rrsets_.size(), loader.getRRCount());
+    EXPECT_EQ(1, loader.getProgress());
 
     // No more loading now
     EXPECT_THROW(loader.load(), isc::InvalidOperation);
@@ -461,17 +586,6 @@ TEST_F(ZoneLoaderTest, loadCheck) {
     EXPECT_FALSE(destination_client_.commit_called_);
 }
 
-// The same test, but for copying from other data source
-TEST_F(ZoneLoaderTest, copyCheck) {
-    prepareSource(Name("example.org"), "novalidate.zone");
-    ZoneLoader loader(destination_client_, Name("example.org"),
-                      source_client_);
-
-    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
-    // The messages go to the log. We don't have an easy way to examine them.
-    EXPECT_FALSE(destination_client_.commit_called_);
-}
-
 // Check a warning doesn't disrupt the loading of the zone
 TEST_F(ZoneLoaderTest, loadCheckWarn) {
     ZoneLoader loader(destination_client_, Name("example.org"),
@@ -493,6 +607,20 @@ TEST_F(ZoneLoaderTest, copyCheckWarn) {
     EXPECT_TRUE(destination_client_.commit_called_);
     EXPECT_EQ(3, destination_client_.rrsets_.size());
 
+}
+
+// Test there's validation of the data in the zone loader when copying
+// from another data source.
+TEST_F(ZoneLoaderTest, copyCheck) {
+    // In this test, my_source_client provides a zone that does not
+    // validate (no NS).
+    MockClient my_source_client;
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      my_source_client);
+
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
 }
 
 }

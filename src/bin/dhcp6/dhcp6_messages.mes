@@ -172,6 +172,43 @@ This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The reason is most likely
 to be to a programming error: please raise a bug report.
 
+% DHCP6_PARSER_COMMIT_EXCEPTION parser failed to commit changes
+On receipt of message containing details to a change of the IPv6 DHCP
+server configuration, a set of parsers were successfully created, but one
+of them failed to commit its changes due to a low-level system exception
+being raised.  Additional messages may be output indicating the reason.
+
+% DHCP6_PARSER_COMMIT_FAIL parser failed to commit changes: %1
+On receipt of message containing details to a change of the IPv6 DHCP
+server configuration, a set of parsers were successfully created, but
+one of them failed to commit its changes.  The reason for the failure
+is given in the message.
+
+% DHCP6_PARSER_CREATED created parser for configuration element %1
+A debug message output during a configuration update of the IPv6 DHCP
+server, notifying that the parser for the specified configuration element
+has been successfully created.
+
+% DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
+On receipt of message containing details to a change of its configuration,
+the IPv6 DHCP server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
+% DHCP6_PARSER_EXCEPTION failed to create or run parser for configuration element %1
+On receipt of message containing details to a change of its configuration,
+the IPv6 DHCP server failed to create a parser to decode the contents of
+the named configuration element, or the creation succeeded but the parsing
+actions and committal of changes failed.  The message has been output in
+response to a non-BIND 10 exception being raised.  Additional messages
+may give further information.
+
+The most likely cause of this is that the specification file for the server
+(which details the allowable contents of the configuration) is not correct for
+this version of BIND 10.  This former may be the result of an interrupted
+installation of an update to BIND 10.
+
 % DHCP6_PROCESS_IA_NA_REQUEST server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
 This is a debug message that indicates a processing of received IA_NA
 option. It may optionally contain an address that may be used by the server
@@ -193,6 +230,34 @@ A debug message listing the data returned to the client.
 % DHCP6_SERVER_FAILED server failed: %1
 The IPv6 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
+
+% DHCP6_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
+This informational messages indicates that the server was not able to read
+its server identifier (DUID) and has generated a new one. This server-id
+will be stored in a file and will be read and used during next restart. It
+is normal behavior when the server is started for the first time. If
+this message is printed every start, please check that the server have
+sufficient permission to write its server-id file and that the file is not
+corrupt.
+
+Changing the server identifier in a production environment is not
+recommended as existing clients will not recognize the server and may go
+through a rebind phase. However, they should be able to recover without
+losing their leases.
+
+% DHCP6_SERVERID_LOADED server-id %1 has been loaded from file %2
+This debug message indicates that the server loaded its server identifier.
+That value is sent in all server responses and clients use it to
+discriminate between servers. This is a part of normal startup or
+reconfiguration procedure.
+
+% DHCP6_SERVERID_WRITE_FAIL server was not able to write its ID to file %1
+This warning message indicates that server was not able to write its
+server identifier (DUID) to a file. This likely indicates lack of write
+permission to a given file or directory. This is not cricital and the
+server will continue to operate, but server will generate different DUID
+during every start and clients will need to go through a rebind phase
+to recover.
 
 % DHCP6_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND
