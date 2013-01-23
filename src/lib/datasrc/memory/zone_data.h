@@ -413,7 +413,7 @@ public:
     ///
     /// The class encapsulation ensures that the origin node always exists at
     /// the same address, so this method always returns a non-NULL valid
-    /// valid pointer.
+    /// pointer.
     ///
     /// \throw none
     const ZoneNode* getOriginNode() const {
