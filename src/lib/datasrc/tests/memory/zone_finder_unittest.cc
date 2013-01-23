@@ -105,7 +105,6 @@ protected:
                           ZoneFinder::FindResultFlags expected_flags =
                           ZoneFinder::RESULT_DEFAULT);
 
-public:
     InMemoryZoneFinderTest() :
         class_(RRClass::IN()),
         origin_("example.org"),
@@ -293,75 +292,89 @@ public:
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
-        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
-            RRsetPtr(); // note we use the same type as of retval of getRRsig()
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
                 ZoneFinderContextPtr find_result(zone_finder->find(
                                                      name, rrtype, options));
-                // Check it returns correct answers
-                EXPECT_EQ(result, find_result->code);
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                          find_result->isWildcard());
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                          != 0, find_result->isNSECSigned());
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                          != 0, find_result->isNSEC3Signed());
-                if (check_answer) {
-                    if (!answer) {
-                        ASSERT_FALSE(find_result->rrset);
-                    } else {
-                        ASSERT_TRUE(find_result->rrset);
-                        ConstRRsetPtr result_rrset(
-                            convertRRset(find_result->rrset));
-                        rrsetCheck(answer, result_rrset);
-                        if (answer_sig &&
-                            (options & ZoneFinder::FIND_DNSSEC) != 0) {
-                            ASSERT_TRUE(result_rrset->getRRsig());
-                            rrsetCheck(answer_sig, result_rrset->getRRsig());
-                        } else {
-                            EXPECT_FALSE(result_rrset->getRRsig());
-                        }
-                    }
-                } else if (check_wild_answer) {
-                    ASSERT_NE(ConstRRsetPtr(), answer) <<
-                        "Wrong test, don't check for wild names if you expect "
-                        "empty answer";
-                    ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
-                        "No answer found";
-                    // Build the expected answer using the given name and
-                    // other parameter of the base wildcard RRset.
-                    RRsetPtr wildanswer(new RRset(name, answer->getClass(),
-                                                  answer->getType(),
-                                                  answer->getTTL()));
-                    RdataIteratorPtr expectedIt(answer->getRdataIterator());
-                    for (; !expectedIt->isLast(); expectedIt->next()) {
-                        wildanswer->addRdata(expectedIt->getCurrent());
-                    }
-
-                    ConstRRsetPtr result_rrset(
-                        convertRRset(find_result->rrset));
-                    rrsetCheck(wildanswer, result_rrset);
-
-                    // Same for the RRSIG, if any.
-                    if (answer_sig) {
-                        ASSERT_TRUE(result_rrset->getRRsig());
-
-                        RRsetPtr wildsig(new RRset(name,
-                                                   answer_sig->getClass(),
-                                                   RRType::RRSIG(),
-                                                   answer_sig->getTTL()));
-                        RdataIteratorPtr expectedIt(
-                            answer_sig->getRdataIterator());
-                        for (; !expectedIt->isLast(); expectedIt->next()) {
-                            wildsig->addRdata(expectedIt->getCurrent());
-                        }
-                        rrsetCheck(wildsig, result_rrset->getRRsig());
-                    }
-                }
+                findTestCommon(name, result, find_result, check_answer,
+                               answer, expected_flags, options,
+                               check_wild_answer);
             });
     }
+
+private:
+    void findTestCommon(const Name& name, ZoneFinder::Result result,
+                        ZoneFinderContextPtr find_result,
+                        bool check_answer,
+                        const ConstRRsetPtr& answer,
+                        ZoneFinder::FindResultFlags expected_flags,
+                        ZoneFinder::FindOptions options,
+                        bool check_wild_answer)
+    {
+        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
+            RRsetPtr(); // note we use the same type as of retval of getRRsig()
+
+        // Check it returns correct answers
+        EXPECT_EQ(result, find_result->code);
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                  find_result->isWildcard());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
+                  != 0, find_result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
+                  != 0, find_result->isNSEC3Signed());
+        if (check_answer) {
+            if (!answer) {
+                ASSERT_FALSE(find_result->rrset);
+            } else {
+                ASSERT_TRUE(find_result->rrset);
+                ConstRRsetPtr result_rrset(
+                    convertRRset(find_result->rrset));
+                rrsetCheck(answer, result_rrset);
+                if (answer_sig && (options & ZoneFinder::FIND_DNSSEC) != 0) {
+                    ASSERT_TRUE(result_rrset->getRRsig());
+                    rrsetCheck(answer_sig, result_rrset->getRRsig());
+                } else {
+                    EXPECT_FALSE(result_rrset->getRRsig());
+                }
+            }
+        } else if (check_wild_answer) {
+            ASSERT_NE(ConstRRsetPtr(), answer) <<
+                "Wrong test, don't check for wild names if you expect "
+                "empty answer";
+            ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
+                "No answer found";
+            // Build the expected answer using the given name and
+            // other parameter of the base wildcard RRset.
+            RRsetPtr wildanswer(new RRset(name, answer->getClass(),
+                                          answer->getType(),
+                                          answer->getTTL()));
+            RdataIteratorPtr expectedIt(answer->getRdataIterator());
+            for (; !expectedIt->isLast(); expectedIt->next()) {
+                wildanswer->addRdata(expectedIt->getCurrent());
+            }
+
+            ConstRRsetPtr result_rrset(convertRRset(find_result->rrset));
+            rrsetCheck(wildanswer, result_rrset);
+
+            // Same for the RRSIG, if any.
+            if (answer_sig) {
+                ASSERT_TRUE(result_rrset->getRRsig());
+
+                RRsetPtr wildsig(new RRset(name, answer_sig->getClass(),
+                                           RRType::RRSIG(),
+                                           answer_sig->getTTL()));
+                RdataIteratorPtr expectedIt(
+                    answer_sig->getRdataIterator());
+                for (; !expectedIt->isLast(); expectedIt->next()) {
+                    wildsig->addRdata(expectedIt->getCurrent());
+                }
+                rrsetCheck(wildsig, result_rrset->getRRsig());
+            }
+        }
+    }
+
+protected:
     /**
      * \brief Calls the findAll on the finder and checks the result.
      */
