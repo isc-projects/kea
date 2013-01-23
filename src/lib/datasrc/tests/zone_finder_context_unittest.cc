@@ -18,7 +18,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/database.h>

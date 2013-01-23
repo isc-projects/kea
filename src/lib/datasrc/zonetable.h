@@ -19,7 +19,7 @@
 
 #include <dns/rrset.h>
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 
 #include <boost/shared_ptr.hpp>
 
