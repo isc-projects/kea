@@ -29,6 +29,12 @@ def request_url(step, url):
 
 @step('last http response status code should be ([0-9]+)')
 def check_last_response_code(step, code):
+    """
+    Checks whether the last call to request_url resulted in a response
+    with the given (numeric) status code
+    Fails if it does not, or if there never was a complete request_url
+    operation
+    """
     assert world.last_http_response != None, "No HTTP request made yet"
     assert int(code) == world.last_http_response.getcode(),\
                         code + " != " +\
