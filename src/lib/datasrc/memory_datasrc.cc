@@ -26,7 +26,7 @@
 #include <datasrc/rbtree.h>
 #include <datasrc/rbnode_rrset.h>
 #include <datasrc/logger.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 #include <datasrc/zone_finder.h>
