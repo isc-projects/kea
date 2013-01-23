@@ -581,12 +581,77 @@ public:
 
     /// \brief Search for an RRset of given RR type at the zone origin.
     ///
-    /// This is an equivalent of a call to \c find() where the \c name
-    /// parameter is the zone origin.
-    virtual boost::shared_ptr<Context> findAtOrigin(
+    /// In terms of API this method is equivalent to a call to \c find() where
+    /// the \c name parameter is the zone origin (return value of
+    /// \c getOrigin()) and is redundant.  This method is provided as a
+    /// optimization point for some kind of finder implementations that can
+    /// exploit the fact that the query name is the zone origin and for
+    /// applications that want to possibly benefit from such implementations.
+    ///
+    /// If \c use_minttl is set to \c true and the returned context would
+    /// contain a non NULL RRset, its RR TTL is (possibly) adjusted so that
+    /// it's set to the minimum of its own TTL and the minimum TTL field value
+    /// of the zone's SOA record.  If the RRset contains an RRSIG, its TTL
+    /// is also adjusted in the same way.
+    ///
+    /// The origin of a zone is special in some points: for any valid zone
+    /// there should always be an SOA and at least one NS RR there, which
+    /// also means the origin name is never empty.  Also, the SOA record can
+    /// be used in a DNS response for negative answers, in which case the
+    /// RR TTL must be set to minimum of its own RRTTL and the value of the
+    /// minimum TTL field.  Although these operations can be performed
+    /// through other public interfaces, they can be sometimes suboptimal
+    /// in performance or could be more efficient in a specialized
+    /// implementation.  For example, a specific implementation of
+    /// \c getOrigin() could involve a dynamic creation of a \c Name object,
+    /// which is less efficient; on the other hand, the underlying finder
+    /// implementation may have an efficient way to access RRs of the origin
+    /// in implementation specific way; and, while reconstructing an RRset
+    /// with replacing the TTL is relatively expensive, this can be done
+    /// much faster if the need for it is known beforehand.
+    ///
+    /// If the underlying finder implementation wants to optimize these cases,
+    /// it can do so by overriding the \c findAtOriginImpl() protected method.
+    /// It has the default implementation for any other implementations, which
+    /// should work for any finder implementation as long as it conforms to
+    /// other public interfaces.
+    ///
+    /// So, an implementation of a finder does not have to care about this
+    /// method unless it sees the need for optimizing the behavior.
+    /// Also, applications normally do not have to use this interface;
+    /// using the generic \c find() method (with some post call processing)
+    /// can do everything this method can provide.  The default implementation
+    /// may even be slower than such straightforward usage due to the
+    /// internal overhead.  This method should be used if and only if the
+    /// application needs to achieve the possible best performance with an
+    /// optimized finder implementation.
+    ///
+    /// \param type The RR type to be searched for.
+    /// \param use_minttl Whether to adjust the TTL (see the description).
+    /// \param options The search options.  Same for \c find().
+    ///
+    /// \return A \c FindContext object enclosing the search result.
+    ///         See \c find().
+    boost::shared_ptr<Context> findAtOrigin(
+        const isc::dns::RRType& type, bool use_minttl,
+        FindOptions options)
+    {
+        return (findAtOriginImpl(type, use_minttl, options));
+    }
+
+protected:
+    /// \brief Actual implementation of \c findAtOrigin().
+    ///
+    /// This is separated from the public \c findAtOrigin() method so that
+    /// the interface can be changed (if and when necessary) without affecting
+    /// the user applications of the public method.  It has the default
+    /// implementation; normally the specific derived class does not have to
+    /// override it.
+    virtual boost::shared_ptr<Context> findAtOriginImpl(
         const isc::dns::RRType& type, bool use_minttl,
         FindOptions options);
 
+public:
     ///
     /// \brief Finds all RRsets in the given name.
     ///

@@ -83,8 +83,8 @@ copyRRset(const AbstractRRset& rrset, const RRTTL& ttl) {
 }
 
 ZoneFinderContextPtr
-ZoneFinder::findAtOrigin(const dns::RRType& type, bool use_minttl,
-                         FindOptions options)
+ZoneFinder::findAtOriginImpl(const dns::RRType& type, bool use_minttl,
+                             FindOptions options)
 {
     ZoneFinderContextPtr context = find(getOrigin(), type, options);
 
@@ -104,7 +104,7 @@ ZoneFinder::findAtOrigin(const dns::RRType& type, bool use_minttl,
             } else if (context->isNSEC3Signed()) {
                 flags_copy = flags_copy | RESULT_NSEC3_SIGNED;
             }
-            
+
             return (ZoneFinderContextPtr(
                         new GenericContext(*this, options,
                                            ResultContext(context->code,
