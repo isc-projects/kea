@@ -67,7 +67,7 @@
 namespace isc {
 namespace datasrc {
 
-// The iterator.h is not included on purpose, most application won't need it
+// zone_iterator.h is not included on purpose, most application won't need it
 class ZoneIterator;
 typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 
