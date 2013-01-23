@@ -7,7 +7,7 @@
 ]>
 
 <!--
- - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -3903,10 +3903,21 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
 &gt; <userinput>config set Dhcp4/option-data[1]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-data[1]/code 43</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[1]/data "12345"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data ""</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
+
+      <note>
+        <para>
+          With this version of BIND 10, the "vendor-encapsulated-options" option
+          must be specified in the configuration although it has no configurable
+          parameters. If it is not specified, the server will assume that it is
+          not configured and will not send it to a client. In the future there
+          will be no need to include this option in the configuration.
+        </para>
+      </note>
+
     </section>
 
     <section id="dhcp4-option-spaces">
@@ -4544,8 +4555,10 @@ Dhcp6/subnet6/	list
       which is empty by default, but options can be defined in it. Those options
       are called vendor-specific information options. The following examples
       show how to define an option "foo" with code 1 that consists of IPv6 address,
-      unsigned 16 bit integer and a string. The foo option is conveyed in a
-      vendor specific information option.
+      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
+      vendor specific information option. This option comprises a single
+      uint32 value that is set to "12345". The sub-option "foo" follows
+      the data field holding this value.
       <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
