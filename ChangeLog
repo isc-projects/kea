@@ -1,3 +1,12 @@
+556.	[bug]		marcin
+	Fixed DHCP servers configuration whereby the servers did not
+	receive a configuration stored in the database on their startup.
+	Also, the configuration handler function now uses full configuration
+	instead of partial to configure the server. This guarantees that
+	dependencies between various configuration parameters are
+	fulfilled.
+	(Trac #2637, git 91aa998226f1f91a232f2be59a53c9568c4ece77)
+
 555.	[func]		marcin
 	The encapsulated option space name can be specified for
 	a DHCP option. It comprises sub-options being sent within
