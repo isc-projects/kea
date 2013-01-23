@@ -1813,6 +1813,7 @@ doFindAtOriginTest(ZoneFinder& finder,
                    ZoneFinder::Result expected_result,
                    const std::vector<std::string>& expected_rdatas,
                    const std::vector<std::string>& expected_sig_rdatas,
+                   bool use_minttl = false,
                    ZoneFinder::FindResultFlags expected_flags =
                    ZoneFinder::RESULT_DEFAULT,
                    const isc::dns::Name& expected_name =
@@ -1822,7 +1823,7 @@ doFindAtOriginTest(ZoneFinder& finder,
 {
     SCOPED_TRACE("doFindOriginTest " + origin.toText() + " " + type.toText());
     ConstZoneFinderContextPtr result =
-        finder.findAtOrigin(type, false, options);
+        finder.findAtOrigin(type, use_minttl, options);
     findTestCommon(finder, origin, type, result, expected_type, expected_ttl,
                    expected_result, expected_rdatas, expected_sig_rdatas,
                    expected_flags, expected_name, options);
@@ -2182,7 +2183,7 @@ TYPED_TEST(DatabaseClientTest, findAtOrigin) {
     doFindAtOriginTest(*finder, this->zname_, RRType::NS(), RRType::NS(),
                        this->rrttl_, ZoneFinder::SUCCESS,
                        this->expected_rdatas_, this->expected_sig_rdatas_,
-                       ZoneFinder::RESULT_DEFAULT, this->zname_,
+                       false, ZoneFinder::RESULT_DEFAULT, this->zname_,
                        ZoneFinder::FIND_DNSSEC);
 
     // Specified type of RR doesn't exist, no DNSSEC
@@ -2203,7 +2204,7 @@ TYPED_TEST(DatabaseClientTest, findAtOrigin) {
     doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), RRType::NSEC(),
                        this->rrttl_, ZoneFinder::NXRRSET,
                        this->expected_rdatas_, this->expected_sig_rdatas_,
-                       ZoneFinder::RESULT_NSEC_SIGNED,
+                       false, ZoneFinder::RESULT_NSEC_SIGNED,
                        this->zname_, ZoneFinder::FIND_DNSSEC);
 
     // Specified type of RR doesn't exist, with DNSSEC, enabling NSEC3
@@ -2213,8 +2214,109 @@ TYPED_TEST(DatabaseClientTest, findAtOrigin) {
     doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), RRType::TXT(),
                        this->rrttl_, ZoneFinder::NXRRSET,
                        this->expected_rdatas_, this->expected_sig_rdatas_,
-                       ZoneFinder::RESULT_NSEC3_SIGNED,
+                       false, ZoneFinder::RESULT_NSEC3_SIGNED,
                        this->zname_, ZoneFinder::FIND_DNSSEC);
+}
+
+TYPED_TEST(DatabaseClientTest, findAtOriginWithMinTTL) {
+    // First, replace the SOA of the test zone so that its RR TTL is larger
+    // than MINTTL (the original data are used in many places, so replacing
+    // them just for this doesn't make sense).
+    RRsetPtr old_soa(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    old_soa->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                         "ns1.example.org. admin.example.org. "
+                                         "1234 3600 1800 2419200 7200"));
+
+    const string new_soa_rdata = "ns1.example.org. admin.example.org. "
+        "1234 3600 1800 2419200 1200";
+    RRsetPtr new_soa(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    new_soa->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                         new_soa_rdata));
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*old_soa);
+    this->updater_->addRRset(*new_soa);
+    this->updater_->commit();
+
+    ZoneFinderPtr finder = this->getFinder();
+
+    // Specify the use of min TTL, then the resulting TTL should be drived
+    // from the SOA MINTTL (which is smaller).
+    this->expected_rdatas_.push_back(new_soa_rdata);
+    doFindAtOriginTest(*finder, this->zname_, RRType::SOA(), RRType::SOA(),
+                       RRTTL(1200), ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       true);
+
+    // If DNSSEC is requested, TTL of the RRSIG should also be the min.
+    this->expected_sig_rdatas_.push_back(
+        "SOA 5 3 3600 20000101000000 "
+        "20000201000000 12345 example.org. FAKEFAKEFAKE");
+    doFindAtOriginTest(*finder, this->zname_, RRType::SOA(), RRType::SOA(),
+                       RRTTL(1200), ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       true, ZoneFinder::RESULT_DEFAULT, this->zname_,
+                       ZoneFinder::FIND_DNSSEC);
+
+    // Not really intended usage, but specify the use of min TTL for non SOA.
+    // It should still work as specified.
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    doFindAtOriginTest(*finder, this->zname_, RRType::NS(), RRType::NS(),
+                       RRTTL(1200), ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       true);
+
+    // If we don't request the use of min TTL, the original TTL will be used.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back(new_soa_rdata);
+    doFindAtOriginTest(*finder, this->zname_, RRType::SOA(), RRType::SOA(),
+                       this->rrttl_, ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_);
+
+    // If no RRset is returned, use_minttl doesn't matter (it shouldn't cause
+    // disruption)
+    this->expected_rdatas_.clear();
+    doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), this->qtype_,
+                       this->rrttl_, ZoneFinder::NXRRSET,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       true);
+
+    // If it results in NXRRSET with NSEC, and if we specify the use of min
+    // TTL, the NSEC and RRSIG should have the min TTL (again, though, this
+    // use case is not really the intended one)
+    this->expected_rdatas_.push_back(
+        "acnamesig1.example.org. A NS RRSIG NSEC");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), RRType::NSEC(),
+                       RRTTL(1200), ZoneFinder::NXRRSET,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       true, ZoneFinder::RESULT_NSEC_SIGNED,
+                       this->zname_, ZoneFinder::FIND_DNSSEC);
+}
+
+TYPED_TEST(DatabaseClientTest, findAtOriginWithMinTTLBroken) {
+    // Similar to the previous case, but we intentionally remove the SOA
+    // (assuming the underlying data source doesn't complain about it).
+    // This will cause exception in subsequent findAtOrigin() with use_minttl
+    // being true.
+    RRsetPtr old_soa(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    old_soa->addRdata(rdata::createRdata(RRType::SOA(), this->qclass_,
+                                         "ns1.example.org. admin.example.org. "
+                                         "1234 3600 1800 2419200 7200"));
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->updater_->deleteRRset(*old_soa);
+    this->updater_->commit();
+
+    EXPECT_THROW(this->getFinder()->findAtOrigin(RRType::NS(), true,
+                                                 ZoneFinder::FIND_DEFAULT),
+                 DataSourceError);
 }
 
 TYPED_TEST(DatabaseClientTest, findOutOfZone) {

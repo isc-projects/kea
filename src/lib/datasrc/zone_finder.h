@@ -584,7 +584,7 @@ public:
     /// This is an equivalent of a call to \c find() where the \c name
     /// parameter is the zone origin.
     virtual boost::shared_ptr<Context> findAtOrigin(
-        const isc::dns::RRType& type, bool use_minmtu,
+        const isc::dns::RRType& type, bool use_minttl,
         FindOptions options);
 
     ///
