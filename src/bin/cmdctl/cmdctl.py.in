@@ -544,10 +544,10 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         try:
             self._check_key_and_cert(key, cert)
             ssl_sock = ssl.wrap_socket(sock,
-                                      server_side = True,
-                                      certfile = cert,
-                                      keyfile = key,
-                                      ssl_version = ssl.PROTOCOL_SSLv23)
+                                       server_side=True,
+                                       certfile=cert,
+                                       keyfile=key,
+                                       ssl_version=ssl.PROTOCOL_SSLv23)
             # Return here (if control leaves this blocks it will raise an
             # error)
             return ssl_sock
