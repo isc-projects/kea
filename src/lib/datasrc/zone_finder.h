@@ -583,7 +583,7 @@ public:
     ///
     /// In terms of API this method is equivalent to a call to \c find() where
     /// the \c name parameter is the zone origin (return value of
-    /// \c getOrigin()) and is redundant.  This method is provided as a
+    /// \c getOrigin()) and is redundant.  This method is provided as an
     /// optimization point for some kind of finder implementations that can
     /// exploit the fact that the query name is the zone origin and for
     /// applications that want to possibly benefit from such implementations.
@@ -611,10 +611,10 @@ public:
     /// much faster if the need for it is known beforehand.
     ///
     /// If the underlying finder implementation wants to optimize these cases,
-    /// it can do so by overriding the \c findAtOriginImpl() protected method.
-    /// It has the default implementation for any other implementations, which
-    /// should work for any finder implementation as long as it conforms to
-    /// other public interfaces.
+    /// it can do so by specializing the method.  It has the default
+    /// implementation for any other implementations, which should work for
+    /// any finder implementation as long as it conforms to other public
+    /// interfaces.
     ///
     /// So, an implementation of a finder does not have to care about this
     /// method unless it sees the need for optimizing the behavior.
@@ -632,22 +632,7 @@ public:
     ///
     /// \return A \c FindContext object enclosing the search result.
     ///         See \c find().
-    boost::shared_ptr<Context> findAtOrigin(
-        const isc::dns::RRType& type, bool use_minttl,
-        FindOptions options)
-    {
-        return (findAtOriginImpl(type, use_minttl, options));
-    }
-
-protected:
-    /// \brief Actual implementation of \c findAtOrigin().
-    ///
-    /// This is separated from the public \c findAtOrigin() method so that
-    /// the interface can be changed (if and when necessary) without affecting
-    /// the user applications of the public method.  It has the default
-    /// implementation; normally the specific derived class does not have to
-    /// override it.
-    virtual boost::shared_ptr<Context> findAtOriginImpl(
+    virtual boost::shared_ptr<Context> findAtOrigin(
         const isc::dns::RRType& type, bool use_minttl,
         FindOptions options);
 
