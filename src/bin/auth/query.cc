@@ -102,8 +102,8 @@ Query::ResponseCreator::create(Message& response,
 void
 Query::addSOA(ZoneFinder& finder) {
     // This method is always called in finding SOA for a negative response,
-    // so we specify the use of min(RRTTL SOA MINTTL) as specified Section 3
-    // of RFC2308.
+    // so we specify the use of min(RRTTL, SOA MINTTL) as specified in
+    // Section 3 of RFC2308.
     ZoneFinderContextPtr soa_ctx = finder.findAtOrigin(RRType::SOA(), true,
                                                        dnssec_opt_);
     if (soa_ctx->code != ZoneFinder::SUCCESS) {
