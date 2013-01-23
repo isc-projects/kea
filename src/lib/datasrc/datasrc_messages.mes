@@ -486,6 +486,10 @@ Some resource types are singletons -- only one is allowed in a domain
 % DATASRC_MEM_SUCCESS query for '%1/%2' successful
 Debug information. The requested record was found.
 
+% DATASRC_MEM_FIND_TYPE_AT_ORIGIN origin query for type %1 in in-memory zone %2/%3 successful
+Debug information.  A specific type RRset is requested at a zone origin
+of an in-memory zone and it is found.
+
 % DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty
 Debug information. The search stopped because the requested domain was
 detected to be a superdomain of some existing node of zone (while there

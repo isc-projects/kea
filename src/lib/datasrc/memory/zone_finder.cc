@@ -721,8 +721,8 @@ InMemoryZoneFinder::Context::findAdditional(
 
 boost::shared_ptr<ZoneFinder::Context>
 InMemoryZoneFinder::find(const isc::dns::Name& name,
-                const isc::dns::RRType& type,
-                const FindOptions options)
+                         const isc::dns::RRType& type,
+                         const FindOptions options)
 {
     return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
                                              findInternal(name, type,
@@ -731,14 +731,40 @@ InMemoryZoneFinder::find(const isc::dns::Name& name,
 
 boost::shared_ptr<ZoneFinder::Context>
 InMemoryZoneFinder::findAll(const isc::dns::Name& name,
-        std::vector<isc::dns::ConstRRsetPtr>& target,
-        const FindOptions options)
+                            std::vector<isc::dns::ConstRRsetPtr>& target,
+                            const FindOptions options)
 {
     return (ZoneFinderContextPtr(new Context(*this, options, rrclass_,
                                              findInternal(name,
                                                           RRType::ANY(),
                                                           &target,
                                                           options))));
+}
+
+boost::shared_ptr<ZoneFinder::Context>
+InMemoryZoneFinder::findAtOrigin(const isc::dns::RRType& type,
+                                 bool /*use_minttl*/, // not yet supported
+                                 const FindOptions options)
+{
+    const ZoneNode* const node = zone_data_.getOriginNode();
+    const RdataSet* const found = RdataSet::find(node->getData(), type);
+
+    if (found != NULL) {
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_TYPE_AT_ORIGIN).
+            arg(type).arg(getOrigin()).arg(rrclass_);
+        return (ZoneFinderContextPtr(
+                    new Context(*this, options, rrclass_,
+                                createFindResult(rrclass_, zone_data_, SUCCESS,
+                                                 node, found, options))));
+    }
+    return (ZoneFinderContextPtr(
+                    new Context(*this, options, rrclass_,
+                                createFindResult(rrclass_, zone_data_, NXRRSET,
+                                                 node,
+                                                 getNSECForNXRRSET(zone_data_,
+                                                                   options,
+                                                                   node),
+                                                 options))));
 }
 
 ZoneFinderResultContext
