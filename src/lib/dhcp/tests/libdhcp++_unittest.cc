@@ -273,7 +273,7 @@ TEST_F(LibDhcpTest, packOptions6) {
 
     OutputBuffer assembled(512);
 
-    EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
+    EXPECT_NO_THROW(LibDHCP::packOptions(assembled, opts));
     EXPECT_EQ(sizeof(v6packed), assembled.getLength());
     EXPECT_EQ(0, memcmp(assembled.getData(), v6packed, sizeof(v6packed)));
 }

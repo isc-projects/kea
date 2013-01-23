@@ -216,8 +216,8 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         const RecordFieldsCollection& records = getRecordFields();
         if (records.size() > values.size()) {
             isc_throw(InvalidOptionValue, "number of data fields for the option"
-                      << " type " << type_ << " is greater than number of values"
-                      << " provided.");
+                      << " type '" <<  getCode() << "' is greater than number"
+                      << " of values provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
             writeToBuffer(util::str::trim(values[i]),
@@ -444,14 +444,8 @@ OptionDefinition::writeToBuffer(const std::string& value,
         OptionDataTypeUtil::writeString(value, buf);
         return;
     case OPT_FQDN_TYPE:
-        {
-            // FQDN implementation is not terribly complicated but will require
-            // creation of some additional logic (maybe object) that will parse
-            // the fqdn into labels.
-            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
-                      " is not supported yet");
-            return;
-        }
+        OptionDataTypeUtil::writeFqdn(value, buf);
+        return;
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been

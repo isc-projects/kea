@@ -205,7 +205,7 @@ bool Dhcpv6Srv::run() {
 
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
                           DHCP6_RESPONSE_DATA)
-                          .arg(rsp->getType()).arg(rsp->toText());
+                    .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
                 if (rsp->pack()) {
                     try {
