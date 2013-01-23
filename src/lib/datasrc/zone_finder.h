@@ -407,7 +407,7 @@ public:
     /// \name Search Methods
     ///
     //@{
-    /// Search the zone for a given pair of domain name and RR type.
+    /// \brief Search the zone for a given pair of domain name and RR type.
     ///
     /// Each derived version of this method searches the underlying backend
     /// for the data that best matches the given name and type.
@@ -578,6 +578,14 @@ public:
                                             const isc::dns::RRType& type,
                                             const FindOptions options
                                             = FIND_DEFAULT) = 0;
+
+    /// \brief Search for an RRset of given RR type at the zone origin.
+    ///
+    /// This is an equivalent of a call to \c find() where the \c name
+    /// parameter is the zone origin.
+    virtual boost::shared_ptr<Context> findAtOrigin(
+        const isc::dns::RRType& type, bool use_minmtu,
+        FindOptions options);
 
     ///
     /// \brief Finds all RRsets in the given name.
