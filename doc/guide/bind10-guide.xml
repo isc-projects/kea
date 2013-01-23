@@ -3921,44 +3921,344 @@ Dhcp6/subnet6/	list
         2001:db8:: address may be assigned as well. If you want to avoid this,
         please use the "min-max" notation.
       </para>
+    </section>
+
+    <section id="dhcp6-std-options">
+      <title>Standard DHCPv6 options</title>
       <para>
-        Options can also be configured: the following commands configure
-        the DNS-SERVERS option for all subnets with the following addresses:
-        2001:db8:1::1 and 2001:db8:1::2
+        One of the major features of DHCPv6 server is to provide configuration
+        options to clients. Although there are several options that require
+        special behavior, most options are sent by the server only if the client
+        explicitely requested them.  The following example shows how to
+        configure DNS servers, which is one of the most frequently used
+        options. Numbers in the first column are added for easier reference and
+        will not appear on screen. Options specified in this way are considered
+        global and apply to all configured subnets.
+
         <screen>
+1. &gt; <userinput>config add Dhcp6/option-data</userinput>
+2. &gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
+3. &gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+4. &gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+5. &gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+6. &gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8::cafe, 2001:db8::babe"</userinput>
+7. &gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+    <para>
+      The first line creates new entry in option-data table. It
+      contains information on all global options that the server is
+      supposed to configure in all subnets. The second line specifies
+      option name. For a complete list of currently supported names,
+      see the list <xref linkend="dhcp6-std-options-list"/> below.
+      The third line specified option code. It must match values from
+      the list. Fourth line specifies option space, which must always
+      be set to "dhcp6" as these are standard DHCPv6 options. For
+      other name spaces, including custom option spaces, see <xref
+      linkend="dhcp6-option-spaces"/>. Fifth line specifies format in
+      which data will be specified. It is recommended to use CSV (coma
+      separated values). The sixth list specifies the actual value to
+      be sent to clients. Data is specified as a normal text with
+      values separated with comas, if more than one value is
+      allowed.
+    </para>
+
+    <para>
+      Options can also be configured as hex values. If csv-format is
+      set to false, option data must be specified as a hex string. The
+      following commands configure the DNS-SERVERS option for all
+      subnets with the following addresses: 2001:db8:1::cafe and
+      2001:db8:1::babe. Note that csv-format is set to false.
+      <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format false</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/data "2001 0DB8 0001 0000 0000 0000</userinput>
-        <userinput>0000 0001 2001 0DB8 0001 0000 0000 0000 0000 0002"</userinput>
+        <userinput>0000 CAFE 2001 0DB8 0001 0000 0000 0000 0000 BABE"</userinput>
 &gt; <userinput>config commit</userinput>
         </screen>
        (The value for the setting of the "data" element is split across two
-        lines in this document for clarity: when entering the command, the whole
+        lines in this document for clarity: when entering the command, all the
         string should be entered on the same line.)
       </para>
-      <para>
-        Currently the only way to set option data is to specify the
-        data as a string of hexadecimal digits.  It is planned to allow
-        alternative ways of specifying the data as a comma-separated list,
-        e.g. "2001:db8:1::1,2001:db8:1::2".
-      </para>
-      <para>
-        As with global settings, it is also possible to override options on a
-        per-subnet basis, e.g.  the following commands override the global DNS
-        servers option for a particular subnet, setting a single DNS server with
-        address 2001:db8:1::3.
-        <screen>
+
+    <para>
+      As with global settings, it is also possible to override options
+      on a per-subnet basis. The following commands override the
+      global DNS servers option for a particular subnet, setting a
+      single DNS server with address 2001:db8:1::3. It is convenient
+      to use global options when clients connected to most of your
+      subnets are expected to get the same values of a given
+      option. You can then override specific values for small number
+      of subnets. If you use different values in each subnet, it does
+      not make sense to specify global option values
+      (Dhcp6/option-data), but rather use only subnet-specific values
+      (Dhcp6/subnet[X]/option-data[Y]).
+      <screen>
 &gt; <userinput>config add Dhcp6/subnet6[0]/option-data</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/name "dns-servers"</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/code 23</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001 0DB8 0001 0000</userinput>
-        <userinput>0000 0000 0000 0003"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001:db8:1::3"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-        (As before, the setting of the "data" element has been split across two
-        lines for clarity.)
+    </para>
+
+<note>
+  <para>In upcoming Kea versions, it will not be required anymore to specify
+  option code, space and csv-format fields as those fields will be filled
+  automatically.</para>
+</note>
+
+
+<para>
+  This is the list of currently supported standard DHCPv6 options. Name and code
+  specify name and code that should be used as a name in option-data
+  structures. Type designates the actual format of the data. Uint8 means 8 bit
+  unsigned integer with allowed values 0 to 255. Uint16 means 16 bit unsinged
+  integer with allowed values 0 to 65535. Uint32 means 32 bit unsigned integer with
+  allowed values 0 to 4294967295. ipv6-address means a normal IPv6 address. Fqdn means
+  fully qualified domain name. String means any text. Some options are designated
+  as arrays. This means that more than one value is allowed in such an option. For example
+  the option dns-servers allows conveying more than one IPv6 addresses, so clients will
+  get multiple DNS servers if needed.
+</para>
+
+<!-- @todo: describe record types -->
+
+<para>
+        <itemizedlist id="dhcp6-std-options-list">
+          <title>List of standard DHCPv6 options</title>
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<listitem><para>name: clientid, code: 1,  type: binary, array false</para></listitem>
+<listitem><para>name: serverid, code: 2,  type: binary, array false</para></listitem>
+<listitem><para>name: ia-na, code: 3,  type: record, array false</para></listitem>
+<listitem><para>name: ia-ta, code: 4,  type: uint32, array false</para></listitem>
+<listitem><para>name: iaaddr, code: 5,  type: record, array false</para></listitem>
+<listitem><para>name: oro, code: 6,  type: uint16, array true</para></listitem> -->
+<listitem><para>name: preference, code: 7,  type: uint8, array false</para></listitem>
+
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<listitem><para>name: elapsed-time, code: 8,  type: uint16, array false</para></listitem>
+<listitem><para>name: relay-msg, code: 9,  type: binary, array false</para></listitem>
+<listitem><para>name: auth, code: 11,  type: binary, array false</para></listitem>
+<listitem><para>name: unicast, code: 12,  type: ipv6-address, array false</para></listitem>
+<listitem><para>name: status-code, code: 13,  type: record, array false</para></listitem>
+<listitem><para>name: rapid-commit, code: 14,  type: empty, array false</para></listitem>
+<listitem><para>name: user-class, code: 15,  type: binary, array false</para></listitem>
+<listitem><para>name: vendor-class, code: 16,  type: record, array false</para></listitem>
+<listitem><para>name: vendor-opts, code: 17,  type: uint32, array false</para></listitem>
+<listitem><para>name: interface-id, code: 18,  type: binary, array false</para></listitem>
+<listitem><para>name: reconf-msg, code: 19,  type: uint8, array false</para></listitem>
+<listitem><para>name: reconf-accept, code: 20,  type: empty, array false</para></listitem> -->
+<listitem><para>name: sip-server-dns, code: 21,  type: fqdn, array true</para></listitem>
+<listitem><para>name: sip-server-addr, code: 22,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: dns-servers, code: 23,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: domain-search, code: 24,  type: fqdn, array true</para></listitem>
+<listitem><para>name: ia-pd, code: 25,  type: record, array false</para></listitem>
+<listitem><para>name: iaprefix, code: 26,  type: record, array false</para></listitem>
+<listitem><para>name: nis-servers, code: 27,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: nisp-servers, code: 28,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: nis-domain-name, code: 29,  type: fqdn, array true</para></listitem>
+<listitem><para>name: nisp-domain-name, code: 30,  type: fqdn, array true</para></listitem>
+<listitem><para>name: sntp-servers, code: 31,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: information-refresh-time, code: 32,  type: uint32, array false</para></listitem>
+<listitem><para>name: bcmcs-server-dns, code: 33,  type: fqdn, array true</para></listitem>
+<listitem><para>name: bcmcs-server-addr, code: 34,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: geoconf-civic, code: 36,  type: record, array false</para></listitem>
+<listitem><para>name: remote-id, code: 37,  type: record, array false</para></listitem>
+<listitem><para>name: subscriber-id, code: 38,  type: binary, array false</para></listitem>
+<listitem><para>name: client-fqdn, code: 39,  type: record, array false</para></listitem>
+<listitem><para>name: pana-agent, code: 40,  type: ipv6-address, array true</para></listitem>
+<listitem><para>name: new-posix-timezone, code: 41,  type: string, array false</para></listitem>
+<listitem><para>name: new-tzdb-timezone, code: 42,  type: string, array false</para></listitem>
+<listitem><para>name: ero, code: 43,  type: uint16, array true</para></listitem>
+<listitem><para>name: lq-query, code: 44,  type: record, array false</para></listitem>
+<listitem><para>name: client-data, code: 45,  type: empty, array false</para></listitem>
+<listitem><para>name: clt-time, code: 46,  type: uint32, array false</para></listitem>
+<listitem><para>name: lq-relay-data, code: 47,  type: record, array false</para></listitem>
+<listitem><para>name: lq-client-link, code: 48, type: ipv6-address, array true</para></listitem>
+</itemizedlist>
+</para>
+    </section>
+
+    <section id="dhcp6-custom-options">
+      <title>Custom DHCPv6 options</title>
+      <para>It is also possible to define new options that are
+      currently not supported out of the box. Let's assume that we
+      want to define a new DHCPv6 option called foo. It will have code 100
+      and will convey a single unsigned 32 bit integer value. We can define
+      such option format by using the following commands:
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 100</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "uint32"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      Note that this specifies new option format, not the values conveyed in
+      that option.
+      </para>
+      <para>Once the new option format is specified, concrete values can then
+      be specified in the same way as standard options. For example the following
+      commands may be used to define global values that apply to all subnets.
+        <screen>
+1. &gt; <userinput>config add Dhcp6/option-data</userinput>
+2. &gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+3. &gt; <userinput>config set Dhcp6/option-data[0]/code 100</userinput>
+4. &gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+5. &gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+6. &gt; <userinput>config set Dhcp6/option-data[0]/data "12345"</userinput>
+7. &gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>New options can take more complex forms than simple use of
+      primitives (uint8, string, ipv6-address etc).  It is possible to
+      define composition of existing primitives. Let's assume that we
+      want to define a new option that will consist of an IPv6
+      address, followed by unsigned 16 bit integer, followed by a text
+      string. Such an option could be defined in the following way:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+</screen>
+     Its values can be later defined as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+7. &gt; <userinput>config commit</userinput></screen>
       </para>
     </section>
+
+    <section id="dhcp6-vendor-opts">
+      <title>DHCPv6 vendor specific options</title>
+      <para>Currently there are two option spaces defined: dhcp4 (to
+      be used in DHCPv4 daemon) and dhcp6. There is also vendor-opts-space,
+      which is empty by default, but options can be defined in it. Those options
+      are called vendor-specific information options. The following examples
+      show how to define an option foo with code 1 that consists of IPv6 address,
+      unsigned 16 bit integer and a string. The foo option is conveyed in
+      vendor specific information option.
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulates ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+     After option format is defined, the next step is to define actual values
+     for that option:
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    We should also define values for the vendor-opts, that will convey our option foo.
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/name "vendor-opts"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/code 17</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="dhcp6-option-spaces">
+      <title>Nested DHCPv6 options (custom option spaces)</title>
+      <para>It is sometimes useful to define completely new option
+      spaces.  This is useful if the user wants his new option to
+      convey sub-options that use separate numbering scheme, for
+      example sub-options with codes 1 and 2. Those option codes
+      conflict with standard DHCPv6 options, so a separate option
+      space must be defined. Let's assume that we want to have a
+      DHCPv6 option with code 102 that conveys two sub-options with
+      codes 1 and 2. This could be achieved with the following examples.
+      First we need to define those new sub-options:
+<screen>
+config add Dhcp6/option-def
+config set Dhcp6/option-def[0]/name "subopt1"
+config set Dhcp6/option-def[0]/code 1
+config set Dhcp6/option-def[0]/space "isc"
+config set Dhcp6/option-def[0]/type "ipv6-address"
+config set Dhcp6/option-def[0]/record-types ""
+config set Dhcp6/option-def[0]/array false
+config set Dhcp6/option-def[0]/encapsulate ""
+config commit
+
+config add Dhcp6/option-def
+config set Dhcp6/option-def[1]/name "subopt2"
+config set Dhcp6/option-def[1]/code 2
+config set Dhcp6/option-def[1]/space "isc"
+config set Dhcp6/option-def[1]/type "string"
+config set Dhcp6/option-def[1]/record-types ""
+config set Dhcp6/option-def[1]/array false
+config set Dhcp6/option-def[1]/encapsulate ""
+config commit</screen>
+The next step is to define a regular DHCPv6 option and specify that it
+should include options from isc option space:
+<screen>
+config add Dhcp6/option-def
+config set Dhcp6/option-def[2]/name "container"
+config set Dhcp6/option-def[2]/code 102
+config set Dhcp6/option-def[2]/space "dhcp6"
+config set Dhcp6/option-def[2]/type "uint16"
+config set Dhcp6/option-def[2]/array false
+config set Dhcp6/option-def[2]/record-types ""
+config set Dhcp6/option-def[2]/encapsulate "isc"
+config commit</screen>
+
+Finally, we should specify values for those new options:
+<screen>
+config add Dhcp6/option-data
+config set Dhcp6/option-data[0]/name "subopt1"
+config set Dhcp6/option-data[0]/space "isc"
+config set Dhcp6/option-data[0]/code 1
+config set Dhcp6/option-data[0]/csv-format true
+config set Dhcp6/option-data[0]/data "2001:db8::abcd"
+config commit
+
+config add Dhcp6/option-data
+config set Dhcp6/option-data[1]/name "subopt2"
+config set Dhcp6/option-data[1]/space "isc"
+config set Dhcp6/option-data[1]/code 2
+config set Dhcp6/option-data[1]/csv-format true
+config set Dhcp6/option-data[1]/data "Hello world"
+config commit
+
+config add Dhcp6/option-data
+config set Dhcp6/option-data[2]/name "container"
+config set Dhcp6/option-data[2]/space "dhcp6"
+config set Dhcp6/option-data[2]/code 102
+config set Dhcp6/option-data[2]/csv-format true
+config set Dhcp6/option-data[2]/data "123"
+config commit</screen>
+      </para>
+    </section>
+
+    
        
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
