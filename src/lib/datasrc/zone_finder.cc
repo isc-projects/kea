@@ -83,8 +83,8 @@ copyRRset(const AbstractRRset& rrset, const RRTTL& ttl) {
 }
 
 ZoneFinderContextPtr
-ZoneFinder::findAtOriginImpl(const dns::RRType& type, bool use_minttl,
-                             FindOptions options)
+ZoneFinder::findAtOrigin(const dns::RRType& type, bool use_minttl,
+                         FindOptions options)
 {
     ZoneFinderContextPtr context = find(getOrigin(), type, options);
 
