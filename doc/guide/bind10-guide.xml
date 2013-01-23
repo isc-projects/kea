@@ -3718,87 +3718,87 @@ Dhcp4/subnet4	[]	list	(default)
           <tr></tr>
           </thead>
           <tbody>
-<tr><td>subnet-mask</td><td>1</td><td>true</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>time-offset</td><td>2</td><td>true</td><td>uint32</td><td>false</td></tr>
-<tr><td>routers</td><td>3</td><td>true</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>time-servers</td><td>4</td><td>true</td><td>ipv4-address</td><td>array true</td></tr>
-<tr><td>name-servers</td><td>5</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>domain-name-servers</td><td>6</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>log-servers</td><td>7</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>cookie-servers</td><td>8</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>lpr-servers</td><td>9</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>impress-servers</td><td>10</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>resource-location-servers</td><td>11</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>host-name</td><td>12</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>boot-size</td><td>13</td><td>true</td><td>type: uint16</td><td>false</td></tr>
-<tr><td>merit-dump</td><td>14</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>domain-name</td><td>15</td><td>true</td><td>type: fqdn</td><td>false</td></tr>
-<tr><td>swap-server</td><td>16</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>root-path</td><td>17</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>extensions-path</td><td>18</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>ip-forwarding</td><td>19</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>non-local-source-routing</td><td>20</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>policy-filter</td><td>21</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>max-dgram-reassembly</td><td>22</td><td>true</td><td>type: uint16</td><td>false</td></tr>
-<tr><td>default-ip-ttl</td><td>23</td><td>true</td><td>type: uint8</td><td>false</td></tr>
-<tr><td>path-mtu-aging-timeout</td><td>24</td><td>true</td><td>type: uint32</td><td>false</td></tr>
-<tr><td>path-mtu-plateau-table</td><td>25</td><td>true</td><td>type: uint16</td><td>array true</td></tr>
-<tr><td>interface-mtu</td><td>26</td><td>true</td><td>type: uint16</td><td>false</td></tr>
-<tr><td>all-subnets-local</td><td>27</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>broadcast-address</td><td>28</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>perform-mask-discovery</td><td>29</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>mask-supplier</td><td>30</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>router-discovery</td><td>31</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>router-solicitation-address</td><td>32</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>static-routes</td><td>33</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>trailer-encapsulation</td><td>34</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>arp-cache-timeout</td><td>35</td><td>true</td><td>type: uint32</td><td>false</td></tr>
-<tr><td>ieee802-3-encapsulation</td><td>36</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>default-tcp-ttl</td><td>37</td><td>true</td><td>type: uint8</td><td>false</td></tr>
-<tr><td>tcp-keepalive-internal</td><td>38</td><td>true</td><td>type: uint32</td><td>false</td></tr>
-<tr><td>tcp-keepalive-garbage</td><td>39</td><td>true</td><td>type: boolean</td><td>false</td></tr>
-<tr><td>nis-domain</td><td>40</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>nis-servers</td><td>41</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>ntp-servers</td><td>42</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>vendor-encapsulated-options</td><td>43</td><td>true</td><td>type: empty</td><td>false</td></tr>
-<tr><td>netbios-name-servers</td><td>44</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>netbios-dd-server</td><td>45</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>netbios-node-type</td><td>46</td><td>true</td><td>type: uint8</td><td>false</td></tr>
-<tr><td>netbios-scope</td><td>47</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>font-servers</td><td>48</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>x-display-manager</td><td>49</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>dhcp-requested-address</td><td>50</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
+<tr><td>subnet-mask</td><td>1</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>time-offset</td><td>2</td><td>uint32</td><td>false</td></tr>
+<tr><td>routers</td><td>3</td><td>ipv4-address</td></tr>
+<tr><td>time-servers</td><td>4</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>name-servers</td><td>5</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>domain-name-servers</td><td>6</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>log-servers</td><td>7</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>cookie-servers</td><td>8</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>lpr-servers</td><td>9</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>impress-servers</td><td>10</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>resource-location-servers</td><td>11</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>host-name</td><td>12</td><td>string</td><td>false</td></tr>
+<tr><td>boot-size</td><td>13</td><td>uint16</td><td>false</td></tr>
+<tr><td>merit-dump</td><td>14</td><td>string</td><td>false</td></tr>
+<tr><td>domain-name</td><td>15</td><td>fqdn</td><td>false</td></tr>
+<tr><td>swap-server</td><td>16</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>root-path</td><td>17</td><td>string</td><td>false</td></tr>
+<tr><td>extensions-path</td><td>18</td><td>string</td><td>false</td></tr>
+<tr><td>ip-forwarding</td><td>19</td><td>boolean</td><td>false</td></tr>
+<tr><td>non-local-source-routing</td><td>20</td><td>boolean</td><td>false</td></tr>
+<tr><td>policy-filter</td><td>21</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>max-dgram-reassembly</td><td>22</td><td>uint16</td><td>false</td></tr>
+<tr><td>default-ip-ttl</td><td>23</td><td>uint8</td><td>false</td></tr>
+<tr><td>path-mtu-aging-timeout</td><td>24</td><td>uint32</td><td>false</td></tr>
+<tr><td>path-mtu-plateau-table</td><td>25</td><td>uint16</td><td>true</td></tr>
+<tr><td>interface-mtu</td><td>26</td><td>uint16</td><td>false</td></tr>
+<tr><td>all-subnets-local</td><td>27</td><td>boolean</td><td>false</td></tr>
+<tr><td>broadcast-address</td><td>28</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>perform-mask-discovery</td><td>29</td><td>boolean</td><td>false</td></tr>
+<tr><td>mask-supplier</td><td>30</td><td>boolean</td><td>false</td></tr>
+<tr><td>router-discovery</td><td>31</td><td>boolean</td><td>false</td></tr>
+<tr><td>router-solicitation-address</td><td>32</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>static-routes</td><td>33</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>trailer-encapsulation</td><td>34</td><td>boolean</td><td>false</td></tr>
+<tr><td>arp-cache-timeout</td><td>35</td><td>uint32</td><td>false</td></tr>
+<tr><td>ieee802-3-encapsulation</td><td>36</td><td>boolean</td><td>false</td></tr>
+<tr><td>default-tcp-ttl</td><td>37</td><td>uint8</td><td>false</td></tr>
+<tr><td>tcp-keepalive-internal</td><td>38</td><td>uint32</td><td>false</td></tr>
+<tr><td>tcp-keepalive-garbage</td><td>39</td><td>boolean</td><td>false</td></tr>
+<tr><td>nis-domain</td><td>40</td><td>string</td><td>false</td></tr>
+<tr><td>nis-servers</td><td>41</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>ntp-servers</td><td>42</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>vendor-encapsulated-options</td><td>43</td><td>empty</td><td>false</td></tr>
+<tr><td>netbios-name-servers</td><td>44</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>netbios-dd-server</td><td>45</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>netbios-node-type</td><td>46</td><td>uint8</td><td>false</td></tr>
+<tr><td>netbios-scope</td><td>47</td><td>string</td><td>false</td></tr>
+<tr><td>font-servers</td><td>48</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>x-display-manager</td><td>49</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>dhcp-requested-address</td><td>50</td><td>ipv4-address</td><td>false</td></tr>
 <!-- Lease time should not be configured by a user.
-<tr><td>dhcp-lease-time</td><td>51</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>dhcp-lease-time</td><td>51</td><td>uint32</td><td>false</td></tr>
 -->
-<tr><td>dhcp-option-overload</td><td>52</td><td>true</td><td>type: uint8</td><td>false</td></tr>
+<tr><td>dhcp-option-overload</td><td>52</td><td>uint8</td><td>false</td></tr>
 <!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
-<tr><td>dhcp-message-type</td><td>53</td><td>true</td><td>type: uint8</td><td>false</td></tr>
-<tr><td>dhcp-server-identifier</td><td>54</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>dhcp-parameter-request-list</td><td>55</td><td>true</td><td>type: uint8</td><td>array true</td></tr>
+<tr><td>dhcp-message-type</td><td>53</td><td>uint8</td><td>false</td></tr>
+<tr><td>dhcp-server-identifier</td><td>54</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>dhcp-parameter-request-list</td><td>55</td><td>uint8</td><td>true</td></tr>
 -->
-<tr><td>dhcp-message</td><td>56</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>dhcp-max-message-size</td><td>57</td><td>true</td><td>type: uint16</td><td>false</td></tr>
+<tr><td>dhcp-message</td><td>56</td><td>string</td><td>false</td></tr>
+<tr><td>dhcp-max-message-size</td><td>57</td><td>uint16</td><td>false</td></tr>
 <!-- Renewal and rebinding time should not be configured by a user.
-<tr><td>dhcp-renewal-time</td><td>58</td><td>true</td><td>type: uint32</td><td>false</td></tr>
-<tr><td>dhcp-rebinding-time</td><td>59</td><td>true</td><td>type: uint32</td><td>false</td></tr>
+<tr><td>dhcp-renewal-time</td><td>58</td><td>uint32</td><td>false</td></tr>
+<tr><td>dhcp-rebinding-time</td><td>59</td><td>uint32</td><td>false</td></tr>
 -->
-<tr><td>vendor-class-identifier</td><td>60</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>vendor-class-identifier</td><td>60</td><td>binary</td><td>false</td></tr>
 <!-- Client identifier should not be configured by a user.
-<tr><td>dhcp-client-identifier</td><td>61</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>dhcp-client-identifier</td><td>61</td><td>binary</td><td>false</td></tr>
 -->
-<tr><td>nwip-domain-name</td><td>62</td><td>true</td><td>type: string</td><td>false</td></tr>
-<tr><td>nwip-suboptions</td><td>63</td><td>true</td><td>type: binary</td><td>false</td></tr>
-<tr><td>user-class</td><td>77</td><td>true</td><td>type: binary</td><td>false</td></tr>
-<tr><td>fqdn</td><td>81</td><td>true</td><td>type: record</td><td>false</td></tr>
-<tr><td>dhcp-agent-options</td><td>82</td><td>true</td><td>type: empty</td><td>false</td></tr>
-<tr><td>authenticate</td><td>90</td><td>true</td><td>type: binary</td><td>false</td></tr>
-<tr><td>client-last-transaction-time</td><td>91</td><td>true</td><td>type: uint32</td><td>false</td></tr>
-<tr><td>associated-ip</td><td>92</td><td>true</td><td>type: ipv4-address</td><td>array true</td></tr>
-<tr><td>subnet-selection</td><td>118</td><td>true</td><td>type: ipv4-address</td><td>false</td></tr>
-<tr><td>domain-search</td><td>119</td><td>true</td><td>type: binary</td><td>false</td></tr>
-<tr><td>vivco-suboptions</td><td>124</td><td>true</td><td>type: binary</td><td>false</td></tr>
-<tr><td>vivso-suboptions</td><td>125</td><td>true</td><td>type: binary</td><td>false</td></tr>
+<tr><td>nwip-domain-name</td><td>62</td><td>string</td><td>false</td></tr>
+<tr><td>nwip-suboptions</td><td>63</td><td>binary</td><td>false</td></tr>
+<tr><td>user-class</td><td>77</td><td>binary</td><td>false</td></tr>
+<tr><td>fqdn</td><td>81</td><td>record</td><td>false</td></tr>
+<tr><td>dhcp-agent-options</td><td>82</td><td>empty</td><td>false</td></tr>
+<tr><td>authenticate</td><td>90</td><td>binary</td><td>false</td></tr>
+<tr><td>client-last-transaction-time</td><td>91</td><td>uint32</td><td>false</td></tr>
+<tr><td>associated-ip</td><td>92</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>subnet-selection</td><td>118</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>domain-search</td><td>119</td><td>binary</td><td>false</td></tr>
+<tr><td>vivco-suboptions</td><td>124</td><td>binary</td><td>false</td></tr>
+<tr><td>vivso-suboptions</td><td>125</td><td>binary</td><td>false</td></tr>
 </tbody>
 </table>
 </para>
