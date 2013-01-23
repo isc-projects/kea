@@ -289,10 +289,9 @@ class CommandControl():
             if key == 'version':
                 continue
             elif key in ['key_file', 'cert_file']:
-                # TODO, only check whether the file exist, is a
-                # file, and is readable
-                # further check need to be done: eg. whether
-                # the private/certificate is valid.
+                # TODO: we only check whether the file exist, is a
+                # file, and is readable; but further check need to be done:
+                # eg. whether the private/certificate is valid.
                 path = new_config[key]
                 try:
                     check_file(path)
@@ -549,16 +548,16 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                                       certfile = cert,
                                       keyfile = key,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
+            # Return here (if control leaves this blocks it will raise an
+            # error)
             return ssl_sock
         except ssl.SSLError as err:
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
-            self.close_request(sock)
-            # raise socket error to finish the request
-            raise socket.error
         except (CmdctlException, IOError) as cce:
             logger.error(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
-            # raise socket error to finish the request
-            raise socket.error
+        self.close_request(sock)
+        # raise socket error to finish the request
+        raise socket.error
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''

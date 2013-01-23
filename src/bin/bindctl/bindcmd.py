@@ -124,6 +124,11 @@ class BindCmdInterpreter(Cmd):
             self.csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir + \
                 os.sep + '.bind10' + os.sep
 
+    def _print(self, *args):
+        '''Simple wrapper around calls to print that can be overridden in
+           unit tests.'''
+        print(*args)
+
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -151,19 +156,19 @@ WARNING: Python readline module isn't available, so the command line editor
                 return 1
 
             self.cmdloop()
-            print('\nExit from bindctl')
+            self._print('\nExit from bindctl')
             return 0
         except FailToLogin as err:
             # error already printed when this was raised, ignoring
             return 1
         except KeyboardInterrupt:
-            print('\nExit from bindctl')
+            self._print('\nExit from bindctl')
             return 0
         except socket.error as err:
-            print('Failed to send request, the connection is closed')
+            self._print('Failed to send request, the connection is closed')
             return 1
         except http.client.CannotSendRequest:
-            print('Can not send request, the connection is busy')
+            self._print('Can not send request, the connection is busy')
             return 1
 
     def _get_saved_user_info(self, dir, file_name):
@@ -182,7 +187,8 @@ WARNING: Python readline module isn't available, so the command line editor
             for row in users_info:
                 users.append([row[0], row[1]])
         except (IOError, IndexError) as err:
-            print("Error reading saved username and password from %s%s: %s" % (dir, file_name, err))
+            self._print("Error reading saved username and password "
+                        "from %s%s: %s" % (dir, file_name, err))
         finally:
             if csvfile:
                 csvfile.close()
@@ -202,20 +208,22 @@ WARNING: Python readline module isn't available, so the command line editor
             writer.writerow([username, passwd])
             csvfile.close()
         except IOError as err:
-            print("Error saving user information:", err)
-            print("user info file name: %s%s" % (dir, file_name))
+            self._print("Error saving user information:", err)
+            self._print("user info file name: %s%s" % (dir, file_name))
             return False
 
         return True
 
-    def __try_login(self, username, password):
+    def _try_login(self, username, password):
         '''
-        Attempts to log in to bindctl by sending a POST with
+        Attempts to log in to cmdctl by sending a POST with
         the given username and password.
         On success of the POST (mind, not the login, only the network
         operation), returns a tuple (response, data).
         On failure, raises a FailToLogin exception, and prints some
         information on the failure.
+        This call is essentially 'private', but made 'protected' for
+        easier testing.
         '''
         param = {'username': username, 'password' : password}
         try:
@@ -223,11 +231,12 @@ WARNING: Python readline module isn't available, so the command line editor
             data = response.read().decode()
             return (response, data)
         except socket.error as err:
-            print("Socket error while sending login information: ", err)
+            self._print("Socket error while sending login information: ", err)
             if err.errno == errno.ECONNRESET:
-                print("Please check the logs of b10-cmdctl, there may be a "
-                      "problem accepting SSL connections, such as a "
-                      "permission problem on the server certificate file.")
+                self._print("Please check the logs of b10-cmdctl, there may "
+                            "be a problem accepting SSL connections, such "
+                            "as a permission problem on the server "
+                            "certificate file.")
             raise FailToLogin()
 
     def login_to_cmdctl(self):
@@ -240,30 +249,30 @@ WARNING: Python readline module isn't available, so the command line editor
         # Look at existing username/password combinations and try to log in
         users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
-            response, data = self.__try_login(row[0], row[1])
+            response, data = self._try_login(row[0], row[1])
 
             if response.status == http.client.OK:
                 # Is interactive?
                 if sys.stdin.isatty():
-                    print(data + ' login as ' + row[0])
+                    self._print(data + ' login as ' + row[0])
                 return True
 
         # No valid logins were found, prompt the user for a username/password
         count = 0
-        print('No stored password file found, please see sections '
+        self._print('No stored password file found, please see sections '
               '"Configuration specification for b10-cmdctl" and "bindctl '
               'command-line options" of the BIND 10 guide.')
         while True:
             count = count + 1
             if count > 3:
-                print("Too many authentication failures")
+                self._print("Too many authentication failures")
                 return False
 
             username = input("Username: ")
             passwd = getpass.getpass()
 
-            response, data = self.__try_login(username, passwd)
-            print(data)
+            response, data = self._try_login(username, passwd)
+            self._print(data)
 
             if response.status == http.client.OK:
                 self._save_user_info(username, passwd, self.csv_file_dir,
@@ -461,25 +470,26 @@ WARNING: Python readline module isn't available, so the command line editor
         pass
 
     def do_help(self, name):
-        print(CONST_BINDCTL_HELP)
+        self._print(CONST_BINDCTL_HELP)
         for k in self.modules.values():
             n = k.get_name()
             if len(n) >= CONST_BINDCTL_HELP_INDENT_WIDTH:
-                print("    %s" % n)
-                print(textwrap.fill(k.get_desc(),
-                      initial_indent="            ",
-                      subsequent_indent="    " +
-                      " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
-                      width=70))
+                self._print("    %s" % n)
+                self._print(textwrap.fill(k.get_desc(),
+                            initial_indent="            ",
+                            subsequent_indent="    " +
+                            " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
+                            width=70))
             else:
-                print(textwrap.fill("%s%s%s" %
-                    (k.get_name(),
-                     " "*(CONST_BINDCTL_HELP_INDENT_WIDTH - len(k.get_name())),
-                     k.get_desc()),
-                    initial_indent="    ",
-                    subsequent_indent="    " +
-                    " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
-                    width=70))
+                self._print(textwrap.fill("%s%s%s" %
+                            (k.get_name(),
+                            " "*(CONST_BINDCTL_HELP_INDENT_WIDTH -
+                                 len(k.get_name())),
+                            k.get_desc()),
+                            initial_indent="    ",
+                            subsequent_indent="    " +
+                            " " * CONST_BINDCTL_HELP_INDENT_WIDTH,
+                            width=70))
 
     def onecmd(self, line):
         if line == 'EOF' or line.lower() == "quit":
@@ -654,20 +664,20 @@ WARNING: Python readline module isn't available, so the command line editor
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
-            print('Error: ', err)
+            self._print('Error: ', err)
         except BindCtlException as err:
-            print("Error! ", err)
+            self._print("Error! ", err)
             self._print_correct_usage(err)
         except isc.cc.data.DataTypeError as err:
-            print("Error! ", err)
+            self._print("Error! ", err)
         except isc.cc.data.DataTypeError as dte:
-            print("Error: " + str(dte))
+            self._print("Error: " + str(dte))
         except isc.cc.data.DataNotFoundError as dnfe:
-            print("Error: " + str(dnfe))
+            self._print("Error: " + str(dnfe))
         except isc.cc.data.DataAlreadyPresentError as dape:
-            print("Error: " + str(dape))
+            self._print("Error: " + str(dape))
         except KeyError as ke:
-            print("Error: missing " + str(ke))
+            self._print("Error: missing " + str(ke))
 
     def _print_correct_usage(self, ept):
         if isinstance(ept, CmdUnknownModuleSyntaxError):
@@ -716,7 +726,8 @@ WARNING: Python readline module isn't available, so the command line editor
             module_name = identifier.split('/')[1]
             if module_name != "" and (self.config_data is None or \
                not self.config_data.have_specification(module_name)):
-                print("Error: Module '" + module_name + "' unknown or not running")
+                self._print("Error: Module '" + module_name +
+                            "' unknown or not running")
                 return
 
         if cmd.command == "show":
@@ -730,7 +741,9 @@ WARNING: Python readline module isn't available, so the command line editor
                     #identifier
                     identifier += cmd.params['argument']
                 else:
-                    print("Error: unknown argument " + cmd.params['argument'] + ", or multiple identifiers given")
+                    self._print("Error: unknown argument " +
+                                cmd.params['argument'] +
+                                ", or multiple identifiers given")
                     return
             values = self.config_data.get_value_maps(identifier, show_all)
             for value_map in values:
@@ -758,13 +771,14 @@ WARNING: Python readline module isn't available, so the command line editor
                     line += "(default)"
                 if value_map['modified']:
                     line += "(modified)"
-                print(line)
+                self._print(line)
         elif cmd.command == "show_json":
             if identifier == "":
-                print("Need at least the module to show the configuration in JSON format")
+                self._print("Need at least the module to show the "
+                            "configuration in JSON format")
             else:
                 data, default = self.config_data.get_value(identifier)
-                print(json.dumps(data))
+                self._print(json.dumps(data))
         elif cmd.command == "add":
             self.config_data.add_value(identifier,
                                        cmd.params.get('value_or_name'),
@@ -776,7 +790,7 @@ WARNING: Python readline module isn't available, so the command line editor
                 self.config_data.remove_value(identifier, None)
         elif cmd.command == "set":
             if 'identifier' not in cmd.params:
-                print("Error: missing identifier or value")
+                self._print("Error: missing identifier or value")
             else:
                 parsed_value = None
                 try:
@@ -793,9 +807,9 @@ WARNING: Python readline module isn't available, so the command line editor
             try:
                 self.config_data.commit()
             except isc.config.ModuleCCSessionError as mcse:
-                print(str(mcse))
+                self._print(str(mcse))
         elif cmd.command == "diff":
-            print(self.config_data.get_local_changes())
+            self._print(self.config_data.get_local_changes())
         elif cmd.command == "go":
             self.go(identifier)
 
@@ -815,7 +829,7 @@ WARNING: Python readline module isn't available, so the command line editor
         # check if exists, if not, revert and error
         v,d = self.config_data.get_value(new_location)
         if v is None:
-            print("Error: " + identifier + " not found")
+            self._print("Error: " + identifier + " not found")
             return
 
         self.location = new_location
@@ -830,7 +844,7 @@ WARNING: Python readline module isn't available, so the command line editor
                 with open(command.params['filename']) as command_file:
                     commands = command_file.readlines()
             except IOError as ioe:
-                print("Error: " + str(ioe))
+                self._print("Error: " + str(ioe))
                 return
         elif command_sets.has_command_set(command.command):
             commands = command_sets.get_commands(command.command)
@@ -848,7 +862,7 @@ WARNING: Python readline module isn't available, so the command line editor
     def __show_execute_commands(self, commands):
         '''Prints the command list without executing them'''
         for line in commands:
-            print(line.strip())
+            self._print(line.strip())
 
     def __apply_execute_commands(self, commands):
         '''Applies the configuration commands from the given iterator.
@@ -869,18 +883,19 @@ WARNING: Python readline module isn't available, so the command line editor
             for line in commands:
                 line = line.strip()
                 if verbose:
-                    print(line)
+                    self._print(line)
                 if line.startswith('#') or len(line) == 0:
                     continue
                 elif line.startswith('!'):
                     if re.match('^!echo ', line, re.I) and len(line) > 6:
-                        print(line[6:])
+                        self._print(line[6:])
                     elif re.match('^!verbose\s+on\s*$', line, re.I):
                         verbose = True
                     elif re.match('^!verbose\s+off$', line, re.I):
                         verbose = False
                     else:
-                        print("Warning: ignoring unknown directive: " + line)
+                        self._print("Warning: ignoring unknown directive: " +
+                                    line)
                 else:
                     cmd = BindCmdParser(line)
                     self._validate_cmd(cmd)
@@ -891,12 +906,12 @@ WARNING: Python readline module isn't available, so the command line editor
                 isc.cc.data.DataNotFoundError,
                 isc.cc.data.DataAlreadyPresentError,
                 KeyError) as err:
-            print('Error: ', err)
-            print()
-            print('Depending on the contents of the script, and which')
-            print('commands it has called, there can be committed and')
-            print('local changes. It is advised to check your settings,')
-            print('and revert local changes with "config revert".')
+            self._print('Error: ', err)
+            self._print()
+            self._print('Depending on the contents of the script, and which')
+            self._print('commands it has called, there can be committed and')
+            self._print('local changes. It is advised to check your settings')
+            self._print(', and revert local changes with "config revert".')
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
@@ -910,6 +925,7 @@ WARNING: Python readline module isn't available, so the command line editor
         # The reply is a string containing JSON data,
         # parse it, then prettyprint
         if data != "" and data != "{}":
-            print(json.dumps(json.loads(data), sort_keys=True, indent=4))
+            self._print(json.dumps(json.loads(data), sort_keys=True,
+                                   indent=4))
 
 

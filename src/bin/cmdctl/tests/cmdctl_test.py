@@ -22,13 +22,13 @@ import sys
 from cmdctl import *
 import isc.log
 
-SRC_FILE_PATH = '..' + os.sep
-if 'CMDCTL_SRC_PATH' in os.environ:
-    SRC_FILE_PATH = os.environ['CMDCTL_SRC_PATH'] + os.sep
+assert 'CMDCTL_SRC_PATH' in os.environ,\
+       "Please run this test with 'make check'"
+SRC_FILE_PATH = os.environ['CMDCTL_SRC_PATH'] + os.sep
 
-BUILD_FILE_PATH = '..' + os.sep
-if 'CMDCTL_BUILD_PATH' in os.environ:
-    BUILD_FILE_PATH = os.environ['CMDCTL_BUILD_PATH'] + os.sep
+assert 'CMDCTL_BUILD_PATH' in os.environ,\
+       "Please run this test with 'make check'"
+BUILD_FILE_PATH = os.environ['CMDCTL_BUILD_PATH'] + os.sep
 
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
@@ -535,6 +535,18 @@ class TestSecureHTTPServer(unittest.TestCase):
                                    BUILD_FILE_PATH + 'cmdctl-certfile.pem')
         self.assertIsInstance(ssl_sock, ssl.SSLSocket)
 
+        # wrap_socket can also raise IOError, which should be caught and
+        # handled like the other errors.
+        # Force this by temporarily disabling our own file checks
+        orig_check_func = self.server._check_key_and_cert
+        try:
+            self.server._check_key_and_cert = lambda x,y: None
+            self.assertRaises(socket.error,
+                              self.server._wrap_socket_in_ssl_context,
+                              sock,
+                              'no_such_file', 'no_such_file')
+        finally:
+            self.server._check_key_and_cert = orig_check_func
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
