@@ -219,7 +219,7 @@ void Pkt4::check() {
     uint8_t msg_type = getType();
     if (msg_type > DHCPLEASEACTIVE) {
         isc_throw(BadValue, "Invalid DHCP message type received: "
-                  << msg_type);
+                  << static_cast<int>(msg_type));
     }
 }
 
@@ -230,10 +230,10 @@ uint8_t Pkt4::getType() const {
     }
 
     // Check if Message Type is specified as OptionInt<uint8_t>
-    boost::shared_ptr<OptionInt<uint8_t> > typeOpt =
+    boost::shared_ptr<OptionInt<uint8_t> > type_opt =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >(generic);
-    if (typeOpt) {
-        return (typeOpt->getValue());
+    if (type_opt) {
+        return (type_opt->getValue());
     }
 
     // Try to use it as generic option
@@ -253,7 +253,6 @@ void Pkt4::setType(uint8_t dhcp_type) {
     }
 }
 
-
 void Pkt4::repack() {
     bufferOut_.writeData(&data_[0], data_.size());
 }
@@ -263,7 +262,7 @@ Pkt4::toText() {
     stringstream tmp;
     tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
         << " remoteAddr=" << remote_addr_.toText()
-        << ":" << remote_port_ << ", msgtype=" << getType()
+        << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
         << ", transid=0x" << hex << transid_ << dec << endl;
 
     for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();

@@ -20,10 +20,11 @@ export PYTHON_EXEC
 
 SYSINFO_PATH=@abs_top_builddir@/src/bin/sysinfo
 
-# Note: we shouldn't need log_messages except for the seemingly necessary
-# dependency due to the automatic import in the isc package (its __init__.py
-# imports some other modules)
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python/isc/log_messages
+# Note: we shouldn't need log_messages and lib/dns except for the seemingly
+# necessary dependency due to the automatic import in the isc package (its
+# __init__.py imports some other modules)
+# #2145 should eliminate the need for them.
+PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
 # Likewise, we need only because isc.log requires some loadable modules.

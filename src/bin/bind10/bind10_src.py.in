@@ -491,6 +491,8 @@ class BoB:
 
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > self.msgq_timeout:
+                if msgq_proc.process:
+                    msgq_proc.process.kill()
                 logger.error(BIND10_CONNECTING_TO_CC_FAIL)
                 raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
 

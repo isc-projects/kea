@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,8 +22,7 @@ using namespace isc::dhcp;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     : LeaseMgr(parameters) {
-    std::cout << "Warning: Using memfile database backend. It is usable for limited"
-              << " testing only. Leases will be lost after restart." << std::endl;
+    LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_WARNING);
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {

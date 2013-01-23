@@ -123,6 +123,26 @@ CfgMgr::getOptionDef(const std::string& option_space,
 }
 
 Subnet6Ptr
+CfgMgr::getSubnet6(const std::string& iface) {
+
+    if (!iface.length()) {
+        return (Subnet6Ptr());
+    }
+
+    // If there is more than one, we need to choose the proper one
+    for (Subnet6Collection::iterator subnet = subnets6_.begin();
+         subnet != subnets6_.end(); ++subnet) {
+        if (iface == (*subnet)->getIface()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6_IFACE)
+                .arg((*subnet)->toText()).arg(iface);
+            return (*subnet);
+        }
+    }
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
 
     // If there's only one subnet configured, let's just use it
@@ -143,6 +163,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6)
@@ -227,7 +248,16 @@ void CfgMgr::deleteSubnets6() {
     subnets6_.clear();
 }
 
-CfgMgr::CfgMgr() {
+std::string CfgMgr::getDataDir() {
+    return (datadir_);
+}
+
+
+CfgMgr::CfgMgr()
+    :datadir_(DHCP_DATA_DIR) {
+    // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
+    // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
+    // See AM_CPPFLAGS definition in Makefile.am
 }
 
 CfgMgr::~CfgMgr() {
