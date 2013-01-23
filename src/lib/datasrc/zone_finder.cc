@@ -26,6 +26,13 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace datasrc {
 
+ZoneFinderContextPtr
+ZoneFinder::findAtOrigin(const dns::RRType& type, bool /*use_minmtu*/,
+                         FindOptions options)
+{
+    return (find(getOrigin(), type, options));
+}
+
 isc::dns::ConstRRsetPtr
 ZoneFinder::stripRRsigs(isc::dns::ConstRRsetPtr rp,
                         const FindOptions options) {

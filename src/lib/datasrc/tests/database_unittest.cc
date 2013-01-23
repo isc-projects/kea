@@ -1805,6 +1805,30 @@ doFindTest(ZoneFinder& finder,
 }
 
 void
+doFindAtOriginTest(ZoneFinder& finder,
+                   const isc::dns::Name& origin,
+                   const isc::dns::RRType& type,
+                   const isc::dns::RRType& expected_type,
+                   const isc::dns::RRTTL expected_ttl,
+                   ZoneFinder::Result expected_result,
+                   const std::vector<std::string>& expected_rdatas,
+                   const std::vector<std::string>& expected_sig_rdatas,
+                   ZoneFinder::FindResultFlags expected_flags =
+                   ZoneFinder::RESULT_DEFAULT,
+                   const isc::dns::Name& expected_name =
+                   isc::dns::Name::ROOT_NAME(),
+                   const ZoneFinder::FindOptions options =
+                   ZoneFinder::FIND_DEFAULT)
+{
+    SCOPED_TRACE("doFindOriginTest " + origin.toText() + " " + type.toText());
+    ConstZoneFinderContextPtr result =
+        finder.findAtOrigin(type, false, options);
+    findTestCommon(finder, origin, type, result, expected_type, expected_ttl,
+                   expected_result, expected_rdatas, expected_sig_rdatas,
+                   expected_flags, expected_name, options);
+}
+
+void
 doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     ZoneFinder::Result expected_result,
                     const isc::dns::RRType expected_type,
@@ -2139,6 +2163,58 @@ TYPED_TEST(DatabaseClientTest, find) {
     doFindTest(*finder, isc::dns::Name("badsigtype.example.org."),
                this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                this->expected_rdatas_, this->expected_sig_rdatas_);
+}
+
+TYPED_TEST(DatabaseClientTest, findAtOrigin) {
+    ZoneFinderPtr finder(this->getFinder());
+
+    // Specified type of RR exists, no DNSSEC
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com.");
+    doFindAtOriginTest(*finder, this->zname_, RRType::NS(), RRType::NS(),
+                       this->rrttl_, ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_);
+
+    // Specified type of RR exists, with DNSSEC
+    this->expected_sig_rdatas_.push_back("NS 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindAtOriginTest(*finder, this->zname_, RRType::NS(), RRType::NS(),
+                       this->rrttl_, ZoneFinder::SUCCESS,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       ZoneFinder::RESULT_DEFAULT, this->zname_,
+                       ZoneFinder::FIND_DNSSEC);
+
+    // Specified type of RR doesn't exist, no DNSSEC
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), this->qtype_,
+                       this->rrttl_, ZoneFinder::NXRRSET,
+                       this->expected_rdatas_, this->expected_sig_rdatas_);
+
+    // Specified type of RR doesn't exist, with DNSSEC
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    this->expected_rdatas_.push_back(
+        "acnamesig1.example.org. A NS RRSIG NSEC");
+    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), RRType::NSEC(),
+                       this->rrttl_, ZoneFinder::NXRRSET,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       ZoneFinder::RESULT_NSEC_SIGNED,
+                       this->zname_, ZoneFinder::FIND_DNSSEC);
+
+    // Specified type of RR doesn't exist, with DNSSEC, enabling NSEC3
+    this->current_accessor_->enableNSEC3();
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    doFindAtOriginTest(*finder, this->zname_, RRType::TXT(), RRType::TXT(),
+                       this->rrttl_, ZoneFinder::NXRRSET,
+                       this->expected_rdatas_, this->expected_sig_rdatas_,
+                       ZoneFinder::RESULT_NSEC3_SIGNED,
+                       this->zname_, ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, findOutOfZone) {
