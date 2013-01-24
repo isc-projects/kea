@@ -35,6 +35,7 @@ import sys
 new_rdata_factory_users = [('aaaa', 'in'),
                            ('hinfo', 'generic'),
                            ('naptr', 'generic'),
+                           ('mx', 'generic'),
                            ('soa', 'generic'),
                            ('spf', 'generic'),
                            ('txt', 'generic')

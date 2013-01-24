@@ -57,6 +57,19 @@ MX::MX(const std::string& mx_str) :
     mxname_ = Name(mxname);
 }
 
+MX::MX(MasterLexer& lexer, const Name*, MasterLoader::Options,
+       MasterLoaderCallbacks&) :
+    preference_(0), mxname_(".")
+{
+    uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid MX preference");
+    }
+
+    preference_ = static_cast<uint16_t>(num);
+    mxname_ = Name(lexer.getNextToken(MasterToken::QSTRING).getString());
+}
+
 MX::MX(uint16_t preference, const Name& mxname) :
     preference_(preference), mxname_(mxname)
 {}

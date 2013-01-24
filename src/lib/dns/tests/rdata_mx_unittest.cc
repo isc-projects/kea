@@ -70,6 +70,10 @@ TEST_F(Rdata_MX_Test, createFromLexer) {
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                              "10 mx. example.com"));
+
+    // 65536 is larger than maximum possible preference
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "65536 mx.example.com"));
 }
 
 TEST_F(Rdata_MX_Test, toWireRenderer) {
