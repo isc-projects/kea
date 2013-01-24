@@ -2242,7 +2242,7 @@ TYPED_TEST(DatabaseClientTest, findAtOriginWithMinTTL) {
 
     ZoneFinderPtr finder = this->getFinder();
 
-    // Specify the use of min TTL, then the resulting TTL should be drived
+    // Specify the use of min TTL, then the resulting TTL should be derived
     // from the SOA MINTTL (which is smaller).
     this->expected_rdatas_.push_back(new_soa_rdata);
     doFindAtOriginTest(*finder, this->zname_, RRType::SOA(), RRType::SOA(),
