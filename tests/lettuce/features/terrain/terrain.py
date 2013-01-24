@@ -63,6 +63,8 @@ copylist = [
      "configurations/ddns/noddns.config"],
     ["configurations/xfrin/retransfer_master.conf.orig",
      "configurations/xfrin/retransfer_master.conf"],
+    ["configurations/xfrin/retransfer_master_nons.conf.orig",
+     "configurations/xfrin/retransfer_master_nons.conf"],
     ["configurations/xfrin/retransfer_slave.conf.orig",
      "configurations/xfrin/retransfer_slave.conf"],
     ["data/inmem-xfrin.sqlite3.orig",
