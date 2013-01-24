@@ -421,8 +421,9 @@ class XfrinIXFRAdd(XfrinState):
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
-                # The final part is there. Check all was signed
-                # and commit it to the database.
+                # The final part is there. Finish the transfer by
+                # checking the last TSIG (if required), the zone data and
+                # commiting.
                 conn.finish_transfer()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -493,12 +494,9 @@ class XfrinAXFREnd(XfrinState):
         """
         Final processing after processing an entire AXFR session.
 
-        In this process all the AXFR changes are committed to the
-        data source.
-
-        There might be more actions here, but for now we simply return False,
-        indicating there will be no more message to receive.
-
+        This simply calls the finish_transfer method of the connection
+        that ensures it is signed by TSIG (if required), the zone data
+        is valid and commits it.
         """
         conn.finish_transfer()
         return False
