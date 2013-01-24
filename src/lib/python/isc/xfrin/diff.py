@@ -589,8 +589,8 @@ class Diff:
         '''
         This first applies all changes to the data source. Then it creates
         and returns an RRsetCollection on top of the corresponding zone
-        updater and returns it. Notice it might be impossible to apply more
-        changes after that.
+        updater. Notice it might be impossible to apply more changes after
+        that.
 
         This must not be called after a commit, or it'd throw ValueError.
         '''
