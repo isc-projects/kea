@@ -366,9 +366,10 @@ class TestConfigCommands(unittest.TestCase):
     def __check_printed_messages(self, expected_messages):
         '''Helper test function to check the printed messages against a list
            of regexps'''
-        for el in map(self.__check_printed_message,
-                      expected_messages,
-                      self.printed_messages):
+        self.assertEqual(len(expected_messages), len(self.printed_messages))
+        for _ in map(self.__check_printed_message,
+                     expected_messages,
+                     self.printed_messages):
             pass
 
     def test_try_login(self):
