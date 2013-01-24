@@ -395,6 +395,28 @@ rm -f $tempfile $backupfile
 
 
 sec=`expr $sec + 1`
+echo $sec".1. Database is V2.1 database - check"
+check_version $testdata/v2_1.sqlite3 "V2.1"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo $sec".2. Database is a V2.1 database - upgrade"
+upgrade_ok_test $testdata/v2_1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.2 database - check"
+check_version $testdata/v2_2.sqlite3 "V2.2"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo $sec".2. Database is a V2.2 database - upgrade"
+upgrade_ok_test $testdata/v2_2.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+sec=`expr $sec + 1`
 echo $sec".1. Database is V2.0 database with empty schema table - check"
 check_version_fail $testdata/empty_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
