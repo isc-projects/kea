@@ -39,6 +39,11 @@ DNAME::DNAME(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+DNAME::DNAME(MasterLexer& lexer, const Name*, MasterLoader::Options,
+             MasterLoaderCallbacks&) :
+    dname_(lexer.getNextToken(MasterToken::QSTRING).getString())
+{}
+
 DNAME::DNAME(const DNAME& other) :
     Rdata(), dname_(other.dname_)
 {}
