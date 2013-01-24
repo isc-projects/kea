@@ -2789,7 +2789,7 @@ bind10-devel-20110224 released on February 24, 2011
 	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
 
 160.	[func]		jelte
-  	Updated the resolver to take 3 different timeout values;
+	Updated the resolver to take 3 different timeout values;
 	timeout_query for outstanding queries we sent while resolving
 	timeout_client for sending an answer back to the client
 	timeout_lookup for stopping the resolving
@@ -2968,7 +2968,7 @@ bind10-devel-20110120 released on January 20, 2011
 	(Trac #226, svn r3989)
 
 136.	[bug]		jelte
-  	bindctl (and the configuration manager in general) now no longer
+	bindctl (and the configuration manager in general) now no longer
 	accepts 'unknown' data; i.e. data for modules that it does not know
 	about, or configuration items that are not specified in the .spec
 	files.
@@ -3210,7 +3210,7 @@ bind10-devel-20100917 released on September 17, 2010
 	(Trac #342, svn r2949)
 
 94.	[bug]		jelte
-  	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
+	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
 	were used per DNS message in the xfrout stream.
 	(Trac #334, r2931)
 
@@ -3344,7 +3344,7 @@ bind10-devel-20100812 released on August 12, 2010
 	module. (Trac #275, r2459)
 
 73.	[bug]		jelte
-  	Fixed a bug where in bindctl, locally changed settings were
+	Fixed a bug where in bindctl, locally changed settings were
 	reset when the list of running modules is updated. (Trac #285,
 	r2452)
 
@@ -3355,11 +3355,11 @@ bind10-devel-20100812 released on August 12, 2010
 	known such platform. (Trac #148, r2427)
 
 71.	[func]		each
-  	Add "-a" (address) option to bind10 to specify an address for
+	Add "-a" (address) option to bind10 to specify an address for
 	the auth server to listen on.
 
 70.	[func]		each
-  	Added a hot-spot cache to libdatasrc to speed up access to
+	Added a hot-spot cache to libdatasrc to speed up access to
 	repeatedly-queried data and reduce the number of queries to
 	the underlying database; this should substantially improve
 	performance.  Also added a "-n" ("no cache") option to
