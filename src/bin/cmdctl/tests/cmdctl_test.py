@@ -533,7 +533,7 @@ class TestSecureHTTPServer(unittest.TestCase):
         ssl_sock = self.server._wrap_socket_in_ssl_context(sock1,
                                    BUILD_FILE_PATH + 'cmdctl-keyfile.pem',
                                    BUILD_FILE_PATH + 'cmdctl-certfile.pem')
-        self.assertIsInstance(ssl_sock, ssl.SSLSocket)
+        self.assertTrue(isinstance(ssl_sock, ssl.SSLSocket))
 
         # wrap_socket can also raise IOError, which should be caught and
         # handled like the other errors.
