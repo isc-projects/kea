@@ -16,7 +16,8 @@
 import isc.log
 import unittest
 from isc.datasrc import ZoneFinder
-from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata, RRsetCollection
+from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata, \
+    RRsetCollectionBase
 from isc.xfrin.diff import Diff, NoSuchZone
 
 class TestError(Exception):
@@ -1087,14 +1088,26 @@ class DiffTest(unittest.TestCase):
             self.__check_find_all_call(diff.find_all, self.__rrset3,
                                        rcode)
 
-    class Collection:
+    class Collection(isc.dns.RRsetCollectionBase):
         '''
-        Our own mock RRsetCollection. We don't use it, just pass it through.
-        This is to implement the below method.
+        Our own mock RRsetCollection. We only pass it through, but we
+        still define an (mostly empty) find method to satisfy the
+        expectations.
         '''
-        # Any idea why python doesn't agree with inheriting from
-        # dns.RRsetCollection?
-        pass
+        def __init__(self):
+            '''
+            Empty init. The base class's __init__ can't be called,
+            so we need to provide our own to shadow it -- and make sure
+            not to call the parent().__init__().
+            '''
+            pass
+
+        def find(self, name, rrclass, rrtype):
+            '''
+            Empty find method. Returns None to each query (pretends
+            the collection is empty. Present mostly for completeness.
+            '''
+            return None
 
     def get_rrset_collection(self):
         '''
@@ -1116,8 +1129,10 @@ class DiffTest(unittest.TestCase):
         self.assertEqual('add', self.__data_operations[0][0])
         # Check the returned one is actually RRsetCollection
         self.assertTrue(collection, self.Collection)
-        # We don't call anything on the collection. It's just the mock from
-        # above, so it wouldn't be any good.
+        # The collection is just the mock from above, so this doesn't do much
+        # testing, but we check that the mock got through and didn't get hurt.
+        self.assertIsNone(collection.find(Name('example.org'), RRClass.IN(),
+                                          RRType.SOA()))
 
 if __name__ == "__main__":
     isc.log.init("bind10")
