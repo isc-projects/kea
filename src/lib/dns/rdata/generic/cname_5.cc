@@ -39,6 +39,11 @@ CNAME::CNAME(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+CNAME::CNAME(MasterLexer& lexer, const Name*, MasterLoader::Options,
+             MasterLoaderCallbacks&) :
+    cname_(lexer.getNextToken(MasterToken::QSTRING).getString())
+{}
+
 CNAME::CNAME(const CNAME& other) :
     Rdata(), cname_(other.cname_)
 {}
