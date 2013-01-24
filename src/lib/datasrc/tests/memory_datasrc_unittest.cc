@@ -28,7 +28,7 @@
 #include <datasrc/client.h>
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 
 #include "test_client.h"
 

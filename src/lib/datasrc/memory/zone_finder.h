@@ -18,7 +18,7 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/treenode_rrset.h>
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
