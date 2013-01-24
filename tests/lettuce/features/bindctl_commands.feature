@@ -17,7 +17,7 @@ Feature: control with bindctl
         And wait for bind10 stderr message XFRIN_STARTED
         And wait for bind10 stderr message XFROUT_STARTED
         And wait for bind10 stderr message STATS_STARTING
-        And wait for bind10 stderr message STATHTTPD_STARTED
+        And wait for bind10 stderr message STATSHTTPD_STARTED
 
         Then remove bind10 configuration Boss/components/NOSUCHMODULE
         last bindctl output should contain Error
