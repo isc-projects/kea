@@ -112,10 +112,37 @@ SRV::SRV(InputBuffer& buffer, size_t rdata_len) {
         isc_throw(InvalidRdataLength, "SRV too short");
     }
 
-    uint16_t priority = buffer.readUint16();
-    uint16_t weight = buffer.readUint16();
-    uint16_t port = buffer.readUint16();
+    const uint16_t priority = buffer.readUint16();
+    const uint16_t weight = buffer.readUint16();
+    const uint16_t port = buffer.readUint16();
     const Name targetname(buffer);
+
+    impl_ = new SRVImpl(priority, weight, port, targetname);
+}
+
+SRV::SRV(MasterLexer& lexer, const Name*, MasterLoader::Options,
+         MasterLoaderCallbacks&)
+{
+    uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV priority");
+    }
+    const uint16_t priority = static_cast<uint16_t>(num);
+
+    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV weight");
+    }
+    const uint16_t weight = static_cast<uint16_t>(num);
+
+    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV port");
+    }
+    const uint16_t port = static_cast<uint16_t>(num);
+
+    const Name targetname =
+        Name(lexer.getNextToken(MasterToken::QSTRING).getString());
 
     impl_ = new SRVImpl(priority, weight, port, targetname);
 }

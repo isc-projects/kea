@@ -42,6 +42,7 @@ new_rdata_factory_users = [('aaaa', 'in'),
                            ('ptr', 'generic'),
                            ('soa', 'generic'),
                            ('spf', 'generic'),
+                           ('srv', 'in'),
                            ('txt', 'generic')
                           ]
 

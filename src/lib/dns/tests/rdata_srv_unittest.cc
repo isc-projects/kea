@@ -125,6 +125,16 @@ TEST_F(Rdata_SRV_Test, createFromLexer) {
                                      "1 5 1500 a.example.com.")));
 
     // Exceptions cause NULL to be returned.
+
+    // Bad priority
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
+                                             "65536 5 1500 "
+                                             "a.example.com."));
+    // Bad weight
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
+                                             "1 65536 1500 "
+                                             "a.example.com."));
+    // Bad port
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
                                              "1 5 281474976710656 "
                                              "a.example.com."));
