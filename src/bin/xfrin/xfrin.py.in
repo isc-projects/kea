@@ -94,6 +94,12 @@ class XfrinProtocolError(Exception):
     '''
     pass
 
+class XfrinZoneError(Exception):
+    '''
+    An exception raised when the received zone contain invalid data.
+    '''
+    pass
+
 class XfrinZoneUptodate(Exception):
     '''TBD
     '''
@@ -817,7 +823,7 @@ class XfrinConnection(asyncore.dispatcher):
         if not check_zone(self._zone_name, self._rrclass,
                           self._diff.get_rrset_collection(),
                           (self.__validate_error, self.__validate_warning)):
-            raise XfrinProtocolError('Validation of the new zone failed')
+            raise XfrinZoneError('Validation of the new zone failed')
         self._diff.commit()
 
     def __parse_soa_response(self, msg, response_data):
@@ -965,7 +971,15 @@ class XfrinConnection(asyncore.dispatcher):
             # of trying another primary server, etc, but for now we treat it
             # as "success".
             pass
+        except XfrinZoneError:
+            # The log message doesn't contain the exception text, since there's
+            # only one place where the exception is thrown now and it'd be the
+            # same generic message every time.
+            logger.error(XFRIN_INVALID_ZONE_DATA, self.zone_str(),
+                         format_addrinfo(self._master_addrinfo))
+            ret = XFRIN_FAIL
         except XfrinProtocolError as e:
+            # FIXME: Why is this .info? Even the messageID contains "ERROR".
             logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_ERROR, req_str,
                         self.zone_str(),
                         format_addrinfo(self._master_addrinfo), str(e))

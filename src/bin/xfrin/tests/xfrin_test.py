@@ -1335,8 +1335,7 @@ class TestAXFR(TestXfrinConnection):
             answers=[begin_soa_rrset, a_rr, soa_rrset])
         # Make it fail the validation
         self._check_zone_result = False
-        self.assertRaises(XfrinProtocolError,
-                          self.conn._handle_xfrin_responses)
+        self.assertRaises(XfrinZoneError, self.conn._handle_xfrin_responses)
         self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
         self.assertEqual([], self.conn._datasrc_client.committed_diffs)
         # Check the validation is called with the correct parameters
