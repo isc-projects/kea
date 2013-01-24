@@ -3643,7 +3643,7 @@ Dhcp4/subnet4	[]	list	(default)
       values from that list. Line 4 specifies option space, which must always
       be set to "dhcp4" as these are standard DHCPv4 options. For
       other option spaces, including custom option spaces, see <xref
-      linkend="dhcp4-option-spaces"/>. The fifth line specfies the format in
+      linkend="dhcp4-option-spaces"/>. The fifth line specifies the format in
       which the data will be entered: use of CSV (comma
       separated values) is recommended. The sixth line gives the actual value to
       be sent to clients. Data is specified as a normal text, with
@@ -3663,13 +3663,9 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/csv-format false</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "C0 00 03 01</userinput>
-         <userinput> C0 00 03 02"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "C0 00 03 01 C0 00 03 02"</userinput>
 &gt; <userinput>config commit</userinput>
         </screen>
-       (The value for the setting of the "data" element is split across two
-        lines in this document for clarity: when entering the command, the
-        string should be entered on the same line.)
       </para>
 
       <para>
@@ -3697,30 +3693,35 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
 
       <note>
-        <para>In upcoming Kea versions, it will not be required anymore to specify
-        option code, space and csv-format fields as those fields will be filled
+        <para>In a future version of Kea, it will not be necessary to specify
+        the option code, space and csv-format fields as they will be set
         automatically.</para>
       </note>
 
       <para>
-        Below is a list of currently supported standard DHCPv4 options. The name and code
-        specify name and code that should be used as a name in option-data
-        structures. Type designates the actual format of the data:
+        Below is a list of currently supported standard DHCPv4 options. The "Name" and "Code"
+        are the values that should be used as a name in the option-data
+        structures. "Type" designates the format of the data: the meanings of
+        the various types is given in <xref linkend="dhcp-types"/>.
       </para>
-
+      <para>
+        Some options are designated as arrays, which means that more than one
+        value is allowed in such an option. For example the option time-servers
+        allows the specification of more than one IPv4 address, so allowing
+        clients to obtain the the addresses of multiple NTP servers.
+      </para>
       <!-- @todo: describe record types -->
 
-<para>
-<table border="1" cellpadding="5%" id="dhcp4-std-options-list">
+      <para>
+        <table border="1" cellpadding="5%" id="dhcp4-std-options-list">
           <caption>List of standard DHCPv4 options</caption>
           <thead>
-          <tr><td>Name</td><td>Code</td><td>Type</td><td>Array?</td></tr>
-          <tr></tr>
+            <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
           </thead>
           <tbody>
 <tr><td>subnet-mask</td><td>1</td><td>ipv4-address</td><td>false</td></tr>
 <tr><td>time-offset</td><td>2</td><td>uint32</td><td>false</td></tr>
-<tr><td>routers</td><td>3</td><td>ipv4-address</td></tr>
+<tr><td>routers</td><td>3</td><td>ipv4-address</td><td>true</td></tr>
 <tr><td>time-servers</td><td>4</td><td>ipv4-address</td><td>true</td></tr>
 <tr><td>name-servers</td><td>5</td><td>ipv4-address</td><td>false</td></tr>
 <tr><td>domain-name-servers</td><td>6</td><td>ipv4-address</td><td>true</td></tr>
@@ -3799,17 +3800,37 @@ Dhcp4/subnet4	[]	list	(default)
 <tr><td>domain-search</td><td>119</td><td>binary</td><td>false</td></tr>
 <tr><td>vivco-suboptions</td><td>124</td><td>binary</td><td>false</td></tr>
 <tr><td>vivso-suboptions</td><td>125</td><td>binary</td><td>false</td></tr>
-</tbody>
-</table>
-</para>
+          </tbody>
+        </table>
+      </para>
+      <para>
+        <table border="1" cellpadding="5%" id="dhcp-types">
+          <caption>List of standard DHCP option types</caption>
+          <thead>
+            <tr><th>Name</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>binary</td><td>An arbitrary string of bytes, specified as a set of hexadecimal digits.</td></tr>
+            <tr><td>boolean</td><td>Boolean value with allowed values true or false</td></tr>
+            <tr><td>empty</td><td>No value, data is carried in suboptions</td></tr>
+            <tr><td>fqdn</td><td>Fully qualified domain name (e.g. www.example.com)</td></tr>
+            <tr><td>ipv4-address</td><td>IPv4 address in the usual dotted-decimal notation (e.g. 192.0.2.1)</td></tr>
+            <tr><td>ipv6-address</td><td>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</td></tr>
+            <tr><td>record</td><td>Structured data that may comprise any types (except "record" and "empty")</td></tr>
+            <tr><td>string</td><td>Any text</td></tr>
+            <tr><td>uint8</td><td>8 bit unsigned integer with allowed values 0 to 255</td></tr>
+            <tr><td>uint16</td><td>16 bit unsinged integer with allowed values 0 to 65535</td></tr>
+            <tr><td>uint32</td><td>32 bit unsigned integer with allowed values 0 to 4294967295</td></tr>
+          </tbody>
+       </table>
+      </para>
     </section>
 
     <section id="dhcp4-custom-options">
       <title>Custom DHCPv4 options</title>
-      <para>It is also possible to define new options that are
-      currently not supported out of the box. Let's assume that we
-      want to define a new DHCPv4 option called "foo". It will have code 222
-      and will convey a single unsigned 32 bit integer value. We can define
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv4 option called "foo" which will have
+      code 222 and will convey a single unsigned 32 bit integer value. We can define
       such an option by using the following commands:
       <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
@@ -3821,12 +3842,12 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput></screen>
-      Note that this specifies new option format, not the values conveyed in
-      that option.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
       </para>
-      <para>Once the new option format is defined, concrete values can then
-      be specified in the same way as standard options. For example the following
-      commands may be used to define global values that apply to all subnets.
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
         <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
@@ -3838,7 +3859,7 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
 
       <para>New options can take more complex forms than simple use of
-      primitives (uint8, string, ipv4-address etc).  It is possible to
+      primitives (uint8, string, ipv4-address etc): it is possible to
       define an option comprising a number of existing primitives.
       </para>
       <para>Assume we
@@ -3855,7 +3876,12 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
 </screen>
-     Its values can be later defined as follows:
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
 <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/name "bar"</userinput>
@@ -3865,19 +3891,24 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
-
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
     </section>
 
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 vendor specific options</title>
       <para>Currently there are three option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon) and dhcp4; there is also vendor-opts-space,
-      which is empty by default, but options can be defined in it. Those options
+      be used in DHCPv4 daemon), dhcp6, and vendor-opts-space.  The last-mentioned
+      is empty by default but options can be defined in it: those options
       are called vendor-specific information options. The following examples
       show how to define an option "foo" with code 1 that consists of IPv4 address,
       unsigned 16 bit integer and a string. The "foo" option is conveyed in a
       vendor specific information option.
-      <screen>
+      </para>
+      <para>
+      The first step is to define the format of the option:
+<screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
@@ -3886,8 +3917,10 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulates ""</userinput>
-&gt; <userinput>config commit</userinput></screen>
-     After option format is defined, the next step is to define actual values
+&gt; <userinput>config commit</userinput>
+</screen>
+      (Note that the option space is set to "vendor-encapsulated-option-space".)
+     Once the option format is defined, the next step is to define actual values
      for that option:
      <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
@@ -3897,7 +3930,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-    We should also define values for the vendor-opts, that will convey our option foo.
+    We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
      <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
@@ -3927,10 +3960,12 @@ Dhcp4/subnet4	[]	list	(default)
       convey sub-options that use separate numbering scheme, for
       example sub-options with codes 1 and 2. Those option codes
       conflict with standard DHCPv4 options, so a separate option
-      space must be defined. Let's assume that we want to have a
-      DHCPv4 option with code 222 that conveys two sub-options with
-      codes 1 and 2. This could be achieved with the following examples.
-      First we need to define those new sub-options:
+      space must be defined.
+      </para>
+      <para>      
+      Assume that we want to have a DHCPv4 option called "container" with
+      code 222 that conveys two sub-options with codes 1 and 2. 
+      First we need to define the new sub-options:
 <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/name "subopt1"</userinput>
@@ -3952,8 +3987,12 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[1]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-The next step is to define a regular DHCPv6 option and specify that it
-should include options from isc option space:
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+    The next step is to define a regular DHCPv4 option with our desired
+    code and specify that it should include options from the new option space:
 <screen>
 &gt; <userinput>add Dhcp4/option-def</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
@@ -3965,8 +4004,11 @@ should include options from isc option space:
 &gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
 &gt; <userinput>commit</userinput>
 </screen>
-
-Finally, we should specify values for those new options:
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulates" field.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
 <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/name "subopt1"</userinput>
@@ -3992,26 +4034,31 @@ Finally, we should specify values for those new options:
 &gt; <userinput>config set Dhcp4/option-data[2]/data "123"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
+      Even though the "container" option comprises sub-options, we need to
+      set dummy values for it so that it is included in the data sent to a
+      client.
       </para>
     </section>
 
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
-      <para>The DHCPv4 protocol uses a "server identifier" for clients to be able
-      to discriminate between several servers present on the same link: this
-      value is an IPv4 address of the server. When started for the first time,
-      the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
-      and store the chosen value to a file. (The file is named b10-dhcp4-serverid and is
-      stored in the "local state directory".  This is set during installation
-      when "configure" is run, and can be changed by using "--localstatedir"
-      on the "configure" command line.)  That file will be read by the server
-      and the contained value used whenever the server is subsequently started.
+      <para>
+        The DHCPv4 protocol uses a "server identifier" for clients to be able
+        to discriminate between several servers present on the same link: this
+        value is an IPv4 address of the server. When started for the first time,
+        the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
+        and store the chosen value to a file. That file will be read by the server
+        and the contained value used whenever the server is subsequently started.
       </para>
       <para>
-        It is unlikely that this parameter needs to be changed. If such a need
-        arises, please stop the server, edit the file and restart the server.
-        It is a text file that should contain an IPv4 address. Spaces are
-        ignored.  No extra characters are allowed in this file.
+        It is unlikely that this parameter should ever need to be changed.
+        However, if such a need arises, stop the server, edit the file and restart
+        the server. (The file is named b10-dhcp4-serverid and by default is
+        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
+        This can be changed when BIND 10 is built by using "--localstatedir"
+        on the "configure" command line.)  The file is a text file that should
+        contain an IPv4 address. Spaces are ignored, and no extra characters are allowed
+        in this file.
       </para>
     </section>
 
@@ -4340,7 +4387,7 @@ Dhcp6/subnet6/	list
       list. Line 4 specifies option space, which must always
       be set to "dhcp6" as these are standard DHCPv6 options. For
       other name spaces, including custom option spaces, see <xref
-      linkend="dhcp6-option-spaces"/>. The fifth line specfies the format in
+      linkend="dhcp6-option-spaces"/>. The fifth line specifies the format in
       which the data will be entered: use of CSV (comma
       separated values) is recommended. The sixth line gives the actual value to
       be sent to clients. Data is specified as a normal text, with
@@ -4394,42 +4441,38 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config commit</userinput></screen>
     </para>
 
-<note>
-  <para>In future version of Kea versions, it will not be necessary to specify
-  option code, space and csv-format fields as those fields will be set
-  automatically.</para>
-</note>
+    <note>
+      <para>
+        In future version of Kea versions, it will not be necessary to specify
+        option code, space and csv-format fields as those fields will be set
+        automatically.
+      </para>
+    </note>
 
 
-<para>
-  Below is a list of currently supported standard DHCPv6 options. The name and code
-  specify name and code that should be used as a name in option-data
-  structures. Type designates the actual format of the data:
-
-  <itemizedlist id="dhcp6-option-types">
-  <listitem><simpara>uint8 means 8 bit unsigned integer with allowed values 0 to 255.</simpara></listitem>
-  <listitem><simpara>uint16 means 16 bit unsinged integer with allowed values 0 to 65535.</simpara></listitem>
-  <listitem><simpara>uint32 means 32 bit unsigned integer with allowed values 0 to 4294967295.</simpara></listitem>
-  <listitem><simpara>ipv6-address means a normal IPv6 address.</simpara></listitem>
-  <listitem><simpara>fqdn means fully qualified domain name.</simpara></listitem>
-  <listitem><simpara>String means any text.</simpara></listitem>
-  </itemizedlist>
-  Some options are designated as arrays, which means that more than one
-  value is allowed in such an option. For example the option dns-servers
-  allows the specification of more than one IPv6 address, so allowing
-  clients to obtain the the addresses of multiple DNS servers.
-</para>
+    <para>
+      Below is a list of currently supported standard DHCPv6 options. The name and code
+      specify name and code that should be used as a name in option-data
+      structures. Type designates the actual format of the data and is one of
+      the types listed in <xref linkend="dhcp-types"/>.
+    </para>
+    <para>
+      Some options are designated as arrays, which means that more than one
+      value is allowed in such an option. For example the option dns-servers
+      allows the specification of more than one IPv6 address, so allowing
+      clients to obtain the the addresses of multiple DNS servers.
+    </para>
 
 <!-- @todo: describe record types -->
 
-<para>
-<table border="1" cellpadding="5%" id="dhcp6-std-options-list">
-          <caption>List of standard DHCPv6 options</caption>
-          <thead>
-          <tr><td>Name</td><td>Code</td><td>Type</td><td>Array?</td></tr>
+    <para>
+      <table border="1" cellpadding="5%" id="dhcp6-std-options-list">
+        <caption>List of standard DHCPv6 options</caption>
+        <thead>
+          <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
           <tr></tr>
-          </thead>
-          <tbody>
+        </thead>
+        <tbody>
 <!-- Our engine uses those options on its own, admin must not configure them on his own
 <tr><td>clientid</td><td>1</td><td>binary</td><td>false</td></tr>
 <tr><td>serverid</td><td>2</td><td>binary</td><td>false</td></tr>
@@ -4479,9 +4522,9 @@ Dhcp6/subnet6/	list
 <tr><td>clt-time</td><td>46</td><td>uint32</td><td>false</td></tr>
 <tr><td>lq-relay-data</td><td>47</td><td>record</td><td>false</td></tr>
 <tr><td>lq-client-link</td><td>48</td><td>ipv6-address</td><td>true</td></tr>
-</tbody>
-</table>
-</para>
+        </tbody>
+      </table>
+    </para>
     </section>
 
     <section id="dhcp6-custom-options">
@@ -4715,20 +4758,22 @@ Finally, we should specify values for those new options:
       possible. This format consists of a link-layer (MAC) address and a
       timestamp. When started for the first time, the DHCPv6 server will
       automatically generate such a DUID and store the chosen value to
-      a file (The file is named b10-dhcp6-serverid and is stored in the
-      "local state directory".  This is set during installation when
-      "configure" is run, and can be changed by using "--localstatedir"
-      on the "configure" command line.)  That file will be read by the server
+      a file.  That file is read by the server
       and the contained value used whenever the server is subsequently started.
       </para>
       <para>
-        It is unlikely that this parameter needs to be changed. If such a need
-        arises, please stop the server, edit the file and start the server
-        again. It is a text file that contains double digit hexadecimal values
+        It is unlikely that this parameter should ever need to be changed.
+        However, if such a need arises, stop the server, edit the file and restart
+        the server. (The file is named b10-dhcp6-serverid and by default is
+        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
+        This can be changed when BIND 10 is built by using "--localstatedir"
+        on the "configure" command line.)  The file is a text file that contains
+        double digit hexadecimal values
         separated by colons. This format is similar to typical MAC address
         format. Spaces are ignored. No extra characters are allowed in this
         file.
       </para>
+
     </section>
 
     <section id="dhcp6-std">
