@@ -1628,6 +1628,26 @@ class TestIXFRResponse(TestXfrinConnection):
                     [[('delete', begin_soa_rrset), ('add', soa_rrset)]],
                     self.conn._datasrc_client.committed_diffs)
 
+    def test_ixfr_response_fail_validation(self):
+        '''
+        An IXFR that fails validation later on. Check it is rejected.
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self._check_zone_result = False
+        self.assertRaises(XfrinZoneError, self.conn._handle_xfrin_responses)
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+        self.assertEqual(TEST_ZONE_NAME, self._check_zone_params[0])
+        self.assertEqual(TEST_RRCLASS, self._check_zone_params[1])
+        self.assertTrue(isinstance(self._check_zone_params[2],
+                                   MockRRsetCollection))
+        # Check we can safely call the callbacks. They have no sideeffects
+        # we can check (checking logging is hard), but we at least check
+        # they don't crash.
+        self._check_zone_params[3][0]("Test error")
+        self._check_zone_params[3][1]("Test warning")
+
     def test_ixfr_response_multi_sequences(self):
         '''Similar to the previous case, but with multiple diff seqs.
 
