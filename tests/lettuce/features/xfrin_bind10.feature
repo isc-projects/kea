@@ -93,3 +93,45 @@ Feature: Xfrin
     # Transwer should succeed now
     When I send bind10 the command Xfrin retransfer example.org
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+
+    Scenario: Validation fails
+    # In this test, the source data of the XFR is invalid (missing NS record
+    # at the origin). We check it is rejected after the transfer.
+    #
+    # We use abuse the fact that we do not check data when we read it from
+    # the sqlite3 database (unless we load into in-memory, which we don't
+    # do here).
+    The file data/test_nonexistent_db.sqlite3 should not exist
+
+    Given I have bind10 running with configuration xfrin/retransfer_master_nons.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+
+    And I have bind10 running with configuration xfrin/retransfer_slave.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    # Now we use the first step again to see if the file has been created
+    The file data/test_nonexistent_db.sqlite3 should exist
+
+    A query for www.example.org to [::1]:47806 should have rcode REFUSED
+    When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    # It should complain once about invalid data, then again that the whole
+    # zone is invalid and then reject it.
+    And wait for new bind10 stderr message XFRIN_ZONE_INVALID
+    And wait for new bind10 stderr message XFRIN_INVALID_ZONE_DATA
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+    # The zone still doesn't exist as it is rejected.
+    # FIXME: This step fails. Probably an empty zone is created in the data
+    # source :-|.
+    A query for www.example.org to [::1]:47806 should have rcode REFUSED
+
+    # TODO: Update scenario, load previous zone, upgrade to never one but
+    # broken. We use the fact that the SOA serial is higher in the nons
+    # version of DB.
