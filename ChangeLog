@@ -1,3 +1,11 @@
+560.	[bug]		jinmei
+	b10-auth now sets the TTL of SOA RR for negative responses to
+	the minimum of the RR TTL and the minimum TTL of the SOA RDATA
+	as specified in RFC2308; previously the RR TTL was always used.
+	The ZoneFinder class was extended partly for implementing this
+	and partly for allowing further optimization.
+	(Trac #2309 and #2635, git ee17e979fcde48b59d91c74ac368244169065f3b)
+
 559.	[bug]		jelte
 	b10-cmdctl no longer aborts on basic file issues with its https
 	certificate or private key file. It performs additional checks, and
@@ -15,7 +23,7 @@
 	if client requested them or not.
 	(Trac #2591, git aeec2dc1b9c511d17971ac63138576c37e7c5164)
 
-557.	[func]		stephen
+557.	[doc]		stephen
 	Update DHCP sections of the BIND 10 guide.
 	(Trac #2642, git e5faeb5fa84b7218fde486347359504cf692510e)
 
