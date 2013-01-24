@@ -58,6 +58,13 @@ with the tool b10-cmdctl-usermgr.
 This debug message indicates that the given command is being sent to
 the given module.
 
+% CMDCTL_SSL_SETUP_FAILURE_READING_CERT failed to read certificate or key: %1
+The b10-cmdctl daemon is unable to read either the certificate file or
+the private key file, and is therefore unable to accept any SSL connections.
+The specific error is printed in the message.
+The administrator should solve the issue with the files, or recreate them
+with the b10-certgen tool.
+
 % CMDCTL_SSL_SETUP_FAILURE_USER_DENIED failed to create an SSL connection (user denied): %1
 The user was denied because the SSL connection could not successfully
 be set up. The specific error is given in the log message. Possible
