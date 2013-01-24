@@ -101,8 +101,11 @@ Query::ResponseCreator::create(Message& response,
 
 void
 Query::addSOA(ZoneFinder& finder) {
-    ZoneFinderContextPtr soa_ctx = finder.find(finder.getOrigin(),
-                                               RRType::SOA(), dnssec_opt_);
+    // This method is always called in finding SOA for a negative response,
+    // so we specify the use of min(RRTTL, SOA MINTTL) as specified in
+    // Section 3 of RFC2308.
+    ZoneFinderContextPtr soa_ctx = finder.findAtOrigin(RRType::SOA(), true,
+                                                       dnssec_opt_);
     if (soa_ctx->code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             finder.getOrigin().toText());
@@ -318,11 +321,9 @@ void
 Query::addAuthAdditional(ZoneFinder& finder,
                          vector<ConstRRsetPtr>& additionals)
 {
-    const Name& origin = finder.getOrigin();
-
     // Fill in authority and addtional sections.
-    ConstZoneFinderContextPtr ns_context = finder.find(origin, RRType::NS(),
-                                                       dnssec_opt_);
+    ConstZoneFinderContextPtr ns_context =
+        finder.findAtOrigin(RRType::NS(), false, dnssec_opt_);
 
     // zone origin name should have NS records
     if (ns_context->code != ZoneFinder::SUCCESS) {

@@ -17,7 +17,7 @@
 
 #include <datasrc/exceptions.h>
 #include <datasrc/memory/zone_data.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <util/memory_segment.h>
