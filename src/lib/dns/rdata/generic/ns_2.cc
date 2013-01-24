@@ -39,6 +39,11 @@ NS::NS(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+NS::NS(MasterLexer& lexer, const Name*, MasterLoader::Options,
+       MasterLoaderCallbacks&) :
+    nsname_(lexer.getNextToken(MasterToken::QSTRING).getString())
+{}
+
 NS::NS(const NS& other) :
     Rdata(), nsname_(other.nsname_)
 {}
