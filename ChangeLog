@@ -1,3 +1,12 @@
+559.	[bug]		jelte
+	b10-cmdctl no longer aborts on basic file issues with its https
+	certificate or private key file. It performs additional checks, and
+	provides better error logs if these fail. Additionally, bindctl
+	provides a better error report if it is unable to connect over
+	https connection. This issue could occur if BIND 10 was installed
+	with root privileges but then started as a normal user.
+	(Trac #2595, git 09b1a2f927483b407d70e98f5982f424cc872149)
+
 558.	[func]		marcin
 	b10-dhcp4: server now adds configured options to its
 	responses to a client when client requests them.
