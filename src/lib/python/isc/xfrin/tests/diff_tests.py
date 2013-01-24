@@ -1111,7 +1111,7 @@ class DiffTest(unittest.TestCase):
         diff = Diff(self, Name('example.org'), single_update_mode=True)
         diff.add_data(self.__rrset_soa)
         collection = diff.get_rrset_collection()
-        # Check it is commited
+        # Check it is applied
         self.assertEqual(1, len(self.__data_operations))
         self.assertEqual('add', self.__data_operations[0][0])
         # Check the returned one is actually RRsetCollection
