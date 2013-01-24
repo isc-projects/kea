@@ -25,6 +25,13 @@ Feature: Xfrin
 
     A query for www.example.org to [::1]:47806 should have rcode REFUSED
     When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    # The data we receive contain a NS RRset that refers to three names in the
+    # example.org. zone. All these three are nonexistent in the data, producing
+    # 3 separate warning messages in the log.
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    # But after complaining, the zone data should be accepted.
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     A query for www.example.org to [::1]:47806 should have rcode NOERROR
