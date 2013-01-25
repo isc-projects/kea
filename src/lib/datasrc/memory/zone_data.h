@@ -287,7 +287,7 @@ private:
 /// from NSEC to NSEC3 or vice versa, support incremental signing, or support
 /// multiple sets of NSEC3 parameters.
 ///
-/// One last type of meta data is the status of the zone in terms of DNSSEC
+/// One other type of meta data is the status of the zone in terms of DNSSEC
 /// signing.  This class supports the following concepts:
 /// - Whether the zone is signed or not, either with NSEC records or NSEC3
 ///   records.
@@ -314,6 +314,15 @@ private:
 /// \c getNSEC3Data()) partly for a more intuitive shortcut, and partly
 /// because we won't have to change the application code when we implement
 /// the future separation.
+///
+/// One last type of meta data is the zone's "minimum" TTL.  It's expected
+/// to be a shortcut copy of the minimum field of the zone's SOA RDATA,
+/// and is expected to be used to create an SOA RR for a negative response,
+/// whose RR TTL may have to be set to this value according to RFC2308.
+/// This class is not aware of such usage, however, and only provides a
+/// simple getter and setter method for this value: \c getMinTTLData() and
+/// \c setMinTTL().  The user of this class is responsible for setting the
+/// value with \c setMinTTL() when it loads or updates the SOA RR.
 ///
 /// The intended usage of these two status concepts is to implement the
 /// \c ZoneFinder::Context::isNSECSigned() and
@@ -349,9 +358,7 @@ private:
     /// allocator (\c create()), so the constructor is hidden as private.
     ///
     /// It never throws an exception.
-    ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
-        zone_tree_(zone_tree), origin_node_(origin_node)
-    {}
+    ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node);
 
     // Zone node flags.
 private:
@@ -456,6 +463,26 @@ public:
     ///
     /// \throw none
     const NSEC3Data* getNSEC3Data() const { return (nsec3_data_.get()); }
+
+    /// \brief Return a pointer to the zone's minimum TTL data.
+    ///
+    /// The returned pointer points to a memory region that is valid at least
+    /// for 32 bits, storing the zone's minimum TTL in the network byte
+    /// order.  The corresponding 32-bit value as an integer is initially
+    /// set to the value of \c dns::RRTTL::MAX_TTL(), and, once
+    /// \c setMinTTL() is called, set to the value specified at the latest
+    /// call to \c setMinTTL().
+    ///
+    /// It returns opaque data to make it clear that unless the wire
+    /// format data is necessary (e.g., when rendering it in a DNS message),
+    /// it should be converted to, e.g., an \c RRTTL object explicitly.
+    ///
+    /// The returned pointer is valid as long as the \c ZoneData is valid,
+    /// and the corresponding 32-bit data are the same until \c setMinTTL()
+    /// is called.
+    ///
+    /// \throw none
+    const void* getMinTTLData() const { return (&min_ttl_); }
     //@}
 
     ///
@@ -552,12 +579,32 @@ public:
         nsec3_data_ = nsec3_data;
         return (old);
     }
+
+    /// \brief Set the zone's "minimum" TTL.
+    ///
+    /// This method updates the recorded minimum TTL of the zone data.
+    /// It's expected to be identical to the value of the Minimum field
+    /// of the SOA RR at the zone apex, but this method does not check the
+    /// consistency; it's the caller's responsibility.
+    ///
+    /// While RFC2181 specifies the max TTL value to be 2^31-1, this method
+    /// does not check the range; it accepts any unsigned 32-bit integer
+    /// value.  In practice, this shouldn't cause a problem, however, because
+    /// the only expected usage of this value is to use the minimum of this
+    /// value and SOA RR's TTL, and the latter is expected to be in the
+    /// valid range.
+    ///
+    /// \throw None
+    /// \param min_ttl_val The minimum TTL value as unsigned 32-bit integer
+    /// in the host byte order.
+    void setMinTTL(uint32_t min_ttl_val);
     //@}
 
 private:
     const boost::interprocess::offset_ptr<ZoneTree> zone_tree_;
     const boost::interprocess::offset_ptr<ZoneNode> origin_node_;
     boost::interprocess::offset_ptr<NSEC3Data> nsec3_data_;
+    uint32_t min_ttl_;
 };
 
 } // namespace memory
