@@ -50,20 +50,20 @@
 	to complete.
 	(Trac #2574, git 5b8a824054313bdecb8988b46e55cb2e94cb2d6c)
 
-553.    [func]      stephen
+553.	[func]		stephen
 	Values of the parameters to access the DHCP server lease database
 	can now be set through the BIND 10 configuration mechanism.
 	(Trac #2559, git 6c6f405188cc02d2358e114c33daff58edabd52a)
 
-552.    [bug]       shane
-    Build on Raspberry PI.
+552.	[bug]		shane
+	Build on Raspberry PI.
 	The main issue was use of char for reading from input streams,
 	which is incorrect, as EOF is returned as an int -1, which would
 	then get cast into a char -1.
 	A number of other minor issues were also fixed.
 	(Trac #2571, git 525333e187cc4bbbbde288105c9582c1024caa4a)
 
-551.    [bug]       shane
+551.	[bug]		shane
 	Kill msgq if we cannot connect to it on startup.
 	When the boss process was unable to connect to the msgq, it would
 	exit. However, it would leave the msgq process running. This has
@@ -127,8 +127,8 @@
 543.	[func]*		jelte
 	When calling getFullConfig() as a module, , the configuration is now
 	returned as properly-structured JSON.  Previously, the structure had
-	been flattened, with all data being labelled by fully-qualified element
-	names.
+	been flattened, with all data being labelled by fully-qualified
+	element names.
 	(Trac #2619, git bed3c88c25ea8f7e951317775e99ebce3340ca22)
 
 542.	[func]		marcin
@@ -192,7 +192,7 @@
 	compile-time option --enable-debug.
 	(Trac #1081, git db55f102b30e76b72b134cbd77bd183cd01f95c0)
 
-534.	[func]*			vorner
+534.	[func]*		vorner
 	The b10-msgq now uses the same logging format as the rest
 	of the system. However, it still doesn't obey the common
 	configuration, as due to technical issues it is not able
