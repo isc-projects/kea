@@ -62,6 +62,10 @@ public:
 
     /// \brief Search for an RRset of given RR type at the zone origin
     /// specialized for in-memory data source.
+    ///
+    /// This specialized version exploits internal data structure to find
+    /// RRsets at the zone origin and (if \c use_minttl is true) extract
+    /// the SOA Minimum TTL much more efficiently.
     virtual boost::shared_ptr<Context> findAtOrigin(
         const isc::dns::RRType& type, bool use_minttl,
         FindOptions options);

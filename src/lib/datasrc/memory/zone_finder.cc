@@ -23,9 +23,12 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/rrttl.h>
 #include <dns/nsec3hash.h>
 
 #include <datasrc/logger.h>
+
+#include <util/buffer.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -104,14 +107,19 @@ createTreeNodeRRset(const ZoneNode* node,
                     const RdataSet* rdataset,
                     const RRClass& rrclass,
                     ZoneFinder::FindOptions options,
-                    const Name* realname = NULL)
+                    const Name* realname = NULL,
+                    const void* ttl_data = NULL)
 {
     const bool dnssec = ((options & ZoneFinder::FIND_DNSSEC) != 0);
-    if (node != NULL && rdataset != NULL) {
-        if (realname != NULL) {
+    if (node && rdataset) {
+        if (realname) {
             return (TreeNodeRRsetPtr(new TreeNodeRRset(*realname, rrclass,
                                                        node, rdataset,
                                                        dnssec)));
+        } else if (ttl_data) {
+            assert(!realname);  // these two cases should be mixed in our use
+            return (TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node, rdataset,
+                                                       dnssec, ttl_data)));
         } else {
             return (TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node, rdataset,
                                                        dnssec)));
@@ -229,6 +237,12 @@ createNSEC3RRset(const ZoneNode* node, const RRClass& rrclass) {
                                 ZoneFinder::FIND_DNSSEC));
 }
 
+inline RRTTL
+createTTLFromData(const void* ttl_data) {
+    util::InputBuffer b(ttl_data, sizeof(uint32_t));
+    return (RRTTL(b));
+}
+
 // convenience function to fill in the final details
 //
 // Set up ZoneFinderResultContext object as a return value of find(),
@@ -250,7 +264,8 @@ createFindResult(const RRClass& rrclass,
                  const RdataSet* rdataset,
                  ZoneFinder::FindOptions options,
                  bool wild = false,
-                 const Name* qname = NULL)
+                 const Name* qname = NULL,
+                 bool use_minttl = false)
 {
     ZoneFinder::FindResultFlags flags = ZoneFinder::RESULT_DEFAULT;
     const Name* rename = NULL;
@@ -268,6 +283,15 @@ createFindResult(const RRClass& rrclass,
         }
     }
 
+    if (use_minttl && rdataset &&
+        createTTLFromData(zone_data.getMinTTLData()) <
+        createTTLFromData(rdataset->getTTLData())) {
+        return (ZoneFinderResultContext(
+                    code,
+                    createTreeNodeRRset(node, rdataset, rrclass, options,
+                                        rename, zone_data.getMinTTLData()),
+                    flags, zone_data, node, rdataset));
+    }
     return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rdataset,
                                                               rrclass, options,
                                                               rename),
@@ -743,7 +767,7 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
 
 boost::shared_ptr<ZoneFinder::Context>
 InMemoryZoneFinder::findAtOrigin(const isc::dns::RRType& type,
-                                 bool /*use_minttl*/, // not yet supported
+                                 bool use_minttl,
                                  const FindOptions options)
 {
     const ZoneNode* const node = zone_data_.getOriginNode();
@@ -755,7 +779,8 @@ InMemoryZoneFinder::findAtOrigin(const isc::dns::RRType& type,
         return (ZoneFinderContextPtr(
                     new Context(*this, options, rrclass_,
                                 createFindResult(rrclass_, zone_data_, SUCCESS,
-                                                 node, found, options))));
+                                                 node, found, options, false,
+                                                 NULL, use_minttl))));
     }
     return (ZoneFinderContextPtr(
                     new Context(*this, options, rrclass_,
@@ -764,7 +789,8 @@ InMemoryZoneFinder::findAtOrigin(const isc::dns::RRType& type,
                                                  getNSECForNXRRSET(zone_data_,
                                                                    options,
                                                                    node),
-                                                 options))));
+                                                 options, false, NULL,
+                                                 use_minttl))));
 }
 
 ZoneFinderResultContext
