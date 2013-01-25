@@ -59,8 +59,7 @@ TreeNodeRRset::getName() const {
 const RRTTL&
 TreeNodeRRset::getTTL() const {
     if (ttl_ == NULL) {
-        util::InputBuffer ttl_buffer(rdataset_->getTTLData(),
-                                     sizeof(uint32_t));
+        util::InputBuffer ttl_buffer(ttl_data_, sizeof(uint32_t));
         ttl_ = new RRTTL(ttl_buffer);
     }
 
@@ -169,7 +168,7 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
     // Render the main (non RRSIG) RRs
     const size_t rendered_rdata_count =
         writeRRs(renderer, rdataset_->getRdataCount(), name_labels,
-                 rdataset_->type, rrclass_, rdataset_->getTTLData(), reader,
+                 rdataset_->type, rrclass_, ttl_data_, reader,
                  &RdataReader::iterateRdata);
     if (renderer.isTruncated()) {
         return (rendered_rdata_count);
@@ -180,7 +179,7 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
     // Render any RRSIGs, if we supposed to do so
     const size_t rendered_rrsig_count = dnssec_ok_ ?
         writeRRs(renderer, rrsig_count_, name_labels, RRType::RRSIG(),
-                 rrclass_, rdataset_->getTTLData(), reader,
+                 rrclass_, ttl_data_, reader,
                  &RdataReader::iterateSingleSig) : 0;
 
     return (rendered_rdata_count + rendered_rrsig_count);
