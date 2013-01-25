@@ -63,7 +63,11 @@ using result::EXIST;
 /// be a concern here.
 ConstRRsetPtr
 convertRRset(ConstRRsetPtr src) {
-    return (textToRRset(src->toText()));
+    // If the type is SOA, textToRRset performs a stricter check, so we should
+    // specify the origin.
+    const Name& origin = (src->getType() == RRType::SOA()) ?
+        src->getName() : Name::ROOT_NAME();
+    return (textToRRset(src->toText(), src->getClass(), origin));
 }
 
 /// \brief Test fixture for the InMemoryZoneFinder class
@@ -322,7 +326,7 @@ protected:
                           memory::InMemoryZoneFinder* zone_finder = NULL,
                           ZoneFinder::FindOptions options =
                           ZoneFinder::FIND_DEFAULT,
-                          bool check_wild_answer = false)
+                          bool use_minttl = false)
     {
         SCOPED_TRACE("findAtOriginTest for " + rrtype.toText());
 
@@ -330,9 +334,9 @@ protected:
             zone_finder = &zone_finder_;
         }
         ZoneFinderContextPtr find_result(zone_finder->findAtOrigin(
-                                             rrtype, false, options));
+                                             rrtype, use_minttl, options));
         findTestCommon(origin_, result, find_result, check_answer, answer,
-                       expected_flags, options, check_wild_answer);
+                       expected_flags, options, false);
     }
 
 private:
@@ -627,7 +631,6 @@ TEST_F(InMemoryZoneFinderTest, glue) {
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::DELEGATION,
              true, rr_child_ns_);
 
-
     // If we do it in the "glue OK" mode, we should find the exact match.
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
              rr_child_glue_, ZoneFinder::RESULT_DEFAULT, NULL,
@@ -699,6 +702,55 @@ TEST_F(InMemoryZoneFinderTest, findAtOrigin) {
     findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
                      ZoneFinder::RESULT_NSEC3_SIGNED, NULL,
                      ZoneFinder::FIND_DNSSEC);
+}
+
+TEST_F(InMemoryZoneFinderTest, findAtOriginWithMinTTL) {
+    // Install zone's SOA.  This also sets internal zone data min TTL field.
+    addToZoneData(rr_soa_);
+
+    // Specify the use of min TTL, then the resulting TTL should be derived
+    // from the SOA MINTTL (which is smaller).
+    findAtOriginTest(RRType::SOA(), ZoneFinder::SUCCESS, true,
+                     textToRRset("example.org. 100 IN SOA . . 0 0 0 0 100",
+                                 class_, origin_),
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // Add signed NS for the following test.
+    RRsetPtr ns_rrset(textToRRset("example.org. 300 IN NS ns.example.org."));
+    ns_rrset->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                   "NS 5 3 3600 20120814220826 20120715220826 "
+                                   "1234 example.org. FAKE"));
+    addToZoneData(ns_rrset);
+
+    // If DNSSEC is requested, TTL of the RRSIG should also be the min.
+    ns_rrset->setTTL(RRTTL(100));      // reset TTL to the expected one
+    findAtOriginTest(RRType::NS(), ZoneFinder::SUCCESS, true, ns_rrset,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // If we don't request the use of min TTL, the original TTL will be used.
+    findAtOriginTest(RRType::SOA(), ZoneFinder::SUCCESS, true, rr_soa_,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, false);
+
+    // If no RRset is returned, use_minttl doesn't matter (it shouldn't cause
+    // disruption)
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // If it results in NXRRSET with NSEC, and if we specify the use of min
+    // TTL, the NSEC and RRSIG should have the min TTL (again, though, this
+    // use case is not really the intended one)
+    rr_nsec_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                   "NSEC 5 3 3600 20120814220826 "
+                                   "20120715220826 1234 example.org. FAKE"));
+    addToZoneData(rr_nsec_);
+    rr_nsec_->setTTL(RRTTL(100)); // reset it to the expected one
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, rr_nsec_,
+                     ZoneFinder::RESULT_NSEC_SIGNED, NULL,
+                     ZoneFinder::FIND_DNSSEC, true);
 }
 
 /**
