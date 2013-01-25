@@ -45,7 +45,20 @@ Feature: Xfrin
     When I do an AXFR transfer of example.org
     Then transfer result should have 13 rrs
 
-
+    # Now try to offer another update. However, the validation of
+    # data should fail. The old version shoud still be available.
+    When I send bind10 the following commands with cmdctl port 47804:
+    """
+    config set data_sources/classes/IN[0]/params/database_file data/example.org-nons.sqlite3
+    config set Auth/database_file data/example.org-nons.sqlite3
+    config commit
+    """
+    Then I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    And wait for new bind10 stderr message XFRIN_ZONE_INVALID
+    And wait for new bind10 stderr message XFRIN_INVALID_ZONE_DATA
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+    A query for example.org type NS to [::1]:47806 should have rcode NOERROR
+    And transfer result should have 13 rrs
 
     Scenario: Transfer with TSIG
     # Similar setup to the test above, but this time, we add TSIG configuration
@@ -129,9 +142,5 @@ Feature: Xfrin
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
     # The zone still doesn't exist as it is rejected.
     # FIXME: This step fails. Probably an empty zone is created in the data
-    # source :-|.
-    A query for www.example.org to [::1]:47806 should have rcode REFUSED
-
-    # TODO: Update scenario, load previous zone, upgrade to never one but
-    # broken. We use the fact that the SOA serial is higher in the nons
-    # version of DB.
+    # source :-|. This should be REFUSED, not SERVFAIL.
+    A query for www.example.org to [::1]:47806 should have rcode SERVFAIL
