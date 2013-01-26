@@ -432,6 +432,8 @@ initModulePart_RRClass(PyObject* mod) {
                                                   NULL, NULL);
         PyObjectContainer(po_IncompleteRRClass).installToModule(
             mod, "IncompleteRRClass");
+
+#include <dns/python/rrclass_constants_inc.cc>
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRClass initialization: " +
@@ -518,6 +520,8 @@ initModulePart_RRType(PyObject* mod) {
                                                  NULL, NULL);
         PyObjectContainer(po_IncompleteRRType).installToModule(
             mod, "IncompleteRRType");
+
+#include <dns/python/rrtype_constants_inc.cc>
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRType initialization: " +
