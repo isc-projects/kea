@@ -35,8 +35,8 @@ class ZoneCheckerTest(unittest.TestCase):
         rrsets = RRsetCollection(b'example.org. 0 SOA . . 0 0 0 0 0\n' +
                                  b'example.org. 0 NS ns.example.org.\n' +
                                  b'ns.example.org. 0 A 192.0.2.1\n',
-                                 Name('example.org'), RRClass.IN())
-        self.assertTrue(check_zone(Name('example.org'), RRClass.IN(),
+                                 Name('example.org'), RRClass.IN)
+        self.assertTrue(check_zone(Name('example.org'), RRClass.IN,
                                    rrsets,
                                    (lambda r: self.__callback(r, errors),
                                     lambda r: self.__callback(r, warns))))
@@ -45,8 +45,8 @@ class ZoneCheckerTest(unittest.TestCase):
 
         # Check fails and one additional warning.
         rrsets = RRsetCollection(b'example.org. 0 NS ns.example.org.',
-                                 Name('example.org'), RRClass.IN())
-        self.assertFalse(check_zone(Name('example.org'), RRClass.IN(), rrsets,
+                                 Name('example.org'), RRClass.IN)
+        self.assertFalse(check_zone(Name('example.org'), RRClass.IN, rrsets,
                                     (lambda r: self.__callback(r, errors),
                                      lambda r: self.__callback(r, warns))))
         self.assertEqual(['zone example.org/IN: has 0 SOA records'], errors)
@@ -56,7 +56,7 @@ class ZoneCheckerTest(unittest.TestCase):
         # Same RRset collection, suppressing callbacks
         errors = []
         warns = []
-        self.assertFalse(check_zone(Name('example.org'), RRClass.IN(), rrsets,
+        self.assertFalse(check_zone(Name('example.org'), RRClass.IN, rrsets,
                                     (None, None)))
         self.assertEqual([], errors)
         self.assertEqual([], warns)
@@ -64,29 +64,29 @@ class ZoneCheckerTest(unittest.TestCase):
     def test_check_badarg(self):
         rrsets = RRsetCollection()
         # Bad types
-        self.assertRaises(TypeError, check_zone, 1, RRClass.IN(), rrsets,
+        self.assertRaises(TypeError, check_zone, 1, RRClass.IN, rrsets,
                           (None, None))
         self.assertRaises(TypeError, check_zone, Name('example'), 1, rrsets,
                           (None, None))
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           1, (None, None))
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, 1)
 
         # Bad callbacks
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, (None, None, None))
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, (1, None))
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, (None, 1))
 
         # Extra/missing args
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, (None, None), 1)
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets)
-        check_zone(Name('example'), RRClass.IN(), rrsets, (None, None))
+        check_zone(Name('example'), RRClass.IN, rrsets, (None, None))
 
     def test_check_callback_fail(self):
         # Let the call raise a Python exception.  It should be propagated to
@@ -96,7 +96,7 @@ class ZoneCheckerTest(unittest.TestCase):
 
         # Using an empty collection, triggering an error callback.
         self.assertRaises(FakeException, check_zone, Name('example.org'),
-                          RRClass.IN(), RRsetCollection(),
+                          RRClass.IN, RRsetCollection(),
                           (__bad_callback, None))
 
         # An unusual case: the callback is expected to return None, but if it
@@ -108,7 +108,7 @@ class ZoneCheckerTest(unittest.TestCase):
 
         ref_checker = RefChecker()
         orig_refcnt = sys.getrefcount(ref_checker)
-        check_zone(Name('example.org'), RRClass.IN(), RRsetCollection(),
+        check_zone(Name('example.org'), RRClass.IN, RRsetCollection(),
                    (lambda r: __callback(r, ref_checker), None))
         self.assertEqual(orig_refcnt, sys.getrefcount(ref_checker))
 
@@ -132,48 +132,45 @@ class ZoneCheckerTest(unittest.TestCase):
                     raise FakeException('find error')
                 if self.__find_result is not 'use_default':
                     return self.__find_result
-                if rrtype == RRType.SOA():
-                    soa = RRset(Name('example'), RRClass.IN(), rrtype,
-                                RRTTL(0))
-                    soa.add_rdata(Rdata(RRType.SOA(), RRClass.IN(),
+                if rrtype == RRType.SOA:
+                    soa = RRset(Name('example'), RRClass.IN, rrtype, RRTTL(0))
+                    soa.add_rdata(Rdata(RRType.SOA, RRClass.IN,
                                         '. . 0 0 0 0 0'))
                     return soa
-                if rrtype == RRType.NS():
-                    ns = RRset(Name('example'), RRClass.IN(), rrtype,
-                               RRTTL(0))
-                    ns.add_rdata(Rdata(RRType.NS(), RRClass.IN(),
-                                       'example.org'))
+                if rrtype == RRType.NS:
+                    ns = RRset(Name('example'), RRClass.IN, rrtype, RRTTL(0))
+                    ns.add_rdata(Rdata(RRType.NS, RRClass.IN, 'example.org'))
                     return ns
                 return None
 
         # A successful case.  Just checking it works in that case.
         rrsets = FakeRRsetCollection()
-        self.assertTrue(check_zone(Name('example'), RRClass.IN(), rrsets,
+        self.assertTrue(check_zone(Name('example'), RRClass.IN, rrsets,
                                    (None, None)))
 
         # Likewise, normal case but zone check fails.
         rrsets = FakeRRsetCollection(False, None)
-        self.assertFalse(check_zone(Name('example'), RRClass.IN(), rrsets,
+        self.assertFalse(check_zone(Name('example'), RRClass.IN, rrsets,
                                     (None, None)))
 
         # Our find() returns a bad type of result.
         rrsets = FakeRRsetCollection(False, 1)
-        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN(),
+        self.assertRaises(TypeError, check_zone, Name('example'), RRClass.IN,
                           rrsets, (None, None))
 
         # Our find() returns an empty SOA RRset.  C++ zone checker code
         # throws, which results in IscException.
         rrsets = FakeRRsetCollection(False, RRset(Name('example'),
-                                                  RRClass.IN(),
-                                                  RRType.SOA(), RRTTL(0)))
+                                                  RRClass.IN,
+                                                  RRType.SOA, RRTTL(0)))
         self.assertRaises(IscException, check_zone, Name('example'),
-                          RRClass.IN(), rrsets, (None, None))
+                          RRClass.IN, rrsets, (None, None))
 
         # Our find() raises an exception.  That exception is propagated to
         # the top level.
         rrsets = FakeRRsetCollection(True)
         self.assertRaises(FakeException, check_zone, Name('example'),
-                          RRClass.IN(), rrsets, (None, None))
+                          RRClass.IN, rrsets, (None, None))
 
 if __name__ == '__main__':
     unittest.main()
