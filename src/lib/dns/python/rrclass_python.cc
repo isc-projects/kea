@@ -54,13 +54,6 @@ PyObject* RRClass_getCode(s_RRClass* self);
 PyObject* RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op);
 Py_hash_t RRClass_hash(PyObject* pyself);
 
-// Static function for direct class creation
-PyObject* RRClass_IN(s_RRClass *self);
-PyObject* RRClass_CH(s_RRClass *self);
-PyObject* RRClass_HS(s_RRClass *self);
-PyObject* RRClass_NONE(s_RRClass *self);
-PyObject* RRClass_ANY(s_RRClass *self);
-
 typedef CPPPyObjectContainer<s_RRClass, RRClass> RRClassContainer;
 
 // This list contains the actual set of functions we have in
@@ -81,11 +74,6 @@ PyMethodDef RRClass_methods[] = {
       "returned" },
     { "get_code", reinterpret_cast<PyCFunction>(RRClass_getCode), METH_NOARGS,
       "Returns the class code as an integer" },
-    { "IN", reinterpret_cast<PyCFunction>(RRClass_IN), METH_NOARGS | METH_STATIC, "Creates an IN RRClass" },
-    { "CH", reinterpret_cast<PyCFunction>(RRClass_CH), METH_NOARGS | METH_STATIC, "Creates a CH RRClass" },
-    { "HS", reinterpret_cast<PyCFunction>(RRClass_HS), METH_NOARGS | METH_STATIC, "Creates an HS RRClass" },
-    { "NONE", reinterpret_cast<PyCFunction>(RRClass_NONE), METH_NOARGS | METH_STATIC, "Creates a NONE RRClass" },
-    { "ANY", reinterpret_cast<PyCFunction>(RRClass_ANY), METH_NOARGS | METH_STATIC, "Creates an ANY RRClass" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -232,37 +220,6 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
         Py_RETURN_TRUE;
     else
         Py_RETURN_FALSE;
-}
-
-//
-// Common function for RRClass_IN/CH/etc.
-//
-PyObject* RRClass_createStatic(RRClass stc) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->cppobj = new RRClass(stc);
-    }
-    return (ret);
-}
-
-PyObject* RRClass_IN(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::IN()));
-}
-
-PyObject* RRClass_CH(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::CH()));
-}
-
-PyObject* RRClass_HS(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::HS()));
-}
-
-PyObject* RRClass_NONE(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::NONE()));
-}
-
-PyObject* RRClass_ANY(s_RRClass*) {
-    return (RRClass_createStatic(RRClass::ANY()));
 }
 
 Py_hash_t
