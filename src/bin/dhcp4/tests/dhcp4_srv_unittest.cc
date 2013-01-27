@@ -18,6 +18,9 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -74,14 +77,82 @@ public:
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().addSubnet4(subnet_);
 
+        // Add Router option.
+        Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
+        opt_routers->setAddress(IOAddress("192.0.2.2"));
+        subnet_->addOption(opt_routers, false, "dhcp4");
+
         // it's ok if that fails. There should not be such a file anyway
         unlink(SRVID_FILE);
+    }
+
+    /// @brief Add 'Parameter Request List' option to the packet.
+    ///
+    /// This function PRL option comprising the following option codes:
+    /// - 5 - Name Server
+    /// - 15 - Domain Name
+    /// - 7 - Log Server
+    /// - 8 - Quotes Server
+    /// - 9 - LPR Server
+    ///
+    /// @param pkt packet to add PRL option to.
+    void addPrlOption(Pkt4Ptr& pkt) {
+
+        OptionUint8ArrayPtr option_prl =
+            OptionUint8ArrayPtr(new OptionUint8Array(Option::V4,
+                                                     DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+        // Let's request options that have been configured for the subnet.
+        option_prl->addValue(DHO_DOMAIN_NAME_SERVERS);
+        option_prl->addValue(DHO_DOMAIN_NAME);
+        option_prl->addValue(DHO_LOG_SERVERS);
+        option_prl->addValue(DHO_COOKIE_SERVERS);
+        // Let's also request the option that hasn't been configured. In such
+        // case server should ignore request for this particular option.
+        option_prl->addValue(DHO_LPR_SERVERS);
+        // And add 'Parameter Request List' option into the DISCOVER packet.
+        pkt->addOption(option_prl);
+    }
+
+    /// @brief Configures options being requested in the PRL option.
+    ///
+    /// The lpr-servers option is NOT configured here altough it is
+    /// added to the 'Parameter Request List' option in the
+    /// \ref addPrlOption. When requested option is not configured
+    /// the server should not return it in its rensponse. The goal
+    /// of not configuring the requested option is to verify that
+    /// the server will not return it.
+    void configureRequestedOptions() {
+        // dns-servers
+        Option4AddrLstPtr
+            option_dns_servers(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS));
+        option_dns_servers->addAddress(IOAddress("192.0.2.1"));
+        option_dns_servers->addAddress(IOAddress("192.0.2.100"));
+        ASSERT_NO_THROW(subnet_->addOption(option_dns_servers, false, "dhcp4"));
+
+        // domain-name
+        OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
+        boost::shared_ptr<OptionCustom>
+            option_domain_name(new OptionCustom(def, Option::V4));
+        option_domain_name->writeFqdn("example.com");
+        subnet_->addOption(option_domain_name, false, "dhcp4");
+
+        // log-servers
+        Option4AddrLstPtr option_log_servers(new Option4AddrLst(DHO_LOG_SERVERS));
+        option_log_servers->addAddress(IOAddress("192.0.2.2"));
+        option_log_servers->addAddress(IOAddress("192.0.2.10"));
+        ASSERT_NO_THROW(subnet_->addOption(option_log_servers, false, "dhcp4"));
+
+        // cookie-servers
+        Option4AddrLstPtr option_cookie_servers(new Option4AddrLst(DHO_COOKIE_SERVERS));
+        option_cookie_servers->addAddress(IOAddress("192.0.2.1"));
+        ASSERT_NO_THROW(subnet_->addOption(option_cookie_servers, false, "dhcp4"));
     }
 
     /// @brief checks that the response matches request
     /// @param q query (client's message)
     /// @param a answer (server's message)
-    void MessageCheck(const boost::shared_ptr<Pkt4>& q,
+    void messageCheck(const boost::shared_ptr<Pkt4>& q,
                       const boost::shared_ptr<Pkt4>& a) {
         ASSERT_TRUE(q);
         ASSERT_TRUE(a);
@@ -91,18 +162,38 @@ public:
         EXPECT_EQ(q->getIndex(),  a->getIndex());
         EXPECT_EQ(q->getGiaddr(), a->getGiaddr());
 
-        // Check that bare minimum of required options are there
+        // Check that bare minimum of required options are there.
+        // We don't check options requested by a client. Those
+        // are checked elsewhere.
         EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
         EXPECT_TRUE(a->getOption(DHO_ROUTERS));
         EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
         EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
         EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-        EXPECT_TRUE(a->getOption(DHO_ROUTERS));
-        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
-        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
 
         // Check that something is offered
         EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
+    }
+
+    /// @brief Check that requested options are present.
+    ///
+    /// @param pkt packet to be checked.
+    void optionsCheck(const Pkt4Ptr& pkt) {
+        // Check that the requested and configured options are returned
+        // in the ACK message.
+        EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME))
+            << "domain-name not present in the response";
+        EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
+            << "dns-servers not present in the response";
+        EXPECT_TRUE(pkt->getOption(DHO_LOG_SERVERS))
+            << "log-servers not present in the response";
+        EXPECT_TRUE(pkt->getOption(DHO_COOKIE_SERVERS))
+            << "cookie-servers not present in the response";
+        // Check that the requested but not configured options are not
+        // returned in the ACK message.
+        EXPECT_FALSE(pkt->getOption(DHO_LPR_SERVERS))
+            << "domain-name present in the response but it is"
+            << " expected not to be present";
     }
 
     /// @brief generates client-id option
@@ -324,6 +415,12 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     pkt->setHops(3);
     pkt->setRemotePort(DHCP4_SERVER_PORT);
 
+    // We are going to test that certain options are returned
+    // (or not returned) in the OFFER message when requested
+    // using 'Parameter Request List' option. Let's configure
+    // those options that are returned when requested.
+    configureRequestedOptions();
+
     // Should not throw
     EXPECT_NO_THROW(
         offer = srv->processDiscover(pkt);
@@ -337,7 +434,39 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     // This is relayed message. It should be sent back to relay address.
     EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
 
-    MessageCheck(pkt, offer);
+    messageCheck(pkt, offer);
+
+    // There are some options that are always present in the
+    // message, even if not requested.
+    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME));
+    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME_SERVERS));
+
+    // We did not request any options so they should not be present
+    // in the OFFER.
+    EXPECT_FALSE(offer->getOption(DHO_LOG_SERVERS));
+    EXPECT_FALSE(offer->getOption(DHO_COOKIE_SERVERS));
+    EXPECT_FALSE(offer->getOption(DHO_LPR_SERVERS));
+
+    // Add 'Parameter Request List' option.
+    addPrlOption(pkt);
+
+    // Now repeat the test but request some options.
+    EXPECT_NO_THROW(
+        offer = srv->processDiscover(pkt);
+    );
+
+    // Should return something
+    ASSERT_TRUE(offer);
+
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    // This is relayed message. It should be sent back to relay address.
+    EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
+
+    messageCheck(pkt, offer);
+
+    // Check that the requested options are returned.
+    optionsCheck(offer);
 
     // Now repeat the test for directly sent message
     pkt->setHops(0);
@@ -357,7 +486,10 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
     // to relay.
     EXPECT_EQ(pkt->getRemoteAddr(), offer->getRemoteAddr());
 
-    MessageCheck(pkt, offer);
+    messageCheck(pkt, offer);
+
+    // Check that the requested options are returned.
+    optionsCheck(offer);
 
     delete srv;
 }
@@ -385,6 +517,12 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     req->setRemoteAddr(IOAddress("192.0.2.56"));
     req->setGiaddr(IOAddress("192.0.2.67"));
 
+    // We are going to test that certain options are returned
+    // in the ACK message when requested using 'Parameter
+    // Request List' option. Let's configure those options that
+    // are returned when requested.
+    configureRequestedOptions();
+
     // Should not throw
     ASSERT_NO_THROW(
         ack = srv->processRequest(req);
@@ -398,7 +536,37 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     // This is relayed message. It should be sent back to relay address.
     EXPECT_EQ(req->getGiaddr(), ack->getRemoteAddr());
 
-    MessageCheck(req, ack);
+    messageCheck(req, ack);
+
+    // There are some options that are always present in the
+    // message, even if not requested.
+    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME));
+    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME_SERVERS));
+
+    // We did not request any options so these should not be present
+    // in the ACK.
+    EXPECT_FALSE(ack->getOption(DHO_LOG_SERVERS));
+    EXPECT_FALSE(ack->getOption(DHO_COOKIE_SERVERS));
+    EXPECT_FALSE(ack->getOption(DHO_LPR_SERVERS));
+
+    // Add 'Parameter Request List' option.
+    addPrlOption(req);
+
+    // Repeat the test but request some options.
+    ASSERT_NO_THROW(
+        ack = srv->processRequest(req);
+    );
+
+    // Should return something
+    ASSERT_TRUE(ack);
+
+    EXPECT_EQ(DHCPACK, ack->getType());
+
+    // This is relayed message. It should be sent back to relay address.
+    EXPECT_EQ(req->getGiaddr(), ack->getRemoteAddr());
+
+    // Check that the requested options are returned.
+    optionsCheck(ack);
 
     // Now repeat the test for directly sent message
     req->setHops(0);
@@ -418,7 +586,10 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     // to relay.
     EXPECT_EQ(ack->getRemoteAddr(), req->getRemoteAddr());
 
-    MessageCheck(req, ack);
+    messageCheck(req, ack);
+
+    // Check that the requested options are returned.
+    optionsCheck(ack);
 
     delete srv;
 }
@@ -890,7 +1061,6 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
                               temp_valid, temp_t1, temp_t2, temp_timestamp,

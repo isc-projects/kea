@@ -114,9 +114,18 @@ public:
 /// leases.
 struct Lease {
 
+    /// @brief Constructor
+    ///
+    /// @param addr IP address
+    /// @param t1 renewal time
+    /// @param t2 rebinding time
+    /// @param valid_lft Lifetime of the lease
+    /// @param subnet_id Subnet identification
+    /// @param cltt Client last transmission time
     Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt);
 
+    /// @brief Destructor
     virtual ~Lease() {}
 
     /// @brief IPv4 ot IPv6 address
@@ -226,13 +235,14 @@ struct Lease4 : public Lease {
 
     /// @brief Constructor
     ///
-    /// @param addr IPv4 address as unsigned 32-bit integer in network byte
-    ///        order.
+    /// @param addr IPv4 address.
     /// @param hwaddr Hardware address buffer
     /// @param hwaddr_len Length of hardware address buffer
     /// @param clientid Client identification buffer
     /// @param clientid_len Length of client identification buffer
     /// @param valid_lft Lifetime of the lease
+    /// @param t1 renewal time
+    /// @param t2 rebinding time
     /// @param cltt Client last transmission time
     /// @param subnet_id Subnet identification
     Lease4(const isc::asiolink::IOAddress& addr, const uint8_t* hwaddr, size_t hwaddr_len,
