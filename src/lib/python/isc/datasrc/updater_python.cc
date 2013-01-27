@@ -203,7 +203,7 @@ namespace {
 
 class s_UpdaterRRsetCollection : public s_RRsetCollection {
 public:
-    s_UpdaterRRsetCollection() : s_RRsetCollection() {}
+    s_UpdaterRRsetCollection() : s_RRsetCollection(), base_obj_(NULL) {}
     PyObject* base_obj_;
 };
 

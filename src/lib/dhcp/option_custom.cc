@@ -387,14 +387,10 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
 }
 
 void
-OptionCustom::pack4(isc::util::OutputBuffer& buf) {
-    if (len() > 255) {
-        isc_throw(OutOfRange, "DHCPv4 Option " << type_
-                  << " value is too high. At most 255 is supported.");
-    }
+OptionCustom::pack(isc::util::OutputBuffer& buf) {
 
-    buf.writeUint8(type_);
-    buf.writeUint8(len() - getHeaderLen());
+    // Pack DHCP header (V4 or V6).
+    packHeader(buf);
 
     // Write data from buffers.
     for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
@@ -411,21 +407,6 @@ OptionCustom::pack4(isc::util::OutputBuffer& buf) {
     packOptions(buf);
 }
 
-void
-OptionCustom::pack6(isc::util::OutputBuffer& buf) {
-    buf.writeUint16(type_);
-    buf.writeUint16(len() - getHeaderLen());
-
-    // Write data from buffers.
-    for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
-         it != buffers_.end(); ++it) {
-        if (!it->empty()) {
-            buf.writeData(&(*it)[0], it->size());
-        }
-    }
-
-    packOptions(buf);
-}
 
 asiolink::IOAddress
 OptionCustom::readAddress(const uint32_t index) const {

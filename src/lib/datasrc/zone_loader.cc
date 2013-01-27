@@ -17,7 +17,7 @@
 
 #include <datasrc/client.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/zone.h>
 #include <datasrc/logger.h>
 #include <datasrc/rrset_collection_base.h>

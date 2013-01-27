@@ -69,7 +69,7 @@ public:
         ///
         /// @param opt option
         /// @param persist if true option is always sent.
-        OptionDescriptor(OptionPtr& opt, bool persist)
+        OptionDescriptor(const OptionPtr& opt, bool persist)
             : option(opt), persistent(persist) {};
 
         /// @brief Constructor
@@ -225,7 +225,7 @@ public:
     /// @param option_space name of the option space to add an option to.
     ///
     /// @throw isc::BadValue if invalid option provided.
-    void addOption(OptionPtr& option, bool persistent,
+    void addOption(const OptionPtr& option, bool persistent,
                    const std::string& option_space);
 
     /// @brief Delete all options configured for the subnet.

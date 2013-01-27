@@ -267,20 +267,12 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     return (offset);
 }
 
-void LibDHCP::packOptions6(isc::util::OutputBuffer &buf,
-                           const isc::dhcp::Option::OptionCollection& options) {
-    for (Option::OptionCollection::const_iterator it = options.begin();
-         it != options.end(); ++it) {
-        it->second->pack(buf);
-    }
-}
-
 void
 LibDHCP::packOptions(isc::util::OutputBuffer& buf,
                      const Option::OptionCollection& options) {
     for (Option::OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
-        it->second->pack4(buf);
+        it->second->pack(buf);
     }
 }
 
