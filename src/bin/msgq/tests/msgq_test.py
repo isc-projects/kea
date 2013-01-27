@@ -454,9 +454,8 @@ class SendNonblock(unittest.TestCase):
         Two tests are done: one where the error is raised on the 3rd octet,
                             and one on the 23rd.
         """
-        sockerr = socket.error
         for err in [ errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR ]:
-            sockerr.errno = err
+            sockerr = socket.error(err, 'Socket error')
             self.do_send_with_send_error(3, sockerr)
             self.do_send_with_send_error(23, sockerr)
 
@@ -467,9 +466,8 @@ class SendNonblock(unittest.TestCase):
         Two tests are done: one where the error is raised on the 3rd octet,
                             and one on the 23rd.
         """
-        sockerr = socket.error
         for err in [ errno.EPIPE, errno.ENOBUFS, errno.ECONNRESET ]:
-            sockerr.errno = err
+            sockerr = socket.error(err, 'Socket error')
             self.do_send_with_send_error(3, sockerr, False)
             self.do_send_with_send_error(23, sockerr, False)
 
