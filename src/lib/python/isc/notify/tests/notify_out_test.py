@@ -436,7 +436,9 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 5
         timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
         self.assertEqual(timeout, 0)
-        self.assertListEqual([2, 1], valid_fds)
+        self.assertEqual(len(valid_fds), 2)
+        self.assertIn(1, valid_fds)
+        self.assertIn(2, valid_fds)
 
     def test_shutdown(self):
         thread = self._notify.dispatcher()
