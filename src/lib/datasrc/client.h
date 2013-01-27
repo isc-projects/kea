@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 
 /// \file
 /// Datasource clients
@@ -66,7 +67,7 @@
 namespace isc {
 namespace datasrc {
 
-// The iterator.h is not included on purpose, most application won't need it
+// zone_iterator.h is not included on purpose, most application won't need it
 class ZoneIterator;
 typedef boost::shared_ptr<ZoneIterator> ZoneIteratorPtr;
 

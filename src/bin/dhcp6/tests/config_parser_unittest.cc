@@ -351,7 +351,6 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
         "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -390,7 +389,6 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
         "    \"valid-lifetime\": 4,"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -516,7 +514,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
         "    \"pool\": [ \"4001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
+
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -544,7 +542,6 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
