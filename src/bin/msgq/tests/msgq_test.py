@@ -140,6 +140,72 @@ class TestSubscriptionManager(unittest.TestCase):
         self.sm.subscribe('ConfigManager', '*', 's3')
         self.assertEqual(1, self.__cfgmgr_ready_called)
 
+class MsgQTest(unittest.TestCase):
+    def setUp(self):
+        self.__msgq = MsgQ()
+
+    def test_undeliverable_errors(self):
+        sent_messages = []
+        def fake_end_prepared_msg(socket, msg):
+            sent_messages.append((socket, msg))
+        self.__msgq.send_prepared_msg = fake_end_prepared_msg
+        # These would be real sockets in the MsgQ, but we pass them as
+        # parameters only, so we don't need them to be. We use simple
+        # integers to tell one from another.
+        sender = 1
+        recipient = 2
+        # The routing headers and data to test with.
+        routing = {
+            'to': '*',
+            'group': 'group',
+            'instance': '*',
+            'seq': 42
+        }
+        data = {
+            "data": "Just some data"
+        }
+        # Send the message. No recipient, but errors are not requested,
+        # so none is generated.
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual([], sent_messages)
+        # Ask for errors if it can't be delivered.
+        routing["wants_reply"] = True
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual(1, len(sent_messages))
+        # TODO: Parse the message and check it looks correct. It should contain
+        # the reply header too.
+        sent_messages = []
+        # If the message is a reply itself, we never generate the errors, even
+        # if they can't be delivered. This is partly because the answer reuses
+        # the old header (which would then inherit the wants_reply flag) and
+        # partly we want to avoid loops of errors that can't be delivered.
+        # If a reply can't be delivered, the sender can't do much anyway even
+        # if notified.
+        routing["reply"] = 3
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual([], sent_messages)
+        # If there are recipients (but no "reply" header), the error should not
+        # be sent and the message should get delivered.
+        del routing["reply"]
+        self.__msgq.subs.find = lambda group, instance: [recipient]
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual(1, len(sent_messages))
+        # TODO: Parse the message to see it's the sent message.
+        sent_messages = []
+        # When we send a direct message and the recipient is not there, we get
+        # the error too
+        routing["to"] = "lname"
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual(1, len(sent_messages))
+        # TODO: Parse the errors
+        # But when the recipient is there, it is delivered and no error is
+        # generated.
+        self.__msgq.lnames["lname"] = recipient
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual(1, len(sent_messages))
+        # TODO: Parse the message and see it's not an error.
+        sent_messages = []
+
 class DummySocket:
     """
     Dummy socket class.
