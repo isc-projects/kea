@@ -3619,18 +3619,17 @@ Dhcp4/subnet4	[]	list	(default)
         special behavior, most options are sent by the server only if the client
         explicitly requested them.  The following example shows how to
         configure DNS servers, which is one of the most frequently used
-        options. Numbers in the first column are added for easier reference and
-        will not appear on screen. Options specified in this way are considered
-        global and apply to all configured subnets.
+        options. Options specified in this way are considered global and apply
+        to all configured subnets.
 
         <screen>
-1. &gt; <userinput>config add Dhcp4/option-data</userinput>
-2. &gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
-3. &gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
-4. &gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
-5. &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-6. &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.3.1, 192.0.3.2"</userinput>
-7. &gt; <userinput>config commit</userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.3.1, 192.0.3.2"</userinput>
+&gt; <userinput>config commit</userinput>
 </screen>
       </para>
     <para>
@@ -3842,9 +3841,27 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput></screen>
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
       Note that the above set of comments define the format of the new option and do not
       set its values.
       </para>
+      <note>
+        <para>
+          In the current release the default values are not propagated to the
+          parser when the new configuration is being set. Therefore, all
+          parameters must be specified at all times, even if their values are
+          left blank.
+        </para>
+      </note>
+
       <para>Once the new option format is defined, its value is set
       in the same way as for a standard option. For example the following
       commands set a global value that applies to all subnets.
@@ -3898,13 +3915,17 @@ Dhcp4/subnet4	[]	list	(default)
 
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 vendor specific options</title>
-      <para>Currently there are three option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon), dhcp6, and vendor-opts-space.  The last-mentioned
-      is empty by default but options can be defined in it: those options
-      are called vendor-specific information options. The following examples
-      show how to define an option "foo" with code 1 that consists of IPv4 address,
-      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
-      vendor specific information option.
+      <para>Currently there are two major option spaces defined: "dhcp4" and "dhcp6".
+      They group standard DHCPv4 and DHCPv6 options respectively. Some of the
+      standard options may encapsulate other option spaces. Those options that
+      belong to the encapsulated option space are appended as sub-options to the
+      option that encapsulates it. The name of the option space being encapsulated
+      by the standard option is created as a result of the concatenation of the
+      standard option's name and the postfix "-space". Thus the option space encapsulated
+      by the "vendor-enapsulated-options" option is named "vendor-encapsulated-options-space".
+      The following examples show how to define an option "foo" with code 1 that
+      consists of IPv4 address, unsigned 16 bit integer and a string. The "foo"
+      option is conveyed in a vendor specific information option.
       </para>
       <para>
       The first step is to define the format of the option:
@@ -3919,7 +3940,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulates ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      (Note that the option space is set to "vendor-encapsulated-option-space".)
+     (Note that the option space is set to "vendor-encapsulated-options-space".)
      Once the option format is defined, the next step is to define actual values
      for that option:
      <screen>
@@ -3930,7 +3951,8 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-    We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
+    We also set up a dummy value for "vendor-encapsulated-options", the option that conveys
+    our sub-option "foo".
      <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
@@ -3956,11 +3978,16 @@ Dhcp4/subnet4	[]	list	(default)
     <section id="dhcp4-option-spaces">
       <title>Nested DHCPv4 options (custom option spaces)</title>
       <para>It is sometimes useful to define completely new option
-      spaces.  This is useful if the user wants his new option to
-      convey sub-options that use separate numbering scheme, for
-      example sub-options with codes 1 and 2. Those option codes
-      conflict with standard DHCPv4 options, so a separate option
-      space must be defined.
+      space. This is the case when user creates new option in the
+      standard option space ("dhcp4 or "dhcp6") and wants this option
+      to convey sub-options. Thanks to being in the separate space,
+      sub-option codes will have a separate numbering scheme and may
+      overlap with codes of standard options.
+      </para>
+      <para>Note that it is not required to create new option space when
+      defining sub-options for a standard option because it is by
+      default created if the standard option is meant to convey
+      any sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
       </para>
       <para>      
       Assume that we want to have a DHCPv4 option called "container" with
@@ -4005,7 +4032,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>commit</userinput>
 </screen>
     The name of the option space in which the sub-options are defined
-    is set in the "encapsulates" field.
+    is set in the "encapsulate" field.
     </para>
     <para>
     Finally, we can set values for the new options:
@@ -4034,9 +4061,6 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[2]/data "123"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      Even though the "container" option comprises sub-options, we need to
-      set dummy values for it so that it is included in the data sent to a
-      client.
       </para>
     </section>
 
@@ -4451,10 +4475,10 @@ Dhcp6/subnet6/	list
 
 
     <para>
-      Below is a list of currently supported standard DHCPv6 options. The name and code
-      specify name and code that should be used as a name in option-data
-      structures. Type designates the actual format of the data and is one of
-      the types listed in <xref linkend="dhcp-types"/>.
+      Below is a list of currently supported standard DHCPv6 options. The "Name" and "Code"
+      are the values that should be used as a name in the option-data
+      structures. "Type" designates the format of the data: the meanings of
+      the various types is given in <xref linkend="dhcp-types"/>.
     </para>
     <para>
       Some options are designated as arrays, which means that more than one
@@ -4529,10 +4553,9 @@ Dhcp6/subnet6/	list
 
     <section id="dhcp6-custom-options">
       <title>Custom DHCPv6 options</title>
-      <para>It is also possible to define new options that are
-      currently not supported out of the box. Let's assume that we
-      want to define a new DHCPv6 option called "foo". It will have code 100
-      and will convey a single unsigned 32 bit integer value. We can define
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv6 option called "foo" which will have
+      code 100 and will convey a single unsigned 32 bit integer value. We can define
       such an option by using the following commands:
       <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
@@ -4544,12 +4567,21 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput></screen>
-      Note that this specifies new option format, not the values conveyed in
-      that option.
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
       </para>
-      <para>Once the new option format is defined, concrete values can then
-      be specified in the same way as standard options. For example the following
-      commands may be used to define global values that apply to all subnets.
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
         <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
@@ -4561,7 +4593,7 @@ Dhcp6/subnet6/	list
       </para>
 
       <para>New options can take more complex forms than simple use of
-      primitives (uint8, string, ipv6-address etc).  It is possible to
+      primitives (uint8, string, ipv6-address etc): it is possible to
       define an option comprising a number of existing primitives.
       </para>
       <para>
@@ -4579,7 +4611,12 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
 </screen>
-     Its values can be later defined as follows:
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+        Its values can be later defined as follows:
 <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "bar"</userinput>
@@ -4589,19 +4626,27 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
     </section>
 
     <section id="dhcp6-vendor-opts">
       <title>DHCPv6 vendor specific options</title>
-      <para>Currently there are three option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon) and dhcp6; there is also vendor-opts-space,
-      which is empty by default, but options can be defined in it. Those options
-      are called vendor-specific information options. The following examples
-      show how to define an option "foo" with code 1 that consists of IPv6 address,
-      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
-      vendor specific information option. This option comprises a single
-      uint32 value that is set to "12345". The sub-option "foo" follows
-      the data field holding this value.
+      <para>Currently there are two major option spaces defined: "dhcp4" and "dhcp6".
+      They group standard DHCPv4 and DHCPv6 options respectively. Some of the
+      standard options may encapsulate other option spaces. Those options that
+      belong to the encapsulated option space are appended as sub-options to the
+      option that encapsulates it. The name of the option space being encapsulated
+      by the standard option is created as a result of the concatenation of the
+      standard option's name and the postfix "-space". Thus the option space encapsulated
+      by the "vendor-opts" option is named "vendor-opts-space".
+      The following examples show how to define an option "foo" with code 1 that
+      consists of IPv6 address, unsigned 16 bit integer and a string. The "foo"
+      option is conveyed in a vendor specific information option.
+      </para>
+      <para>
+        The first step is to define the format of the option:
       <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
@@ -4611,8 +4656,10 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/encapsulates ""</userinput>
-&gt; <userinput>config commit</userinput></screen>
-     After option format is defined, the next step is to define actual values
+&gt; <userinput>config commit</userinput>
+</screen>
+     (Note that the option space is set to "vendor-opts-space".)
+     Once the option format is defined, the next step is to define actual values
      for that option:
      <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
@@ -4637,14 +4684,21 @@ Dhcp6/subnet6/	list
     <section id="dhcp6-option-spaces">
       <title>Nested DHCPv6 options (custom option spaces)</title>
       <para>It is sometimes useful to define completely new option
-      spaces.  This is useful if the user wants his new option to
-      convey sub-options that use separate numbering scheme, for
-      example sub-options with codes 1 and 2. Those option codes
-      conflict with standard DHCPv6 options, so a separate option
-      space must be defined. Let's assume that we want to have a
-      DHCPv6 option with code 102 that conveys two sub-options with
-      codes 1 and 2. This could be achieved with the following examples.
-      First we need to define those new sub-options:
+      space. This is the case when user creates new option in the
+      standard option space ("dhcp4 or "dhcp6") and wants this option
+      to convey sub-options. Thanks to being in the separate space,
+      sub-option codes will have a separate numbering scheme and may
+      overlap with codes of standard options.
+      </para>
+      <para>Note that it is not required to create new option space when
+      defining sub-options for a standard option because it is by
+      default created if the standard option is meant to convey
+      any sub-options (see <xref linkend="dhcp6-vendor-opts"/>).
+      </para>
+      <para>      
+      Assume that we want to have a DHCPv6 option called "container" with
+      code 102 that conveys two sub-options with codes 1 and 2. 
+      First we need to define the new sub-options:
 <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "subopt1"</userinput>
@@ -4666,8 +4720,12 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[1]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-The next step is to define a regular DHCPv6 option and specify that it
-should include options from isc option space:
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+    The next step is to define a regular DHCPv6 option with our desired
+    code and specify that it should include options from the new option space:
 <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/name "container"</userinput>
@@ -4679,8 +4737,11 @@ should include options from isc option space:
 &gt; <userinput>config set Dhcp6/option-def[2]/encapsulate "isc"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-
-Finally, we should specify values for those new options:
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulate" field.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
 <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "subopt1"</userinput>
