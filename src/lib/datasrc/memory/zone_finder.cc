@@ -765,6 +765,16 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
                                                           options))));
 }
 
+// The implementation is a special case of the generic findInternal: we know
+// the qname should have an "exact match" and its node is accessible via
+// getOriginNode(); and, since there should be at least SOA RR at the origin
+// the case of CNAME can be eliminated (these should be guaranteed at the load
+// or update time, but even if they miss a corner case and allows a CNAME to
+// be added at origin, the zone is broken anyway, so we'd just let this
+// method return garbage, too).  As a result, there can be only too cases
+// for the result codes: SUCCESS if the requested type of RR exists; NXRRSET
+// otherwise.  Due to its simplicity we implement it separately, rather than
+// sharing the code with findInternal.
 boost::shared_ptr<ZoneFinder::Context>
 InMemoryZoneFinder::findAtOrigin(const isc::dns::RRType& type,
                                  bool use_minttl,
