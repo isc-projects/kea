@@ -468,6 +468,7 @@ def check_statistics_items(step, category, has_except_for):
 
     stats = flatten(parse_bindctl_output_as_data_structure())
     if has_except_for:
+        # fetch step tables in the scnario as hashes
         for item in step.hashes:
             name = category+'.'+item['item_name']
             value = item['item_value']
