@@ -53,23 +53,6 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-/// \brief expensive rrset converter
-///
-/// converts any specialized rrset (which may not have implemented some
-/// methods for efficiency) into a 'full' RRsetPtr, for easy use in test
-/// checks.
-///
-/// Done very inefficiently through text representation, speed should not
-/// be a concern here.
-ConstRRsetPtr
-convertRRset(ConstRRsetPtr src) {
-    // If the type is SOA, textToRRset performs a stricter check, so we should
-    // specify the origin.
-    const Name& origin = (src->getType() == RRType::SOA()) ?
-        src->getName() : Name::ROOT_NAME();
-    return (textToRRset(src->toText(), src->getClass(), origin));
-}
-
 /// \brief Test fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderTest : public ::testing::Test {
     // A straightforward pair of textual RR(set) and a RRsetPtr variable
@@ -195,6 +178,10 @@ protected:
                 *zone_data[i].rrset = textToRRset(zone_data[i].text, class_,
                                                   origin_);
             } else {
+                // For other data, we should rather omit the origin (the root
+                // name will be used by default); there's some out-of-zone
+                // name, which would trigger an exception if we specified
+                // origin_.
                 *zone_data[i].rrset = textToRRset(zone_data[i].text);
             }
         }
@@ -209,6 +196,24 @@ protected:
 
     void addToZoneData(const ConstRRsetPtr rrset) {
         updater_.add(rrset, rrset->getRRsig());
+    }
+
+    /// \brief expensive rrset converter
+    ///
+    /// converts any specialized rrset (which may not have implemented some
+    /// methods for efficiency) into a 'full' RRsetPtr, for easy use in test
+    /// checks.
+    ///
+    /// Done very inefficiently through text representation, speed should not
+    /// be a concern here.
+    ConstRRsetPtr
+    convertRRset(ConstRRsetPtr src) {
+        // If the type is SOA, textToRRset performs a stricter check, so we
+        // should specify the origin.  For now we don't use out-of-zone
+        // owner names (e.g. for pathological cases) with this method, so it
+        // works for all test data.  If future changes break this assumption
+        // we should adjust it.
+        return (textToRRset(src->toText(), class_, origin_));
     }
 
     // Some data to test with
