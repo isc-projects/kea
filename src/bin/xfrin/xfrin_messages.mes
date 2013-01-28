@@ -77,7 +77,7 @@ is not equal to the requested SOA serial.
 There was an error importing the python DNS module pydnspp. The most
 likely cause is a PYTHONPATH problem.
 
-% XFRIN_INVALID_ZONE_DATA zone %2 received from %3 contains invalid data
+% XFRIN_INVALID_ZONE_DATA zone %1 received from %2 contains invalid data
 The zone was received, but it failed sanity validation. The previous version
 of zone (if any is available) will be used. Look for previous
 XFRIN_ZONE_INVALID messages to see the exact problem(s).
