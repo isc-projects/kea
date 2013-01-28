@@ -56,25 +56,11 @@ protected:
 
 void
 buildSkeletonMessage(MessageAttributes& msgattrs) {
-    msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-    msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+    msgattrs.setRequestIPVersion(AF_INET);
+    msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
-}
-
-TEST_F(CountersTest, invalidParameter) {
-    MessageAttributes msgattrs;
-
-    // Passing *_UNSPEC should trigger throwing an exception
-    // isc::InvalidParameter.
-    EXPECT_THROW(
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_UNSPEC),
-        isc::InvalidParameter);
-    EXPECT_THROW(
-        msgattrs.setRequestTransportProtocol(
-            MessageAttributes::TRANSPORT_UNSPEC),
-        isc::InvalidParameter);
 }
 
 TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
@@ -137,17 +123,11 @@ TEST_F(CountersTest, incrementProtocolType) {
     //      ipv6        tcp
     int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
     for (int i = 0; i < 4; ++i) {
-        const enum MessageAttributes::IPVersionType ipversion =
-            (i & 1) != 0 ?
-            MessageAttributes::IP_VERSION_IPV4 :
-            MessageAttributes::IP_VERSION_IPV6;
-        const enum MessageAttributes::TransportProtocolType proto =
-            (i & 2) != 0 ?
-            MessageAttributes::TRANSPORT_UDP :
-            MessageAttributes::TRANSPORT_TCP;
+        const int af = i & 1 ? AF_INET : AF_INET6;
+        const int proto = i & 2 ? IPPROTO_UDP : IPPROTO_TCP;
 
         buildSkeletonMessage(msgattrs);
-        msgattrs.setRequestIPVersion(ipversion);
+        msgattrs.setRequestIPVersion(af);
         msgattrs.setRequestTransportProtocol(proto);
 
         response.setRcode(Rcode::REFUSED());
@@ -157,12 +137,12 @@ TEST_F(CountersTest, incrementProtocolType) {
 
         counters.inc(msgattrs, response, true);
 
-        if (ipversion == MessageAttributes::IP_VERSION_IPV4) {
+        if (af == AF_INET) {
             ++count_v4;
         } else {
             ++count_v6;
         }
-        if (proto == MessageAttributes::TRANSPORT_UDP) {
+        if (proto == IPPROTO_UDP) {
             ++count_udp;
         } else {
             ++count_tcp;
@@ -548,8 +528,8 @@ TEST_F(CountersTest, incrementQrySuccess) {
     std::map<std::string, int> expect;
 
     // Opcode = QUERY, Rcode = NOERROR, ANCOUNT > 0
-    msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-    msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+    msgattrs.setRequestIPVersion(AF_INET);
+    msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
@@ -598,8 +578,8 @@ TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
     int count_referral = 0, count_nxrrset = 0;
     for (int i = 0; i < 2; ++i) {
         const bool is_aa_set = i & 1;
-        msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-        msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+        msgattrs.setRequestIPVersion(AF_INET);
+        msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
         msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
@@ -642,8 +622,8 @@ TEST_F(CountersTest, incrementAuthQryRej) {
     std::map<std::string, int> expect;
 
     // Opcode = QUERY, Rcode = REFUSED, ANCOUNT = 0 (don't care)
-    msgattrs.setRequestIPVersion(MessageAttributes::IP_VERSION_IPV4);
-    msgattrs.setRequestTransportProtocol(MessageAttributes::TRANSPORT_UDP);
+    msgattrs.setRequestIPVersion(AF_INET);
+    msgattrs.setRequestTransportProtocol(IPPROTO_UDP);
     msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);

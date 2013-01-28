@@ -54,8 +54,8 @@ public:
     };
 private:
     // request attributes
-    IPVersionType req_ip_version_;                  // IP version
-    TransportProtocolType req_transport_protocol_;  // Transport layer protocol
+    int req_ip_version_;            // IP version
+    int req_transport_protocol_;    // Transport layer protocol
     boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
         REQ_WITH_EDNS_0,            // request with EDNS ver.0
@@ -71,9 +71,7 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() :
-        req_ip_version_(IP_VERSION_UNSPEC),
-        req_transport_protocol_(TRANSPORT_UNSPEC)
+    MessageAttributes() : req_ip_version_(0), req_transport_protocol_(0)
     {}
 
     /// \brief Return opcode of the request.
@@ -94,39 +92,32 @@ public:
         req_opcode_ = opcode;
     }
 
-    /// \brief Return IP version carrying the request.
-    /// \return IP version carrying the request
+    /// \brief Get IP version carrying a request.
+    /// \return IP version carrying a request (AF_INET or AF_INET6)
     /// \throw None
-    IPVersionType getRequestIPVersion() const {
+    int getRequestIPVersion() const {
         return (req_ip_version_);
     }
 
-    /// \brief Set IP version carrying the request.
-    /// \param ip_version IP version carrying the request
-    /// \throw isc::InvalidParameter ip_version is invalid
-    void setRequestIPVersion(const IPVersionType ip_version) {
-        if (ip_version == IP_VERSION_UNSPEC) {
-            isc_throw(isc::InvalidParameter, "Invalid IP version");
-        }
+    /// \brief Set IP version carrying a request.
+    /// \param ip_version AF_INET or AF_INET6
+    /// \throw None
+    void setRequestIPVersion(const int ip_version) {
         req_ip_version_ = ip_version;
     }
 
-    /// \brief Return transport protocol carrying the request.
-    /// \return Transport protocol carrying the request
+    /// \brief Get transport protocol carrying a request.
+    /// \return Transport protocol carrying a request
+    ///         (IPPROTO_UDP or IPPROTO_TCP)
     /// \throw None
-    TransportProtocolType getRequestTransportProtocol() const {
+    int getRequestTransportProtocol() const {
         return (req_transport_protocol_);
     }
 
-    /// \brief Set transport protocol carrying the request.
-    /// \param transport_protocol Transport protocol carrying the request
-    /// \throw isc::InvalidParameter transport_protocol is invalid
-    void setRequestTransportProtocol(
-        const TransportProtocolType transport_protocol)
-    {
-        if (transport_protocol == TRANSPORT_UNSPEC) {
-            isc_throw(isc::InvalidParameter, "Invalid transport protocol");
-        }
+    /// \brief Set transport protocol carrying a request.
+    /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
+    /// \throw None
+    void setRequestTransportProtocol(const int transport_protocol) {
         req_transport_protocol_ = transport_protocol;
     }
 
@@ -233,7 +224,6 @@ class Counters : boost::noncopyable {
 private:
     // counter for DNS message attributes
     isc::statistics::Counter server_msg_counter_;
-
     void incRequest(const MessageAttributes& msgattrs);
     void incResponse(const MessageAttributes& msgattrs,
                      const isc::dns::Message& response);
