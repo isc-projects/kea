@@ -24,6 +24,8 @@
 
 #include <statistics/counter.h>
 
+#include <boost/optional.hpp>
+
 using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
@@ -151,14 +153,11 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // OPCODE
-    try {
-        server_msg_counter_.inc(
-            opcode_to_msgcounter[msgattrs.getRequestOpCode().getCode()]);
-    } catch (const isc::InvalidOperation& ex) {
-        // The exception will be thrown if OpCode is not set
-        //  (e.g. message is short).
-        // Increment MSG_OPCODE_OTHER.
-        server_msg_counter_.inc(MSG_OPCODE_OTHER);
+    const boost::optional<const isc::dns::Opcode&> opcode =
+        msgattrs.getRequestOpCode();
+    // Increment opcode counter only if the opcode exists.
+    if (opcode) {
+        server_msg_counter_.inc(opcode_to_msgcounter[opcode.get().getCode()]);
     }
 }
 
@@ -198,47 +197,42 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    try {
-        if (msgattrs.getRequestOpCode() == Opcode::QUERY()) {
-            // compound attributes
-            const unsigned int answer_rrs =
-                response.getRRCount(Message::SECTION_ANSWER);
-            const bool is_aa_set =
-                response.getHeaderFlag(Message::HEADERFLAG_AA);
+    const boost::optional<const isc::dns::Opcode&> opcode =
+        msgattrs.getRequestOpCode();
+    if (opcode && opcode.get() == Opcode::QUERY()) {
+        // compound attributes
+        const unsigned int answer_rrs =
+            response.getRRCount(Message::SECTION_ANSWER);
+        const bool is_aa_set =
+            response.getHeaderFlag(Message::HEADERFLAG_AA);
 
-            if (is_aa_set) {
-                // QryAuthAns
-                server_msg_counter_.inc(MSG_QRYAUTHANS);
+        if (is_aa_set) {
+            // QryAuthAns
+            server_msg_counter_.inc(MSG_QRYAUTHANS);
+        } else {
+            // QryNoAuthAns
+            server_msg_counter_.inc(MSG_QRYNOAUTHANS);
+        }
+
+        if (rcode == Rcode::NOERROR_CODE) {
+            if (answer_rrs > 0) {
+                // QrySuccess
+                server_msg_counter_.inc(MSG_QRYSUCCESS);
             } else {
-                // QryNoAuthAns
-                server_msg_counter_.inc(MSG_QRYNOAUTHANS);
-            }
-
-            if (rcode == Rcode::NOERROR_CODE) {
-                if (answer_rrs > 0) {
-                    // QrySuccess
-                    server_msg_counter_.inc(MSG_QRYSUCCESS);
+                if (is_aa_set) {
+                    // QryNxrrset
+                    server_msg_counter_.inc(MSG_QRYNXRRSET);
                 } else {
-                    if (is_aa_set) {
-                        // QryNxrrset
-                        server_msg_counter_.inc(MSG_QRYNXRRSET);
-                    } else {
-                        // QryReferral
-                        server_msg_counter_.inc(MSG_QRYREFERRAL);
-                    }
+                    // QryReferral
+                    server_msg_counter_.inc(MSG_QRYREFERRAL);
                 }
-            } else if (rcode == Rcode::REFUSED_CODE) {
-                if (!response.getHeaderFlag(Message::HEADERFLAG_RD)) {
-                    // AuthRej
-                    server_msg_counter_.inc(MSG_QRYREJECT);
-                }
+            }
+        } else if (rcode == Rcode::REFUSED_CODE) {
+            if (!response.getHeaderFlag(Message::HEADERFLAG_RD)) {
+                // AuthRej
+                server_msg_counter_.inc(MSG_QRYREJECT);
             }
         }
-    } catch (const isc::InvalidOperation& ex) {
-        // The exception will be thrown if OpCode is not set
-        //  (e.g. message is short).
-        // Do not increment the counters above since they are incremented
-        // only if Opcode is Query.
     }
 }
 
