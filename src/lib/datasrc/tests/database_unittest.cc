@@ -4390,11 +4390,13 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
     this->updater_.reset();
     this->updater_ = this->client_->getUpdater(this->zname_, false);
 
-    // Just call getRRsetCollection() here. The .find() is unnecessary,
-    // but we have it to use the result of getRRsetCollection().
-    this->updater_->getRRsetCollection().find(Name("www.example.org"),
-                                              RRClass::IN(),
-                                              RRType::MX());
+    // Just call getRRsetCollection() here. The test using .find() is
+    // unnecessary for the purpose of this test case, but we have it to
+    // use the result of getRRsetCollection() and silence some compiler
+    // complaining about ignoring the return value of
+    // getRRsetCollection().
+    EXPECT_FALSE(this->updater_->getRRsetCollection().
+                 find(Name("www.example.org"), RRClass::IN(), RRType::MX()));
 
     // addRRset() must throw isc::InvalidOperation here.
     EXPECT_THROW(this->updater_->addRRset(*this->rrset_),
