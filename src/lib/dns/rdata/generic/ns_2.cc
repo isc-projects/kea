@@ -22,6 +22,8 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using namespace isc::util;
 
@@ -39,9 +41,9 @@ NS::NS(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
-NS::NS(MasterLexer& lexer, const Name*, MasterLoader::Options,
-       MasterLoaderCallbacks&) :
-    nsname_(lexer.getNextToken(MasterToken::QSTRING).getString())
+NS::NS(MasterLexer& lexer, const Name* origin,
+       MasterLoader::Options, MasterLoaderCallbacks&) :
+    nsname_(createNameFromLexer(lexer, origin))
 {}
 
 NS::NS(const NS& other) :
