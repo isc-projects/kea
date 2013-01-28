@@ -819,17 +819,49 @@ public:
     /// \c ZoneUpdater implementation.
     ///
     /// The behavior of the RRsetCollection is similar to the behavior
-    /// of the \c Zonefinder returned by \c getFinder().
+    /// of the \c Zonefinder returned by \c getFinder().  In fact, it's
+    /// redundant in a sense because one can implement the
+    /// \c dns::RRsetCollectionBase interface using an updater and
+    /// \c getFinder() interface (unless it's expected to support zone
+    /// iteration, and the initial implementation of the `RRsetCollection`
+    /// returned by this method doesn't support it).  We still provide it
+    /// as an updater's method so it will be easier for an updater
+    /// implementation to customize the `RRsetCollection` implementation,
+    /// and also for making it easy to impose restrictions described below.
+    ///
+    /// Specific data sources may have special restrictions.  That's
+    /// especially the case for database-based data sources.  Such
+    /// restrictions may also result in limiting the usage of the
+    /// `RRsetCollection` as described in the following paragraphs.  A
+    /// specific updater implementation may provide more flexible
+    /// behavior, but applications using this interface must assume
+    /// the most restricted case unless it knows it uses a particular
+    /// specialized updater implementation that loosens specific restrictions.
+    ///
+    /// To summarize the restrictions:
+    /// - An application must not add or delete RRsets after
+    ///   \c getRRsetCollection() is called.
+    /// - An application must not use the returned collection from
+    ///   \c getRRsetCollection() once \c commit() is called on the updater
+    ///   that generates the collection.
+    ///
     /// Implementations of \c ZoneUpdater may not allow adding or
     /// deleting RRsets after \c getRRsetCollection() is called. This is
-    /// because iterating the collection may result in unexpected
-    /// behavior if the underlying data is updated.  Implementations of
-    /// \c ZoneUpdater may disable a previously returned
-    /// \c RRsetCollection after \c commit() is called. Even in this
-    /// case, using existing iterators may result in unexpected behavior
-    /// after \c commit() is called. If an \c RRsetCollection is
-    /// disabled, using methods such as \c find() and using its iterator
-    /// would cause an exception to be thrown. See
+    /// because if an iterator of the collection is being used at that time
+    /// the modification to the zone may break an internal assumption of the
+    /// iterator and may result in unexpected behavior.  Also, the iterator
+    /// may conceptually hold a "reader lock" of the zone (in an implementation
+    /// dependent manner), which would prevent the addition or deletion,
+    /// surprising the caller (who would normally expect it to succeed).
+    ///
+    /// Implementations of \c ZoneUpdater may disable a previously returned
+    /// \c RRsetCollection after \c commit() is called.  This is because
+    /// the returned \c RRsetCollection may internally rely on the conceptual
+    /// transaction of the updater that generates the collection (which would
+    /// be literally the case for database-based data sources), and once
+    /// the transaction is committed anything that relies on it won't be valid.
+    /// If an \c RRsetCollection is disabled, using methods such as \c find()
+    /// and using its iterator would cause an exception to be thrown. See
     /// \c isc::datasrc::RRsetCollectionBase for details.
     virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
 
@@ -881,9 +913,8 @@ public:
     /// \c DataSourceError exception.
     ///
     /// Implementations of \c ZoneUpdater may not allow adding or
-    /// deleting RRsets after \c getRRsetCollection() is called. This is
-    /// because iterating the collection may result in unexpected
-    /// behavior if the underlying data is updated. In this case,
+    /// deleting RRsets after \c getRRsetCollection() is called (see
+    /// the description of \c getRRsetCollection()).  In this case,
     /// implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
@@ -958,9 +989,8 @@ public:
     /// \c DataSourceError exception.
     ///
     /// Implementations of \c ZoneUpdater may not allow adding or
-    /// deleting RRsets after \c getRRsetCollection() is called. This is
-    /// because iterating the collection may result in unexpected
-    /// behavior if the underlying data is updated. In this case,
+    /// deleting RRsets after \c getRRsetCollection() is called (see
+    /// the description of \c getRRsetCollection()).  In this case,
     /// implementations throw an \c InvalidOperation exception.
     ///
     /// If journaling was requested when getting this updater, it will reject
