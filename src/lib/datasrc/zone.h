@@ -18,10 +18,10 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
+#include <dns/rrset_collection_base.h>
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
-#include <dns/rrset_collection_base.h>
 
 #include <utility>
 #include <vector>
@@ -806,7 +806,7 @@ public:
     /// Return an RRsetCollection for the updater.
     ///
     /// This method returns an \c RRsetCollection for the updater,
-    /// implementing the \c isc::datasrc::RRsetCollectionBase
+    /// implementing the \c isc::dns::RRsetCollectionBase
     /// interface. Typically, the returned \c RRsetCollection is a
     /// singleton for its \c ZoneUpdater. The returned RRsetCollection
     /// object must not be used after its corresponding \c ZoneUpdater
@@ -820,16 +820,16 @@ public:
     /// redundant in a sense because one can implement the
     /// \c dns::RRsetCollectionBase interface using an updater and
     /// \c getFinder() interface (unless it's expected to support zone
-    /// iteration, and the initial implementation of the `RRsetCollection`
+    /// iteration, and the initial implementation of the \c RRsetCollection
     /// returned by this method doesn't support it).  We still provide it
     /// as an updater's method so it will be easier for an updater
-    /// implementation to customize the `RRsetCollection` implementation,
+    /// implementation to customize the \c RRsetCollection implementation,
     /// and also for making it easy to impose restrictions described below.
     ///
     /// Specific data sources may have special restrictions.  That's
     /// especially the case for database-based data sources.  Such
     /// restrictions may also result in limiting the usage of the
-    /// `RRsetCollection` as described in the following paragraphs.  A
+    /// \c RRsetCollection as described in the following paragraphs.  A
     /// specific updater implementation may provide more flexible
     /// behavior, but applications using this interface must assume
     /// the most restricted case unless it knows it uses a particular
