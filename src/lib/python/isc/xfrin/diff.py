@@ -146,12 +146,12 @@ class Diff:
         """
         # first add or delete must be of type SOA
         if len(buf) == 0 and\
-           rr.get_type() != isc.dns.RRType.SOA():
+           rr.get_type() != isc.dns.RRType.SOA:
             raise ValueError("First " + operation +
                              " in single update mode must be of type SOA")
         # And later adds or deletes may not
         elif len(buf) != 0 and\
-           rr.get_type() == isc.dns.RRType.SOA():
+           rr.get_type() == isc.dns.RRType.SOA:
             raise ValueError("Multiple SOA records in single " +
                              "update mode " + operation)
         buf.append((operation, rr))
@@ -238,8 +238,8 @@ class Diff:
             '''A helper routine to identify whether two RRsets are of the
             same 'type'.  For RRSIGs we should consider type covered, too.
             '''
-            if rrset1.get_type() != isc.dns.RRType.RRSIG() or \
-                    rrset2.get_type != isc.dns.RRType.RRSIG():
+            if rrset1.get_type() != isc.dns.RRType.RRSIG or \
+                    rrset2.get_type != isc.dns.RRType.RRSIG:
                 return rrset1.get_type() == rrset2.get_type()
             # RR type of the both RRsets is RRSIG.  Compare type covered.
             # We know they have exactly one RDATA.
@@ -425,7 +425,7 @@ class Diff:
             return a.get_name() == b.get_name() and\
                    a.get_type() == b.get_type() and\
                    a.get_rdata()[0] == b.get_rdata()[0]
-        if rr.get_type() == isc.dns.RRType.SOA():
+        if rr.get_type() == isc.dns.RRType.SOA:
             return buf
         else:
             return [ op for op in buf if not same_rr(op[1], rr)]

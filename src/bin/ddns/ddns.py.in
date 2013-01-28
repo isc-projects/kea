@@ -134,7 +134,7 @@ def get_datasrc_client(cc_session):
     function will simply be removed.
 
     '''
-    HARDCODED_DATASRC_CLASS = RRClass.IN()
+    HARDCODED_DATASRC_CLASS = RRClass.IN
     file, is_default = cc_session.get_remote_config_value("Auth",
                                                           "database_file")
     # See xfrout.py:get_db_file() for this trick:

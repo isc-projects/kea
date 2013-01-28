@@ -257,9 +257,9 @@ class XfroutSession():
 
         # Identify the request type
         self._request_type = question.get_type()
-        if self._request_type == RRType.AXFR():
+        if self._request_type == RRType.AXFR:
             self._request_typestr = 'AXFR'
-        elif self._request_type == RRType.IXFR():
+        elif self._request_type == RRType.IXFR:
             self._request_typestr = 'IXFR'
         else:
             # Likewise, this should be impossible.
@@ -352,7 +352,7 @@ class XfroutSession():
         result, finder = self._datasrc_client.find_zone(zone_name)
         if result != DataSourceClient.SUCCESS:
             return (Rcode.NOTAUTH(), None)
-        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA())
+        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
         if result != ZoneFinder.SUCCESS:
             return (Rcode.SERVFAIL(), None)
         # Especially for database-based zones, a working zone may be in
@@ -405,7 +405,7 @@ class XfroutSession():
             # Ignore data whose owner name is not the zone apex, and
             # ignore non-SOA or different class of records.
             if auth_rrset.get_name() != zone_name or \
-                    auth_rrset.get_type() != RRType.SOA() or \
+                    auth_rrset.get_type() != RRType.SOA or \
                     auth_rrset.get_class() != zone_class:
                 continue
             if auth_rrset.get_rdata_count() != 1:
@@ -490,7 +490,7 @@ class XfroutSession():
             self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
 
-        if self._request_type == RRType.AXFR():
+        if self._request_type == RRType.AXFR:
             return self.__axfr_setup(zone_name)
         else:
             return self.__ixfr_setup(request_msg, zone_name, zone_class)
@@ -530,7 +530,7 @@ class XfroutSession():
 
         try:
             # increment Xfr starts by RRType
-            if self._request_type == RRType.AXFR():
+            if self._request_type == RRType.AXFR:
                 self._inc_axfr_running()
             else:
                 self._inc_ixfr_running()
@@ -542,7 +542,7 @@ class XfroutSession():
                     format_addrinfo(self._remote), zone_str, err)
         finally:
             # decrement Xfr starts by RRType
-            if self._request_type == RRType.AXFR():
+            if self._request_type == RRType.AXFR:
                 self._dec_axfr_running()
             else:
                 self._dec_ixfr_running()
@@ -614,7 +614,7 @@ class XfroutSession():
 
             # For AXFR (or AXFR-style IXFR), in which case _jnl_reader is None,
             # we should skip SOAs from the iterator.
-            if self._jnl_reader is None and rrset.get_type() == RRType.SOA():
+            if self._jnl_reader is None and rrset.get_type() == RRType.SOA:
                 continue
 
             # We calculate the maximum size of the RRset (i.e. the
@@ -1215,7 +1215,7 @@ class XfroutServer:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if not zone_class:
-                zone_class = str(RRClass.IN())
+                zone_class = str(RRClass.IN)
             if zone_name:
                 logger.info(XFROUT_NOTIFY_COMMAND, zone_name, zone_class)
                 if self.send_notify(zone_name, zone_class):

@@ -135,7 +135,7 @@ class DDNS_SOA:
     def __write_soa_internal(self, origin_soa, soa_num):
         '''Write back serial number to soa'''
         new_soa = RRset(origin_soa.get_name(), origin_soa.get_class(),
-                        RRType.SOA(), origin_soa.get_ttl())
+                        RRType.SOA, origin_soa.get_ttl())
         soa_rdata_parts = origin_soa.get_rdata()[0].to_text().split()
         soa_rdata_parts[2] = str(soa_num.get_value())
         new_soa.add_rdata(Rdata(origin_soa.get_type(), origin_soa.get_class(),
@@ -297,7 +297,7 @@ class UpdateSession:
             raise UpdateError('Invalid number of records in zone section: ' +
                               str(n_zones), None, None, Rcode.FORMERR())
         zrecord = self.__message.get_question()[0]
-        if zrecord.get_type() != RRType.SOA():
+        if zrecord.get_type() != RRType.SOA:
             raise UpdateError('update zone section contains non-SOA',
                               None, None, Rcode.FORMERR())
 
@@ -476,7 +476,7 @@ class UpdateSession:
                 return Rcode.NOTZONE()
 
             # Algorithm taken from RFC2136 Section 3.2
-            if rrset.get_class() == RRClass.ANY():
+            if rrset.get_class() == RRClass.ANY:
                 if rrset.get_ttl().get_value() != 0 or\
                    rrset.get_rdata_count() != 0:
                     logger.info(LIBDDNS_PREREQ_FORMERR_ANY,
@@ -484,7 +484,7 @@ class UpdateSession:
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
-                elif rrset.get_type() == RRType.ANY():
+                elif rrset.get_type() == RRType.ANY:
                     if not self.__prereq_name_in_use(rrset):
                         rcode = Rcode.NXDOMAIN()
                         logger.info(LIBDDNS_PREREQ_NAME_IN_USE_FAILED,
@@ -500,7 +500,7 @@ class UpdateSession:
                                     ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
-            elif rrset.get_class() == RRClass.NONE():
+            elif rrset.get_class() == RRClass.NONE:
                 if rrset.get_ttl().get_value() != 0 or\
                    rrset.get_rdata_count() != 0:
                     logger.info(LIBDDNS_PREREQ_FORMERR_NONE,
@@ -508,7 +508,7 @@ class UpdateSession:
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
-                elif rrset.get_type() == RRType.ANY():
+                elif rrset.get_type() == RRType.ANY:
                     if not self.__prereq_name_not_in_use(rrset):
                         rcode = Rcode.YXDOMAIN()
                         logger.info(LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED,
@@ -582,12 +582,12 @@ class UpdateSession:
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
-                if rrset.get_type() == RRType.SOA():
+                if rrset.get_type() == RRType.SOA:
                     # In case there's multiple soa records in the update
                     # somehow, just take the last
                     for rr in foreach_rr(rrset):
                         self.__set_soa_rrset(rr)
-            elif rrset.get_class() == RRClass.ANY():
+            elif rrset.get_class() == RRClass.ANY:
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_NONZERO_TTL,
                                 ClientFormatter(self.__client_addr),
@@ -607,7 +607,7 @@ class UpdateSession:
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
-            elif rrset.get_class() == RRClass.NONE():
+            elif rrset.get_class() == RRClass.NONE:
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL,
                                 ClientFormatter(self.__client_addr),
@@ -657,7 +657,7 @@ class UpdateSession:
         # For a number of cases, we may need to remove data in the zone
         # (note; SOA is handled separately by __do_update, so that one
         # is explicitely ignored here)
-        if rrset.get_type() == RRType.SOA():
+        if rrset.get_type() == RRType.SOA:
             return
         result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
                                                  rrset.get_type())
@@ -668,7 +668,7 @@ class UpdateSession:
             return
         elif result == ZoneFinder.SUCCESS:
             # if update is cname, and zone rr is not, ignore
-            if rrset.get_type() == RRType.CNAME():
+            if rrset.get_type() == RRType.CNAME:
                 # Remove original CNAME record (the new one
                 # is added below)
                 self.__diff.delete_data(orig_rrset)
@@ -679,7 +679,7 @@ class UpdateSession:
         elif result == ZoneFinder.NXRRSET:
             # There is data present, but not for this type.
             # If this type is CNAME, ignore the update
-            if rrset.get_type() == RRType.CNAME():
+            if rrset.get_type() == RRType.CNAME:
                 return
         for rr in foreach_rr(rrset):
             self.__do_update_add_single_rr(rr, orig_rrset)
@@ -696,8 +696,8 @@ class UpdateSession:
                                                         rrset.get_type())
         if result == ZoneFinder.SUCCESS:
             if to_delete.get_name() == self.__zname and\
-               (to_delete.get_type() == RRType.SOA() or\
-                to_delete.get_type() == RRType.NS()):
+               (to_delete.get_type() == RRType.SOA or\
+                to_delete.get_type() == RRType.NS):
                 # ignore
                 return
             for rr in foreach_rr(to_delete):
@@ -749,8 +749,8 @@ class UpdateSession:
             for to_delete in rrsets:
                 # if name == self.__zname and type is soa or ns, don't delete!
                 if to_delete.get_name() == self.__zname and\
-                   (to_delete.get_type() == RRType.SOA() or
-                    to_delete.get_type() == RRType.NS()):
+                   (to_delete.get_type() == RRType.SOA or
+                    to_delete.get_type() == RRType.NS):
                     continue
                 else:
                     for rr in foreach_rr(to_delete):
@@ -771,10 +771,10 @@ class UpdateSession:
         to_delete = convert_rrset_class(rrset, self.__zclass)
 
         if rrset.get_name() == self.__zname:
-            if rrset.get_type() == RRType.SOA():
+            if rrset.get_type() == RRType.SOA:
                 # ignore
                 return
-            elif rrset.get_type() == RRType.NS():
+            elif rrset.get_type() == RRType.NS:
                 # hmm. okay. annoying. There must be at least one left,
                 # delegate to helper method
                 self.__ns_deleter_helper(to_delete)
@@ -793,7 +793,7 @@ class UpdateSession:
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        result, old_soa, _ = self.__diff.find(self.__zname, RRType.SOA(),
+        result, old_soa, _ = self.__diff.find(self.__zname, RRType.SOA,
                                               ZoneFinder.NO_WILDCARD |
                                               ZoneFinder.FIND_GLUE_OK)
         # We may implement recovering from missing SOA data at some point, but
@@ -841,12 +841,12 @@ class UpdateSession:
             for rrset in self.__message.get_section(SECTION_UPDATE):
                 if rrset.get_class() == self.__zclass:
                     self.__do_update_add_rrs_to_rrset(rrset)
-                elif rrset.get_class() == RRClass.ANY():
-                    if rrset.get_type() == RRType.ANY():
+                elif rrset.get_class() == RRClass.ANY:
+                    if rrset.get_type() == RRType.ANY:
                         self.__do_update_delete_name(rrset)
                     else:
                         self.__do_update_delete_rrset(rrset)
-                elif rrset.get_class() == RRClass.NONE():
+                elif rrset.get_class() == RRClass.NONE:
                     self.__do_update_delete_rrs_from_rrset(rrset)
 
             self.__diff.commit()
