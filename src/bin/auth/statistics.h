@@ -152,7 +152,7 @@ public:
     }
 
     /// \brief Set DNSSEC OK (DO) bit of the request.
-    /// \param is_dnssec_ok true if DNSSEC OK (DO) bit of the request is set
+    /// \param with_dnssec_ok true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     void setRequestDO(const bool with_dnssec_ok) {
         bit_attributes_[REQ_WITH_DNSSEC_OK] = with_dnssec_ok;
@@ -173,12 +173,12 @@ public:
     }
 
     /// \brief Set TSIG attributes of the request.
-    /// \param is_tsig true if the request is TSIG signed
-    /// \param is_badsig true if the signature of the request is bad
+    /// \param signed_tsig true if the request is signed with TSIG
+    /// \param badsig true if the signature of the request is bad
     /// \throw None
-    void setRequestTSIG(const bool tsig_signed, const bool badsig) {
-        assert(!(!tsig_signed && badsig));
-        bit_attributes_[REQ_TSIG_SIGNED] = tsig_signed;
+    void setRequestTSIG(const bool signed_tsig, const bool badsig) {
+        assert(!(!signed_tsig && badsig));
+        bit_attributes_[REQ_TSIG_SIGNED] = signed_tsig;
         bit_attributes_[REQ_BADSIG] = badsig;
     }
 
@@ -197,14 +197,14 @@ public:
     }
 
     /// \brief Return whether the response is TSIG signed or not.
-    /// \return true if the response is TSIG signed
+    /// \return true if the response is signed with TSIG
     /// \throw None
     bool getResponseTSIG() const {
         return (bit_attributes_[RES_TSIG_SIGNED]);
     }
 
     /// \brief Set whether the response is TSIG signed or not.
-    /// \param is_tsig_signed true if the response is TSIG signed
+    /// \param signed_tsig true if the response is signed with TSIG
     /// \throw None
     void setResponseTSIG(const bool signed_tsig) {
         bit_attributes_[RES_TSIG_SIGNED] = signed_tsig;
