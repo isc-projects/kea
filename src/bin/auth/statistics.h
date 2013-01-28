@@ -176,7 +176,7 @@ public:
     /// \param is_tsig true if the request is TSIG signed
     /// \param is_badsig true if the signature of the request is bad
     /// \throw None
-    void setRequestSig(const bool tsig_signed, const bool badsig) {
+    void setRequestTSIG(const bool tsig_signed, const bool badsig) {
         assert(!(!tsig_signed && badsig));
         bit_attributes_[REQ_TSIG_SIGNED] = tsig_signed;
         bit_attributes_[REQ_BADSIG] = badsig;

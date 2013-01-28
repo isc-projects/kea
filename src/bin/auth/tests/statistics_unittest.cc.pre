@@ -297,7 +297,7 @@ TEST_F(CountersTest, incrementTSIG) {
         const bool is_res_tsig = (i & 1) != 0;
         const bool is_badsig = (i & 2) != 0;
         buildSkeletonMessage(msgattrs);
-        msgattrs.setRequestSig(is_req_tsig, is_badsig);
+        msgattrs.setRequestTSIG(is_req_tsig, is_badsig);
         msgattrs.setResponseSigTSIG(is_res_tsig);
 
         response.setRcode(Rcode::REFUSED());
@@ -352,7 +352,7 @@ TEST_F(CountersTest, incrementOpcode) {
     {
         buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode(i));
-        msgattrs.setRequestSig(false, false);
+        msgattrs.setRequestTSIG(false, false);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
@@ -408,7 +408,7 @@ TEST_F(CountersTest, incrementRcode) {
     {
         buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode::IQUERY());
-        msgattrs.setRequestSig(false, false);
+        msgattrs.setRequestTSIG(false, false);
 
         response.setRcode(Rcode(i));
         response.addQuestion(Question(Name("example.com"),
@@ -469,7 +469,7 @@ TEST_F(CountersTest, incrementTruncated) {
         const bool is_truncated = i & 1;
         buildSkeletonMessage(msgattrs);
         msgattrs.setRequestOpCode(Opcode::IQUERY());
-        msgattrs.setRequestSig(false, false);
+        msgattrs.setRequestTSIG(false, false);
         msgattrs.setResponseTruncated(is_truncated);
 
         response.setRcode(Rcode::SERVFAIL());
@@ -512,7 +512,7 @@ TEST_F(CountersTest, incrementQryAuthAnsAndNoAuthAns) {
     for (int i = 0; i < 2; ++i) {
         const bool is_aa_set = i & 1;
         buildSkeletonMessage(msgattrs);
-        msgattrs.setRequestSig(false, false);
+        msgattrs.setRequestTSIG(false, false);
 
         response.setRcode(Rcode::SERVFAIL());
         response.addQuestion(Question(Name("example.com"),
@@ -553,7 +553,7 @@ TEST_F(CountersTest, incrementQrySuccess) {
     msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
-    msgattrs.setRequestSig(false, false);
+    msgattrs.setRequestTSIG(false, false);
 
     response.setRcode(Rcode::NOERROR());
     response.addQuestion(Question(Name("example.com"),
@@ -603,7 +603,7 @@ TEST_F(CountersTest, incrementQryReferralAndNxrrset) {
         msgattrs.setRequestOpCode(Opcode::QUERY());
         msgattrs.setRequestEDNS0(true);
         msgattrs.setRequestDO(true);
-        msgattrs.setRequestSig(false, false);
+        msgattrs.setRequestTSIG(false, false);
 
         response.setRcode(Rcode::NOERROR());
         response.addQuestion(Question(Name("example.com"),
@@ -647,7 +647,7 @@ TEST_F(CountersTest, incrementAuthQryRej) {
     msgattrs.setRequestOpCode(Opcode::QUERY());
     msgattrs.setRequestEDNS0(true);
     msgattrs.setRequestDO(true);
-    msgattrs.setRequestSig(false, false);
+    msgattrs.setRequestTSIG(false, false);
 
     response.setRcode(Rcode::REFUSED());
     response.addQuestion(Question(Name("example.com"),
