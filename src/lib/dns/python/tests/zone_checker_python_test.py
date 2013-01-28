@@ -142,7 +142,7 @@ class ZoneCheckerTest(unittest.TestCase):
                     ns = RRset(Name('example'), RRClass.IN(), rrtype,
                                RRTTL(0))
                     ns.add_rdata(Rdata(RRType.NS(), RRClass.IN(),
-                                       'example.org'))
+                                       'example.org.'))
                     return ns
                 return None
 

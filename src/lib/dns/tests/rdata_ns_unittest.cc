@@ -36,8 +36,8 @@ class Rdata_NS_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-const generic::NS rdata_ns("ns.example.com");
-const generic::NS rdata_ns2("ns2.example.com");
+const generic::NS rdata_ns("ns.example.com.");
+const generic::NS rdata_ns2("ns2.example.com.");
 const uint8_t wiredata_ns[] = {
     0x02, 0x6e, 0x73, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
     0x63, 0x6f, 0x6d, 0x00 };
@@ -50,15 +50,15 @@ const uint8_t wiredata_ns2[] = {
     0x03, 0x6e, 0x73, 0x32, 0xc0, 0x03 };
 
 TEST_F(Rdata_NS_Test, createFromText) {
-    EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com")));
+    EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com.")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com.")));
     // should be case sensitive.
-    EXPECT_EQ(0, rdata_ns.compare(generic::NS("NS.EXAMPLE.COM")));
+    EXPECT_EQ(0, rdata_ns.compare(generic::NS("NS.EXAMPLE.COM.")));
     // RDATA of a class-independent type should be recognized for any
     // "unknown" class.
     EXPECT_EQ(0, rdata_ns.compare(*createRdata(RRType("NS"), RRClass(65000),
-                                               "ns.example.com")));
+                                               "ns.example.com.")));
 }
 
 TEST_F(Rdata_NS_Test, createFromWire) {
@@ -78,7 +78,7 @@ TEST_F(Rdata_NS_Test, createFromWire) {
                                       "rdata_ns_fromWire", 71),
                  DNSMessageFORMERR);
 
-    EXPECT_EQ(0, generic::NS("ns2.example.com").compare(
+    EXPECT_EQ(0, generic::NS("ns2.example.com.").compare(
                   *rdataFactoryFromFile(RRType("NS"), RRClass("IN"),
                                         "rdata_ns_fromWire", 55)));
     EXPECT_THROW(*rdataFactoryFromFile(RRType("NS"), RRClass("IN"),
@@ -119,13 +119,13 @@ TEST_F(Rdata_NS_Test, toText) {
 }
 
 TEST_F(Rdata_NS_Test, compare) {
-    generic::NS small("a.example");
-    generic::NS large("example");
+    generic::NS small("a.example.");
+    generic::NS large("example.");
     EXPECT_TRUE(Name("a.example") > Name("example"));
     EXPECT_GT(0, small.compare(large));
 }
 
 TEST_F(Rdata_NS_Test, getNSName) {
-    EXPECT_EQ(Name("ns.example.com"), rdata_ns.getNSName());
+    EXPECT_EQ(Name("ns.example.com."), rdata_ns.getNSName());
 }
 }

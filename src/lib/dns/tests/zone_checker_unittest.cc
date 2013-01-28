@@ -160,7 +160,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     // Likewise, if the SOA RRset contains non SOA Rdata, it should be a bug.
     rrsets_->removeRRset(zname_, zclass_, RRType::SOA());
     soa_.reset(new RRset(zname_, zclass_, RRType::SOA(), RRTTL(60)));
-    soa_->addRdata(createRdata(RRType::NS(), zclass_, "ns.example.com"));
+    soa_->addRdata(createRdata(RRType::NS(), zclass_, "ns.example.com."));
     rrsets_->addRRset(soa_);
     EXPECT_THROW(checkZone(zname_, zclass_, *rrsets_, callbacks_), Unexpected);
     checkIssues();              // no error/warning should be reported
@@ -245,7 +245,7 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     rrsets_->removeRRset(ns_name, zclass_, RRType::CNAME());
     rrsets_->removeRRset(zname_, zclass_, RRType::NS());
     ns_.reset(new RRset(zname_, zclass_, RRType::NS(), RRTTL(60)));
-    ns_->addRdata(generic::NS("ns.example.org"));
+    ns_->addRdata(generic::NS("ns.example.org."));
     rrsets_->addRRset(ns_);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
@@ -274,7 +274,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDelegation) {
     rrsets_->addRRset(ns_);
     RRsetPtr child_ns(new RRset(Name("child.example.com"), zclass_,
                                 RRType::NS(), RRTTL(60)));
-    child_ns->addRdata(generic::NS("ns.example.org"));
+    child_ns->addRdata(generic::NS("ns.example.org."));
     rrsets_->addRRset(child_ns);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
@@ -282,7 +282,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDelegation) {
     // Zone cut at the NS name.  Same result.
     rrsets_->removeRRset(child_ns->getName(), zclass_, RRType::NS());
     child_ns.reset(new RRset(ns_name, zclass_, RRType::NS(), RRTTL(60)));
-    child_ns->addRdata(generic::NS("ns.example.org"));
+    child_ns->addRdata(generic::NS("ns.example.org."));
     rrsets_->addRRset(child_ns);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();
@@ -291,7 +291,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDelegation) {
     rrsets_->removeRRset(child_ns->getName(), zclass_, RRType::NS());
     child_ns.reset(new RRset(Name("another.ns.child.example.com"), zclass_,
                              RRType::NS(), RRTTL(60)));
-    child_ns->addRdata(generic::NS("ns.example.org"));
+    child_ns->addRdata(generic::NS("ns.example.org."));
     rrsets_->addRRset(child_ns);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_warns_.push_back("zone example.com/IN: NS has no address");
@@ -332,7 +332,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDNAME) {
     // this implementation prefers the NS and skips further checks.
     ns_.reset(new RRset(Name("child.example.com"), zclass_, RRType::NS(),
                         RRTTL(60)));
-    ns_->addRdata(generic::NS("ns.example.org"));
+    ns_->addRdata(generic::NS("ns.example.org."));
     rrsets_->addRRset(ns_);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     checkIssues();

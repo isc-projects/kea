@@ -767,7 +767,7 @@ TEST_F(RdataSerializationTest, badAddRdata) {
 
     // Likewise.  Inconsistent name compression policy.
     const ConstRdataPtr ns_rdata =
-        createRdata(RRType::NS(), RRClass::IN(), "ns.example");
+        createRdata(RRType::NS(), RRClass::IN(), "ns.example.");
     encoder_.start(RRClass::IN(), RRType::DNAME());
     EXPECT_THROW(encoder_.addRdata(*ns_rdata), isc::BadValue);
 
