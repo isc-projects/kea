@@ -26,6 +26,8 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
@@ -57,17 +59,17 @@ MX::MX(const std::string& mx_str) :
     mxname_ = Name(mxname);
 }
 
-MX::MX(MasterLexer& lexer, const Name*, MasterLoader::Options,
-       MasterLoaderCallbacks&) :
+MX::MX(MasterLexer& lexer, const Name* origin,
+       MasterLoader::Options, MasterLoaderCallbacks&) :
     preference_(0), mxname_(".")
 {
     uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
         isc_throw(InvalidRdataText, "Invalid MX preference");
     }
-
     preference_ = static_cast<uint16_t>(num);
-    mxname_ = Name(lexer.getNextToken(MasterToken::QSTRING).getString());
+
+    mxname_ = createNameFromLexer(lexer, origin);
 }
 
 MX::MX(uint16_t preference, const Name& mxname) :

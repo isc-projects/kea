@@ -89,7 +89,7 @@ TEST_F(Rdata_NS_Test, createFromWire) {
 TEST_F(Rdata_NS_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_ns.compare(
         *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
-                                     "ns.example.com")));
+                                     "ns.example.com.")));
 
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
