@@ -21,7 +21,7 @@
 
 #include <datasrc/exceptions.h>
 #include <datasrc/result.h>
-#include <datasrc/rrset_collection_base.h>
+#include <dns/rrset_collection_base.h>
 
 #include <utility>
 #include <vector>
@@ -741,9 +741,6 @@ typedef boost::shared_ptr<ZoneFinder::Context> ZoneFinderContextPtr;
 /// \c ZoneFinder::Context object.
 typedef boost::shared_ptr<ZoneFinder::Context> ConstZoneFinderContextPtr;
 
-/// \brief A forward declaration
-class RRsetCollectionBase;
-
 /// The base class to make updates to a single zone.
 ///
 /// On construction, each derived class object will start a "transaction"
@@ -863,7 +860,7 @@ public:
     /// If an \c RRsetCollection is disabled, using methods such as \c find()
     /// and using its iterator would cause an exception to be thrown. See
     /// \c isc::datasrc::RRsetCollectionBase for details.
-    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() = 0;
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() = 0;
 
     /// Add an RRset to a zone via the updater
     ///
