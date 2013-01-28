@@ -509,8 +509,8 @@ class NotifyOut:
         msg = Message(Message.RENDER)
         qid = random.randint(0, 0xFFFF)
         msg.set_qid(qid)
-        msg.set_opcode(Opcode.NOTIFY())
-        msg.set_rcode(Rcode.NOERROR())
+        msg.set_opcode(Opcode.NOTIFY)
+        msg.set_rcode(Rcode.NOERROR)
         msg.set_header_flag(Message.HEADERFLAG_AA)
         msg.add_question(Question(zone_name, zone_class, RRType.SOA))
         msg.add_rrset(Message.SECTION_ANSWER, self._get_zone_soa(zone_name,
@@ -566,7 +566,7 @@ class NotifyOut:
                             Name(zone_notify_info.zone_name).to_text())
                 return _BAD_QUERY_NAME
 
-            if msg.get_opcode() != Opcode.NOTIFY():
+            if msg.get_opcode() != Opcode.NOTIFY:
                 logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
                             from_addr[1], msg.get_opcode().to_text())
                 return _BAD_OPCODE

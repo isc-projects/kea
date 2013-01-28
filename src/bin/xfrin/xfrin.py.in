@@ -715,8 +715,8 @@ class XfrinConnection(asyncore.dispatcher):
         query_id = random.randint(0, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
-        msg.set_opcode(Opcode.QUERY())
-        msg.set_rcode(Rcode.NOERROR())
+        msg.set_opcode(Opcode.QUERY)
+        msg.set_rcode(Rcode.NOERROR)
         msg.add_question(Question(self._zone_name, self._rrclass, query_type))
 
         # Remember our serial, if known
@@ -992,7 +992,7 @@ class XfrinConnection(asyncore.dispatcher):
         # cause interoperability trouble with stricter checks.
 
         msg_rcode = msg.get_rcode()
-        if msg_rcode != Rcode.NOERROR():
+        if msg_rcode != Rcode.NOERROR:
             raise XfrinProtocolError('error response: %s' %
                                      msg_rcode.to_text())
 

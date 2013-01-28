@@ -248,14 +248,14 @@ class UpdateSession:
             self.__check_update_acl(self.__zname, self.__zclass)
             self._create_diff()
             prereq_result = self.__check_prerequisites()
-            if prereq_result != Rcode.NOERROR():
+            if prereq_result != Rcode.NOERROR:
                 self.__make_response(prereq_result)
                 return UPDATE_ERROR, self.__zname, self.__zclass
             update_result = self.__do_update()
-            if update_result != Rcode.NOERROR():
+            if update_result != Rcode.NOERROR:
                 self.__make_response(update_result)
                 return UPDATE_ERROR, self.__zname, self.__zclass
-            self.__make_response(Rcode.NOERROR())
+            self.__make_response(Rcode.NOERROR)
             return UPDATE_SUCCESS, self.__zname, self.__zclass
         except UpdateError as e:
             if not e.nolog:
@@ -272,7 +272,7 @@ class UpdateSession:
         except isc.datasrc.Error as e:
             logger.error(LIBDDNS_DATASRC_ERROR,
                          ClientFormatter(self.__client_addr, self.__tsig), e)
-            self.__make_response(Rcode.SERVFAIL())
+            self.__make_response(Rcode.SERVFAIL)
             return UPDATE_ERROR, None, None
 
     def _get_update_zone(self):
@@ -295,11 +295,11 @@ class UpdateSession:
         n_zones = self.__message.get_rr_count(SECTION_ZONE)
         if n_zones != 1:
             raise UpdateError('Invalid number of records in zone section: ' +
-                              str(n_zones), None, None, Rcode.FORMERR())
+                              str(n_zones), None, None, Rcode.FORMERR)
         zrecord = self.__message.get_question()[0]
         if zrecord.get_type() != RRType.SOA:
             raise UpdateError('update zone section contains non-SOA',
-                              None, None, Rcode.FORMERR())
+                              None, None, Rcode.FORMERR)
 
         # See if we're serving a primary zone specified in the zone section.
         zname = zrecord.get_name()
@@ -316,12 +316,12 @@ class UpdateSession:
             logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_FORWARD_FAIL,
                          ClientFormatter(self.__client_addr, self.__tsig),
                          ZoneFormatter(zname, zclass))
-            raise UpdateError('forward', zname, zclass, Rcode.NOTIMP(), True)
+            raise UpdateError('forward', zname, zclass, Rcode.NOTIMP, True)
         # zone wasn't found
         logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_NOTAUTH,
                      ClientFormatter(self.__client_addr, self.__tsig),
                      ZoneFormatter(zname, zclass))
-        raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
+        raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH, True)
 
     def _create_diff(self):
         '''
@@ -352,7 +352,7 @@ class UpdateSession:
             logger.info(LIBDDNS_UPDATE_DENIED,
                         ClientFormatter(self.__client_addr, self.__tsig),
                         ZoneFormatter(zname, zclass))
-            raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
+            raise UpdateError('rejected', zname, zclass, Rcode.REFUSED, True)
         if action == DROP:
             logger.info(LIBDDNS_UPDATE_DROPPED,
                         ClientFormatter(self.__client_addr, self.__tsig),
@@ -459,7 +459,7 @@ class UpdateSession:
     def __check_prerequisites(self):
         '''Check the prerequisites section of the UPDATE Message.
            RFC2136 Section 2.4.
-           Returns a dns Rcode signaling either no error (Rcode.NOERROR())
+           Returns a dns Rcode signaling either no error (Rcode.NOERROR)
            or that one of the prerequisites failed (any other Rcode).
         '''
 
@@ -473,7 +473,7 @@ class UpdateSession:
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
-                return Rcode.NOTZONE()
+                return Rcode.NOTZONE
 
             # Algorithm taken from RFC2136 Section 3.2
             if rrset.get_class() == RRClass.ANY:
@@ -483,10 +483,10 @@ class UpdateSession:
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 elif rrset.get_type() == RRType.ANY:
                     if not self.__prereq_name_in_use(rrset):
-                        rcode = Rcode.NXDOMAIN()
+                        rcode = Rcode.NXDOMAIN
                         logger.info(LIBDDNS_PREREQ_NAME_IN_USE_FAILED,
                                     ClientFormatter(self.__client_addr),
                                     ZoneFormatter(self.__zname, self.__zclass),
@@ -494,7 +494,7 @@ class UpdateSession:
                         return rcode
                 else:
                     if not self.__prereq_rrset_exists(rrset):
-                        rcode = Rcode.NXRRSET()
+                        rcode = Rcode.NXRRSET
                         logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_FAILED,
                                     ClientFormatter(self.__client_addr),
                                     ZoneFormatter(self.__zname, self.__zclass),
@@ -507,10 +507,10 @@ class UpdateSession:
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 elif rrset.get_type() == RRType.ANY:
                     if not self.__prereq_name_not_in_use(rrset):
-                        rcode = Rcode.YXDOMAIN()
+                        rcode = Rcode.YXDOMAIN
                         logger.info(LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED,
                                     ClientFormatter(self.__client_addr),
                                     ZoneFormatter(self.__zname, self.__zclass),
@@ -518,7 +518,7 @@ class UpdateSession:
                         return rcode
                 else:
                     if not self.__prereq_rrset_does_not_exist(rrset):
-                        rcode = Rcode.YXRRSET()
+                        rcode = Rcode.YXRRSET
                         logger.info(LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED,
                                     ClientFormatter(self.__client_addr),
                                     ZoneFormatter(self.__zname, self.__zclass),
@@ -530,7 +530,7 @@ class UpdateSession:
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 else:
                     collect_rrsets(exact_match_rrsets, rrset)
             else:
@@ -538,11 +538,11 @@ class UpdateSession:
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
-                return Rcode.FORMERR()
+                return Rcode.FORMERR
 
         for collected_rrset in exact_match_rrsets:
             if not self.__prereq_rrset_exists_value(collected_rrset):
-                rcode = Rcode.NXRRSET()
+                rcode = Rcode.NXRRSET
                 logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
@@ -550,7 +550,7 @@ class UpdateSession:
                 return rcode
 
         # All prerequisites are satisfied
-        return Rcode.NOERROR()
+        return Rcode.NOERROR
 
     def __set_soa_rrset(self, rrset):
         '''Sets the given rrset to the member __added_soa (which
@@ -570,7 +570,7 @@ class UpdateSession:
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
-                return Rcode.NOTZONE()
+                return Rcode.NOTZONE
             if rrset.get_class() == self.__zclass:
                 # In fact, all metatypes are in a specific range,
                 # so one check can test TKEY to ANY
@@ -581,7 +581,7 @@ class UpdateSession:
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 if rrset.get_type() == RRType.SOA:
                     # In case there's multiple soa records in the update
                     # somehow, just take the last
@@ -593,40 +593,40 @@ class UpdateSession:
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 if rrset.get_rdata_count() > 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY,
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 if rrset.get_type().get_code() >= 249 and\
                    rrset.get_type().get_code() <= 254:
                     logger.info(LIBDDNS_UPDATE_DELETE_BAD_TYPE,
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
             elif rrset.get_class() == RRClass.NONE:
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL,
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
                 if rrset.get_type().get_code() >= 249:
                     logger.info(LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE,
                                 ClientFormatter(self.__client_addr),
                                 ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
-                    return Rcode.FORMERR()
+                    return Rcode.FORMERR
             else:
                 logger.info(LIBDDNS_UPDATE_BAD_CLASS,
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
-                return Rcode.FORMERR()
-        return Rcode.NOERROR()
+                return Rcode.FORMERR
+        return Rcode.NOERROR
 
     def __do_update_add_single_rr(self, rr, existing_rrset):
         '''Helper for __do_update_add_rrs_to_rrset: only add the
@@ -800,7 +800,7 @@ class UpdateSession:
         # for now servfail on such a broken state
         if result != ZoneFinder.SUCCESS:
             raise UpdateError("Error finding SOA record in datasource.",
-                    self.__zname, self.__zclass, Rcode.SERVFAIL())
+                    self.__zname, self.__zclass, Rcode.SERVFAIL)
         serial_operation = DDNS_SOA()
         if self.__added_soa is not None and\
         serial_operation.soa_update_check(old_soa, self.__added_soa):
@@ -820,7 +820,7 @@ class UpdateSession:
         '''
         # prescan
         prescan_result = self.__do_prescan()
-        if prescan_result != Rcode.NOERROR():
+        if prescan_result != Rcode.NOERROR:
             return prescan_result
 
         # update
@@ -850,13 +850,13 @@ class UpdateSession:
                     self.__do_update_delete_rrs_from_rrset(rrset)
 
             self.__diff.commit()
-            return Rcode.NOERROR()
+            return Rcode.NOERROR
         except isc.datasrc.Error as dse:
             logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
-            return Rcode.SERVFAIL()
+            return Rcode.SERVFAIL
         except Exception as uce:
             logger.error(LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION,
                          ClientFormatter(self.__client_addr),
                          ZoneFormatter(self.__zname, self.__zclass),
                          uce)
-            return Rcode.SERVFAIL()
+            return Rcode.SERVFAIL

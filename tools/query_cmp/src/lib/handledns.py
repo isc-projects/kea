@@ -187,7 +187,7 @@ def send_req(query, server, port=53, timeout=5):
 
 	msg = Message(Message.RENDER)
 	msg.set_qid(int(qheader['id']))
-	msg.set_opcode(Opcode.QUERY())
+	msg.set_opcode(Opcode.QUERY)
 	msg.set_rcode(Rcode(int(qheader['rcode'])))
 
 	if qheader['qr'] == 1: 

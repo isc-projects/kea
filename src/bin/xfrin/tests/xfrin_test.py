@@ -317,7 +317,7 @@ class MockXfrinConnection(XfrinConnection):
         return len(data)
 
     def create_response_data(self, response=True, auth=True, bad_qid=False,
-                             rcode=Rcode.NOERROR(),
+                             rcode=Rcode.NOERROR,
                              questions=default_questions,
                              answers=default_answers,
                              authorities=[],
@@ -327,7 +327,7 @@ class MockXfrinConnection(XfrinConnection):
         if bad_qid:
             qid += 1
         resp.set_qid(qid)
-        resp.set_opcode(Opcode.QUERY())
+        resp.set_opcode(Opcode.QUERY)
         resp.set_rcode(rcode)
         if response:
             resp.set_header_flag(Message.HEADERFLAG_QR)
@@ -712,7 +712,7 @@ class TestXfrinConnection(unittest.TestCase):
             'bad_qid': False,
             'response': True,
             'auth': True,
-            'rcode': Rcode.NOERROR(),
+            'rcode': Rcode.NOERROR,
             'answers': default_answers,
             'authorities': [],
             'tsig': False,
@@ -881,8 +881,8 @@ class TestAXFR(TestXfrinConnection):
     def test_create_query(self):
         def check_query(expected_qtype, expected_auth):
             '''Helper method to repeat the same pattern of tests'''
-            self.assertEqual(Opcode.QUERY(), msg.get_opcode())
-            self.assertEqual(Rcode.NOERROR(), msg.get_rcode())
+            self.assertEqual(Opcode.QUERY, msg.get_opcode())
+            self.assertEqual(Rcode.NOERROR, msg.get_rcode())
             self.assertEqual(1, msg.get_rr_count(Message.SECTION_QUESTION))
             self.assertEqual(TEST_ZONE_NAME, msg.get_question()[0].get_name())
             self.assertEqual(expected_qtype, msg.get_question()[0].get_type())
@@ -968,7 +968,7 @@ class TestAXFR(TestXfrinConnection):
         # server tsig check fail, return with RCODE 9 (NOTAUTH)
         self.conn._send_query(RRType.SOA)
         self.conn.reply_data = \
-            self.conn.create_response_data(rcode=Rcode.NOTAUTH())
+            self.conn.create_response_data(rcode=Rcode.NOTAUTH)
         self.assertRaises(XfrinProtocolError,
                           self.conn._handle_xfrin_responses)
 
@@ -992,7 +992,7 @@ class TestAXFR(TestXfrinConnection):
             lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
         self.conn._send_query(RRType.AXFR)
         self.conn.reply_data = self.conn.create_response_data(
-                rcode=Rcode.SERVFAIL())
+                rcode=Rcode.SERVFAIL)
         # xfrin should check TSIG before other part of incoming message
         # validate log message for XfrinException
         self.__match_exception(XfrinProtocolError,
@@ -1019,7 +1019,7 @@ class TestAXFR(TestXfrinConnection):
     def test_response_error_code(self):
         self.conn._send_query(RRType.AXFR)
         self.conn.reply_data = self.conn.create_response_data(
-            rcode=Rcode.SERVFAIL())
+            rcode=Rcode.SERVFAIL)
         self.assertRaises(XfrinProtocolError,
                           self.conn._handle_xfrin_responses)
 
@@ -1069,7 +1069,7 @@ class TestAXFR(TestXfrinConnection):
         self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
 
     def test_soacheck_error_code(self):
-        self.soa_response_params['rcode'] = Rcode.SERVFAIL()
+        self.soa_response_params['rcode'] = Rcode.SERVFAIL
         self.conn.response_generator = self._create_soa_response_data
         self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
 
@@ -1191,7 +1191,7 @@ class TestAXFR(TestXfrinConnection):
         self.conn._tsig_key = TSIG_KEY
         self.conn._tsig_ctx_creator = \
             lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
-        self.soa_response_params['rcode'] = Rcode.NOTAUTH()
+        self.soa_response_params['rcode'] = Rcode.NOTAUTH
         self.conn.response_generator = self._create_soa_response_data
 
         self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
