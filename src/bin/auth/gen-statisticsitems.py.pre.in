@@ -219,7 +219,9 @@ def generate_docfile(docfile, def_mtime):
                     if word == xmldocument_command_name:
                         command = ElementTree.SubElement(sim_para, 'command')
                         command.text = word
-                        # append empty string for trailing text
+                        # at this point command.tail is None
+                        # append empty string as trailing text for the next
+                        # word so it can be concatinated with trailing words
                         command.tail = ''
                         prev = command
                     else:
