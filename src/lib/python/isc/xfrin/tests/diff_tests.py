@@ -1098,7 +1098,7 @@ class DiffTest(unittest.TestCase):
             '''
             Empty init. The base class's __init__ can't be called,
             so we need to provide our own to shadow it -- and make sure
-            not to call the parent().__init__().
+            not to call the super().__init__().
             '''
             pass
 
