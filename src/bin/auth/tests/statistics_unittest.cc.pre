@@ -80,13 +80,13 @@ TEST_F(CountersTest, invalidParameter) {
 TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
     MessageAttributes msgattrs;
 
-    // getRequestOpCode() will throw isc::InvalidOperation when called before
+    // getRequestOpCode() should return boost::none when called before
     // opcode is set with setRequestOpCode().
-    EXPECT_THROW(msgattrs.getRequestOpCode(), isc::InvalidOperation);
+    EXPECT_FALSE(msgattrs.getRequestOpCode());
 
     msgattrs.setRequestOpCode(Opcode::QUERY());
-    // getRequestOpCode() will not throw at this point.
-    EXPECT_NO_THROW(msgattrs.getRequestOpCode());
+    // getRequestOpCode() should be Opcode::QUERY.
+    EXPECT_EQ(Opcode::QUERY(), msgattrs.getRequestOpCode().get());
 }
 
 TEST_F(CountersTest, incrementResponse) {
