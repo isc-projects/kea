@@ -96,12 +96,15 @@ class XfrinProtocolError(Exception):
 
 class XfrinZoneError(Exception):
     '''
-    An exception raised when the received zone contain invalid data.
+    An exception raised when the received zone is broken enough to be unusable.
     '''
     pass
 
 class XfrinZoneUptodate(Exception):
-    '''TBD
+    '''
+    Thrown when the zone is already up to date, so there's no need to download
+    the zone. This is not really an error case (but it's still an exceptional
+    condition and the control flow is different than usual).
     '''
     pass
 
