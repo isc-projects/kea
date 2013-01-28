@@ -11,6 +11,8 @@ import threading
 import isc.cc
 import collections
 import isc.log
+import struct
+import json
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -144,6 +146,18 @@ class MsgQTest(unittest.TestCase):
     def setUp(self):
         self.__msgq = MsgQ()
 
+    def parse_msg(self, msg):
+        """
+        Parse a binary representation of message to the routing header and the
+        data payload. It assumes the message is correctly encoded and the
+        payload is not omitted. It'd probably throw in other cases, but we
+        don't use it in such situations in this test.
+        """
+        (length, header_len) = struct.unpack('>IH', msg[:6])
+        header = json.loads(msg[6:6 + header_len].decode('utf-8'))
+        data = json.loads(msg[6 + header_len:].decode('utf-8'))
+        return (header, data)
+
     def test_undeliverable_errors(self):
         sent_messages = []
         def fake_end_prepared_msg(socket, msg):
@@ -190,7 +204,8 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.subs.find = lambda group, instance: [recipient]
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
-        # TODO: Parse the message to see it's the sent message.
+        self.assertEqual(2, sent_messages[0][0]) # The recipient
+        self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
         sent_messages = []
         # When we send a direct message and the recipient is not there, we get
         # the error too
@@ -203,7 +218,8 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.lnames["lname"] = recipient
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
-        # TODO: Parse the message and see it's not an error.
+        self.assertEqual(2, sent_messages[0][0]) # The recipient
+        self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
         sent_messages = []
 
 class DummySocket:
