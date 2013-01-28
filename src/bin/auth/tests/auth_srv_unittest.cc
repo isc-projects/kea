@@ -295,6 +295,7 @@ TEST_F(AuthSrvTest, shortMessage) {
 // Response messages.  Must be silently dropped, whether it's a valid response
 // or malformed or could otherwise cause a protocol error.
 TEST_F(AuthSrvTest, response) {
+    // isc::testutils::SrvTestBase::response() processes 3 messages.
     response();
 
     ConstElementPtr stats_after = server.getStatistics()->get("zones")->
