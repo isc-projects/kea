@@ -43,27 +43,38 @@ MX::MX(InputBuffer& buffer, size_t) :
 }
 
 MX::MX(const std::string& mx_str) :
-    preference_(0), mxname_(".")
+    // Fill in dummy name and replace them soon below.
+    preference_(0), mxname_(Name::ROOT_NAME())
 {
-    istringstream iss(mx_str);
-    uint16_t pref;
-    string mxname;
+    try {
+        std::istringstream ss(mx_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    iss >> pref >> mxname;
+        const uint32_t num =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid MX preference");
+        }
+        preference_ = static_cast<uint16_t>(num);
 
-    if (iss.bad() || iss.fail() || !iss.eof()) {
-        isc_throw(InvalidRdataText, "Invalid MX text format");
+        mxname_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for MX: "
+                      << mx_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct MX from '" <<
+                  mx_str << "': " << ex.what());
     }
-
-    preference_ = pref;
-    mxname_ = Name(mxname);
 }
 
 MX::MX(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
     preference_(0), mxname_(".")
 {
-    uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
         isc_throw(InvalidRdataText, "Invalid MX preference");
     }
