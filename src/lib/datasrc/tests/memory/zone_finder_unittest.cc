@@ -739,6 +739,14 @@ TEST_F(InMemoryZoneFinderTest, findAtOriginWithMinTTL) {
                      ZoneFinder::RESULT_DEFAULT, NULL,
                      ZoneFinder::FIND_DEFAULT, false);
 
+    // If the found RRset has a smaller TTL than SOA, the original TTL should
+    // win.
+    rr_a_->setTTL(RRTTL(10));
+    addToZoneData(rr_a_);
+    findAtOriginTest(RRType::A(), ZoneFinder::SUCCESS, true, rr_a_,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
     // If no RRset is returned, use_minttl doesn't matter (it shouldn't cause
     // disruption)
     findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
