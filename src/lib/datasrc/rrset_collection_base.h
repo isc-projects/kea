@@ -112,9 +112,6 @@ protected:
     /// \brief See \c isc::dns::RRsetCollectionBase::getBeginning() for
     /// documentation.
     ///
-    /// \throw isc::dns::RRsetCollectionError if using the iterator
-    /// results in some underlying datasrc error, or if \c disable() was
-    /// called.
     /// \throw isc::NotImplemented as it's not implemented currently.
     virtual IterPtr getBeginning() {
         isc_throw(NotImplemented, "This method is not implemented.");
@@ -123,9 +120,6 @@ protected:
     /// \brief See \c isc::dns::RRsetCollectionBase::getEnd() for
     /// documentation.
     ///
-    /// \throw isc::dns::RRsetCollectionError if using the iterator
-    /// results in some underlying datasrc error, or if \c disable() was
-    /// called.
     /// \throw isc::NotImplemented as it's not implemented currently.
     virtual IterPtr getEnd() {
         isc_throw(NotImplemented, "This method is not implemented.");
