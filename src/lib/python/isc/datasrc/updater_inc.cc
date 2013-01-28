@@ -178,4 +178,67 @@ Exceptions:\n\
              error, or wrapper error\n\\n\
 \n\
 ";
+
+// Modifications:
+// -  remove reference to isc.datasrc.RRsetCollectionBase (hidden for Python
+//    wrapper)
+const char* const ZoneUpdater_getRRsetCollection_doc = "\
+get_rrset_collection() -> isc.dns.RRsetCollectionBase \n\
+\n\
+Return an RRsetCollection for the updater.\n\
+\n\
+This method returns an RRsetCollection for the updater, implementing\n\
+the isc.dns.RRsetCollectionBase interface. Typically, the returned\n\
+RRsetCollection is a singleton for its ZoneUpdater. The returned\n\
+RRsetCollection object must not be used after its corresponding\n\
+ZoneUpdater has been destroyed. The returned RRsetCollection object\n\
+may be used to search RRsets from the ZoneUpdater. The actual\n\
+RRsetCollection returned has a behavior dependent on the ZoneUpdater\n\
+implementation.\n\
+\n\
+The behavior of the RRsetCollection is similar to the behavior of the\n\
+Zonefinder returned by get_finder(). In fact, it's redundant in a\n\
+sense because one can implement the dns.RRsetCollectionBase interface\n\
+using an updater and get_finder() interface (unless it's expected to\n\
+support zone iteration, and the initial implementation of the\n\
+RRsetCollection returned by this method doesn't support it). We\n\
+still provide it as an updater's method so it will be easier for an\n\
+updater implementation to customize the RRsetCollection\n\
+implementation, and also for making it easy to impose restrictions\n\
+described below.\n\
+\n\
+Specific data sources may have special restrictions. That's especially\n\
+the case for database-based data sources. Such restrictions may also\n\
+result in limiting the usage of the RRsetCollection as described in\n\
+the following paragraphs. A specific updater implementation may\n\
+provide more flexible behavior, but applications using this interface\n\
+must assume the most restricted case unless it knows it uses a\n\
+particular specialized updater implementation that loosens specific\n\
+restrictions.\n\
+\n\
+- An application must not add or delete RRsets after\n\
+  get_rrset_collection() is called.\n\
+- An application must not use the returned collection from\n\
+  get_rrset_collection() once commit() is called on the updater that\n\
+  generates the collection.\n\
+\n\
+Implementations of ZoneUpdater may not allow adding or deleting RRsets\n\
+after get_rrset_collection() is called. This is because if an\n\
+iterator of the collection is being used at that time the modification\n\
+to the zone may break an internal assumption of the iterator and may\n\
+result in unexpected behavior. Also, the iterator may conceptually\n\
+hold a \"reader lock\" of the zone (in an implementation dependent\n\
+manner), which would prevent the addition or deletion, surprising the\n\
+caller (who would normally expect it to succeed).\n\
+\n\
+Implementations of ZoneUpdater may disable a previously returned\n\
+RRsetCollection after commit() is called. This is because the returned\n\
+RRsetCollection may internally rely on the conceptual transaction of\n\
+the updater that generates the collection (which would be literally\n\
+the case for database-based data sources), and once the transaction is\n\
+committed anything that relies on it won't be valid. If an\n\
+RRsetCollection is disabled, using methods such as find() and using\n\
+its iterator would cause an exception to be thrown.\n\
+\n\
+";
 } // unnamed namespace
