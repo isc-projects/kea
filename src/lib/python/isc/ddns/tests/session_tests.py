@@ -42,8 +42,8 @@ def create_update_msg(zones=[TEST_ZONE_RECORD], prerequisites=[],
                       updates=[], tsig_key=None):
     msg = Message(Message.RENDER)
     msg.set_qid(5353)           # arbitrary chosen
-    msg.set_opcode(Opcode.UPDATE())
-    msg.set_rcode(Rcode.NOERROR())
+    msg.set_opcode(Opcode.UPDATE)
+    msg.set_rcode(Rcode.NOERROR)
     for z in zones:
         msg.add_question(z)
     for p in prerequisites:
@@ -216,7 +216,7 @@ class SessionTestBase(unittest.TestCase):
         '''Perform common checks on update resposne message.'''
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_QR))
         # note: we convert opcode to text it'd be more helpful on failure.
-        self.assertEqual(Opcode.UPDATE().to_text(), msg.get_opcode().to_text())
+        self.assertEqual(Opcode.UPDATE.to_text(), msg.get_opcode().to_text())
         self.assertEqual(expected_rcode.to_text(), msg.get_rcode().to_text())
         # All sections should be cleared
         self.assertEqual(0, msg.get_rr_count(SECTION_ZONE))
@@ -305,20 +305,20 @@ class SessionTest(SessionTestBase):
         self.assertEqual(UPDATE_ERROR, result)
         self.assertEqual(None, zname)
         self.assertEqual(None, zclass)
-        self.check_response(session.get_message(), Rcode.FORMERR())
+        self.check_response(session.get_message(), Rcode.FORMERR)
 
         # Zone section contains multiple records
         msg = create_update_msg(zones=[TEST_ZONE_RECORD, TEST_ZONE_RECORD])
         session = UpdateSession(msg, TEST_CLIENT4, None)
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.FORMERR())
+        self.check_response(session.get_message(), Rcode.FORMERR)
 
         # Zone section's type is not SOA
         msg = create_update_msg(zones=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
                                                 RRType.A)])
         session = UpdateSession(msg, TEST_CLIENT4, None)
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.FORMERR())
+        self.check_response(session.get_message(), Rcode.FORMERR)
 
     def test_update_secondary(self):
         # specified zone is configured as a secondary.  Since this
@@ -330,7 +330,7 @@ class SessionTest(SessionTestBase):
                                 ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                                            TEST_RRCLASS, self._datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.NOTIMP())
+        self.check_response(session.get_message(), Rcode.NOTIMP)
 
     def check_notauth(self, zname, zclass=TEST_RRCLASS):
         '''Common test sequence for the 'notauth' test'''
@@ -339,7 +339,7 @@ class SessionTest(SessionTestBase):
                                 ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                                            TEST_RRCLASS, self._datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.NOTAUTH())
+        self.check_response(session.get_message(), Rcode.NOTAUTH)
 
     def test_update_notauth(self):
         '''Update attempt for non authoritative zones'''
@@ -364,7 +364,7 @@ class SessionTest(SessionTestBase):
                                            TEST_RRCLASS,
                                            BadDataSourceClient()))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.SERVFAIL())
+        self.check_response(session.get_message(), Rcode.SERVFAIL)
 
     def test_foreach_rr_in_rrset(self):
         rrset = create_rrset("www.example.org", TEST_RRCLASS,
@@ -632,7 +632,7 @@ class SessionTest(SessionTestBase):
         self.assertEqual(expected.to_text(),
                          session._UpdateSession__message.get_rcode().to_text())
         # And that the result looks right
-        if expected == Rcode.NOERROR():
+        if expected == Rcode.NOERROR:
             self.assertEqual(UPDATE_SUCCESS, result)
         else:
             self.assertEqual(UPDATE_ERROR, result)
@@ -672,7 +672,7 @@ class SessionTest(SessionTestBase):
         self.assertEqual(expected.to_text(),
                          session._UpdateSession__message.get_rcode().to_text())
         # And that the result looks right
-        if expected == Rcode.NOERROR():
+        if expected == Rcode.NOERROR:
             self.assertEqual(UPDATE_SUCCESS, result)
         else:
             self.assertEqual(UPDATE_ERROR, result)
@@ -727,36 +727,36 @@ class SessionTest(SessionTestBase):
         name_not_in_use_no = create_rrset("www.example.org", RRClass.NONE,
                                           RRType.ANY, 0)
         # check 'no' result codes
-        self.check_prerequisite_result(Rcode.NXRRSET(),
+        self.check_prerequisite_result(Rcode.NXRRSET,
                                        [ rrset_exists_no ])
-        self.check_prerequisite_result(Rcode.NXRRSET(),
+        self.check_prerequisite_result(Rcode.NXRRSET,
                                        [ rrset_exists_value_no ])
-        self.check_prerequisite_result(Rcode.YXRRSET(),
+        self.check_prerequisite_result(Rcode.YXRRSET,
                                        [ rrset_does_not_exist_no ])
-        self.check_prerequisite_result(Rcode.NXDOMAIN(),
+        self.check_prerequisite_result(Rcode.NXDOMAIN,
                                        [ name_in_use_no ])
-        self.check_prerequisite_result(Rcode.YXDOMAIN(),
+        self.check_prerequisite_result(Rcode.YXDOMAIN,
                                        [ name_not_in_use_no ])
 
         # the 'yes' codes should result in ok
         # individually
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_exists_yes ] )
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_exists_value_yes ])
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_does_not_exist_yes ])
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ name_in_use_yes ])
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ name_not_in_use_yes ])
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_exists_value_1,
                                          rrset_exists_value_2,
                                          rrset_exists_value_3])
 
         # and together
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_exists_yes,
                                          rrset_exists_value_yes,
                                          rrset_does_not_exist_yes,
@@ -768,7 +768,7 @@ class SessionTest(SessionTestBase):
 
         # try out a permutation, note that one rrset is split up,
         # and the order of the RRs should not matter
-        self.check_prerequisite_result(Rcode.NOERROR(),
+        self.check_prerequisite_result(Rcode.NOERROR,
                                        [ rrset_exists_value_3,
                                          rrset_exists_yes,
                                          rrset_exists_value_2,
@@ -777,7 +777,7 @@ class SessionTest(SessionTestBase):
 
         # Should fail on the first error, even if most of the
         # prerequisites are ok
-        self.check_prerequisite_result(Rcode.NXDOMAIN(),
+        self.check_prerequisite_result(Rcode.NXDOMAIN,
                                        [ rrset_exists_value_3,
                                          rrset_exists_yes,
                                          rrset_exists_value_2,
@@ -787,38 +787,38 @@ class SessionTest(SessionTestBase):
 
     def test_prerequisite_notzone(self):
         rrset = create_rrset("some.other.zone.", RRClass.ANY, RRType.SOA, 0)
-        self.check_prerequisite_result(Rcode.NOTZONE(), [ rrset ])
+        self.check_prerequisite_result(Rcode.NOTZONE, [ rrset ])
 
     def test_prerequisites_formerr(self):
         # test for form errors in the prerequisite section
 
         # Class ANY, non-zero TTL
         rrset = create_rrset("example.org", RRClass.ANY, RRType.SOA, 1)
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
         # Class ANY, but with rdata
         rrset = create_rrset("example.org", RRClass.ANY, RRType.A, 0,
                              [ b'\x00\x00\x00\x00' ])
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
         # Class NONE, non-zero TTL
         rrset = create_rrset("example.org", RRClass.NONE, RRType.SOA, 1)
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
         # Class NONE, but with rdata
         rrset = create_rrset("example.org", RRClass.NONE, RRType.A, 0,
                              [ b'\x00\x00\x00\x00' ])
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
         # Matching class and type, but non-zero TTL
         rrset = create_rrset("www.example.org", RRClass.IN, RRType.A, 1,
                              [ "192.0.2.1" ])
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
         # Completely different class
         rrset = create_rrset("example.org", RRClass.CH, RRType.TXT, 0,
                              [ "foo" ])
-        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prerequisite_result(Rcode.FORMERR, [ rrset ])
 
     def __prereq_helper(self, method, expected, rrset):
         '''Calls the given method with self._datasrc_client
@@ -907,7 +907,7 @@ class SessionTest(SessionTestBase):
                                       RRType.ANY, 0)
 
         # Test a prerequisite that would fail
-        self.check_full_handle_result(Rcode.NXDOMAIN(), [], [ name_in_use_no ])
+        self.check_full_handle_result(Rcode.NXDOMAIN, [], [ name_in_use_no ])
 
         # Change ACL so that it would be denied
         self._acl_map = {(TEST_ZONE_NAME, TEST_RRCLASS):
@@ -915,7 +915,7 @@ class SessionTest(SessionTestBase):
 
         # The prerequisite should now not be reached; it should fail on the
         # ACL
-        self.check_full_handle_result(Rcode.REFUSED(), [], [ name_in_use_no ])
+        self.check_full_handle_result(Rcode.REFUSED, [], [ name_in_use_no ])
 
     def test_prescan(self):
         '''Test whether the prescan succeeds on data that is ok, and whether
@@ -923,29 +923,29 @@ class SessionTest(SessionTestBase):
         # prepare a set of correct update statements
         self.__initialize_update_rrsets()
 
-        self.check_prescan_result(Rcode.NOERROR(), [ self.rrset_update_a ])
+        self.check_prescan_result(Rcode.NOERROR, [ self.rrset_update_a ])
 
         # check if soa is noticed
-        self.check_prescan_result(Rcode.NOERROR(), [ self.rrset_update_soa ],
+        self.check_prescan_result(Rcode.NOERROR, [ self.rrset_update_soa ],
                                   self.rrset_update_soa)
 
         # Other types of succesful prechecks
-        self.check_prescan_result(Rcode.NOERROR(), [ self.rrset_update_soa2 ],
+        self.check_prescan_result(Rcode.NOERROR, [ self.rrset_update_soa2 ],
                                   self.rrset_update_soa2)
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_del_name ])
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_del_name_apex ])
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_del_rrset ])
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_del_mx_apex ])
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_del_rrset_part ])
 
         # and check a few permutations of the above
         # all of them (with one of the soas)
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [
                                     self.rrset_update_a,
                                     self.rrset_update_soa,
@@ -960,16 +960,16 @@ class SessionTest(SessionTestBase):
         # Two soas. Should we reject or simply use the last?
         # (RFC is not really explicit on this, but between the lines I read
         # use the last)
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_soa,
                                     self.rrset_update_soa2 ],
                                     self.rrset_update_soa2)
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [ self.rrset_update_soa2,
                                     self.rrset_update_soa ],
                                   self.rrset_update_soa)
 
-        self.check_prescan_result(Rcode.NOERROR(),
+        self.check_prescan_result(Rcode.NOERROR,
                                   [
                                     self.rrset_update_del_mx_apex,
                                     self.rrset_update_del_name,
@@ -985,35 +985,35 @@ class SessionTest(SessionTestBase):
         '''Test whether prescan fails on bad data'''
         # out of zone data
         rrset = create_rrset("different.zone", RRClass.ANY, RRType.TXT, 0)
-        self.check_prescan_result(Rcode.NOTZONE(), [ rrset ])
+        self.check_prescan_result(Rcode.NOTZONE, [ rrset ])
 
         # forbidden type, zone class
         rrset = create_rrset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.ANY, 0,
                              [ b'\x00' ])
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
         # non-zero TTL, class ANY
         rrset = create_rrset(TEST_ZONE_NAME, RRClass.ANY, RRType.TXT, 1)
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
         # non-zero Rdata, class ANY
         rrset = create_rrset(TEST_ZONE_NAME, RRClass.ANY, RRType.TXT, 0,
                              [ "foo" ])
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
         # forbidden type, class ANY
         rrset = create_rrset(TEST_ZONE_NAME, RRClass.ANY, RRType.AXFR, 0,
                              [ b'\x00' ])
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
         # non-zero TTL, class NONE
         rrset = create_rrset(TEST_ZONE_NAME, RRClass.NONE, RRType.TXT, 1)
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
         # forbidden type, class NONE
         rrset = create_rrset(TEST_ZONE_NAME, RRClass.NONE, RRType.AXFR, 0,
                              [ b'\x00' ])
-        self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
+        self.check_prescan_result(Rcode.FORMERR, [ rrset ])
 
     def __check_inzone_data(self, expected_result, name, rrtype,
                             expected_rrset = None):
@@ -1066,7 +1066,7 @@ class SessionTest(SessionTestBase):
                                  self.orig_a_rrset)
 
         # Add two rrs
-        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
+        self.check_full_handle_result(Rcode.NOERROR, [ self.rrset_update_a ])
 
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
@@ -1074,7 +1074,7 @@ class SessionTest(SessionTestBase):
                                  extended_a_rrset)
 
         # Adding the same RRsets should not make a difference.
-        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
+        self.check_full_handle_result(Rcode.NOERROR, [ self.rrset_update_a ])
 
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
@@ -1082,7 +1082,7 @@ class SessionTest(SessionTestBase):
                                  extended_a_rrset)
 
         # Now delete those two, and we should end up with the original RRset
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset_part ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
@@ -1090,7 +1090,7 @@ class SessionTest(SessionTestBase):
                                  self.orig_a_rrset)
 
         # 'Deleting' them again should make no difference
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset_part ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
@@ -1099,14 +1099,14 @@ class SessionTest(SessionTestBase):
 
         # But deleting the entire rrset, independent of its contents, should
         # work
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
 
         # Check that if we update the SOA, it is updated to our value
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_soa2 ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
@@ -1126,7 +1126,7 @@ class SessionTest(SessionTestBase):
                                          RRClass.ANY,
                                          RRType.A,
                                          0)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ rrset_delete_glue ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("sub.example.org."),
@@ -1141,7 +1141,7 @@ class SessionTest(SessionTestBase):
                                                      RRClass.ANY,
                                                      RRType.A,
                                                      0)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ rrset_delete_nonexistent_glue ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("sub.example.org."),
@@ -1157,7 +1157,7 @@ class SessionTest(SessionTestBase):
                                  RRType.A)
         rrset = create_rrset("new.example.org", TEST_RRCLASS, RRType.A,
                              3600, [ "192.0.2.1", "192.0.2.2" ])
-        self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
+        self.check_full_handle_result(Rcode.NOERROR, [ rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("new.example.org"),
                                  RRType.A,
@@ -1170,7 +1170,7 @@ class SessionTest(SessionTestBase):
                                  RRType.TXT)
         rrset = create_rrset("new.example.org", TEST_RRCLASS, RRType.TXT,
                              3600, [ "foo" ])
-        self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
+        self.check_full_handle_result(Rcode.NOERROR, [ rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("new.example.org"),
                                  RRType.TXT,
@@ -1200,7 +1200,7 @@ class SessionTest(SessionTestBase):
         rrset3 = create_rrset("new_a.example.org", TEST_RRCLASS, RRType.A,
                               3600, [ "192.0.2.2" ])
 
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ rrset1, rrset2, rrset3 ])
 
         # The update should have merged rrset1 and rrset3
@@ -1230,14 +1230,14 @@ class SessionTest(SessionTestBase):
                                  RRType.A)
 
         # Delete the entire name
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_name ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
 
         # Should still be gone after pointless second delete
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_name ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
                                  isc.dns.Name("www.example.org"),
@@ -1285,7 +1285,7 @@ class SessionTest(SessionTestBase):
 
         # Check that we cannot delete the SOA record by direct deletion
         # both by name+type and by full rrset
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_soa_apex,
                                         self.rrset_update_soa_del ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
@@ -1295,7 +1295,7 @@ class SessionTest(SessionTestBase):
 
         # If we delete everything at the apex, the SOA and NS rrsets should be
         # untouched (but serial will be incremented)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_name_apex ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
@@ -1312,7 +1312,7 @@ class SessionTest(SessionTestBase):
 
         # Deleting the NS rrset by name and type only, it should also be left
         # untouched
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_ns_apex ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
@@ -1327,7 +1327,7 @@ class SessionTest(SessionTestBase):
         short_ns_rrset = create_rrset("example.org", TEST_RRCLASS,
                                       RRType.NS, 3600,
                                       [ "ns3.example.org." ])
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset_ns ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
@@ -1341,7 +1341,7 @@ class SessionTest(SessionTestBase):
         new_ns = create_rrset("example.org", TEST_RRCLASS, RRType.NS, 3600,
                               [ "newns1.example.org", "newns2.example.org" ])
 
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ new_ns,
                                         self.rrset_update_del_rrset_ns ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
@@ -1359,7 +1359,7 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
                                  RRType.MX)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset_mx ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
                                  isc.dns.Name("example.org"),
@@ -1372,7 +1372,7 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_a,
                                         self.rrset_update_del_rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
@@ -1386,7 +1386,7 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_a,
                                         self.rrset_update_del_name ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
@@ -1400,7 +1400,7 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_rrset,
                                         self.rrset_update_a ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
@@ -1415,7 +1415,7 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A)
-        self.check_full_handle_result(Rcode.NOERROR(),
+        self.check_full_handle_result(Rcode.NOERROR,
                                       [ self.rrset_update_del_name,
                                         self.rrset_update_a ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
@@ -1439,7 +1439,7 @@ class SessionTest(SessionTestBase):
         rrset = create_rrset("cname.example.org", TEST_RRCLASS, RRType.A,
                              3600, [ "192.0.2.1" ])
 
-        self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
+        self.check_full_handle_result(Rcode.NOERROR, [ rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
                                  isc.dns.Name("cname.example.org"),
                                  RRType.A,
@@ -1449,7 +1449,7 @@ class SessionTest(SessionTestBase):
         new_cname_rrset = create_rrset("cname.example.org", TEST_RRCLASS,
                                        RRType.CNAME, 3600,
                                        [ "mail.example.org." ])
-        self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
+        self.check_full_handle_result(Rcode.NOERROR, [ new_cname_rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
                                  isc.dns.Name("cname.example.org"),
                                  RRType.A,
@@ -1466,7 +1466,7 @@ class SessionTest(SessionTestBase):
         new_cname_rrset = create_rrset("www.example.org", TEST_RRCLASS,
                                        RRType.CNAME, 3600,
                                        [ "mail.example.org." ])
-        self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
+        self.check_full_handle_result(Rcode.NOERROR, [ new_cname_rrset ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("www.example.org"),
                                  RRType.A,
@@ -1475,13 +1475,13 @@ class SessionTest(SessionTestBase):
     def test_update_bad_class(self):
         rrset = create_rrset("example.org.", RRClass.CH, RRType.TXT, 0,
                              [ "foo" ])
-        self.check_full_handle_result(Rcode.FORMERR(), [ rrset ])
+        self.check_full_handle_result(Rcode.FORMERR, [ rrset ])
 
     def test_uncaught_exception(self):
         def my_exc():
             raise Exception("foo")
         self._session._UpdateSession__update_soa = my_exc
-        self.assertEqual(Rcode.SERVFAIL().to_text(),
+        self.assertEqual(Rcode.SERVFAIL.to_text(),
                          self._session._UpdateSession__do_update().to_text())
 
 class SessionACLTest(SessionTestBase):
@@ -1527,7 +1527,7 @@ class SessionACLTest(SessionTestBase):
                                                          self._datasrc_client,
                                                          acl_map))
         self.assertEqual((UPDATE_ERROR, None, None), session.handle())
-        self.check_response(session.get_message(), Rcode.REFUSED())
+        self.check_response(session.get_message(), Rcode.REFUSED)
 
         # If the message contains TSIG, it should match the ACCEPT
         # ACL entry, and the request should be granted.

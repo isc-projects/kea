@@ -61,10 +61,10 @@ class TSIGContextTest(unittest.TestCase):
     def createMessageAndSign(self, id, qname, ctx, message_flags=RD_FLAG,
                              qtype=RRType.A, answer_data=None,
                              answer_type=None, add_question=True,
-                             rcode=Rcode.NOERROR()):
+                             rcode=Rcode.NOERROR):
         self.message.clear(Message.RENDER)
         self.message.set_qid(id)
-        self.message.set_opcode(Opcode.QUERY())
+        self.message.set_opcode(Opcode.QUERY)
         self.message.set_rcode(rcode)
         if (message_flags & QR_FLAG) != 0:
             self.message.set_header_flag(Message.HEADERFLAG_QR)
@@ -120,7 +120,7 @@ class TSIGContextTest(unittest.TestCase):
         self.assertEqual(TSIGContext.STATE_INIT, self.tsig_ctx.get_state())
 
         # And there should be no error code.
-        self.assertEqual(TSIGError(Rcode.NOERROR()), self.tsig_ctx.get_error())
+        self.assertEqual(TSIGError(Rcode.NOERROR), self.tsig_ctx.get_error())
 
         # No message signed yet
         self.assertRaises(TSIGContextError, self.tsig_ctx.last_had_signature)
@@ -329,7 +329,7 @@ class TSIGContextTest(unittest.TestCase):
         tsig = self.createMessageAndSign(test_qid, self.test_name,
                                          self.tsig_verify_ctx,
                                          QR_FLAG, RRType.SOA, None, None,
-                                         True, Rcode.NOTAUTH())
+                                         True, Rcode.NOTAUTH)
 
         expected_otherdata = b"\x00\x00\x4d\xa8\xbe\x86"
         expected_mac = b"\xd4\xb0\x43\xf6\xf4\x44\x95\xec\x8a\x01\x26" +\
