@@ -503,13 +503,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     MessageAttributes stats_attrs;
 
     stats_attrs.setRequestIPVersion(
-        io_message.getRemoteEndpoint().getFamily() == AF_INET ?
-            MessageAttributes::IP_VERSION_IPV4 :
-            MessageAttributes::IP_VERSION_IPV6);
+        io_message.getRemoteEndpoint().getFamily());
     stats_attrs.setRequestTransportProtocol(
-        io_message.getRemoteEndpoint().getProtocol() == IPPROTO_UDP ?
-            MessageAttributes::TRANSPORT_UDP :
-            MessageAttributes::TRANSPORT_TCP);
+        io_message.getRemoteEndpoint().getProtocol());
 
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
