@@ -298,7 +298,7 @@ TEST_F(CountersTest, incrementTSIG) {
         const bool is_badsig = (i & 2) != 0;
         buildSkeletonMessage(msgattrs);
         msgattrs.setRequestTSIG(is_req_tsig, is_badsig);
-        msgattrs.setResponseSigTSIG(is_res_tsig);
+        msgattrs.setResponseTSIG(is_res_tsig);
 
         response.setRcode(Rcode::REFUSED());
         response.addQuestion(Question(Name("example.com"),
