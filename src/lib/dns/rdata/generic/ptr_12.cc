@@ -29,8 +29,25 @@ using namespace isc::util;
 // BEGIN_RDATA_NAMESPACE
 
 PTR::PTR(const std::string& type_str) :
-    ptr_name_(type_str)
-{}
+    // Fill in dummy name and replace them soon below.
+    ptr_name_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(type_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        ptr_name_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for PTR: "
+                      << type_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct PTR from '" <<
+                  type_str << "': " << ex.what());
+    }
+}
 
 PTR::PTR(InputBuffer& buffer, size_t) :
     ptr_name_(buffer)
