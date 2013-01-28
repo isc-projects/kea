@@ -754,6 +754,10 @@ class TestXfrinConnection(unittest.TestCase):
         A mock function used instead of dns.check_zone.
         '''
         self._check_zone_params = (name, rrclass, rrsets, callbacks)
+        # Call both callbacks to see they do nothing. This checks
+        # the transfer depends on the result only.
+        callbacks[0]("Test error")
+        callbacks[1]("Test warning")
         return self._check_zone_result
 
     def _create_normal_response_data(self):
@@ -1548,6 +1552,15 @@ class TestAXFR(TestXfrinConnection):
     def test_do_xfrin_datasrc_error(self):
         # Emulate failure in the data source client on commit.
         self.conn._datasrc_client.force_fail = True
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+
+    def test_do_xfrin_invalid_zone(self):
+        """
+        Test receiving an invalid zone. We mock the check and see the whole
+        transfer is rejected.
+        """
+        self._check_zone_result = False
         self.conn.response_generator = self._create_normal_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
 
