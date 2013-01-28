@@ -1,3 +1,9 @@
+561.	[bug]		kambe, jelte
+	b10-stats-httpd no longer dumps request information to the console,
+	but uses the bind10 logging system. Additionally, the logging
+	identifiers have been changed from STATHTTPD_* to STATSHTTPD_*
+	(Trac #1897, git 93716b025a4755a8a2cbf250a9e4187741dbc9bb)
+
 560.	[bug]		jinmei
 	b10-auth now sets the TTL of SOA RR for negative responses to
 	the minimum of the RR TTL and the minimum TTL of the SOA RDATA
