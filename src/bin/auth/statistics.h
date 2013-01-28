@@ -262,12 +262,11 @@ public:
 
     /// \brief Increment counters according to the parameters.
     ///
-    /// This method is mostly exception free. But it may still throw a
-    /// standard exception if memory allocation fails inside the method.
-    ///
     /// \param msgattrs DNS message attributes.
     /// \param response DNS response message.
     /// \param done DNS response was sent to the client.
+    ///
+    /// \throw None
     ///
     void inc(const MessageAttributes& msgattrs,
              const isc::dns::Message& response, const bool done);
