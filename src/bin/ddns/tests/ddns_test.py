@@ -39,9 +39,9 @@ TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 TEST_ZONE_NAME = Name('example.org')
 TEST_ZONE_NAME_STR = TEST_ZONE_NAME.to_text()
-UPDATE_RRTYPE = RRType.SOA()
+UPDATE_RRTYPE = RRType.SOA
 TEST_QID = 5353                 # arbitrary chosen
-TEST_RRCLASS = RRClass.IN()
+TEST_RRCLASS = RRClass.IN
 TEST_RRCLASS_STR = TEST_RRCLASS.to_text()
 TEST_SERVER6 = ('2001:db8::53', 53, 0, 0)
 TEST_CLIENT6 = ('2001:db8::1', 53000, 0, 0)
@@ -478,7 +478,7 @@ class TestDDNSServer(unittest.TestCase):
         # By default (in our faked config) it should be derived from the
         # test data source
         rrclass, datasrc_client = self.ddns_server._datasrc_info
-        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(RRClass.IN, rrclass)
         self.assertEqual(DataSourceClient.SUCCESS,
                          datasrc_client.find_zone(Name('example.org'))[0])
 
@@ -491,7 +491,7 @@ class TestDDNSServer(unittest.TestCase):
             {'database_file': './notexistentdir/somedb.sqlite3'}
         self.__cc_session.add_remote_config_by_name('Auth')
         rrclass, datasrc_client = self.ddns_server._datasrc_info
-        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(RRClass.IN, rrclass)
         self.assertRaises(isc.datasrc.Error,
                           datasrc_client.find_zone, Name('example.org'))
 
@@ -1127,9 +1127,9 @@ class TestDDNSSession(unittest.TestCase):
         self.__faked_result = UPDATE_DROP
         # Put the same RR twice in the prerequisite section.  We should see
         # them as separate RRs.
-        dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
+        dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS,
                              RRTTL(0))
-        dummy_record.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, "ns.example"))
+        dummy_record.add_rdata(Rdata(RRType.NS, TEST_RRCLASS, "ns.example"))
         self.server.handle_request((self.__sock, TEST_SERVER6, TEST_CLIENT6,
                                     create_msg(prereq=[dummy_record,
                                                        dummy_record])))

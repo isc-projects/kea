@@ -30,7 +30,7 @@ def rrsets_equal(a, b):
            a.get_class() == b.get_class() and \
            a.get_type() == b.get_type() and \
            a.get_ttl() == b.get_ttl() and \
-           (a.get_type() == RRType.RRSIG() or
+           (a.get_type() == RRType.RRSIG or
             sorted(a.get_rdata()) == sorted(b.get_rdata()))
 
 # The following are short cut utilities to create an RRset of a specific
@@ -38,25 +38,25 @@ def rrsets_equal(a, b):
 # tests, so we define default values for them for convenience.
 
 def create_a(name, address, ttl=3600):
-    rrset = RRset(name, RRClass.IN(), RRType.A(), RRTTL(ttl))
-    rrset.add_rdata(Rdata(RRType.A(), RRClass.IN(), address))
+    rrset = RRset(name, RRClass.IN, RRType.A, RRTTL(ttl))
+    rrset.add_rdata(Rdata(RRType.A, RRClass.IN, address))
     return rrset
 
 def create_aaaa(name, address, ttl=3600):
-    rrset = RRset(name, RRClass.IN(), RRType.AAAA(), RRTTL(ttl))
-    rrset.add_rdata(Rdata(RRType.AAAA(), RRClass.IN(), address))
+    rrset = RRset(name, RRClass.IN, RRType.AAAA, RRTTL(ttl))
+    rrset.add_rdata(Rdata(RRType.AAAA, RRClass.IN, address))
     return rrset
 
 def create_ns(nsname, name=Name('example.com'), ttl=3600):
     '''For convenience we use a default name often used as a zone name'''
-    rrset = RRset(name, RRClass.IN(), RRType.NS(), RRTTL(ttl))
-    rrset.add_rdata(Rdata(RRType.NS(), RRClass.IN(), nsname))
+    rrset = RRset(name, RRClass.IN, RRType.NS, RRTTL(ttl))
+    rrset.add_rdata(Rdata(RRType.NS, RRClass.IN, nsname))
     return rrset
 
 def create_cname(target='target.example.com', name=Name('example.com'),
                  ttl=3600):
-    rrset = RRset(name, RRClass.IN(), RRType.CNAME(), RRTTL(ttl))
-    rrset.add_rdata(Rdata(RRType.CNAME(), RRClass.IN(), target))
+    rrset = RRset(name, RRClass.IN, RRType.CNAME, RRTTL(ttl))
+    rrset.add_rdata(Rdata(RRType.CNAME, RRClass.IN, target))
     return rrset
 
 def create_generic(name, rdlen, type=RRType('TYPE65300'), ttl=3600):
@@ -67,16 +67,16 @@ def create_generic(name, rdlen, type=RRType('TYPE65300'), ttl=3600):
     The RDATA will be filled with specified length of all-0 data.
 
     '''
-    rrset = RRset(name, RRClass.IN(), type, RRTTL(ttl))
-    rrset.add_rdata(Rdata(type, RRClass.IN(), '\\# ' +
+    rrset = RRset(name, RRClass.IN, type, RRTTL(ttl))
+    rrset.add_rdata(Rdata(type, RRClass.IN, '\\# ' +
                           str(rdlen) + ' ' + '00' * rdlen))
     return rrset
 
 def create_soa(serial, name=Name('example.com'), ttl=3600):
     '''For convenience we use a default name often used as a zone name'''
 
-    rrset = RRset(name, RRClass.IN(), RRType.SOA(), RRTTL(ttl))
+    rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(ttl))
     rdata_str = 'master.example.com. admin.example.com. ' + \
         str(serial) + ' 3600 1800 2419200 7200'
-    rrset.add_rdata(Rdata(RRType.SOA(), RRClass.IN(), rdata_str))
+    rrset.add_rdata(Rdata(RRType.SOA, RRClass.IN, rdata_str))
     return rrset
