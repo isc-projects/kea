@@ -120,7 +120,7 @@ class TestBasicMethods(unittest.TestCase):
                   'item_type': 'real',
                   'item_default': 0.0 }]
         counters._stop_timer(t2, elem, spec, 'time')
-        self.assertGreater(counters._get_counter(elem,'time'), 1)
+        self.assertGreaterEqual(counters._get_counter(elem,'time'), 1.0)
 
     def test_rasing_incrementers(self):
         """ use Thread"""
