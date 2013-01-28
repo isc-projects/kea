@@ -143,6 +143,10 @@ class TestSubscriptionManager(unittest.TestCase):
         self.assertEqual(1, self.__cfgmgr_ready_called)
 
 class MsgQTest(unittest.TestCase):
+    """
+    Tests for the behaviour of MsgQ. This is for the core of MsgQ, other
+    subsystems are in separate test fixtures.
+    """
     def setUp(self):
         self.__msgq = MsgQ()
 
@@ -159,6 +163,10 @@ class MsgQTest(unittest.TestCase):
         return (header, data)
 
     def test_undeliverable_errors(self):
+        """
+        Send several packets through the MsgQ and check it generates
+        undeliverable notifications under the correct circumstances.
+        """
         sent_messages = []
         def fake_end_prepared_msg(socket, msg):
             sent_messages.append((socket, msg))
