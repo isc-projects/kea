@@ -27,20 +27,27 @@ class MessageTest(unittest.TestCase):
         self.msg1_str = "{\"just\": [\"an\", \"arbitrary\", \"structure\"]}";
         self.msg1_wire = self.msg1_str.encode()
 
-        self.msg2 = { "aaa": [ 1, 1.1, True, False, None ] }
-        self.msg2_str = "{\"aaa\": [1, 1.1, true, false, null]}";
+        self.msg2 = { "aaa": [ 1, True, False, None ] }
+        self.msg2_str = "{\"aaa\": [1, true, false, null]}";
         self.msg2_wire = self.msg2_str.encode()
 
         self.msg3 = { "aaa": [ 1, 1.1, True, False, "string\n" ] }
         self.msg3_str = "{\"aaa\": [1, 1.1, true, false, \"string\n\" ]}";
         self.msg3_wire = self.msg3_str.encode()
 
+        # Due to the inherent impreciseness of floating point values,
+        # we test this one separately (with AlmostEqual)
+        self.msg_float = 1.1
+        self.msg_float_str = "1.1";
+        self.msg_float_wire = self.msg_float_str.encode()
+
     def test_encode_json(self):
         self.assertEqual(self.msg1_wire, isc.cc.message.to_wire(self.msg1))
         self.assertEqual(self.msg2_wire, isc.cc.message.to_wire(self.msg2))
-
+        self.assertAlmostEqual(float(self.msg_float_wire),
+                               float(isc.cc.message.to_wire(self.msg_float)))
         self.assertRaises(TypeError, isc.cc.message.to_wire, NotImplemented)
-        
+
     def test_decode_json(self):
         self.assertEqual(self.msg1, isc.cc.message.from_wire(self.msg1_wire))
         self.assertEqual(self.msg2, isc.cc.message.from_wire(self.msg2_wire))
