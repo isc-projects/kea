@@ -302,12 +302,12 @@ class NotifyOut:
                          format_zone_str(zone_name, zone_class))
             return []
 
-        result, ns_rrset, _ = finder.find(zone_name, RRType.NS())
+        result, ns_rrset, _ = finder.find(zone_name, RRType.NS)
         if result is not finder.SUCCESS or ns_rrset is None:
             logger.warn(NOTIFY_OUT_ZONE_NO_NS,
                         format_zone_str(zone_name, zone_class))
             return []
-        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA())
+        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
         if result is not finder.SUCCESS or soa_rrset is None or \
                 soa_rrset.get_rdata_count() != 1:
             logger.warn(NOTIFY_OUT_ZONE_BAD_SOA,
@@ -323,11 +323,11 @@ class NotifyOut:
             ns_result, ns_finder = ds_client.find_zone(ns_name)
             if ns_result is DataSourceClient.SUCCESS or \
                ns_result is DataSourceClient.PARTIALMATCH:
-                result, rrset, _ = ns_finder.find(ns_name, RRType.A())
+                result, rrset, _ = ns_finder.find(ns_name, RRType.A)
                 if result is ns_finder.SUCCESS and rrset is not None:
                     addrs.extend([a.to_text() for a in rrset.get_rdata()])
 
-                result, rrset, _ = ns_finder.find(ns_name, RRType.AAAA())
+                result, rrset, _ = ns_finder.find(ns_name, RRType.AAAA)
                 if result is ns_finder.SUCCESS and rrset is not None:
                     addrs.extend([aaaa.to_text()
                                     for aaaa in rrset.get_rdata()])
@@ -512,7 +512,7 @@ class NotifyOut:
         msg.set_opcode(Opcode.NOTIFY())
         msg.set_rcode(Rcode.NOERROR())
         msg.set_header_flag(Message.HEADERFLAG_AA)
-        msg.add_question(Question(zone_name, zone_class, RRType.SOA()))
+        msg.add_question(Question(zone_name, zone_class, RRType.SOA))
         msg.add_rrset(Message.SECTION_ANSWER, self._get_zone_soa(zone_name,
                                                                  zone_class))
         return msg, qid
@@ -531,7 +531,7 @@ class NotifyOut:
                                            zone_name.to_text() + '/' +
                                            zone_class.to_text() + ' not found')
 
-        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA())
+        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
         if result is not finder.SUCCESS or soa_rrset is None or \
                 soa_rrset.get_rdata_count() != 1:
             raise NotifyOutDataSourceError('_get_zone_soa: Zone ' +

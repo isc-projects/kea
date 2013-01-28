@@ -96,7 +96,7 @@ class ZoneLoaderTests(unittest.TestCase):
         """
         result, finder = self.client.find_zone(self.test_name)
         self.assertEqual(self.client.SUCCESS, result)
-        result, rrset, _ = finder.find(self.test_name, isc.dns.RRType.SOA())
+        result, rrset, _ = finder.find(self.test_name, isc.dns.RRType.SOA)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual(soa_txt, rrset.to_text())
 
@@ -231,7 +231,7 @@ class ZoneLoaderTests(unittest.TestCase):
     def test_wrong_class_from_client(self):
         # For ds->ds loading, wrong class is detected upon construction
         # Need a bit of the extended setup for CH source client
-        clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH())
+        clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
         clientlist.configure('[ { "type": "static", "params": "' +
                              STATIC_ZONE_FILE +'" } ]', False)
         self.source_client, _, _ = clientlist.find(isc.dns.Name("bind."),
