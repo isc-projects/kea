@@ -6,9 +6,7 @@ $ORIGIN ttl1.
 				1814400
 				3
 				)
-; this needs #2390
-;			NS	ns
-			NS	ns.ttl1.
+			NS	ns
 ns			A	10.53.0.1
 a			TXT	"soa minttl 3"
 b		2	TXT	"explicit ttl 2"
