@@ -49,8 +49,6 @@ namespace isc {
 namespace auth {
 namespace unittest {
 
-// Test if the counters has expected values specified in expect and the others
-// are zero.
 void
 checkStatisticsCounters(const isc::data::ConstElementPtr counters,
                         const std::map<std::string, int>& expect)
