@@ -62,7 +62,7 @@ def import_definitions():
         leaf node:
         (item name)\t+(internal item counter name)\t+(description of the item)
 
-        Branch nodes contains leaf nodes and/or branch nodes. The end of
+        Branch nodes contain leaf nodes and/or branch nodes. The end of
         a branch node is indicated with ';' as item name (first column).
 
         Internal branch name and internal item counter name must be unique.
@@ -277,46 +277,60 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
 
     Returns nothing.
     '''
-    msg_counter_types = 'enum MSGCounterType {\n'
+    msg_counter_types = ['enum MSGCounterType {']
     item_names =  ['// using -1 as counter_id to state it is not a '
-                   + 'counter item\n']
-    item_names += ['const int NOT_ITEM = -1;\n', '\n']
+                   + 'counter item']
+    item_names += ['const int NOT_ITEM = -1;', '']
 
-    def convert_list(items, msg_counter_types, item_names_current, item_names):
+    def convert_list(items, item_head, msg_counter_types, item_names):
+        '''Convert item tree to a set of C++ code fragment in given lists.
+
+        This method recursively builds two lists:
+        - msg_counter_types consists of strings for all leaf items, each
+          defines one enum element with a comment, e.g.
+          COUNTER_ITEM, ///< item's descriptin
+        - item_names consists of tuples of three elements, depending on
+          whether it's a leaf element (no child from it) or not:
+          (leaf)   { "item_name", NULL, COUNTER_ITEM },
+          (branch) { "item_name", CHILD_NAME, NOT_ITEM
+
+        Each single call to this function builds a C++ structure beginning
+        with the given item_head, which is a string that reads like
+        'const struct CounterSpec some_counters[] = {'
+        followed by the item_names tuples corresponding to that level.
+        If some of the items of this level have a child, recursive calls
+        to this function extends msg_counter_types and item_names.
+        item_names for this level will be concatenated at the end end of
+        the given item_names.
+
+        '''
+        item_names_current = [item_head]
         for item in items:
+            item_spec = '    { "' + item['name'] + '", '
             if item['child'] is None:
-                msg_counter_types += '    ' + item['index'] + ',    ' +\
-                                    '///< ' + item['description'] + '\n'
-                item_names_current.append('    { "' + item['name'] +
-                                          '", NULL, ' + item['index'] + ' },\n'
-                                          )
+                item_spec += 'NULL, ' + item['index']
+                msg_counter_types.append('    ' + item['index'] + ',    ' +
+                                         '///< ' + item['description'])
             else:
-                item_names_current_ = ['const struct CounterSpec ' +
-                                       item['index'] + '[] = {\n']
-                msg_counter_types, item_names_current_, item_names = \
-                        convert_list(item['child'], msg_counter_types,
-                                     item_names_current_, item_names)
-                item_names_current_.append('    { NULL, NULL, NOT_ITEM }\n' +
-                              '};\n')
-                item_names.extend(item_names_current_)
-                item_names_current.append('    { "' + item['name'] + '", ' +
-                                          item['index'] + ', NOT_ITEM },\n')
-        return msg_counter_types, item_names_current, item_names
+                item_spec += item['index'] + ', NOT_ITEM'
+                child_head = 'const struct CounterSpec ' + \
+                    item['index'] + '[] = {'
+                convert_list(item['child'], child_head,
+                             msg_counter_types, item_names)
+            item_names_current.append(item_spec + ' },')
 
-    msg_counter_types, item_names_current, item_names = \
-            convert_list(item_list, msg_counter_types, [], item_names)
-    item_names.append('const struct CounterSpec msg_counter_tree[] = {\n')
-    item_names.extend(item_names_current)
-    item_names.append('    { NULL, NULL, NOT_ITEM }\n' +
-                  '};\n')
+        item_names_current.append('    { NULL, NULL, NOT_ITEM }\n};')
+        item_names.extend(item_names_current)
 
-    msg_counter_types += \
-        '    // End of counter types\n' +\
-        '    MSG_COUNTER_TYPES  ///< The number of defined counters\n' +\
-        '};\n'
+    convert_list(item_list, 'const struct CounterSpec msg_counter_tree[] = {',
+                 msg_counter_types, item_names)
+    msg_counter_types.extend([
+            '    // End of counter types',
+            '    MSG_COUNTER_TYPES  ///< The number of defined counters',
+            '};'])
 
-    item_decls = msg_counter_types
-    item_defs = ''.join(item_names)
+    item_decls = '\n'.join(msg_counter_types)
+    item_defs = '\n'.join(item_names)
 
     if need_generate(builddir+os.sep+itemsfile,
                      srcdir+os.sep+itemsfile+pre_suffix, def_mtime):
