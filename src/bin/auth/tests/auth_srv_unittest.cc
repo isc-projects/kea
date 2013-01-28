@@ -135,12 +135,6 @@ protected:
                       rcode_value;
     }
 
-    // Checks whether all Rcode counters are set to zero
-    void checkAllRcodeCountersZero() const {
-        // with checking NOERROR == 0 and the others are 0
-        checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 0);
-    }
-
     // Checks whether all Rcode counters are set to zero except the given
     // rcode (it is checked to be set to 'value')
     void checkAllRcodeCountersZeroExcept(const Rcode& rcode, int value) const {
