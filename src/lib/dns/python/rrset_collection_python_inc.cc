@@ -36,6 +36,41 @@ Returns the RRset in the collection that exactly matches the given\n\
 name, rrclass and rrtype. If no matching RRset is found, None is\n\
 returned.\n\
 \n\
+This method's implementations currently are not specified to handle\n\
+RRTypes such as RRSIG and NSEC3. This interface may be refined to\n\
+clarify this point in the future, and perhaps, provide additional API\n\
+for these RRType.\n\
+\n\
+As for RRSIG, there are some fundamental open questions. For example,\n\
+it's not clear whether we want to return all RRSIGs of the given name\n\
+covering any RR types (in which case, we need to figure out how), or\n\
+we need to extend the interface so we can specify the covered type. A\n\
+specific derived implementation may return something if type RRSIG is\n\
+specified, but this is not specified here at the base class level. So,\n\
+for RRSIGs the behavior should be assumed as undefined.\n\
+\n\
+As for NSEC3, it's not clear whether owner names (which included\n\
+hashed labels) are the best choice of search key, because in many\n\
+cases, what the application wants to find is an NSEC3 that has the\n\
+hash of some particular \"normal\" domain names. Also, if the\n\
+underlying implementation encapsulates a single zone, NSEC3 records\n\
+conceptually belong to a separate name space, which may cause\n\
+implementation difficulty.\n\
+\n\
+Behavior with meta types such as ANY and AXFR are also undefined. A\n\
+specific implementation may return something for these. But, unlike\n\
+the case of RRSIGs, these types of RRsets are not expected to be added\n\
+to any implementation of collection in the first place (by the\n\
+definition of \"meta types\"), so querying for such types is\n\
+basically an invalid operation. The API doesn't require\n\
+implementations to check this condition and reject it, so the behavior\n\
+is undefined. This interface will not be refined in future versions\n\
+for these meta types.\n\
+\n\
+Exceptions:\n\
+  RRsetCollectionError if find() results in some implementation-\n\
+             specific error.\n\
+\n\
 Parameters:\n\
   name       (isc.dns.Name) The name of the RRset to search for.\n\
   rrtype     (isc.dns.RRType) The type of the RRset to search for.\n\
@@ -121,7 +156,7 @@ find(name, rrclass, rrtype) -> isc.dns.RRset\n\
 Find a matching RRset in the collection.\n\
 \n\
 Returns the RRset in the collection that exactly matches the given\n\
-name, rrclass and rrtype. If no matching RRset is found, NULL is\n\
+name, rrclass and rrtype. If no matching RRset is found, None is\n\
 returned.\n\
 \n\
 Parameters:\n\
@@ -129,7 +164,7 @@ Parameters:\n\
   rrclass    The class of the RRset to search for.\n\
   rrtype     The type of the RRset to search for.\n\
 \n\
-Return Value(s): The RRset if found, NULL otherwise.\n\
+Return Value(s): The RRset if found, None otherwise.\n\
 ";
 
 // Modifications
