@@ -22,10 +22,6 @@
 
 #include <vector>
 
-namespace {
-const unsigned int InitialValue = 0;
-} // anonymous namespace
-
 namespace isc {
 namespace statistics {
 
@@ -36,6 +32,7 @@ public:
 
 private:
     std::vector<Counter::Value> counters_;
+    static const unsigned int InitialValue = 0;
 
 public:
     /// The constructor.
