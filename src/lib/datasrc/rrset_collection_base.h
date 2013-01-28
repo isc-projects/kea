@@ -22,9 +22,6 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief A forward declaration
-class ZoneUpdater;
-
 /// \brief datasrc derivation of \c isc::dns::RRsetCollectionBase.
 ///
 /// This is a default datasrc implementation of

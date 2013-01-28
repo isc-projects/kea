@@ -4244,7 +4244,7 @@ public:
     {}
 
     ZoneUpdaterPtr updater;
-    isc::datasrc::RRsetCollectionBase& collection;
+    isc::dns::RRsetCollectionBase& collection;
 };
 
 TYPED_TEST(RRsetCollectionTest, find) {
@@ -4429,7 +4429,7 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, updateThrows) {
 // Test that using an RRsetCollection after calling commit() on the
 // ZoneUpdater throws, as the RRsetCollection is disabled.
 TYPED_TEST(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
-     isc::datasrc::RRsetCollectionBase& collection =
+     isc::dns::RRsetCollectionBase& collection =
          this->updater_->getRRsetCollection();
 
      // find() must not throw here.

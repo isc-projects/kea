@@ -14,6 +14,7 @@
 
 #include <datasrc/zone_loader.h>
 #include <datasrc/data_source.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/memory_client.h>
@@ -77,24 +78,16 @@ public:
     RRClass rrclass_;
 };
 
-// Test implementation of RRsetCollectionBase.
+// Test implementation of RRsetCollectionBase. This is currently just a
+// wrapper around \c isc::datasrc::RRsetCollectionBase;
+// \c isc::datasrc::RRsetCollectionBase may become an abstract class in
+// the future.
 class TestRRsetCollection : public isc::datasrc::RRsetCollectionBase {
 public:
     TestRRsetCollection(ZoneUpdater& updater,
                         const isc::dns::RRClass& rrclass) :
         isc::datasrc::RRsetCollectionBase(updater, rrclass)
     {}
-
-    virtual ~TestRRsetCollection() {}
-
-protected:
-    virtual RRsetCollectionBase::IterPtr getBeginning() {
-        isc_throw(isc::NotImplemented, "This method is not implemented.");
-    }
-
-    virtual RRsetCollectionBase::IterPtr getEnd() {
-        isc_throw(isc::NotImplemented, "This method is not implemented.");
-    }
 };
 
 // The updater isn't really correct according to the API. For example,
@@ -111,7 +104,7 @@ public:
     virtual ZoneFinder& getFinder() {
         return (finder_);
     }
-    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         if (!rrset_collection_) {
             rrset_collection_.reset(new TestRRsetCollection(*this,
                                                             client_->rrclass_));

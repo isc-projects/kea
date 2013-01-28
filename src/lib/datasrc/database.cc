@@ -1439,7 +1439,7 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         if (!rrset_collection_) {
             // This is only assigned the first time and remains for the
             // lifetime of the DatabaseUpdater.
