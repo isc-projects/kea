@@ -531,6 +531,7 @@ class MsgQ:
         instance = routing["instance"]
         to = routing["to"]
         if group == None or instance == None:
+            # FIXME: Should we log them instead?
             return  # ignore invalid packets entirely
 
         if to == "*":
@@ -539,12 +540,15 @@ class MsgQ:
             if to in self.lnames:
                 sockets = [ self.lnames[to] ]
             else:
-                return # recipient doesn't exist
+                sockets = []
 
         msg = self.preparemsg(routing, data)
 
         if sock in sockets:
+            # Don't bounce to self
             sockets.remove(sock)
+
+        # TODO: The place to create an undeliverable error, if requested
         for socket in sockets:
             self.send_prepared_msg(socket, msg)
 
