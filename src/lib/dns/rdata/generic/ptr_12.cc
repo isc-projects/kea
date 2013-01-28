@@ -39,9 +39,9 @@ PTR::PTR(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
-PTR::PTR(MasterLexer& lexer, const Name*, MasterLoader::Options,
-         MasterLoaderCallbacks&) :
-    ptr_name_(lexer.getNextToken(MasterToken::QSTRING).getString())
+PTR::PTR(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options, MasterLoaderCallbacks&) :
+    ptr_name_(createNameFromLexer(lexer, origin))
 {}
 
 PTR::PTR(const PTR& source) :
