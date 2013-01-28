@@ -31,16 +31,14 @@
 #include <iterator>
 #include <utility>
 
-namespace {
-typedef boost::shared_ptr<isc::statistics::Counter> CounterPtr;
-typedef std::map<std::string, CounterPtr> DictionaryMap;
-}
 
 namespace isc {
 namespace statistics {
 
 class CounterDictionary : boost::noncopyable {
 private:
+    typedef boost::shared_ptr<isc::statistics::Counter> CounterPtr;
+    typedef std::map<std::string, CounterPtr> DictionaryMap;
     DictionaryMap dictionary_;
     std::vector<std::string> elements_;
     const size_t items_;
