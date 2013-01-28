@@ -1144,7 +1144,7 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
         self.xfrsess._request_data = self.mdata
         self.xfrsess._server.get_db_file = lambda : TESTDATA_SRCDIR + \
             'test.sqlite3'
-        self.ns_name = 'a.dns.example.com'
+        self.ns_name = 'a.dns.example.com.'
 
     def check_axfr_stream(self, response):
         '''Common checks for AXFR(-style) response for the test zone.

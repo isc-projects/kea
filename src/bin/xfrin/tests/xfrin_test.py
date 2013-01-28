@@ -361,7 +361,7 @@ class TestXfrinState(unittest.TestCase):
         self.ns_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
                               RRTTL(3600))
         self.ns_rrset.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS,
-                                      'ns.example.com'))
+                                      'ns.example.com.'))
         self.a_rrset = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.A(),
                              RRTTL(3600))
         self.a_rrset.add_rdata(Rdata(RRType.A(), TEST_RRCLASS, '192.0.2.1'))
@@ -1168,7 +1168,7 @@ class TestAXFR(TestXfrinConnection):
     def test_soacheck_referral_response(self):
         self.conn.response_generator = self._create_soa_response_data
         self.soa_response_params['answers'] = []
-        self.soa_response_params['authorities'] = [create_ns('ns.example.com')]
+        self.soa_response_params['authorities'] = [create_ns('ns.example.com.')]
         self.assertRaises(XfrinProtocolError, self.conn._check_soa_serial)
 
     def test_soacheck_nodata_response(self):

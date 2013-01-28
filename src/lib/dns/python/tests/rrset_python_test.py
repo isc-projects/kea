@@ -78,7 +78,7 @@ class TestModuleSpec(unittest.TestCase):
     def test_add_rdata(self):
         # no iterator to read out yet (TODO: add addition test once implemented)
 
-        self.assertRaises(TypeError, self.rrset_a.add_rdata, Rdata(RRType("NS"), RRClass("IN"), "test.name"))
+        self.assertRaises(TypeError, self.rrset_a.add_rdata, Rdata(RRType("NS"), RRClass("IN"), "test.name."))
         pass
 
     def test_to_text(self):

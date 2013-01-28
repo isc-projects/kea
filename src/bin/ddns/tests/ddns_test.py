@@ -1129,7 +1129,7 @@ class TestDDNSSession(unittest.TestCase):
         # them as separate RRs.
         dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
                              RRTTL(0))
-        dummy_record.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, "ns.example"))
+        dummy_record.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, "ns.example."))
         self.server.handle_request((self.__sock, TEST_SERVER6, TEST_CLIENT6,
                                     create_msg(prereq=[dummy_record,
                                                        dummy_record])))

@@ -168,7 +168,7 @@ TEST_F(RRsetTest, addRdataPtr) {
     // Pointer version of addRdata() doesn't type check and does allow to
     //add a different type of Rdata as a result.
     rrset_a_empty.addRdata(createRdata(RRType::NS(), RRClass::IN(),
-                                       "ns.example.com"));
+                                       "ns.example.com."));
     EXPECT_EQ(3, rrset_a_empty.getRdataCount());
 }
 

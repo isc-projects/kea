@@ -31,8 +31,25 @@ using namespace isc::util;
 // BEGIN_RDATA_NAMESPACE
 
 NS::NS(const std::string& namestr) :
-    nsname_(namestr)
-{}
+    // Fill in dummy name and replace them soon below.
+    nsname_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(namestr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        nsname_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for NS: "
+                      << namestr);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct NS from '" <<
+                  namestr << "': " << ex.what());
+    }
+}
 
 NS::NS(InputBuffer& buffer, size_t) :
     nsname_(buffer)
