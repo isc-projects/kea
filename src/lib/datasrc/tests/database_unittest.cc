@@ -2466,7 +2466,7 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
     // It should normally just result in DELEGATION; if GLUE_OK is specified,
     // the other RR should be visible.
     this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns.example.com");
+    this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, Name("brokenns1.example.org"), this->qtype_,
                RRType::NS(), this->rrttl_, ZoneFinder::DELEGATION,
                this->expected_rdatas_, this->empty_rdatas_,
@@ -2515,7 +2515,7 @@ TYPED_TEST(DatabaseClientTest, findDS) {
     // Some insane case: DS under a zone cut.  It's included in the DB, but
     // shouldn't be visible via finder.
     this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns.example.com");
+    this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, Name("child.insecdelegation.example.org"),
                RRType::DS(), RRType::NS(), this->rrttl_,
                ZoneFinder::DELEGATION, this->expected_rdatas_,

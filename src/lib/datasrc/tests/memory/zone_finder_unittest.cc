@@ -123,7 +123,7 @@ public:
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
             {"ns.example.org. 300 IN A 192.0.2.2", &rr_ns_a_},
             // This one will place rr_ns_a_ at a zone cut, making it a glue:
-            {"ns.example.org. 300 IN NS 192.0.2.2", &rr_ns_ns_},
+            {"ns.example.org. 300 IN NS 192.0.2.2.", &rr_ns_ns_},
             {"ns.example.org. 300 IN AAAA 2001:db8::2", &rr_ns_aaaa_},
             {"cname.example.org. 300 IN CNAME canonical.example.org",
              &rr_cname_},
