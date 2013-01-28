@@ -196,17 +196,17 @@ public:
         bit_attributes_[RES_IS_TRUNCATED] = is_truncated;
     }
 
-    /// \brief Return TSIG attributes of the response.
+    /// \brief Return whether the response is TSIG signed or not.
     /// \return true if the response is TSIG signed
     /// \throw None
-    bool getResponseSigTSIG() const {
+    bool getResponseTSIG() const {
         return (bit_attributes_[RES_TSIG_SIGNED]);
     }
 
-    /// \brief Set TSIG attributes of the response.
+    /// \brief Set whether the response is TSIG signed or not.
     /// \param is_tsig_signed true if the response is TSIG signed
     /// \throw None
-    void setResponseSigTSIG(const bool signed_tsig) {
+    void setResponseTSIG(const bool signed_tsig) {
         bit_attributes_[RES_TSIG_SIGNED] = signed_tsig;
     }
 };

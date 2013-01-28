@@ -181,7 +181,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
     }
 
     // response TSIG
-    if (msgattrs.getResponseSigTSIG()) {
+    if (msgattrs.getResponseTSIG()) {
         server_msg_counter_.inc(MSG_RESPONSE_TSIG);
     }
 
