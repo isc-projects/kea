@@ -1128,7 +1128,7 @@ class DiffTest(unittest.TestCase):
         self.assertEqual(1, len(self.__data_operations))
         self.assertEqual('add', self.__data_operations[0][0])
         # Check the returned one is actually RRsetCollection
-        self.assertTrue(collection, self.Collection)
+        self.assertTrue(isinstance(collection, self.Collection))
         # The collection is just the mock from above, so this doesn't do much
         # testing, but we check that the mock got through and didn't get hurt.
         self.assertIsNone(collection.find(Name('example.org'), RRClass.IN(),
