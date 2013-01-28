@@ -130,14 +130,14 @@ public:
         req_transport_protocol_ = transport_protocol;
     }
 
-    /// \brief Return EDNS attribute of the request.
+    /// \brief Return whether EDNS version of the request is 0 or not.
     /// \return true if EDNS version of the request is 0
     /// \throw None
     bool getRequestEDNS0() const {
         return (bit_attributes_[REQ_WITH_EDNS_0]);
     }
 
-    /// \brief Set EDNS attribute of the request.
+    /// \brief Set whether EDNS version of the request is 0 or not.
     /// \param with_edns_0 true if EDNS version of the request is 0
     /// \throw None
     void setRequestEDNS0(const bool with_edns_0) {
@@ -158,14 +158,14 @@ public:
         bit_attributes_[REQ_WITH_DNSSEC_OK] = with_dnssec_ok;
     }
 
-    /// \brief Return TSIG attribute of the request.
+    /// \brief Return whether the request is TSIG signed or not.
     /// \return true if the request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
         return (bit_attributes_[REQ_TSIG_SIGNED]);
     }
 
-    /// \brief Return the status of the signature of the request.
+    /// \brief Return whether the signature of the request is bad or not.
     /// \return true if the signature of the request is bad
     /// \throw None
     bool getRequestSigBadSig() const {
