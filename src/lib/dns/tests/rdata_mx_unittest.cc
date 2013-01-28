@@ -38,7 +38,7 @@ class Rdata_MX_Test : public RdataTest {
 const generic::MX rdata_mx(10, Name("mx.example.com"));
 
 TEST_F(Rdata_MX_Test, createFromText) {
-    const generic::MX rdata_mx2("10 mx.example.com");
+    const generic::MX rdata_mx2("10 mx.example.com.");
     EXPECT_EQ(0, rdata_mx2.compare(rdata_mx));
 }
 
@@ -48,6 +48,9 @@ TEST_F(Rdata_MX_Test, badText) {
     EXPECT_THROW(const generic::MX rdata_mx("SPOON"), InvalidRdataText);
     EXPECT_THROW(const generic::MX rdata_mx("10 mx. example.com."),
                  InvalidRdataText);
+    // No origin and relative
+    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com"),
+                 MissingNameOrigin);
 }
 
 TEST_F(Rdata_MX_Test, copy) {

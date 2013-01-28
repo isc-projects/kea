@@ -632,9 +632,9 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, rrsigs);
 
     ConstRdataPtr mx_rdata1 = createRdata(RRType::MX(), RRClass::IN(),
-                                          "5 mx1.example.com");
+                                          "5 mx1.example.com.");
     ConstRdataPtr mx_rdata2 = createRdata(RRType::MX(), RRClass::IN(),
-                                          "10 mx2.example.com");
+                                          "10 mx2.example.com.");
     rdata_list_.clear();
     rdata_list_.push_back(mx_rdata1);
     rdata_list_.push_back(mx_rdata2);
