@@ -22,8 +22,11 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using namespace isc::util;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -39,9 +42,9 @@ CNAME::CNAME(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
-CNAME::CNAME(MasterLexer& lexer, const Name*, MasterLoader::Options,
-             MasterLoaderCallbacks&) :
-    cname_(lexer.getNextToken(MasterToken::QSTRING).getString())
+CNAME::CNAME(MasterLexer& lexer, const Name* origin,
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    cname_(createNameFromLexer(lexer, origin))
 {}
 
 CNAME::CNAME(const CNAME& other) :
