@@ -25,9 +25,12 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using namespace isc::util;
 using namespace isc::util::str;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -120,8 +123,8 @@ SRV::SRV(InputBuffer& buffer, size_t rdata_len) {
     impl_ = new SRVImpl(priority, weight, port, targetname);
 }
 
-SRV::SRV(MasterLexer& lexer, const Name*, MasterLoader::Options,
-         MasterLoaderCallbacks&)
+SRV::SRV(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options, MasterLoaderCallbacks&)
 {
     uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
@@ -141,8 +144,7 @@ SRV::SRV(MasterLexer& lexer, const Name*, MasterLoader::Options,
     }
     const uint16_t port = static_cast<uint16_t>(num);
 
-    const Name targetname =
-        Name(lexer.getNextToken(MasterToken::QSTRING).getString());
+    const Name targetname = createNameFromLexer(lexer, origin);
 
     impl_ = new SRVImpl(priority, weight, port, targetname);
 }
