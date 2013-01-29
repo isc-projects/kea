@@ -16,7 +16,8 @@
 import isc.log
 import unittest
 from isc.datasrc import ZoneFinder
-from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
+from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata, \
+    RRsetCollectionBase
 from isc.xfrin.diff import Diff, NoSuchZone
 
 class TestError(Exception):
@@ -1086,6 +1087,52 @@ class DiffTest(unittest.TestCase):
                                        rcode)
             self.__check_find_all_call(diff.find_all, self.__rrset3,
                                        rcode)
+
+    class Collection(isc.dns.RRsetCollectionBase):
+        '''
+        Our own mock RRsetCollection. We only pass it through, but we
+        still define an (mostly empty) find method to satisfy the
+        expectations.
+        '''
+        def __init__(self):
+            '''
+            Empty init. The base class's __init__ can't be called,
+            so we need to provide our own to shadow it -- and make sure
+            not to call the super().__init__().
+            '''
+            pass
+
+        def find(self, name, rrclass, rrtype):
+            '''
+            Empty find method. Returns None to each query (pretends
+            the collection is empty. Present mostly for completeness.
+            '''
+            return None
+
+    def get_rrset_collection(self):
+        '''
+        Part of pretending to be the zone updater. This returns the rrset
+        collection (a mock one, unuseable) for the updater.
+        '''
+        return self.Collection()
+
+    def test_get_rrset_collection(self):
+        '''
+        Test the diff can return corresponding rrset collection. Test
+        it applies the data first.
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        collection = diff.get_rrset_collection()
+        # Check it is applied
+        self.assertEqual(1, len(self.__data_operations))
+        self.assertEqual('add', self.__data_operations[0][0])
+        # Check the returned one is actually RRsetCollection
+        self.assertTrue(isinstance(collection, self.Collection))
+        # The collection is just the mock from above, so this doesn't do much
+        # testing, but we check that the mock got through and didn't get hurt.
+        self.assertIsNone(collection.find(Name('example.org'), RRClass.IN(),
+                                          RRType.SOA()))
 
 if __name__ == "__main__":
     isc.log.init("bind10")
