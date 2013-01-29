@@ -12,19 +12,22 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <datasrc/memory/zone_data.h>
+#include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/memory/rdataset.h>
+
 #include "memory_segment_test.h"
 
 #include <dns/rdataclass.h>
 
 #include <exceptions/exceptions.h>
 
+#include <util/buffer.h>
+
 #include <dns/name.h>
 #include <dns/labelsequence.h>
 #include <dns/rrclass.h>
-
-#include <datasrc/memory/rdata_serialization.h>
-#include <datasrc/memory/rdataset.h>
-#include <datasrc/memory/zone_data.h>
+#include <dns/rrttl.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -257,5 +260,22 @@ TEST_F(ZoneDataTest, isSigned) {
     // change it to unsigned again
     zone_data_->setSigned(false);
     EXPECT_FALSE(zone_data_->isSigned());
+}
+
+// A simple wrapper to reconstruct an RRTTL object from wire-format TTL
+// data (32 bits)
+RRTTL
+createRRTTL(const void* ttl_data) {
+    isc::util::InputBuffer b(ttl_data, sizeof(uint32_t));
+    return (RRTTL(b));
+}
+
+TEST_F(ZoneDataTest, minTTL) {
+    // By default it's tentatively set to "max TTL"
+    EXPECT_EQ(RRTTL::MAX_TTL(), createRRTTL(zone_data_->getMinTTLData()));
+
+    // Explicitly set, then retrieve it.
+    zone_data_->setMinTTL(1200);
+    EXPECT_EQ(RRTTL(1200), createRRTTL(zone_data_->getMinTTLData()));
 }
 }
