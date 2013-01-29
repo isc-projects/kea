@@ -40,7 +40,7 @@ new_rdata_factory_users = [('aaaa', 'in'),
                            ('txt', 'generic')
                           ]
 
-re_typecode = re.compile('([\da-z]+)_(\d+)')
+re_typecode = re.compile('([\da-z\-]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
 # "AXFR"=>252 etc: for meta types and types well-known but not implemented
@@ -286,7 +286,15 @@ def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
     pydef_txt = ''
     for code in code2txt.keys():
         codetxt = code2txt[code].upper()
-        declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + codetxt + '();\n'
+        # Workaround by heuristics: there's a "NULL" RR type, but it would
+        # cause conflict with the C/C++ macro.  We use Null as a special case.
+        if codetxt == 'NULL':
+            codetxt = 'Null'
+        # Likewise, convert "NSAP-PTR" to "NSAP_PTR".
+        if codetxt == 'NSAP-PTR':
+            codetxt = "NSAP_PTR"
+        declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + \
+            codetxt + '();\n'
         deftxt += '''inline const RR''' + cap_key + '''&
 RR''' + cap_key + '''::''' + codetxt + '''() {
     static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code + ''');
