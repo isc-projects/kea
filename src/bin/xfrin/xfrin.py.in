@@ -36,6 +36,7 @@ from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
 from isc.server_common.tsig_keyring import init_keyring, get_keyring
 from isc.log_messages.xfrin_messages import *
+from isc.dns import *
 
 isc.log.init("b10-xfrin", buffer=True)
 logger = isc.log.Logger("xfrin")
@@ -44,13 +45,6 @@ logger = isc.log.Logger("xfrin")
 # use here are hardcoded for now
 DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
 DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
-
-try:
-    from pydnspp import *
-except ImportError as e:
-    # C++ loadable module may not be installed; even so the xfrin process
-    # must keep running, so we warn about it and move forward.
-    logger.error(XFRIN_IMPORT_DNS, str(e))
 
 isc.util.process.rename()
 
@@ -100,8 +94,17 @@ class XfrinProtocolError(Exception):
     '''
     pass
 
+class XfrinZoneError(Exception):
+    '''
+    An exception raised when the received zone is broken enough to be unusable.
+    '''
+    pass
+
 class XfrinZoneUptodate(Exception):
-    '''TBD
+    '''
+    Thrown when the zone is already up to date, so there's no need to download
+    the zone. This is not really an error case (but it's still an exceptional
+    condition and the control flow is different than usual).
     '''
     pass
 
@@ -427,10 +430,10 @@ class XfrinIXFRAdd(XfrinState):
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
-                # The final part is there. Check all was signed
-                # and commit it to the database.
-                conn._check_response_tsig_last()
-                conn._diff.commit()
+                # The final part is there. Finish the transfer by
+                # checking the last TSIG (if required), the zone data and
+                # commiting.
+                conn.finish_transfer()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
             elif soa_serial != conn._current_serial:
@@ -500,15 +503,11 @@ class XfrinAXFREnd(XfrinState):
         """
         Final processing after processing an entire AXFR session.
 
-        In this process all the AXFR changes are committed to the
-        data source.
-
-        There might be more actions here, but for now we simply return False,
-        indicating there will be no more message to receive.
-
+        This simply calls the finish_transfer method of the connection
+        that ensures it is signed by TSIG (if required), the zone data
+        is valid and commits it.
         """
-        conn._check_response_tsig_last()
-        conn._diff.commit()
+        conn.finish_transfer()
         return False
 
 class XfrinTransferStats:
@@ -805,6 +804,31 @@ class XfrinConnection(asyncore.dispatcher):
                 raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
                                          'message')
 
+    def __validate_error(self, reason):
+        '''
+        Used as error callback below.
+        '''
+        logger.error(XFRIN_ZONE_INVALID, self._zone_name, self._rrclass,
+                     reason)
+
+    def __validate_warning(self, reason):
+        '''
+        Used as warning callback below.
+        '''
+        logger.warn(XFRIN_ZONE_WARN, self._zone_name, self._rrclass, reason)
+
+    def finish_transfer(self):
+        """
+        Perform any necessary checks after a transfer. Then complete the
+        transfer by commiting the transaction into the data source.
+        """
+        self._check_response_tsig_last()
+        if not check_zone(self._zone_name, self._rrclass,
+                          self._diff.get_rrset_collection(),
+                          (self.__validate_error, self.__validate_warning)):
+            raise XfrinZoneError('Validation of the new zone failed')
+        self._diff.commit()
+
     def __parse_soa_response(self, msg, response_data):
         '''Parse a response to SOA query and extract the SOA from answer.
 
@@ -950,7 +974,15 @@ class XfrinConnection(asyncore.dispatcher):
             # of trying another primary server, etc, but for now we treat it
             # as "success".
             pass
+        except XfrinZoneError:
+            # The log message doesn't contain the exception text, since there's
+            # only one place where the exception is thrown now and it'd be the
+            # same generic message every time.
+            logger.error(XFRIN_INVALID_ZONE_DATA, self.zone_str(),
+                         format_addrinfo(self._master_addrinfo))
+            ret = XFRIN_FAIL
         except XfrinProtocolError as e:
+            # FIXME: Why is this .info? Even the messageID contains "ERROR".
             logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_ERROR, req_str,
                         self.zone_str(),
                         format_addrinfo(self._master_addrinfo), str(e))
