@@ -112,12 +112,34 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL), ttl_(NULL)
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL),
+        ttl_data_(rdataset->getTTLData()), ttl_(NULL)
+    {}
+
+    /// \brief Constructor with a specific TTL.
+    ///
+    /// This constructor is mostly the same as the normal version, but takes
+    /// an extra parameter, \c ttl_data.  It's expected to point to a memory
+    /// region at least for 32 bits, and the corresponding 32-bit data will
+    /// be used as wire-format TTL value of the RRset, instead of the TTL
+    /// associated with \c rdataset.
+    ///
+    /// It's the caller's responsibility to guarantee the memory region is
+    /// valid and intact throughout the lifetime of the RRset.
+    ///
+    /// \throw None
+    TreeNodeRRset(const dns::RRClass& rrclass, const ZoneNode* node,
+                  const RdataSet* rdataset, bool dnssec_ok,
+                  const void* ttl_data) :
+        node_(node), rdataset_(rdataset),
+        rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL),
+        ttl_data_(ttl_data), ttl_(NULL)
     {}
 
     /// \brief Constructor for wildcard-expanded owner name.
     ///
-    /// This constructor is mostly the same as the other version, but takes
+    /// This constructor is mostly the same as the normal version, but takes
     /// an extra parameter, \c realname.  It effectively overrides the owner
     /// name of the RRset; wherever the owner name is used (e.g., in the
     /// \c toWire() method), the specified name will be used instead of
@@ -133,7 +155,7 @@ public:
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
         dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname)),
-	ttl_(NULL)
+	ttl_data_(rdataset->getTTLData()), ttl_(NULL)
     {}
 
     virtual ~TreeNodeRRset() {
@@ -255,6 +277,7 @@ private:
     const bool dnssec_ok_;
     mutable dns::Name* name_;
     const dns::Name* const realname_;
+    const void* const ttl_data_;
     mutable dns::RRTTL* ttl_;
 };
 
