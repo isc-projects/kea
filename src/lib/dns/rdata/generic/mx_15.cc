@@ -42,6 +42,22 @@ MX::MX(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid MX RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
+///
+/// The EXCHANGE name must be absolute since there's no parameter that
+/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
+/// exception will be thrown. It must not be represented as a quoted
+/// string.
+///
+/// See the construction that takes \c MasterLexer for other fields.
+///
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
 MX::MX(const std::string& mx_str) :
     // Fill in dummy name and replace them soon below.
     preference_(0), mxname_(Name::ROOT_NAME())
@@ -70,6 +86,24 @@ MX::MX(const std::string& mx_str) :
     }
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an MX RDATA.  The EXCHANGE field can be non-absolute if \c origin
+/// is non-NULL, in which case \c origin is used to make it absolute.
+/// It must not be represented as a quoted string.
+///
+/// The PREFERENCE field must be a valid decimal representation of an
+/// unsigned 16-bit integer.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of EXCHANGE when it
+/// is non-absolute.
 MX::MX(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
     preference_(0), mxname_(".")
