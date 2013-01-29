@@ -36,8 +36,8 @@ class Rdata_DNAME_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-const generic::DNAME rdata_dname("dn.example.com");
-const generic::DNAME rdata_dname2("dn2.example.com");
+const generic::DNAME rdata_dname("dn.example.com.");
+const generic::DNAME rdata_dname2("dn2.example.com.");
 const uint8_t wiredata_dname[] = {
     0x02, 0x64, 0x6e, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
     0x63, 0x6f, 0x6d, 0x00 };
@@ -52,16 +52,16 @@ const uint8_t wiredata_dname2[] = {
     0x63, 0x6f, 0x6d, 0x00 };
 
 TEST_F(Rdata_DNAME_Test, createFromText) {
-    EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("dn.example.com")));
+    EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("dn.example.com.")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("dn.example.com.")));
     // should be case sensitive.
-    EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("DN.EXAMPLE.COM")));
+    EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("DN.EXAMPLE.COM.")));
     // RDATA of a class-independent type should be recognized for any
     // "unknown" class.
     EXPECT_EQ(0, rdata_dname.compare(*createRdata(RRType("DNAME"),
                                                   RRClass(65000),
-                                                  "dn.example.com")));
+                                                  "dn.example.com.")));
 }
 
 TEST_F(Rdata_DNAME_Test, createFromWire) {
@@ -81,7 +81,7 @@ TEST_F(Rdata_DNAME_Test, createFromWire) {
                                       "rdata_dname_fromWire", 71),
                  DNSMessageFORMERR);
 
-    EXPECT_EQ(0, generic::DNAME("dn2.example.com").compare(
+    EXPECT_EQ(0, generic::DNAME("dn2.example.com.").compare(
                   *rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
                                         "rdata_dname_fromWire", 55)));
     EXPECT_THROW(*rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
