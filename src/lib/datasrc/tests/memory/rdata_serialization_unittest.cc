@@ -773,7 +773,7 @@ TEST_F(RdataSerializationTest, badAddRdata) {
 
     // Same as the previous one, opposite inconsistency.
     const ConstRdataPtr dname_rdata =
-        createRdata(RRType::DNAME(), RRClass::IN(), "dname.example");
+        createRdata(RRType::DNAME(), RRClass::IN(), "dname.example.");
     encoder_.start(RRClass::IN(), RRType::NS());
     EXPECT_THROW(encoder_.addRdata(*dname_rdata), isc::BadValue);
 
