@@ -90,7 +90,7 @@ TEST_F(Rdata_CNAME_Test, createFromWire) {
 TEST_F(Rdata_CNAME_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_cname.compare(
         *test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
-                                     "cn.example.com")));
+                                     "cn.example.com.")));
 }
 
 TEST_F(Rdata_CNAME_Test, toWireBuffer) {
