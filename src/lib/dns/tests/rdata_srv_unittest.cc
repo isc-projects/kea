@@ -39,7 +39,7 @@ class Rdata_SRV_Test : public RdataTest {
 string srv_txt("1 5 1500 a.example.com.");
 string srv_txt2("1 5 1400 example.com.");
 string too_long_label("012345678901234567890123456789"
-    "0123456789012345678901234567890123");
+    "0123456789012345678901234567890123.");
 
 // 1 5 1500 a.example.com.
 const uint8_t wiredata_srv[] = {

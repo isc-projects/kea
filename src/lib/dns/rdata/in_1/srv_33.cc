@@ -73,23 +73,40 @@ struct SRVImpl {
 SRV::SRV(const std::string& srv_str) :
     impl_(NULL)
 {
-    istringstream iss(srv_str);
-
     try {
-        const int32_t priority = tokenToNum<int32_t, 16>(getToken(iss));
-        const int32_t weight = tokenToNum<int32_t, 16>(getToken(iss));
-        const int32_t port = tokenToNum<int32_t, 16>(getToken(iss));
-        const Name targetname(getToken(iss));
+        std::istringstream ss(srv_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-        if (!iss.eof()) {
-            isc_throw(InvalidRdataText, "Unexpected input for SRV RDATA: " <<
-                    srv_str);
+        uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV priority");
+        }
+        const uint16_t priority = static_cast<uint16_t>(num);
+
+        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV weight");
+        }
+        const uint16_t weight = static_cast<uint16_t>(num);
+
+        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV port");
+        }
+        const uint16_t port = static_cast<uint16_t>(num);
+
+        const Name targetname = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for SRV: "
+                      << srv_str);
         }
 
         impl_ = new SRVImpl(priority, weight, port, targetname);
-    } catch (const StringTokenError& ste) {
-        isc_throw(InvalidRdataText, "Invalid SRV text: " <<
-                  ste.what() << ": " << srv_str);
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct SRV from '" <<
+                  srv_str << "': " << ex.what());
     }
 }
 
