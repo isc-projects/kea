@@ -309,7 +309,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDNAME) {
     ns_->addRdata(generic::NS(ns_name));
     rrsets_->addRRset(ns_);
     RRsetPtr dname(new RRset(zname_, zclass_, RRType::DNAME(), RRTTL(60)));
-    dname->addRdata(generic::DNAME("example.org"));
+    dname->addRdata(generic::DNAME("example.org."));
     rrsets_->addRRset(dname);
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN: NS 'ns.child.example.com'"
@@ -320,7 +320,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDNAME) {
     rrsets_->removeRRset(zname_, zclass_, RRType::DNAME());
     dname.reset(new RRset(Name("child.example.com"), zclass_, RRType::DNAME(),
                           RRTTL(60)));
-    dname->addRdata(generic::DNAME("example.org"));
+    dname->addRdata(generic::DNAME("example.org."));
     rrsets_->addRRset(dname);
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN: NS 'ns.child.example.com'"
@@ -342,7 +342,7 @@ TEST_F(ZoneCheckerTest, checkNSWithDNAME) {
     rrsets_->removeRRset(dname->getName(), zclass_, RRType::DNAME());
     rrsets_->removeRRset(ns_->getName(), zclass_, RRType::NS());
     dname.reset(new RRset(ns_name, zclass_, RRType::DNAME(), RRTTL(60)));
-    dname->addRdata(generic::DNAME("example.org"));
+    dname->addRdata(generic::DNAME("example.org."));
     rrsets_->addRRset(dname);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_warns_.push_back("zone example.com/IN: NS has no address");

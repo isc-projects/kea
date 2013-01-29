@@ -32,8 +32,25 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_RDATA_NAMESPACE
 
 DNAME::DNAME(const std::string& namestr) :
-    dname_(namestr)
-{}
+    // Fill in dummy name and replace it soon below.
+    dname_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(namestr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        dname_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for DNAME: "
+                      << namestr);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct DNAME from '" <<
+                  namestr << "': " << ex.what());
+    }
+}
 
 DNAME::DNAME(InputBuffer& buffer, size_t) :
     dname_(buffer)
