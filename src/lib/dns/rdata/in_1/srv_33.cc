@@ -51,25 +51,20 @@ struct SRVImpl {
 
 /// \brief Constructor from string.
 ///
-/// \c srv_str must be formatted as follows:
-/// \code <Priority> <Weight> <Port> <Target>
-/// \endcode
-/// where
-/// - &lt;Priority&gt;, &lt;Weight&gt;, and &lt;Port&gt; are an unsigned
-///   16-bit decimal integer.
-/// - &lt;Target&gt; is a valid textual representation of domain name.
+/// The given string must represent a valid SRV RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
 ///
-/// An example of valid string is:
-/// \code "1 5 1500 example.com." \endcode
+/// The TARGET name must be absolute since there's no parameter that
+/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
+/// exception will be thrown. It must not be represented as a quoted
+/// string.
 ///
-/// <b>Exceptions</b>
+/// See the construction that takes \c MasterLexer for other fields.
 ///
-/// If &lt;Target&gt; is not a valid domain name, a corresponding exception
-/// from the \c Name class will be thrown;
-/// if %any of the other bullet points above is not met, an exception of
-/// class \c InvalidRdataText will be thrown.
-/// This constructor internally involves resource allocation, and if it fails
-/// a corresponding standard exception will be thrown.
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
 SRV::SRV(const std::string& srv_str) :
     impl_(NULL)
 {
@@ -140,6 +135,24 @@ SRV::SRV(InputBuffer& buffer, size_t rdata_len) {
     impl_ = new SRVImpl(priority, weight, port, targetname);
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an SRV RDATA.  The TARGET field can be non-absolute if \c origin
+/// is non-NULL, in which case \c origin is used to make it absolute.
+/// It must not be represented as a quoted string.
+///
+/// The PRIORITY, WEIGHT and PORT fields must each be a valid decimal
+/// representation of an unsigned 16-bit integers respectively.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of TARGET when it
+/// is non-absolute.
 SRV::SRV(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&)
 {
