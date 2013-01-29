@@ -267,20 +267,12 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     return (offset);
 }
 
-void LibDHCP::packOptions6(isc::util::OutputBuffer &buf,
-                           const isc::dhcp::Option::OptionCollection& options) {
-    for (Option::OptionCollection::const_iterator it = options.begin();
-         it != options.end(); ++it) {
-        it->second->pack(buf);
-    }
-}
-
 void
 LibDHCP::packOptions(isc::util::OutputBuffer& buf,
                      const Option::OptionCollection& options) {
     for (Option::OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
-        it->second->pack4(buf);
+        it->second->pack(buf);
     }
 }
 
@@ -329,10 +321,35 @@ LibDHCP::initStdOptionDefs4() {
 
     // Now let's add all option definitions.
     for (int i = 0; i < OPTION_DEF_PARAMS_SIZE4; ++i) {
-        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
-                                                            OPTION_DEF_PARAMS4[i].code,
-                                                            OPTION_DEF_PARAMS4[i].type,
-                                                            OPTION_DEF_PARAMS4[i].array));
+        std::string encapsulates(OPTION_DEF_PARAMS4[i].encapsulates);
+        if (!encapsulates.empty() && OPTION_DEF_PARAMS4[i].array) {
+            isc_throw(isc::BadValue, "invalid standard option definition: "
+                      << "option with code '" << OPTION_DEF_PARAMS4[i].code
+                      << "' may not encapsulate option space '"
+                      << encapsulates << "' because the definition"
+                      << " indicates that this option comprises an array"
+                      << " of values");
+        }
+
+        // Depending whether the option encapsulates an option space or not
+        // we pick different constructor to create an instance of the option
+        // definition.
+        OptionDefinitionPtr definition;
+        if (encapsulates.empty()) {
+            // Option does not encapsulate any option space.
+            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
+                                                  OPTION_DEF_PARAMS4[i].code,
+                                                  OPTION_DEF_PARAMS4[i].type,
+                                                  OPTION_DEF_PARAMS4[i].array));
+
+        } else {
+            // Option does encapsulate an option space.
+            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
+                                                  OPTION_DEF_PARAMS4[i].code,
+                                                  OPTION_DEF_PARAMS4[i].type,
+                                                  OPTION_DEF_PARAMS4[i].encapsulates));
+
+        }
 
         for (int rec = 0; rec < OPTION_DEF_PARAMS4[i].records_size; ++rec) {
             definition->addRecordField(OPTION_DEF_PARAMS4[i].records[rec]);
@@ -358,10 +375,34 @@ LibDHCP::initStdOptionDefs6() {
     v6option_defs_.clear();
 
     for (int i = 0; i < OPTION_DEF_PARAMS_SIZE6; ++i) {
-        OptionDefinitionPtr definition(new OptionDefinition(OPTION_DEF_PARAMS6[i].name,
-                                                            OPTION_DEF_PARAMS6[i].code,
-                                                            OPTION_DEF_PARAMS6[i].type,
-                                                            OPTION_DEF_PARAMS6[i].array));
+        std::string encapsulates(OPTION_DEF_PARAMS6[i].encapsulates);
+        if (!encapsulates.empty() && OPTION_DEF_PARAMS6[i].array) {
+            isc_throw(isc::BadValue, "invalid standard option definition: "
+                      << "option with code '" << OPTION_DEF_PARAMS6[i].code
+                      << "' may not encapsulate option space '"
+                      << encapsulates << "' because the definition"
+                      << " indicates that this option comprises an array"
+                      << " of values");
+        }
+
+        // Depending whether an option encapsulates an option space or not
+        // we pick different constructor to create an instance of the option
+        // definition.
+        OptionDefinitionPtr definition;
+        if (encapsulates.empty()) {
+            // Option does not encapsulate any option space.
+            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS6[i].name,
+                                                  OPTION_DEF_PARAMS6[i].code,
+                                                  OPTION_DEF_PARAMS6[i].type,
+                                                  OPTION_DEF_PARAMS6[i].array));
+        } else {
+            // Option does encapsulate an option space.
+            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS6[i].name,
+                                                  OPTION_DEF_PARAMS6[i].code,
+                                                  OPTION_DEF_PARAMS6[i].type,
+                                                  OPTION_DEF_PARAMS6[i].encapsulates));
+
+        }
 
         for (int rec = 0; rec < OPTION_DEF_PARAMS6[i].records_size; ++rec) {
             definition->addRecordField(OPTION_DEF_PARAMS6[i].records[rec]);

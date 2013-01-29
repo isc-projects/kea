@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/subnet.h>
 
@@ -44,14 +45,12 @@ bool Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 void
-Subnet::addOption(OptionPtr& option, bool persistent,
+Subnet::addOption(const OptionPtr& option, bool persistent,
                   const std::string& option_space) {
-    // @todo Once the #2313 is merged we need to use the OptionSpace object to
-    // validate the option space name here. For now, let's check that the name
-    // is not empty as the empty namespace has a special meaning here - it is
-    // returned when desired namespace is not found when getOptions is called.
-    if (option_space.empty()) {
-        isc_throw(isc::BadValue, "option space name must not be empty");
+    // Check that the option space name is valid.
+    if (!OptionSpace::validateName(option_space)) {
+        isc_throw(isc::BadValue, "invalid option space name: '"
+                  << option_space << "'");
     }
     validateOption(option);
 
@@ -183,6 +182,16 @@ Subnet6::validateOption(const OptionPtr& option) const {
         isc_throw(isc::BadValue, "expected V6 option to be added to the subnet");
     }
 }
+
+
+void Subnet6::setIface(const std::string& iface_name) {
+    iface_ = iface_name;
+}
+
+std::string Subnet6::getIface() const {
+    return (iface_);
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

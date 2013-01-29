@@ -158,27 +158,12 @@ public:
     ///
     /// Writes option in wire-format to buffer, returns pointer to first unused
     /// byte after stored option (that is useful for writing options one after
-    /// another). Used in DHCPv6 options.
-    ///
-    /// @todo Migrate DHCPv6 code to pack(OutputBuffer& buf) version
+    /// another).
     ///
     /// @param buf pointer to a buffer
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
     virtual void pack(isc::util::OutputBuffer& buf);
-
-    /// @brief Writes option in a wire-format to a buffer.
-    ///
-    /// Method will throw if option storing fails for some reason.
-    ///
-    /// @todo Once old (DHCPv6) implementation is rewritten,
-    /// unify pack4() and pack6() and rename them to just pack().
-    ///
-    /// @param buf output buffer (option will be stored there)
-    ///
-    /// @throw OutOfRange Option type is greater than 255.
-    /// @throw BadValue Universe is not V4.
-    virtual void pack4(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer.
     ///
@@ -317,13 +302,6 @@ public:
     virtual bool equal(const OptionPtr& other) const;
 
 protected:
-    /// Builds raw (over-wire) buffer of this option, including all
-    /// defined suboptions. Version for building DHCPv4 options.
-    ///
-    /// @param buf output buffer (built options will be stored here)
-    ///
-    /// @throw BadValue Universe is not V6.
-    virtual void pack6(isc::util::OutputBuffer& buf);
 
     /// @brief Store option's header in a buffer.
     ///

@@ -232,7 +232,7 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.2 python3.1 python3])
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -282,7 +282,10 @@ AC_SUBST(PYTHON_LOGMSGPKG_DIR)
 
 # This is python package paths commonly used in python tests.  See
 # README of log_messages for why it's included.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+# lib/dns/python/.libs is necessary because __init__.py of isc package
+# automatically imports isc.datasrc, which then requires the DNS loadable
+# module.  #2145 should eliminate the need for it.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
 AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
@@ -1214,6 +1217,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/server_common/tests/Makefile
                  src/lib/python/isc/sysinfo/Makefile
                  src/lib/python/isc/sysinfo/tests/Makefile
+                 src/lib/python/isc/statistics/Makefile
+                 src/lib/python/isc/statistics/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile

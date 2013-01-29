@@ -209,6 +209,8 @@ public:
     }
 };
 
+typedef boost::shared_ptr<RRsetCollectionBase> RRsetCollectionPtr;
+
 } // end of namespace dns
 } // end of namespace isc
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
-
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -55,7 +55,16 @@ namespace {
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal members
 public:
-    NakedDhcpv6Srv(uint16_t port):Dhcpv6Srv(port) { }
+    NakedDhcpv6Srv(uint16_t port) : Dhcpv6Srv(port) {
+        // Open the "memfile" database for leases
+        std::string memfile = "type=memfile";
+        LeaseMgrFactory::create(memfile);
+    }
+
+    virtual ~NakedDhcpv6Srv() {
+        // Close the lease database
+        LeaseMgrFactory::destroy();
+    }
 
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
@@ -64,10 +73,16 @@ public:
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
+    using Dhcpv6Srv::loadServerID;
+    using Dhcpv6Srv::writeServerID;
 };
+
+static const char* DUID_FILE = "server-id-test.txt";
 
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
+    /// Name of the server-id file (used in server-id tests)
+
     // these are empty for now, but let's keep them around
     Dhcpv6SrvTest() : rcode_(-1) {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
@@ -77,6 +92,9 @@ public:
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
+
+        // it's ok if that fails. There should not be such a file anyway
+        unlink(DUID_FILE);
     }
 
     // Generate IA_NA option with specified parameters
@@ -246,6 +264,9 @@ public:
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
+
+        // Let's clean up if there is such a file.
+        unlink(DUID_FILE);
     };
 
     // A subnet used in most tests
@@ -1294,6 +1315,151 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// source address.
+TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    // CASE 1: We have only one subnet defined and we received local traffic.
+    // The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and we received relayed traffic.
+    // We should NOT select it.
+
+    // Identical steps as in case 1, but repeated for clarity
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+    pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have three subnets defined and we received local traffic.
+    // Nothing should be selected.
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 4: We have three subnets defined and we received relayed traffic
+    // that came out of subnet 2. We should select subnet2 then
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:2::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 5: We have three subnets defined and we received relayed traffic
+    // that came out of undefined subnet. We should select nothing
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// network interface name.
+TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    subnet1->setIface("eth0");
+    subnet3->setIface("wifi1");
+
+    // CASE 1: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth0. The only available subnet should be selected
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->setIface("eth0");
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet1);
+
+    // CASE 2: We have only one subnet defined and it is available via eth0.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    pkt->setIface("eth1");
+
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 3: We have only 3 subnets defined, one over eth0, one remote and
+    // one over wifi1.
+    // Packet came from eth1. We should not select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+
+    pkt->setIface("eth0");
+    EXPECT_EQ(subnet1, srv.selectSubnet(pkt));
+
+    pkt->setIface("eth3"); // no such interface
+    EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt)); // nothing selected
+
+    pkt->setIface("wifi1");
+    EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+}
+
+// This test verifies if the server-id disk operations (read, write) are
+// working properly.
+TEST_F(Dhcpv6SrvTest, ServerID) {
+    NakedDhcpv6Srv srv(0);
+
+    string duid1_text = "01:ff:02:03:06:80:90:ab:cd:ef";
+    uint8_t duid1[] = { 0x01, 0xff, 2, 3, 6, 0x80, 0x90, 0xab, 0xcd, 0xef };
+    OptionBuffer expected_duid1(duid1, duid1 + sizeof(duid1));
+
+    fstream file1(DUID_FILE, ios::out | ios::trunc);
+    file1 << duid1_text;
+    file1.close();
+
+    // Test reading from a file
+    EXPECT_TRUE(srv.loadServerID(DUID_FILE));
+    ASSERT_TRUE(srv.getServerID());
+    ASSERT_EQ(sizeof(duid1) + Option::OPTION6_HDR_LEN, srv.getServerID()->len());
+    ASSERT_TRUE(expected_duid1 == srv.getServerID()->getData());
+
+    // Now test writing to a file
+    EXPECT_EQ(0, unlink(DUID_FILE));
+    EXPECT_NO_THROW(srv.writeServerID(DUID_FILE));
+
+    fstream file2(DUID_FILE, ios::in);
+    ASSERT_TRUE(file2.good());
+    string text;
+    file2 >> text;
+    file2.close();
+
+    EXPECT_EQ(duid1_text, text);
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

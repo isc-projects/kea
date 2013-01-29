@@ -1,7 +1,108 @@
+561.	[bug]		kambe, jelte
+	b10-stats-httpd no longer dumps request information to the console,
+	but uses the bind10 logging system. Additionally, the logging
+	identifiers have been changed from STATHTTPD_* to STATSHTTPD_*
+	(Trac #1897, git 93716b025a4755a8a2cbf250a9e4187741dbc9bb)
+
+560.	[bug]		jinmei
+	b10-auth now sets the TTL of SOA RR for negative responses to
+	the minimum of the RR TTL and the minimum TTL of the SOA RDATA
+	as specified in RFC2308; previously the RR TTL was always used.
+	The ZoneFinder class was extended partly for implementing this
+	and partly for allowing further optimization.
+	(Trac #2309 and #2635, git ee17e979fcde48b59d91c74ac368244169065f3b)
+
+559.	[bug]		jelte
+	b10-cmdctl no longer aborts on basic file issues with its https
+	certificate or private key file. It performs additional checks, and
+	provides better error logs if these fail. Additionally, bindctl
+	provides a better error report if it is unable to connect over
+	https connection. This issue could occur if BIND 10 was installed
+	with root privileges but then started as a normal user.
+	(Trac #2595, git 09b1a2f927483b407d70e98f5982f424cc872149)
+
+558.	[func]		marcin
+	b10-dhcp4: server now adds configured options to its
+	responses to a client when client requests them.
+	A few basic options: Routers, Domain Name, Domain
+	Name Servers and Subnet Mask are added regardless
+	if client requested them or not.
+	(Trac #2591, git aeec2dc1b9c511d17971ac63138576c37e7c5164)
+
+557.	[doc]		stephen
+	Update DHCP sections of the BIND 10 guide.
+	(Trac #2642, git e5faeb5fa84b7218fde486347359504cf692510e)
+
+556.	[bug]		marcin
+	Fixed DHCP servers configuration whereby the servers did not
+	receive a configuration stored in the database on their startup.
+	Also, the configuration handler function now uses full configuration
+	instead of partial to configure the server. This guarantees that
+	dependencies between various configuration parameters are
+	fulfilled.
+	(Trac #2637, git 91aa998226f1f91a232f2be59a53c9568c4ece77)
+
+555.	[func]		marcin
+	The encapsulated option space name can be specified for
+	a DHCP option. It comprises sub-options being sent within
+	an option that encapsulates this option space.
+	(Trac #2314, git 27e6119093723a1e46a239ec245a8b4b10677635)
+
+554.	[func]		jinmei
+	b10-loadzone: improved completion log message and intermediate
+	reports: It now logs the precise number of loaded RRs on
+	completion, and intermediate reports show additional information
+	such as the estimated progress in percentage and estimated time
+	to complete.
+	(Trac #2574, git 5b8a824054313bdecb8988b46e55cb2e94cb2d6c)
+
+553.	[func]		stephen
+	Values of the parameters to access the DHCP server lease database
+	can now be set through the BIND 10 configuration mechanism.
+	(Trac #2559, git 6c6f405188cc02d2358e114c33daff58edabd52a)
+
+552.	[bug]		shane
+	Build on Raspberry PI.
+	The main issue was use of char for reading from input streams,
+	which is incorrect, as EOF is returned as an int -1, which would
+	then get cast into a char -1.
+	A number of other minor issues were also fixed.
+	(Trac #2571, git 525333e187cc4bbbbde288105c9582c1024caa4a)
+
+551.	[bug]		shane
+	Kill msgq if we cannot connect to it on startup.
+	When the boss process was unable to connect to the msgq, it would
+	exit. However, it would leave the msgq process running. This has
+	been fixed, and the msgq is now stopped in this case.
+	(Trac #2608, git 016925ef2437e0396127e135c937d3a55539d224)
+
+550.	[func]		tomek
+	b10-dhcp4: The DHCPv4 server now generates a server identifier
+	the first time it is run. The identifier is preserved in a file
+	across server restarts.
+	b10-dhcp6: The server identifier is now preserved in a file across
+	server restarts.
+	(Trac #2597, git fa342a994de5dbefe32996be7eebe58f6304cff7)
+
+549.	[func]		tomek
+	b10-dhcp6: It is now possible to specify that a configured subnet
+	is reachable locally over specified interface (see "interface"
+	parameter in Subnet6 configuration).
+	(Trac #2596, git a70f6172194a976b514cd7d67ce097bbca3c2798)
+
+548.	[func]		vorner
+	The message queue daemon now appears on the bus. This has two
+	effects, one is it obeys logging configuration and logs to the
+	correct place like the rest of the modules. The other is it
+	appears in bindctl as module (but it doesn't have any commands or
+	configuration yet).
+	(Trac #2582, git ced31d8c5a0f2ca930b976d3caecfc24fc04634e)
+
 547.	[func]*		vorner
 	The b10-loadzone now performs more thorough sanity check on the
 	loaded data.  Some of the checks are now fatal and zone failing
 	them will be rejected.
+	(Trac #2436, git 48d999f1cb59f308f9f30ba2639521d2a5a85baa)
 
 546.	[func]		marcin
 	DHCP option definitions can be now created using the
@@ -32,8 +133,8 @@
 543.	[func]*		jelte
 	When calling getFullConfig() as a module, , the configuration is now
 	returned as properly-structured JSON.  Previously, the structure had
-	been flattened, with all data being labelled by fully-qualified element
-	names.
+	been flattened, with all data being labelled by fully-qualified
+	element names.
 	(Trac #2619, git bed3c88c25ea8f7e951317775e99ebce3340ca22)
 
 542.	[func]		marcin
@@ -97,7 +198,7 @@
 	compile-time option --enable-debug.
 	(Trac #1081, git db55f102b30e76b72b134cbd77bd183cd01f95c0)
 
-534.	[func]*			vorner
+534.	[func]*		vorner
 	The b10-msgq now uses the same logging format as the rest
 	of the system. However, it still doesn't obey the common
 	configuration, as due to technical issues it is not able
@@ -2694,7 +2795,7 @@ bind10-devel-20110224 released on February 24, 2011
 	(Trac #496, git b9296ca023cc9e76cda48a7eeebb0119166592c5)
 
 160.	[func]		jelte
-  	Updated the resolver to take 3 different timeout values;
+	Updated the resolver to take 3 different timeout values;
 	timeout_query for outstanding queries we sent while resolving
 	timeout_client for sending an answer back to the client
 	timeout_lookup for stopping the resolving
@@ -2873,7 +2974,7 @@ bind10-devel-20110120 released on January 20, 2011
 	(Trac #226, svn r3989)
 
 136.	[bug]		jelte
-  	bindctl (and the configuration manager in general) now no longer
+	bindctl (and the configuration manager in general) now no longer
 	accepts 'unknown' data; i.e. data for modules that it does not know
 	about, or configuration items that are not specified in the .spec
 	files.
@@ -3115,7 +3216,7 @@ bind10-devel-20100917 released on September 17, 2010
 	(Trac #342, svn r2949)
 
 94.	[bug]		jelte
-  	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
+	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
 	were used per DNS message in the xfrout stream.
 	(Trac #334, r2931)
 
@@ -3249,7 +3350,7 @@ bind10-devel-20100812 released on August 12, 2010
 	module. (Trac #275, r2459)
 
 73.	[bug]		jelte
-  	Fixed a bug where in bindctl, locally changed settings were
+	Fixed a bug where in bindctl, locally changed settings were
 	reset when the list of running modules is updated. (Trac #285,
 	r2452)
 
@@ -3260,11 +3361,11 @@ bind10-devel-20100812 released on August 12, 2010
 	known such platform. (Trac #148, r2427)
 
 71.	[func]		each
-  	Add "-a" (address) option to bind10 to specify an address for
+	Add "-a" (address) option to bind10 to specify an address for
 	the auth server to listen on.
 
 70.	[func]		each
-  	Added a hot-spot cache to libdatasrc to speed up access to
+	Added a hot-spot cache to libdatasrc to speed up access to
 	repeatedly-queried data and reduce the number of queries to
 	the underlying database; this should substantially improve
 	performance.  Also added a "-n" ("no cache") option to

@@ -14,6 +14,7 @@
 
 #include <datasrc/rrset_collection_base.h>
 #include <datasrc/zone_loader.h>
+#include <datasrc/zone_finder.h>
 #include <exceptions/exceptions.h>
 
 using namespace isc;

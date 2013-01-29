@@ -4,13 +4,16 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-msgq
 
+b10_msgqdir = $(pkgdatadir)
+b10_msgq_DATA = msgq.spec
+
 CLEANFILES = b10-msgq msgq.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.pyc
 
 man_MANS = b10-msgq.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) msgq.xml msgq_messages.mes
+EXTRA_DIST = $(man_MANS) msgq.xml msgq_messages.mes msgq.spec
 
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/

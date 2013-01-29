@@ -29,7 +29,7 @@ class TestConfigManagerData(unittest.TestCase):
         self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
         self.config_manager_data = ConfigManagerData(self.writable_data_path,
                                                      file_name="b10-config.db")
-        self.assert_(self.config_manager_data)
+        self.assertTrue(self.config_manager_data)
 
     def test_abs_file(self):
         """
@@ -170,65 +170,61 @@ class TestConfigManager(unittest.TestCase):
                          cm.config.db_filename)
 
     def test_init(self):
-        self.assert_(self.cm.module_specs == {})
-        self.assert_(self.cm.data_path == self.writable_data_path)
-        self.assert_(self.cm.config != None)
-        self.assert_(self.fake_session.has_subscription("ConfigManager"))
-        self.assert_(self.fake_session.has_subscription("Boss", "ConfigManager"))
+        self.assertEqual(self.cm.module_specs, {})
+        self.assertEqual(self.cm.data_path, self.writable_data_path)
+        self.assertIsNotNone(self.cm.config)
+        self.assertTrue(self.fake_session.has_subscription("ConfigManager"))
+        self.assertTrue(self.fake_session.has_subscription("Boss", "ConfigManager"))
         self.assertFalse(self.cm.running)
 
     def test_notify_boss(self):
         self.cm.notify_boss()
         msg = self.fake_session.get_message("Boss", None)
-        self.assert_(msg)
+        self.assertTrue(msg)
         # this one is actually wrong, but 'current status quo'
         self.assertEqual(msg, {"running": "ConfigManager"})
 
     def test_set_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
-        self.assert_(module_spec.get_module_name() not in
-                     self.cm.virtual_modules)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.virtual_modules)
 
     def test_remove_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.remove_module_spec(module_spec.get_module_name())
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
-        self.assert_(module_spec.get_module_name() not in
-                     self.cm.virtual_modules)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.virtual_modules)
 
     def test_add_remove_virtual_module(self):
         module_spec = isc.config.module_spec.module_spec_from_file(
             self.data_path + os.sep + "spec1.spec")
         check_func = lambda: True
         # Make sure it's not in there before
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
-        self.assert_(module_spec.get_module_name() not in
-                     self.cm.virtual_modules)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.virtual_modules)
         # Add it there
         self.cm.set_virtual_module(module_spec, check_func)
         # Check it's in there
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         self.assertEqual(self.cm.module_specs[module_spec.get_module_name()],
                       module_spec)
         self.assertEqual(self.cm.virtual_modules[module_spec.get_module_name()],
                       check_func)
         # Remove it again
         self.cm.remove_module_spec(module_spec.get_module_name())
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
-        self.assert_(module_spec.get_module_name() not in
-                     self.cm.virtual_modules)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.virtual_modules)
 
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         module_spec2 = self.cm.get_module_spec(module_spec.get_module_name())
         self.assertEqual(module_spec.get_full_spec(), module_spec2)
 
@@ -238,16 +234,16 @@ class TestConfigManager(unittest.TestCase):
         config_spec = self.cm.get_config_spec()
         self.assertEqual(config_spec, {})
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         config_spec = self.cm.get_config_spec()
         self.assertEqual(config_spec, { 'Spec1': None })
         self.cm.remove_module_spec('Spec1')
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         config_spec = self.cm.get_config_spec()
         self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
         config_spec = self.cm.get_config_spec('Spec2')
@@ -258,16 +254,16 @@ class TestConfigManager(unittest.TestCase):
         commands_spec = self.cm.get_commands_spec()
         self.assertEqual(commands_spec, {})
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         commands_spec = self.cm.get_commands_spec()
         self.assertEqual(commands_spec, { 'Spec1': None })
         self.cm.remove_module_spec('Spec1')
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         commands_spec = self.cm.get_commands_spec()
         self.assertEqual(commands_spec['Spec2'], module_spec.get_commands_spec())
         commands_spec = self.cm.get_commands_spec('Spec2')
@@ -277,16 +273,16 @@ class TestConfigManager(unittest.TestCase):
         statistics_spec = self.cm.get_statistics_spec()
         self.assertEqual(statistics_spec, {})
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         statistics_spec = self.cm.get_statistics_spec()
         self.assertEqual(statistics_spec, { 'Spec1': None })
         self.cm.remove_module_spec('Spec1')
         module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
-        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.assertNotIn(module_spec.get_module_name(), self.cm.module_specs)
         self.cm.set_module_spec(module_spec)
-        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.assertIn(module_spec.get_module_name(), self.cm.module_specs)
         statistics_spec = self.cm.get_statistics_spec()
         self.assertEqual(statistics_spec['Spec2'], module_spec.get_statistics_spec())
         statistics_spec = self.cm.get_statistics_spec('Spec2')

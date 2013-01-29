@@ -84,51 +84,14 @@ Option::check() {
 }
 
 void Option::pack(isc::util::OutputBuffer& buf) {
-    switch (universe_) {
-    case V6:
-        return (pack6(buf));
-
-    case V4:
-        return (pack4(buf));
-
-    default:
-        isc_throw(BadValue, "Failed to pack " << type_ << " option as the "
-                  << "universe type is unknown.");
+    // Write a header.
+    packHeader(buf);
+    // Write data.
+    if (!data_.empty()) {
+        buf.writeData(&data_[0], data_.size());
     }
-}
-
-void
-Option::pack4(isc::util::OutputBuffer& buf) {
-    if (universe_ == V4) {
-        // Write a header.
-        packHeader(buf);
-        // Write data.
-        if (!data_.empty()) {
-            buf.writeData(&data_[0], data_.size());
-        }
-        // Write sub-options.
-        packOptions(buf);
-    } else {
-        isc_throw(BadValue, "Invalid universe type " << universe_);
-    }
-
-    return;
-}
-
-void Option::pack6(isc::util::OutputBuffer& buf) {
-    if (universe_ == V6) {
-        // Write a header.
-        packHeader(buf);
-        // Write data.
-        if (!data_.empty()) {
-            buf.writeData(&data_[0], data_.size());
-        }
-        // Write sub-options.
-        packOptions(buf);
-    } else {
-        isc_throw(BadValue, "Invalid universe type " << universe_);
-    }
-    return;
+    // Write sub-options.
+    packOptions(buf);
 }
 
 void
@@ -153,16 +116,7 @@ Option::packHeader(isc::util::OutputBuffer& buf) {
 
 void
 Option::packOptions(isc::util::OutputBuffer& buf) {
-    switch (universe_) {
-    case V4:
-        LibDHCP::packOptions(buf, options_);
-        return;
-    case V6:
-        LibDHCP::packOptions6(buf, options_);
-        return;
-    default:
-        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
-    }
+    LibDHCP::packOptions(buf, options_);
 }
 
 void Option::unpack(OptionBufferConstIter begin,
