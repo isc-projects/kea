@@ -218,7 +218,7 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     // If there's a CNAME at the name instead, it's an error.
     rrsets_->removeRRset(Name("*.example.com"), zclass_, RRType::A());
     RRsetPtr cname(new RRset(ns_name, zclass_, RRType::CNAME(), RRTTL(60)));
-    cname->addRdata(generic::CNAME("cname.example.com"));
+    cname->addRdata(generic::CNAME("cname.example.com."));
     rrsets_->addRRset(cname);
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, callbacks_));
     expected_errors_.push_back("zone example.com/IN: NS 'ns.example.com' is "

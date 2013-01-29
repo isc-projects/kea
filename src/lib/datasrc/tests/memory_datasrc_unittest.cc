@@ -347,7 +347,7 @@ public:
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
             {"ns.example.org. 300 IN A 192.0.2.2", &rr_ns_a_},
             {"ns.example.org. 300 IN AAAA 2001:db8::2", &rr_ns_aaaa_},
-            {"cname.example.org. 300 IN CNAME canonical.example.org",
+            {"cname.example.org. 300 IN CNAME canonical.example.org.",
              &rr_cname_},
             {"cname.example.org. 300 IN A 192.0.2.3", &rr_cname_a_},
             {"dname.example.org. 300 IN DNAME target.example.org.",

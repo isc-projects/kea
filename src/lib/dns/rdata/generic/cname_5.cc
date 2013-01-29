@@ -32,8 +32,25 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_RDATA_NAMESPACE
 
 CNAME::CNAME(const std::string& namestr) :
-    cname_(namestr)
-{}
+    // Fill in dummy name and replace it soon below.
+    cname_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(namestr);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        cname_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for CNAME: "
+                      << namestr);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct CNAME from '" <<
+                  namestr << "': " << ex.what());
+    }
+}
 
 CNAME::CNAME(InputBuffer& buffer, size_t) :
     Rdata(), cname_(buffer)
