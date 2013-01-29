@@ -3649,7 +3649,7 @@ TYPED_TEST(DatabaseClientTest, deleteRRset) {
                           RRType::CNAME(), this->rrttl_));
     this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
                                               this->rrset_->getClass(),
-                                              "www.example.org"));
+                                              "www.example.org."));
     this->updater_->deleteRRset(*this->rrset_);
 
     // The this->updater_ finder should immediately see the deleted results.
@@ -3701,7 +3701,7 @@ TYPED_TEST(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
                            RRType::CNAME(), this->rrttl_));
     this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
                                               this->rrset_->getClass(),
-                                              "www.example.org"));
+                                              "www.example.org."));
 
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->updater_->deleteRRset(*this->rrset_);
