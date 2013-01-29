@@ -43,6 +43,10 @@ new_rdata_factory_users = [('aaaa', 'in'),
 re_typecode = re.compile('([\da-z]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
+# "AXFR"=>252 etc: for meta types and types well-known but not implemented
+meta_types = {}
+# "NONE"=>254 etc: for classes that don't have any known types
+meta_classes = {}
 typeandclass = []
 generic_code = 65536            # something larger than any code value
 rdata_declarations = ''
@@ -177,6 +181,9 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
             # also apply to files.
             filelist = os.listdir(classdir)
             filelist.sort()
+            if len(filelist) == 0: # if there's no known types treat it as meta
+                meta_classes[class_txt] = class_code
+                continue
             for file in filelist:
                 file = classdir + os.sep + file
                 m = re_typecode.match(os.path.split(file)[1])
@@ -185,7 +192,11 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
                     type_code = m.group(2)
                     if not type_code in typecode2txt:
                         typecode2txt[type_code] = type_txt
-                    if re.search('\cc$', file):
+                    if re.search('\.txt$', file): # we use .txt for meta types
+                        if rdatadef_mtime < getmtime(file):
+                            rdatadef_mtime = getmtime(file)
+                        meta_types[type_txt] = type_code
+                    elif re.search('\cc$', file):
                         if rdatadef_mtime < getmtime(file):
                             rdatadef_mtime = getmtime(file)
                         class_definitions += import_classdef(class_txt, file)
@@ -350,6 +361,16 @@ def generate_rrparam(fileprefix, basemtime):
             typeandclassparams += 'add("' + type_utxt + '", ' + str(type_code)
             typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
+
+    typeandclassparams += indent + '// Meta and non-implemented RR types\n'
+    for type_txt, type_code in meta_types.items():
+        typeandclassparams += indent + \
+            'addType("' + type_txt.upper() + '", ' + str(type_code) + ');\n'
+
+    typeandclassparams += indent + '// Meta classes\n'
+    for cls_txt, cls_code in meta_classes.items():
+        typeandclassparams += indent + \
+            'addClass("' + cls_txt.upper() + '", ' + str(cls_code) + ');\n'
 
     rrparam_temp = open(placeholder, 'r')
     rrparam_out = open(outputfile, 'w')

@@ -205,7 +205,7 @@ TEST_F(RRsetTest, toText) {
     // Unless it is type ANY or NONE
     EXPECT_EQ("test.example.com. 3600 ANY A\n",
               rrset_any_a_empty.toText());
-    EXPECT_EQ("test.example.com. 3600 CLASS254 A\n",
+    EXPECT_EQ("test.example.com. 3600 NONE A\n",
               rrset_none_a_empty.toText());
 }
 
