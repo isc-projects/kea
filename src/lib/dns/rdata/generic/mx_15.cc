@@ -31,6 +31,7 @@
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
