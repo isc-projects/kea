@@ -37,8 +37,9 @@ private:
 public:
     /// The constructor.
     ///
-    /// This constructor is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
+    /// This constructor prepares a set of counters which has \a items
+    /// elements. The counters will be initialized with \a InitialValue;
+    /// which is defined as 0.
     ///
     /// \param items A number of counter items to hold (greater than 0)
     ///
