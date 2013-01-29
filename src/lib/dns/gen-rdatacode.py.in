@@ -181,7 +181,9 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
             # also apply to files.
             filelist = os.listdir(classdir)
             filelist.sort()
-            if len(filelist) == 0: # if there's no known types treat it as meta
+            if len(filelist) == 0:
+                # if there's no known types treat it as meta.  Note that
+                # listdir() (seemingly) ignores .gitignore.
                 meta_classes[class_txt] = class_code
                 continue
             for file in filelist:
