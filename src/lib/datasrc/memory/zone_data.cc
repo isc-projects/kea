@@ -138,6 +138,9 @@ namespace {
 // A helper to convert a TTL value in network byte order and set it in
 // ZoneData::min_ttl_.  We can use util::OutputBuffer, but copy the logic
 // here to guarantee it is exception free.
+// Note: essentially this function is a local (re)implementation of the
+// standard htonl() library function, but we avoid relying on it in case it's
+// not available (it's not in the C++ standard library).
 void
 setTTLInNetOrder(uint32_t val, uint32_t* result) {
     uint8_t buf[4];
