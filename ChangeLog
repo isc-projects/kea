@@ -1,3 +1,9 @@
+562.	[func]*		vorner
+	The b10-xfrin now performs basic sanity check on just received
+	zone. It'll reject severely broken zones (such as missng NS
+	records).
+	(Trac #2439, git 44699b4b18162581cd1dd39be5fb76ca536012e6)
+
 561.	[bug]		kambe, jelte
 	b10-stats-httpd no longer dumps request information to the console,
 	but uses the bind10 logging system. Additionally, the logging
