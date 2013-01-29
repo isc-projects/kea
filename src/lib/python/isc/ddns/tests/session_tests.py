@@ -543,7 +543,7 @@ class SessionTest(SessionTestBase):
         self.__prereq_helper(method, False, rrset)
         add_rdata(rrset, "ns1.example.org.")
         self.__prereq_helper(method, False, rrset)
-        add_rdata(rrset, "ns2.example.org")
+        add_rdata(rrset, "ns2.example.org.")
         self.__prereq_helper(method, False, rrset)
         add_rdata(rrset, "ns3.example.org.")
         self.__prereq_helper(method, True, rrset)
@@ -703,13 +703,13 @@ class SessionTest(SessionTestBase):
 
         rrset_exists_value_1 = create_rrset("example.org", RRClass.IN(),
                                             RRType.NS(), 0,
-                                            [ "ns1.example.org" ])
+                                            [ "ns1.example.org." ])
         rrset_exists_value_2 = create_rrset("example.org", RRClass.IN(),
                                             RRType.NS(), 0,
-                                            [ "ns2.example.org" ])
+                                            [ "ns2.example.org." ])
         rrset_exists_value_3 = create_rrset("example.org", RRClass.IN(),
                                             RRType.NS(), 0,
-                                            [ "ns3.example.org" ])
+                                            [ "ns3.example.org." ])
 
         # and a number that should not
         rrset_exists_no = create_rrset("foo.example.org", RRClass.ANY(),
@@ -1339,7 +1339,7 @@ class SessionTest(SessionTestBase):
         # should not keep any
         self.__initialize_update_rrsets()
         new_ns = create_rrset("example.org", TEST_RRCLASS, RRType.NS(), 3600,
-                              [ "newns1.example.org", "newns2.example.org" ])
+                              [ "newns1.example.org.", "newns2.example.org." ])
 
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ new_ns,
