@@ -130,8 +130,8 @@ class SessionModuleTests(unittest.TestCase):
                          str(rrset2))
 
         rrset3 = convert_rrset_class(rrset2, RRClass.NONE)
-        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
-                         "c0000201\nwww.example.org. 3600 CLASS254 " +
+        self.assertEqual("www.example.org. 3600 NONE A \\# 4 " +
+                         "c0000201\nwww.example.org. 3600 NONE " +
                          "A \\# 4 c0000202\n",
                          str(rrset3))
 
@@ -399,8 +399,8 @@ class SessionTest(SessionTestBase):
                          str(rrset2))
 
         rrset3 = convert_rrset_class(rrset2, RRClass.NONE)
-        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
-                         "c0000201\nwww.example.org. 3600 CLASS254 " +
+        self.assertEqual("www.example.org. 3600 NONE A \\# 4 " +
+                         "c0000201\nwww.example.org. 3600 NONE " +
                          "A \\# 4 c0000202\n",
                          str(rrset3))
 

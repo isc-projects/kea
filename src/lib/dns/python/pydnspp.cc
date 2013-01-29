@@ -527,10 +527,6 @@ initModulePart_RRClass(PyObject* mod) {
 
         // Incorporate auto-generated RRClass constants
 #include <dns/python/rrclass_constants_inc.cc>
-
-        // We still need to define some special classes by hand (for now)
-        installClassVariable(rrclass_type, "NONE",
-                             createRRClassObject(RRClass::NONE()));
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRClass initialization: " +
@@ -620,14 +616,6 @@ initModulePart_RRType(PyObject* mod) {
 
         // Incorporate auto-generated RRType constants
 #include <dns/python/rrtype_constants_inc.cc>
-
-        // We still need to define some special types by hand (for now)
-        installClassVariable(rrtype_type, "IXFR",
-                                 createRRTypeObject(RRType::IXFR()));
-        installClassVariable(rrtype_type, "AXFR",
-                             createRRTypeObject(RRType::AXFR()));
-        installClassVariable(rrtype_type, "ANY",
-                             createRRTypeObject(RRType::ANY()));
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRType initialization: " +

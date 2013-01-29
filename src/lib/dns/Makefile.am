@@ -76,6 +76,9 @@ EXTRA_DIST += rdata/generic/minfo_14.cc
 EXTRA_DIST += rdata/generic/minfo_14.h
 EXTRA_DIST += rdata/generic/afsdb_18.cc
 EXTRA_DIST += rdata/generic/afsdb_18.h
+EXTRA_DIST += rdata/generic/any_255.txt
+EXTRA_DIST += rdata/generic/axfr_252.txt
+EXTRA_DIST += rdata/generic/ixfr_251.txt
 EXTRA_DIST += rdata/hs_4/a_1.cc
 EXTRA_DIST += rdata/hs_4/a_1.h
 EXTRA_DIST += rdata/in_1/a_1.cc
@@ -86,8 +89,10 @@ EXTRA_DIST += rdata/in_1/dhcid_49.cc
 EXTRA_DIST += rdata/in_1/dhcid_49.h
 EXTRA_DIST += rdata/in_1/srv_33.cc
 EXTRA_DIST += rdata/in_1/srv_33.h
+EXTRA_DIST += rdata/none_254
 #EXTRA_DIST += rdata/template.cc
 #EXTRA_DIST += rdata/template.h
+#EXTRA_DIST += rdata/template.txt
 
 noinst_SCRIPTS = gen-rdatacode.py
 
