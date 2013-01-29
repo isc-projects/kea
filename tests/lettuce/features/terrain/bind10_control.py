@@ -422,8 +422,7 @@ def check_statistics(step, counter, category, zone, gtltbt, number, upper):
         zone_str = " for zone %s" % zone
     for level in depth:
         output = find_value(output, level)
-    else:
-        found = find_value(output, counter)
+    found = find_value(output, counter)
     assert found is not None, \
         'Not found statistics counter %s%s%s' % \
             (counter, category_str, zone_str)
