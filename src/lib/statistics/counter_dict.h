@@ -46,6 +46,16 @@ private:
     // specified at the construction of this class.
     CounterDictionary();
 public:
+    /// The constructor.
+    ///
+    /// This constructor prepares a dictionary of set of counters.
+    /// Initially the dictionary is empty.
+    /// Each counter has \a items elements. The counters will be initialized
+    /// with \a InitialValue; which is defined as 0.
+    ///
+    /// \param items A number of counter items to hold (greater than 0)
+    ///
+    /// \throw isc::InvalidParameter \a items is 0
     explicit CounterDictionary(const size_t items) :
         items_(items)
     {
@@ -54,6 +64,13 @@ public:
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
     }
+
+    /// \brief Add an element which has a key \a name to the dictionary.
+    ///
+    /// \param name A key of the element to add
+    ///
+    /// \throw isc::InvalidParameter an element which has \a name as key
+    ///                              already exists
     void addElement(const std::string& name) {
         // throw if the element already exists
         if (dictionary_.count(name) != 0) {
@@ -65,6 +82,13 @@ public:
         dictionary_.insert(
             DictionaryMap::value_type(name, CounterPtr(new Counter(items_))));
     }
+
+    /// \brief Delete the element which has a key \a name from the dictionary.
+    ///
+    /// \param name A key of the element to delete
+    ///
+    /// \throw isc::OutOfRange an element which has \a name as key does not
+    ///                        exist
     void deleteElement(const std::string& name) {
         const size_t result = dictionary_.erase(name);
         if (result != 1) {
@@ -74,6 +98,13 @@ public:
                       "Element " << name << " does not exist");
         }
     }
+
+    /// \brief Get a reference to a %Counter which has \a name as key
+    ///
+    /// \param name A key of the element
+    ///
+    /// \throw isc::OutOfRange an element which has \a name as key does not
+    ///                        exist
     Counter& getElement(const std::string& name) {
         DictionaryMap::const_iterator i = dictionary_.find(name);
         if (i != dictionary_.end()) {
@@ -86,9 +117,12 @@ public:
                       "Element " << name << " does not exist");
         }
     }
+
+    /// \brief Same as \c getElement()
     Counter& operator[](const std::string& name) {
         return (getElement(name));
     }
+
     /// \brief \c ConstIterator is a constant iterator that provides an
     /// interface for enumerating name of zones stored in CounterDictionary.
     ///
@@ -117,18 +151,18 @@ public:
             {}
 
         private:
-            /// \brief An internal method to increment this iterator.
+            // An internal method to increment this iterator.
             void increment() {
                 ++iterator_;
                 return;
             }
 
-            /// \brief An internal method to check equality.
+            // An internal method to check equality.
             bool equal(const ConstIterator& other) const {
                 return (iterator_ == other.iterator_);
             }
 
-            /// \brief An internal method to dereference this iterator.
+            // An internal method to dereference this iterator.
             const value_type& dereference() const {
                 return (iterator_->first);
             }
@@ -138,9 +172,12 @@ public:
             DictionaryMap::const_iterator iterator_;
     };
 
+    /// \brief Get an iterator for the beginning of the dictionary.
     ConstIterator begin() const {
         return (CounterDictionary::ConstIterator(dictionary_.begin()));
     }
+
+    /// \brief Get an iterator for the end of the dictionary.
     ConstIterator end() const {
         return (CounterDictionary::ConstIterator(dictionary_.end()));
     }
