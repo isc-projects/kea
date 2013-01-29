@@ -41,7 +41,7 @@ public:
     /// @brief Adds a new item to the option_space.
     ///
     /// @param item reference to the item being added.
-    /// @param name of the option space.
+    /// @param option_space name of the option space.
     void addItem(const ItemType& item, const std::string& option_space) {
         ItemsContainerPtr items = getItems(option_space);
         items->push_back(item);

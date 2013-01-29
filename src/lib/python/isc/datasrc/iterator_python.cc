@@ -25,7 +25,7 @@
 #include <datasrc/client.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 
 #include <dns/python/name_python.h>
 #include <dns/python/rrset_python.h>

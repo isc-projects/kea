@@ -47,12 +47,12 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
     bool result = true;
 
     if (!config || config->getType() != Element::map) {
-        addError(errors, "Base config for SQlite3 backend must be a map");
+        addError(errors, "Base config for SQLite3 backend must be a map");
         result = false;
     } else {
         if (!config->contains(CONFIG_ITEM_DATABASE_FILE)) {
             addError(errors,
-                     "Config for SQlite3 backend does not contain a '" +
+                     "Config for SQLite3 backend does not contain a '" +
                      string(CONFIG_ITEM_DATABASE_FILE) +
                      "' value");
             result = false;
@@ -89,11 +89,11 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
             new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
         return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
     } catch (const std::exception& exc) {
-        error = std::string("Error creating sqlite3 datasource: ") +
+        error = std::string("Error creating SQLite3 datasource: ") +
             exc.what();
         return (NULL);
     } catch (...) {
-        error = std::string("Error creating sqlite3 datasource, "
+        error = std::string("Error creating SQLite3 datasource, "
                             "unknown exception");
         return (NULL);
     }

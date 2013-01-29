@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/option_space.h>
+#include <dhcp/option_space.h>
 
 #include <gtest/gtest.h>
 

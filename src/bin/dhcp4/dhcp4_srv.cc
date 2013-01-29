@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -30,6 +31,11 @@
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/addr_utilities.h>
 
+#include <boost/algorithm/string/erase.hpp>
+
+#include <iomanip>
+#include <fstream>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -38,10 +44,6 @@ using namespace std;
 
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
-const std::string HARDCODED_GATEWAY = "192.0.2.1";
-const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
-const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
@@ -56,7 +58,22 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
             IfaceMgr::instance().openSockets4(port);
         }
 
-        setServerID();
+        string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
+        if (loadServerID(srvid_file)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
+                .arg(srvid_file);
+        } else {
+            generateServerID();
+            LOG_INFO(dhcp4_logger, DHCP4_SERVERID_GENERATED)
+                .arg(srvidToString(getServerID()))
+                .arg(srvid_file);
+
+            if (!writeServerID(srvid_file)) {
+                LOG_WARN(dhcp4_logger, DHCP4_SERVERID_WRITE_FAIL)
+                    .arg(srvid_file);
+            }
+
+        }
 
         // Instantiate LeaseMgr
         LeaseMgrFactory::create(dbconfig);
@@ -176,19 +193,108 @@ Dhcpv4Srv::run() {
                 }
             }
         }
-
-        // TODO add support for config session (see src/bin/auth/main.cc)
-        //      so this daemon can be controlled from bob
     }
 
     return (true);
 }
 
-void
-Dhcpv4Srv::setServerID() {
-    /// @todo: implement this for real (see ticket #2588)
-    serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                             IOAddress(HARDCODED_SERVER_ID)));
+bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
+
+    // load content of the file into a string
+    fstream f(file_name.c_str(), ios::in);
+    if (!f.is_open()) {
+        return (false);
+    }
+
+    string hex_string;
+    f >> hex_string;
+    f.close();
+
+    // remove any spaces
+    boost::algorithm::erase_all(hex_string, " ");
+
+    try {
+        IOAddress addr(hex_string);
+
+        if (!addr.isV4()) {
+            return (false);
+        }
+
+        // Now create server-id option
+        serverid_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, addr));
+
+    } catch(...) {
+        // any kind of malformed input (empty string, IPv6 address, complete
+        // garbate etc.)
+        return (false);
+    }
+
+    return (true);
+}
+
+void Dhcpv4Srv::generateServerID() {
+
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+    // Let's find suitable interface.
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+
+        // Let's don't use loopback.
+        if (iface->flag_loopback_) {
+            continue;
+        }
+
+        // Let's skip downed interfaces. It is better to use working ones.
+        if (!iface->flag_up_) {
+            continue;
+        }
+
+        const IfaceMgr::AddressCollection addrs = iface->getAddresses();
+
+        for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+             addr != addrs.end(); ++addr) {
+            if (addr->getFamily() != AF_INET) {
+                continue;
+            }
+
+            serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                     *addr));
+            return;
+        }
+
+
+    }
+
+    isc_throw(BadValue, "No suitable interfaces for server-identifier found");
+}
+
+bool Dhcpv4Srv::writeServerID(const std::string& file_name) {
+    fstream f(file_name.c_str(), ios::out | ios::trunc);
+    if (!f.good()) {
+        return (false);
+    }
+    f << srvidToString(getServerID());
+    f.close();
+}
+
+string Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
+    if (!srvid) {
+        isc_throw(BadValue, "NULL pointer passed to srvidToString()");
+    }
+    boost::shared_ptr<Option4AddrLst> generated =
+        boost::dynamic_pointer_cast<Option4AddrLst>(srvid);
+    if (!srvid) {
+        isc_throw(BadValue, "Pointer to invalid option passed to srvidToString()");
+    }
+
+    Option4AddrLst::AddressContainer addrs = generated->getAddresses();
+    if (addrs.size() != 1) {
+        isc_throw(BadValue, "Malformed option passed to srvidToString(). "
+                  << "Expected to contain a single IPv4 address.");
+    }
+
+    return (addrs[0].toText());
 }
 
 void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
@@ -233,18 +339,75 @@ void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
 }
 
 
-void Dhcpv4Srv::appendRequestedOptions(Pkt4Ptr& msg) {
-    OptionPtr opt;
+void Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 
-    // Domain name (type 15)
-    vector<uint8_t> domain(HARDCODED_DOMAIN_NAME.begin(), HARDCODED_DOMAIN_NAME.end());
-    opt = OptionPtr(new Option(Option::V4, DHO_DOMAIN_NAME, domain));
-    msg->addOption(opt);
-    // TODO: Add Option_String class
+    // Get the subnet relevant for the client. We will need it
+    // to get the options associated with it.
+    Subnet4Ptr subnet = selectSubnet(question);
+    // If we can't find the subnet for the client there is no way
+    // to get the options to be sent to a client. We don't log an
+    // error because it will be logged by the assignLease method
+    // anyway.
+    if (!subnet) {
+        return;
+    }
 
-    // DNS servers (type 6)
-    opt = OptionPtr(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, IOAddress(HARDCODED_DNS_SERVER)));
-    msg->addOption(opt);
+    // try to get the 'Parameter Request List' option which holds the
+    // codes of requested options.
+    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
+        OptionUint8Array>(question->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+    // If there is no PRL option in the message from the client then
+    // there is nothing to do.
+    if (!option_prl) {
+        return;
+    }
+
+    // Get the codes of requested options.
+    const std::vector<uint8_t>& requested_opts = option_prl->getValues();
+    // For each requested option code get the instance of the option
+    // to be returned to the client.
+    for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
+         opt != requested_opts.end(); ++opt) {
+        Subnet::OptionDescriptor desc =
+            subnet->getOptionDescriptor("dhcp4", *opt);
+        if (desc.option) {
+            msg->addOption(desc.option);
+        }
+    }
+}
+
+void
+Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+    // Identify options that we always want to send to the
+    // client (if they are configured).
+    static const uint16_t required_options[] = {
+        DHO_SUBNET_MASK,
+        DHO_ROUTERS,
+        DHO_DOMAIN_NAME_SERVERS,
+        DHO_DOMAIN_NAME };
+
+    static size_t required_options_size =
+        sizeof(required_options) / sizeof(required_options[0]);
+
+    // Get the subnet.
+    Subnet4Ptr subnet = selectSubnet(question);
+    if (!subnet) {
+        return;
+    }
+
+    // Try to find all 'required' options in the outgoing
+    // message. Those that are not present will be added.
+    for (int i = 0; i < required_options_size; ++i) {
+        OptionPtr opt = msg->getOption(required_options[i]);
+        if (!opt) {
+            // Check whether option has been configured.
+            Subnet::OptionDescriptor desc =
+                subnet->getOptionDescriptor("dhcp4", required_options[i]);
+            if (desc.option) {
+                msg->addOption(desc.option);
+            }
+        }
+    }
 }
 
 void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
@@ -316,10 +479,12 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         opt->setUint32(lease->valid_lft_);
         answer->addOption(opt);
 
-        // @todo: include real router information here
         // Router (type 3)
-        opt = OptionPtr(new Option4AddrLst(DHO_ROUTERS, IOAddress(HARDCODED_GATEWAY)));
-        answer->addOption(opt);
+        Subnet::OptionDescriptor opt_routers =
+            subnet->getOptionDescriptor("dhcp4", DHO_ROUTERS);
+        if (opt_routers.option) {
+            answer->addOption(opt_routers.option);
+        }
 
         // Subnet mask (type 1)
         answer->addOption(getNetmaskOption(subnet));
@@ -358,9 +523,14 @@ Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
-    appendRequestedOptions(offer);
+    appendRequestedOptions(discover, offer);
 
     assignLease(discover, offer);
+
+    // There are a few basic options that we always want to
+    // include in the response. If client did not request
+    // them we append them for him.
+    appendBasicOptions(discover, offer);
 
     return (offer);
 }
@@ -371,9 +541,14 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
-    appendRequestedOptions(ack);
+    appendRequestedOptions(request, ack);
 
     assignLease(request, ack);
+
+    // There are a few basic options that we always want to
+    // include in the response. If client did not request
+    // them we append them for him.
+    appendBasicOptions(request, ack);
 
     return (ack);
 }

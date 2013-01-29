@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,16 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief file name of a server-id file
+///
+/// Server must store its duid in persistent storage that must not change
+/// between restarts. This is name of the file that is created in dataDir
+/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
+/// double digit hex values separated by colons format, e.g.
+/// 01:ff:02:03:06:80:90:ab:cd:ef. Server will create it during first
+/// run and then use it afterwards.
+static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 /// @brief DHCPv6 server service.
 ///
@@ -64,10 +74,7 @@ public:
     /// old or create new DUID.
     ///
     /// @param port port on will all sockets will listen
-    /// @param dbconfig Lease manager configuration string.  The default
-    ///        of the "memfile" manager is used for testing.
-    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT,
-              const char* dbconfig = "type=memfile");
+    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -290,15 +297,39 @@ protected:
 
     /// @brief Sets server-identifier.
     ///
-    /// This method attempts to set server-identifier DUID. It loads it
-    /// from a file. If file load fails, it generates new DUID using
-    /// interface link-layer addresses (EUI-64) + timestamp (DUID type
-    /// duid-llt, see RFC3315, section 9.2). If there are no suitable
+    /// This method attempts to generate server-identifier DUID. It generates a
+    /// new DUID using interface link-layer addresses (EUI-64) + timestamp (DUID
+    /// type duid-llt, see RFC3315, section 9.2). If there are no suitable
     /// interfaces present, exception it thrown
     ///
     /// @throws isc::Unexpected Failed to read DUID file and no suitable
     ///         interfaces for new DUID generation are detected.
-    void setServerID();
+    void generateServerID();
+
+    /// @brief attempts to load DUID from a file
+    ///
+    /// Tries to load duid from a text file. If the load is successful,
+    /// it creates server-id option and stores it in serverid_ (to be used
+    /// later by getServerID()).
+    ///
+    /// @param file_name name of the DUID file to load
+    /// @return true if load was successful, false otherwise
+    bool loadServerID(const std::string& file_name);
+
+    /// @brief attempts to write DUID to a file
+    /// Tries to write duid content (stored in serverid_) to a text file.
+    ///
+    /// @param file_name name of the DUID file to write
+    /// @return true if write was successful, false otherwise
+    bool writeServerID(const std::string& file_name);
+
+    /// @brief converts DUID to text
+    /// Converts content of DUID option to a text representation, e.g.
+    /// 01:ff:02:03:06:80:90:ab:cd:ef
+    ///
+    /// @param opt option that contains DUID
+    /// @return string representation
+    static std::string duidToString(const OptionPtr& opt);
 
 private:
     /// @brief Allocation Engine.

@@ -69,7 +69,7 @@ public:
         ///
         /// @param opt option
         /// @param persist if true option is always sent.
-        OptionDescriptor(OptionPtr& opt, bool persist)
+        OptionDescriptor(const OptionPtr& opt, bool persist)
             : option(opt), persistent(persist) {};
 
         /// @brief Constructor
@@ -225,7 +225,7 @@ public:
     /// @param option_space name of the option space to add an option to.
     ///
     /// @throw isc::BadValue if invalid option provided.
-    void addOption(OptionPtr& option, bool persistent,
+    void addOption(const OptionPtr& option, bool persistent,
                    const std::string& option_space);
 
     /// @brief Delete all options configured for the subnet.
@@ -416,6 +416,9 @@ protected:
     /// fully trusted.
     isc::asiolink::IOAddress last_allocated_;
 
+    /// @brief Name of the network interface (if connected directly)
+    std::string iface_;
+
 private:
 
     /// A collection of option spaces grouping option descriptors.
@@ -495,6 +498,18 @@ public:
     Triplet<uint32_t> getPreferred() const {
         return (preferred_);
     }
+
+    /// @brief sets name of the network interface for directly attached networks
+    ///
+    /// A subnet may be reachable directly (not via relays). In DHCPv6 it is not
+    /// possible to decide that based on addresses assigned to network interfaces,
+    /// as DHCPv6 operates on link-local (and site local) addresses.
+    /// @param iface_name name of the interface
+    void setIface(const std::string& iface_name);
+
+    /// @brief network interface name used to reach subnet (or "" for remote subnets)
+    /// @return network interface name for directly attached subnets or ""
+    std::string getIface() const;
 
 protected:
 

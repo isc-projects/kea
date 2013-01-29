@@ -90,7 +90,7 @@ Pkt6::packUDP() {
         bufferOut_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions6(bufferOut_, options_);
+        LibDHCP::packOptions(bufferOut_, options_);
     }
     catch (const Exception& e) {
         /// @todo: throw exception here once we turn this function to void.
@@ -155,8 +155,8 @@ Pkt6::toText() {
     tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
         << " remoteAddr=[" << remote_addr_.toText()
         << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << msg_type_ << ", transid=0x" << hex << transid_
-        << dec << endl;
+    tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
+        hex << transid_ << dec << endl;
     for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
