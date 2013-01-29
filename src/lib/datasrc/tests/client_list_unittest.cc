@@ -14,7 +14,7 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
@@ -77,7 +77,7 @@ public:
     };
     class Iterator : public ZoneIterator {
     public:
-        Iterator(const Name& origin, bool include_ns) :
+        Iterator(const Name& origin, bool include_a) :
             origin_(origin),
             soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(),
                            RRTTL(3600)))
@@ -89,12 +89,21 @@ public:
                                                0, 0, 0, 0, 0));
             rrsets_.push_back(soa_);
 
-            if (include_ns) {
-                ns_.reset(new RRset(origin_, RRClass::IN(), RRType::NS(),
-                                    RRTTL(3600)));
-                ns_->addRdata(rdata::generic::NS(Name::ROOT_NAME()));
-                rrsets_.push_back(ns_);
+            RRsetPtr rrset(new RRset(origin_, RRClass::IN(), RRType::NS(),
+                                     RRTTL(3600)));
+            rrset->addRdata(rdata::generic::NS(Name::ROOT_NAME()));
+            rrsets_.push_back(rrset);
+
+            if (include_a) {
+                 // Dummy A rrset. This is used for checking zone data
+                 // after reload.
+                 rrset.reset(new RRset(Name("tstzonedata").concatenate(origin_),
+                                       RRClass::IN(), RRType::A(),
+                                       RRTTL(3600)));
+                 rrset->addRdata(rdata::in::A("192.0.2.1"));
+                 rrsets_.push_back(rrset);
             }
+
             rrsets_.push_back(ConstRRsetPtr());
 
             it_ = rrsets_.begin();
@@ -110,13 +119,12 @@ public:
     private:
         const Name origin_;
         const RRsetPtr soa_;
-        RRsetPtr ns_;
         std::vector<ConstRRsetPtr> rrsets_;
         std::vector<ConstRRsetPtr>::const_iterator it_;
     };
     // Constructor from a list of zones.
     MockDataSourceClient(const char* zone_names[]) :
-        have_ns_(true), use_baditerator_(true)
+        have_a_(true), use_baditerator_(true)
     {
         for (const char** zone(zone_names); *zone; ++zone) {
             zones.insert(Name(*zone));
@@ -128,7 +136,7 @@ public:
                          const ConstElementPtr& configuration) :
         type_(type),
         configuration_(configuration),
-        have_ns_(true), use_baditerator_(true)
+        have_a_(true), use_baditerator_(true)
     {
         EXPECT_NE("MasterFiles", type) << "MasterFiles is a special case "
             "and it never should be created as a data source client";
@@ -176,19 +184,19 @@ public:
         } else {
             FindResult result(findZone(name));
             if (result.code == isc::datasrc::result::SUCCESS) {
-                return (ZoneIteratorPtr(new Iterator(name, have_ns_)));
+                return (ZoneIteratorPtr(new Iterator(name, have_a_)));
             } else {
                 isc_throw(DataSourceError, "No such zone");
             }
         }
     }
-    void disableNS() { have_ns_ = false; }
+    void disableA() { have_a_ = false; }
     void disableBadIterator() { use_baditerator_ = false; }
     const string type_;
     const ConstElementPtr configuration_;
 private:
     set<Name> zones;
-    bool have_ns_; // control the iterator behavior wrt whether to include NS
+    bool have_a_; // control the iterator behavior whether to include A record
     bool use_baditerator_; // whether to use bogus zone iterators for tests
 };
 
@@ -285,7 +293,7 @@ public:
         MockDataSourceClient mock_client(zones);
         // Disable some default features of the mock to distinguish the
         // temporary case from normal case.
-        mock_client.disableNS();
+        mock_client.disableA();
         mock_client.disableBadIterator();
 
         // Create cache from the temporary data source, and push it to the
@@ -925,14 +933,19 @@ TYPED_TEST(ReloadTest, reloadSuccess) {
     this->list_->configure(this->config_elem_zones_, true);
     const Name name("example.org");
     this->prepareCache(0, name);
-    // The cache currently contains a tweaked version of zone, which doesn't
-    // have apex NS.  So the lookup should result in NXRRSET.
-    EXPECT_EQ(ZoneFinder::NXRRSET,
-              this->list_->find(name).finder_->find(name, RRType::NS())->code);
+    // The cache currently contains a tweaked version of zone, which
+    // doesn't have "tstzonedata" A record.  So the lookup should result
+    // in NXDOMAIN.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              this->list_->find(name).finder_->
+                  find(Name("tstzonedata").concatenate(name),
+                       RRType::A())->code);
     // Now reload the full zone. It should be there now.
     EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, this->doReload(name));
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name, RRType::NS())->code);
+              this->list_->find(name).finder_->
+                  find(Name("tstzonedata").concatenate(name),
+                       RRType::A())->code);
 }
 
 // The cache is not enabled. The load should be rejected.
@@ -941,14 +954,18 @@ TYPED_TEST(ReloadTest, reloadNotEnabled) {
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
     this->prepareCache(0, name);
-    // See the reloadSuccess test.  This should result in NXRRSET.
-    EXPECT_EQ(ZoneFinder::NXRRSET,
-              this->list_->find(name).finder_->find(name, RRType::NS())->code);
+    // See the reloadSuccess test.  This should result in NXDOMAIN.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              this->list_->find(name).finder_->
+                  find(Name("tstzonedata").concatenate(name),
+                       RRType::A())->code);
     // Now reload. It should reject it.
     EXPECT_EQ(ConfigurableClientList::CACHE_DISABLED, this->doReload(name));
     // Nothing changed here
-    EXPECT_EQ(ZoneFinder::NXRRSET,
-              this->list_->find(name).finder_->find(name, RRType::NS())->code);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              this->list_->find(name).finder_->
+                  find(Name("tstzonedata").concatenate(name),
+                       RRType::A())->code);
 }
 
 // Test several cases when the zone does not exist
@@ -974,10 +991,11 @@ TYPED_TEST(ReloadTest, reloadNoSuchZone) {
               this->list_->find(Name("example.cz")).dsrc_client_);
     EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
               this->list_->find(Name("sub.example.com"), true).dsrc_client_);
-    // Not reloaded, so NS shouldn't be visible yet.
-    EXPECT_EQ(ZoneFinder::NXRRSET,
+    // Not reloaded, so A record shouldn't be visible yet.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->list_->find(Name("example.com")).finder_->
-              find(Name("example.com"), RRType::NS())->code);
+                  find(Name("tstzonedata.example.com"),
+                       RRType::A())->code);
 }
 
 // Check we gracefuly throw an exception when a zone disappeared in

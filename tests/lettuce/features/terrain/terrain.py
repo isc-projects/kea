@@ -1,3 +1,4 @@
+
 # Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -379,6 +380,9 @@ def initialize(scenario):
 
     # Convenience variable to access the last query result from querying.py
     world.last_query_result = None
+
+    # Convenience variable to access the last HTTP response from http.py
+    world.last_http_response = None
 
     # For slightly better errors, initialize a process_pids for the relevant
     # steps

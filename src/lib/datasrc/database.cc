@@ -18,7 +18,7 @@
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/rrset_collection_base.h>
 
 #include <exceptions/exceptions.h>

@@ -76,6 +76,10 @@ This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
 \n\
+Implementations of ZoneUpdater may not allow adding or deleting RRsets\n\
+after get_rrset_collection() is called. In this case, implementations\n\
+throw an InvalidOperation exception.\n\
+\n\
 Todo As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\
 \n\
@@ -132,6 +136,10 @@ RRset:\n\
 This method must not be called once commit() is performed. If it calls\n\
 after commit() the implementation must throw a isc.datasrc.Error\n\
 exception.\n\
+\n\
+Implementations of ZoneUpdater may not allow adding or deleting RRsets\n\
+after get_rrset_collection() is called. In this case, implementations\n\
+throw an InvalidOperation exception.\n\
 \n\
 Todo: As noted above we may have to revisit the design details as we\n\
 gain experiences:\n\

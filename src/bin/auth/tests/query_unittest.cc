@@ -90,6 +90,10 @@ private:
 #include <auth/tests/example_base_inc.cc>
 #include <auth/tests/example_nsec3_inc.cc>
 
+// This SOA is used in negative responses; its RRTTL is set to SOA's MINTTL
+const char* const soa_minttl_txt =
+    "example.com. 0 IN SOA . . 1 0 0 0 0\n";
+
 // This is used only in one pathological test case.
 const char* const zone_ds_txt =
     "example.com. 3600 IN DS 57855 5 1 "
@@ -1207,7 +1211,7 @@ TEST_P(QueryTest, nodomainANY) {
     EXPECT_NO_THROW(query.process(*list_, Name("nxdomain.example.com"),
                                   RRType::ANY(), response));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -1345,7 +1349,7 @@ TEST_P(QueryTest, nxdomain) {
                                   Name("nxdomain.example.com"), qtype,
                                   response));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC) {
@@ -1356,8 +1360,8 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
                                   Name("nxdomain.example.com"), qtype,
                                   response, true));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
@@ -1382,8 +1386,8 @@ TEST_P(QueryTest, nxdomainWithNSEC2) {
     query.process(*list_, Name("(.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_mx_txt) + "\n" +
                          string("mx.example.com. 3600 IN RRSIG ") +
@@ -1407,8 +1411,8 @@ TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
     query.process(*list_, Name("nx.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 4, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_no_txt) + "\n" +
                          string(").no.example.com. 3600 IN RRSIG ") +
@@ -1474,8 +1478,8 @@ TEST_F(QueryTestForMockOnly, nxdomainBadNSEC5) {
     query.process(*list_, Name("nxdomain.example.com"), qtype,
                   response, true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
@@ -1503,7 +1507,7 @@ TEST_P(QueryTest, nxrrset) {
                                   RRType::TXT(), response));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC) {
@@ -1513,7 +1517,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_www_txt) + "\n" +
                    string("www.example.com. 3600 IN RRSIG ") +
@@ -1534,7 +1539,8 @@ TEST_P(QueryTest, emptyNameWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_mx_txt) + "\n" +
                    string("mx.example.com. 3600 IN RRSIG ") +
@@ -1550,7 +1556,8 @@ TEST_P(QueryTest, nxrrsetWithoutNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
 }
@@ -1706,7 +1713,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_wild_txt) +
                    string("*.wild.example.com. 3600 IN RRSIG ") +
@@ -1729,7 +1737,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
                   RRType::TXT(), response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_wild_txt_nxrrset) +
                    string("*.uwild.example.com. 3600 IN RRSIG ") +
@@ -1753,7 +1762,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 8, 0, NULL,
                   // SOA + its RRSIG
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_uwild_txt) +
@@ -1816,7 +1826,8 @@ TEST_P(QueryTest, wildcardEmptyWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_empty_prev_txt) +
                    string("t.example.com. 3600 IN RRSIG ") +
@@ -2043,7 +2054,7 @@ TEST_P(QueryTest, DNAME_NX_RRSET) {
                     RRType::TXT(), response));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-        NULL, soa_txt, NULL, mock_finder->getOrigin());
+        NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 /*
@@ -2307,8 +2318,8 @@ TEST_P(QueryTest, dsAboveDelegationNoData) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) +
-                   string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec_txt) +
                    "unsigned-delegation.example.com. 3600 IN RRSIG " +
@@ -2324,7 +2335,8 @@ TEST_P(QueryTest, dsBelowDelegation) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_apex_txt) + "\n" +
                    string("example.com. 3600 IN RRSIG ") +
@@ -2342,7 +2354,8 @@ TEST_P(QueryTest, dsBelowDelegationWithDS) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA")).c_str(), NULL,
                   mock_finder->getOrigin());
 }
@@ -2382,9 +2395,10 @@ TEST_F(QueryTestForMockOnly, dsAtGrandParentAndChild) {
     memory_client.addZone(ZoneFinderPtr(
                               new AlternateZoneFinder(childname)));
     query.process(*list_, childname, RRType::DS(), response, true);
+    // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (childname.toText() + " 3600 IN SOA . . 0 0 0 0 0\n" +
-                   childname.toText() + " 3600 IN RRSIG " +
+                  (childname.toText() + " 0 IN SOA . . 0 0 0 0 0\n" +
+                   childname.toText() + " 0 IN RRSIG " +
                    getCommonRRSIGText("SOA") + "\n" +
                    childname.toText() + " 3600 IN NSEC " +
                    childname.toText() + " SOA NSEC RRSIG\n" +
@@ -2404,9 +2418,10 @@ TEST_F(QueryTestForMockOnly, dsAtRoot) {
                               new AlternateZoneFinder(Name::ROOT_NAME())));
     query.process(*list_, Name::ROOT_NAME(), RRType::DS(), response,
                   true);
+    // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(". 3600 IN SOA . . 0 0 0 0 0\n") +
-                   ". 3600 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
+                  (string(". 0 IN SOA . . 0 0 0 0 0\n") +
+                   ". 0 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
                    ". 3600 IN NSEC " + ". SOA NSEC RRSIG\n" +
                    ". 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC")).c_str(), NULL);
@@ -2443,7 +2458,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_www_txt) + "\n" +
                    nsec3_hash_.calculate(Name("www.example.com.")) +
@@ -2478,7 +2494,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
     query.process(*list_, Name("unsigned-delegation.example.com."),
                   RRType::DS(), response, true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
                    nsec3_hash_.calculate(
@@ -2500,7 +2517,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
     query.process(*list_, Name("unsigned-delegation-optout.example.com."),
                   RRType::DS(), response, true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_apex_txt) + "\n" +
                    nsec3_hash_.calculate(Name("example.com.")) +
@@ -2528,8 +2546,8 @@ TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
                   response, true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
                   // SOA + its RRSIG
-                  (string(soa_txt) +
-                   string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_apex_txt) + "\n" +
