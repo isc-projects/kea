@@ -30,6 +30,20 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NS RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
+///
+/// The NSDNAME must be absolute since there's no parameter that
+/// specifies the origin name; if it is not absolute, \c
+/// MissingNameOrigin exception will be thrown.  These must not be
+/// represented as a quoted string.
+///
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
 NS::NS(const std::string& namestr) :
     // Fill in dummy name and replace them soon below.
     nsname_(Name::ROOT_NAME())
@@ -58,6 +72,21 @@ NS::NS(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NS RDATA.  The NSDNAME field can be non
+/// absolute if \c origin is non NULL, in which case \c origin is used
+/// to make it absolute.  It must not be represented as a quoted string.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of NSDNAME when it
+/// is non-absolute.
 NS::NS(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
     nsname_(createNameFromLexer(lexer, origin))
