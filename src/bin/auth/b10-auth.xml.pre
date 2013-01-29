@@ -196,6 +196,21 @@
 
 <!-- ### STATISTICS DATA PLACEHOLDER ### -->
 
+    <note><para>
+      DNS parameters (e.g. opcode) in the request message will not be
+      considered if <command>b10-auth</command> failed to parse message,
+      including but not limited to the following circumstance:
+      <itemizedlist>
+        <listitem><para>
+          EDNS version of a message is unknown to
+          <command>b10-auth</command>.
+        </para></listitem>
+        <listitem><para>
+          TSIG signature verification fails.
+        </para></listitem>
+      </itemizedlist>
+    </para></note>
+
   </refsect1>
 
   <refsect1>
