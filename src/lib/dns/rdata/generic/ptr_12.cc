@@ -73,9 +73,10 @@ PTR::PTR(InputBuffer& buffer, size_t) :
 /// \brief Constructor with a context of MasterLexer.
 ///
 /// The \c lexer should point to the beginning of valid textual
-/// representation of a PTR RDATA.  The PTRDNAME field can be non
-/// absolute if \c origin is non NULL, in which case \c origin is used
-/// to make it absolute.  It must not be represented as a quoted string.
+/// representation of a PTR RDATA.  The PTRDNAME field can be
+/// non-absolute if \c origin is non-NULL, in which case \c origin is
+/// used to make it absolute.  It must not be represented as a quoted
+/// string.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
 /// \throw Other Exceptions from the Name and RRTTL constructors if
