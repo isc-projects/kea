@@ -51,7 +51,7 @@ public:
     /// This constructor prepares a dictionary of set of counters.
     /// Initially the dictionary is empty.
     /// Each counter has \a items elements. The counters will be initialized
-    /// with \a InitialValue; which is defined as 0.
+    /// with 0.
     ///
     /// \param items A number of counter items to hold (greater than 0)
     ///

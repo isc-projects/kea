@@ -32,20 +32,18 @@ public:
 
 private:
     std::vector<Counter::Value> counters_;
-    static const unsigned int InitialValue = 0;
 
 public:
     /// The constructor.
     ///
     /// This constructor prepares a set of counters which has \a items
-    /// elements. The counters will be initialized with \a InitialValue;
-    /// which is defined as 0.
+    /// elements. The counters will be initialized with 0.
     ///
     /// \param items A number of counter items to hold (greater than 0)
     ///
     /// \throw isc::InvalidParameter \a items is 0
     explicit Counter(const size_t items) :
-        counters_(items, InitialValue)
+        counters_(items, 0)
     {
         if (items == 0) {
             isc_throw(isc::InvalidParameter, "Items must not be 0");
