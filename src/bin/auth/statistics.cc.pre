@@ -26,12 +26,6 @@
 
 #include <boost/optional.hpp>
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
 using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
