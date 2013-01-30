@@ -291,8 +291,8 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
           COUNTER_ITEM, ///< item's descriptin
         - item_names consists of tuples of three elements, depending on
           whether it's a leaf element (no child from it) or not:
-          (leaf)   { "item_name", NULL, COUNTER_ITEM },
-          (branch) { "item_name", CHILD_NAME, NOT_ITEM
+          (leaf)   ( "item_name", NULL, COUNTER_ITEM )
+          (branch) ( "item_name", CHILD_NAME, NOT_ITEM )
 
         Each single call to this function builds a C++ structure beginning
         with the given item_head, which is a string that reads like
