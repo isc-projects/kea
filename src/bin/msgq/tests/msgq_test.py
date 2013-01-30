@@ -179,6 +179,7 @@ class MsgQTest(unittest.TestCase):
         # The routing headers and data to test with.
         routing = {
             'to': '*',
+            'from': 'sender',
             'group': 'group',
             'instance': '*',
             'seq': 42
@@ -188,6 +189,10 @@ class MsgQTest(unittest.TestCase):
         }
         # Send the message. No recipient, but errors are not requested,
         # so none is generated.
+        self.__msgq.process_command_send(sender, routing, data)
+        self.assertEqual([], sent_messages)
+        # It should act the same if we explicitly say we do not want replies.
+        routing["wants_reply"] = False
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual([], sent_messages)
         # Ask for errors if it can't be delivered.
@@ -200,7 +205,8 @@ class MsgQTest(unittest.TestCase):
                               'instance': '*',
                               'reply': 42,
                               'seq': 42,
-                              'to': '*',
+                              'from': 'msgq',
+                              'to': 'sender',
                               'wants_reply': True
                           }, {'result': [-1, "No such recipient"]}),
                           self.parse_msg(sent_messages[0][1]))
@@ -235,7 +241,8 @@ class MsgQTest(unittest.TestCase):
                               'instance': '*',
                               'reply': 42,
                               'seq': 42,
-                              'to': 'lname',
+                              'from': 'msgq',
+                              'to': 'sender',
                               'wants_reply': True
                           }, {'result': [-1, "No such recipient"]}),
                           self.parse_msg(sent_messages[0][1]))
