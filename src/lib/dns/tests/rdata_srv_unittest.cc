@@ -78,6 +78,8 @@ TEST_F(Rdata_SRV_Test, badText) {
     // bad name
     EXPECT_THROW(in::SRV("1 5 1500 a.example.com." + too_long_label),
                  TooLongLabel);
+    // Extra text at end of line
+    EXPECT_THROW(in::SRV("1 5 1500 a.example.com. extra."), InvalidRdataText);
 }
 
 TEST_F(Rdata_SRV_Test, assignment) {
@@ -138,6 +140,9 @@ TEST_F(Rdata_SRV_Test, createFromLexer) {
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
                                              "1 5 281474976710656 "
                                              "a.example.com."));
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
+                                             "1 5 1500 a.example.com. extra."));
 }
 
 TEST_F(Rdata_SRV_Test, toWireBuffer) {

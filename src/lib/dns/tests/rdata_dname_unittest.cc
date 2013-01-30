@@ -64,6 +64,11 @@ TEST_F(Rdata_DNAME_Test, createFromText) {
                                                   "dn.example.com.")));
 }
 
+TEST_F(Rdata_DNAME_Test, badText) {
+    // Extra text at end of line
+    EXPECT_THROW(generic::DNAME("dname.example.com. extra."), InvalidRdataText);
+}
+
 TEST_F(Rdata_DNAME_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dname.compare(
                   *rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
@@ -93,6 +98,9 @@ TEST_F(Rdata_DNAME_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_dname.compare(
         *test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
                                      "dn.example.com.")));
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
+                                             "dname.example.com. extra."));
 }
 
 TEST_F(Rdata_DNAME_Test, toWireBuffer) {
