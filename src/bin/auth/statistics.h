@@ -75,14 +75,13 @@ public:
     {}
 
     /// \brief Return opcode of the request.
-    /// \return opcode of the request wrapped with boost::optional
-    /// \throw isc::InvalidOperation Opcode is not set
-    const boost::optional<const isc::dns::Opcode&> getRequestOpCode() const {
-        if (req_opcode_) {
-            return (req_opcode_.get());
-        } else {
-            return boost::none;
-        }
+    ///
+    /// \return opcode of the request wrapped with boost::optional; it's
+    ///         converted to false if Opcode hasn't been set.
+    ///
+    /// \throw None
+    const boost::optional<isc::dns::Opcode>& getRequestOpCode() const {
+        return (req_opcode_);
     }
 
     /// \brief Set opcode of the request.
