@@ -333,6 +333,7 @@ Session::establish(const char* socket_file) {
     recvmsg(routing, msg, false);
 
     impl_->lname_ = msg->get("lname")->stringValue();
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_LNAME_RECEIVED).arg(impl_->lname_);
 
     // At this point there's no risk of resource leak.
     session_holder.clear();
