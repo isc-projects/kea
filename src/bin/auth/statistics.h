@@ -60,7 +60,7 @@ public:
     };
 private:
     // request attributes
-    int req_ip_version_;            // IP version
+    int req_address_family_;            // IP version
     int req_transport_protocol_;    // Transport layer protocol
     boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
@@ -77,7 +77,7 @@ public:
     /// \brief The constructor.
     ///
     /// \throw None
-    MessageAttributes() : req_ip_version_(0), req_transport_protocol_(0)
+    MessageAttributes() : req_address_family_(0), req_transport_protocol_(0)
     {}
 
     /// \brief Return opcode of the request.
@@ -99,21 +99,21 @@ public:
 
     /// \brief Get IP version carrying a request.
     ///
-    /// \return IP version carrying a request (AF_INET or AF_INET6)
+    /// \return IP address family carrying a request (AF_INET or AF_INET6)
     /// \throw None
     int getRequestIPVersion() const {
-        return (req_ip_version_);
+        return (req_address_family_);
     }
 
-    /// \brief Set IP version carrying a request.
+    /// \brief Set IP address family carrying a request.
     ///
-    /// \param ip_version AF_INET or AF_INET6
+    /// \param address_family AF_INET or AF_INET6
     /// \throw None
-    void setRequestIPVersion(const int ip_version) {
-        if (ip_version != AF_INET && ip_version != AF_INET6) {
+    void setRequestIPVersion(const int address_family) {
+        if (address_family != AF_INET && address_family != AF_INET6) {
             isc_throw(isc::InvalidParameter, "Unknown address family");
         }
-        req_ip_version_ = ip_version;
+        req_address_family_ = address_family;
     }
 
     /// \brief Get transport protocol carrying a request.
