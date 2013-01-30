@@ -548,9 +548,33 @@ class MsgQ:
             # Don't bounce to self
             sockets.remove(sock)
 
-        # TODO: The place to create an undeliverable error, if requested
-        for socket in sockets:
-            self.send_prepared_msg(socket, msg)
+        if sockets:
+            for socket in sockets:
+                self.send_prepared_msg(socket, msg)
+        elif routing.get("wants_reply") and "reply" not in routing:
+            # We have no recipients. But the sender insists on a reply
+            # (and the message isn't a reply itself). We need to send
+            # an error to satisfy the senders hurger for response, since
+            # nobody else will do that.
+
+            # The real errors would be positive, 1 most probably. We use
+            # negative errors for delivery errors to distinguish them a
+            # little. We probably should have a way to provide more data
+            # in the error message.
+            payload = isc.config.ccsession.create_answer(-1,
+                                                         "No such recipient")
+            # We create the header based on the current one. But we don't
+            # want to mangle it for the caller, so we get a copy. A shallow
+            # one should be enough, we modify the dict only.
+            header = routing.copy()
+            header["reply"] = routing["seq"]
+            # The other headers can just stay the same. They are not used
+            # in the recipient and we know where to send it, so we don't
+            # need the "to" header. We don't know the sender's lname
+            # in this part of code anyway.
+            errmsg = self.preparemsg(header, payload)
+            # Send it back.
+            self.send_prepared_msg(sock, errmsg)
 
     def process_command_subscribe(self, sock, routing, data):
         group = routing["group"]

@@ -194,7 +194,16 @@ class MsgQTest(unittest.TestCase):
         routing["wants_reply"] = True
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
-        # TODO: Parse the message and check it looks correct. It should contain
+        self.assertEqual(1, sent_messages[0][0])
+        self.assertEqual(({
+                              'group': 'group',
+                              'instance': '*',
+                              'reply': 42,
+                              'seq': 42,
+                              'to': '*',
+                              'wants_reply': True
+                          }, {'result': [-1, "No such recipient"]}),
+                          self.parse_msg(sent_messages[0][1]))
         # the reply header too.
         sent_messages = []
         # If the message is a reply itself, we never generate the errors, even
@@ -220,7 +229,17 @@ class MsgQTest(unittest.TestCase):
         routing["to"] = "lname"
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
-        # TODO: Parse the errors
+        self.assertEqual(1, sent_messages[0][0])
+        self.assertEqual(({
+                              'group': 'group',
+                              'instance': '*',
+                              'reply': 42,
+                              'seq': 42,
+                              'to': 'lname',
+                              'wants_reply': True
+                          }, {'result': [-1, "No such recipient"]}),
+                          self.parse_msg(sent_messages[0][1]))
+        sent_messages = []
         # But when the recipient is there, it is delivered and no error is
         # generated.
         self.__msgq.lnames["lname"] = recipient
