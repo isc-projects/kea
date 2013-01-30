@@ -138,10 +138,6 @@ public:
     {
         public:
             /// \brief The constructor.
-            ///
-            /// This constructor is mostly exception free. But it may still
-            /// throw a standard exception if memory allocation fails
-            /// inside the method.
             ConstIterator() {}
 
             /// \brief Constructor from implementation detail
