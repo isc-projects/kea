@@ -23,7 +23,7 @@ import os
 from pydnspp import *
 
 class TestModuleSpec(unittest.TestCase):
-    
+
     def setUp(self):
         self.test_name = Name("test.example.com")
         self.test_domain = Name("example.com")
@@ -78,8 +78,8 @@ class TestModuleSpec(unittest.TestCase):
     def test_add_rdata(self):
         # no iterator to read out yet (TODO: add addition test once implemented)
 
-        self.assertRaises(TypeError, self.rrset_a.add_rdata, Rdata(RRType("NS"), RRClass("IN"), "test.name."))
-        pass
+        self.assertRaises(TypeError, self.rrset_a.add_rdata,
+                          Rdata(RRType("NS"), RRClass("IN"), "test.name."))
 
     def test_to_text(self):
         self.assertEqual("test.example.com. 3600 IN A 192.0.2.1\n"
@@ -126,6 +126,6 @@ class TestModuleSpec(unittest.TestCase):
         # they would leak.
         self.assertEqual(1, sys.getrefcount(self.rrset_a.get_rdata()))
         self.assertEqual(1, sys.getrefcount(self.rrset_a.get_rdata()[0]))
-        
+
 if __name__ == '__main__':
     unittest.main()
