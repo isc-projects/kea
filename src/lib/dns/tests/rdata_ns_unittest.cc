@@ -61,6 +61,11 @@ TEST_F(Rdata_NS_Test, createFromText) {
                                                "ns.example.com.")));
 }
 
+TEST_F(Rdata_NS_Test, badText) {
+    // Extra input at end of line
+    EXPECT_THROW(generic::NS("ns.example.com. extra."), InvalidRdataText);
+}
+
 TEST_F(Rdata_NS_Test, createFromWire) {
     EXPECT_EQ(0, rdata_ns.compare(
                   *rdataFactoryFromFile(RRType("NS"), RRClass("IN"),
@@ -94,6 +99,10 @@ TEST_F(Rdata_NS_Test, createFromLexer) {
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                              ""));
+
+    // Extra input at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
+                                             "ns.example.com. extra."));
 }
 
 TEST_F(Rdata_NS_Test, toWireBuffer) {
