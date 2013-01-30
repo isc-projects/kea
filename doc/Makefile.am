@@ -1,6 +1,6 @@
 SUBDIRS = guide
 
-EXTRA_DIST = version.ent.in
+EXTRA_DIST = version.ent.in differences.txt
 
 devel:
 	mkdir -p html
