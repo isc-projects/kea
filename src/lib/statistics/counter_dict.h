@@ -40,7 +40,6 @@ private:
     typedef boost::shared_ptr<isc::statistics::Counter> CounterPtr;
     typedef std::map<std::string, CounterPtr> DictionaryMap;
     DictionaryMap dictionary_;
-    std::vector<std::string> elements_;
     const size_t items_;
     // Default constructor is forbidden; number of counter items must be
     // specified at the construction of this class.
