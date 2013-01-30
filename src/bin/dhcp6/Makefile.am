@@ -53,12 +53,6 @@ b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-b10_dhcp6_CXXFLAGS = -Wno-unused-parameter
-endif
-
 b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
