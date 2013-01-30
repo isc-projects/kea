@@ -94,7 +94,7 @@ Feature: Xfrin
 
     # Transfer should fail
     When I send bind10 the command Xfrin retransfer example.org
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_ERROR not XFRIN_TRANSFER_SUCCESS
+    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_TRANSFER_SUCCESS
     # Set client to use TSIG as well
     When I send bind10 the following commands:
     """
