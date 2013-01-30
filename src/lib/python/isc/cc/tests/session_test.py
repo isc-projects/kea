@@ -381,18 +381,42 @@ class testSession(unittest.TestCase):
         sent = sess._socket.readsentmsg_parsed()
         self.assertEqual(sent, ({"from": "test_name", "seq": 2, "to": "*",
                                  "instance": "*", "group": "my_group",
-                                 "type": "send"}, {"hello": "a"}))
+                                 "type": "send", "want_answer": False},
+                                {"hello": "a"}))
         self.assertEqual(sess._sequence, 2)
 
         sess.group_sendmsg({ 'hello': 'a' }, "my_group", "my_instance")
         sent = sess._socket.readsentmsg_parsed()
-        self.assertEqual(sent, ({"from": "test_name", "seq": 3, "to": "*", "instance": "my_instance", "group": "my_group", "type": "send"}, {"hello": "a"}))
+        self.assertEqual(sent, ({"from": "test_name", "seq": 3, "to": "*",
+                                 "instance": "my_instance",
+                                 "group": "my_group", "type": "send",
+                                 "want_answer": False},
+                                {"hello": "a"}))
         self.assertEqual(sess._sequence, 3)
 
         sess.group_sendmsg({ 'hello': 'a' }, "your_group", "your_instance")
         sent = sess._socket.readsentmsg_parsed()
-        self.assertEqual(sent, ({"from": "test_name", "seq": 4, "to": "*", "instance": "your_instance", "group": "your_group", "type": "send"}, {"hello": "a"}))
+        self.assertEqual(sent, ({"from": "test_name", "seq": 4, "to": "*",
+                                 "instance": "your_instance",
+                                 "group": "your_group", "type": "send",
+                                 "want_answer": False},
+                                {"hello": "a"}))
         self.assertEqual(sess._sequence, 4)
+        # Test the optional want_answer parameter
+        sess.group_sendmsg({'hello': 'a'}, "group", want_answer=True)
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"from": "test_name", "seq": 5, "to": "*",
+                                 "instance": "*", "group": "group", "type":
+                                 "send", "want_answer": True},
+                                {"hello": "a"}))
+        self.assertEqual(sess._sequence, 5)
+        sess.group_sendmsg({'hello': 'a'}, "group", want_answer=False)
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"from": "test_name", "seq": 6, "to": "*",
+                                 "instance": "*", "group": "group", "type":
+                                 "send", "want_answer": False},
+                                {"hello": "a"}))
+        self.assertEqual(sess._sequence, 6)
 
     def test_group_recvmsg(self):
         # must this one do anything except not return messages with
