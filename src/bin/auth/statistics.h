@@ -29,6 +29,12 @@
 
 #include <stdint.h>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
 namespace isc {
 namespace auth {
 namespace statistics {
@@ -104,6 +110,9 @@ public:
     /// \param ip_version AF_INET or AF_INET6
     /// \throw None
     void setRequestIPVersion(const int ip_version) {
+        if (ip_version != AF_INET && ip_version != AF_INET6) {
+            isc_throw(isc::InvalidParameter, "Unknown address family");
+        }
         req_ip_version_ = ip_version;
     }
 
@@ -121,6 +130,11 @@ public:
     /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
     /// \throw None
     void setRequestTransportProtocol(const int transport_protocol) {
+        if (transport_protocol != IPPROTO_UDP &&
+            transport_protocol != IPPROTO_TCP)
+        {
+            isc_throw(isc::InvalidParameter, "Unknown transport protocol");
+        }
         req_transport_protocol_ = transport_protocol;
     }
 

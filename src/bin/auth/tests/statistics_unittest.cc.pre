@@ -63,6 +63,31 @@ buildSkeletonMessage(MessageAttributes& msgattrs) {
     msgattrs.setRequestDO(true);
 }
 
+TEST_F(CountersTest, invalidParameterForSetRequestIPVersion) {
+    MessageAttributes msgattrs;
+
+    // It should not throw if the parameter is AF_INET or AF_INET6.
+    EXPECT_NO_THROW(msgattrs.setRequestIPVersion(AF_INET));
+    EXPECT_NO_THROW(msgattrs.setRequestIPVersion(AF_INET6));
+
+    // It should throw isc::InvalidParameter if the parameter is not AF_INET
+    // nor AF_INET6.
+    EXPECT_THROW(msgattrs.setRequestIPVersion(AF_UNIX), isc::InvalidParameter);
+}
+
+TEST_F(CountersTest, invalidParameterForSetRequestTransportProtocol) {
+    MessageAttributes msgattrs;
+
+    // It should not throw if the parameter is IPPROTO_UDP or IPPROTO_TCP.
+    EXPECT_NO_THROW(msgattrs.setRequestTransportProtocol(IPPROTO_UDP));
+    EXPECT_NO_THROW(msgattrs.setRequestTransportProtocol(IPPROTO_TCP));
+
+    // It should throw isc::InvalidParameter if the parameter is not
+    // IPPROTO_UDP nor IPPROTO_TCP.
+    EXPECT_THROW(msgattrs.setRequestTransportProtocol(IPPROTO_IP),
+                 isc::InvalidParameter);
+}
+
 TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
     MessageAttributes msgattrs;
 
