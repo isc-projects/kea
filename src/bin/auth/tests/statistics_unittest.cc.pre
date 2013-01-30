@@ -133,12 +133,12 @@ TEST_F(CountersTest, incrementProtocolType) {
     std::map<std::string, int> expect;
 
     // Test these patterns:
-    //      ipversion   protocol
+    //      af     proto
     //     -----------------
-    //      ipv4        udp
-    //      ipv6        udp
-    //      ipv4        tcp
-    //      ipv6        tcp
+    //      ipv6   tcp
+    //      ipv4   tcp
+    //      ipv6   udp
+    //      ipv4   udp
     int count_v4 = 0, count_v6 = 0, count_udp = 0, count_tcp = 0;
     for (int i = 0; i < 4; ++i) {
         const int af = i & 1 ? AF_INET : AF_INET6;
