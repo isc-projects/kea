@@ -347,8 +347,8 @@ class MsgQ:
         while len(received) < length:
             try:
                 data = sock.recv(length - len(received))
-            except socket.error:
-                raise MsgQReceiveError(socket.error)
+            except socket.error as err:
+                raise MsgQReceiveError(str(err))
             if len(data) == 0:
                 raise MsgQReceiveError("EOF")
             received += data
