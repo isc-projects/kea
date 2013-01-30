@@ -256,7 +256,8 @@ class Session:
             "instance": instance,
         })
 
-    def group_sendmsg(self, msg, group, instance = "*", to = "*"):
+    def group_sendmsg(self, msg, group, instance = "*", to = "*",
+                      want_answer=False):
         seq = self._next_sequence()
         self.sendmsg({
             "type": "send",
@@ -265,6 +266,7 @@ class Session:
             "group": group,
             "instance": instance,
             "seq": seq,
+            "want_answer": want_answer
         }, isc.cc.message.to_wire(msg))
         return seq
 
