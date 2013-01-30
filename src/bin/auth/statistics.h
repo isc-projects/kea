@@ -175,10 +175,15 @@ public:
     /// \brief Set TSIG attributes of the request.
     ///
     /// \param signed_tsig true if the request is signed with TSIG
-    /// \param badsig true if the signature of the request is bad
-    /// \throw None
+    /// \param badsig true if the signature of the request is bad; it must not
+    //                be true unless signed_tsig is true
+    /// \throw isc::InvalidParameter if badsig is true though the request is
+    ///                              not signed
     void setRequestTSIG(const bool signed_tsig, const bool badsig) {
-        assert(!(!signed_tsig && badsig));
+        if (!signed_tsig && badsig) {
+            isc_throw(isc::InvalidParameter, "Message is not signed but badsig"
+                                             " is true");
+        }
         bit_attributes_[REQ_TSIG_SIGNED] = signed_tsig;
         bit_attributes_[REQ_BADSIG] = badsig;
     }
