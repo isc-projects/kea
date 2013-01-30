@@ -30,7 +30,7 @@ class SessionTimeout(Exception): pass
 
 class Session:
     MSGQ_DEFAULT_TIMEOUT = 4000
-    
+
     def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
@@ -159,7 +159,7 @@ class Session:
         if len(data) == 0: # server closed connection
             raise ProtocolError("Read of 0 bytes: connection closed")
         return data
-        
+
     def _receive_len_data(self):
         """Reads self._recv_len_size bytes of data from the socket into
            self._recv_len_data
@@ -203,7 +203,7 @@ class Session:
             # they may never both be non-zero (we are either starting
             # a full read, or continuing one of the reads
             assert self._recv_size == 0 or self._recv_len_size == 0
-            
+
             if self._recv_size == 0:
                 if self._recv_len_size == 0:
                     # both zero, start a new full read
