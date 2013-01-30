@@ -78,13 +78,13 @@ public:
     ///
     /// \return opcode of the request wrapped with boost::optional; it's
     ///         converted to false if Opcode hasn't been set.
-    ///
     /// \throw None
     const boost::optional<isc::dns::Opcode>& getRequestOpCode() const {
         return (req_opcode_);
     }
 
     /// \brief Set opcode of the request.
+    ///
     /// \param opcode Opcode of the request
     /// \throw None
     void setRequestOpCode(const isc::dns::Opcode& opcode) {
@@ -92,6 +92,7 @@ public:
     }
 
     /// \brief Get IP version carrying a request.
+    ///
     /// \return IP version carrying a request (AF_INET or AF_INET6)
     /// \throw None
     int getRequestIPVersion() const {
@@ -99,6 +100,7 @@ public:
     }
 
     /// \brief Set IP version carrying a request.
+    ///
     /// \param ip_version AF_INET or AF_INET6
     /// \throw None
     void setRequestIPVersion(const int ip_version) {
@@ -106,6 +108,7 @@ public:
     }
 
     /// \brief Get transport protocol carrying a request.
+    ///
     /// \return Transport protocol carrying a request
     ///         (IPPROTO_UDP or IPPROTO_TCP)
     /// \throw None
@@ -114,6 +117,7 @@ public:
     }
 
     /// \brief Set transport protocol carrying a request.
+    ///
     /// \param transport_protocol IPPROTO_UDP or IPPROTO_TCP
     /// \throw None
     void setRequestTransportProtocol(const int transport_protocol) {
@@ -121,6 +125,7 @@ public:
     }
 
     /// \brief Return whether EDNS version of the request is 0 or not.
+    ///
     /// \return true if EDNS version of the request is 0
     /// \throw None
     bool getRequestEDNS0() const {
@@ -128,6 +133,7 @@ public:
     }
 
     /// \brief Set whether EDNS version of the request is 0 or not.
+    ///
     /// \param with_edns_0 true if EDNS version of the request is 0
     /// \throw None
     void setRequestEDNS0(const bool with_edns_0) {
@@ -135,6 +141,7 @@ public:
     }
 
     /// \brief Return DNSSEC OK (DO) bit of the request.
+    ///
     /// \return true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     bool getRequestDO() const {
@@ -142,6 +149,7 @@ public:
     }
 
     /// \brief Set DNSSEC OK (DO) bit of the request.
+    ///
     /// \param with_dnssec_ok true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
     void setRequestDO(const bool with_dnssec_ok) {
@@ -149,6 +157,7 @@ public:
     }
 
     /// \brief Return whether the request is TSIG signed or not.
+    ///
     /// \return true if the request is TSIG signed
     /// \throw None
     bool getRequestSigTSIG() const {
@@ -156,6 +165,7 @@ public:
     }
 
     /// \brief Return whether the signature of the request is bad or not.
+    ///
     /// \return true if the signature of the request is bad
     /// \throw None
     bool getRequestSigBadSig() const {
@@ -163,6 +173,7 @@ public:
     }
 
     /// \brief Set TSIG attributes of the request.
+    ///
     /// \param signed_tsig true if the request is signed with TSIG
     /// \param badsig true if the signature of the request is bad
     /// \throw None
@@ -173,6 +184,7 @@ public:
     }
 
     /// \brief Return TC (truncated) bit of the response.
+    ///
     /// \return true if the response is truncated
     /// \throw None
     bool getResponseTruncated() const {
@@ -180,6 +192,7 @@ public:
     }
 
     /// \brief Set TC (truncated) bit of the response.
+    ///
     /// \param is_truncated true if the response is truncated
     /// \throw None
     void setResponseTruncated(const bool is_truncated) {
@@ -187,6 +200,7 @@ public:
     }
 
     /// \brief Return whether the response is TSIG signed or not.
+    ///
     /// \return true if the response is signed with TSIG
     /// \throw None
     bool getResponseTSIG() const {
@@ -194,6 +208,7 @@ public:
     }
 
     /// \brief Set whether the response is TSIG signed or not.
+    ///
     /// \param signed_tsig true if the response is signed with TSIG
     /// \throw None
     void setResponseTSIG(const bool signed_tsig) {
@@ -239,14 +254,12 @@ public:
     ///        item_name is a string seperated by '.'.
     ///        item_value is an integer.
     /// \endverbatim
-    ///
     typedef isc::data::ConstElementPtr ConstItemTreePtr;
 
     /// \brief The constructor.
     ///
     /// This constructor is mostly exception free. But it may still throw
     /// a standard exception if memory allocation fails inside the method.
-    ///
     Counters();
 
     /// \brief Increment counters according to the parameters.
@@ -254,9 +267,7 @@ public:
     /// \param msgattrs DNS message attributes.
     /// \param response DNS response message.
     /// \param done DNS response was sent to the client.
-    ///
     /// \throw None
-    ///
     void inc(const MessageAttributes& msgattrs,
              const isc::dns::Message& response, const bool done);
 
@@ -266,9 +277,7 @@ public:
     /// standard exception if memory allocation fails inside the method.
     ///
     /// \return statistics data
-    ///
     /// \throw std::bad_alloc Internal resource allocation fails
-    ///
     ConstItemTreePtr get() const;
 };
 
