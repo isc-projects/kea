@@ -72,7 +72,7 @@ public:
     ///                              already exists
     void addElement(const std::string& name) {
         // throw if the element already exists
-        if (dictionary_.count(name) != 0) {
+        if (dictionary_.find(name) != dictionary_.end()) {
             isc_throw(isc::InvalidParameter,
                       "Element " << name << " already exists");
         }
