@@ -311,6 +311,9 @@ class MsgQ:
         lname = self.newlname()
         self.lnames[lname] = newsocket
 
+        logger.debug(TRACE_BASIC, MSGQ_SOCKET_REGISTERED, newsocket.fileno(),
+                     lname)
+
         if self.poller:
             self.poller.register(newsocket, select.POLLIN)
         else:
