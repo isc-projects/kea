@@ -75,6 +75,24 @@ TEST_F(CountersTest, invalidOperationForGetRequestOpCode) {
     EXPECT_EQ(Opcode::QUERY(), msgattrs.getRequestOpCode().get());
 }
 
+TEST_F(CountersTest, invalidParameterForSetRequestTSIG) {
+    MessageAttributes msgattrs;
+
+    // These patterns should not throw:
+    //      request signature  badsig
+    //     --------------------------
+    //      (none)             false 
+    //      TSIG               false 
+    //      TSIG               true  
+    EXPECT_NO_THROW(msgattrs.setRequestTSIG(false, false));
+    EXPECT_NO_THROW(msgattrs.setRequestTSIG(true, false));
+    EXPECT_NO_THROW(msgattrs.setRequestTSIG(true, true));
+
+    // It should throw isc::InvalidParameter if a message is not signed but
+    // badsig is true
+    EXPECT_THROW(msgattrs.setRequestTSIG(false, true), isc::InvalidParameter);
+}
+
 TEST_F(CountersTest, incrementResponse) {
     Message response(Message::RENDER);
     MessageAttributes msgattrs;
