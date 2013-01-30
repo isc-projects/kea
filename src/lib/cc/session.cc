@@ -479,14 +479,13 @@ Session::group_sendmsg(ConstElementPtr msg, std::string group,
         arg(group);
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
-    
+
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(to));
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
     env->set("seq", Element::create(nseq));
-    //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
     return (nseq);
@@ -513,7 +512,7 @@ Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
         arg(newmsg->str());
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
-    
+
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(envelope->get("from")->stringValue()));

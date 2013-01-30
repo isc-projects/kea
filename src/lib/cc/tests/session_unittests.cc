@@ -26,7 +26,7 @@
 
 #include <cc/session.h>
 #include <cc/data.h>
-#include <session_unittests_config.h>
+#include <cc/tests/session_unittests_config.h>
 
 using namespace isc::cc;
 
@@ -50,7 +50,6 @@ TEST(AsioSession, establish) {
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
                   ), isc::cc::SessionError
     );
-                  
 }
 
 // This class sets up a domain socket for the session to connect to
@@ -70,7 +69,7 @@ public:
                                boost::bind(&TestDomainSocket::acceptHandler,
                                            this, _1));
     }
-    
+
     ~TestDomainSocket() {
         socket_.close();
         unlink(BIND10_TEST_SOCKET_FILE);
@@ -89,7 +88,7 @@ public:
         const unsigned int length_net = htonl(length);
         const unsigned short header_length = header_wire.length();
         const unsigned short header_length_net = htons(header_length);
-    
+
         socket_.send(asio::buffer(&length_net, sizeof(length_net)));
         socket_.send(asio::buffer(&header_length_net,
                                   sizeof(header_length_net)));
@@ -112,7 +111,7 @@ public:
         asio::async_read(socket_,  asio::buffer(data_buf, 0),
                          boost::bind(&TestDomainSocket::sendLname, this));
     }
-    
+
 private:
     asio::io_service& io_service_;
     asio::local::stream_protocol::endpoint ep_;
