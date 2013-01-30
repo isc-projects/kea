@@ -41,6 +41,11 @@ This may be caused by a programmer error (one of the components sending invalid
 data) or possibly by incompatible version of msgq and the component (but that's
 unlikely, as the protocol is not changed often).
 
+% MSGQ_INVALID_CMD Received invalid command: %1
+An unknown command listed in the log has been received. It is ignored. This
+indicates either a programmer error (eg. a typo in the command name) or
+incompatible version of a module and message queue daemon.
+
 % MSGQ_LISTENER_FAILED Failed to initialize listener on socket file '%1': %2
 The message queue daemon tried to listen on a file socket (the path is in the
 message), but it failed. The error from the operating system is logged.
@@ -75,17 +80,17 @@ the corresponding socket is dropped.
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
 
-% MSGQ_INVALID_CMD Received invalid command: %1
-An unknown command listed in the log has been received. It is ignored. This
-indicates either a programmer error (eg. a typo in the command name) or
-incompatible version of a module and message queue daemon.
-
 % MSGQ_SEND_ERR Error while sending to socket %1: %2
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
 
 % MSGQ_SHUTDOWN Stopping Msgq
 Debug message. The message queue is shutting down.
+
+% MSGQ_SOCKET_REGISTERED Registered a socket descriptor %1 with lname %2
+Debug message. The msgq daemon accepted a session request on the
+shown descriptor of socket and assigned a unique identifier (lname)
+for the client on that socket.
 
 % MSGQ_SOCK_CLOSE Closing socket fd %1
 Debug message. Closing the mentioned socket.
