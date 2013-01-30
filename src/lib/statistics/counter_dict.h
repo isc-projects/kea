@@ -138,15 +138,16 @@ public:
                                 boost::forward_traversal_tag>
     {
         public:
-            /// The constructor.
+            /// \brief The constructor.
             ///
             /// This constructor is mostly exception free. But it may still
             /// throw a standard exception if memory allocation fails
             /// inside the method.
             ConstIterator() {}
-            /// Constructor from implementation detail DictionaryMap::const_iterator
-            ConstIterator(
-                DictionaryMap::const_iterator iterator) :
+
+            /// \brief Constructor from implementation detail
+            /// DictionaryMap::const_iterator
+            ConstIterator(DictionaryMap::const_iterator iterator) :
                 iterator_(iterator)
             {}
 
