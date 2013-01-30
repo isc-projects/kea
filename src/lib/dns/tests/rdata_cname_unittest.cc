@@ -62,6 +62,11 @@ TEST_F(Rdata_CNAME_Test, createFromText) {
                                                   "cn.example.com.")));
 }
 
+TEST_F(Rdata_CNAME_Test, badText) {
+    // Extra text at end of line
+    EXPECT_THROW(generic::CNAME("cname.example.com. extra."), InvalidRdataText);
+}
+
 TEST_F(Rdata_CNAME_Test, createFromWire) {
     EXPECT_EQ(0, rdata_cname.compare(
                   *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
@@ -91,6 +96,9 @@ TEST_F(Rdata_CNAME_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_cname.compare(
         *test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
                                      "cn.example.com.")));
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
+                                             "cname.example.com. extra."));
 }
 
 TEST_F(Rdata_CNAME_Test, toWireBuffer) {
