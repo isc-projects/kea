@@ -53,12 +53,6 @@ dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
 nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
 
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-dhcp6_unittests_CXXFLAGS = -Wno-unused-parameter
-endif
-
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)

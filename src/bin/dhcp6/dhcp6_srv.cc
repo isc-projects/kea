@@ -256,7 +256,8 @@ bool Dhcpv6Srv::loadServerID(const std::string& file_name) {
     return (true);
 }
 
-std::string Dhcpv6Srv::duidToString(const OptionPtr& opt) {
+std::string
+Dhcpv6Srv::duidToString(const OptionPtr& opt) {
     stringstream tmp;
 
     OptionBuffer data = opt->getData();
@@ -275,16 +276,19 @@ std::string Dhcpv6Srv::duidToString(const OptionPtr& opt) {
     return tmp.str();
 }
 
-bool Dhcpv6Srv::writeServerID(const std::string& file_name) {
+bool
+Dhcpv6Srv::writeServerID(const std::string& file_name) {
     fstream f(file_name.c_str(), ios::out | ios::trunc);
     if (!f.good()) {
         return (false);
     }
     f << duidToString(getServerID());
     f.close();
+    return (true);
 }
 
-void Dhcpv6Srv::generateServerID() {
+void
+Dhcpv6Srv::generateServerID() {
 
     /// @todo: This code implements support for DUID-LLT (the recommended one).
     /// We should eventually add support for other DUID types: DUID-LL, DUID-EN
@@ -367,7 +371,8 @@ void Dhcpv6Srv::generateServerID() {
                                      srvid.begin(), srvid.end()));
 }
 
-void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+void
+Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // Add client-id.
     OptionPtr clientid = question->getOption(D6O_CLIENTID);
     if (clientid) {
@@ -377,7 +382,8 @@ void Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // TODO: Should throw if there is no client-id (except anonymous INF-REQUEST)
 }
 
-void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+void
+Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // add server-id
     answer->addOption(getServerID());
 
@@ -393,7 +399,8 @@ void Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
 }
 
-void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+void
+Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // Get the subnet for a particular address.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
     if (!subnet) {
@@ -420,7 +427,8 @@ void Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer)
     }
 }
 
-OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
+OptionPtr
+Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     // @todo This function uses OptionCustom class to manage contents
     // of the data fields. Since this this option is frequently used
     // it may be good to implement dedicated class to avoid performance
@@ -446,8 +454,9 @@ OptionPtr Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     return (option_status);
 }
 
-void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
-                            RequirementLevel serverid) {
+void
+Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
+                       RequirementLevel serverid) {
     Option::OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
     switch (clientid) {
     case MANDATORY:
@@ -494,7 +503,8 @@ void Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
     }
 }
 
-Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
+Subnet6Ptr
+Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
     /// @todo: pass interface information only if received direct (non-relayed) message
 
@@ -510,7 +520,8 @@ Subnet6Ptr Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
     return (subnet);
 }
 
-void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+void
+Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
@@ -579,8 +590,9 @@ void Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
-OptionPtr Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                                 Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
+OptionPtr
+Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                       Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
@@ -675,8 +687,9 @@ OptionPtr Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     return (ia_rsp);
 }
 
-OptionPtr Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                                Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
+OptionPtr
+Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                      Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
                                                             subnet->getID());
 
@@ -719,7 +732,8 @@ OptionPtr Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     return (ia_rsp);
 }
 
-void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
+void
+Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
 
     // We need to renew addresses for all IA_NA options in the client's
     // RENEW message.
@@ -775,7 +789,8 @@ void Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
     }
 }
 
-void Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
+void
+Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
 
     // We need to release addresses for all IA_NA options in the client's
     // RELEASE message.
@@ -831,9 +846,9 @@ void Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
                      "Summary status for all processed IA_NAs"));
 }
 
-OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
-                                  int& general_status,
-                                  boost::shared_ptr<Option6IA> ia) {
+OptionPtr
+Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+                        int& general_status, boost::shared_ptr<Option6IA> ia) {
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
     // to this particular client.
@@ -942,8 +957,8 @@ OptionPtr Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
     }
 }
 
-
-Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
+Pkt6Ptr
+Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     sanityCheck(solicit, MANDATORY, FORBIDDEN);
 
@@ -958,7 +973,8 @@ Pkt6Ptr Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     return (advertise);
 }
 
-Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
+Pkt6Ptr
+Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     sanityCheck(request, MANDATORY, MANDATORY);
 
@@ -973,7 +989,8 @@ Pkt6Ptr Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     return (reply);
 }
 
-Pkt6Ptr Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
+Pkt6Ptr
+Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     sanityCheck(renew, MANDATORY, MANDATORY);
 
@@ -988,19 +1005,22 @@ Pkt6Ptr Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     return reply;
 }
 
-Pkt6Ptr Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
+Pkt6Ptr
+Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
     return reply;
 }
 
-Pkt6Ptr Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
+Pkt6Ptr
+Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, confirm->getTransid()));
     return reply;
 }
 
-Pkt6Ptr Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
+Pkt6Ptr
+Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
     sanityCheck(release, MANDATORY, MANDATORY);
 
@@ -1014,13 +1034,15 @@ Pkt6Ptr Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     return reply;
 }
 
-Pkt6Ptr Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
+Pkt6Ptr
+Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
     return reply;
 }
 
-Pkt6Ptr Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
+Pkt6Ptr
+Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
