@@ -159,7 +159,7 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     }
 
     // OPCODE
-    const boost::optional<const isc::dns::Opcode&> opcode =
+    const boost::optional<isc::dns::Opcode>& opcode =
         msgattrs.getRequestOpCode();
     // Increment opcode counter only if the opcode exists.
     if (opcode) {
@@ -203,7 +203,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         server_msg_counter_.inc(MSG_REQUEST_BADEDNSVER);
     }
 
-    const boost::optional<const isc::dns::Opcode&> opcode =
+    const boost::optional<isc::dns::Opcode>& opcode =
         msgattrs.getRequestOpCode();
     if (opcode && opcode.get() == Opcode::QUERY()) {
         // compound attributes
