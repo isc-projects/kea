@@ -86,7 +86,7 @@ removelist = [
 # If we have waited OUTPUT_WAIT_MAX_INTERVALS times, we will abort with an
 # error (so as not to hang indefinitely)
 OUTPUT_WAIT_INTERVAL = 0.5
-OUTPUT_WAIT_MAX_INTERVALS = 20
+OUTPUT_WAIT_MAX_INTERVALS = 120
 
 # class that keeps track of one running process and the files
 # we created for it.
