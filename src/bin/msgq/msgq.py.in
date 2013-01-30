@@ -568,10 +568,11 @@ class MsgQ:
             # one should be enough, we modify the dict only.
             header = routing.copy()
             header["reply"] = routing["seq"]
-            # The other headers can just stay the same. They are not used
-            # in the recipient and we know where to send it, so we don't
-            # need the "to" header. We don't know the sender's lname
-            # in this part of code anyway.
+            header["from"] = 'msgq' # Dummy lname not assigned to clients
+            header["to"] = routing["from"]
+            # We keep the seq as it is. We don't need to track the message
+            # and provided the sender always uses a new one, it won't know
+            # we're cheating, since we won't send it two same either.
             errmsg = self.preparemsg(header, payload)
             # Send it back.
             self.send_prepared_msg(sock, errmsg)
