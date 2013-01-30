@@ -93,7 +93,7 @@
       file.  It has the same name, with ".backup" appended to it.  If a
       file of that name already exists, the file will have the suffix
       ".backup-1".  If that exists, the file will be suffixed ".backup-2",
-      and so on). Exit status is 0 if the upgrade is either succesful or
+      and so on). Exit status is 0 if the upgrade is either successful or
       aborted by the user, and non-zero if there is an error.
     </para>
 
