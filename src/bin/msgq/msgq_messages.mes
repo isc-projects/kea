@@ -84,6 +84,25 @@ Debug message. This message includes the whole routing header of a packet.
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
 
+% MSGQ_CLOSE_ON_SEND Sending to socket failed as already closed (okay to ignore on shutdown): FD=%1
+The msgq daemon tries to send some data to a client module, but it
+failed because the socket has been closed.  This normally means the
+client terminates (for some reason - either gracefully or as a crash)
+while other modules try to send a message to the terminated module.
+Since msgq doesn't keep track of the status of client modules, this
+can happen and is not really an error for msgq; however, it can still
+be an unexpected event for the BIND 10 system as a whole in that this
+particular message is lost, so it's logged as a warning.  If this
+message is logged for a running BIND 10 system, it's suggested to
+check other log messages; there may be an error from other modules
+reporting a missing response message.  One common, less critical case
+where this message is logged is during shutdown.  The ordering of
+process shutdown is basically arbitrary at this moment, so it's
+possible that some module tries to send a "quitting" message to some
+other module but the latter has already shut down.  Such cases are
+generally non critical, but you may want to check other possible error
+messages.
+
 % MSGQ_SHUTDOWN Stopping Msgq
 Debug message. The message queue is shutting down.
 

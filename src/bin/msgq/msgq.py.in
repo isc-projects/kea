@@ -431,9 +431,12 @@ class MsgQ:
     def sendmsg(self, sock, env, msg = None):
         self.send_prepared_msg(sock, self.preparemsg(env, msg))
 
-    def __send_data(self, sock, data):
+    def _send_data(self, sock, data):
         """
-        Send a piece of data to the given socket.
+        Send a piece of data to the given socket.  This method is
+        essentially "private" to MsgQ, but defined as if it were "protected"
+        for easier access from tests.
+
         Parameters:
         sock: The socket to send to
         data: The list of bytes to send
@@ -449,15 +452,17 @@ class MsgQ:
             sock.setblocking(0)
             return sock.send(data)
         except socket.error as e:
-            if e.errno in [ errno.EAGAIN,
-                            errno.EWOULDBLOCK,
-                            errno.EINTR ]:
+            if e.errno in [ errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR ]:
                 return 0
-            elif e.errno in [ errno.EPIPE,
-                              errno.ECONNRESET,
-                              errno.ENOBUFS ]:
-                logger.error(MSGQ_SEND_ERR, sock.fileno(),
-                             errno.errorcode[e.errno])
+            elif e.errno in [ errno.EPIPE, errno.ECONNRESET, errno.ENOBUFS ]:
+                # EPIPE happens if the remote module has terminated by the time
+                # of this send; its severity can vary, but in many cases it
+                # shouldn't be critical, so we log it separately as a warning.
+                if e.errno == errno.EPIPE:
+                    logger.warn(MSGQ_CLOSE_ON_SEND, sock.fileno())
+                else:
+                    logger.error(MSGQ_SEND_ERR, sock.fileno(),
+                                 errno.errorcode[e.errno])
                 self.kill_socket(sock.fileno(), sock)
                 return None
             else:
@@ -472,7 +477,7 @@ class MsgQ:
         if fileno in self.sendbuffs:
             amount_sent = 0
         else:
-            amount_sent = self.__send_data(sock, msg)
+            amount_sent = self._send_data(sock, msg)
             if amount_sent is None:
                 # Socket has been killed, drop the send
                 return
@@ -501,7 +506,7 @@ class MsgQ:
         # Try to send some data from the buffer
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
-        amount_sent = self.__send_data(sock, msg)
+        amount_sent = self._send_data(sock, msg)
         if amount_sent is not None:
             # Keep the rest
             msg = msg[amount_sent:]

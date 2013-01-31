@@ -1,3 +1,4 @@
+import msgq
 from msgq import SubscriptionManager, MsgQ
 
 import unittest
@@ -558,6 +559,103 @@ class ThreadTests(unittest.TestCase):
         test_thread.start()
         test_thread.join(60)
         self.assertTrue(self.__result)
+
+class SocketTests(unittest.TestCase):
+    '''Test cases for micro behaviors related to socket operations.
+
+    Some cases are covered as part of other tests, but in this fixture
+    we check more details of specific method related socket operation,
+    with the help mock classes to avoid expensive overhead.
+
+    '''
+    class MockSocket():
+        '''A mock socket used instead of standard socket objects.'''
+        def __init__(self):
+            self.ex_on_send = None # raised from send() if not None
+            self.blockings = [] # history of setblocking() params
+        def setblocking(self, on):
+            self.blockings.append(on)
+        def send(self, data):
+            if self.ex_on_send is not None:
+                raise self.ex_on_send
+            return 10           # arbitrary choice
+        def fileno(self):
+            return 42           # arbitrary choice
+
+    class LoggerWrapper():
+        '''A simple wrapper of logger to inspect log messages.'''
+        def __init__(self, logger):
+            self.error_called = 0
+            self.warn_called = 0
+            self.orig_logger = logger
+        def error(self, id, fd_arg, sock_arg):
+            self.error_called += 1
+            self.orig_logger.error(id, fd_arg, sock_arg)
+        def warn(self, id, fd_arg):
+            self.warn_called += 1
+            self.orig_logger.warn(id, fd_arg)
+
+    def mock_kill_socket(self, fileno, sock):
+        '''A replacement of MsgQ.kill_socket method for inspection.'''
+        self.__killed_socket = (fileno, sock)
+
+    def setUp(self):
+        self.__msgq = MsgQ()
+        self.__msgq.kill_socket = self.mock_kill_socket
+        self.__sock = self.MockSocket()
+        self.__data = b'dummy'
+        self.__sock_error = socket.error()
+        self.__killed_socket = None
+        self.__logger = self.LoggerWrapper(msgq.logger)
+        msgq.logger = self.__logger
+
+    def tearDown(self):
+        msgq.logger = self.__logger.orig_logger
+
+    def test_send_data(self):
+        # Successful case: _send_data() returns the hardcoded value, and
+        # setblocking() is called twice with the expected parameters
+        self.assertEqual(10, self.__msgq._send_data(self.__sock, self.__data))
+        self.assertEqual([0, 1], self.__sock.blockings)
+        self.assertIsNone(self.__killed_socket)
+
+    def test_send_data_interrupt(self):
+        '''send() is interruptted. send_data() returns 0, sock isn't killed.'''
+        expected_blockings = []
+        for eno in [errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR]:
+            self.__sock_error.errno = eno
+            self.__sock.ex_on_send = self.__sock_error
+            self.assertEqual(0, self.__msgq._send_data(self.__sock,
+                                                       self.__data))
+            expected_blockings.extend([0, 1])
+            self.assertEqual(expected_blockings, self.__sock.blockings)
+            self.assertIsNone(self.__killed_socket)
+
+    def test_send_data_error(self):
+        '''Unexpected error happens on send().  The socket is killed.
+
+        If the error is EPIPE, it's logged at the warn level; otherwise
+        an error message is logged.
+
+        '''
+        expected_blockings = []
+        expected_errors = 0
+        expected_warns = 0
+        for eno in [errno.EPIPE, errno.ECONNRESET, errno.ENOBUFS]:
+            self.__sock_error.errno = eno
+            self.__sock.ex_on_send = self.__sock_error
+            self.assertEqual(None, self.__msgq._send_data(self.__sock,
+                                                          self.__data))
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            expected_blockings.extend([0, 1])
+            self.assertEqual(expected_blockings, self.__sock.blockings)
+
+            if eno == errno.EPIPE:
+                expected_warns += 1
+            else:
+                expected_errors += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_warns, self.__logger.warn_called)
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()
