@@ -1310,7 +1310,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10_src.py
+           src/bin/bind10/b10-init.py
            src/bin/bind10/run_bind10.sh
            src/bin/bind10/tests/bind10_test.py
            src/bin/bindctl/run_bindctl.sh
