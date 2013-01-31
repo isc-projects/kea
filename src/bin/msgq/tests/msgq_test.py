@@ -564,8 +564,8 @@ class SocketTests(unittest.TestCase):
     '''Test cases for micro behaviors related to socket operations.
 
     Some cases are covered as part of other tests, but in this fixture
-    we check more details of specific method related socket operation,
-    with the help mock classes to avoid expensive overhead.
+    we check more details of specific method related to socket operation,
+    with the help of mock classes to avoid expensive overhead.
 
     '''
     class MockSocket():
