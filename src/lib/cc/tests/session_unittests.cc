@@ -19,16 +19,25 @@
 // XXX: the ASIO header must be included before others.  See session.cc.
 #include <asio.hpp>
 
+#include <cc/session.h>
+#include <cc/data.h>
+#include <cc/tests/session_unittests_config.h>
+
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
-#include <cc/session.h>
-#include <cc/data.h>
-#include <cc/tests/session_unittests_config.h>
+#include <utility>
+#include <vector>
+#include <string>
 
 using namespace isc::cc;
+using std::pair;
+using std::vector;
+using std::string;
+using isc::data::ConstElementPtr;
+using isc::data::Element;
 
 TEST(AsioSession, establish) {
     asio::io_service io_service_;
@@ -75,12 +84,10 @@ public:
         unlink(BIND10_TEST_SOCKET_FILE);
     }
 
-    void
-    acceptHandler(const asio::error_code&) const {
+    void acceptHandler(const asio::error_code&) const {
     }
 
-    void
-    sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
+    void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
         const std::string header_wire = env->toWire();
         const std::string body_wire = msg->toWire();
         const unsigned int length = 2 + header_wire.length() +
@@ -96,8 +103,61 @@ public:
         socket_.send(asio::buffer(body_wire.data(), body_wire.length()));
     }
 
-    void
-    sendLname() {
+    /// Pair holding header and data of a message sent over the wire.
+    typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
+    /// \brief Read a message from the socket
+    ///
+    /// Read a message from the socket and parse it. Block until it is
+    /// read or error happens. If error happens, it throws isc::Unexpected.
+    ///
+    /// This method would block for ever if the sender is not sending.
+    /// But the whole test has a timeout of 10 seconds (see the
+    /// SessionTest::SetUp and SessionTest::TearDown).
+    ///
+    /// \note The method assumes the wire data are correct and does not check
+    ///    it. Strange things might happen if it is not the case, but the
+    ///    test would likely fail as a result, so we prefer simplicity here.
+    ///
+    /// \return Pair containing the header and body elements (in this order).
+    SentMessage readmsg() {
+        // The format is:
+        // <uint32_t in net order = total length>
+        // <uint16_t in net order = header length>
+        // <char * header length = the header>
+        // <char * the rest of the total length = the data>
+        uint32_t total_len_data;
+        if (asio::read(socket_, asio::buffer(&total_len_data,
+                                             sizeof total_len_data)) !=
+            sizeof total_len_data) {
+            isc_throw(isc::Unexpected, "Error while reading total length");
+        }
+        const uint32_t total_len = ntohl(total_len_data);
+        uint16_t header_len_data;
+        if (asio::read(socket_, asio::buffer(&header_len_data,
+                                             sizeof header_len_data)) !=
+            sizeof header_len_data) {
+            isc_throw(isc::Unexpected, "Error while reading header length");
+        }
+        const uint16_t header_len = ntohs(header_len_data);
+        // We use char, not unsigned char, because we want to make a string
+        // out of it.
+        vector<char> raw_data;
+        raw_data.resize(total_len - sizeof header_len_data);
+        if (asio::read(socket_,
+                       asio::buffer(&raw_data[0],
+                                    total_len - sizeof header_len_data)) !=
+            total_len - header_len_data) {
+            isc_throw(isc::Unexpected, "Error while reading data");
+        }
+        // Extract the right data into each string and convert.
+        return (SentMessage(
+            Element::fromWire(string(raw_data.begin(),
+                                     raw_data.begin() + header_len)),
+            Element::fromWire(string(raw_data.begin() + header_len,
+                                     raw_data.end()))));
+    }
+
+    void sendLname() {
         isc::data::ElementPtr lname_answer1 =
             isc::data::Element::fromJSON("{ \"type\": \"lname\" }");
         isc::data::ElementPtr lname_answer2 =
@@ -105,8 +165,7 @@ public:
         sendmsg(lname_answer1, lname_answer2);
     }
 
-    void
-    setSendLname() {
+    void setSendLname() {
         // ignore whatever data we get, send back an lname
         asio::async_read(socket_,  asio::buffer(data_buf, 0),
                          boost::bind(&TestDomainSocket::sendLname, this));
@@ -131,6 +190,21 @@ protected:
 
     ~SessionTest() {
         delete tds;
+    }
+
+    void SetUp() {
+        // There are blocking reads in some tests. We want to have a safety
+        // catch in case the sender didn't write enough. We set a timeout of
+        // 10 seconds per one test (which should really be enough even on
+        // slow machines). If the timeout happens, it kills the test and
+        // the whole test fails.
+        alarm(10);
+    }
+
+    void TearDown() {
+        // Cancel the timeout scheduled in SetUp. We don't want to kill any
+        // of the other tests by it by accident.
+        alarm(0);
     }
 
 public:
