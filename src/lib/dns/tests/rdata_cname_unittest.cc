@@ -96,6 +96,13 @@ TEST_F(Rdata_CNAME_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_cname.compare(
         *test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
                                      "cn.example.com.")));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::CNAME("cname10.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
+                                     "cname10")));
+
     // Extra text at end of line
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::CNAME(), RRClass::IN(),
                                              "cname.example.com. extra."));

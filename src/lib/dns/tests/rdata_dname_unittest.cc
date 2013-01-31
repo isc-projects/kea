@@ -98,6 +98,13 @@ TEST_F(Rdata_DNAME_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_dname.compare(
         *test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
                                      "dn.example.com.")));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::DNAME("dname8.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
+                                     "dname8")));
+
     // Extra text at end of line
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNAME(), RRClass::IN(),
                                              "dname.example.com. extra."));
