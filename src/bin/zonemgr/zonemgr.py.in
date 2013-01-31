@@ -714,4 +714,4 @@ if '__main__' == __name__:
     if zonemgrd and zonemgrd.running:
         zonemgrd.shutdown()
 
-    logger.debug(DBG_START_SHUT, ZONEMGR_SHUTDOWN)
+    logger.info(ZONEMGR_SHUTDOWN)

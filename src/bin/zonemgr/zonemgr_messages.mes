@@ -114,7 +114,7 @@ connecting to the command channel daemon.  The most usual cause of this
 problem is that the daemon is not running.
 
 % ZONEMGR_SHUTDOWN zone manager has shut down
-A debug message, output when the zone manager has shut down completely.
+The zone manager has shut down completely.
 
 % ZONEMGR_STARTED zonemgr started
 This informational message is output by zonemgr when all initialization
