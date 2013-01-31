@@ -659,6 +659,7 @@ class SocketTests(unittest.TestCase):
         for eno in [errno.EPIPE, errno.ECONNRESET, errno.ENOBUFS]:
             self.__sock_error.errno = eno
             self.__sock.ex_on_send = self.__sock_error
+            self.__killed_socket = None # clear any previuos value
             self.assertEqual(None, self.__msgq._send_data(self.__sock,
                                                           self.__data))
             self.assertEqual((42, self.__sock), self.__killed_socket)
@@ -703,9 +704,13 @@ class SocketTests(unittest.TestCase):
         expected_errors = 0
         expected_debugs = 0
 
+        # if socket.recv() fails due to socket.error, it will be logged
+        # as error or debug depending on the errno.  In either case the socket
+        # will be killed.
         for eno in [errno.ENOBUFS, errno.ECONNRESET]:
             self.__sock_error.errno = eno
             self.__sock.recv_result = self.__sock_error
+            self.__killed_socket = None # clear any previuos value
             self.__msgq.process_packet(42, self.__sock)
             self.assertEqual((42, self.__sock), self.__killed_socket)
             if eno == errno.ENOBUFS:
@@ -715,8 +720,13 @@ class SocketTests(unittest.TestCase):
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_debugs, self.__logger.debug_called)
 
+        # if socket.recv() returns empty data, the result depends on whether
+        # there's any preceding data; in the second case below, at least
+        # 6 bytes of data will be expected, and the second call to our faked
+        # recv() returns empty data.  In that case it will logged as error.
         for recv_data in [b'', b'short']:
             self.__sock.recv_result = recv_data
+            self.__killed_socket = None
             self.__msgq.process_packet(42, self.__sock)
             self.assertEqual((42, self.__sock), self.__killed_socket)
             if len(recv_data) == 0:
