@@ -699,7 +699,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
+                      Pkt6Ptr /* question */, boost::shared_ptr<Option6IA> ia) {
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
                                                             subnet->getID());
 
@@ -857,7 +857,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
 }
 
 OptionPtr
-Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr /* question */,
                         int& general_status, boost::shared_ptr<Option6IA> ia) {
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
