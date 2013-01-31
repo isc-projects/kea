@@ -75,19 +75,19 @@ SRV::SRV(const std::string& srv_str) :
 
         uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV priority");
+            isc_throw(InvalidRdataText, "Invalid SRV priority in: " << srv_str);
         }
         const uint16_t priority = static_cast<uint16_t>(num);
 
         num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV weight");
+            isc_throw(InvalidRdataText, "Invalid SRV weight in: " << srv_str);
         }
         const uint16_t weight = static_cast<uint16_t>(num);
 
         num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV port");
+            isc_throw(InvalidRdataText, "Invalid SRV port in: " << srv_str);
         }
         const uint16_t port = static_cast<uint16_t>(num);
 
@@ -158,19 +158,19 @@ SRV::SRV(MasterLexer& lexer, const Name* origin,
 {
     uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV priority");
+        isc_throw(InvalidRdataText, "Invalid SRV priority: " << num);
     }
     const uint16_t priority = static_cast<uint16_t>(num);
 
     num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV weight");
+        isc_throw(InvalidRdataText, "Invalid SRV weight: " << num);
     }
     const uint16_t weight = static_cast<uint16_t>(num);
 
     num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV port");
+        isc_throw(InvalidRdataText, "Invalid SRV port: " << num);
     }
     const uint16_t port = static_cast<uint16_t>(num);
 
