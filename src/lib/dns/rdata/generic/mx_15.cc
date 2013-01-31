@@ -70,7 +70,8 @@ MX::MX(const std::string& mx_str) :
         const uint32_t num =
             lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid MX preference");
+            isc_throw(InvalidRdataText, "Invalid MX preference in: "
+                      << mx_str);
         }
         preference_ = static_cast<uint16_t>(num);
 
@@ -110,7 +111,7 @@ MX::MX(MasterLexer& lexer, const Name* origin,
 {
     const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid MX preference");
+        isc_throw(InvalidRdataText, "Invalid MX preference: " << num);
     }
     preference_ = static_cast<uint16_t>(num);
 
