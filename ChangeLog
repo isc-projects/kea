@@ -1,3 +1,8 @@
+563.	[build]		jinmei
+	Added --disable-rpath configure option to avoid embedding library
+	paths to binaries.  Patch from Adam Tkac.
+	(Trac #2667, git 1c50c5a6ee7e9675e3ab154f2c7f975ef519fca2)
+
 562.	[func]*		vorner
 	The b10-xfrin now performs basic sanity check on just received
 	zone. It'll reject severely broken zones (such as missng NS
