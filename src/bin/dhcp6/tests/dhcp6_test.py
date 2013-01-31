@@ -13,7 +13,15 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10_src import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+# Because the file has a hyphen in its name, we need to work around
+# the standard syntax here
+b10_init = __import__('b10-init')
+# emulate the 'from X import'
+ProcessInfo = b10_init.ProcessInfo
+parse_args = b10_init.parse_args
+dump_pid = b10_init.dump_pid
+unlink_pid_file = b10_init.unlink_pid_file
+_BASETIME = b10_init._BASETIME
 
 import unittest
 import sys
@@ -157,7 +165,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
 
     def test_alive(self):
         """
-        Simple test. Checks that b10-dhcp6 can be started and prints out info 
+        Simple test. Checks that b10-dhcp6 can be started and prints out info
         about starting DHCPv6 operation.
         """
         print("Note: Purpose of some of the tests is to check if DHCPv6 server can be started,")

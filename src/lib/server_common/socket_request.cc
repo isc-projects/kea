@@ -84,7 +84,7 @@ protocolString(SocketRequestor::Protocol protocol) {
 
 // Creates the cc session message to request a socket.
 // The actual command format is hardcoded, and should match
-// the format as read in bind10_src.py.in
+// the format as read in b10-init.py.in
 isc::data::ConstElementPtr
 createRequestSocketMessage(SocketRequestor::Protocol protocol,
                            const std::string& address, uint16_t port,
