@@ -40,6 +40,8 @@ using std::string;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
 
+namespace {
+
 TEST(AsioSession, establish) {
     asio::io_service io_service_;
     Session sess(io_service_);
@@ -204,6 +206,7 @@ protected:
         alarm(0);
     }
 
+    // Check two elements are equal
     void elementsEqual(const ConstElementPtr& expected,
                        const ConstElementPtr& actual)
     {
@@ -212,11 +215,23 @@ protected:
             ", got: " << actual->toWire();
     }
 
+    // The same, but with one specified as string
     void elementsEqual(const string& expected,
                        const ConstElementPtr& actual)
     {
         const ConstElementPtr expected_el(Element::fromJSON(expected));
         elementsEqual(expected_el, actual);
+    }
+
+    // Check the session sent a message with the given header. The
+    // message is hardcoded.
+    void checkSentMessage(const string& expected_hdr,
+                          const char* description)
+    {
+        SCOPED_TRACE(description);
+        const SentMessage msg(tds->readmsg());
+        elementsEqual(expected_hdr, msg.first);
+        elementsEqual("{\"test\": 42}", msg.second);
     }
 
 public:
@@ -344,26 +359,45 @@ TEST_F(SessionTest, group_sendmsg) {
 
     const ConstElementPtr msg(Element::fromJSON("{\"test\": 42}"));
     sess.group_sendmsg(msg, "group");
-    const SentMessage m1(tds->readmsg());
-    elementsEqual("{"
-                  "   \"from\": \"foobar\","
-                  "   \"group\": \"group\","
-                  "   \"instance\": \"*\","
-                  "   \"seq\": 0,"
-                  "   \"to\": \"*\","
-                  "   \"type\": \"send\""
-                  "}", m1.first);
-    elementsEqual(msg, m1.second);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 0,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "No instance");
     sess.group_sendmsg(msg, "group", "instance", "recipient");
-    const SentMessage m2(tds->readmsg());
-    elementsEqual("{"
-                  "   \"from\": \"foobar\","
-                  "   \"group\": \"group\","
-                  "   \"instance\": \"instance\","
-                  "   \"seq\": 1,"
-                  "   \"to\": \"recipient\","
-                  "   \"type\": \"send\""
-                  "}", m2.first);
-    elementsEqual(msg, m2.second);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"instance\","
+                     "   \"seq\": 1,"
+                     "   \"to\": \"recipient\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "With instance");
+    sess.group_sendmsg(msg, "group", "*", "*", true);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 2,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": True"
+                     "}", "Want answer");
+    sess.group_sendmsg(msg, "group", "*", "*", false);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 3,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "Doesn't want answer");
 }
 
+}
