@@ -82,7 +82,8 @@ namespace isc {
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance = "*",
-                                      std::string to = "*") = 0;
+                                      std::string to = "*",
+                                      bool want_answer = false) = 0;
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
@@ -128,10 +129,24 @@ namespace isc {
                                    std::string instance = "*");
             virtual void unsubscribe(std::string group,
                              std::string instance = "*");
+            /// \brief Send a message to a group.
+            ///
+            /// \todo Can someone explain how the group, instance and to work?
+            ///     What is the desired semantics here?
+            /// \param msg The message to send.
+            /// \param group Part of addressing.
+            /// \param instance Part of addressing.
+            /// \param to Part of addressing.
+            /// \param want_answer Require an answer? If it is true and there's
+            ///     no recipient, the message queue answers by an error
+            ///     instead.
+            /// \return The squence number of the message sent. It can be used
+            ///     to wait for an answer by group_recvmsg.
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance = "*",
-                                      std::string to = "*");
+                                      std::string to = "*",
+                                      bool want_answer = false);
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
