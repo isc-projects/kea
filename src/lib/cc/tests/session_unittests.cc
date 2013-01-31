@@ -31,6 +31,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <iostream>
 
 using namespace isc::cc;
 using std::pair;
@@ -60,6 +61,9 @@ TEST(AsioSession, establish) {
                   ), isc::cc::SessionError
     );
 }
+
+/// \brief Pair holding header and data of a message sent over the wire.
+typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
 
 // This class sets up a domain socket for the session to connect to
 // it will impersonate the msgq a tiny bit (if setSendLname() has
@@ -103,12 +107,10 @@ public:
         socket_.send(asio::buffer(body_wire.data(), body_wire.length()));
     }
 
-    /// Pair holding header and data of a message sent over the wire.
-    typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
     /// \brief Read a message from the socket
     ///
     /// Read a message from the socket and parse it. Block until it is
-    /// read or error happens. If error happens, it throws isc::Unexpected.
+    /// read or error happens. If error happens, it asio::system_error.
     ///
     /// This method would block for ever if the sender is not sending.
     /// But the whole test has a timeout of 10 seconds (see the
@@ -125,36 +127,31 @@ public:
         // <uint16_t in net order = header length>
         // <char * header length = the header>
         // <char * the rest of the total length = the data>
+
+        // Read and convert the lengths first.
         uint32_t total_len_data;
-        if (asio::read(socket_, asio::buffer(&total_len_data,
-                                             sizeof total_len_data)) !=
-            sizeof total_len_data) {
-            isc_throw(isc::Unexpected, "Error while reading total length");
-        }
-        const uint32_t total_len = ntohl(total_len_data);
         uint16_t header_len_data;
-        if (asio::read(socket_, asio::buffer(&header_len_data,
-                                             sizeof header_len_data)) !=
-            sizeof header_len_data) {
-            isc_throw(isc::Unexpected, "Error while reading header length");
-        }
+        vector<asio::mutable_buffer> len_buffers;
+        len_buffers.push_back(asio::buffer(&total_len_data,
+                                           sizeof total_len_data));
+        len_buffers.push_back(asio::buffer(&header_len_data,
+                                           sizeof header_len_data));
+        asio::read(socket_, len_buffers);
+        const uint32_t total_len = ntohl(total_len_data);
         const uint16_t header_len = ntohs(header_len_data);
-        // We use char, not unsigned char, because we want to make a string
-        // out of it.
-        vector<char> raw_data;
-        raw_data.resize(total_len - sizeof header_len_data);
-        if (asio::read(socket_,
-                       asio::buffer(&raw_data[0],
-                                    total_len - sizeof header_len_data)) !=
-            total_len - header_len_data) {
-            isc_throw(isc::Unexpected, "Error while reading data");
+        string header, msg;
+        header.resize(header_len);
+        msg.resize(total_len - header_len - sizeof header_len_data);
+        vector<asio::mutable_buffer> data_buffers;
+        data_buffers.push_back(asio::buffer(&header[0], header.size()));
+        data_buffers.push_back(asio::buffer(&msg[0], msg.size()));
+        asio::read(socket_, data_buffers);
+        if (msg == "") { // The case of no msg present, for control messages
+            msg = "null";
         }
         // Extract the right data into each string and convert.
-        return (SentMessage(
-            Element::fromWire(string(raw_data.begin(),
-                                     raw_data.begin() + header_len)),
-            Element::fromWire(string(raw_data.begin() + header_len,
-                                     raw_data.end()))));
+        return (SentMessage(Element::fromWire(header),
+                            Element::fromWire(msg)));
     }
 
     void sendLname() {
@@ -198,13 +195,28 @@ protected:
         // 10 seconds per one test (which should really be enough even on
         // slow machines). If the timeout happens, it kills the test and
         // the whole test fails.
-        alarm(10);
+        //alarm(10);
     }
 
     void TearDown() {
         // Cancel the timeout scheduled in SetUp. We don't want to kill any
         // of the other tests by it by accident.
         alarm(0);
+    }
+
+    void elementsEqual(const ConstElementPtr& expected,
+                       const ConstElementPtr& actual)
+    {
+        EXPECT_TRUE(expected->equals(*actual)) <<
+            "Elements differ, expected: " << expected->toWire() <<
+            ", got: " << actual->toWire();
+    }
+
+    void elementsEqual(const string& expected,
+                       const ConstElementPtr& actual)
+    {
+        const ConstElementPtr expected_el(Element::fromJSON(expected));
+        elementsEqual(expected_el, actual);
     }
 
 public:
@@ -322,3 +334,36 @@ TEST_F(SessionTest, get_socket_descr) {
     // expect actual socket handle to be returned, not 0
     EXPECT_LT(0, socket);
 }
+
+// Test the group_sendmsg sends the correct data.
+TEST_F(SessionTest, group_sendmsg) {
+    // Connect
+    tds->setSendLname();
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+    elementsEqual("{\"type\": \"getlname\"}", tds->readmsg().first);
+
+    const ConstElementPtr msg(Element::fromJSON("{\"test\": 42}"));
+    sess.group_sendmsg(msg, "group");
+    const SentMessage m1(tds->readmsg());
+    elementsEqual("{"
+                  "   \"from\": \"foobar\","
+                  "   \"group\": \"group\","
+                  "   \"instance\": \"*\","
+                  "   \"seq\": 0,"
+                  "   \"to\": \"*\","
+                  "   \"type\": \"send\""
+                  "}", m1.first);
+    elementsEqual(msg, m1.second);
+    sess.group_sendmsg(msg, "group", "instance", "recipient");
+    const SentMessage m2(tds->readmsg());
+    elementsEqual("{"
+                  "   \"from\": \"foobar\","
+                  "   \"group\": \"group\","
+                  "   \"instance\": \"instance\","
+                  "   \"seq\": 1,"
+                  "   \"to\": \"recipient\","
+                  "   \"type\": \"send\""
+                  "}", m2.first);
+    elementsEqual(msg, m2.second);
+}
+
