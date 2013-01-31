@@ -3,8 +3,8 @@ dnl
 dnl @summary figure out whether and which "rpath" linker option is available
 dnl
 dnl This macro checks if the linker supports an option to embed a path
-dnl to a runtime library (often installed in an uncommon place), such as
-dnl gcc's -rpath option.  If found, it sets the ISC_RPATH_FLAG variable to
+dnl to a runtime library (often installed in an uncommon place), such as the
+dnl commonly used -R option.  If found, it sets the ISC_RPATH_FLAG variable to
 dnl the found option flag.  The main configure.ac can use it as follows:
 dnl if test "x$ISC_RPATH_FLAG" != "x"; then
 dnl     LDFLAGS="$LDFLAGS ${ISC_RPATH_FLAG}/usr/local/lib/some_library"
