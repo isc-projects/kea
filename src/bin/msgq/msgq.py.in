@@ -364,13 +364,12 @@ class MsgQ:
             try:
                 data = sock.recv(length - len(received))
 
-            # If the remote client has closed the socket there seems to be
-            # two possible cases: getting ECONNRESET or receiving empty data.
-            # These cases are possible in normal operation, so we report them
-            # using MsgQCloseOnReceive.
             except socket.error as err:
-                if err.errno == errno.ECONNRESET:
-                    raise MsgQCloseOnReceive(str(err), continued)
+                # This case includes ECONNRESET, which seems to happen when
+                # the remote client has closed its socket at some subtle
+                # timing (it should normally result in receiving empty data).
+                # Since we didn't figure out how exactly that could happen,
+                # we treat it just like other really-unexpected socket errors.
                 raise MsgQReceiveError(str(err))
             if len(data) == 0:
                 raise MsgQCloseOnReceive("EOF", continued)

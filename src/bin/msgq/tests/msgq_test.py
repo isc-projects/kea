@@ -705,18 +705,14 @@ class SocketTests(unittest.TestCase):
         expected_debugs = 0
 
         # if socket.recv() fails due to socket.error, it will be logged
-        # as error or debug depending on the errno.  In either case the socket
-        # will be killed.
+        # as error and the socket will be killed regardless of errno.
         for eno in [errno.ENOBUFS, errno.ECONNRESET]:
             self.__sock_error.errno = eno
             self.__sock.recv_result = self.__sock_error
             self.__killed_socket = None # clear any previuos value
             self.__msgq.process_packet(42, self.__sock)
             self.assertEqual((42, self.__sock), self.__killed_socket)
-            if eno == errno.ENOBUFS:
-                expected_errors += 1
-            else:
-                expected_debugs += 1
+            expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_debugs, self.__logger.debug_called)
 

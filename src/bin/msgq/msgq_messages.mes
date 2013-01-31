@@ -99,10 +99,22 @@ the authors when figuring the problem out.
 % MSGQ_RECV_ERR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
 the corresponding socket is dropped.  The errors include receiving
-broken or (non empty but) incomplete data.  In either case it suggests
+broken or (non empty but) incomplete data.  In either case it usually suggests
 something unexpected happens within the BIND 10 system; it's probably
 better to restart the system, and if it continues it should be
-reported as a bug.
+reported as a bug.  One known, probably non critical case is
+the "connection reset by peer" (or its variants) socket error appearing
+on shutdown.  It's known this happens when the remote client closes the
+connection as part of shutdown process.  Such cases are normally expected
+to be reported as receiving empty data (which we log it at the debug level
+as the MSGQ_CLOSE_ON_RECV message), but for some (yet) unknown reason
+it can also be reported as the system error.  At shutdown time it's expected
+that connections are closed, so it's probably safe to ignore these messages
+in such a case.  We still log them as an error as we've not figured out
+how exactly that can happen.  In future, we may make the shutdown process
+more robust so the msgq daemon can explicitly know when a client shuts down
+more reliably.  If and when it's implemented this error message won't appear
+on shutdown unless there's really something unexpected.
 
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
