@@ -56,6 +56,16 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
+/// @brief file name of a server-id file
+///
+/// Server must store its duid in persistent storage that must not change
+/// between restarts. This is name of the file that is created in dataDir
+/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
+/// double digit hex values separated by colons format, e.g.
+/// 01:ff:02:03:06:80:90:ab:cd:ef. Server will create it during first
+/// run and then use it afterwards.
+static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
+
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
     : alloc_engine_(), serverid_(), shutdown_(true) {
 

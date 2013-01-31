@@ -34,6 +34,10 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+if USE_CLANGPP
+# Disable unused parameter warning caused by some Boost headers when compiling with clang
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
