@@ -473,7 +473,7 @@ Session::unsubscribe(std::string group, std::string instance) {
 
 int
 Session::group_sendmsg(ConstElementPtr msg, std::string group,
-                       std::string instance, std::string to, bool)
+                       std::string instance, std::string to, bool want_answer)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_SEND).arg(msg->str()).
         arg(group);
@@ -486,6 +486,7 @@ Session::group_sendmsg(ConstElementPtr msg, std::string group,
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
     env->set("seq", Element::create(nseq));
+    env->set("want_answer", Element::create(want_answer));
 
     sendmsg(env, msg);
     return (nseq);
