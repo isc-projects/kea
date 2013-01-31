@@ -49,7 +49,7 @@ public:
     /// @brief Establishes msgq session.
     ///
     /// Creates session that will be used to receive commands and updated
-    /// configuration from boss (or indirectly from user via bindctl).
+    /// configuration from cfgmgr (or indirectly from user via bindctl).
     void establishSession();
 
     /// @brief Terminates existing msgq session.

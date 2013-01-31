@@ -92,7 +92,7 @@
         "item_optional": false,
         "item_default": "1970-01-01T00:00:00Z",
         "item_title": "Last update time",
-        "item_description": "The latest date time when the stats module receives from other modules like auth server or boss process and so on",
+        "item_description": "The latest date time when the stats module receives from other modules like auth server or b10-init process and so on",
         "item_format": "date-time"
       },
       {

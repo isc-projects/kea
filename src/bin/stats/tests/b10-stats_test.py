@@ -659,7 +659,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], sum_qudp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
-        # self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
+        # self.base.b10_init.server.pid_list = [ killed ] + self.base.b10_init.server.pid_list[:]
         self.stats.update_statistics_data('Auth',
                                           "bar1@foo",
                                           {'queries.tcp': bar1_tcp})
@@ -1151,9 +1151,9 @@ class TestStats(unittest.TestCase):
             send_command('show', 'Stats'),
             (0, stat.statistics_data))
         # check statistics data of 'Boss'
-        boss = self.base.boss.server
+        b10_init = self.base.b10_init.server
         self.assertEqual(
-            stat.statistics_data_bymid['Boss'][boss.cc_session.lname],
+            stat.statistics_data_bymid['Boss'][b10_init.cc_session.lname],
             {'boot_time': self.const_datetime})
         self.assertEqual(
             len(stat.statistics_data_bymid['Boss']), 1)
@@ -1219,8 +1219,8 @@ class TestStats(unittest.TestCase):
 
     def test_polling2(self):
         # set invalid statistics
-        boss = self.base.boss.server
-        boss.statistics_data = {'boot_time':1}
+        b10_init = self.base.b10_init.server
+        b10_init.statistics_data = {'boot_time':1}
         stats_server = ThreadingServerManager(MyStats)
         stat = stats_server.server
         stats_server.run()

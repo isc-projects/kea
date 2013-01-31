@@ -177,9 +177,9 @@ class TestConfigManager(unittest.TestCase):
         self.assertTrue(self.fake_session.has_subscription("Boss", "ConfigManager"))
         self.assertFalse(self.cm.running)
 
-    def test_notify_boss(self):
-        self.cm.notify_boss()
-        msg = self.fake_session.get_message("Boss", None)
+    def test_notify_b10_init(self):
+        self.cm.notify_b10_init()
+        msg = self.fake_session.get_message("Init", None)
         self.assertTrue(msg)
         # this one is actually wrong, but 'current status quo'
         self.assertEqual(msg, {"running": "ConfigManager"})

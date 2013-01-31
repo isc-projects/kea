@@ -204,7 +204,7 @@ def parse_bindctl_output_as_data_structure():
 def find_process_pid(step, process_name):
     """Helper function to request the running processes from Boss, and
        return the pid of the process with the given process_name.
-       Fails with an assert if the response from boss is not valid JSON,
+       Fails with an assert if the response from b10-init is not valid JSON,
        or if the process with the given name is not found.
     """
     # show_processes output is a list of lists, where the inner lists
