@@ -588,22 +588,26 @@ class SocketTests(unittest.TestCase):
             self.error_called = 0
             self.warn_called = 0
             self.orig_logger = logger
-        def error(self, id, fd_arg, sock_arg):
+        def error(self, *args):
             self.error_called += 1
-            self.orig_logger.error(id, fd_arg, sock_arg)
-        def warn(self, id, fd_arg):
+            self.orig_logger.error(*args)
+        def warn(self, *args):
             self.warn_called += 1
-            self.orig_logger.warn(id, fd_arg)
+            self.orig_logger.warn(*args)
 
     def mock_kill_socket(self, fileno, sock):
         '''A replacement of MsgQ.kill_socket method for inspection.'''
         self.__killed_socket = (fileno, sock)
+        if fileno in self.__msgq.sockets:
+            del self.__msgq.sockets[fileno]
 
     def setUp(self):
         self.__msgq = MsgQ()
         self.__msgq.kill_socket = self.mock_kill_socket
         self.__sock = self.MockSocket()
         self.__data = b'dummy'
+        self.__msgq.sockets[42] = self.__sock
+        self.__msgq.sendbuffs[42] = (None, b'testdata')
         self.__sock_error = socket.error()
         self.__killed_socket = None
         self.__logger = self.LoggerWrapper(msgq.logger)
@@ -656,6 +660,32 @@ class SocketTests(unittest.TestCase):
                 expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_warns, self.__logger.warn_called)
+
+    def test_process_fd_read_after_bad_write(self):
+        '''Check the specific case of write fail followed by read attempt.
+
+        The write failure results in kill_socket, then read shouldn't tried.
+
+        '''
+        self.__sock_error.errno = errno.EPIPE
+        self.__sock.ex_on_send = self.__sock_error
+        self.__msgq.process_socket = None # if called, trigger an exception
+        self.__msgq._process_fd(42, True, True, False) # shouldn't crash
+
+        # check the socket is deleted from the fileno=>sock dictionary
+        self.assertEqual({}, self.__msgq.sockets)
+
+    def test_process_fd_close_after_bad_write(self):
+        '''Similar to the previous, but for checking dup'ed kill attempt'''
+        self.__sock_error.errno = errno.EPIPE
+        self.__sock.ex_on_send = self.__sock_error
+        self.__msgq._process_fd(42, True, False, True) # shouldn't crash
+        self.assertEqual({}, self.__msgq.sockets)
+
+    def test_process_fd_writer_after_close(self):
+        '''Emulate a "writable" socket has been already closed and killed.'''
+        # This just shouldn't crash
+        self.__msgq._process_fd(4200, True, False, False)
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()

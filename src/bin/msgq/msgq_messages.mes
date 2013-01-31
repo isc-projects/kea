@@ -68,11 +68,6 @@ happen and it is either a programmer error or OS bug. The event is ignored. The
 number noted as the event is the raw encoded value, which might be useful to
 the authors when figuring the problem out.
 
-% MSGQ_READ_UNKNOWN_FD Got read on strange socket %1
-The OS reported a file descriptor is ready to read. But the daemon doesn't know
-the mentioned file descriptor, which is either a programmer error or OS bug.
-The read event is ignored.
-
 % MSGQ_RECV_ERR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
 the corresponding socket is dropped.
