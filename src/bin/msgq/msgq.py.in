@@ -319,14 +319,6 @@ class MsgQ:
         else:
             self.add_kqueue_socket(newsocket)
 
-    def process_socket(self, fd):
-        """Process a read on a socket."""
-        if not fd in self.sockets:
-            logger.error(MSGQ_READ_UNKNOWN_FD, fd)
-            return
-        sock = self.sockets[fd]
-        self.process_packet(fd, sock)
-
     def kill_socket(self, fd, sock):
         """Fully close down the socket."""
         if self.poller:
@@ -639,11 +631,14 @@ class MsgQ:
         from tests.
 
         '''
-        if writable:
+        # We need to check if FD is still in the sockets dict, because
+        # it's possible that the socket has been "killed" while processing
+        # other FDs; it's even possible it's killed within this method.
+        if writable and fd in self.sockets:
             self.__process_write(fd)
-        if readable:
-            self.process_socket(fd)
-        if closed:
+        if readable and fd in self.sockets:
+            self.process_packet(fd, self.sockets[fd])
+        if closed and fd in self.sockets:
             self.kill_socket(fd, self.sockets[fd])
 
     def stop(self):
