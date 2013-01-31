@@ -56,8 +56,8 @@
     <para>The <command>b10-ddns</command> daemon provides the BIND 10
       Dynamic Update (DDNS) service, as specified in RFC 2136.
       Normally it is started by the
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      boss process.
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      process.
     </para>
 
     <para>
@@ -154,7 +154,7 @@
       <command>shutdown</command> exits <command>b10-ddns</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the b10-init process may restart this service
       if configured.)
     </para>
 

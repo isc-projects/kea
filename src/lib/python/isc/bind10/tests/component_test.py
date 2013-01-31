@@ -70,7 +70,7 @@ class BossUtils:
         isc.bind10.component.time.time = lambda: tm + 30
 
     # Few functions that pretend to start something. Part of pretending of
-    # being boss.
+    # being b10-init.
     def start_msgq(self):
         pass
 
@@ -103,7 +103,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__registered_processes = {}
         self.__stop_process_params = None
         self.__start_simple_params = None
-        # Pretending to be boss
+        # Pretending to be b10-init
         self.__change_user_called = False
 
     def change_user(self):
@@ -149,7 +149,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         its behaviour.
 
         The process used is some nonsense, as this isn't used in this
-        kind of tests and we pretend to be the boss.
+        kind of tests and we pretend to be the b10-init.
         """
         component = Component('No process', self, kind, 'homeless', [])
         component._start_internal = self.__start
@@ -176,7 +176,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         Test the correct data are stored inside the component.
         """
         component = self.__create_component('core')
-        self.assertEqual(self, component._boss)
+        self.assertEqual(self, component._b10_init)
         self.assertEqual("No process", component._process)
         self.assertEqual(None, component._start_func)
         self.assertEqual("homeless", component._address)
@@ -539,7 +539,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def register_process(self, pid, process):
         """
-        Part of pretending to be a boss
+        Part of pretending to be a b10-init
         """
         self.__registered_processes[pid] = process
 
@@ -570,13 +570,13 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def stop_process(self, process, address, pid):
         """
-        Part of pretending to be boss.
+        Part of pretending to be b10-init.
         """
         self.__stop_process_params = (process, address, pid)
 
     def start_simple(self, process):
         """
-        Part of pretending to be boss.
+        Part of pretending to be b10-init.
         """
         self.__start_simple_params = process
 
@@ -632,14 +632,14 @@ class ComponentTests(BossUtils, unittest.TestCase):
 
     def set_creator(self, creator):
         """
-        Part of faking being the boss. Check the creator (faked as well)
+        Part of faking being the b10-init. Check the creator (faked as well)
         is passed here.
         """
         self.assertTrue(isinstance(creator, self.FakeCreator))
 
     def log_started(self, pid):
         """
-        Part of faking the boss. Check the pid is the one of the fake creator.
+        Part of faking the b10-init. Check the pid is the one of the fake creator.
         """
         self.assertEqual(42, pid)
 
@@ -706,8 +706,8 @@ class FailComponent(BaseComponent):
     """
     A mock component that fails whenever it is started.
     """
-    def __init__(self, name, boss, kind, address=None, params=None):
-        BaseComponent.__init__(self, boss, kind)
+    def __init__(self, name, b10_init, kind, address=None, params=None):
+        BaseComponent.__init__(self, b10_init, kind)
 
     def _start_internal(self):
         raise TestError("test error")
@@ -755,11 +755,12 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         self.__core_log = self.__core_log_create + self.__core_log_start
         self.__specials = { 'test': self.__component_test }
 
-    def __component_test(self, process, boss, kind, address=None, params=None):
+    def __component_test(self, process, b10_init, kind, address=None,
+                         params=None):
         """
         Create a test component. It will log events to us.
         """
-        self.assertEqual(self, boss)
+        self.assertEqual(self, b10_init)
         return TestComponent(self, process, kind, address, params)
 
     def test_init(self):

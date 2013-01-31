@@ -232,10 +232,10 @@ class ConfigManager:
             # handler, so make it use defaults (and flush any buffered logs)
             ccsession.default_logconfig_handler({}, self.log_config_data)
 
-    def notify_boss(self):
+    def notify_b10_init(self):
         """Notifies the Boss module that the Config Manager is running"""
         # TODO: Use a real, broadcast notification here.
-        self.cc.group_sendmsg({"running": "ConfigManager"}, "Boss")
+        self.cc.group_sendmsg({"running": "ConfigManager"}, "Init")
 
     def set_module_spec(self, spec):
         """Adds a ModuleSpec"""

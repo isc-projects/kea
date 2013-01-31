@@ -24,14 +24,14 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>bind10</refentrytitle>
+    <refentrytitle>b10-init</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>bind10</refname>
-    <refpurpose>BIND 10 boss process</refpurpose>
+    <refname>b10-init</refname>
+    <refpurpose>BIND 10 init process</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -43,7 +43,7 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>bind10</command>
+      <command>b10-init</command>
       <arg><option>-c <replaceable>config-filename</replaceable></option></arg>
       <arg><option>-i</option></arg>
       <arg><option>-m <replaceable>file</replaceable></option></arg>
@@ -68,14 +68,14 @@
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para>The <command>bind10</command> daemon starts up other
+    <para>The <command>b10-init</command> daemon starts up other
     BIND 10 required daemons.  It handles restarting of exiting
     programs and also the shutdown of all managed daemons.</para>
 
 <!-- TODO: list what it starts here? -->
 
 <!-- TODO
-    <para>The configuration of the <command>bind10</command> daemon
+    <para>The configuration of the <command>b10-init</command> daemon
     is defined in the TODO configuration file, as described in the
     <citerefentry><refentrytitle>TODO</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     manual page.</para>
@@ -169,7 +169,7 @@
       <varlistentry>
         <term><option>-i</option>, <option>--no-kill</option></term>
         <listitem>
-	  <para>When this option is passed, <command>bind10</command>
+	  <para>When this option is passed, <command>b10-init</command>
 	  does not send SIGTERM and SIGKILL signals to modules during
 	  shutdown. (This option was introduced for use during
 	  testing.)</para>
@@ -180,8 +180,8 @@
         <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
 <!-- TODO: example more detail. -->
         <listitem>
-          <para>The username for <command>bind10</command> to run as.
-            <command>bind10</command> must be initially ran as the
+          <para>The username for <command>b10-init</command> to run as.
+            <command>b10-init</command> must be initially ran as the
             root user to use this option.
             The default is to run as the current user.</para>
          </listitem>
@@ -190,7 +190,7 @@
       <varlistentry>
         <term><option>--pid-file</option> <replaceable>filename</replaceable></term>
         <listitem>
-          <para>If defined, the PID of the <command>bind10</command> is stored
+          <para>If defined, the PID of the <command>b10-init</command> is stored
              in this file.
           </para>
          </listitem>
@@ -203,7 +203,7 @@
           <para>The name this process should have in tools like
           <command>ps</command> or <command>top</command>. This
           is handy if you have multiple versions/installations
-          of <command>bind10</command>.
+          of <command>b10-init</command>.
 <!-- TODO: only supported with setproctitle feature
 The default is the basename of ARG 0.
 -->
@@ -215,7 +215,7 @@ The default is the basename of ARG 0.
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem>
 	  <para>Display more about what is going on for
-	  <command>bind10</command> and its child processes.</para>
+	  <command>b10-init</command> and its child processes.</para>
 <!-- TODO: not true about all children yet -->
         </listitem>
       </varlistentry>
@@ -245,7 +245,7 @@ TODO: configuration section
 
     <para>
       The configuration provides settings for components for
-      <command>bind10</command> to manage under
+      <command>b10-init</command> to manage under
       <varname>/Boss/components/</varname>.
       The default elements are:
     </para>
@@ -265,7 +265,7 @@ TODO: configuration section
     <para>
       (Note that the startup of <command>b10-sockcreator</command>,
       <command>b10-cfgmgr</command>, and <command>b10-msgq</command>
-      is not configurable. They are hardcoded and <command>bind10</command>
+      is not configurable. They are hardcoded and <command>b10-init</command>
       will not run without them.)
     </para>
 
@@ -296,12 +296,12 @@ sometime and I'd like it to teach to guess the address.
             This defines how required a component is.
             The possible settings for <varname>kind</varname> are:
             <varname>core</varname> (system won't start if it won't
-            start and <command>bind10</command> will shutdown if
+            start and <command>b10-init</command> will shutdown if
             a <quote>core</quote> component crashes),
-            <varname>dispensable</varname> (<command>bind10</command>
+            <varname>dispensable</varname> (<command>b10-init</command>
             will restart failing component),
             and
-	    <varname>needed</varname> (<command>bind10</command>
+	    <varname>needed</varname> (<command>b10-init</command>
 	    will shutdown if component won't initially start, but
 	    if crashes later, it will attempt to restart).
             This setting is required.
@@ -325,7 +325,7 @@ list
       <varlistentry>
         <term> <varname>priority</varname> </term>
         <listitem>
-          <para>This is an integer. <command>bind10</command>
+          <para>This is an integer. <command>b10-init</command>
             will start the components with largest priority numbers first.
           </para>
         </listitem>
@@ -335,7 +335,7 @@ list
           <term> <varname>process</varname> </term>
         <listitem>
           <para>This is the filename of the executable to be started.
-            If not defined, then <command>bind10</command> will
+            If not defined, then <command>b10-init</command> will
             use the component name instead.
           </para>
         </listitem>
@@ -368,9 +368,8 @@ xfrin
 
 <!-- TODO: formating -->
     <para>
-      The <varname>Boss</varname> configuration commands are:
+      The <varname>init</varname> configuration commands are:
     </para>
-<!-- TODO: let's just let bind10 be known as bind10 and not Boss -->
 
 <!-- TODO -->
 <!--
@@ -389,7 +388,7 @@ xfrin
 -->
 
     <para>
-      <command>getstats</command> tells <command>bind10</command>
+      <command>getstats</command> tells <command>b10-init</command>
       to send its statistics data to the <command>b10-stats</command>
       daemon.
       This is an internal command and not exposed to the administrator.
@@ -398,13 +397,13 @@ xfrin
 
     <para>
       <command>ping</command> is used to check the connection with the
-      <command>bind10</command> daemon.
+      <command>b10-init</command> daemon.
       It returns the text <quote>pong</quote>.
     </para>
 
     <para>
       <command>show_processes</command> lists the current processes
-      managed by <command>bind10</command>.
+      managed by <command>b10-init</command>.
       The output is an array in JSON format containing the process
       ID, the name for each and the address name used on each message bus.
 <!-- TODO: what is name? -->
@@ -413,10 +412,10 @@ xfrin
     </para>
 
     <para>
-      <command>shutdown</command> tells <command>bind10</command>
+      <command>shutdown</command> tells <command>b10-init</command>
       to shutdown the BIND 10 servers.
       It will tell each process it manages to shutdown and, when
-      complete, <command>bind10</command> will exit.
+      complete, <command>b10-init</command> will exit.
     </para>
 
   </refsect1>
@@ -434,7 +433,7 @@ xfrin
       <varlistentry>
         <term>boot_time</term>
         <listitem><para>
-          The date and time that the <command>bind10</command>
+          The date and time that the <command>b10-init</command>
           process started.
           This is represented in ISO 8601 format.
         </para></listitem>
@@ -493,14 +492,14 @@ xfrin
       </citerefentry>, -->
 
   <refsect1 id='history'><title>HISTORY</title>
-    <para>The development of <command>bind10</command>
+    <para>The development of <command>b10-init</command>
     was started in October 2009.</para>
   </refsect1>
 
   <refsect1>
     <title>AUTHORS</title>
     <para>
-      The <command>bind10</command>
+      The <command>b10-init</command>
       daemon was initially designed by Shane Kerr of ISC.
     </para>
   </refsect1>
