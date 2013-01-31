@@ -1,6 +1,6 @@
 {
   "module_spec": {
-    "module_name": "Boss",
+    "module_name": "Init",
     "module_description": "Master process",
     "config_data": [
       {
@@ -66,7 +66,7 @@
       },
       {
         "command_name": "ping",
-        "command_description": "Ping the boss process",
+        "command_description": "Ping the b10-init process",
         "command_args": []
       },
       {

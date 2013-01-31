@@ -34,21 +34,21 @@ namespace server_common {
 namespace {
 SocketRequestor* requestor(NULL);
 
-// Before the boss process calls send_fd, it first sends this
+// Before the b10-init process calls send_fd, it first sends this
 // string to indicate success, followed by the file descriptor
 const std::string& CREATOR_SOCKET_OK() {
     static const std::string str("1\n");
     return (str);
 }
 
-// Before the boss process calls send_fd, it sends this
+// Before the b10-init process calls send_fd, it sends this
 // string to indicate failure. It will not send a file descriptor.
 const std::string& CREATOR_SOCKET_UNAVAILABLE() {
     static const std::string str("0\n");
     return (str);
 }
 
-// The name of the ccsession command to request a socket from boss
+// The name of the ccsession command to request a socket from b10-init
 // (the actual format of command and response are hardcoded in their
 // respective methods)
 const std::string& REQUEST_SOCKET_COMMAND() {
@@ -56,7 +56,7 @@ const std::string& REQUEST_SOCKET_COMMAND() {
     return (str);
 }
 
-// The name of the ccsession command to tell boss we no longer need
+// The name of the ccsession command to tell b10-init we no longer need
 // a socket (the actual format of command and response are hardcoded
 // in their respective methods)
 const std::string& RELEASE_SOCKET_COMMAND() {
@@ -69,7 +69,7 @@ const size_t SOCKET_ERROR_CODE = 2;
 const size_t SHARE_ERROR_CODE = 3;
 
 // A helper converter from numeric protocol ID to the corresponding string.
-// used both for generating a message for the boss process and for logging.
+// used both for generating a message for the b10-init process and for logging.
 inline const char*
 protocolString(SocketRequestor::Protocol protocol) {
     switch (protocol) {
@@ -211,7 +211,7 @@ createFdShareSocket(const std::string& path) {
 // \return the socket fd that has been read
 int
 getSocketFd(const std::string& token, int sock_pass_fd) {
-    // Tell the boss the socket token.
+    // Tell b10-init the socket token.
     const std::string token_data = token + "\n";
     if (!isc::util::io::write_data(sock_pass_fd, token_data.c_str(),
                                    token_data.size())) {
@@ -226,7 +226,7 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
         isc_throw(SocketRequestor::SocketError,
                   "Error reading status code while requesting socket");
     }
-    // Actual status value hardcoded by boss atm.
+    // Actual status value hardcoded by b10-init atm.
     if (CREATOR_SOCKET_UNAVAILABLE() == status) {
         isc_throw(SocketRequestor::SocketError,
                   "CREATOR_SOCKET_UNAVAILABLE returned");
@@ -258,7 +258,7 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
 }
 
 // This implementation class for SocketRequestor uses
-// a CC session for communication with the boss process,
+// a CC session for communication with the b10-init process,
 // and fd_share to read out the socket(s).
 // Since we only use a reference to the session, it must never
 // be closed during the lifetime of this class
@@ -300,10 +300,10 @@ public:
                                        share_name.empty() ? app_name_ :
                                        share_name);
 
-        // Send it to boss
+        // Send it to b10-init
         const int seq = session_.group_sendmsg(request_msg, "Boss");
 
-        // Get the answer from the boss.
+        // Get the answer from b10-init.
         // Just do a blocking read, we can't really do much anyway
         isc::data::ConstElementPtr env, recv_msg;
         if (!session_.group_recvmsg(env, recv_msg, false, seq)) {
@@ -330,12 +330,12 @@ public:
         const isc::data::ConstElementPtr release_msg =
             createReleaseSocketMessage(token);
 
-        // Send it to boss
+        // Send it to b10-init
         const int seq = session_.group_sendmsg(release_msg, "Boss");
         LOG_DEBUG(logger, DBGLVL_TRACE_DETAIL, SOCKETREQUESTOR_RELEASESOCKET).
             arg(token);
 
-        // Get the answer from the boss.
+        // Get the answer from b10-init.
         // Just do a blocking read, we can't really do much anyway
         isc::data::ConstElementPtr env, recv_msg;
         if (!session_.group_recvmsg(env, recv_msg, false, seq)) {

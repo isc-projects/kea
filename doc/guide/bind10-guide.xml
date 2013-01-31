@@ -1301,11 +1301,11 @@ Available module names:
 
         When 'help' is used as a command to a module, it shows the supported commands for the module; for example:
         <screen>&gt; <userinput>Boss help</userinput>
-Module  Boss 	Master process
+Module  Init 	Master process
 Available commands:
     help        Get help for module.
     shutdown    Shut down BIND 10
-    ping        Ping the boss process
+    ping        Ping the Init process
     show_processes
             List the running BIND 10 processes
         </screen>
@@ -2146,7 +2146,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
             <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
             <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
             <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in b10-init before the release -->
           </tbody>
           </tgroup>
         </table>
@@ -2420,7 +2420,7 @@ can use various data source backends.
               <simpara>Stop the authoritative DNS server.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the BIND 10 init process may restart this service
       if configured.)
               </simpara>
             </listitem>
@@ -3340,7 +3340,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
     </para>
-    
+
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
@@ -3409,7 +3409,7 @@ $</screen>
    </section>
 
   </chapter>
-  
+
   <chapter id="dhcp4">
     <title>The DHCPv4 Server</title>
 
@@ -3502,7 +3502,7 @@ Dhcp4/subnet4	[]	list	(default)
       The server comes with an in-memory database ("memfile") configured as the default
       database. This is used for internal testing and is not supported.  In addition,
       it does not store lease information on disk: lease information will be lost if the
-      server is restarted. 
+      server is restarted.
       </para>
       </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
@@ -3552,7 +3552,7 @@ Dhcp4/subnet4	[]	list	(default)
       database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
       </note>
       </section>
-      
+
       <section id="dhcp4-address-config">
       <title>Configuration of Address Pools</title>
       <para>
@@ -3782,7 +3782,7 @@ Dhcp6/lease-database/name	""	string	(default)
 Dhcp6/lease-database/user	""	string	(default)
 Dhcp6/lease-database/host	""	string	(default)
 Dhcp6/lease-database/password	""	string	(default)
-Dhcp6/subnet6/	list	
+Dhcp6/subnet6/	list
 </screen>
       </para>
       <para>
@@ -3813,7 +3813,7 @@ Dhcp6/subnet6/	list
       The server comes with an in-memory database ("memfile") configured as the default
       database. This is used for internal testing and is not supported.  In addition,
       it does not store lease information on disk: lease information will be lost if the
-      server is restarted. 
+      server is restarted.
       </para>
       </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
@@ -3959,7 +3959,7 @@ Dhcp6/subnet6/	list
         lines for clarity.)
       </para>
     </section>
-       
+
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
           <para>
@@ -3994,8 +3994,8 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config commit</userinput>
 </screen>
         </para>
-      </section>    
-    
+      </section>
+
    </section>
 
     <section id="dhcp6-serverid">

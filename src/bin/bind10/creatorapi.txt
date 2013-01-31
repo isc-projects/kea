@@ -25,7 +25,7 @@ It seems we are stuck with current msgq for a while and there's a chance the
 new replacement will not be able to send sockets inbound. So, we need another
 channel.
 
-The boss will create a unix-domain socket and listen on it. When something
+b10-init will create a unix-domain socket and listen on it. When something
 requests a socket over the command channel and the socket is created, some kind
 of token is returned to the application (which will represent the future
 socket). The application then connects to the unix-domain socket, sends the
@@ -60,7 +60,7 @@ command channel), the reference count can be decreased without problems. But
 when the application terminates or crashes, we need to decrease it as well.
 There's a problem, since we don't know which command channel connection (eg.
 lname) belongs to which PID. Furthermore, the applications don't need to be
-started by boss.
+started by b10-init.
 
 There are two possibilities:
 * Let the msgq send messages about disconnected clients (eg. group message to
@@ -75,12 +75,12 @@ There are two possibilities:
 The commands
 ------------
 * Command to release a socket. This one would have single parameter, the token
-  used to get the socket. After this, boss would decrease its reference count
-  and if it drops to zero, close its own copy of the socket. This should be used
-  when the module stops using the socket (and after closes it). The
-  library could remember the file-descriptor to token mapping (for
-  common applications that don't request the same socket multiple
-  times in parallel).
+  used to get the socket. After this, b10-init would decrease its reference
+  count and if it drops to zero, close its own copy of the socket. This
+  should be used when the module stops using the socket (and after closes
+  it). The library could remember the file-descriptor to token mapping (for
+  common applications that don't request the same socket multiple times in
+  parallel).
 * Command to request a socket. It would have parameters to specify which socket
   (IP address, address family, port) and how to allow sharing. Sharing would be
   one of:

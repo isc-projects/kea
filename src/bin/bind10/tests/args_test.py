@@ -1,5 +1,5 @@
 """
-This program tests the boss process to make sure that it runs while
+This program tests the b10-init process to make sure that it runs while
 dropping permissions. It must be run as a user that can set permission.
 """
 import unittest
@@ -22,12 +22,12 @@ class TestBossArgs(unittest.TestCase):
         found_string = False
         start_time = time.time()
         while time.time() < start_time + TIMEOUT:
-            (r,w,x) = select.select((bob.stdout,), (), (), TIMEOUT) 
+            (r,w,x) = select.select((bob.stdout,), (), (), TIMEOUT)
             if bob.stdout in r:
                 s = bob.stdout.readline()
                 if s == '':
                     break
-                if s.startswith(s): 
+                if s.startswith(s):
                     found_string = True
                     break
         return found_string

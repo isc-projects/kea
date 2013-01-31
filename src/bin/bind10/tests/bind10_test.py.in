@@ -108,19 +108,19 @@ class TestProcessInfo(unittest.TestCase):
 
 class TestCacheCommands(unittest.TestCase):
     """
-    Test methods of boss related to the socket cache and socket handling.
+    Test methods of b10-init related to the socket cache and socket handling.
     """
     def setUp(self):
         """
-        Prepare the boss for some tests.
+        Prepare b10-init for some tests.
 
         Also prepare some variables we need.
         """
-        self.__boss = BoB()
+        self.__b10_init = BoB()
         # Fake the cache here so we can pretend it is us and hijack the
         # calls to its methods.
-        self.__boss._socket_cache = self
-        self.__boss._socket_path = '/socket/path'
+        self.__b10_init._socket_cache = self
+        self.__b10_init._socket_path = '/socket/path'
         self.__raise_exception = None
         self.__socket_args = {
             "port": 53,
@@ -178,18 +178,18 @@ class TestCacheCommands(unittest.TestCase):
         """
         Test that it calls the drop_application method of the cache.
         """
-        self.__boss.socket_consumer_dead(self.FalseSocket())
+        self.__b10_init.socket_consumer_dead(self.FalseSocket())
         self.assertEqual(42, self.__drop_app_called)
 
     def test_consumer_dead_invalid(self):
         """
         Test that it doesn't crash in case the application is not known to
-        the cache, the boss doesn't crash, as this actually can happen in
+        the cache, the b10_init doesn't crash, as this actually can happen in
         practice.
         """
         self.__raise_exception = ValueError("This application is unknown")
         # This doesn't crash
-        self.__boss.socket_consumer_dead(self.FalseSocket())
+        self.__b10_init.socket_consumer_dead(self.FalseSocket())
 
     def get_socket(self, token, application):
         """
@@ -210,7 +210,7 @@ class TestCacheCommands(unittest.TestCase):
         socket = self.FalseSocket()
         # An exception from the cache
         self.__raise_exception = ValueError("Test value error")
-        self.__boss.socket_request_handler(b"token", socket)
+        self.__b10_init.socket_request_handler(b"token", socket)
         # It was called, but it threw, so it is not noted here
         self.assertIsNone(self.__get_socket_called)
         self.assertEqual(b"0\n", socket.send)
@@ -219,7 +219,7 @@ class TestCacheCommands(unittest.TestCase):
         # Now prepare a valid scenario
         self.__raise_exception = None
         socket.send = b""
-        self.__boss.socket_request_handler(b"token", socket)
+        self.__b10_init.socket_request_handler(b"token", socket)
         self.assertEqual(b"1\n", socket.send)
         self.assertEqual((42, 13), self.__send_fd_called)
         self.assertEqual(("token", 42), self.__get_socket_called)
@@ -240,7 +240,7 @@ class TestCacheCommands(unittest.TestCase):
         """
         Test the successful scenario of getting a socket.
         """
-        result = self.__boss._get_socket(self.__socket_args)
+        result = self.__b10_init._get_socket(self.__socket_args)
         [code, answer] = result['result']
         self.assertEqual(0, code)
         self.assertEqual({
@@ -264,7 +264,7 @@ class TestCacheCommands(unittest.TestCase):
             The rest is not tested, as it is already checked in the
             test_get_socket_ok.
             """
-            [rcode, ranswer] = self.__boss._get_socket(args)['result']
+            [rcode, ranswer] = self.__b10_init._get_socket(args)['result']
             self.assertEqual(code, rcode)
             if code != 0:
                 # This should be an error message. The exact formatting
@@ -325,18 +325,18 @@ class TestCacheCommands(unittest.TestCase):
         """
         # This should be OK and just propagated to the call.
         self.assertEqual({"result": [0]},
-                         self.__boss.command_handler("drop_socket",
-                                                     {"token": "token"}))
+                         self.__b10_init.command_handler("drop_socket",
+                                                         {"token": "token"}))
         self.assertEqual("token", self.__drop_socket_called)
         self.__drop_socket_called = None
         # Missing parameter
         self.assertEqual({"result": [1, "Missing token parameter"]},
-                         self.__boss.command_handler("drop_socket", {}))
+                         self.__b10_init.command_handler("drop_socket", {}))
         self.assertIsNone(self.__drop_socket_called)
         # An exception is raised from within the cache
         self.__raise_exception = ValueError("Test error")
         self.assertEqual({"result": [1, "Test error"]},
-                         self.__boss.command_handler("drop_socket",
+                         self.__b10_init.command_handler("drop_socket",
                          {"token": "token"}))
 
 
@@ -378,7 +378,7 @@ class TestBoB(unittest.TestCase):
         self.__uid_set = None
         bob = BoB()
         bob.change_user()
-        # No gid/uid set in boss, nothing called.
+        # No gid/uid set in b10_init, nothing called.
         self.assertIsNone(self.__gid_set)
         self.assertIsNone(self.__uid_set)
 
@@ -615,10 +615,12 @@ class MockBob(BoB):
         self.get_process_exit_status_called = False
 
         class MockSockCreator(isc.bind10.component.Component):
-            def __init__(self, process, boss, kind, address=None, params=None):
-                isc.bind10.component.Component.__init__(self, process, boss,
-                                                        kind, 'SockCreator')
-                self._start_func = boss.start_creator
+            def __init__(self, process, b10_init, kind, address=None,
+                         params=None):
+                isc.bind10.component.Component.__init__(self, process,
+                                                        b10_init, kind,
+                                                        'SockCreator')
+                self._start_func = b10_init.start_creator
 
         specials = isc.bind10.special_component.get_specials()
         specials['sockcreator'] = MockSockCreator
@@ -1276,7 +1278,7 @@ class TestPIDFile(unittest.TestCase):
 
 class TestBossComponents(unittest.TestCase):
     """
-    Test the boss propagates component configuration properly to the
+    Test b10-init propagates component configuration properly to the
     component configurator and acts sane.
     """
     def setUp(self):
@@ -1445,7 +1447,7 @@ class TestBossComponents(unittest.TestCase):
 
     def test_kills(self):
         """
-        Test that the boss kills components which don't want to stop.
+        Test that b10-init kills components which don't want to stop.
         """
         self.__real_test_kill()
 
@@ -1465,7 +1467,7 @@ class TestBossComponents(unittest.TestCase):
 
     def test_nokill(self):
         """
-        Test that the boss *doesn't* kill components which don't want to
+        Test that b10-init *doesn't* kill components which don't want to
         stop, when asked not to (by passing the --no-kill option which
         sets bob.nokill to True).
         """
@@ -2142,14 +2144,14 @@ class TestBossComponents(unittest.TestCase):
 
 class SocketSrvTest(unittest.TestCase):
     """
-    This tests some methods of boss related to the unix domain sockets used
-    to transfer other sockets to applications.
+    This tests some methods of b10-init related to the unix domain sockets
+    used to transfer other sockets to applications.
     """
     def setUp(self):
         """
-        Create the boss to test, testdata and backup some functions.
+        Create the b10-init to test, testdata and backup some functions.
         """
-        self.__boss = BoB()
+        self.__b10_init = BoB()
         self.__select_backup = bind10_src.select.select
         self.__select_called = None
         self.__socket_data_called = None
@@ -2216,24 +2218,24 @@ class SocketSrvTest(unittest.TestCase):
 
     def __accept(self):
         """
-        Hijact the accept method of the boss.
+        Hijact the accept method of the b10-init.
 
-        Notes down it was called and stops the boss.
+        Notes down it was called and stops b10-init.
         """
         self.__accept_called = True
-        self.__boss.runnable = False
+        self.__b10_init.runnable = False
 
     def test_srv_accept_called(self):
         """
-        Test that the _srv_accept method of boss is called when the listening
-        socket is readable.
+        Test that the _srv_accept method of b10-init is called when the
+        listening socket is readable.
         """
-        self.__boss.runnable = True
-        self.__boss._srv_socket = self.__FalseSocket(self)
-        self.__boss._srv_accept = self.__accept
-        self.__boss.ccs = self.__CCS()
+        self.__b10_init.runnable = True
+        self.__b10_init._srv_socket = self.__FalseSocket(self)
+        self.__b10_init._srv_accept = self.__accept
+        self.__b10_init.ccs = self.__CCS()
         bind10_src.select.select = self.__select_accept
-        self.__boss.run(2)
+        self.__b10_init.run(2)
         # It called the accept
         self.assertTrue(self.__accept_called)
         # And the select had the right parameters
@@ -2243,39 +2245,39 @@ class SocketSrvTest(unittest.TestCase):
         """
         Test how the _srv_accept method works.
         """
-        self.__boss._srv_socket = self.__FalseSocket(self)
-        self.__boss._srv_accept()
+        self.__b10_init._srv_socket = self.__FalseSocket(self)
+        self.__b10_init._srv_accept()
         # After we accepted, a new socket is added there
-        socket = self.__boss._unix_sockets[13][0]
+        socket = self.__b10_init._unix_sockets[13][0]
         # The socket is properly stored there
         self.assertTrue(isinstance(socket, self.__FalseSocket))
         # And the buffer (yet empty) is there
-        self.assertEqual({13: (socket, b'')}, self.__boss._unix_sockets)
+        self.assertEqual({13: (socket, b'')}, self.__b10_init._unix_sockets)
 
     def __socket_data(self, socket):
-        self.__boss.runnable = False
+        self.__b10_init.runnable = False
         self.__socket_data_called = socket
 
     def test_socket_data(self):
         """
         Test that a socket that wants attention gets it.
         """
-        self.__boss._srv_socket = self.__FalseSocket(self)
-        self.__boss._socket_data = self.__socket_data
-        self.__boss.ccs = self.__CCS()
-        self.__boss._unix_sockets = {13: (self.__FalseSocket(self, 13), b'')}
-        self.__boss.runnable = True
+        self.__b10_init._srv_socket = self.__FalseSocket(self)
+        self.__b10_init._socket_data = self.__socket_data
+        self.__b10_init.ccs = self.__CCS()
+        self.__b10_init._unix_sockets = {13: (self.__FalseSocket(self, 13), b'')}
+        self.__b10_init.runnable = True
         bind10_src.select.select = self.__select_data
-        self.__boss.run(2)
+        self.__b10_init.run(2)
         self.assertEqual(13, self.__socket_data_called)
         self.assertEqual(([2, 1, 42, 13], [], [], None), self.__select_called)
 
     def __prepare_data(self, data):
         socket = self.__FalseSocket(self, 13)
-        self.__boss._unix_sockets = {13: (socket, b'')}
+        self.__b10_init._unix_sockets = {13: (socket, b'')}
         socket.data = data
-        self.__boss.socket_consumer_dead = self.__consumer_dead
-        self.__boss.socket_request_handler = self.__socket_request_handler
+        self.__b10_init.socket_consumer_dead = self.__consumer_dead
+        self.__b10_init.socket_request_handler = self.__socket_request_handler
         return socket
 
     def __consumer_dead(self, socket):
@@ -2290,9 +2292,9 @@ class SocketSrvTest(unittest.TestCase):
         when it is closed.
         """
         socket = self.__prepare_data(None)
-        self.__boss._socket_data(13)
+        self.__b10_init._socket_data(13)
         self.assertEqual(socket, self.__consumer_dead_called)
-        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertEqual({}, self.__b10_init._unix_sockets)
         self.assertTrue(socket.closed)
 
     def test_socket_short(self):
@@ -2301,8 +2303,8 @@ class SocketSrvTest(unittest.TestCase):
         kept there, but nothing is called.
         """
         socket = self.__prepare_data(b'tok')
-        self.__boss._socket_data(13)
-        self.assertEqual({13: (socket, b'tok')}, self.__boss._unix_sockets)
+        self.__b10_init._socket_data(13)
+        self.assertEqual({13: (socket, b'tok')}, self.__b10_init._unix_sockets)
         self.assertFalse(socket.closed)
         self.assertIsNone(self.__consumer_dead_called)
         self.assertIsNone(self.__socket_request_handler_called)
@@ -2315,9 +2317,9 @@ class SocketSrvTest(unittest.TestCase):
         """
         socket = self.__prepare_data(b"en\nanothe")
         # The data to finish
-        self.__boss._unix_sockets[13] = (socket, b'tok')
-        self.__boss._socket_data(13)
-        self.assertEqual({13: (socket, b'anothe')}, self.__boss._unix_sockets)
+        self.__b10_init._unix_sockets[13] = (socket, b'tok')
+        self.__b10_init._socket_data(13)
+        self.assertEqual({13: (socket, b'anothe')}, self.__b10_init._unix_sockets)
         self.assertFalse(socket.closed)
         self.assertIsNone(self.__consumer_dead_called)
         self.assertEqual((b'token', socket),
@@ -2330,9 +2332,9 @@ class SocketSrvTest(unittest.TestCase):
         """
         sock = self.__prepare_data(socket.error(errno.ENOMEM,
             "There's more memory available, but not for you"))
-        self.__boss._socket_data(13)
+        self.__b10_init._socket_data(13)
         self.assertEqual(sock, self.__consumer_dead_called)
-        self.assertEqual({}, self.__boss._unix_sockets)
+        self.assertEqual({}, self.__b10_init._unix_sockets)
         self.assertTrue(sock.closed)
 
 class TestFunctions(unittest.TestCase):
@@ -2407,13 +2409,13 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual('Unknown signal 59426', signame)
 
     def test_fatal_signal(self):
-        self.assertIsNone(bind10_src.boss_of_bind)
-        bind10_src.boss_of_bind = BoB()
-        bind10_src.boss_of_bind.runnable = True
+        self.assertIsNone(bind10_src.b10_init)
+        bind10_src.b10_init = BoB()
+        bind10_src.b10_init.runnable = True
         bind10_src.fatal_signal(signal.SIGTERM, None)
         # Now, runnable must be False
-        self.assertFalse(bind10_src.boss_of_bind.runnable)
-        bind10_src.boss_of_bind = None
+        self.assertFalse(bind10_src.b10_init.runnable)
+        bind10_src.b10_init = None
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

@@ -210,7 +210,7 @@ class MockBoss:
       },
       {
         "command_name": "ping",
-        "command_description": "Ping the boss process",
+        "command_description": "Ping the b10-init process",
         "command_args": []
       },
       {
@@ -538,8 +538,8 @@ class BaseModules:
         self.cfgmgr = ThreadingServerManager(MockCfgmgr)
         self.cfgmgr.run()
         # MockBoss
-        self.boss = ThreadingServerManager(MockBoss)
-        self.boss.run()
+        self.b10_init = ThreadingServerManager(MockBoss)
+        self.b10_init.run()
         # MockAuth
         self.auth = ThreadingServerManager(MockAuth)
         self.auth.run()
@@ -559,7 +559,7 @@ class BaseModules:
         self.auth2.shutdown(True)
         self.auth.shutdown(True)
         # MockBoss
-        self.boss.shutdown(True)
+        self.b10_init.shutdown(True)
         # MockCfgmgr
         self.cfgmgr.shutdown(True)
         # remove the unused socket file
