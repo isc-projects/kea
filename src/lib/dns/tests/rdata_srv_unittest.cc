@@ -126,6 +126,12 @@ TEST_F(Rdata_SRV_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
                                      "1 5 1500 a.example.com.")));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, in::SRV("1 5 1500 server16.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::SRV(), RRClass::IN(),
+                                     "1 5 1500 server16")));
+
     // Exceptions cause NULL to be returned.
 
     // Bad priority
