@@ -17,7 +17,7 @@ SUID_USER="shane"
 BIND10_EXE="../run_bind10.sh"
 TIMEOUT=3
 
-class TestBossArgs(unittest.TestCase):
+class TestInitArgs(unittest.TestCase):
     def _waitForString(self, bob, s):
         found_string = False
         start_time = time.time()

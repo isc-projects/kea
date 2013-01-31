@@ -39,7 +39,7 @@
             ]
         }
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-xfrout": {
                 "kind": "dispensable",

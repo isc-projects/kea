@@ -29,7 +29,7 @@
             ]
         }
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
             "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }

@@ -319,15 +319,15 @@ class TestStats(unittest.TestCase):
         self.assertEqual(
             send_command(
                 'show', 'Stats',
-                params={ 'owner' : 'Boss',
+                params={ 'owner' : 'Init',
                   'name'  : 'boot_time' }),
-            (0, {'Boss': {'boot_time': self.const_datetime}}))
+            (0, {'Init': {'boot_time': self.const_datetime}}))
         self.assertEqual(
             send_command(
                 'show', 'Stats',
-                params={ 'owner' : 'Boss',
+                params={ 'owner' : 'Init',
                   'name'  : 'boot_time' }),
-            (0, {'Boss': {'boot_time': self.const_datetime}}))
+            (0, {'Init': {'boot_time': self.const_datetime}}))
         self.assertEqual(
             send_command('status', 'Stats'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
@@ -335,13 +335,13 @@ class TestStats(unittest.TestCase):
         (rcode, value) = send_command('show', 'Stats')
         self.assertEqual(rcode, 0)
         self.assertEqual(len(value), 3)
-        self.assertTrue('Boss' in value)
+        self.assertTrue('Init' in value)
         self.assertTrue('Stats' in value)
         self.assertTrue('Auth' in value)
         self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Boss']), 1)
-        self.assertTrue('boot_time' in value['Boss'])
-        self.assertEqual(value['Boss']['boot_time'], self.const_datetime)
+        self.assertEqual(len(value['Init']), 1)
+        self.assertTrue('boot_time' in value['Init'])
+        self.assertEqual(value['Init']['boot_time'], self.const_datetime)
         self.assertTrue('report_time' in value['Stats'])
         self.assertTrue('boot_time' in value['Stats'])
         self.assertTrue('last_update_time' in value['Stats'])
@@ -350,12 +350,12 @@ class TestStats(unittest.TestCase):
         (rcode, value) = send_command('showschema', 'Stats')
         self.assertEqual(rcode, 0)
         self.assertEqual(len(value), 3)
-        self.assertTrue('Boss' in value)
+        self.assertTrue('Init' in value)
         self.assertTrue('Stats' in value)
         self.assertTrue('Auth' in value)
         self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Boss']), 1)
-        for item in value['Boss']:
+        self.assertEqual(len(value['Init']), 1)
+        for item in value['Init']:
             self.assertTrue(len(item) == 7)
             self.assertTrue('item_name' in item)
             self.assertTrue('item_type' in item)
@@ -383,10 +383,10 @@ class TestStats(unittest.TestCase):
 
     def test_update_modules(self):
         self.stats = stats.Stats()
-        self.assertEqual(len(self.stats.modules), 3) # Auth, Boss, Stats
+        self.assertEqual(len(self.stats.modules), 3) # Auth, Init, Stats
         self.stats.update_modules()
         self.assertTrue('Stats' in self.stats.modules)
-        self.assertTrue('Boss' in self.stats.modules)
+        self.assertTrue('Init' in self.stats.modules)
         self.assertFalse('Dummy' in self.stats.modules)
         my_statistics_data = stats.get_spec_defaults(self.stats.modules['Stats'].get_statistics_spec())
         self.assertTrue('report_time' in my_statistics_data)
@@ -399,7 +399,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(my_statistics_data['last_update_time'], self.const_default_datetime)
         self.assertEqual(my_statistics_data['timestamp'], 0.0)
         self.assertEqual(my_statistics_data['lname'], "")
-        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Boss'].get_statistics_spec())
+        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Init'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
@@ -411,8 +411,8 @@ class TestStats(unittest.TestCase):
         self.stats = stats.Stats()
         my_statistics_data = self.stats.get_statistics_data()
         self.assertTrue('Stats' in my_statistics_data)
-        self.assertTrue('Boss' in my_statistics_data)
-        self.assertTrue('boot_time' in my_statistics_data['Boss'])
+        self.assertTrue('Init' in my_statistics_data)
+        self.assertTrue('boot_time' in my_statistics_data['Init'])
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('report_time' in my_statistics_data['Stats'])
@@ -601,7 +601,7 @@ class TestStats(unittest.TestCase):
                              ['foo1']['nds_queries.perzone'],\
                              _new_val)
         self.assertEqual(self.stats.update_statistics_data(
-                'Boss', 'bar1', _test_exp7), ["KeyError: 'foo'"])
+                'Init', 'bar1', _test_exp7), ["KeyError: 'foo'"])
         self.assertEqual(self.stats.update_statistics_data(
                 'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
@@ -717,9 +717,9 @@ class TestStats(unittest.TestCase):
         self.assertEqual(
             send_command(
                 'show', 'Stats',
-                params={ 'owner' : 'Boss',
+                params={ 'owner' : 'Init',
                   'name'  : 'boot_time' }),
-            (0, {'Boss': {'boot_time': self.const_datetime}}))
+            (0, {'Init': {'boot_time': self.const_datetime}}))
         stats_server.shutdown()
 
     def test_commands(self):
@@ -833,7 +833,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(rcode, 0)
         self.assertEqual(len(value), 3)
         self.assertTrue('Stats' in value)
-        self.assertTrue('Boss' in value)
+        self.assertTrue('Init' in value)
         self.assertTrue('Auth' in value)
         self.assertFalse('__Dummy__' in value)
         schema = value['Stats']
@@ -849,7 +849,7 @@ class TestStats(unittest.TestCase):
             if len(item) == 7:
                 self.assertTrue('item_format' in item)
 
-        schema = value['Boss']
+        schema = value['Init']
         self.assertEqual(len(schema), 1)
         for item in schema:
             self.assertTrue(len(item) == 7)
@@ -879,7 +879,7 @@ class TestStats(unittest.TestCase):
             self.stats.command_showschema(owner='Stats'))
         self.assertEqual(rcode, 0)
         self.assertTrue('Stats' in value)
-        self.assertFalse('Boss' in value)
+        self.assertFalse('Init' in value)
         self.assertFalse('Auth' in value)
         for item in value['Stats']:
             self.assertTrue(len(item) == 6 or len(item) == 7)
@@ -896,7 +896,7 @@ class TestStats(unittest.TestCase):
             self.stats.command_showschema(owner='Stats', name='report_time'))
         self.assertEqual(rcode, 0)
         self.assertTrue('Stats' in value)
-        self.assertFalse('Boss' in value)
+        self.assertFalse('Init' in value)
         self.assertFalse('Auth' in value)
         self.assertEqual(len(value['Stats'][0]), 7)
         self.assertTrue('item_name' in value['Stats'][0])
@@ -1150,15 +1150,15 @@ class TestStats(unittest.TestCase):
         self.assertEqual(
             send_command('show', 'Stats'),
             (0, stat.statistics_data))
-        # check statistics data of 'Boss'
+        # check statistics data of 'Init'
         b10_init = self.base.b10_init.server
         self.assertEqual(
-            stat.statistics_data_bymid['Boss'][b10_init.cc_session.lname],
+            stat.statistics_data_bymid['Init'][b10_init.cc_session.lname],
             {'boot_time': self.const_datetime})
         self.assertEqual(
-            len(stat.statistics_data_bymid['Boss']), 1)
+            len(stat.statistics_data_bymid['Init']), 1)
         self.assertEqual(
-            stat.statistics_data['Boss'],
+            stat.statistics_data['Init'],
             {'boot_time': self.const_datetime})
         # check statistics data of each 'Auth' instances
         list_auth = ['', '2']
@@ -1227,9 +1227,9 @@ class TestStats(unittest.TestCase):
         self.assertEqual(
             send_command('status', 'Stats'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
-        # check default statistics data of 'Boss'
+        # check default statistics data of 'Init'
         self.assertEqual(
-            stat.statistics_data['Boss'],
+            stat.statistics_data['Init'],
             {'boot_time': self.const_default_datetime})
         stats_server.shutdown()
 

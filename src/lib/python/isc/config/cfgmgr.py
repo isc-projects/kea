@@ -210,7 +210,7 @@ class ConfigManager:
         else:
             self.cc = isc.cc.Session()
         self.cc.group_subscribe("ConfigManager")
-        self.cc.group_subscribe("Boss", "ConfigManager")
+        self.cc.group_subscribe("Init", "ConfigManager")
         self.running = False
         # As a core module, CfgMgr is different than other modules,
         # as it does not use a ModuleCCSession, and hence needs
@@ -233,7 +233,7 @@ class ConfigManager:
             ccsession.default_logconfig_handler({}, self.log_config_data)
 
     def notify_b10_init(self):
-        """Notifies the Boss module that the Config Manager is running"""
+        """Notifies the Init module that the Config Manager is running"""
         # TODO: Use a real, broadcast notification here.
         self.cc.group_sendmsg({"running": "ConfigManager"}, "Init")
 

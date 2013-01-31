@@ -115,7 +115,7 @@ class Cache:
     Each socket kept here has a reference count and when it drops to zero,
     it is removed from cache and closed.
 
-    This is expected to be part of Boss, it is not a general utility class.
+    This is expected to be part of Init, it is not a general utility class.
 
     It is not expected to be subclassed. The methods and members are named
     as protected so tests are easier access into them.

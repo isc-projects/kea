@@ -125,7 +125,7 @@ createReleaseSocketMessage(const std::string& token) {
     return (isc::config::createCommand(RELEASE_SOCKET_COMMAND(), release));
 }
 
-// Checks and parses the response receive from Boss
+// Checks and parses the response receive from Init
 // If successful, token and path will be set to the values found in the
 // answer.
 // If the response was an error response, or does not contain the
@@ -158,7 +158,7 @@ readRequestSocketAnswer(isc::data::ConstElementPtr recv_msg,
     path = answer->get("path")->stringValue();
 }
 
-// Connect to the domain socket that has been received from Boss.
+// Connect to the domain socket that has been received from Init.
 // (i.e. the one that is used to pass created sockets over).
 //
 // This should only be called if the socket had not been connected to
@@ -218,7 +218,7 @@ getSocketFd(const std::string& token, int sock_pass_fd) {
         isc_throw(SocketRequestor::SocketError, "Error writing socket token");
     }
 
-    // Boss first sends some data to signal that getting the socket
+    // Init first sends some data to signal that getting the socket
     // from its cache succeeded
     char status[3];        // We need a space for trailing \0, hence 3
     memset(status, 0, 3);
@@ -301,7 +301,7 @@ public:
                                        share_name);
 
         // Send it to b10-init
-        const int seq = session_.group_sendmsg(request_msg, "Boss");
+        const int seq = session_.group_sendmsg(request_msg, "Init");
 
         // Get the answer from b10-init.
         // Just do a blocking read, we can't really do much anyway
@@ -331,7 +331,7 @@ public:
             createReleaseSocketMessage(token);
 
         // Send it to b10-init
-        const int seq = session_.group_sendmsg(release_msg, "Boss");
+        const int seq = session_.group_sendmsg(release_msg, "Init");
         LOG_DEBUG(logger, DBGLVL_TRACE_DETAIL, SOCKETREQUESTOR_RELEASESOCKET).
             arg(token);
 
