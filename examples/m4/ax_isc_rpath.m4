@@ -19,20 +19,22 @@ AC_ARG_ENABLE(rpath,
     rpath=$enableval, rpath=yes)
 
 if test x$rpath != xno; then
-    # We'll tweak both CXXFLAGS and CCFLAGS so this function will work whichever
-    # language is used in the main script.  Note also that it's not LDFLAGS;
-    # technically this is a linker flag, but we've noticed $LDFLAGS can be placed
-    # where the compiler could interpret it as a compiler option, leading to
-    # subtle failure mode.  So, in the check below using the compiler flag is
-    # safer (in the actual Makefiles the flag should be set in LDFLAGS).
+    # We'll tweak both CXXFLAGS and CCFLAGS so this function will work
+    # whichever language is used in the main script.  Note also that it's not
+    #LDFLAGS; technically this is a linker flag, but we've noticed $LDFLAGS
+    # can be placed where the compiler could interpret it as a compiler
+    # option, leading to subtle failure mode.  So, in the check below using
+    # the compiler flag is safer (in the actual Makefiles the flag should be
+    # set in LDFLAGS).
     CXXFLAGS_SAVED="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS -Wl,-R/usr/lib"
     CCFLAGS_SAVED="$CCFLAGS"
     CCFLAGS="$CCFLAGS -Wl,-R/usr/lib"
 
     # check -Wl,-R and -R rather than gcc specific -rpath to be as portable
-    # as possible.  -Wl,-R seems to be safer, so we try it first.  In some cases
-    # -R is not actually recognized but AC_TRY_LINK doesn't fail due to that.
+    # as possible.  -Wl,-R seems to be safer, so we try it first.  In some
+    # cases -R is not actually recognized but AC_TRY_LINK doesn't fail due to
+    # that.
     AC_MSG_CHECKING([whether -Wl,-R flag is available in linker])
     AC_TRY_LINK([],[],
         [ AC_MSG_RESULT(yes)
