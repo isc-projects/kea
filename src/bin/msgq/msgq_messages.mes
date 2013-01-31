@@ -70,7 +70,11 @@ the authors when figuring the problem out.
 
 % MSGQ_RECV_ERR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
-the corresponding socket is dropped.
+the corresponding socket is dropped.  The errors include receiving
+broken or (non empty but) incomplete data.  In either case it suggests
+something unexpected happens within the BIND 10 system; it's probably
+better to restart the system, and if it continues it should be
+reported as a bug.
 
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
@@ -123,3 +127,9 @@ data structure.
 % MSGQ_SUBS_NEW_TARGET Creating new target for subscription to group '%1' for instance '%2'
 Debug message. Creating a new subscription. Also creating a new data structure
 to hold it.
+
+% MSGQ_CLOSE_ON_RECV Reading from socket canceled as it's closed: FD=%1
+A debug message.  The msgq daemon was notified of a read event on a
+socket, but its initial read operation failed because the remote
+client has closed its socket.  This is possible in a normal operation
+when a module shuts down.
