@@ -68,7 +68,7 @@ XMLNS_XSD = "http://www.w3.org/2001/XMLSchema"
 XMLNS_XSI = stats_httpd.XMLNS_XSI
 
 DUMMY_DATA = {
-    'Boss' : {
+    'Init' : {
         "boot_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)
         },
     'Auth' : {
@@ -278,7 +278,7 @@ class TestHttpHandler(unittest.TestCase):
                              + stats_httpd.XSD_URL_PATH)
             # check the path of XSL
             self.assertTrue(xsl_doctype.startswith(
-                    '<?xml-stylesheet type="text/xsl" href="' + 
+                    '<?xml-stylesheet type="text/xsl" href="' +
                     stats_httpd.XSL_URL_PATH
                     + '"?>'))
             # check whether the list of 'identifier' attributes in
@@ -397,7 +397,7 @@ class TestHttpHandler(unittest.TestCase):
 
         # 404 NotFound (too long path)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Boss/boot_time/a')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Init/boot_time/a')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
@@ -1001,7 +1001,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertFalse('item_format' in spec)
             self.assertFalse('format' in stats_xml[i].attrib)
 
-    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsd_string = self.stats_httpd.xsd_handler()
@@ -1036,7 +1036,7 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(attribs[i][1], stats_xsd[i].attrib['type'])
             self.assertEqual(attribs[i][2], stats_xsd[i].attrib['use'])
 
-    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsl_string = self.stats_httpd.xsl_handler()

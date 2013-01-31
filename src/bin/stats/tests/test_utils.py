@@ -140,11 +140,11 @@ class MockCfgmgr:
     def shutdown(self):
         self.cfgmgr.running = False
 
-class MockBoss:
+class MockInit:
     spec_str = """\
 {
   "module_spec": {
-    "module_name": "Boss",
+    "module_name": "Init",
     "module_description": "Mock Master process",
     "config_data": [
       {
@@ -537,8 +537,8 @@ class BaseModules:
         # MockCfgmgr
         self.cfgmgr = ThreadingServerManager(MockCfgmgr)
         self.cfgmgr.run()
-        # MockBoss
-        self.b10_init = ThreadingServerManager(MockBoss)
+        # MockInit
+        self.b10_init = ThreadingServerManager(MockInit)
         self.b10_init.run()
         # MockAuth
         self.auth = ThreadingServerManager(MockAuth)
@@ -558,7 +558,7 @@ class BaseModules:
         # MockAuth
         self.auth2.shutdown(True)
         self.auth.shutdown(True)
-        # MockBoss
+        # MockInit
         self.b10_init.shutdown(True)
         # MockCfgmgr
         self.cfgmgr.shutdown(True)

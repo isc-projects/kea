@@ -31,9 +31,9 @@ class TestError(Exception):
     """
     pass
 
-class BossUtils:
+class InitUtils:
     """
-    A class that brings some utilities for pretending we're Boss.
+    A class that brings some utilities for pretending we're Init.
     This is expected to be inherited by the testcases themselves.
     """
     def setUp(self):
@@ -86,7 +86,7 @@ class BossUtils:
     def start_cmdctl(self):
         pass
 
-class ComponentTests(BossUtils, unittest.TestCase):
+class ComponentTests(InitUtils, unittest.TestCase):
     """
     Tests for the bind10.component.Component class
     """
@@ -94,7 +94,7 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         Pretend a newly started system.
         """
-        BossUtils.setUp(self)
+        InitUtils.setUp(self)
         self._shutdown = False
         self._exitcode = None
         self.__start_called = False
@@ -712,7 +712,7 @@ class FailComponent(BaseComponent):
     def _start_internal(self):
         raise TestError("test error")
 
-class ConfiguratorTest(BossUtils, unittest.TestCase):
+class ConfiguratorTest(InitUtils, unittest.TestCase):
     """
     Tests for the configurator.
     """
@@ -720,7 +720,7 @@ class ConfiguratorTest(BossUtils, unittest.TestCase):
         """
         Prepare some test data for the tests.
         """
-        BossUtils.setUp(self)
+        InitUtils.setUp(self)
         self.log = []
         # The core "hardcoded" configuration
         self.__core = {

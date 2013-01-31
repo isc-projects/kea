@@ -35,7 +35,7 @@
             ]
         }
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-xfrout": {"kind": "dispensable"},
             "b10-auth": {"kind": "needed", "special": "auth"},

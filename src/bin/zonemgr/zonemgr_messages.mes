@@ -69,7 +69,7 @@ new data.
 
 % ZONEMGR_RECEIVE_SHUTDOWN received SHUTDOWN command
 This is a debug message indicating that the zone manager has received
-a SHUTDOWN command over the command channel from the Boss process.
+a SHUTDOWN command over the command channel from the Init process.
 It will act on this command and shut down.
 
 % ZONEMGR_RECEIVE_UNKNOWN received unknown command '%1'

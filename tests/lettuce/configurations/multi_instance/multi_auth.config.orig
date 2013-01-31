@@ -24,7 +24,7 @@
             }]
         }
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth-2": {"kind": "dispensable", "special": "auth"},
             "b10-auth": {"kind": "dispensable", "special": "auth"},
