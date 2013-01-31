@@ -525,6 +525,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
+    const Opcode opcode = message.getOpcode();
+    stats_attrs.setRequestOpCode(opcode);
+
     try {
         // Parse the message.
         message.fromWire(request_buffer);
@@ -573,7 +576,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
-    const Opcode opcode = message.getOpcode();
     bool send_answer = true;
     try {
         // note: This can only be reliable after TSIG check succeeds.
@@ -584,8 +586,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         }
 
         // note: This can only be reliable after TSIG check succeeds.
-        stats_attrs.setRequestOpCode(opcode);
-
         if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context, stats_attrs);

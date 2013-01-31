@@ -155,7 +155,8 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     // OPCODE
     const boost::optional<isc::dns::Opcode>& opcode =
         msgattrs.getRequestOpCode();
-    // Increment opcode counter only if the opcode exists.
+    // Increment opcode counter only if the opcode exists; it can happen if
+    // short message which does not contain DNS header received.
     if (opcode) {
         server_msg_counter_.inc(opcode_to_msgcounter[opcode.get().getCode()]);
     }
@@ -199,7 +200,13 @@ Counters::incResponse(const MessageAttributes& msgattrs,
 
     const boost::optional<isc::dns::Opcode>& opcode =
         msgattrs.getRequestOpCode();
-    if (opcode && opcode.get() == Opcode::QUERY()) {
+    if (!opcode) {
+        isc_throw(isc::Unexpected, "Opcode of the request is empty while it is"
+                                   " responded");
+    }
+    if (!msgattrs.getRequestSigBadSig() &&
+               opcode.get() == Opcode::QUERY())
+    {
         // compound attributes
         const unsigned int answer_rrs =
             response.getRRCount(Message::SECTION_ANSWER);

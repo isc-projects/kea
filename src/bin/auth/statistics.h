@@ -286,7 +286,7 @@ public:
     /// \param msgattrs DNS message attributes.
     /// \param response DNS response message.
     /// \param done DNS response was sent to the client.
-    /// \throw None
+    /// \throw isc::Unexpected Internal condition check failed.
     void inc(const MessageAttributes& msgattrs,
              const isc::dns::Message& response, const bool done);
 
