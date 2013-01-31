@@ -48,7 +48,7 @@ public:
     virtual void disconnect() {}
 
     virtual int group_sendmsg(isc::data::ConstElementPtr msg, std::string group,
-                              std::string, std::string)
+                              std::string, std::string, bool)
     {
         if (!send_ok_) {
             isc_throw(isc::cc::SessionError,
