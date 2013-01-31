@@ -73,6 +73,12 @@ TEST_F(Rdata_MX_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                      "10 mx.example.com.")));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::MX("10 mx2.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                     "10 mx2")));
+
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                              "10 mx. example.com."));

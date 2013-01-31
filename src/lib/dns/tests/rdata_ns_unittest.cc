@@ -96,6 +96,12 @@ TEST_F(Rdata_NS_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                      "ns.example.com.")));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::NS("ns8.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
+                                     "ns8")));
+
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                              ""));
