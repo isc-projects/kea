@@ -99,6 +99,13 @@ TEST_F(Rdata_PTR_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_ptr.compare(
         *test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
                                      "ns.example.com.")));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::PTR("foo0.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
+                                     "foo0")));
+
     // Extra text at end of line
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
                                              "foo.example.com. extra."));
