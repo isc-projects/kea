@@ -309,13 +309,31 @@ TEST_F(AuthSrvTest, response) {
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     shortQuestion();
-    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
+    ConstElementPtr stats_after = server.getStatistics()->get("zones")->
+        get("_SERVER_");
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.formerr"] = 1;
+    expect["qrynoauthans"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
     shortAnswer();
-    checkAllRcodeCountersZeroExcept(Rcode::FORMERR(), 1);
+    ConstElementPtr stats_after = server.getStatistics()->get("zones")->
+        get("_SERVER_");
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["rcode.formerr"] = 1;
+    expect["qrynoauthans"] = 1;
+    checkStatisticsCounters(stats_after, expect);
 }
 
 // Query with unsupported version of EDNS.
@@ -328,8 +346,10 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     expect["request.v4"] = 1;
     expect["request.badednsver"] = 1;
     expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
     expect["responses"] = 1;
     expect["rcode.badvers"] = 1;
+    expect["qrynoauthans"] = 1;
     checkStatisticsCounters(stats_after, expect);
 }
 
