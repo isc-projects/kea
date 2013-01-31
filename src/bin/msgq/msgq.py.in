@@ -815,3 +815,5 @@ if __name__ == "__main__":
         pass
 
     msgq.shutdown()
+
+    logger.info(MSGQ_EXITING)
