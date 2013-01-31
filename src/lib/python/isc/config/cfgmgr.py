@@ -551,7 +551,7 @@ class ConfigManager:
     def run(self):
         """Runs the configuration manager."""
         self.running = True
-        while (self.running):
+        while self.running:
             # we just wait eternally for any command here, so disable
             # timeouts for this specific recv
             self.cc.set_timeout(0)
@@ -566,3 +566,4 @@ class ConfigManager:
                 # Only respond if there actually is something to respond with
                 if answer is not None:
                     self.cc.group_reply(env, answer)
+        logger.info(CFGMGR_STOPPED_BY_COMMAND)
