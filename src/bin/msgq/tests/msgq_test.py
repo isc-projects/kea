@@ -719,7 +719,7 @@ class SocketTests(unittest.TestCase):
         # if socket.recv() returns empty data, the result depends on whether
         # there's any preceding data; in the second case below, at least
         # 6 bytes of data will be expected, and the second call to our faked
-        # recv() returns empty data.  In that case it will logged as error.
+        # recv() returns empty data.  In that case it will be logged as error.
         for recv_data in [b'', b'short']:
             self.__sock.recv_result = recv_data
             self.__killed_socket = None
