@@ -5,6 +5,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+if USE_CLANGPP
+# Disable unused parameter warning caused by some Boost headers when compiling with clang
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
