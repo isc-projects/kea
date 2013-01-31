@@ -572,6 +572,7 @@ class SocketTests(unittest.TestCase):
         '''A mock socket used instead of standard socket objects.'''
         def __init__(self):
             self.ex_on_send = None # raised from send() if not None
+            self.recv_result = b'test' # dummy data or exception
             self.blockings = [] # history of setblocking() params
         def setblocking(self, on):
             self.blockings.append(on)
@@ -579,6 +580,12 @@ class SocketTests(unittest.TestCase):
             if self.ex_on_send is not None:
                 raise self.ex_on_send
             return 10           # arbitrary choice
+        def recv(self, len):
+            if isinstance(self.recv_result, Exception):
+                raise self.recv_result
+            ret = self.recv_result
+            self.recv_result = b'' # if called again, return empty data
+            return ret
         def fileno(self):
             return 42           # arbitrary choice
 
@@ -587,6 +594,7 @@ class SocketTests(unittest.TestCase):
         def __init__(self, logger):
             self.error_called = 0
             self.warn_called = 0
+            self.debug_called = 0
             self.orig_logger = logger
         def error(self, *args):
             self.error_called += 1
@@ -594,6 +602,9 @@ class SocketTests(unittest.TestCase):
         def warn(self, *args):
             self.warn_called += 1
             self.orig_logger.warn(*args)
+        def debug(self, *args):
+            self.debug_called += 1
+            self.orig_logger.debug(*args)
 
     def mock_kill_socket(self, fileno, sock):
         '''A replacement of MsgQ.kill_socket method for inspection.'''
@@ -686,6 +697,34 @@ class SocketTests(unittest.TestCase):
         '''Emulate a "writable" socket has been already closed and killed.'''
         # This just shouldn't crash
         self.__msgq._process_fd(4200, True, False, False)
+
+    def test_process_packet(self):
+        '''Check some failure cases in handling an incoming message.'''
+        expected_errors = 0
+        expected_debugs = 0
+
+        for eno in [errno.ENOBUFS, errno.ECONNRESET]:
+            self.__sock_error.errno = eno
+            self.__sock.recv_result = self.__sock_error
+            self.__msgq.process_packet(42, self.__sock)
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            if eno == errno.ENOBUFS:
+                expected_errors += 1
+            else:
+                expected_debugs += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_debugs, self.__logger.debug_called)
+
+        for recv_data in [b'', b'short']:
+            self.__sock.recv_result = recv_data
+            self.__msgq.process_packet(42, self.__sock)
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            if len(recv_data) == 0:
+                expected_debugs += 1
+            else:
+                expected_errors += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_debugs, self.__logger.debug_called)
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()
