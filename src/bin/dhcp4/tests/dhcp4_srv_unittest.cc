@@ -238,7 +238,7 @@ public:
     /// @param t1_mandatory is T1 mandatory?
     /// @param t2_mandatory is T2 mandatory?
     void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
-                            bool t1_mandatory = false, bool t2_mandatory = false) {
+                            bool t1_mandatory = false, bool /* t2_mandatory */ = false) {
 
         // Technically inPool implies inRange, but let's be on the safe
         // side and check both.

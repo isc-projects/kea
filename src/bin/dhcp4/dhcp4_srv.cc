@@ -648,7 +648,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
     /// TODO: Implement this.
 }
 

@@ -222,7 +222,8 @@ public:
     // Check that generated IAADDR option contains expected address.
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
-                     uint32_t expected_preferred, uint32_t expected_valid) {
+                     uint32_t /* expected_preferred */,
+                     uint32_t /* expected_valid */) {
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
