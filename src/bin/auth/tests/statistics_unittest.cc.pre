@@ -106,9 +106,9 @@ TEST_F(CountersTest, invalidParameterForSetRequestTSIG) {
     // These patterns should not throw:
     //      request signature  badsig
     //     --------------------------
-    //      (none)             false 
-    //      TSIG               false 
-    //      TSIG               true  
+    //      (none)             false
+    //      TSIG               false
+    //      TSIG               true
     EXPECT_NO_THROW(msgattrs.setRequestTSIG(false, false));
     EXPECT_NO_THROW(msgattrs.setRequestTSIG(true, false));
     EXPECT_NO_THROW(msgattrs.setRequestTSIG(true, true));
