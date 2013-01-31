@@ -16,7 +16,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This file implements the Boss of Bind (BoB, or bob) program.
+This file implements the Init of Bind (BoB, or bob) program.
 
 Its purpose is to start up the BIND 10 system, and then manage the
 processes, by starting and stopping processes, plus restarting
@@ -103,7 +103,7 @@ isc.util.process.rename(sys.argv[0])
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
-# This is for boot_time of Boss
+# This is for boot_time of Init
 _BASETIME = time.gmtime()
 
 # Detailed error message commonly used on startup failure, possibly due to
@@ -191,14 +191,14 @@ class CChannelConnectError(Exception): pass
 class ProcessStartError(Exception): pass
 
 class BoB:
-    """Boss of BIND class."""
+    """Init of BIND class."""
 
     def __init__(self, msgq_socket_file=None, data_path=None,
                  config_filename=None, clear_config=False,
                  verbose=False, nokill=False, setuid=None, setgid=None,
                  username=None, cmdctl_port=None, wait_time=10):
         """
-            Initialize the Boss of BIND. This is a singleton (only one can run).
+            Initialize the Init of BIND. This is a singleton (only one can run).
 
             The msgq_socket_file specifies the UNIX domain socket file that the
             msgq process listens on.  If verbose is True, then b10-init reports
@@ -210,7 +210,7 @@ class BoB:
             The cmdctl_port is passed to cmdctl and specify on which port it
             should listen.
 
-            wait_time controls the amount of time (in seconds) that Boss waits
+            wait_time controls the amount of time (in seconds) that Init waits
             for selected processes to initialize before continuing with the
             initialization.  Currently this is only the configuration manager.
         """
@@ -442,7 +442,7 @@ class BoB:
 
     def process_running(self, msg, who):
         """
-            Some processes return a message to the Boss after they have
+            Some processes return a message to the Init after they have
             started to indicate that they are running.  The form of the
             message is a dictionary with contents {"running:", "<process>"}.
             This method checks the passed message and returns True if the
@@ -508,7 +508,7 @@ class BoB:
         # Subscribe to the message queue.  The only messages we expect to receive
         # on this channel are once relating to process startup.
         if self.cc_session is not None:
-            self.cc_session.group_subscribe("Boss")
+            self.cc_session.group_subscribe("Init")
 
         return msgq_proc
 
@@ -723,7 +723,7 @@ class BoB:
 
     def component_shutdown(self, exitcode=0):
         """
-        Stop the Boss instance from a components' request. The exitcode
+        Stop the Init instance from a components' request. The exitcode
         indicates the desired exit code.
 
         If we did not start yet, it raises an exception, which is meant

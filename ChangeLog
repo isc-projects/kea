@@ -575,7 +575,7 @@ bind10-devel-20121115 released on November 15, 2012
 
 487.	[bug]		jinmei
 	The bind10 process now terminates a component (subprocess) by the
-	"config remove Boss/components" bindctl command even if the
+	"config remove Init/components" bindctl command even if the
 	process crashes immediately before the command is sent to bind10.
 	Previously this led to an inconsistent state between the
 	configuration and an internal component list of bind10, and bind10
@@ -599,7 +599,7 @@ bind10-devel-20121115 released on November 15, 2012
 	completion added a part twice has been solved, and it no longer
 	suggests the confusing value 'argument' as a completion-hint for
 	configuration items. Additionally, bindctl no longer crashes upon
-	input like 'config remove Boss'.
+	input like 'config remove Init'.
 	(Trac #2254, git 9047de5e8f973e12e536f7180738e6b515439448)
 
 484.	[func]		tomek
@@ -1462,7 +1462,7 @@ bind10-devel-20120119 released on January 19, 2012
 	the -u flag for switching the user after initialization.
 	Note: this change broke backward compatibility to boss component
 	configuration.  If your b10-config.db contains "setuid" for
-	Boss.components, you'll need to remove that entry by hand before
+	Init.components, you'll need to remove that entry by hand before
 	starting BIND 10.
 	(Trac #1508, #1509, #1510,
 	git edc5b3c12eb45437361484c843794416ad86bb00)
@@ -1785,7 +1785,7 @@ bind10-devel-20111128 released on November 28, 2011
 316.	[func]*		vorner
 	The configuration of what parts of the system run is more
 	flexible now.  Everything that should run must have an
-	entry in Boss/components.
+	entry in Init/components.
 	(Trac #213, git 08e1873a3593b4fa06754654d22d99771aa388a6)
 
 315.	[func]		tomek
@@ -1856,9 +1856,9 @@ bind10-devel-20111128 released on November 28, 2011
 	(Trac #1279, git cd3588c9020d0310f949bfd053c4d3a4bd84ef88)
 
 306.	[bug]		stephen
-	Boss process now waits for the configuration manager to initialize
+	Init process now waits for the configuration manager to initialize
 	itself before continuing with startup.  This fixes a race condition
-	whereby the Boss could start the configuration manager and then
+	whereby the Init could start the configuration manager and then
 	immediately start components that depended on that component being
 	fully initialized.
 	(Trac #1271, git 607cbae949553adac7e2a684fa25bda804658f61)
@@ -2521,7 +2521,7 @@ bind10-devel-20110322 released on March 22, 2011
 
 206.	[func]		shane
 	Add the ability to list the running BIND 10 processes using the
-	command channel. To try this, use "Boss show_processes".
+	command channel. To try this, use "Init show_processes".
 	(Trac #648, git 451bbb67c2b5d544db2f7deca4315165245d2b3b)
 
 205.	[bug]		jinmei
@@ -2685,7 +2685,7 @@ bind10-devel-20110224 released on February 24, 2011
 179.	[func]		vorner
 	It is possible to start and stop resolver and authoritative
 	server without restart of the whole system. Change of the
-	configuration (Boss/start_auth and Boss/start_resolver) is
+	configuration (Init/start_auth and Init/start_resolver) is
 	enough.
 	(Trac #565, git 0ac0b4602fa30852b0d86cc3c0b4730deb1a58fe)
 
@@ -2751,7 +2751,7 @@ bind10-devel-20110224 released on February 24, 2011
 	(Trac #449, git 8aa3b2246ae095bbe7f855fd11656ae3bdb98986)
 
 168.	[bug]		vorner
-	Boss no longer has the -f argument, which was undocumented and
+	Init no longer has the -f argument, which was undocumented and
 	stayed as a relict of previous versions, currently causing only
 	strange behaviour.
 	(Trac #572, git 17f237478961005707d649a661cc72a4a0d612d4)
@@ -3062,7 +3062,7 @@ bind10-devel-20101201 released on December 01, 2010
 	Output changed to JSON format for consistency. (svn r3694)
 
 122.	[func]		stephen
-	src/bin/bind10: Added configuration options to Boss to determine
+	src/bin/bind10: Added configuration options to Init to determine
 	whether to start the authoritative server, recursive server (or
 	both). A dummy program has been provided for test purposes.
 	(Trac #412, svn r3676)
@@ -3131,7 +3131,7 @@ bind10-devel-20101201 released on December 01, 2010
 
 111.	[bug]*		Vaner
 	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
-	properly when user enter "ctrl+c" or 'Boss shutdown' command
+	properly when user enter "ctrl+c" or 'Init shutdown' command
 	through bindctl.  The ZonemgrRefresh.run_timer and
 	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)

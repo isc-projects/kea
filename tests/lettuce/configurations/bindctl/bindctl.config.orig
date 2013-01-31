@@ -17,7 +17,7 @@
     "data_sources": {
         "classes": {}
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
         }

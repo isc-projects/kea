@@ -246,18 +246,18 @@ TODO: configuration section
     <para>
       The configuration provides settings for components for
       <command>b10-init</command> to manage under
-      <varname>/Boss/components/</varname>.
+      <varname>/Init/components/</varname>.
       The default elements are:
     </para>
 
     <itemizedlist>
 
       <listitem>
-        <para> <varname>/Boss/components/b10-cmdctl</varname> </para>
+        <para> <varname>/Init/components/b10-cmdctl</varname> </para>
       </listitem>
 
       <listitem>
-        <para> <varname>/Boss/components/b10-stats</varname> </para>
+        <para> <varname>/Init/components/b10-stats</varname> </para>
       </listitem>
 
     </itemizedlist>
@@ -425,7 +425,7 @@ xfrin
 
     <para>
       The statistics data collected by the <command>b10-stats</command>
-      daemon for <quote>Boss</quote> include:
+      daemon for <quote>Init</quote> include:
     </para>
 
     <variablelist>

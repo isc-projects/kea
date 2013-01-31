@@ -298,15 +298,15 @@ shown, and BIND10 will now shut down.
 
 % BIND10_STARTUP_UNEXPECTED_MESSAGE unrecognised startup message %1
 During the startup process, a number of messages are exchanged between the
-Boss process and the processes it starts.  This error is output when a
-message received by the Boss process is recognised as being of the
+Init process and the processes it starts.  This error is output when a
+message received by the Init process is recognised as being of the
 correct format but is unexpected.  It may be that processes are starting
 of sequence.
 
 % BIND10_STARTUP_UNRECOGNISED_MESSAGE unrecognised startup message %1
 During the startup process, a number of messages are exchanged between the
-Boss process and the processes it starts.  This error is output when a
-message received by the Boss process is not recognised.
+Init process and the processes it starts.  This error is output when a
+message received by the Init process is not recognised.
 
 % BIND10_STOP_PROCESS asking %1 to shut down
 The b10-init module is sending a shutdown command to the given module over
@@ -318,10 +318,10 @@ action will be taken by the b10-init process.
 
 % BIND10_WAIT_CFGMGR waiting for configuration manager process to initialize
 The configuration manager process is so critical to operation of BIND 10
-that after starting it, the Boss module will wait for it to initialize
+that after starting it, the Init module will wait for it to initialize
 itself before continuing.  This debug message is produced during the
 wait and may be output zero or more times depending on how long it takes
-the configuration manager to start up.  The total length of time Boss
+the configuration manager to start up.  The total length of time Init
 will wait for the configuration manager before reporting an error is
 set with the command line --wait switch, which has a default value of
 ten seconds.

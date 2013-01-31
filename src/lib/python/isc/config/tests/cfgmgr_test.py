@@ -174,7 +174,7 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual(self.cm.data_path, self.writable_data_path)
         self.assertIsNotNone(self.cm.config)
         self.assertTrue(self.fake_session.has_subscription("ConfigManager"))
-        self.assertTrue(self.fake_session.has_subscription("Boss", "ConfigManager"))
+        self.assertTrue(self.fake_session.has_subscription("Init", "ConfigManager"))
         self.assertFalse(self.cm.running)
 
     def test_notify_b10_init(self):

@@ -36,7 +36,7 @@
     "Stats": {
         "poll-interval": 1
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
             "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },

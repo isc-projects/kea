@@ -490,7 +490,7 @@ class TestBoB(unittest.TestCase):
             def group_recvmsg(self, nonblock, seq): pass
         class DummyModuleCCSession():
             module_spec = isc.config.module_spec.ModuleSpec({
-                    "module_name": "Boss",
+                    "module_name": "Init",
                     "statistics": [
                         {
                             "item_name": "boot_time",
@@ -1121,7 +1121,7 @@ class MockComponent:
     def kill(self, forceful):
         self.forceful = forceful
 
-class TestBossCmd(unittest.TestCase):
+class TestInitCmd(unittest.TestCase):
     def test_ping(self):
         """
         Confirm simple ping command works.
@@ -1276,7 +1276,7 @@ class TestPIDFile(unittest.TestCase):
         self.assertRaises(IOError, dump_pid,
                           'nonexistent_dir' + os.sep + 'bind10.pid')
 
-class TestBossComponents(unittest.TestCase):
+class TestInitComponents(unittest.TestCase):
     """
     Test b10-init propagates component configuration properly to the
     component configurator and acts sane.
@@ -1743,7 +1743,7 @@ class TestBossComponents(unittest.TestCase):
         self.assertEqual(attempts, 2)
 
         self.assertEqual(cc_socket_file, bob.msgq_socket_file)
-        self.assertEqual(cc_sub, 'Boss')
+        self.assertEqual(cc_sub, 'Init')
 
         # isc.cc.Session, time.time() and time.sleep() are restored
         # during tearDown().
