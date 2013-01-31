@@ -71,18 +71,19 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 class MsgQReceiveError(Exception): pass
 
 class MsgQCloseOnReceive(Exception):
-    '''Exception raised when reading data from a socket results in "shutdown.
+    '''Exception raised when reading data from a socket results in 'shutdown'.
 
-    This can be either getting 0-length data or via ECONNRESET socket.error
-    exception.  This class holds whether it happens in the middle of reading
-    (i.e. after reading some) via partial_read parameter, which is set to True
-    if and only if so.  This will be used by an upper layer cathing the
-    exception to distinguish severity of the event.
+    This happens when msgq received 0-length data.  This class holds whether
+    it happens in the middle of reading (i.e. after reading some) via
+    partial_read parameter, which is set to True if and only if so.
+    This will be used by an upper layer catching the exception to distinguish
+    the severity of the event.
 
     "'''
     def __init__(self, reason, partial_read):
         self.partial_read = partial_read
         self.__reason = reason
+
     def __str__(self):
         return self.__reason
 
