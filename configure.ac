@@ -232,6 +232,21 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
+# Our experiments have shown Solaris 10 has broken support for the
+# IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value
+# previously set via setsockopt().  We know it doesn't happen on one instance
+# on Solaris 11, but we don't know whether it happens for any Solaris 10
+# implementations or for earlier versions of Solaris.  In any case, at the
+# moment this matters for only one unittest case, so we'll simply disable
+# the affected test using the following definition with the specific hardcoding
+# of that version of Solaris.
+case "$host" in
+*-solaris2.10)
+	AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
+	[Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
+	;;
+esac
+
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
