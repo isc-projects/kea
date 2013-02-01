@@ -33,13 +33,22 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_SRV_Test : public RdataTest {
-    // there's nothing to specialize
-};
+public:
+    Rdata_SRV_Test() :
+        srv_txt("1 5 1500 a.example.com."),
+        srv_txt2("1 5 1400 example.com."),
+        too_long_label("012345678901234567890123456789"
+                       "0123456789012345678901234567890123."),
+        rdata_srv(srv_txt),
+        rdata_srv2(srv_txt2)
+    {}
 
-string srv_txt("1 5 1500 a.example.com.");
-string srv_txt2("1 5 1400 example.com.");
-string too_long_label("012345678901234567890123456789"
-    "0123456789012345678901234567890123.");
+    const string srv_txt;
+    const string srv_txt2;
+    const string too_long_label;
+    const in::SRV rdata_srv;
+    const in::SRV rdata_srv2;
+};
 
 // 1 5 1500 a.example.com.
 const uint8_t wiredata_srv[] = {
@@ -49,9 +58,6 @@ const uint8_t wiredata_srv[] = {
 const uint8_t wiredata_srv2[] = {
     0x00, 0x01, 0x00, 0x05, 0x05, 0x78, 0x07, 0x65, 0x78, 0x61, 0x6d,
     0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00};
-
-const in::SRV rdata_srv(srv_txt);
-const in::SRV rdata_srv2(srv_txt2);
 
 TEST_F(Rdata_SRV_Test, createFromText) {
     EXPECT_EQ(1, rdata_srv.getPriority());
