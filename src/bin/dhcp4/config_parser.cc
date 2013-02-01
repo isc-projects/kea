@@ -687,7 +687,7 @@ public:
     virtual void commit() {
         if (options_ == NULL) {
             isc_throw(isc::InvalidOperation, "parser logic error: storage must be set before "
-                      "commiting option data.");
+                      "committing option data.");
         } else  if (!option_descriptor_.option) {
             // Before we can commit the new option should be configured. If it is not
             // than somebody must have called commit() before build().
@@ -1855,7 +1855,7 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
     LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE).arg(config_details);
 
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(0, "Configuration commited.");
+    answer = isc::config::createAnswer(0, "Configuration committed.");
     return (answer);
 }
 

@@ -77,6 +77,11 @@ is not equal to the requested SOA serial.
 There was an error importing the python DNS module pydnspp. The most
 likely cause is a PYTHONPATH problem.
 
+% XFRIN_INVALID_ZONE_DATA zone %1 received from %2 is broken and unusable
+The zone was received, but it failed sanity validation. The previous version
+of zone (if any is available) will be used. Look for previous
+XFRIN_ZONE_INVALID messages to see the exact problem(s).
+
 % XFRIN_IXFR_TRANSFER_SUCCESS incremental IXFR transfer of zone %1 succeeded (messages: %2, changesets: %3, deletions: %4, additions: %5, bytes: %6, run time: %7 seconds, %8 bytes/second)
 The IXFR transfer for the given zone was successful.
 The provided information contains the following values:
@@ -205,7 +210,7 @@ such that the remote server doesn't support IXFR, we don't have the SOA record
 (or the zone at all), we are out of sync, etc. In many of these situations,
 AXFR could still work. Therefore we try that one in case it helps.
 
-% XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4
+% XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION %1 transfer of zone %2 with %3 failed: %4
 The XFR transfer for the given zone has failed due to a protocol
 error, such as an unexpected response from the primary server.  The
 error is shown in the log message.  It may be because the primary
@@ -231,6 +236,12 @@ idea, however, in terms of who should be responsible for managing
 zones at a higher level.  In future it is more likely that a separate
 zone management framework is provided, and the situation where the
 given zone isn't found in xfrout will be treated as an error.
+
+% XFRIN_ZONE_INVALID Newly received zone %1/%2 fails validation: %3
+The zone was received successfully, but it failed validation. The problem
+is severe enough that the new version of zone is discarded and the old version,
+if any, will stay in use. New transfer will be attempted after some time.
+The problem needs to be fixed in the zone data on the remote server.
 
 % XFRIN_ZONE_MULTIPLE_SOA Zone %1 has %2 SOA RRs
 On starting an xfrin session, it is identified that the zone to be
@@ -258,3 +269,9 @@ the latest version of the zone.  But if the primary server is known to
 be the real source of the zone, some unexpected inconsistency may have
 happened, and you may want to take a closer look.  In this case xfrin
 doesn't perform subsequent zone transfer.
+
+% XFRIN_ZONE_WARN Newly received zone %1/%2 has a problem: %3
+The zone was received successfully, but when checking it, it was discovered
+there's some issue with it. It might be correct, but it should be checked
+and possibly fixed on the remote server. The problem is described in the
+message. The problem does not stop the zone from being used.
