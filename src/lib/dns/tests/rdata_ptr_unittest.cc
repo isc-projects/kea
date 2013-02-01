@@ -65,6 +65,11 @@ TEST_F(Rdata_PTR_Test, createFromText) {
                                                "ns.example.com.")));
 }
 
+TEST_F(Rdata_PTR_Test, badText) {
+    // Extra text at end of line
+    EXPECT_THROW(generic::PTR("foo.example.com. extra."), InvalidRdataText);
+}
+
 TEST_F(Rdata_PTR_Test, createFromWire) {
     EXPECT_EQ(0, rdata_ptr.compare(
                   *rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
@@ -94,6 +99,16 @@ TEST_F(Rdata_PTR_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_ptr.compare(
         *test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
                                      "ns.example.com.")));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::PTR("foo0.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
+                                     "foo0")));
+
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::PTR(), RRClass::IN(),
+                                             "foo.example.com. extra."));
 }
 
 TEST_F(Rdata_PTR_Test, toWireBuffer) {
