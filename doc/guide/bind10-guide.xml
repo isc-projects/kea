@@ -347,7 +347,7 @@ share/
   share/bind10/
     auth.spec
     b10-cmdctl.pem
-    bob.spec
+    init.spec
     passwd.csv
   man/
 var/

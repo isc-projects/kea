@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+IN# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -136,7 +136,7 @@ This indicates a process started previously terminated. The process id
 and component owning the process are indicated, as well as the exit code.
 This doesn't distinguish if the process was supposed to terminate or not.
 
-% BIND10_READING_BOSS_CONFIGURATION reading b10-init configuration
+% BIND10_READING_INIT_CONFIGURATION reading b10-init configuration
 The b10-init process is starting up, and will now process the initial
 configuration, as received from the configuration manager.
 
