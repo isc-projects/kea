@@ -269,8 +269,6 @@ public:
 // to child zones are identified by the existence of non origin NS records.
 // Another special name is "dname.example.com".  Query names under this name
 // will result in DNAME.
-// This mock zone doesn't handle empty non terminal nodes (if we need to test
-// such cases find() should have specialized code for it).
 class MockZoneFinder : public ZoneFinder {
 public:
     MockZoneFinder() :
