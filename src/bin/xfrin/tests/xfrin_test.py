@@ -153,13 +153,19 @@ class MockCC(MockModuleCCSession):
     def remove_remote_config(self, module_name):
         pass
 
+class MockRRsetCollection:
+    '''
+    A mock RRset collection. We don't use it really (we mock the method that
+    it is passed to too), so it's empty.
+    '''
+    pass
+
 class MockDataSourceClient():
     '''A simple mock data source client.
 
     This class provides a minimal set of wrappers related the data source
     API that would be used by Diff objects.  For our testing purposes they
-    only keep truck of the history of the changes.
-
+    only keep track of the history of the changes.
     '''
     def __init__(self):
         self.force_fail = False # if True, raise an exception on commit
@@ -216,6 +222,12 @@ class MockDataSourceClient():
     def get_updater(self, zone_name, replace, journaling=False):
         self._journaling_enabled = journaling
         return self
+
+    def get_rrset_collection(self):
+        '''
+        Pretend to be a zone updater and provide a (dummy) rrset collection.
+        '''
+        return MockRRsetCollection()
 
     def add_rrset(self, rrset):
         self.diffs.append(('add', rrset))
@@ -726,11 +738,27 @@ class TestXfrinConnection(unittest.TestCase):
             'tsig_1st': None,
             'tsig_2nd': None
             }
+        self.__orig_check_zone = xfrin.check_zone
+        xfrin.check_zone = self.__check_zone
+        self._check_zone_result = True
+        self._check_zone_params = None
 
     def tearDown(self):
         self.conn.close()
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
+        xfrin.check_zone = self.__orig_check_zone
+
+    def __check_zone(self, name, rrclass, rrsets, callbacks):
+        '''
+        A mock function used instead of dns.check_zone.
+        '''
+        self._check_zone_params = (name, rrclass, rrsets, callbacks)
+        # Call both callbacks to see they do nothing. This checks
+        # the transfer depends on the result only.
+        callbacks[0]("Test error")
+        callbacks[1]("Test warning")
+        return self._check_zone_result
 
     def _create_normal_response_data(self):
         # This helper method creates a simple sequence of DNS messages that
@@ -825,6 +853,7 @@ class TestAXFR(TestXfrinConnection):
 
     def tearDown(self):
         time.time = self.orig_time_time
+        super().tearDown()
 
     def __create_mock_tsig(self, key, error, has_last_signature=True):
         # This helper function creates a MockTSIGContext for a given key
@@ -1297,6 +1326,33 @@ class TestAXFR(TestXfrinConnection):
                     [[('add', ns_rr), ('add', a_rr), ('add', soa_rrset)]],
                     self.conn._datasrc_client.committed_diffs)
 
+    def test_axfr_response_fail_validation(self):
+        """
+        Test we reject a zone transfer if it fails the check_zone validation.
+        """
+        a_rr = self._create_a('192.0.2.1')
+        self.conn._send_query(RRType.AXFR())
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                RRType.AXFR())],
+            # begin serial=1230, end serial=1234. end will be used.
+            answers=[begin_soa_rrset, a_rr, soa_rrset])
+        # Make it fail the validation
+        self._check_zone_result = False
+        self.assertRaises(XfrinZoneError, self.conn._handle_xfrin_responses)
+        self.assertEqual(type(XfrinAXFREnd()), type(self.conn.get_xfrstate()))
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+        # Check the validation is called with the correct parameters
+        self.assertEqual(TEST_ZONE_NAME, self._check_zone_params[0])
+        self.assertEqual(TEST_RRCLASS, self._check_zone_params[1])
+        self.assertTrue(isinstance(self._check_zone_params[2],
+                                   MockRRsetCollection))
+        # Check we can safely call the callbacks. They have no sideeffects
+        # we can check (checking logging is hard), but we at least check
+        # they don't crash.
+        self._check_zone_params[3][0]("Test error")
+        self._check_zone_params[3][1]("Test warning")
+
     def test_axfr_response_extra(self):
         '''Test with an extra RR after the end of AXFR session.
 
@@ -1499,6 +1555,15 @@ class TestAXFR(TestXfrinConnection):
         self.conn.response_generator = self._create_normal_response_data
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
 
+    def test_do_xfrin_invalid_zone(self):
+        """
+        Test receiving an invalid zone. We mock the check and see the whole
+        transfer is rejected.
+        """
+        self._check_zone_result = False
+        self.conn.response_generator = self._create_normal_response_data
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+
     def test_do_soacheck_and_xfrin(self):
         self.conn.response_generator = self._create_soa_response_data
         self.assertEqual(self.conn.do_xfrin(True), XFRIN_OK)
@@ -1575,6 +1640,26 @@ class TestIXFRResponse(TestXfrinConnection):
         check_diffs(self.assertEqual,
                     [[('delete', begin_soa_rrset), ('add', soa_rrset)]],
                     self.conn._datasrc_client.committed_diffs)
+
+    def test_ixfr_response_fail_validation(self):
+        '''
+        An IXFR that fails validation later on. Check it is rejected.
+        '''
+        self.conn.reply_data = self.conn.create_response_data(
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self._check_zone_result = False
+        self.assertRaises(XfrinZoneError, self.conn._handle_xfrin_responses)
+        self.assertEqual([], self.conn._datasrc_client.committed_diffs)
+        self.assertEqual(TEST_ZONE_NAME, self._check_zone_params[0])
+        self.assertEqual(TEST_RRCLASS, self._check_zone_params[1])
+        self.assertTrue(isinstance(self._check_zone_params[2],
+                                   MockRRsetCollection))
+        # Check we can safely call the callbacks. They have no sideeffects
+        # we can check (checking logging is hard), but we at least check
+        # they don't crash.
+        self._check_zone_params[3][0]("Test error")
+        self._check_zone_params[3][1]("Test warning")
 
     def test_ixfr_response_multi_sequences(self):
         '''Similar to the previous case, but with multiple diff seqs.

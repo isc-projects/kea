@@ -25,6 +25,13 @@ Feature: Xfrin
 
     A query for www.example.org to [::1]:47806 should have rcode REFUSED
     When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    # The data we receive contain a NS RRset that refers to three names in the
+    # example.org. zone. All these three are nonexistent in the data, producing
+    # 3 separate warning messages in the log.
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    And wait for new bind10 stderr message XFRIN_ZONE_WARN
+    # But after complaining, the zone data should be accepted.
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     A query for www.example.org to [::1]:47806 should have rcode NOERROR
@@ -38,7 +45,20 @@ Feature: Xfrin
     When I do an AXFR transfer of example.org
     Then transfer result should have 13 rrs
 
-
+    # Now try to offer another update. However, the validation of
+    # data should fail. The old version shoud still be available.
+    When I send bind10 the following commands with cmdctl port 47804:
+    """
+    config set data_sources/classes/IN[0]/params/database_file data/example.org-nons.sqlite3
+    config set Auth/database_file data/example.org-nons.sqlite3
+    config commit
+    """
+    Then I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    And wait for new bind10 stderr message XFRIN_ZONE_INVALID
+    And wait for new bind10 stderr message XFRIN_INVALID_ZONE_DATA
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+    A query for example.org type NS to [::1]:47806 should have rcode NOERROR
+    And transfer result should have 13 rrs
 
     Scenario: Transfer with TSIG
     # Similar setup to the test above, but this time, we add TSIG configuration
@@ -74,7 +94,7 @@ Feature: Xfrin
 
     # Transfer should fail
     When I send bind10 the command Xfrin retransfer example.org
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_ERROR not XFRIN_TRANSFER_SUCCESS
+    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_TRANSFER_SUCCESS
     # Set client to use TSIG as well
     When I send bind10 the following commands:
     """
@@ -86,3 +106,41 @@ Feature: Xfrin
     # Transwer should succeed now
     When I send bind10 the command Xfrin retransfer example.org
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+
+    Scenario: Validation fails
+    # In this test, the source data of the XFR is invalid (missing NS record
+    # at the origin). We check it is rejected after the transfer.
+    #
+    # We use abuse the fact that we do not check data when we read it from
+    # the sqlite3 database (unless we load into in-memory, which we don't
+    # do here).
+    The file data/test_nonexistent_db.sqlite3 should not exist
+
+    Given I have bind10 running with configuration xfrin/retransfer_master_nons.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+
+    And I have bind10 running with configuration xfrin/retransfer_slave.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    # Now we use the first step again to see if the file has been created
+    The file data/test_nonexistent_db.sqlite3 should exist
+
+    A query for www.example.org to [::1]:47806 should have rcode REFUSED
+    When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    # It should complain once about invalid data, then again that the whole
+    # zone is invalid and then reject it.
+    And wait for new bind10 stderr message XFRIN_ZONE_INVALID
+    And wait for new bind10 stderr message XFRIN_INVALID_ZONE_DATA
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+    # The zone still doesn't exist as it is rejected.
+    # FIXME: This step fails. Probably an empty zone is created in the data
+    # source :-|. This should be REFUSED, not SERVFAIL.
+    A query for www.example.org to [::1]:47806 should have rcode SERVFAIL

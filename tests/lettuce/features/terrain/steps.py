@@ -30,7 +30,7 @@ def stop_a_named_process(step, process_name):
     """
     world.processes.stop_process(process_name)
 
-@step('wait (?:(\d+) times )?for (new )?(\w+) stderr message (.+)(?: not (.+))?')
+@step('wait (?:(\d+) times )?for (new )?(\w+) stderr message (\S+)(?: not (\S+))?')
 def wait_for_stderr_message(step, times, new, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stderr

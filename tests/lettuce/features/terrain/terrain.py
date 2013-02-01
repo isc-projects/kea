@@ -64,6 +64,8 @@ copylist = [
      "configurations/ddns/noddns.config"],
     ["configurations/xfrin/retransfer_master.conf.orig",
      "configurations/xfrin/retransfer_master.conf"],
+    ["configurations/xfrin/retransfer_master_nons.conf.orig",
+     "configurations/xfrin/retransfer_master_nons.conf"],
     ["configurations/xfrin/retransfer_slave.conf.orig",
      "configurations/xfrin/retransfer_slave.conf"],
     ["data/inmem-xfrin.sqlite3.orig",
@@ -84,7 +86,7 @@ removelist = [
 # If we have waited OUTPUT_WAIT_MAX_INTERVALS times, we will abort with an
 # error (so as not to hang indefinitely)
 OUTPUT_WAIT_INTERVAL = 0.5
-OUTPUT_WAIT_MAX_INTERVALS = 20
+OUTPUT_WAIT_MAX_INTERVALS = 120
 
 # class that keeps track of one running process and the files
 # we created for it.

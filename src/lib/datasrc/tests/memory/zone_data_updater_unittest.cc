@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/memory/rdataset.h>
+#include <datasrc/memory/zone_data.h>
+
 #include <testutils/dnsmessage_test.h>
 
 #include <exceptions/exceptions.h>
@@ -19,10 +23,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
-
-#include <datasrc/memory/rdataset.h>
-#include <datasrc/memory/zone_data.h>
-#include <datasrc/memory/zone_data_updater.h>
+#include <dns/rrttl.h>
 
 #include "memory_segment_test.h"
 
@@ -84,6 +85,16 @@ getNode(isc::util::MemorySegment& mem_sgmt, const Name& name,
     zone_data->insertName(mem_sgmt, name, &node);
     EXPECT_NE(static_cast<ZoneNode*>(NULL), node);
     return (node);
+}
+
+TEST_F(ZoneDataUpdaterTest, zoneMinTTL) {
+    // If we add SOA, zone's min TTL will be updated.
+    updater_->add(textToRRset(
+                      "example.org. 3600 IN SOA . . 0 0 0 0 1200",
+                      zclass_, zname_),
+                  ConstRRsetPtr());
+    isc::util::InputBuffer b(zone_data_->getMinTTLData(), sizeof(uint32_t));
+    EXPECT_EQ(RRTTL(1200), RRTTL(b));
 }
 
 TEST_F(ZoneDataUpdaterTest, rrsigOnly) {

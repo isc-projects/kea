@@ -194,8 +194,14 @@ checkBasicFields(const AbstractRRset& actual_rrset, const RdataSet* rdataset,
 // a temporary non-copyable object.
 boost::shared_ptr<TreeNodeRRset>
 createRRset(const RRClass& rrclass, const ZoneNode* node,
-            const RdataSet* rdataset, bool dnssec_ok)
+            const RdataSet* rdataset, bool dnssec_ok,
+            const void* ttl_data = NULL)
 {
+    if (ttl_data) {
+        return (boost::shared_ptr<TreeNodeRRset>(
+                    new TreeNodeRRset(rrclass, node, rdataset, dnssec_ok,
+                                      ttl_data)));
+    }
     return (boost::shared_ptr<TreeNodeRRset>(
                 new TreeNodeRRset(rrclass, node, rdataset, dnssec_ok)));
 }
@@ -243,6 +249,13 @@ TEST_F(TreeNodeRRsetTest, create) {
                                   true),
                      wildcard_rdataset_, match_name_, rrclass_, RRType::A(),
                      3600, 2, 1);
+
+    // Constructed with explicit TTL
+    const uint32_t ttl = 0;     // use 0 to avoid byte-order conversion
+    checkBasicFields(*createRRset(rrclass_, www_node_, a_rdataset_, true,
+                                  &ttl),
+                     a_rdataset_, www_name_, rrclass_, RRType::A(), 0, 2,
+                     1);
 }
 
 // The following two templated functions are helper to encapsulate the
@@ -337,6 +350,21 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     }
 
     {
+        SCOPED_TRACE("with RRSIG, DNSSEC OK, explicit TTL");
+        const uint32_t ttl = 0;
+        const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true,
+                                  &ttl);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
+                          www_name_,
+                          textToRRset("www.example.com. 0 IN A 192.0.2.1\n"
+                                      "www.example.com. 0 IN A 192.0.2.2"),
+                          textToRRset("www.example.com. 0 IN RRSIG "
+                                      "A 5 2 3600 20120814220826 "
+                                      "20120715220826 1234 example.com. FAKE"),
+                          true);
+    }
+
+    {
         SCOPED_TRACE("with RRSIG, DNSSEC not OK");
         const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, false);
         checkToWireResult(expected_renderer, actual_renderer, rrset,
@@ -396,7 +424,7 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   true);
         checkToWireResult(expected_renderer, actual_renderer, rrset,
-                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,true);
+                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_, true);
     }
 
     {
@@ -407,7 +435,7 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
                                   false);
         checkToWireResult(expected_renderer, actual_renderer, rrset,
-                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,false);
+                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_, false);
     }
 }
 
@@ -522,6 +550,14 @@ TEST_F(TreeNodeRRsetTest, toText) {
     // Constructed with RRSIG, and it should be visible.
     checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, true),
                 a_rrset_, a_rrsig_rrset_);
+    // Same as the previous, but with explicit TTL.
+    const uint32_t ttl = 0;
+    checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, true, &ttl),
+                textToRRset("www.example.com. 0 IN A 192.0.2.1\n"
+                            "www.example.com. 0 IN A 192.0.2.2"),
+                textToRRset("www.example.com. 0 IN RRSIG A 5 2 3600 "
+                            "20120814220826 20120715220826 1234 example.com. "
+                            "FAKE"));
     // Constructed with RRSIG, and it should be invisible.
     checkToText(*createRRset(rrclass_, www_node_, a_rdataset_, false),
                 a_rrset_, ConstRRsetPtr());
@@ -555,6 +591,11 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     // Same name (node), same type (rdataset) => same kind
     EXPECT_TRUE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
                                               a_rdataset_, true)));
+
+    // Similar to the previous, but with explicit (different TTL) => still same
+    const uint32_t ttl = 0;
+    EXPECT_TRUE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
+                                              a_rdataset_, true, &ttl)));
 
     // Same name (node), different type (rdataset) => not same kind
     EXPECT_FALSE(rrset.isSameKind(*createRRset(rrclass_, www_node_,
