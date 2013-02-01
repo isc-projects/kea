@@ -599,7 +599,7 @@ class MockProcessInfo:
 # of the unit test, by overriding the process start methods we can check
 # that the right processes are started depending on the configuration
 # options.
-class MockBob(Init):
+class MockInit(Init):
     def __init__(self):
         Init.__init__(self)
 
@@ -820,7 +820,7 @@ class MockBob(Init):
         return MockProcessInfo(name, args, c_channel_env,
                                dev_null_stdout, dev_null_stderr)
 
-class MockBobSimple(Init):
+class MockInitSimple(Init):
     def __init__(self):
         Init.__init__(self)
         # Set which process has been started
@@ -840,7 +840,7 @@ class MockBobSimple(Init):
         self.started_process_env = c_channel_env
         return None
 
-class TestStartStopProcessesBob(unittest.TestCase):
+class TestStartStopProcessesInit(unittest.TestCase):
     """
     Check that the start_all_components method starts the right combination
     of components and that the right components are started and stopped
@@ -936,7 +936,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         """
         Test the configuration is loaded at the startup.
         """
-        init = MockBob()
+        init = MockInit()
         config = self.construct_config(start_auth, start_resolver)
         class CC:
             def get_full_config(self):
@@ -972,7 +972,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         """
 
         # Create Init and ensure correct initialization
-        init = MockBob()
+        init = MockInit()
         self.check_preconditions(init)
 
         init.start_all_components()
@@ -1033,7 +1033,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Tests that a component is started only once.
         """
         # Create Init and ensure correct initialization
-        init = MockBob()
+        init = MockInit()
         self.check_preconditions(init)
 
         init.start_all_components()
@@ -1056,7 +1056,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
         Test that components are not started by the config handler before
         startup.
         """
-        init = MockBob()
+        init = MockInit()
         self.check_preconditions(init)
 
         init.start_auth = lambda: self.fail("Started auth again")
@@ -1071,7 +1071,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
     def test_start_dhcp(self):
 
         # Create Init and ensure correct initialization
-        init = MockBob()
+        init = MockInit()
         self.check_preconditions(init)
 
         init.start_all_components()
@@ -1080,7 +1080,7 @@ class TestStartStopProcessesBob(unittest.TestCase):
 
     def test_start_dhcp_v6only(self):
         # Create Init and ensure correct initialization
-        init = MockBob()
+        init = MockInit()
         self.check_preconditions(init)
         # v6 only enabled
         init.start_all_components()
@@ -1134,7 +1134,7 @@ class TestInitCmd(unittest.TestCase):
         """
         Confirm simple ping command works.
         """
-        init = MockBob()
+        init = MockInit()
         answer = init.command_handler("ping", None)
         self.assertEqual(answer, {'result': [0, 'pong']})
 
@@ -1142,7 +1142,7 @@ class TestInitCmd(unittest.TestCase):
         """
         Confirm getting a list of processes works.
         """
-        init = MockBob()
+        init = MockInit()
         answer = init.command_handler("show_processes", None)
         self.assertEqual(answer, {'result': [0, []]})
 
@@ -1150,7 +1150,7 @@ class TestInitCmd(unittest.TestCase):
         """
         Confirm getting a list of processes works.
         """
-        init = MockBob()
+        init = MockInit()
         init.register_process(1, MockComponent('first', 1))
         init.register_process(2, MockComponent('second', 2, 'Second'))
         answer = init.command_handler("show_processes", None)
@@ -1351,7 +1351,7 @@ class TestInitComponents(unittest.TestCase):
         Test the situation when we run in usual scenario, nothing fails,
         we just start, reconfigure and then stop peacefully.
         """
-        init = MockBob()
+        init = MockInit()
         # Start it
         orig = init._component_configurator.startup
         init._component_configurator.startup = self.__unary_hook
@@ -1390,7 +1390,7 @@ class TestInitComponents(unittest.TestCase):
         """
         Helper function that does the actual kill functionality testing.
         """
-        init = MockBob()
+        init = MockInit()
         init.nokill = nokill
 
         killed = []
@@ -1485,7 +1485,7 @@ class TestInitComponents(unittest.TestCase):
         """
         Test the component_shutdown sets all variables accordingly.
         """
-        init = MockBob()
+        init = MockInit()
         self.assertRaises(Exception, init.component_shutdown, 1)
         self.assertEqual(1, init.exitcode)
         init._Init__started = True
@@ -1497,7 +1497,7 @@ class TestInitComponents(unittest.TestCase):
         """
         Test initial configuration is loaded.
         """
-        init = MockBob()
+        init = MockInit()
         # Start it
         init._component_configurator.reconfigure = self.__unary_hook
         # We need to return the original read_bind10_config
@@ -1518,7 +1518,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_restart_processes(self):
         '''Check some behavior on restarting processes.'''
-        init = MockBob()
+        init = MockInit()
         init.runnable = True
         component = MockComponent('test', 53)
 
@@ -1540,7 +1540,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_get_processes(self):
         '''Test that procsses are returned correctly, sorted by pid.'''
-        init = MockBob()
+        init = MockInit()
 
         pids = list(range(0, 20))
         random.shuffle(pids)
@@ -1566,7 +1566,7 @@ class TestInitComponents(unittest.TestCase):
         '''Construct a Init instance, set various data in it according to
         passed args and check if the component was added to the list of
         components to restart.'''
-        init = MockBob()
+        init = MockInit()
         init.runnable = runnable
 
         component = MockComponent('test', 53)
@@ -1597,7 +1597,7 @@ class TestInitComponents(unittest.TestCase):
         self._test_reap_children_helper(True,  True,  True)
 
         # setup for more tests below
-        init = MockBob()
+        init = MockInit()
         init.runnable = True
         component = MockComponent('test', 53)
         init.components[53] = component
@@ -1636,7 +1636,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_kill_started_components(self):
         '''Test that started components are killed.'''
-        init = MockBob()
+        init = MockInit()
 
         component = MockComponent('test', 53, 'Test')
         init.components[53] = component
@@ -1660,7 +1660,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_msgq(self):
         '''Test that b10-msgq is started.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'FOO': 'an env string'}
         init._run_under_unittests = True
 
@@ -1676,7 +1676,7 @@ class TestInitComponents(unittest.TestCase):
     def test_start_msgq_timeout(self):
         '''Test that b10-msgq startup attempts connections several times
         and times out eventually.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {}
         # set the timeout to an arbitrary pre-determined value (which
         # code below depends on)
@@ -1789,7 +1789,7 @@ class TestInitComponents(unittest.TestCase):
                 else:
                     return ({}, None)
 
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'TESTENV': 'A test string'}
         init.cc_session = DummySession()
         init.wait_time = 5
@@ -1831,7 +1831,7 @@ class TestInitComponents(unittest.TestCase):
         class DummySession():
             def group_recvmsg(self):
                 return (None, None)
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {}
         init.cc_session = DummySession()
         # set wait_time to an arbitrary pre-determined value (which code
@@ -1871,7 +1871,7 @@ class TestInitComponents(unittest.TestCase):
                 self.started = False
             def start(self):
                 self.started = True
-        init = MockBobSimple()
+        init = MockInitSimple()
         self._tmp_module_cc_session = isc.config.ModuleCCSession
         isc.config.ModuleCCSession = DummySession
 
@@ -1886,7 +1886,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_process(self):
         '''Test that processes can be started.'''
-        init = MockBob()
+        init = MockInit()
 
         # use the MockProcessInfo creator
         init._make_process_info = init._make_mock_process_info
@@ -1901,7 +1901,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_register_process(self):
         '''Test that processes can be registered with Init.'''
-        init = MockBob()
+        init = MockInit()
         component = MockComponent('test', 53, 'Test')
 
         self.assertFalse(53 in init.components)
@@ -1925,7 +1925,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_simple(self):
         '''Test simple process startup.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'TESTENV': 'A test string'}
 
         # non-verbose case
@@ -1948,7 +1948,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_auth(self):
         '''Test that b10-auth is started.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'FOO': 'an env string'}
 
         # non-verbose case
@@ -1971,7 +1971,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_resolver(self):
         '''Test that b10-resolver is started.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'BAR': 'an env string'}
 
         # non-verbose case
@@ -1999,7 +1999,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_start_cmdctl(self):
         '''Test that b10-cmdctl is started.'''
-        init = MockBobSimple()
+        init = MockInitSimple()
         init.c_channel_env = {'BAZ': 'an env string'}
 
         # non-verbose case
@@ -2044,7 +2044,7 @@ class TestInitComponents(unittest.TestCase):
             def close(self):
                 return
 
-        class MockBobSocketData(Init):
+        class MockInitSocketData(Init):
             def __init__(self, throw):
                 self._unix_sockets = {42: (MockSock(42, throw), b'')}
                 self.requests = []
@@ -2057,7 +2057,7 @@ class TestInitComponents(unittest.TestCase):
                 self.dead.append(sock.fd)
 
         # Case where we get data every time we call recv()
-        init = MockBobSocketData(False)
+        init = MockInitSocketData(False)
         init._socket_data(42)
         self.assertEqual(init.requests,
                          [{42: b'Hello World.'},
@@ -2068,7 +2068,7 @@ class TestInitComponents(unittest.TestCase):
         # Case where socket.recv() raises EAGAIN. In this case, the
         # routine is supposed to save what it has back to
         # Init._unix_sockets.
-        init = MockBobSocketData(True)
+        init = MockInitSocketData(True)
         init._socket_data(42)
         self.assertEqual(init.requests, [{42: b'Hello World.'}])
         self.assertFalse(init.dead)
@@ -2077,7 +2077,7 @@ class TestInitComponents(unittest.TestCase):
 
     def test_startup(self):
         '''Test that Init.startup() handles failures properly.'''
-        class MockBobStartup(Init):
+        class MockInitStartup(Init):
             def __init__(self, throw):
                 self.throw = throw
                 self.started = False
@@ -2110,7 +2110,7 @@ class TestInitComponents(unittest.TestCase):
         # All is well case, where all components are started
         # successfully. We check that the actual call to
         # start_all_components() is made, and Init.runnable is true.
-        init = MockBobStartup(False)
+        init = MockInitStartup(False)
         r = init.startup()
         self.assertIsNone(r)
         self.assertTrue(init.started)
@@ -2121,7 +2121,7 @@ class TestInitComponents(unittest.TestCase):
         # Case where starting components fails. We check that
         # kill_started_components() is called right after, and
         # Init.runnable is not modified.
-        init = MockBobStartup(True)
+        init = MockInitStartup(True)
         r = init.startup()
         # r contains an error message
         self.assertEqual(r, 'Unable to start myproc: Assume starting components has failed.')
@@ -2131,20 +2131,20 @@ class TestInitComponents(unittest.TestCase):
         self.assertEqual({}, init.c_channel_env)
 
         # Check if msgq_socket_file is carried over
-        init = MockBobStartup(False)
+        init = MockInitStartup(False)
         init.msgq_socket_file = 'foo'
         r = init.startup()
         self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, init.c_channel_env)
 
         # Check failure of changing user results in a different message
-        init = MockBobStartup(b10_init.ChangeUserError('failed to chusr'))
+        init = MockInitStartup(b10_init.ChangeUserError('failed to chusr'))
         r = init.startup()
         self.assertIn('failed to chusr', r)
         self.assertTrue(init.killed)
 
         # Check the case when socket file already exists
         isc.cc.Session = DummySessionSocketExists
-        init = MockBobStartup(False)
+        init = MockInitStartup(False)
         r = init.startup()
         self.assertIn('already running', r)
 

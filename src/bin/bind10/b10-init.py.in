@@ -664,7 +664,7 @@ class Init:
         # inside the configurator.
         self.start_ccsession(self.c_channel_env)
 
-        # Extract the parameters associated with Bob.  This can only be
+        # Extract the parameters associated with Init.  This can only be
         # done after the CC Session is started.  Note that the logging
         # configuration may override the "-v" switch set on the command line.
         self._read_bind10_config()
