@@ -61,6 +61,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
         string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
         if (loadServerID(srvid_file)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
+                .arg(srvidToString(getServerID()))
                 .arg(srvid_file);
         } else {
             generateServerID();

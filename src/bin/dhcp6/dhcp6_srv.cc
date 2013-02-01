@@ -78,6 +78,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
         if (loadServerID(duid_file)) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_SERVERID_LOADED)
+                .arg(duidToString(getServerID()))
                 .arg(duid_file);
         } else {
             generateServerID();

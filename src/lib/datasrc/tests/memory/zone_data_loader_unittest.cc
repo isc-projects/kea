@@ -12,13 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dns/name.h>
-#include <dns/rrclass.h>
-
+#include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_data_updater.h>
-#include <datasrc/memory/zone_data_loader.h>
+
+#include <util/buffer.h>
+
+#include <dns/name.h>
+#include <dns/rrclass.h>
 
 #include "memory_segment_test.h"
 
@@ -60,6 +62,15 @@ TEST_F(ZoneDataLoaderTest, loadRRSIGFollowsNothing) {
     EXPECT_EQ(1, rdset->getSigRdataCount()); // but 1 SIG
 
     // Teardown checks for memory segment leaks
+}
+
+TEST_F(ZoneDataLoaderTest, zoneMinTTL) {
+    // This should hold outside of the loader class, but we do double check.
+    zone_data_ = loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
+                              TEST_DATA_DIR
+                              "/example.org-nsec3-signed.zone");
+    isc::util::InputBuffer b(zone_data_->getMinTTLData(), sizeof(uint32_t));
+    EXPECT_EQ(RRTTL(1200), RRTTL(b));
 }
 
 }
