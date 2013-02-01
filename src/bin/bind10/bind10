@@ -1,3 +1,2 @@
 #!/bin/sh
-BIND10_SBIN_DIR=`dirname $0`
-exec ${BIND10_SBIN_DIR}/b10-init $*
+exec b10-init $*
