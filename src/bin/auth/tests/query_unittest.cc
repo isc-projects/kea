@@ -2473,17 +2473,32 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   NULL, mock_finder->getOrigin());
 }
 
-// Check the exception is correctly raised when the NSEC3 thing isn't in the
-// zone
-TEST_P(QueryTest, nxrrsetMissingNSEC3) {
+TEST_P(QueryTest, nxrrsetDerivedFromOptOutNSEC3) {
     // In this test we emulate the situation where an empty non-terminal name
     // is derived from insecure delegation and covered by an opt-out NSEC3.
-    // In the actual test data the covering NSEC3 doesn't have the opt-out
-    // bit set, but the implementation doesn't check it.
+    // In the actual test data the covering NSEC3 really has the opt-out
+    // bit set, although the implementation doesn't check it anyway.
     enableNSEC3(rrsets_to_add_);
-    EXPECT_THROW(query.process(*list_, Name("empty.example.com"),
-                               RRType::TXT(), response, true),
-                 Query::BadNSEC3);
+    query.process(*list_, Name("empty.example.com"), RRType::TXT(), response,
+                  true);
+
+    // The closest provable encloser is the origin name (example.com.), and
+    // the next closer is the empty name itself, which is expected to be
+    // covered by an opt-out NSEC3 RR.  The response should contain these 2
+    // NSEC3s.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
