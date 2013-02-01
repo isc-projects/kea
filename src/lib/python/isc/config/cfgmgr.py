@@ -68,6 +68,52 @@ class ConfigManagerData:
             self.db_filename = data_path + os.sep + file_name
             self.data_path = data_path
 
+    def check_for_updates(file_config):
+        """
+        Given the parsed JSON data from the config file,
+        check whether it needs updating due to version changes.
+        Return the data with updates (or the original data if no
+        updates were necessary).
+        Even though it is at this moment not technically necessary, this
+        function makes and returns a copy of the given data.
+        """
+        config = copy.deepcopy(file_config)
+        if 'version' in config:
+            data_version = config['version']
+        else:
+            # If it is not present, assume latest or earliest?
+            data_version = 1
+
+        # For efficiency, if up-to-date, return now
+        if data_version == config_data.BIND10_CONFIG_DATA_VERSION:
+            return config
+
+        # Don't know what to do if it is more recent
+        if data_version > config_data.BIND10_CONFIG_DATA_VERSION:
+            raise ConfigManagerDataReadError("Cannot load configuration file: version %d not yet supported" % config['version'])
+        # At some point we might give up supporting older versions
+        if data_version < 1:
+            raise ConfigManagerDataReadError("Cannot load configuration file: version %d no longer supported" % config['version'])
+
+        # Ok, so we have a still-supported older version. Apply all
+        # updates
+        new_data_version = data_version
+        if new_data_version == 1:
+            # only format change, no other changes necessary
+            new_data_version = 2
+        if new_data_version == 2:
+            # 'Boss' got changed to 'Init'; If for some reason both are
+            # present, simply ignore the old one
+            if 'Boss' in config and not 'Init' in config:
+                config['Init'] = config['Boss']
+                del config['Boss']
+            new_data_version = 3
+
+        config['version'] = new_data_version
+        logger.info(CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE, data_version,
+                    new_data_version)
+        return config
+
     def read_from_file(data_path, file_name):
         """Read the current configuration found in the file file_name.
            If file_name is absolute, data_path is ignored. Otherwise
@@ -90,21 +136,7 @@ class ConfigManagerData:
             # If possible, we automatically convert to the new
             # scheme and update the configuration
             # If not, we raise an exception
-            if 'version' in file_config:
-                if file_config['version'] == config_data.BIND10_CONFIG_DATA_VERSION:
-                    config.data = file_config
-                elif file_config['version'] == 1:
-                    # only format change, no other changes necessary
-                    file_config['version'] = 2
-                    logger.info(CFGMGR_AUTOMATIC_CONFIG_DATABASE_UPDATE, 1, 2)
-                    config.data = file_config
-                else:
-                    if config_data.BIND10_CONFIG_DATA_VERSION > file_config['version']:
-                        raise ConfigManagerDataReadError("Cannot load configuration file: version %d no longer supported" % file_config['version'])
-                    else:
-                        raise ConfigManagerDataReadError("Cannot load configuration file: version %d not yet supported" % file_config['version'])
-            else:
-                raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
+            config.data = ConfigManagerData.check_for_updates(file_config)
         except IOError as ioe:
             # if IOError is 'no such file or directory', then continue
             # (raise empty), otherwise fail (raise error)

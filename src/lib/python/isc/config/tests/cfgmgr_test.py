@@ -49,6 +49,50 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data.db_filename,
                          self.writable_data_path + os.sep + "b10-config.db")
 
+    def test_check_for_updates_up_to_date(self):
+        # This should automatically give an up-to-date version
+        file_config = ConfigManagerData.read_from_file(
+                        self.writable_data_path, "b10-config.db").data
+        updated_config = ConfigManagerData.check_for_updates(file_config)
+        self.assertEqual(file_config, updated_config)
+
+    def test_check_for_updates_from_1(self):
+        config = { "version": 1,
+                   "foo": "bar",
+                   "something": [ 1, 2, 3 ] }
+        updated = ConfigManagerData.check_for_updates(config)
+        config['version'] = config_data.BIND10_CONFIG_DATA_VERSION
+        self.assertEqual(config, updated)
+
+    def test_check_for_updates_from_2(self):
+        # No 'Boss' present, no change (except version)
+        config = { "version": 2,
+                   "foo": "bar",
+                   "something": [ 1, 2, 3 ] }
+        updated = ConfigManagerData.check_for_updates(config)
+        config['version'] = config_data.BIND10_CONFIG_DATA_VERSION
+        self.assertEqual(config, updated)
+
+        # With Boss, should be changed to 'Init'
+        config = { "version": 2,
+                   "Boss": { "some config": 1 },
+                   "something": [ 1, 2, 3 ] }
+        updated = ConfigManagerData.check_for_updates(config)
+        config = { "version": config_data.BIND10_CONFIG_DATA_VERSION,
+                   "Init": { "some config": 1 },
+                   "something": [ 1, 2, 3 ] }
+        self.assertEqual(config, updated)
+
+        # With Boss AND Init, no change
+        config = { "version": 2,
+                   "Boss": { "some config": 1 },
+                   "Init": { "some other config": 1 },
+                   "something": [ 1, 2, 3 ] }
+        updated = ConfigManagerData.check_for_updates(config)
+        config['version'] = config_data.BIND10_CONFIG_DATA_VERSION
+        self.assertEqual(config, updated)
+
+
     def test_read_from_file(self):
         ConfigManagerData.read_from_file(self.writable_data_path, "b10-config.db")
         self.assertRaises(ConfigManagerDataEmpty,
@@ -539,7 +583,8 @@ class TestConfigManager(unittest.TestCase):
     def test_set_config_all(self):
         my_ok_answer = { 'result': [ 0 ] }
 
-        self.assertEqual({"version": 2}, self.cm.config.data)
+        self.assertEqual({"version": config_data.BIND10_CONFIG_DATA_VERSION},
+                         self.cm.config.data)
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
         self.cm.handle_msg(ccsession.create_command(
