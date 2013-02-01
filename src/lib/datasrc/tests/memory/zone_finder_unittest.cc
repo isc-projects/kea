@@ -53,19 +53,6 @@ namespace {
 using result::SUCCESS;
 using result::EXIST;
 
-/// \brief expensive rrset converter
-///
-/// converts any specialized rrset (which may not have implemented some
-/// methods for efficiency) into a 'full' RRsetPtr, for easy use in test
-/// checks.
-///
-/// Done very inefficiently through text representation, speed should not
-/// be a concern here.
-ConstRRsetPtr
-convertRRset(ConstRRsetPtr src) {
-    return (textToRRset(src->toText()));
-}
-
 /// \brief Test fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderTest : public ::testing::Test {
     // A straightforward pair of textual RR(set) and a RRsetPtr variable
@@ -105,7 +92,6 @@ protected:
                           ZoneFinder::FindResultFlags expected_flags =
                           ZoneFinder::RESULT_DEFAULT);
 
-public:
     InMemoryZoneFinderTest() :
         class_(RRClass::IN()),
         origin_("example.org"),
@@ -119,6 +105,7 @@ public:
         // Note that this contains an out-of-zone RR, and due to the
         // validation check of masterLoad() used below, we cannot add SOA.
         const RRsetData zone_data[] = {
+            {"example.org. 300 IN SOA . . 0 0 0 0 100", &rr_soa_},
             {"example.org. 300 IN NS ns.example.org.", &rr_ns_},
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
             {"ns.example.org. 300 IN A 192.0.2.2", &rr_ns_a_},
@@ -185,7 +172,18 @@ public:
         };
 
         for (unsigned int i = 0; zone_data[i].text != NULL; ++i) {
-            *zone_data[i].rrset = textToRRset(zone_data[i].text);
+            if (zone_data[i].rrset == &rr_soa_) {
+                // This is zone's SOA.  We need to specify the origin for
+                // textToRRset; otherwise it would throw.
+                *zone_data[i].rrset = textToRRset(zone_data[i].text, class_,
+                                                  origin_);
+            } else {
+                // For other data, we should rather omit the origin (the root
+                // name will be used by default); there's some out-of-zone
+                // name, which would trigger an exception if we specified
+                // origin_.
+                *zone_data[i].rrset = textToRRset(zone_data[i].text);
+            }
         }
 
     }
@@ -198,6 +196,24 @@ public:
 
     void addToZoneData(const ConstRRsetPtr rrset) {
         updater_.add(rrset, rrset->getRRsig());
+    }
+
+    /// \brief expensive rrset converter
+    ///
+    /// converts any specialized rrset (which may not have implemented some
+    /// methods for efficiency) into a 'full' RRsetPtr, for easy use in test
+    /// checks.
+    ///
+    /// Done very inefficiently through text representation, speed should not
+    /// be a concern here.
+    ConstRRsetPtr
+    convertRRset(ConstRRsetPtr src) {
+        // If the type is SOA, textToRRset performs a stricter check, so we
+        // should specify the origin.  For now we don't use out-of-zone
+        // owner names (e.g. for pathological cases) with this method, so it
+        // works for all test data.  If future changes break this assumption
+        // we should adjust it.
+        return (textToRRset(src->toText(), class_, origin_));
     }
 
     // Some data to test with
@@ -218,6 +234,8 @@ public:
     RRsetPtr
         // Out of zone RRset
         rr_out_,
+        // SOA of example.org
+        rr_soa_,
         // NS of example.org
         rr_ns_,
         // A of ns.example.org
@@ -293,75 +311,110 @@ public:
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
-        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
-            RRsetPtr(); // note we use the same type as of retval of getRRsig()
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
                 ZoneFinderContextPtr find_result(zone_finder->find(
                                                      name, rrtype, options));
-                // Check it returns correct answers
-                EXPECT_EQ(result, find_result->code);
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                          find_result->isWildcard());
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                          != 0, find_result->isNSECSigned());
-                EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                          != 0, find_result->isNSEC3Signed());
-                if (check_answer) {
-                    if (!answer) {
-                        ASSERT_FALSE(find_result->rrset);
-                    } else {
-                        ASSERT_TRUE(find_result->rrset);
-                        ConstRRsetPtr result_rrset(
-                            convertRRset(find_result->rrset));
-                        rrsetCheck(answer, result_rrset);
-                        if (answer_sig &&
-                            (options & ZoneFinder::FIND_DNSSEC) != 0) {
-                            ASSERT_TRUE(result_rrset->getRRsig());
-                            rrsetCheck(answer_sig, result_rrset->getRRsig());
-                        } else {
-                            EXPECT_FALSE(result_rrset->getRRsig());
-                        }
-                    }
-                } else if (check_wild_answer) {
-                    ASSERT_NE(ConstRRsetPtr(), answer) <<
-                        "Wrong test, don't check for wild names if you expect "
-                        "empty answer";
-                    ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
-                        "No answer found";
-                    // Build the expected answer using the given name and
-                    // other parameter of the base wildcard RRset.
-                    RRsetPtr wildanswer(new RRset(name, answer->getClass(),
-                                                  answer->getType(),
-                                                  answer->getTTL()));
-                    RdataIteratorPtr expectedIt(answer->getRdataIterator());
-                    for (; !expectedIt->isLast(); expectedIt->next()) {
-                        wildanswer->addRdata(expectedIt->getCurrent());
-                    }
-
-                    ConstRRsetPtr result_rrset(
-                        convertRRset(find_result->rrset));
-                    rrsetCheck(wildanswer, result_rrset);
-
-                    // Same for the RRSIG, if any.
-                    if (answer_sig) {
-                        ASSERT_TRUE(result_rrset->getRRsig());
-
-                        RRsetPtr wildsig(new RRset(name,
-                                                   answer_sig->getClass(),
-                                                   RRType::RRSIG(),
-                                                   answer_sig->getTTL()));
-                        RdataIteratorPtr expectedIt(
-                            answer_sig->getRdataIterator());
-                        for (; !expectedIt->isLast(); expectedIt->next()) {
-                            wildsig->addRdata(expectedIt->getCurrent());
-                        }
-                        rrsetCheck(wildsig, result_rrset->getRRsig());
-                    }
-                }
+                findTestCommon(name, result, find_result, check_answer,
+                               answer, expected_flags, options,
+                               check_wild_answer);
             });
     }
+
+    void findAtOriginTest(const RRType& rrtype,
+                          ZoneFinder::Result result,
+                          bool check_answer = true,
+                          const ConstRRsetPtr& answer = ConstRRsetPtr(),
+                          ZoneFinder::FindResultFlags expected_flags =
+                          ZoneFinder::RESULT_DEFAULT,
+                          memory::InMemoryZoneFinder* zone_finder = NULL,
+                          ZoneFinder::FindOptions options =
+                          ZoneFinder::FIND_DEFAULT,
+                          bool use_minttl = false)
+    {
+        SCOPED_TRACE("findAtOriginTest for " + rrtype.toText());
+
+        if (zone_finder == NULL) {
+            zone_finder = &zone_finder_;
+        }
+        ZoneFinderContextPtr find_result(zone_finder->findAtOrigin(
+                                             rrtype, use_minttl, options));
+        findTestCommon(origin_, result, find_result, check_answer, answer,
+                       expected_flags, options, false);
+    }
+
+private:
+    void findTestCommon(const Name& name, ZoneFinder::Result result,
+                        ZoneFinderContextPtr find_result,
+                        bool check_answer,
+                        const ConstRRsetPtr& answer,
+                        ZoneFinder::FindResultFlags expected_flags,
+                        ZoneFinder::FindOptions options,
+                        bool check_wild_answer)
+    {
+        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
+            RRsetPtr(); // note we use the same type as of retval of getRRsig()
+
+        // Check it returns correct answers
+        EXPECT_EQ(result, find_result->code);
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                  find_result->isWildcard());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+                  find_result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+                  find_result->isNSEC3Signed());
+        if (check_answer) {
+            if (!answer) {
+                ASSERT_FALSE(find_result->rrset);
+            } else {
+                ASSERT_TRUE(find_result->rrset);
+                ConstRRsetPtr result_rrset(convertRRset(find_result->rrset));
+                rrsetCheck(answer, result_rrset);
+                if (answer_sig && (options & ZoneFinder::FIND_DNSSEC) != 0) {
+                    ASSERT_TRUE(result_rrset->getRRsig());
+                    rrsetCheck(answer_sig, result_rrset->getRRsig());
+                } else {
+                    EXPECT_FALSE(result_rrset->getRRsig());
+                }
+            }
+        } else if (check_wild_answer) {
+            ASSERT_NE(ConstRRsetPtr(), answer) <<
+                "Wrong test, don't check for wild names if you expect "
+                "empty answer";
+            ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
+                "No answer found";
+            // Build the expected answer using the given name and
+            // other parameter of the base wildcard RRset.
+            RRsetPtr wildanswer(new RRset(name, answer->getClass(),
+                                          answer->getType(),
+                                          answer->getTTL()));
+            RdataIteratorPtr expectedIt(answer->getRdataIterator());
+            for (; !expectedIt->isLast(); expectedIt->next()) {
+                wildanswer->addRdata(expectedIt->getCurrent());
+            }
+
+            ConstRRsetPtr result_rrset(convertRRset(find_result->rrset));
+            rrsetCheck(wildanswer, result_rrset);
+
+            // Same for the RRSIG, if any.
+            if (answer_sig) {
+                ASSERT_TRUE(result_rrset->getRRsig());
+
+                RRsetPtr wildsig(new RRset(name, answer_sig->getClass(),
+                                           RRType::RRSIG(),
+                                           answer_sig->getTTL()));
+                RdataIteratorPtr expectedIt(
+                    answer_sig->getRdataIterator());
+                for (; !expectedIt->isLast(); expectedIt->next()) {
+                    wildsig->addRdata(expectedIt->getCurrent());
+                }
+                rrsetCheck(wildsig, result_rrset->getRRsig());
+            }
+        }
+    }
+
+protected:
     /**
      * \brief Calls the findAll on the finder and checks the result.
      */
@@ -583,7 +636,6 @@ TEST_F(InMemoryZoneFinderTest, glue) {
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::DELEGATION,
              true, rr_child_ns_);
 
-
     // If we do it in the "glue OK" mode, we should find the exact match.
     findTest(rr_child_glue_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
              rr_child_glue_, ZoneFinder::RESULT_DEFAULT, NULL,
@@ -617,6 +669,101 @@ TEST_F(InMemoryZoneFinderTest, glue) {
     findTest(Name("ns.example.org"), RRType::A(), ZoneFinder::SUCCESS,
              true, rr_ns_a_, ZoneFinder::RESULT_DEFAULT,
              NULL, ZoneFinder::FIND_GLUE_OK);
+}
+
+TEST_F(InMemoryZoneFinderTest, findAtOrigin) {
+    // Add origin NS.
+    rr_ns_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                "NS 5 3 3600 20120814220826 20120715220826 "
+                                "1234 example.org. FAKE"));
+    addToZoneData(rr_ns_);
+
+    // Specified type of RR exists, no DNSSEC
+    findAtOriginTest(RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
+
+    // Specified type of RR exists, with DNSSEC
+    findAtOriginTest(RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DNSSEC);
+
+    // Specified type of RR doesn't exist, no DNSSEC
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET);
+
+    // Specified type of RR doesn't exist, with DNSSEC.  First, make the
+    // zone "NSEC-signed", then check.
+    rr_nsec_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                   "NSEC 5 3 3600 20120814220826 "
+                                   "20120715220826 1234 example.org. FAKE"));
+    addToZoneData(rr_nsec_);
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, rr_nsec_,
+                     ZoneFinder::RESULT_NSEC_SIGNED, NULL,
+                     ZoneFinder::FIND_DNSSEC);
+
+    // Specified type of RR doesn't exist, with DNSSEC, enabling NSEC3.  First,
+    // make the zone "NSEC3-signed" (by just installing NSEC3PARAM; we don't
+    // need to add NSEC3s for the purpose of this test), then check.
+    addToZoneData(textToRRset("example.org. 300 IN NSEC3PARAM "
+                            "1 0 12 aabbccdd"));
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                     ZoneFinder::RESULT_NSEC3_SIGNED, NULL,
+                     ZoneFinder::FIND_DNSSEC);
+}
+
+TEST_F(InMemoryZoneFinderTest, findAtOriginWithMinTTL) {
+    // Install zone's SOA.  This also sets internal zone data min TTL field.
+    addToZoneData(rr_soa_);
+
+    // Specify the use of min TTL, then the resulting TTL should be derived
+    // from the SOA MINTTL (which is smaller).
+    findAtOriginTest(RRType::SOA(), ZoneFinder::SUCCESS, true,
+                     textToRRset("example.org. 100 IN SOA . . 0 0 0 0 100",
+                                 class_, origin_),
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // Add signed NS for the following test.
+    RRsetPtr ns_rrset(textToRRset("example.org. 300 IN NS ns.example.org."));
+    ns_rrset->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                   "NS 5 3 3600 20120814220826 20120715220826 "
+                                   "1234 example.org. FAKE"));
+    addToZoneData(ns_rrset);
+
+    // If DNSSEC is requested, TTL of the RRSIG should also be the min.
+    ns_rrset->setTTL(RRTTL(100));      // reset TTL to the expected one
+    findAtOriginTest(RRType::NS(), ZoneFinder::SUCCESS, true, ns_rrset,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // If we don't request the use of min TTL, the original TTL will be used.
+    findAtOriginTest(RRType::SOA(), ZoneFinder::SUCCESS, true, rr_soa_,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, false);
+
+    // If the found RRset has a smaller TTL than SOA, the original TTL should
+    // win.
+    rr_a_->setTTL(RRTTL(10));
+    addToZoneData(rr_a_);
+    findAtOriginTest(RRType::A(), ZoneFinder::SUCCESS, true, rr_a_,
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // If no RRset is returned, use_minttl doesn't matter (it shouldn't cause
+    // disruption)
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                     ZoneFinder::RESULT_DEFAULT, NULL,
+                     ZoneFinder::FIND_DEFAULT, true);
+
+    // If it results in NXRRSET with NSEC, and if we specify the use of min
+    // TTL, the NSEC and RRSIG should have the min TTL (again, though, this
+    // use case is not really the intended one)
+    rr_nsec_->addRRsig(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                   "NSEC 5 3 3600 20120814220826 "
+                                   "20120715220826 1234 example.org. FAKE"));
+    addToZoneData(rr_nsec_);
+    rr_nsec_->setTTL(RRTTL(100)); // reset it to the expected one
+    findAtOriginTest(RRType::TXT(), ZoneFinder::NXRRSET, true, rr_nsec_,
+                     ZoneFinder::RESULT_NSEC_SIGNED, NULL,
+                     ZoneFinder::FIND_DNSSEC, true);
 }
 
 /**

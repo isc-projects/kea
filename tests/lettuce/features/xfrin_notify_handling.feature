@@ -123,7 +123,7 @@ Feature: Xfrin incoming notify handling
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
     Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_ERROR not XFRIN_XFR_TRANSFER_STARTED
+    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_XFR_TRANSFER_STARTED
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait 5 times for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
     Then wait for new master stderr message NOTIFY_OUT_RETRY_EXCEEDED

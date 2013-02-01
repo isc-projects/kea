@@ -51,6 +51,9 @@ TEST_F(Rdata_MX_Test, badText) {
     // No origin and relative
     EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com"),
                  MissingNameOrigin);
+    // Extra text at end of line
+    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com. extra."),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_MX_Test, copy) {
@@ -70,6 +73,12 @@ TEST_F(Rdata_MX_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                      "10 mx.example.com.")));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::MX("10 mx2.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                     "10 mx2")));
+
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                              "10 mx. example.com."));
@@ -77,6 +86,10 @@ TEST_F(Rdata_MX_Test, createFromLexer) {
     // 65536 is larger than maximum possible preference
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
                                              "65536 mx.example.com."));
+
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "10 mx.example.com. extra."));
 }
 
 TEST_F(Rdata_MX_Test, toWireRenderer) {
