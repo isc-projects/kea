@@ -16,7 +16,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This file implements the Init of Bind (BoB, or bob) program.
+This file implements the b10-init program.
 
 Its purpose is to start up the BIND 10 system, and then manage the
 processes, by starting and stopping processes, plus restarting
@@ -30,7 +30,7 @@ The Python subprocess module is used for starting processes, but
 because this is not efficient for managing groups of processes,
 SIGCHLD signals are caught and processed using the signal module.
 
-Most of the logic is contained in the BoB class. However, since Python
+Most of the logic is contained in the Init class. However, since Python
 requires that signal processing happen in the main thread, we do
 signal handling outside of that class, in the code running for
 __main__.
@@ -190,7 +190,7 @@ class CChannelConnectError(Exception): pass
 
 class ProcessStartError(Exception): pass
 
-class BoB:
+class Init:
     """Init of BIND class."""
 
     def __init__(self, msgq_socket_file=None, data_path=None,
@@ -393,7 +393,7 @@ class BoB:
 
     def _read_bind10_config(self):
         """
-            Reads the parameters associated with the BoB module itself.
+            Reads the parameters associated with the Init module itself.
 
             This means the list of components we should start now.
 
@@ -401,7 +401,7 @@ class BoB:
             it stays because of historical reasons and because the tests
             replace the method sometimes.
         """
-        logger.info(BIND10_READING_BOSS_CONFIGURATION)
+        logger.info(BIND10_READING_INIT_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
         self.__propagate_component_config(config_data['components'])
@@ -673,7 +673,7 @@ class BoB:
 
     def startup(self):
         """
-            Start the BoB instance.
+            Start the Init instance.
 
             Returns None if successful, otherwise an string describing the
             problem.
@@ -740,7 +740,7 @@ class BoB:
             self.runnable = False
 
     def shutdown(self):
-        """Stop the BoB instance."""
+        """Stop the Init instance."""
         logger.info(BIND10_SHUTDOWN)
         # If ccsession is still there, inform rest of the system this module
         # is stopping. Since everything will be stopped shortly, this is not
@@ -1289,12 +1289,11 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     try:
-        # Go bob!
-        b10_init = BoB(options.msgq_socket_file, options.data_path,
-                           options.config_file, options.clear_config,
-                           options.verbose, options.nokill,
-                           setuid, setgid, username, options.cmdctl_port,
-                           options.wait_time)
+        b10_init = Init(options.msgq_socket_file, options.data_path,
+                        options.config_file, options.clear_config,
+                        options.verbose, options.nokill,
+                        setuid, setgid, username, options.cmdctl_port,
+                        options.wait_time)
         startup_result = b10_init.startup()
         if startup_result:
             logger.fatal(BIND10_STARTUP_ERROR, startup_result)
