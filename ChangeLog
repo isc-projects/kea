@@ -1,3 +1,15 @@
+564.	[func]		muks
+	libdns++: the CNAME, DNAME, MX, NS, PTR and SRV Rdata classes now
+	use the generic lexer in constructors from text.  This means that
+	the name fields in such RRs in a zone file can now be non-absolute
+	(the origin name in that context will be used), e.g., when loaded
+	by b10-loadzone. One additional change to the libdns++ API is that
+	the existing string constructors for these Rdata classes also use
+	the generic lexer, and they now expect an absolute name (with the
+	trailing '.') in the name fields.
+	(Trac #2390, git a01569277cda3f78b1171bbf79f15ecf502e81e2)
+	(Trac #2656, git 5a0d055137287f81e23fbeedd35236fee274596d)
+
 563.	[build]		jinmei
 	Added --disable-rpath configure option to avoid embedding library
 	paths to binaries.  Patch from Adam Tkac.
