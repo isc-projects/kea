@@ -217,6 +217,13 @@ public:
             "t644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("www1.uwild.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+
+        // For empty-non-terminal derived from insecure delegation (we don't
+        // need a hash for the delegation point itself for that test).  the
+        // hash for empty name is the same as that for unsigned-delegation
+        // above, as the case is similar to that.
+        hash_map_[Name("empty.example.com")] =
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
     }
     virtual string calculate(const Name& name) const {
         const NSEC3HashMap::const_iterator found = hash_map_.find(name);
@@ -2470,17 +2477,13 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
 
 // Check the exception is correctly raised when the NSEC3 thing isn't in the
 // zone
-TEST_F(QueryTestForMockOnly, nxrrsetMissingNSEC3) {
-    // This is a broken data source scenario; works only with mock.
-
-    mock_finder->setNSEC3Flag(true);
-    // We just need it to return false for "matched". This indicates
-    // there's no exact match for NSEC3 on www.example.com.
-    ZoneFinder::FindNSEC3Result nsec3(false, 0, ConstRRsetPtr(),
-                                      ConstRRsetPtr());
-    mock_finder->setNSEC3Result(&nsec3);
-
-    EXPECT_THROW(query.process(*list_, Name("www.example.com"),
+TEST_P(QueryTest, nxrrsetMissingNSEC3) {
+    // In this test we emulate the situation where an empty non-terminal name
+    // is derived from insecure delegation and covered by an opt-out NSEC3.
+    // In the actual test data the covering NSEC3 doesn't have the opt-out
+    // bit set, but the implementation doesn't check it.
+    enableNSEC3(rrsets_to_add_);
+    EXPECT_THROW(query.process(*list_, Name("empty.example.com"),
                                RRType::TXT(), response, true),
                  Query::BadNSEC3);
 }
