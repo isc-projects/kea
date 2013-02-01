@@ -92,7 +92,6 @@ class TestConfigManagerData(unittest.TestCase):
         config['version'] = config_data.BIND10_CONFIG_DATA_VERSION
         self.assertEqual(config, updated)
 
-
     def test_read_from_file(self):
         ConfigManagerData.read_from_file(self.writable_data_path, "b10-config.db")
         self.assertRaises(ConfigManagerDataEmpty,

@@ -90,10 +90,15 @@ class ConfigManagerData:
 
         # Don't know what to do if it is more recent
         if data_version > config_data.BIND10_CONFIG_DATA_VERSION:
-            raise ConfigManagerDataReadError("Cannot load configuration file: version %d not yet supported" % config['version'])
+            raise ConfigManagerDataReadError(
+                      "Cannot load configuration file: version "
+                      "%d not yet supported" % config['version'])
+
         # At some point we might give up supporting older versions
         if data_version < 1:
-            raise ConfigManagerDataReadError("Cannot load configuration file: version %d no longer supported" % config['version'])
+            raise ConfigManagerDataReadError(
+                      "Cannot load configuration file: version "
+                      "%d no longer supported" % config['version'])
 
         # Ok, so we have a still-supported older version. Apply all
         # updates
