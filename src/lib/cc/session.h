@@ -129,6 +129,7 @@ namespace isc {
                                    std::string instance = "*");
             virtual void unsubscribe(std::string group,
                              std::string instance = "*");
+
             /// \brief Send a message to a group.
             ///
             /// \todo Can someone explain how the group, instance and to work?
@@ -147,6 +148,7 @@ namespace isc {
                                       std::string instance = "*",
                                       std::string to = "*",
                                       bool want_answer = false);
+
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
