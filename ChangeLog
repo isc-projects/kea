@@ -1,3 +1,14 @@
+563.	[build]		jinmei
+	Added --disable-rpath configure option to avoid embedding library
+	paths to binaries.  Patch from Adam Tkac.
+	(Trac #2667, git 1c50c5a6ee7e9675e3ab154f2c7f975ef519fca2)
+
+562.	[func]*		vorner
+	The b10-xfrin now performs basic sanity check on just received
+	zone. It'll reject severely broken zones (such as missng NS
+	records).
+	(Trac #2439, git 44699b4b18162581cd1dd39be5fb76ca536012e6)
+
 561.	[bug]		kambe, jelte
 	b10-stats-httpd no longer dumps request information to the console,
 	but uses the bind10 logging system. Additionally, the logging

@@ -134,6 +134,31 @@ NSEC3Data::insertName(util::MemorySegment& mem_sgmt, const Name& name,
             result == ZoneTree::ALREADYEXISTS) && node != NULL);
 }
 
+namespace {
+// A helper to convert a TTL value in network byte order and set it in
+// ZoneData::min_ttl_.  We can use util::OutputBuffer, but copy the logic
+// here to guarantee it is exception free.
+// Note: essentially this function is a local (re)implementation of the
+// standard htonl() library function, but we avoid relying on it in case it's
+// not available (it's not in the C++ standard library).
+void
+setTTLInNetOrder(uint32_t val, uint32_t* result) {
+    uint8_t buf[4];
+    buf[0] = static_cast<uint8_t>((val & 0xff000000) >> 24);
+    buf[1] = static_cast<uint8_t>((val & 0x00ff0000) >> 16);
+    buf[2] = static_cast<uint8_t>((val & 0x0000ff00) >> 8);
+    buf[3] = static_cast<uint8_t>(val & 0x000000ff);
+    std::memcpy(result, buf, sizeof(*result));
+}
+}
+
+ZoneData::ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
+    zone_tree_(zone_tree), origin_node_(origin_node),
+    min_ttl_(0)          // tentatively set to silence static checkers
+{
+    setTTLInNetOrder(RRTTL::MAX_TTL().getValue(), &min_ttl_);
+}
+
 ZoneData*
 ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     // ZoneTree::insert() and ZoneData allocation can throw.  See also
@@ -176,6 +201,11 @@ ZoneData::insertName(util::MemorySegment& mem_sgmt, const Name& name,
     // This should be ensured by the API:
     assert((result == ZoneTree::SUCCESS ||
             result == ZoneTree::ALREADYEXISTS) && node != NULL);
+}
+
+void
+ZoneData::setMinTTL(uint32_t min_ttl_val) {
+    setTTLInNetOrder(min_ttl_val, &min_ttl_);
 }
 
 } // namespace memory
