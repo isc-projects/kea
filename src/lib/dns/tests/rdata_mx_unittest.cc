@@ -32,10 +32,13 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_MX_Test : public RdataTest {
-    // there's nothing to specialize
-};
+public:
+    Rdata_MX_Test() :
+        rdata_mx(10, Name("mx.example.com"))
+    {}
 
-const generic::MX rdata_mx(10, Name("mx.example.com"));
+    const generic::MX rdata_mx;
+};
 
 TEST_F(Rdata_MX_Test, createFromText) {
     const generic::MX rdata_mx2("10 mx.example.com.");

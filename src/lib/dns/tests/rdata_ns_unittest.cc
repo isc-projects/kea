@@ -33,11 +33,16 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_NS_Test : public RdataTest {
-    // there's nothing to specialize
+public:
+    Rdata_NS_Test() :
+        rdata_ns("ns.example.com."),
+        rdata_ns2("ns2.example.com.")
+    {}
+
+    const generic::NS rdata_ns;
+    const generic::NS rdata_ns2;
 };
 
-const generic::NS rdata_ns("ns.example.com.");
-const generic::NS rdata_ns2("ns2.example.com.");
 const uint8_t wiredata_ns[] = {
     0x02, 0x6e, 0x73, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
     0x63, 0x6f, 0x6d, 0x00 };

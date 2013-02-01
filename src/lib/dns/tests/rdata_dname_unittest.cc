@@ -33,11 +33,16 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_DNAME_Test : public RdataTest {
-    // there's nothing to specialize
+public:
+    Rdata_DNAME_Test() :
+        rdata_dname("dn.example.com."),
+        rdata_dname2("dn2.example.com.")
+    {}
+
+    const generic::DNAME rdata_dname;
+    const generic::DNAME rdata_dname2;
 };
 
-const generic::DNAME rdata_dname("dn.example.com.");
-const generic::DNAME rdata_dname2("dn2.example.com.");
 const uint8_t wiredata_dname[] = {
     0x02, 0x64, 0x6e, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
     0x63, 0x6f, 0x6d, 0x00 };
