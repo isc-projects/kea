@@ -131,34 +131,36 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
         server_msg_counter_.inc(MSG_REQUEST_TCP);
     }
 
-    // request TSIG
+    // Opcode
+    const boost::optional<isc::dns::Opcode>& opcode =
+        msgattrs.getRequestOpCode();
+    // Increment opcode counter only if the opcode exists; opcode can be empty
+    // if a short message which does not contain DNS header is received, or
+    // a response message (i.e. QR bit is set) is received.
+    if (opcode) {
+        server_msg_counter_.inc(opcode_to_msgcounter[opcode.get().getCode()]);
+    }
+
+    // TSIG
     if (msgattrs.requestHasTSIG()) {
         server_msg_counter_.inc(MSG_REQUEST_TSIG);
     }
     if (msgattrs.requestHasBadSig()) {
         server_msg_counter_.inc(MSG_REQUEST_BADSIG);
-        // If signature validation is failed, no other query attributes are
-        // reliable. Skip processing of the rest of query counters.
+        // If signature validation failed, no other request attributes (except
+        // for opcode) are reliable. Skip processing of the rest of request
+        // counters.
         return;
     }
 
-    // request EDNS
+    // EDNS0
     if (msgattrs.requestHasEDNS0()) {
         server_msg_counter_.inc(MSG_REQUEST_EDNS0);
     }
 
-    // request DNSSEC
+    // DNSSEC OK bit
     if (msgattrs.requestHasDO()) {
         server_msg_counter_.inc(MSG_REQUEST_DNSSEC_OK);
-    }
-
-    // OPCODE
-    const boost::optional<isc::dns::Opcode>& opcode =
-        msgattrs.getRequestOpCode();
-    // Increment opcode counter only if the opcode exists; it can happen if
-    // short message which does not contain DNS header received.
-    if (opcode) {
-        server_msg_counter_.inc(opcode_to_msgcounter[opcode.get().getCode()]);
     }
 }
 
