@@ -60,7 +60,7 @@ public:
     };
 private:
     // request attributes
-    int req_address_family_;            // IP version
+    int req_address_family_;        // IP version
     int req_transport_protocol_;    // Transport layer protocol
     boost::optional<isc::dns::Opcode> req_opcode_;  // OpCode
     enum BitAttributes {
@@ -142,7 +142,7 @@ public:
     ///
     /// \return true if EDNS version of the request is 0
     /// \throw None
-    bool getRequestEDNS0() const {
+    bool requestHasEDNS0() const {
         return (bit_attributes_[REQ_WITH_EDNS_0]);
     }
 
@@ -158,7 +158,7 @@ public:
     ///
     /// \return true if DNSSEC OK (DO) bit of the request is set
     /// \throw None
-    bool getRequestDO() const {
+    bool requestHasDO() const {
         return (bit_attributes_[REQ_WITH_DNSSEC_OK]);
     }
 
@@ -174,7 +174,7 @@ public:
     ///
     /// \return true if the request is TSIG signed
     /// \throw None
-    bool getRequestSigTSIG() const {
+    bool requestHasTSIG() const {
         return (bit_attributes_[REQ_TSIG_SIGNED]);
     }
 
@@ -182,7 +182,7 @@ public:
     ///
     /// \return true if the signature of the request is bad
     /// \throw None
-    bool getRequestSigBadSig() const {
+    bool requestHasBadSig() const {
         return (bit_attributes_[REQ_BADSIG]);
     }
 
@@ -206,7 +206,7 @@ public:
     ///
     /// \return true if the response is truncated
     /// \throw None
-    bool getResponseTruncated() const {
+    bool responseIsTruncated() const {
         return (bit_attributes_[RES_IS_TRUNCATED]);
     }
 
@@ -222,7 +222,7 @@ public:
     ///
     /// \return true if the response is signed with TSIG
     /// \throw None
-    bool getResponseTSIG() const {
+    bool responseHasTSIG() const {
         return (bit_attributes_[RES_TSIG_SIGNED]);
     }
 
