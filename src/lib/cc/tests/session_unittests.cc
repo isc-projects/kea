@@ -208,7 +208,7 @@ protected:
 
     // Check two elements are equal
     void elementsEqual(const ConstElementPtr& expected,
-                       const ConstElementPtr& actual)
+                       const ConstElementPtr& actual) const
     {
         EXPECT_TRUE(expected->equals(*actual)) <<
             "Elements differ, expected: " << expected->toWire() <<
@@ -217,7 +217,7 @@ protected:
 
     // The same, but with one specified as string
     void elementsEqual(const string& expected,
-                       const ConstElementPtr& actual)
+                       const ConstElementPtr& actual) const
     {
         const ConstElementPtr expected_el(Element::fromJSON(expected));
         elementsEqual(expected_el, actual);
@@ -226,7 +226,7 @@ protected:
     // Check the session sent a message with the given header. The
     // message is hardcoded.
     void checkSentMessage(const string& expected_hdr,
-                          const char* description)
+                          const char* description) const
     {
         SCOPED_TRACE(description);
         const SentMessage msg(tds->readmsg());
