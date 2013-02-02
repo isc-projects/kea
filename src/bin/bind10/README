@@ -5,7 +5,7 @@ Files:
   README           - this file
   TODO             - remaining development tasks for this program
   bind10.py.in     - used to make bind10.py with proper Python paths
-  init.spec         - defines the options and commands
+  init.spec        - defines the options and commands
   run_bind10.sh.in - use to make run_bind10.sh with proper Python paths
 
 The "tests" directory contains unit tests for the application.
