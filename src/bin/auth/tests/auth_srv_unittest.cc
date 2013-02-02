@@ -419,6 +419,7 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     expect["request.tsig"] = 1;
     expect["request.badsig"] = 1;
     expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
     expect["responses"] = 1;
     expect["response.tsig"] = 1;
     expect["rcode.notauth"] = 1;
@@ -464,6 +465,7 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     expect["request.tsig"] = 1;
     expect["request.badsig"] = 1;
     expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
     expect["responses"] = 1;
     expect["response.tsig"] = 1;
     expect["rcode.notauth"] = 1;
@@ -512,6 +514,7 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     expect["request.tsig"] = 1;
     expect["request.badsig"] = 1;
     expect["request.udp"] = 1;
+    expect["opcode.other"] = 1;
     expect["responses"] = 1;
     expect["response.tsig"] = 1;
     expect["rcode.notauth"] = 1;

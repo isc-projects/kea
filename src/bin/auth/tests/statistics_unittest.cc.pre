@@ -344,7 +344,7 @@ TEST_F(CountersTest, incrementTSIG) {
         expect.clear();
         expect["request.v4"] = i+1;
         expect["request.udp"] = i+1;
-        expect["opcode.query"] = i+1 - count_badsig;
+        expect["opcode.query"] = i+1;
         expect["request.edns0"] = i+1 - count_badsig;
         expect["request.badednsver"] = 0;
         expect["request.dnssec_ok"] = i+1 - count_badsig;

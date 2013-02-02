@@ -196,6 +196,25 @@
 
 <!-- ### STATISTICS DATA PLACEHOLDER ### -->
 
+    <note>
+      <para>
+        Opcode of a request message will not be counted if:
+        <itemizedlist>
+          <listitem><para>
+            The request message is too short to parse the message header
+          </para></listitem>
+          <listitem><para>
+            The request message is a response (i.e. QR bit is set)
+          </para></listitem>
+        </itemizedlist>
+      </para>
+  
+      <para>
+        Request attributes except for opcode will not be counted if signature
+        validation failed as they are not reliable.
+      </para>
+    </note>
+
   </refsect1>
 
   <refsect1>
