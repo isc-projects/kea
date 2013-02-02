@@ -206,9 +206,7 @@ Counters::incResponse(const MessageAttributes& msgattrs,
         isc_throw(isc::Unexpected, "Opcode of the request is empty while it is"
                                    " responded");
     }
-    if (!msgattrs.requestHasBadSig() &&
-               opcode.get() == Opcode::QUERY())
-    {
+    if (!msgattrs.requestHasBadSig() && opcode.get() == Opcode::QUERY()) {
         // compound attributes
         const unsigned int answer_rrs =
             response.getRRCount(Message::SECTION_ANSWER);
