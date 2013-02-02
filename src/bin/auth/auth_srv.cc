@@ -525,7 +525,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
-    const Opcode opcode = message.getOpcode();
+    const Opcode& opcode = message.getOpcode();
     stats_attrs.setRequestOpCode(opcode);
 
     try {
