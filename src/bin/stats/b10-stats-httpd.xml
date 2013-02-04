@@ -54,7 +54,7 @@
       intended for HTTP/XML interface for statistics module. This server
       process runs as a process separated from the process of the BIND 10 Stats
       daemon (<command>b10-stats</command>). The server is initially executed
-      by the b10-init process (<command>bind10</command>) and eventually
+      by the b10-init process and eventually
       exited by it.  The server is intended to serve requests by HTTP
       clients like web browsers and third-party modules. When the server is
       asked, it requests BIND 10 statistics data or its schema from
@@ -74,7 +74,7 @@
       10 statistics. The server uses CC session in communication
       with <command>b10-stats</command>. CC session is provided
       by <command>b10-msgq</command> which is started
-      by <command>bind10</command> in advance. The server is implemented by
+      by <command>b10-init</command> in advance. The server is implemented by
       HTTP-server libraries included in Python 3. The server obtains the
       configuration from the config manager (<command>b10-cfgmgr</command>) in
       runtime. Please see below for more details about this spec file and

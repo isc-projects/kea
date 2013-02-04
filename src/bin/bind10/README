@@ -1,4 +1,5 @@
-This directory contains the source for the "Init of Bind" program.
+This directory contains the source for the "b10-init" program, as well as
+the "bind10" script that runs it.
 
 Files:
   Makefile.am      - build information
