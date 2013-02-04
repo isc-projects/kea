@@ -43,10 +43,24 @@ new_rdata_factory_users = [('aaaa', 'in'),
 re_typecode = re.compile('([\da-z\-]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
-# "AXFR"=>252 etc: for meta types and types well-known but not implemented
-meta_types = {}
-# "NONE"=>254 etc: for classes that don't have any known types
-meta_classes = {}
+# For meta types and types well-known but not implemented
+meta_types = {
+    # Real meta types.  We won't have Rdata implement for them, but we need
+    # RRType constants.
+    'ixfr': 251, 'axfr': 252, 'any': 255,
+    # Obsolete types.  We probalby won't implement Rdata for them, but it's
+    # better to have RRType constants.
+    'md': 3, 'mf': 4, 'mb': 7, 'mg': 8, 'mr': 9, 'nxt': 30, 'a6': 38,
+    'maila': 254,
+    # Types officially assigned but not yet supported in our implementation.
+    'null': 10, 'wks': 11, 'x25': 19, 'rt': 21, 'nsap': 22, 'nsap-ptr': 23,
+    'sig': 24, 'isdn': 20, 'key': 25, 'px': 26, 'gpos': 27, 'loc': 29,
+    'kx': 36, 'cert': 37, 'apl': 42, 'ipseckey': 45, 'tlsa': 52, 'hip': 55,
+    'unspec': 103, 'nid': 104, 'l32': 105, 'l64': 106, 'lp': 107,  'tkey': 249,
+    'mailb': 253, 'uri': 256, 'caa': 257
+    }
+# Classes that don't have any known types
+meta_classes = {'none': 254}
 typeandclass = []
 generic_code = 65536            # something larger than any code value
 rdata_declarations = ''
@@ -181,11 +195,6 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
             # also apply to files.
             filelist = os.listdir(classdir)
             filelist.sort()
-            if len(filelist) == 0:
-                # if there's no known types treat it as meta.  Note that
-                # listdir() (seemingly) ignores .gitignore.
-                meta_classes[class_txt] = class_code
-                continue
             for file in filelist:
                 file = classdir + os.sep + file
                 m = re_typecode.match(os.path.split(file)[1])
@@ -194,11 +203,7 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
                     type_code = m.group(2)
                     if not type_code in typecode2txt:
                         typecode2txt[type_code] = type_txt
-                    if re.search('\.txt$', file): # we use .txt for meta types
-                        if rdatadef_mtime < getmtime(file):
-                            rdatadef_mtime = getmtime(file)
-                        meta_types[type_txt] = type_code
-                    elif re.search('\.cc$', file):
+                    if re.search('\.cc$', file):
                         if rdatadef_mtime < getmtime(file):
                             rdatadef_mtime = getmtime(file)
                         class_definitions += import_classdef(class_txt, file)
