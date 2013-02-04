@@ -1,4 +1,0 @@
-This RR type is not yet implemented; this file is used to generate
-the corresponding RRType constant and a mapping with its textual
-representation, without the Rdata code.  When the Rdata support is
-complete this file must be removed.
