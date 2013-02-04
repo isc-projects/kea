@@ -1,8 +1,0 @@
-For "meta" RR types (i.e., types that don't have Rdata definitions)
-and standard types that have not yet been supported in this
-implementation, place "typename_nn.txt" under the appropriate
-directory (where "typename" is the standard textual mnemonic of the
-type and "nn" is decimal code of the type, e.g. axfr_252.txt).
-Its content doesn't matter.  Then the auto-generate script will
-just generate constant RRTypes and text conversion code for these
-types, skipping Rdata related definitions.
