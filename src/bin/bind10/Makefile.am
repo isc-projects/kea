@@ -15,13 +15,16 @@ noinst_SCRIPTS = run_bind10.sh
 
 bind10dir = $(pkgdatadir)
 bind10_DATA = init.spec
-EXTRA_DIST = init.spec
+EXTRA_DIST = init.spec bind10.in
 
-man_MANS = b10-init.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST += $(man_MANS) b10-init.xml init_messages.mes
+man_MANS = b10-init.8 bind10.8
+DISTCLEANFILES = $(man_MANS) bind10
+EXTRA_DIST += $(man_MANS) b10-init.xml bind10.xml init_messages.mes
 
 if GENERATE_DOCS
+
+bind10.8: bind10.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/bind10.xml
 
 b10-init.8: b10-init.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-init.xml
