@@ -41,7 +41,7 @@ system. The most likely cause is that msgq is not running.
 The configuration manager is starting, reading and saving the configuration
 settings to the shown file.
 
-% CFGMGR_CONFIG_UPDATE_BOSS_AND_INIT_FOUND Configuration found for both 'Boss' and 'Init'
+% CFGMGR_CONFIG_UPDATE_BOSS_AND_INIT_FOUND Configuration found for both 'Boss' and 'Init', ignoring 'Boss'
 In the process of updating the configuration from version 2 to version 3,
 the configuration manager has found that there are existing configurations
 for both the old value 'Boss' and the new value 'Init'. This should in
