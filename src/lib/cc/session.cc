@@ -30,6 +30,11 @@
 #include <asio/deadline_timer.hpp>
 #include <asio/system_error.hpp>
 
+#include <cc/data.h>
+#include <cc/session.h>
+
+#include <util/common_defs.h>
+
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -43,9 +48,6 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <exceptions/exceptions.h>
-
-#include <cc/data.h>
-#include <cc/session.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -480,13 +482,14 @@ Session::group_sendmsg(ConstElementPtr msg, std::string group,
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
 
-    env->set("type", Element::create("send"));
-    env->set("from", Element::create(impl_->lname_));
-    env->set("to", Element::create(to));
-    env->set("group", Element::create(group));
-    env->set("instance", Element::create(instance));
-    env->set("seq", Element::create(nseq));
-    env->set("want_answer", Element::create(want_answer));
+    env->set(isc::util::CC_HEADER_TYPE,
+             Element::create(isc::util::CC_COMMAND_SEND));
+    env->set(isc::util::CC_HEADER_FROM, Element::create(impl_->lname_));
+    env->set(isc::util::CC_HEADER_TO, Element::create(to));
+    env->set(isc::util::CC_HEADER_GROUP, Element::create(group));
+    env->set(isc::util::CC_HEADER_INSTANCE, Element::create(instance));
+    env->set(isc::util::CC_HEADER_SEQ, Element::create(nseq));
+    env->set(isc::util::CC_HEADER_WANT_ANSWER, Element::create(want_answer));
 
     sendmsg(env, msg);
     return (nseq);

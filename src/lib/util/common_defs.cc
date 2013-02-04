@@ -22,6 +22,8 @@ namespace util {
 // keep the syntax here simple and check the generated file
 // (lib/python/isc/util/common_defs.py) is correct and sane.
 
+// The constants used in the CC protocol
+// First the header names
 const char* CC_HEADER_TYPE = "type";
 const char* CC_HEADER_FROM = "from";
 const char* CC_HEADER_TO = "to";
@@ -29,6 +31,8 @@ const char* CC_HEADER_GROUP = "group";
 const char* CC_HEADER_INSTANCE = "instance";
 const char* CC_HEADER_SEQ = "seq";
 const char* CC_HEADER_WANT_ANSWER = "want_answer";
+// The commands in the "type" header
+const char* CC_COMMAND_SEND = "send";
 
 }
 }
