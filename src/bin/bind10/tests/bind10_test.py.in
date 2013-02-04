@@ -2226,7 +2226,7 @@ class SocketSrvTest(unittest.TestCase):
 
     def __accept(self):
         """
-        Hijact the accept method of the b10-init.
+        Hijack the accept method of the b10-init.
 
         Notes down it was called and stops b10-init.
         """

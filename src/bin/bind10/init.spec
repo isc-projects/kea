@@ -1,7 +1,7 @@
 {
   "module_spec": {
     "module_name": "Init",
-    "module_description": "Master process",
+    "module_description": "Init process",
     "config_data": [
       {
         "item_name": "components",

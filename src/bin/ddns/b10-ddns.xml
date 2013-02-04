@@ -119,7 +119,7 @@
         <listitem>
           <para>
             This value is ignored at this moment, but is provided for
-            compatibility with the <command>bind10</command> Init process.
+            compatibility with the <command>b10-init</command> process.
           </para>
         </listitem>
       </varlistentry>

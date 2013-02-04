@@ -31,7 +31,7 @@
 
   <refnamediv>
     <refname>b10-init</refname>
-    <refpurpose>BIND 10 init process</refpurpose>
+    <refpurpose>BIND 10 Init process</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -368,7 +368,7 @@ xfrin
 
 <!-- TODO: formating -->
     <para>
-      The <varname>init</varname> configuration commands are:
+      The <varname>Init</varname> configuration commands are:
     </para>
 
 <!-- TODO -->
