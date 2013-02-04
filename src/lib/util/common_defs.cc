@@ -31,8 +31,12 @@ const char* CC_HEADER_GROUP = "group";
 const char* CC_HEADER_INSTANCE = "instance";
 const char* CC_HEADER_SEQ = "seq";
 const char* CC_HEADER_WANT_ANSWER = "want_answer";
+const char* CC_HEADER_REPLY = "reply";
 // The commands in the "type" header
 const char* CC_COMMAND_SEND = "send";
+// The wildcards of some headers
+const char* CC_TO_WILDCARD = "*";
+const char* CC_INSTANCE_WILDCARD = "*";
 
 }
 }
