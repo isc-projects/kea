@@ -33,6 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+from isc.util.common_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
 
@@ -527,14 +528,14 @@ class MsgQ:
         self.sendmsg(sock, { "type" : "getlname" }, { "lname" : lname })
 
     def process_command_send(self, sock, routing, data):
-        group = routing["group"]
-        instance = routing["instance"]
-        to = routing["to"]
+        group = routing[CC_HEADER_GROUP]
+        instance = routing[CC_HEADER_INSTANCE]
+        to = routing[CC_HEADER_TO]
         if group == None or instance == None:
             # FIXME: Should we log them instead?
             return  # ignore invalid packets entirely
 
-        if to == "*":
+        if to == CC_TO_WILDCARD:
             sockets = self.subs.find(group, instance)
         else:
             if to in self.lnames:
@@ -551,7 +552,8 @@ class MsgQ:
         if sockets:
             for socket in sockets:
                 self.send_prepared_msg(socket, msg)
-        elif routing.get("wants_reply") and "reply" not in routing:
+        elif routing.get(CC_HEADER_WANT_ANSWER) and \
+            CC_HEADER_REPLY not in routing:
             # We have no recipients. But the sender insists on a reply
             # (and the message isn't a reply itself). We need to send
             # an error to satisfy the senders hurger for response, since
@@ -567,9 +569,9 @@ class MsgQ:
             # want to mangle it for the caller, so we get a copy. A shallow
             # one should be enough, we modify the dict only.
             header = routing.copy()
-            header["reply"] = routing["seq"]
-            header["from"] = 'msgq' # Dummy lname not assigned to clients
-            header["to"] = routing["from"]
+            header[CC_HEADER_REPLY] = routing[CC_HEADER_SEQ]
+            header[CC_HEADER_FROM] = "msgq" # Dummy lname not assigned to clients
+            header[CC_HEADER_TO] = routing[CC_HEADER_FROM]
             # We keep the seq as it is. We don't need to track the message
             # and provided the sender always uses a new one, it won't know
             # we're cheating, since we won't send it two same either.

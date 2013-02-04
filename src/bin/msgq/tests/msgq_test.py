@@ -192,11 +192,11 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual([], sent_messages)
         # It should act the same if we explicitly say we do not want replies.
-        routing["wants_reply"] = False
+        routing["want_answer"] = False
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual([], sent_messages)
         # Ask for errors if it can't be delivered.
-        routing["wants_reply"] = True
+        routing["want_answer"] = True
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
         self.assertEqual(1, sent_messages[0][0])
@@ -207,14 +207,14 @@ class MsgQTest(unittest.TestCase):
                               'seq': 42,
                               'from': 'msgq',
                               'to': 'sender',
-                              'wants_reply': True
+                              'want_answer': True
                           }, {'result': [-1, "No such recipient"]}),
                           self.parse_msg(sent_messages[0][1]))
         # the reply header too.
         sent_messages = []
         # If the message is a reply itself, we never generate the errors, even
         # if they can't be delivered. This is partly because the answer reuses
-        # the old header (which would then inherit the wants_reply flag) and
+        # the old header (which would then inherit the want_answer flag) and
         # partly we want to avoid loops of errors that can't be delivered.
         # If a reply can't be delivered, the sender can't do much anyway even
         # if notified.
@@ -243,7 +243,7 @@ class MsgQTest(unittest.TestCase):
                               'seq': 42,
                               'from': 'msgq',
                               'to': 'sender',
-                              'wants_reply': True
+                              'want_answer': True
                           }, {'result': [-1, "No such recipient"]}),
                           self.parse_msg(sent_messages[0][1]))
         sent_messages = []
