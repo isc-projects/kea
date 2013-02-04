@@ -26,15 +26,20 @@ namespace util {
 // one process to another. Since the names should be self-explanatory and
 // the variables here are used mostly to synchronize the same values across
 // multiple programs, separate documentation for each variable is not provided.
+//
+// \todo Generate this header from the .cc file too. It should be simple.
 
 // Constants used in the CC protocol (sent through MSGQ)
-extern const char* CC_HEADER_TYPE;
-extern const char* CC_HEADER_FROM;
-extern const char* CC_HEADER_TO;
-extern const char* CC_HEADER_GROUP;
-extern const char* CC_HEADER_INSTANCE;
-extern const char* CC_HEADER_SEQ;
-extern const char* CC_HEADER_WANT_ANSWER;
+// First the header names.
+extern const char* CC_HEADER_TYPE; // "type"
+extern const char* CC_HEADER_FROM; // "from"
+extern const char* CC_HEADER_TO; // "to"
+extern const char* CC_HEADER_GROUP; // "group"
+extern const char* CC_HEADER_INSTANCE; // "instance"
+extern const char* CC_HEADER_SEQ; // "seq"
+extern const char* CC_HEADER_WANT_ANSWER; // "want_answer"
+// Then the commands used in the CC_HEADER_TYPE header
+extern const char* CC_COMMAND_SEND; // "send"
 
 }
 }
