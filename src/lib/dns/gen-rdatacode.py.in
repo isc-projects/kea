@@ -198,11 +198,11 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
                         if rdatadef_mtime < getmtime(file):
                             rdatadef_mtime = getmtime(file)
                         meta_types[type_txt] = type_code
-                    elif re.search('\cc$', file):
+                    elif re.search('\.cc$', file):
                         if rdatadef_mtime < getmtime(file):
                             rdatadef_mtime = getmtime(file)
                         class_definitions += import_classdef(class_txt, file)
-                    elif re.search('\h$', file):
+                    elif re.search('\.h$', file):
                         if rdatahdr_mtime < getmtime(file):
                             rdatahdr_mtime = getmtime(file)
                         rdata_declarations += import_classheader(class_txt,
