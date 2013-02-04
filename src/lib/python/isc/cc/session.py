@@ -257,8 +257,8 @@ class Session:
             "instance": instance,
         })
 
-    def group_sendmsg(self, msg, group, instance = "*", to = "*",
-                      want_answer=False):
+    def group_sendmsg(self, msg, group, instance=CC_INSTANCE_WILDCARD,
+                      to=CC_TO_WILDCARD, want_answer=False):
         seq = self._next_sequence()
         self.sendmsg({
             CC_HEADER_TYPE: CC_COMMAND_SEND,
