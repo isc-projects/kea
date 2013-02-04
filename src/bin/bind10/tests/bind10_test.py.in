@@ -13,19 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Most of the time, we omit the "b10-init" for brevity. Sometimes,
+# Most of the time, we omit the "init" for brevity. Sometimes,
 # we want to be explicit about what we do, like when hijacking a library
 # call used by the b10-init.
-# Because the file has a hyphen in its name, we need to work around
-# the standard syntax here
-b10_init = __import__('b10-init')
-# emulate the 'from X import'
-Init = b10_init.Init
-ProcessInfo = b10_init.ProcessInfo
-parse_args = b10_init.parse_args
-dump_pid = b10_init.dump_pid
-unlink_pid_file = b10_init.unlink_pid_file
-_BASETIME = b10_init._BASETIME
+from init import Init, ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+import init
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -143,7 +135,7 @@ class TestCacheCommands(unittest.TestCase):
         self.__send_fd_called = None
         self.__get_token_called = None
         self.__drop_socket_called = None
-        b10_init.libutil_io_python.send_fd = self.__send_fd
+        init.libutil_io_python.send_fd = self.__send_fd
 
     def __send_fd(self, to, socket):
         """
@@ -351,26 +343,26 @@ class TestCacheCommands(unittest.TestCase):
 class TestInit(unittest.TestCase):
     def setUp(self):
         # Save original values that may be tweaked in some tests
-        self.__orig_setgid = b10_init.posix.setgid
-        self.__orig_setuid = b10_init.posix.setuid
+        self.__orig_setgid = init.posix.setgid
+        self.__orig_setuid = init.posix.setuid
         self.__orig_logger_class = isc.log.Logger
 
     def tearDown(self):
         # Restore original values saved in setUp()
-        b10_init.posix.setgid = self.__orig_setgid
-        b10_init.posix.setuid = self.__orig_setuid
+        init.posix.setgid = self.__orig_setgid
+        init.posix.setuid = self.__orig_setuid
         isc.log.Logger = self.__orig_logger_class
 
     def test_init(self):
-        init = Init()
-        self.assertEqual(init.verbose, False)
-        self.assertEqual(init.msgq_socket_file, None)
-        self.assertEqual(init.cc_session, None)
-        self.assertEqual(init.ccs, None)
-        self.assertEqual(init.components, {})
-        self.assertEqual(init.runnable, False)
-        self.assertEqual(init.username, None)
-        self.assertIsNone(init._socket_cache)
+        b10_init = Init()
+        self.assertEqual(b10_init.verbose, False)
+        self.assertEqual(b10_init.msgq_socket_file, None)
+        self.assertEqual(b10_init.cc_session, None)
+        self.assertEqual(b10_init.ccs, None)
+        self.assertEqual(b10_init.components, {})
+        self.assertEqual(b10_init.runnable, False)
+        self.assertEqual(b10_init.username, None)
+        self.assertIsNone(b10_init._socket_cache)
 
     def __setgid(self, gid):
         self.__gid_set = gid
@@ -379,14 +371,14 @@ class TestInit(unittest.TestCase):
         self.__uid_set = uid
 
     def test_change_user(self):
-        b10_init.posix.setgid = self.__setgid
-        b10_init.posix.setuid = self.__setuid
+        init.posix.setgid = self.__setgid
+        init.posix.setuid = self.__setuid
 
         self.__gid_set = None
         self.__uid_set = None
-        init = Init()
-        init.change_user()
-        # No gid/uid set in b10_init, nothing called.
+        b10_init = Init()
+        b10_init.change_user()
+        # No gid/uid set in init, nothing called.
         self.assertIsNone(self.__gid_set)
         self.assertIsNone(self.__uid_set)
 
@@ -401,22 +393,22 @@ class TestInit(unittest.TestCase):
             raise ex
 
         # Let setgid raise an exception
-        b10_init.posix.setgid = raising_set_xid
-        b10_init.posix.setuid = self.__setuid
-        self.assertRaises(b10_init.ChangeUserError,
+        init.posix.setgid = raising_set_xid
+        init.posix.setuid = self.__setuid
+        self.assertRaises(init.ChangeUserError,
                           Init(setuid=42, setgid=4200).change_user)
 
         # Let setuid raise an exception
-        b10_init.posix.setgid = self.__setgid
-        b10_init.posix.setuid = raising_set_xid
-        self.assertRaises(b10_init.ChangeUserError,
+        init.posix.setgid = self.__setgid
+        init.posix.setuid = raising_set_xid
+        self.assertRaises(init.ChangeUserError,
                           Init(setuid=42, setgid=4200).change_user)
 
         # Let initial log output after setuid raise an exception
-        b10_init.posix.setgid = self.__setgid
-        b10_init.posix.setuid = self.__setuid
+        init.posix.setgid = self.__setgid
+        init.posix.setuid = self.__setuid
         isc.log.Logger = raising_set_xid
-        self.assertRaises(b10_init.ChangeUserError,
+        self.assertRaises(init.ChangeUserError,
                           Init(setuid=42, setgid=4200).change_user)
 
     def test_set_creator(self):
@@ -1676,15 +1668,15 @@ class TestInitComponents(unittest.TestCase):
     def test_start_msgq_timeout(self):
         '''Test that b10-msgq startup attempts connections several times
         and times out eventually.'''
-        init = MockInitSimple()
-        init.c_channel_env = {}
+        b10_init = MockInitSimple()
+        b10_init.c_channel_env = {}
         # set the timeout to an arbitrary pre-determined value (which
         # code below depends on)
-        init.msgq_timeout = 1
-        init._run_under_unittests = False
+        b10_init.msgq_timeout = 1
+        b10_init._run_under_unittests = False
 
         # use the MockProcessInfo creator
-        init._make_process_info = init._make_mock_process_info
+        b10_init._make_process_info = b10_init._make_mock_process_info
 
         global attempts
         global tsec
@@ -1714,10 +1706,10 @@ class TestInitComponents(unittest.TestCase):
 
         isc.cc.Session = DummySessionAlwaysFails
 
-        with self.assertRaises(b10_init.CChannelConnectError):
+        with self.assertRaises(init.CChannelConnectError):
             # An exception will be thrown here when it eventually times
             # out.
-            pi = init.start_msgq()
+            pi = b10_init.start_msgq()
 
         # time.time() should be called 12 times within the while loop:
         # starting from 0, and 11 more times from 0.1 to 1.1. There's
@@ -1745,12 +1737,12 @@ class TestInitComponents(unittest.TestCase):
         attempts = 0
         tsec = 0
 
-        pi = init.start_msgq()
+        pi = b10_init.start_msgq()
 
         # just one attempt, but 2 calls to time.time()
         self.assertEqual(attempts, 2)
 
-        self.assertEqual(cc_socket_file, init.msgq_socket_file)
+        self.assertEqual(cc_socket_file, b10_init.msgq_socket_file)
         self.assertEqual(cc_sub, 'Init')
 
         # isc.cc.Session, time.time() and time.sleep() are restored
@@ -1831,15 +1823,15 @@ class TestInitComponents(unittest.TestCase):
         class DummySession():
             def group_recvmsg(self):
                 return (None, None)
-        init = MockInitSimple()
-        init.c_channel_env = {}
-        init.cc_session = DummySession()
+        b10_init = MockInitSimple()
+        b10_init.c_channel_env = {}
+        b10_init.cc_session = DummySession()
         # set wait_time to an arbitrary pre-determined value (which code
         # below depends on)
-        init.wait_time = 2
+        b10_init.wait_time = 2
 
         # use the MockProcessInfo creator
-        init._make_process_info = init._make_mock_process_info
+        b10_init._make_process_info = b10_init._make_mock_process_info
 
         global attempts
         attempts = 0
@@ -1851,8 +1843,8 @@ class TestInitComponents(unittest.TestCase):
 
         # We just check that an exception was thrown, and that several
         # attempts were made to connect.
-        with self.assertRaises(b10_init.ProcessStartError):
-            pi = init.start_cfgmgr()
+        with self.assertRaises(init.ProcessStartError):
+            pi = b10_init.start_cfgmgr()
 
         # 2 seconds of attempts every 1 second should result in 2 attempts
         self.assertEqual(attempts, 2)
@@ -1871,16 +1863,17 @@ class TestInitComponents(unittest.TestCase):
                 self.started = False
             def start(self):
                 self.started = True
-        init = MockInitSimple()
+        b10_init = MockInitSimple()
         self._tmp_module_cc_session = isc.config.ModuleCCSession
         isc.config.ModuleCCSession = DummySession
 
-        init.start_ccsession({})
-        self.assertEqual(b10_init.SPECFILE_LOCATION, init.ccs.specfile)
-        self.assertEqual(init.config_handler, init.ccs.config_handler)
-        self.assertEqual(init.command_handler, init.ccs.command_handler)
-        self.assertEqual(init.msgq_socket_file, init.ccs.socket_file)
-        self.assertTrue(init.ccs.started)
+        b10_init.start_ccsession({})
+        self.assertEqual(init.SPECFILE_LOCATION, b10_init.ccs.specfile)
+        self.assertEqual(b10_init.config_handler, b10_init.ccs.config_handler)
+        self.assertEqual(b10_init.command_handler,
+                         b10_init.ccs.command_handler)
+        self.assertEqual(b10_init.msgq_socket_file, b10_init.ccs.socket_file)
+        self.assertTrue(b10_init.ccs.started)
 
         # isc.config.ModuleCCSession is restored during tearDown().
 
@@ -2110,42 +2103,43 @@ class TestInitComponents(unittest.TestCase):
         # All is well case, where all components are started
         # successfully. We check that the actual call to
         # start_all_components() is made, and Init.runnable is true.
-        init = MockInitStartup(False)
-        r = init.startup()
+        b10_init = MockInitStartup(False)
+        r = b10_init.startup()
         self.assertIsNone(r)
-        self.assertTrue(init.started)
-        self.assertFalse(init.killed)
-        self.assertTrue(init.runnable)
-        self.assertEqual({}, init.c_channel_env)
+        self.assertTrue(b10_init.started)
+        self.assertFalse(b10_init.killed)
+        self.assertTrue(b10_init.runnable)
+        self.assertEqual({}, b10_init.c_channel_env)
 
         # Case where starting components fails. We check that
         # kill_started_components() is called right after, and
         # Init.runnable is not modified.
-        init = MockInitStartup(True)
-        r = init.startup()
+        b10_init = MockInitStartup(True)
+        r = b10_init.startup()
         # r contains an error message
         self.assertEqual(r, 'Unable to start myproc: Assume starting components has failed.')
-        self.assertTrue(init.started)
-        self.assertTrue(init.killed)
-        self.assertFalse(init.runnable)
-        self.assertEqual({}, init.c_channel_env)
+        self.assertTrue(b10_init.started)
+        self.assertTrue(b10_init.killed)
+        self.assertFalse(b10_init.runnable)
+        self.assertEqual({}, b10_init.c_channel_env)
 
         # Check if msgq_socket_file is carried over
-        init = MockInitStartup(False)
-        init.msgq_socket_file = 'foo'
-        r = init.startup()
-        self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'}, init.c_channel_env)
+        b10_init = MockInitStartup(False)
+        b10_init.msgq_socket_file = 'foo'
+        r = b10_init.startup()
+        self.assertEqual({'BIND10_MSGQ_SOCKET_FILE': 'foo'},
+                         b10_init.c_channel_env)
 
         # Check failure of changing user results in a different message
-        init = MockInitStartup(b10_init.ChangeUserError('failed to chusr'))
-        r = init.startup()
+        b10_init = MockInitStartup(init.ChangeUserError('failed to chusr'))
+        r = b10_init.startup()
         self.assertIn('failed to chusr', r)
-        self.assertTrue(init.killed)
+        self.assertTrue(b10_init.killed)
 
         # Check the case when socket file already exists
         isc.cc.Session = DummySessionSocketExists
-        init = MockInitStartup(False)
-        r = init.startup()
+        b10_init = MockInitStartup(False)
+        r = b10_init.startup()
         self.assertIn('already running', r)
 
         # isc.cc.Session is restored during tearDown().
@@ -2160,7 +2154,7 @@ class SocketSrvTest(unittest.TestCase):
         Create the b10-init to test, testdata and backup some functions.
         """
         self.__b10_init = Init()
-        self.__select_backup = b10_init.select.select
+        self.__select_backup = init.select.select
         self.__select_called = None
         self.__socket_data_called = None
         self.__consumer_dead_called = None
@@ -2170,7 +2164,7 @@ class SocketSrvTest(unittest.TestCase):
         """
         Restore functions.
         """
-        b10_init.select.select = self.__select_backup
+        init.select.select = self.__select_backup
 
     class __FalseSocket:
         """
@@ -2242,7 +2236,7 @@ class SocketSrvTest(unittest.TestCase):
         self.__b10_init._srv_socket = self.__FalseSocket(self)
         self.__b10_init._srv_accept = self.__accept
         self.__b10_init.ccs = self.__CCS()
-        b10_init.select.select = self.__select_accept
+        init.select.select = self.__select_accept
         self.__b10_init.run(2)
         # It called the accept
         self.assertTrue(self.__accept_called)
@@ -2275,7 +2269,7 @@ class SocketSrvTest(unittest.TestCase):
         self.__b10_init.ccs = self.__CCS()
         self.__b10_init._unix_sockets = {13: (self.__FalseSocket(self, 13), b'')}
         self.__b10_init.runnable = True
-        b10_init.select.select = self.__select_data
+        init.select.select = self.__select_data
         self.__b10_init.run(2)
         self.assertEqual(13, self.__socket_data_called)
         self.assertEqual(([2, 1, 42, 13], [], [], None), self.__select_called)
@@ -2352,15 +2346,15 @@ class TestFunctions(unittest.TestCase):
         self.assertFalse(os.path.exists(self.lockfile_testpath))
         os.mkdir(self.lockfile_testpath)
         self.assertTrue(os.path.isdir(self.lockfile_testpath))
-        self.__isfile_orig = b10_init.os.path.isfile
-        self.__unlink_orig = b10_init.os.unlink
+        self.__isfile_orig = init.os.path.isfile
+        self.__unlink_orig = init.os.unlink
 
     def tearDown(self):
         os.rmdir(self.lockfile_testpath)
         self.assertFalse(os.path.isdir(self.lockfile_testpath))
         os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = "@abs_top_builddir@"
-        b10_init.os.path.isfile = self.__isfile_orig
-        b10_init.os.unlink = self.__unlink_orig
+        init.os.path.isfile = self.__isfile_orig
+        init.os.unlink = self.__unlink_orig
 
     def test_remove_lock_files(self):
         os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = self.lockfile_testpath
@@ -2374,7 +2368,7 @@ class TestFunctions(unittest.TestCase):
             self.assertTrue(os.path.isfile(fname))
 
         # first call should clear up all the lockfiles
-        b10_init.remove_lock_files()
+        init.remove_lock_files()
 
         # check if the lockfiles exist
         for f in lockfiles:
@@ -2382,7 +2376,7 @@ class TestFunctions(unittest.TestCase):
             self.assertFalse(os.path.isfile(fname))
 
         # second call should not assert anyway
-        b10_init.remove_lock_files()
+        init.remove_lock_files()
 
     def test_remove_lock_files_fail(self):
         # Permission error on unlink is ignored; other exceptions are really
@@ -2390,40 +2384,40 @@ class TestFunctions(unittest.TestCase):
         def __raising_unlink(unused, ex):
             raise ex
 
-        b10_init.os.path.isfile = lambda _: True
+        init.os.path.isfile = lambda _: True
         os_error = OSError()
-        b10_init.os.unlink = lambda f: __raising_unlink(f, os_error)
+        init.os.unlink = lambda f: __raising_unlink(f, os_error)
 
         os_error.errno = errno.EPERM
-        b10_init.remove_lock_files() # no disruption
+        init.remove_lock_files() # no disruption
 
         os_error.errno = errno.EACCES
-        b10_init.remove_lock_files() # no disruption
+        init.remove_lock_files() # no disruption
 
         os_error.errno = errno.ENOENT
-        self.assertRaises(OSError, b10_init.remove_lock_files)
+        self.assertRaises(OSError, init.remove_lock_files)
 
-        b10_init.os.unlink = lambda f: __raising_unlink(f, Exception('bad'))
-        self.assertRaises(Exception, b10_init.remove_lock_files)
+        init.os.unlink = lambda f: __raising_unlink(f, Exception('bad'))
+        self.assertRaises(Exception, init.remove_lock_files)
 
     def test_get_signame(self):
         # just test with some samples
-        signame = b10_init.get_signame(signal.SIGTERM)
+        signame = init.get_signame(signal.SIGTERM)
         self.assertEqual('SIGTERM', signame)
-        signame = b10_init.get_signame(signal.SIGKILL)
+        signame = init.get_signame(signal.SIGKILL)
         self.assertEqual('SIGKILL', signame)
         # 59426 is hopefully an unused signal on most platforms
-        signame = b10_init.get_signame(59426)
+        signame = init.get_signame(59426)
         self.assertEqual('Unknown signal 59426', signame)
 
     def test_fatal_signal(self):
-        self.assertIsNone(b10_init.b10_init)
-        b10_init.b10_init = Init()
-        b10_init.b10_init.runnable = True
-        b10_init.fatal_signal(signal.SIGTERM, None)
+        self.assertIsNone(init.b10_init)
+        init.b10_init = Init()
+        init.b10_init.runnable = True
+        init.fatal_signal(signal.SIGTERM, None)
         # Now, runnable must be False
-        self.assertFalse(b10_init.b10_init.runnable)
-        b10_init.b10_init = None
+        self.assertFalse(init.b10_init.runnable)
+        init.b10_init = None
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

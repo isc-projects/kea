@@ -13,15 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Because the file has a hyphen in its name, we need to work around
-# the standard syntax here
-b10_init = __import__('b10-init')
-# emulate the 'from X import'
-ProcessInfo = b10_init.ProcessInfo
-parse_args = b10_init.parse_args
-dump_pid = b10_init.dump_pid
-unlink_pid_file = b10_init.unlink_pid_file
-_BASETIME = b10_init._BASETIME
+from init import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 import unittest
 import sys
