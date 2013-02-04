@@ -1,1 +1,0 @@
-This is a meta type and doesn't have any Rdata definition.
