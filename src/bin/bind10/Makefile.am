@@ -49,10 +49,10 @@ $(PYTHON_LOGMSGPKG_DIR)/work/init_messages.py : init_messages.mes
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/init_messages.mes
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-init: b10-init.py $(PYTHON_LOGMSGPKG_DIR)/work/init_messages.py
+b10-init: init.py $(PYTHON_LOGMSGPKG_DIR)/work/init_messages.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LIBDIR@@|$(libdir)|" \
-	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" b10-init.py >$@
+	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" init.py >$@
 	chmod a+x $@
 
 pytest:
