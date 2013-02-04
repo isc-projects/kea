@@ -1127,6 +1127,7 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/bind10/bind10
                  src/bin/bind10/Makefile
                  src/bin/bind10/tests/Makefile
                  src/bin/cmdctl/Makefile
@@ -1376,6 +1377,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/bind10/bind10
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/dbutil/run_dbutil.sh
