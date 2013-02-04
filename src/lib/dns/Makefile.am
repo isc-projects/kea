@@ -97,7 +97,6 @@ EXTRA_DIST += rdata/generic/mr_9.txt
 EXTRA_DIST += rdata/generic/nid_104.txt
 EXTRA_DIST += rdata/generic/null_10.txt
 EXTRA_DIST += rdata/generic/nxt_30.txt
-EXTRA_DIST += rdata/generic/proforma.txt
 EXTRA_DIST += rdata/generic/rt_21.txt
 EXTRA_DIST += rdata/generic/sig_24.txt
 EXTRA_DIST += rdata/generic/tkey_249.txt
