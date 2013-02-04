@@ -33,8 +33,6 @@
 #include <cc/data.h>
 #include <cc/session.h>
 
-#include <util/common_defs.h>
-
 #include <cstdio>
 #include <vector>
 #include <iostream>
