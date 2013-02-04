@@ -43,24 +43,27 @@ new_rdata_factory_users = [('aaaa', 'in'),
 re_typecode = re.compile('([\da-z\-]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
-# For meta types and types well-known but not implemented
+# For meta types and types well-known but not implemented.  This is a dict from
+# type code values (as string) to textual mnemonic.
 meta_types = {
     # Real meta types.  We won't have Rdata implement for them, but we need
     # RRType constants.
-    'ixfr': 251, 'axfr': 252, 'any': 255,
+    '251': 'ixfr', '252': 'axfr', '255': 'any',
     # Obsolete types.  We probalby won't implement Rdata for them, but it's
     # better to have RRType constants.
-    'md': 3, 'mf': 4, 'mb': 7, 'mg': 8, 'mr': 9, 'nxt': 30, 'a6': 38,
-    'maila': 254,
+    '3': 'md', '4': 'mf', '7': 'mb', '8': 'mg', '9': 'mr', '30': 'nxt',
+    '38': 'a6', '254': 'maila',
     # Types officially assigned but not yet supported in our implementation.
-    'null': 10, 'wks': 11, 'x25': 19, 'rt': 21, 'nsap': 22, 'nsap-ptr': 23,
-    'sig': 24, 'isdn': 20, 'key': 25, 'px': 26, 'gpos': 27, 'loc': 29,
-    'kx': 36, 'cert': 37, 'apl': 42, 'ipseckey': 45, 'tlsa': 52, 'hip': 55,
-    'unspec': 103, 'nid': 104, 'l32': 105, 'l64': 106, 'lp': 107,  'tkey': 249,
-    'mailb': 253, 'uri': 256, 'caa': 257
+    '10': 'null', '11': 'wks', '19': 'x25', '21': 'rt', '22': 'nsap',
+    '23': 'nsap-ptr', '24': 'sig', '20': 'isdn', '25': 'key', '26': 'px',
+    '27': 'gpos', '29': 'loc', '36': 'kx', '37': 'cert', '42': 'apl',
+    '45': 'ipseckey', '52': 'tlsa', '55': 'hip', '103': 'unspec',
+    '104': 'nid', '105': 'l32', '106': 'l64', '107': 'lp', '249':  'tkey',
+    '253': 'mailb', '256': 'uri', '257': 'caa'
     }
-# Classes that don't have any known types
-meta_classes = {'none': 254}
+# Classes that don't have any known types.  This is a dict from type code
+# values (as string) to textual mnemonic.
+meta_classes = {'254': 'none'}
 typeandclass = []
 generic_code = 65536            # something larger than any code value
 rdata_declarations = ''
@@ -378,14 +381,14 @@ def generate_rrparam(fileprefix, basemtime):
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
     typeandclassparams += indent + '// Meta and non-implemented RR types\n'
-    for type_txt, type_code in meta_types.items():
+    for type_code, type_txt in meta_types.items():
         typeandclassparams += indent + \
-            'addType("' + type_txt.upper() + '", ' + str(type_code) + ');\n'
+            'addType("' + type_txt.upper() + '", ' + type_code + ');\n'
 
     typeandclassparams += indent + '// Meta classes\n'
-    for cls_txt, cls_code in meta_classes.items():
+    for cls_code, cls_txt in meta_classes.items():
         typeandclassparams += indent + \
-            'addClass("' + cls_txt.upper() + '", ' + str(cls_code) + ');\n'
+            'addClass("' + cls_txt.upper() + '", ' + cls_code + ');\n'
 
     rrparam_temp = open(placeholder, 'r')
     rrparam_out = open(outputfile, 'w')
@@ -403,9 +406,14 @@ if __name__ == "__main__":
         generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
         generate_rdatahdr('@builddir@/rdataclass.h', heading_txt,
                           rdata_declarations, rdatahdr_mtime)
-        generate_typeclasscode('rrtype', rdatahdr_mtime, typecode2txt, 'Type')
+
+        # merge auto-generated types/classes with meta maps and generate the
+        # corresponding code.
+        generate_typeclasscode('rrtype', rdatahdr_mtime,
+                               dict(typecode2txt, **meta_types), 'Type')
         generate_typeclasscode('rrclass', classdir_mtime,
-                               classcode2txt, 'Class')
+                               dict(classcode2txt, **meta_classes), 'Class')
+
         generate_rrparam('rrparamregistry', rdatahdr_mtime)
     except:
         sys.stderr.write('Code generation failed due to exception: %s\n' %
