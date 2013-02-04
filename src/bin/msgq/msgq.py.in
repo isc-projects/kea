@@ -632,6 +632,12 @@ class MsgQ:
                         break
                     else:
                         writable = event & select.POLLOUT
+                        # Note: it may be okayb to read data if available
+                        # immediately after write some, but due to unexpected
+                        # regression (see comments on the kqueue version below)
+                        # we restrict one operation per iteration for now.
+                        # In future we may clarify the point and enable the
+                        # "read/write" mode.
                         readable = not writable and (event & select.POLLIN)
                         if not writable and not readable:
                             logger.error(MSGQ_POLL_UNKNOWN_EVENT, fd, event)
@@ -658,6 +664,10 @@ class MsgQ:
                         writable = event.filter == select.KQ_FILTER_WRITE
                         readable = (event.filter == select.KQ_FILTER_READ and
                                     event.data > 0)
+                        # It seems to break some of our test cases if we
+                        # immediately close the socket on EOF after reading
+                        # some data.  It may be possible to avoid by tweaking
+                        # the test, but unless we can be sure we'll hold off.
                         closed = (not readable and
                                   (event.flags & select.KQ_EV_EOF))
                         self._process_fd(fd, writable, readable, closed)
