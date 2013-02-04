@@ -210,8 +210,11 @@
       </para>
 
       <para>
-        Request attributes except for opcode will not be counted if signature
+        Request attributes except for opcode will not be counted if TSIG
         validation failed as they are not reliable.
+        We always count opcode mainly for compatibility with BIND 9,
+        but remember that if there's any error related to TSIG, some
+        of the counted opcode may not be trustworthy.
       </para>
     </note>
 
