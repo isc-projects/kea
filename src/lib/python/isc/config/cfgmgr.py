@@ -109,9 +109,14 @@ class ConfigManagerData:
         if new_data_version == 2:
             # 'Boss' got changed to 'Init'; If for some reason both are
             # present, simply ignore the old one
-            if 'Boss' in config and not 'Init' in config:
-                config['Init'] = config['Boss']
-                del config['Boss']
+            if 'Boss' in config:
+                if not 'Init' in config:
+                    config['Init'] = config['Boss']
+                    del config['Boss']
+                else:
+                    # This should not happen, but we don't want to overwrite
+                    # any config in this case, so warn about it
+                    logger.warn(CFGMGR_CONFIG_UPDATE_BOSS_AND_INIT_FOUND)
             new_data_version = 3
 
         config['version'] = new_data_version
