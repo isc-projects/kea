@@ -22,6 +22,7 @@ import threading
 import bind10_config
 
 import isc.cc.message
+from isc.util.common_defs import *
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
@@ -260,13 +261,13 @@ class Session:
                       want_answer=False):
         seq = self._next_sequence()
         self.sendmsg({
-            "type": "send",
-            "from": self._lname,
-            "to": to,
-            "group": group,
-            "instance": instance,
-            "seq": seq,
-            "want_answer": want_answer
+            CC_HEADER_TYPE: CC_COMMAND_SEND,
+            CC_HEADER_FROM: self._lname,
+            CC_HEADER_TO: to,
+            CC_HEADER_GROUP: group,
+            CC_HEADER_INSTANCE: instance,
+            CC_HEADER_SEQ: seq,
+            CC_HEADER_WANT_ANSWER: want_answer
         }, isc.cc.message.to_wire(msg))
         return seq
 
