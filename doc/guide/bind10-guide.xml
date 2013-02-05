@@ -3982,7 +3982,7 @@ Dhcp4/subnet4	[]	list	(default)
       sub-option codes will have a separate numbering scheme and may
       overlap with codes of standard options.
       </para>
-      <para>Note that creation of a new new option space when defining
+      <para>Note that creation of a new option space when defining
       sub-options for a standard option is not required, because it is
       created by default if the standard option is meant to convey any
       sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
@@ -4023,14 +4023,16 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/code 222</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/space "dhcp4"</userinput>
-&gt; <userinput>set Dhcp4/option-def[2]/type "uint16"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/type "empty"</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/array false</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/record-types ""</userinput>
 &gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
 &gt; <userinput>commit</userinput>
 </screen>
     The name of the option space in which the sub-options are defined
-    is set in the "encapsulate" field.
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    which imposes that this option does not carry any data other than
+    sub-options.
     </para>
     <para>
     Finally, we can set values for the new options:
@@ -4056,10 +4058,26 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[2]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-data[2]/code 222</userinput>
 &gt; <userinput>config set Dhcp4/option-data[2]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[2]/data "123"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/data ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      </para>
+    Even tough the "container" option does not carry any data except
+    sub-options, the "data" field must be explictly set to an empty value.
+    It is required because the default configuration values are not
+    propagated to the configuration parsers in the current version of Kea.
+    If the "data" is not set the configuration parser will assume that this
+    parameter is not specified and the error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    apart from the sub-options defined in the encapsulated option space.
+    If the "container" option from the previous example was to carry an uint16
+    value then the "type" value would have to be set to "uint16" instead of
+    "empty" in the option definition. Such option would have the following
+    data structure: DHCP header, uint16 value, sub-options. The value specified
+    with the "data" parameter will be assigned to the uint16 field in the
+    "container" option. This value must be a valid integer enclosed in quotes,
+    e.g. "123".
+    </para>
     </section>
         </section>
     <section id="dhcp4-serverid">
@@ -4718,14 +4736,16 @@ should include options from the isc option space:
 &gt; <userinput>config set Dhcp6/option-def[2]/name "container"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/code 102</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/space "dhcp6"</userinput>
-&gt; <userinput>config set Dhcp6/option-def[2]/type "uint16"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/type "empty"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/array false</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/record-types ""</userinput>
 &gt; <userinput>config set Dhcp6/option-def[2]/encapsulate "isc"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
     The name of the option space in which the sub-options are defined
-    is set in the "encapsulate" field.
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    which imposes that this option does not carry any data other than
+    sub-options.
     </para>
     <para>
     Finally, we can set values for the new options:
@@ -4751,13 +4771,27 @@ should include options from the isc option space:
 &gt; <userinput>config set Dhcp6/option-data[2]/space "dhcp6"</userinput>
 &gt; <userinput>config set Dhcp6/option-data[2]/code 102</userinput>
 &gt; <userinput>config set Dhcp6/option-data[2]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp6/option-data[2]/data "123"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/data ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      </para>
+    Even tough the "container" option does not carry any data except
+    sub-options, the "data" field must be explictly set to an empty value.
+    It is required because the default configuration values are not
+    propagated to the configuration parsers in the current version of Kea.
+    If the "data" is not set the configuration parser will assume that this
+    parameter is not specified and the error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    apart from the sub-options defined in the encapsulated option space.
+    If the "container" option from the previous example was to carry an uint16
+    value then the "type" value would have to be set to "uint16" instead of
+    "empty" in the option definition. Such option would have the following
+    data structure: DHCP header, uint16 value, sub-options. The value specified
+    with the "data" parameter will be assigned to the uint16 field in the
+    "container" option. This value must be a valid integer enclosed in quotes,
+    e.g. "123".
+    </para>
     </section>
-
-    
        
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
