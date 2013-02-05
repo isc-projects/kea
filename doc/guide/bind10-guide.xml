@@ -347,7 +347,7 @@ share/
   share/bind10/
     auth.spec
     b10-cmdctl.pem
-    bob.spec
+    init.spec
     passwd.csv
   man/
 var/
@@ -432,9 +432,9 @@ var/
 	    run): <screen>$ <userinput>bindctl</userinput></screen>
 	    (Login with the provided default username and password.)
             <screen>
-&gt; <userinput>config add Boss/components b10-auth</userinput>
-&gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
-&gt; <userinput>config set Boss/components/b10-auth/kind needed</userinput>
+&gt; <userinput>config add Init/components b10-auth</userinput>
+&gt; <userinput>config set Init/components/b10-auth/special auth</userinput>
+&gt; <userinput>config set Init/components/b10-auth/kind needed</userinput>
 &gt; <userinput>config commit</userinput>
 &gt; <userinput>quit</userinput>
             </screen>
@@ -1274,10 +1274,10 @@ TODO
 
         <screen><userinput>&lt;module&gt; &lt;command&gt; <replaceable>[argument(s)]</replaceable></userinput></screen>
 
-        For example, the Boss module has a 'shutdown' command to shut down
+        For example, the Init module has a 'shutdown' command to shut down
         BIND 10, with an optional argument 'help':
 
-        <screen>&gt; <userinput>Boss shutdown help</userinput>
+        <screen>&gt; <userinput>Init shutdown help</userinput>
 Command  shutdown 	(Shut down BIND 10)
 		help (Get help for command)
 This command has no parameters
@@ -1300,12 +1300,12 @@ Available module names:
         </screen>
 
         When 'help' is used as a command to a module, it shows the supported commands for the module; for example:
-        <screen>&gt; <userinput>Boss help</userinput>
-Module  Boss 	Master process
+        <screen>&gt; <userinput>Init help</userinput>
+Module  Init 	Master process
 Available commands:
     help        Get help for module.
     shutdown    Shut down BIND 10
-    ping        Ping the boss process
+    ping        Ping the Init process
     show_processes
             List the running BIND 10 processes
         </screen>
@@ -1646,7 +1646,7 @@ Parameters:
                         to maps.
                     </simpara>
                     <simpara>
-                        For example, the <command>Boss/components</command>
+                        For example, the <command>Init/components</command>
                         elements is a named set;
                         adding, showing, and then removing an element
                         can be done with the following three commands (note
@@ -1654,13 +1654,13 @@ Parameters:
                         'example_module'):
                     </simpara>
                     <simpara>
-                        <command>config add Boss/components example_module</command>
+                        <command>config add Init/components example_module</command>
                     </simpara>
                     <simpara>
-                        <command>config show Boss/components/example_module</command>
+                        <command>config show Init/components/example_module</command>
                     </simpara>
                     <simpara>
-                        <command>config remove Boss/components example_module</command>
+                        <command>config remove Init/components example_module</command>
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1708,21 +1708,21 @@ Parameters:
 
         <screen>&gt; <userinput>execute init_authoritative_server show</userinput>
 !echo adding Authoritative server component
-config add /Boss/components b10-auth
-config set /Boss/components/b10-auth/kind needed
-config set /Boss/components/b10-auth/special auth
+config add /Init/components b10-auth
+config set /Init/components/b10-auth/kind needed
+config set /Init/components/b10-auth/special auth
 !echo adding Xfrin component
-config add /Boss/components b10-xfrin
-config set /Boss/components/b10-xfrin/address Xfrin
-config set /Boss/components/b10-xfrin/kind dispensable
+config add /Init/components b10-xfrin
+config set /Init/components/b10-xfrin/address Xfrin
+config set /Init/components/b10-xfrin/kind dispensable
 !echo adding Xfrout component
-config add /Boss/components b10-xfrout
-config set /Boss/components/b10-xfrout/address Xfrout
-config set /Boss/components/b10-xfrout/kind dispensable
+config add /Init/components b10-xfrout
+config set /Init/components/b10-xfrout/address Xfrout
+config set /Init/components/b10-xfrout/kind dispensable
 !echo adding Zone Manager component
-config add /Boss/components b10-zonemgr
-config set /Boss/components/b10-zonemgr/address Zonemgr
-config set /Boss/components/b10-zonemgr/kind dispensable
+config add /Init/components b10-zonemgr
+config set /Init/components/b10-zonemgr/address Zonemgr
+config set /Init/components/b10-zonemgr/kind dispensable
 !echo Components added. Please enter "config commit" to
 !echo finalize initial setup and run the components.
         </screen>
@@ -1770,7 +1770,7 @@ config set /Boss/components/b10-zonemgr/kind dispensable
         <section id="bindctl_execute_notes">
             <title>Notes on execute scripts</title>
             Within scripts, you can add or remove modules with the normal
-            configuration commands for <command>Boss/components</command>.
+            configuration commands for <command>Init/components</command>.
             However, as module
             configuration and commands do not show up until the module is
             running, it is currently not possible to add a module and set
@@ -2091,7 +2091,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       <para>
         The BIND 10 suite may be shut down by stopping the
         parent <command>bind10</command> process. This may be done
-        by running the <userinput>Boss shutdown</userinput> command
+        by running the <userinput>Init shutdown</userinput> command
         at the <command>bindctl</command> prompt.
       </para>
     </section>
@@ -2105,7 +2105,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 	of the required <command>b10-sockcreator</command>,
 	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
 	components.
-	The configuration is in the <varname>Boss/components</varname>
+	The configuration is in the <varname>Init/components</varname>
 	section. Each element represents one component, which is
 	an abstraction of a process.
       </para>
@@ -2113,10 +2113,10 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       <para>
 	To add a process to the set, let's say the resolver (which
 	is not started by default), you would do this:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+        <screen>&gt; <userinput>config add Init/components b10-resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
@@ -2146,7 +2146,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
             <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
             <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
             <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in b10-init before the release -->
           </tbody>
           </tgroup>
         </table>
@@ -2230,9 +2230,9 @@ address, but the usual ones don't." mean? -->
         You might want to do that to gain more performance (each one uses only
         single core). Just put multiple entries under different names, like
         this, with the same config:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
+        <screen>&gt; <userinput>config add Init/components b10-resolver-2</userinput>
+&gt; <userinput>config set Init/components/b10-resolver-2/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver-2/kind needed</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
       <para>
@@ -2248,7 +2248,7 @@ address, but the usual ones don't." mean? -->
 
       <para>
         The running processes started by <command>bind10</command>
-        may be listed by running <userinput>Boss show_processes</userinput>
+        may be listed by running <userinput>Init show_processes</userinput>
         using <command>bindctl</command>.
       </para>
 
@@ -2420,7 +2420,7 @@ can use various data source backends.
               <simpara>Stop the authoritative DNS server.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the BIND 10 init process may restart this service
       if configured.)
               </simpara>
             </listitem>
@@ -3024,9 +3024,9 @@ what is XfroutClient xfr_client??
         It can be done by using the <command>bindctl</command>
         utility.  For example:
       <screen>
-&gt; <userinput>config add Boss/components b10-ddns</userinput>
-&gt; <userinput>config set Boss/components/b10-ddns/address DDNS</userinput>
-&gt; <userinput>config set Boss/components/b10-ddns/kind dispensable</userinput>
+&gt; <userinput>config add Init/components b10-ddns</userinput>
+&gt; <userinput>config set Init/components/b10-ddns/address DDNS</userinput>
+&gt; <userinput>config set Init/components/b10-ddns/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       <note><simpara>
@@ -3217,10 +3217,10 @@ what is XfroutClient xfr_client??
       <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config add Init/components b10-resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
 
@@ -3340,7 +3340,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
     </para>
-    
+
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
@@ -3409,7 +3409,7 @@ $</screen>
    </section>
 
   </chapter>
-  
+
   <chapter id="dhcp4">
     <title>The DHCPv4 Server</title>
 
@@ -3425,16 +3425,16 @@ $</screen>
         After starting BIND 10 and entering bindctl, the first step
         in configuring the server is to add it to the list of running BIND 10 services.
 <screen>
-&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
-&gt; <userinput>config set Boss/components/b10-dhcp4/kind dispensable</userinput>
+&gt; <userinput>config add Init/components b10-dhcp4</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp4/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
       <para>
          To remove <command>b10-dhcp4</command> from the set of running services,
-         the <command>b10-dhcp4</command> is removed from list of Boss components:
+         the <command>b10-dhcp4</command> is removed from list of Init components:
 <screen>
-&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
+&gt; <userinput>config remove Init/components b10-dhcp4</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
@@ -3502,7 +3502,7 @@ Dhcp4/subnet4	[]	list	(default)
       The server comes with an in-memory database ("memfile") configured as the default
       database. This is used for internal testing and is not supported.  In addition,
       it does not store lease information on disk: lease information will be lost if the
-      server is restarted. 
+      server is restarted.
       </para>
       </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
@@ -3552,7 +3552,7 @@ Dhcp4/subnet4	[]	list	(default)
       database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
       </note>
       </section>
-      
+
       <section id="dhcp4-address-config">
       <title>Configuration of Address Pools</title>
       <para>
@@ -3726,16 +3726,16 @@ Dhcp4/renew-timer	1000	integer	(default)
         After starting BIND 10 and starting <command>bindctl</command>, the first step
         in configuring the server is to add <command>b10-dhcp6</command> to the list of running BIND 10 services.
 <screen>
-&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
-&gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config add Init/components b10-dhcp6</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
       <para>
          To remove <command>b10-dhcp6</command> from the set of running services,
-         the <command>b10-dhcp4</command> is removed from list of Boss components:
+         the <command>b10-dhcp4</command> is removed from list of Init components:
 <screen>
-&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config remove Init/components b10-dhcp6</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
@@ -3782,7 +3782,7 @@ Dhcp6/lease-database/name	""	string	(default)
 Dhcp6/lease-database/user	""	string	(default)
 Dhcp6/lease-database/host	""	string	(default)
 Dhcp6/lease-database/password	""	string	(default)
-Dhcp6/subnet6/	list	
+Dhcp6/subnet6/	list
 </screen>
       </para>
       <para>
@@ -3813,7 +3813,7 @@ Dhcp6/subnet6/	list
       The server comes with an in-memory database ("memfile") configured as the default
       database. This is used for internal testing and is not supported.  In addition,
       it does not store lease information on disk: lease information will be lost if the
-      server is restarted. 
+      server is restarted.
       </para>
       </footnote>, and so the server must be configured to
       access the correct database with the appropriate credentials.
@@ -3959,7 +3959,7 @@ Dhcp6/subnet6/	list
         lines for clarity.)
       </para>
     </section>
-       
+
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
           <para>
@@ -3994,8 +3994,8 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config commit</userinput>
 </screen>
         </para>
-      </section>    
-    
+      </section>
+
    </section>
 
     <section id="dhcp6-serverid">
@@ -4164,7 +4164,7 @@ Dhcp6/renew-timer	1000	integer	(default)
         "queries.tcp": 1749,
         "queries.udp": 867868
     },
-    "Boss": {
+    "Init": {
         "boot_time": "2011-01-20T16:59:03Z"
     },
     "Stats": {
