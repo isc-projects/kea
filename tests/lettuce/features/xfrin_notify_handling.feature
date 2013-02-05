@@ -244,4 +244,3 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter accept should be 0
     Then the statistics counter senderr should be 0
     Then the statistics counter recverr should be 0
-
