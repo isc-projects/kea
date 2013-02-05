@@ -674,8 +674,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         self.update_config_data(config_data)
 
     def server_bind(self):
-        """server_bind() overridden for counting bind failed
-        unixsockets
+        """server_bind() overridden for counting unix domain sockets
+        bind() failures
         """
         try:
             # call the server_bind() of class
@@ -687,8 +687,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             raise
 
     def get_request(self):
-        """get_request() overridden for counting successfully accepted
-       unixsockets or failed accepted unixsockets
+        """get_request() overridden for counting unix domain sockets
+        accept() failures and success
         """
         try:
             # call the get_request() of class
