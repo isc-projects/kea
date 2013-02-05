@@ -96,7 +96,7 @@ CREATOR_SOCKET_ERROR = 2
 CREATOR_SHARE_ERROR = 3
 
 # Assign this process some longer name
-isc.util.process.rename(sys.argv[0])
+isc.util.process.rename()
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
