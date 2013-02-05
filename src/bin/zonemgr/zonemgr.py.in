@@ -625,7 +625,7 @@ class Zonemgr:
         ZONE_NOTIFY_COMMAND is issued by Auth process;
         ZONE_NEW_DATA_READY_CMD and ZONE_XFRIN_FAILED are issued by
         Xfrin process;
-        shutdown is issued by a user or Boss process. """
+        shutdown is issued by a user or Init process. """
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""

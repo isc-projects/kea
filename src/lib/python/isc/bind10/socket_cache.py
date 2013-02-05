@@ -106,7 +106,8 @@ class Cache:
     This is the cache for sockets from socket creator. The purpose of cache
     is to hold the sockets that were requested, until they are no longer
     needed. One reason is, the socket is created before it is sent over the
-    unix domain socket in boss, so we need to keep it somewhere for a while.
+    unix domain socket in b10-init, so we need to keep it somewhere for a
+    while.
 
     The other reason is, a single socket might be requested multiple times.
     So we keep it here in case someone else might ask for it.
@@ -114,7 +115,7 @@ class Cache:
     Each socket kept here has a reference count and when it drops to zero,
     it is removed from cache and closed.
 
-    This is expected to be part of Boss, it is not a general utility class.
+    This is expected to be part of Init, it is not a general utility class.
 
     It is not expected to be subclassed. The methods and members are named
     as protected so tests are easier access into them.
@@ -175,7 +176,7 @@ class Cache:
           restrictions and of all copies of socket handed out are considered,
           so it can be raised even if you call it with share_mode 'ANY').
         - isc.bind10.sockcreator.CreatorError: fatal creator errors are
-          propagated. Thay should cause the boss to exit if ever encountered.
+          propagated. Thay should cause b10-init to exit if ever encountered.
 
         Note that it isn't guaranteed the tokens would be unique and they
         should be used as an opaque handle only.
@@ -220,11 +221,11 @@ class Cache:
         one returned from previous call from get_token. The token can be used
         only once to receive the socket.
 
-        The application is a token representing the application that requested
-        it. Currently, boss uses the file descriptor of connection from the
-        application, but anything which can be a key in a dict is OK from the
-        cache's point of view. You just need to use the same thing in
-        drop_application.
+        The application is a token representing the application that
+        requested it. Currently, b10-init uses the file descriptor of
+        connection from the application, but anything which can be a key in
+        a dict is OK from the cache's point of view. You just need to use
+        the same thing in drop_application.
 
         In case the token is considered invalid (it doesn't come from the
         get_token, it was already used, the socket wasn't picked up soon

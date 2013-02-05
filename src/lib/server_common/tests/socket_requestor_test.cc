@@ -76,7 +76,7 @@ TEST(SocketRequestorAccess, initialized) {
     initTestSocketRequestor(NULL);
 }
 
-// This class contains a fake (module)ccsession to emulate answers from Boss
+// This class contains a fake (module)ccsession to emulate answers from Init
 class SocketRequestorTest : public ::testing::Test {
 public:
     SocketRequestorTest() : session(ElementPtr(new ListElement),
@@ -100,7 +100,7 @@ public:
     }
 
     // Creates a valid socket request answer, as it would be sent by
-    // Boss. 'valid' in terms of format, not values
+    // Init. 'valid' in terms of format, not values
     void
     addAnswer(const std::string& token, const std::string& path) {
         ElementPtr answer_part = Element::createMap();
@@ -141,7 +141,7 @@ createExpectedRequest(const std::string& address,
 
     // create the envelope
     const ElementPtr packet = Element::createList();
-    packet->add(Element::create("Boss"));
+    packet->add(Element::create("Init"));
     packet->add(Element::create("*"));
     packet->add(createCommand("get_socket", command_args));
     packet->add(Element::create(-1));
@@ -282,7 +282,7 @@ createExpectedRelease(const std::string& token) {
 
     // create the envelope
     const ElementPtr packet = Element::createList();
-    packet->add(Element::create("Boss"));
+    packet->add(Element::create("Init"));
     packet->add(Element::create("*"));
     packet->add(createCommand("drop_socket", command_args));
     packet->add(Element::create(-1));

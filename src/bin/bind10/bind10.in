@@ -1,0 +1,4 @@
+#!/bin/sh
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+exec @libexecdir@/@PACKAGE@/b10-init $*

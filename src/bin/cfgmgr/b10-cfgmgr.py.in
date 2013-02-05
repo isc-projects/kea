@@ -115,7 +115,7 @@ def main():
         cm.read_config()
         for ppath in PLUGIN_PATHS:
             load_plugins(ppath, cm)
-        cm.notify_boss()
+        cm.notify_b10_init()
         cm.run()
     except SessionError as se:
         logger.fatal(CFGMGR_CC_SESSION_ERROR, se)

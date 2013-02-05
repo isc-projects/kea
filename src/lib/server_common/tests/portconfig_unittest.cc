@@ -330,8 +330,8 @@ TEST_F(InstallListenAddressesDeathTest, inconsistent) {
     }
 }
 
-// If we are unable to tell the boss we closed a socket, we abort, as we are
-// not consistent with the boss most probably.
+// If we are unable to tell the b10-init we closed a socket, we abort, as we
+// are not consistent with b10-init most probably.
 TEST_F(InstallListenAddressesDeathTest, cantClose) {
     if (!isc::util::unittests::runningOnValgrind()) {
         installListenAddresses(valid_, store_, dnss_);
