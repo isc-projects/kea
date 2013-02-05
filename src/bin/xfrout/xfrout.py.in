@@ -1274,7 +1274,7 @@ if '__main__' == __name__:
         xfrout_server = XfroutServer()
         xfrout_server.run()
     except KeyboardInterrupt:
-        logger.INFO(XFROUT_STOPPED_BY_KEYBOARD)
+        logger.info(XFROUT_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(XFROUT_CC_SESSION_ERROR, str(e))
     except ModuleCCSessionError as e:
@@ -1287,3 +1287,4 @@ if '__main__' == __name__:
     if xfrout_server:
         xfrout_server.shutdown()
 
+    logger.info(XFROUT_EXITING)

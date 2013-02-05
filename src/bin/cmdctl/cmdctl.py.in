@@ -650,4 +650,6 @@ if __name__ == '__main__':
     if httpd:
         httpd.shutdown()
 
+    logger.info(CMDCTL_EXITING)
+
     sys.exit(result)

@@ -22,6 +22,9 @@ import threading
 import bind10_config
 
 import isc.cc.message
+import isc.log
+from isc.cc.logger import logger
+from isc.log_messages.pycc_messages import *
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
@@ -60,6 +63,8 @@ class Session:
             self._lname = msg["lname"]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
+            logger.debug(logger.DBGLVL_TRACE_BASIC, PYCC_LNAME_RECEIVED,
+                         self._lname)
         except socket.error as se:
                 raise SessionError(se)
 
