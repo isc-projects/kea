@@ -202,28 +202,28 @@ def parse_bindctl_output_as_data_structure():
                       "parseable data structure: '" + output + "': " + str(ve)
 
 def find_process_pid(step, process_name):
-    """Helper function to request the running processes from Boss, and
+    """Helper function to request the running processes from Init, and
        return the pid of the process with the given process_name.
-       Fails with an assert if the response from boss is not valid JSON,
+       Fails with an assert if the response from b10-init is not valid JSON,
        or if the process with the given name is not found.
     """
     # show_processes output is a list of lists, where the inner lists
     # are of the form [ pid, "name" ]
     # Not checking data form; errors will show anyway (if these turn
     # out to be too vague, we can change this)
-    step.given('send bind10 the command Boss show_processes')
+    step.given('send bind10 the command Init show_processes')
     running_processes = parse_bindctl_output_as_data_structure()
 
     for process in running_processes:
         if process[1] == process_name:
             return process[0]
     assert False, "Process named " + process_name +\
-                  " not found in output of Boss show_processes";
+                  " not found in output of Init show_processes";
 
 @step("remember the pid of process ([\S]+)")
 def remember_pid(step, process_name):
     """Stores the PID of the process with the given name as returned by
-       Boss show_processes command.
+       Init show_processes command.
        Fails if the process with the given name does not appear to exist.
        Stores the component_name->pid value in the dict world.process_pids.
        This should only be used by the related step
@@ -239,7 +239,7 @@ def remember_pid(step, process_name):
 @step('pid of process ([\S]+) should not have changed')
 def check_pid(step, process_name):
     """Checks the PID of the process with the given name as returned by
-       Boss show_processes command.
+       Init show_processes command.
        Fails if the process with the given name does not appear to exist.
        Fails if the process with the given name exists, but has a different
        pid than it had when the step 'remember the pid of process' was
@@ -343,9 +343,9 @@ def configure_ddns_on(step):
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
-        config add Boss/components b10-ddns
-        config set Boss/components/b10-ddns/kind dispensable
-        config set Boss/components/b10-ddns/address DDNS
+        config add Init/components b10-ddns
+        config set Init/components/b10-ddns/kind dispensable
+        config set Init/components/b10-ddns/address DDNS
         config commit
         \"\"\"
     """)
@@ -358,7 +358,7 @@ def configure_ddns_off(step):
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
-        config remove Boss/components b10-ddns
+        config remove Init/components b10-ddns
         config commit
         \"\"\"
     """)
