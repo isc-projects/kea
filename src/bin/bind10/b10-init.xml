@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 12, 2012</date>
+    <date>February 5, 2013</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010-2012</year>
+      <year>2010-2013</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -493,7 +493,10 @@ xfrin
 
   <refsect1 id='history'><title>HISTORY</title>
     <para>The development of <command>b10-init</command>
-    was started in October 2009.</para>
+      was started in October 2009.
+      It was renamed and its configuration identifier changed
+      in February 2013.
+    </para>
   </refsect1>
 
   <refsect1>
