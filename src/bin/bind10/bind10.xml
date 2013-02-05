@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 12, 2012</date>
+    <date>February 5, 2013</date>
   </refentryinfo>
 
   <refmeta>
@@ -52,7 +52,7 @@
     <title>DESCRIPTION</title>
 
     <para>The <command>bind10</command> script is a simple wrapper that
-    starts BIND10 by running the <command>b10-init</command> daemon. All
+    starts BIND 10 by running the <command>b10-init</command> daemon. All
     options passed to <command>bind10</command> are directly passed on to
     <command>b10-init</command>.</para>
 
@@ -62,14 +62,14 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-init</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>
   </refsect1>
 
   <refsect1 id='history'><title>HISTORY</title>
-    <para>The <command>bind10</command> script was added in Januari 2013
+    <para>The <command>bind10</command> script was added in February 2013.
     </para>
   </refsect1>
 
