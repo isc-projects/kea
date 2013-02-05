@@ -3609,7 +3609,6 @@ Dhcp4/subnet4	[]	list	(default)
         network configurations. If you want to avoid this, please use the "min-max" notation.
       </para>
       </section>
-    </section>
 
     <section id="dhcp4-std-options">
       <title>Standard DHCPv4 options</title>
@@ -3652,7 +3651,7 @@ Dhcp4/subnet4	[]	list	(default)
     </para>
 
     <para>
-      Options can also be configured as hex values. If csv-format is
+      Options can also be configured as hexadecimal values. If csv-format is
       set to false, option data must be specified as a hex string. The
       following commands configure the domain-name-servers option for all
       subnets with the following addresses: 192.0.3.1 and 192.0.3.2.
@@ -3898,13 +3897,15 @@ Dhcp4/subnet4	[]	list	(default)
 
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 vendor specific options</title>
-      <para>Currently there are three option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon), dhcp6, and vendor-opts-space.  The last-mentioned
-      is empty by default but options can be defined in it: those options
-      are called vendor-specific information options. The following examples
-      show how to define an option "foo" with code 1 that consists of IPv4 address,
-      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
-      vendor specific information option.
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to
+      be used in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there
+      is also vendor-opts-space, which is empty by default, but options
+      can be defined in it. Those options are called vendor-specific
+      information options. The following examples show how to define
+      an option "foo" with code 1 that consists of an IPv4 address, an
+      unsigned 16 bit integer and a string. The "foo" option is conveyed
+      in a vendor specific information option.
       </para>
       <para>
       The first step is to define the format of the option:
@@ -3931,6 +3932,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
     We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
+    This is required else the option will not be included in messages sent to the client.
      <screen>
 &gt; <userinput>config add Dhcp4/option-data</userinput>
 &gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
@@ -3954,6 +3956,7 @@ Dhcp4/subnet4	[]	list	(default)
     </section>
 
     <section id="dhcp4-option-spaces">
+
       <title>Nested DHCPv4 options (custom option spaces)</title>
       <para>It is sometimes useful to define completely new option
       spaces.  This is useful if the user wants his new option to
@@ -4039,7 +4042,7 @@ Dhcp4/subnet4	[]	list	(default)
       client.
       </para>
     </section>
-
+        </section>
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
       <para>
@@ -4136,7 +4139,9 @@ Dhcp4/renew-timer	1000	integer	(default)
             <simpara>Address rebinding (REBIND) and duplication report (DECLINE)
             are not supported yet.</simpara>
           </listitem>
-
+          <listitem>
+          <simpara>DNS Update is not yet supported.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -4170,17 +4175,7 @@ Dhcp4/renew-timer	1000	integer	(default)
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
-      <para>
-        To change one of the parameters, simply follow
-        the usual <command>bindctl</command> procedure. For example, to make the
-        leases longer, change their valid-lifetime parameter:
-        <screen>
-&gt; <userinput>config set Dhcp6/valid-lifetime 7200</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        Please note that most Dhcp6 parameters are of global scope
-        and apply to all defined subnets, unless they are overridden on a
-        per-subnet basis.
-      </para>
+
 
       <para>
         During start-up the server will detect available network interfaces
@@ -4499,8 +4494,8 @@ Dhcp6/subnet6/	list
 <tr><td>sip-server-addr</td><td>22</td><td>ipv6-address</td><td>true</td></tr>
 <tr><td>dns-servers</td><td>23</td><td>ipv6-address</td><td>true</td></tr>
 <tr><td>domain-search</td><td>24</td><td>fqdn</td><td>true</td></tr>
-<tr><td>ia-pd</td><td>25</td><td>record</td><td>false</td></tr>
-<tr><td>iaprefix</td><td>26</td><td>record</td><td>false</td></tr>
+<!-- <tr><td>ia-pd</td><td>25</td><td>record</td><td>false</td></tr> -->
+<!-- <tr><td>iaprefix</td><td>26</td><td>record</td><td>false</td></tr> -->
 <tr><td>nis-servers</td><td>27</td><td>ipv6-address</td><td>true</td></tr>
 <tr><td>nisp-servers</td><td>28</td><td>ipv6-address</td><td>true</td></tr>
 <tr><td>nis-domain-name</td><td>29</td><td>fqdn</td><td>true</td></tr>
@@ -4579,7 +4574,12 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
 </screen>
-     Its values can be later defined as follows:
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
 <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "bar"</userinput>
@@ -4589,19 +4589,24 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
     </section>
 
     <section id="dhcp6-vendor-opts">
       <title>DHCPv6 vendor specific options</title>
-      <para>Currently there are three option spaces defined: dhcp4 (to
-      be used in DHCPv4 daemon) and dhcp6; there is also vendor-opts-space,
-      which is empty by default, but options can be defined in it. Those options
-      are called vendor-specific information options. The following examples
-      show how to define an option "foo" with code 1 that consists of IPv6 address,
-      unsigned 16 bit integer and a string. The "foo" option is conveyed in a
-      vendor specific information option. This option comprises a single
-      uint32 value that is set to "12345". The sub-option "foo" follows
-      the data field holding this value.
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to be used
+      in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there is also
+      vendor-opts-space, which is empty by default, but options can be
+      defined in it. Those options are called vendor-specific information
+      options. The following examples show how to define an option "foo"
+      with code 1 that consists of an IPv6 address, an unsigned 16 bit integer
+      and a string. The "foo" option is conveyed in a vendor specific
+      information option. This option comprises a single uint32 value
+      that is set to "12345". The sub-option "foo" follows the data
+      field holding this value.
       <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
@@ -4641,10 +4646,12 @@ Dhcp6/subnet6/	list
       convey sub-options that use separate numbering scheme, for
       example sub-options with codes 1 and 2. Those option codes
       conflict with standard DHCPv6 options, so a separate option
-      space must be defined. Let's assume that we want to have a
-      DHCPv6 option with code 102 that conveys two sub-options with
-      codes 1 and 2. This could be achieved with the following examples.
-      First we need to define those new sub-options:
+      space must be defined.
+      </para>
+      <para>
+      Assume that we want to have a DHCPv6 option called "container"
+      with code 102 that conveys two sub-options with codes 1 and 2. 
+      First we need to define the new sub-options:
 <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "subopt1"</userinput>
@@ -4666,6 +4673,10 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[1]/encapsulate ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
 The next step is to define a regular DHCPv6 option and specify that it
 should include options from isc option space:
 <screen>
@@ -4679,8 +4690,11 @@ should include options from isc option space:
 &gt; <userinput>config set Dhcp6/option-def[2]/encapsulate "isc"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-
-Finally, we should specify values for those new options:
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulates" field.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
 <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "subopt1"</userinput>
@@ -4714,9 +4728,9 @@ Finally, we should specify values for those new options:
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
           <para>
-          The DHCPv6 server may receive requests from local (connected to the same
-          subnet as the server) and remote (connecting via relays)
-          clients.
+          The DHCPv6 server may receive requests from local (connected
+          to the same subnet as the server) and remote (connecting via
+          relays) clients.
           <note>
           <para>
           Currently relayed DHCPv6 traffic is not supported.  The server will
@@ -4754,7 +4768,7 @@ Finally, we should specify values for those new options:
       <para>The DHCPv6 protocol uses a "server identifier" (also known
       as a DUID) for clients to be able to discriminate between several
       servers present on the same link.  There are several types of
-      DUIDs defined, but RFC 3315 instructs servers to use DUID-LLT if
+      DUIDs defined, but <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> instructs servers to use DUID-LLT if
       possible. This format consists of a link-layer (MAC) address and a
       timestamp. When started for the first time, the DHCPv6 server will
       automatically generate such a DUID and store the chosen value to
@@ -4777,7 +4791,7 @@ Finally, we should specify values for those new options:
     </section>
 
     <section id="dhcp6-std">
-      <title>Supported DHCPv6 Standards</title>
+      <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
       supported:</para>
       <itemizedlist>
