@@ -1,4 +1,9 @@
 #!/bin/sh
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-exec @libexecdir@/@PACKAGE@/b10-init $*
+
+if test -n "${B10_FROM_BUILD}"; then
+	exec ${B10_FROM_BUILD}/src/bin/bind10/b10-init $*
+else
+	prefix=@prefix@
+	exec_prefix=@exec_prefix@
+	exec @libexecdir@/@PACKAGE@/b10-init $*
+fi
