@@ -632,7 +632,7 @@ class MsgQ:
                         break
                     else:
                         writable = event & select.POLLOUT
-                        # Note: it may be okayb to read data if available
+                        # Note: it may be okay to read data if available
                         # immediately after write some, but due to unexpected
                         # regression (see comments on the kqueue version below)
                         # we restrict one operation per iteration for now.
