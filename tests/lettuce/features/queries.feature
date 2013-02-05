@@ -19,8 +19,11 @@ Feature: Querying feature
         And bind10 module StatsHttpd should not be running
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -48,8 +51,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -87,8 +93,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -114,8 +123,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -145,8 +157,11 @@ Feature: Querying feature
         And bind10 module StatsHttpd should not be running
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -172,8 +187,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -194,8 +212,11 @@ Feature: Querying feature
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -217,8 +238,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -251,8 +275,11 @@ Feature: Querying feature
         And bind10 module StatsHttpd should not be running
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -262,8 +289,11 @@ Feature: Querying feature
         The last query response should have ancount 0
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
@@ -285,8 +315,11 @@ Feature: Querying feature
         """
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+        # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
+        # make sure Auth module replied to the command
         And wait for new bind10 stderr message CC_REPLY
+        # make sure the response is for 'getstats'
         And wait for new bind10 stderr message v4
         Then I query statistics zones of bind10 module Auth
         And last bindctl output should not contain "error"
