@@ -1,3 +1,14 @@
+565.	[func]*		jelte
+	The main initializer script (formerly known as either 'bind10',
+	'boss', or 'bob'), has been renamed to b10-init (and Init in
+	configuration). Configuring which components are run is henceforth
+	done through '/Init/components', and the sbin/bind10 script is now
+	simply a shellscript that runs b10-init. Existing configuration is
+	automatically updated. NOTE: once configuration with this update
+	has been saved (by committing any new change with bindctl), you
+	cannot run older versions of BIND 10 anymore with this configuration.
+	(Trac #1901, git bae3798603affdb276f370c1ac6b33b011a5ed4f)
+
 564.	[func]		muks
 	libdns++: the CNAME, DNAME, MX, NS, PTR and SRV Rdata classes now
 	use the generic lexer in constructors from text.  This means that
