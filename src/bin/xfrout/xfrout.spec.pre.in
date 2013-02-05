@@ -222,8 +222,8 @@
                 "senderr": 0,
                 "recverr": 0
               },
-              "item_title": "Unix Domain",
-              "item_description": "Unix Domain",
+              "item_title": "UNIX domain",
+              "item_description": "UNIX domain",
               "map_item_spec": [
                 {
                   "item_name": "open",
@@ -231,7 +231,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Open",
-                  "item_description": "Unix Domain sockets opened successfully"
+                  "item_description": "UNIX domain sockets opened successfully"
                 },
                 {
                   "item_name": "openfail",
@@ -239,7 +239,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Open failures",
-                  "item_description": "Unix Domain sockets open failures"
+                  "item_description": "UNIX domain sockets open failures"
                 },
                 {
                   "item_name": "close",
@@ -247,7 +247,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Close",
-                  "item_description": "Unix Domain sockets closed"
+                  "item_description": "UNIX domain sockets closed"
                 },
                 {
                   "item_name": "bindfail",
@@ -255,7 +255,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Bind failures",
-                  "item_description": "Unix Domain sockets bind failures"
+                  "item_description": "UNIX domain sockets bind failures"
                 },
                 {
                   "item_name": "acceptfail",
@@ -263,7 +263,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Accept failures",
-                  "item_description": "Unix Domain sockets incoming accept failures"
+                  "item_description": "UNIX domain sockets incoming accept failures"
                 },
                 {
                   "item_name": "accept",
@@ -271,7 +271,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Accept",
-                  "item_description": "Unix Domain sockets incoming connections successfully accepted"
+                  "item_description": "UNIX domain sockets incoming connections successfully accepted"
                 },
                 {
                   "item_name": "senderr",
@@ -279,7 +279,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Send errors",
-                  "item_description": "Unix Domain sockets send errors"
+                  "item_description": "UNIX domain sockets send errors"
                 },
                 {
                   "item_name": "recverr",
@@ -287,7 +287,7 @@
                   "item_optional": false,
                   "item_default": 0,
                   "item_title": "Receive errors",
-                  "item_description": "Unix Domain sockets receive errors"
+                  "item_description": "UNIX domain sockets receive errors"
                 }
               ]
             }
