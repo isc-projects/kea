@@ -60,6 +60,9 @@ error is given in the log message.
 There was an error opening a connection to the master. The error is
 shown in the log message.
 
+% XFRIN_EXITING exiting
+The xfrin daemon is exiting.
+
 % XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
 In an attempt of IXFR processing, the beginning SOA of the first difference
 (following the initial SOA that specified the final SOA for all the

@@ -312,6 +312,9 @@ been created and is initializing. The AUTH_SERVER_STARTED message will be
 output when initialization has successfully completed and the server starts
 accepting queries.
 
+% AUTH_SERVER_EXITING exiting
+The authoritative server is exiting.
+
 % AUTH_SERVER_FAILED server failed: %1
 The authoritative server has encountered a fatal error and is terminating. The
 reason for the failure is included in the message.

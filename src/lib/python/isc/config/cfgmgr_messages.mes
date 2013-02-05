@@ -71,6 +71,9 @@ error is given. The most likely cause is that the system does not have
 write access to the configuration database file. The updated
 configuration is not stored.
 
+% CFGMGR_STOPPED_BY_COMMAND received shutdown command, shutting down
+The configuration manager received a shutdown command, and is exiting.
+
 % CFGMGR_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the cfgmgr daemon. The
 daemon will now shut down.
