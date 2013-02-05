@@ -3917,7 +3917,7 @@ Dhcp4/subnet4	[]	list	(default)
       <para>
       Currently there are three option spaces defined: dhcp4 (to
       be used in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there
-      is also vendor-opts-space, which is empty by default, but options
+      is also vendor-encapsulated-options-space, which is empty by default, but options
       can be defined in it. Those options are called vendor-specific
       information options. The following examples show how to define
       an option "foo" with code 1 that consists of an IPv4 address, an
@@ -3982,10 +3982,10 @@ Dhcp4/subnet4	[]	list	(default)
       sub-option codes will have a separate numbering scheme and may
       overlap with codes of standard options.
       </para>
-      <para>Note that it is not required to create new option space when
-      defining sub-options for a standard option because it is by
-      default created if the standard option is meant to convey
-      any sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
+      <para>Note that creation of a new new option space when defining
+      sub-options for a standard option is not required, because it is
+      created by default if the standard option is meant to convey any
+      sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
       </para>
       <para>      
       Assume that we want to have a DHCPv4 option called "container" with
