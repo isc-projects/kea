@@ -895,9 +895,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
     def shutdown(self):
         self._write_sock.send(b"shutdown") #terminate the xfrout session thread
         super().shutdown() # call the shutdown() of class socketserver_mixin.NoPollMixIn
+        # count closed unixsockets
+        self._counters.inc('socket', 'unixdomain', 'close')
         try:
-            # count closed unixsockets
-            self._counters.inc('socket', 'unixdomain', 'close')
             os.unlink(self._sock_file)
         except Exception as e:
             logger.error(XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR, self._sock_file, str(e))
