@@ -166,9 +166,14 @@ namespace isc {
             /// @param returns socket descriptor used for session connection
             virtual int getSocketDesc() const;
     private:
-            void sendmsg(isc::data::ConstElementPtr msg);
-            void sendmsg(isc::data::ConstElementPtr env,
-                         isc::data::ConstElementPtr msg);
+            // The following two methods are virtual to allow tests steal and
+            // replace them. It is not expected to be specialized by a derived
+            // class. Actually, it is not expected to inherit from this class
+            // to begin with.
+            virtual void sendmsg(isc::data::ConstElementPtr msg);
+            virtual void sendmsg(isc::data::ConstElementPtr env,
+                                 isc::data::ConstElementPtr msg);
+
             bool recvmsg(isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
