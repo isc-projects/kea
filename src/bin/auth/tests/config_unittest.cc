@@ -130,7 +130,7 @@ TEST_F(AuthConfigTest, invalidListenAddressConfig) {
     isc::testutils::portconfig::invalidListenAddressConfig(server);
 }
 
-// Try setting addresses trough config
+// Try setting addresses through config
 TEST_F(AuthConfigTest, listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
 
