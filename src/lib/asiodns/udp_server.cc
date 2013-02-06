@@ -61,7 +61,7 @@ struct UDPServer::Data {
      */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
         SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
-        io_(io_service), done_(false),
+        io_(io_service), bytes_(0), done_(false),
         checkin_callback_(checkin),lookup_callback_(lookup),
         answer_callback_(answer)
     {
@@ -77,7 +77,7 @@ struct UDPServer::Data {
     }
     Data(io_service& io_service, int fd, int af, SimpleCallback* checkin,
          DNSLookup* lookup, DNSAnswer* answer) :
-         io_(io_service), done_(false),
+         io_(io_service), bytes_(0), done_(false),
          checkin_callback_(checkin),lookup_callback_(lookup),
          answer_callback_(answer)
     {
@@ -104,7 +104,7 @@ struct UDPServer::Data {
      * We also allocate data for receiving the packet here.
      */
     Data(const Data& other) :
-        io_(other.io_), socket_(other.socket_), done_(false),
+        io_(other.io_), socket_(other.socket_), bytes_(0), done_(false),
         checkin_callback_(other.checkin_callback_),
         lookup_callback_(other.lookup_callback_),
         answer_callback_(other.answer_callback_)
@@ -167,7 +167,6 @@ struct UDPServer::Data {
     // of the coroutine can be declared here.
     size_t bytes_;
     bool done_;
-
 
     // Callback functions provided by the caller
     const SimpleCallback* checkin_callback_;
