@@ -166,6 +166,13 @@ class MsgQTest(unittest.TestCase):
         """
         Send several packets through the MsgQ and check it generates
         undeliverable notifications under the correct circumstances.
+
+        The test is not exhaustive as it doesn't test all combination
+        of existence of the recipient, addressing schemes, want_answer
+        header and the reply header. It is not needed, these should
+        be mostly independant (eg. if the recipient is missing, it
+        shouldn't matter why to the handling of the reply header). If
+        we included everything, the test would have too many scenarios.
         """
         sent_messages = []
         def fake_send_prepared_msg(socket, msg):
@@ -214,12 +221,7 @@ class MsgQTest(unittest.TestCase):
                           self.parse_msg(sent_messages[0][1]))
         # the reply header too.
         sent_messages = []
-        # If the message is a reply itself, we never generate the errors, even
-        # if they can't be delivered. This is partly because the answer reuses
-        # the old header (which would then inherit the want_answer flag) and
-        # partly we want to avoid loops of errors that can't be delivered.
-        # If a reply can't be delivered, the sender can't do much anyway even
-        # if notified.
+        # If the message is a reply itself, we never generate the errors
         routing["reply"] = 3
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual([], sent_messages)
