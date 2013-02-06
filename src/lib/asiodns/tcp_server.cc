@@ -184,7 +184,6 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // provides the appropriate operator() but is otherwise functionless.
         iosock_.reset(new TCPSocket<DummyIOCallback>(*socket_));
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
-        bytes_ = length;
 
         // Perform any necessary operations prior to processing the incoming
         // packet (e.g., checking for queued configuration messages).
