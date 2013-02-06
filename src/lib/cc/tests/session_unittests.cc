@@ -30,12 +30,14 @@
 
 #include <utility>
 #include <vector>
+#include <list>
 #include <string>
 #include <iostream>
 
 using namespace isc::cc;
 using std::pair;
 using std::vector;
+using std::list;
 using std::string;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
@@ -178,6 +180,30 @@ private:
     char data_buf[1024];
 };
 
+// We specialize the tested class a little. We replace some low-level
+// methods so we can examine the rest without relying on real network IO
+class TestSession : public Session {
+public:
+    TestSession(asio::io_service& ioservice) :
+        Session(ioservice)
+    {}
+    SentMessage getSentMessage() {
+        assert(!sent_messages_.empty());
+        SentMessage result(sent_messages_.front());
+        sent_messages_.pop_front();
+        return (result);
+    }
+private:
+    virtual void sendmsg(ConstElementPtr msg) {
+        sendmsg(msg, ConstElementPtr(new isc::data::NullElement));
+    }
+    virtual void sendmsg(ConstElementPtr env, ConstElementPtr msg) {
+        sent_messages_.push_back(SentMessage(env, msg));
+    }
+
+    list<SentMessage> sent_messages_;
+};
+
 class SessionTest : public ::testing::Test {
 protected:
     SessionTest() : sess(my_io_service), work(my_io_service) {
@@ -229,7 +255,7 @@ protected:
                           const char* description)
     {
         SCOPED_TRACE(description);
-        const SentMessage msg(tds->readmsg());
+        const SentMessage &msg(sess.getSentMessage());
         elementsEqual(expected_hdr, msg.first);
         elementsEqual("{\"test\": 42}", msg.second);
     }
@@ -256,7 +282,7 @@ public:
 protected:
     asio::io_service my_io_service;
     TestDomainSocket* tds;
-    Session sess;
+    TestSession sess;
     // Keep run() from stopping right away by informing it it has work to do
     asio::io_service::work work;
 };
@@ -352,10 +378,12 @@ TEST_F(SessionTest, get_socket_descr) {
 
 // Test the group_sendmsg sends the correct data.
 TEST_F(SessionTest, group_sendmsg) {
-    // Connect
+    // Connect (to set the lname, so we can see it sets the from)
     tds->setSendLname();
     sess.establish(BIND10_TEST_SOCKET_FILE);
-    elementsEqual("{\"type\": \"getlname\"}", tds->readmsg().first);
+    // Eat the "get_lname" message, so it doesn't confuse the
+    // test below.
+    sess.getSentMessage();
 
     const ConstElementPtr msg(Element::fromJSON("{\"test\": 42}"));
     sess.group_sendmsg(msg, "group");
