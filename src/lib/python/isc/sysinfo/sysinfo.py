@@ -325,8 +325,8 @@ class SysInfoBSD(SysInfoPOSIX):
         except (subprocess.CalledProcessError, OSError):
             self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
-class SysInfoOpenBSD(SysInfoBSD):
-    """OpenBSD implementation of the SysInfo class.
+class SysInfoNetBSD(SysInfoBSD):
+    """NetBSD and OpenBSD implementation of the SysInfo class.
     See the SysInfo class documentation for more information.
     """
     def __init__(self):
@@ -502,8 +502,8 @@ def SysInfoFromFactory():
     osname = platform.system()
     if osname == 'Linux':
         return SysInfoLinux()
-    elif osname == 'OpenBSD':
-        return SysInfoOpenBSD()
+    elif (osname == 'NetBSD') or (osname == 'OpenBSD'):
+        return SysInfoNetBSD()
     elif osname == 'FreeBSD':
         return SysInfoFreeBSD()
     elif osname == 'Darwin':
