@@ -1588,7 +1588,12 @@ class TestUnixSockServerForCounter(unittest.TestCase):
                           self.unix._counters.get,
                           'socket', 'unixdomain', 'openfail')
         xfrout.ThreadingUnixStreamServer = DummySocketserverException
-        self.unix = UnixSockServer(None, None, None, None, None)
+        try:
+            self.unix = UnixSockServer(None, None, None, None, None)
+        except Exception:
+            pass
+        else:
+            self.fail("an exception should be raised")
         self.assertEqual(
             self.unix._counters.get('socket', 'unixdomain', 'open'), 1)
         self.assertEqual(

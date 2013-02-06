@@ -665,6 +665,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
                                                    handle_class)
         except:
             self._counters.inc('socket', 'unixdomain', 'openfail')
+            raise
         else:
             self._counters.inc('socket', 'unixdomain', 'open')
         self._shutdown_event = shutdown_event
