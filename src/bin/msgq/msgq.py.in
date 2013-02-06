@@ -563,7 +563,7 @@ class MsgQ:
             # negative errors for delivery errors to distinguish them a
             # little. We probably should have a way to provide more data
             # in the error message.
-            payload = isc.config.ccsession.create_answer(-1,
+            payload = isc.config.ccsession.create_answer(CC_REPLY_NO_RECPT,
                                                          "No such recipient")
             # We create the header based on the current one. But we don't
             # want to mangle it for the caller, so we get a copy. A shallow

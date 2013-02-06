@@ -37,6 +37,8 @@ const char* CC_COMMAND_SEND = "send";
 // The wildcards of some headers
 const char* CC_TO_WILDCARD = "*";
 const char* CC_INSTANCE_WILDCARD = "*";
+// Reply codes
+const int CC_REPLY_NO_RECPT = -1; // No recipient
 
 }
 }
