@@ -4061,7 +4061,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[2]/data ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-    Even tough the "container" option does not carry any data except
+    Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explictly set to an empty value.
     It is required because the default configuration values are not
     propagated to the configuration parsers in the current version of Kea.
@@ -4774,7 +4774,7 @@ should include options from the isc option space:
 &gt; <userinput>config set Dhcp6/option-data[2]/data ""</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-    Even tough the "container" option does not carry any data except
+    Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explictly set to an empty value.
     It is required because the default configuration values are not
     propagated to the configuration parsers in the current version of Kea.
