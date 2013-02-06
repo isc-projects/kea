@@ -1,3 +1,11 @@
+TBD.	[func]*		y-aharen
+	Added statistics items in b10-auth based on
+	http://bind10.isc.org/wiki/StatisticsItems. Qtype counters are
+	dropped as it requires further spec design discussion.
+	(Trac #2154, Trac #2155,
+	             git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
+	(Trac #2157, git TBD)
+
 565.	[func]*		jelte
 	The main initializer script (formerly known as either 'bind10',
 	'boss', or 'bob'), has been renamed to b10-init (and Init in
