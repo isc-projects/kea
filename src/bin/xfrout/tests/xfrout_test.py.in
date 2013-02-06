@@ -1635,10 +1635,6 @@ class TestUnixSockServerForCounter(unittest.TestCase):
         self.assertEqual(
             self.unix._counters.get('socket', 'unixdomain', 'acceptfail'), 1)
 
-    def test_senderr(self):
-        # do inside of above TestXfroutSession
-        pass
-
     def test_recverr(self):
         # recverr
         self.assertRaises(isc.cc.data.DataNotFoundError,
