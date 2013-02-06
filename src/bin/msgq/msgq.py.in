@@ -569,6 +569,13 @@ class MsgQ:
             # (and the message isn't a reply itself). We need to send
             # an error to satisfy the senders hunger for response, since
             # nobody else will do that.
+            #
+            # We omit the replies on purpose. The recipient might generate
+            # the response by copying and mangling the header of incoming
+            # message (just like we do below) and would include the want_answer
+            # by accident. And we want to avoid loops of errors. Also, it
+            # is unclear if the knowledge of undeliverable reply would be
+            # of any use to the sender, and it should be much rarer situation.
 
             # The real errors would be positive, 1 most probably. We use
             # negative errors for delivery errors to distinguish them a
