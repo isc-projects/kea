@@ -465,6 +465,15 @@ class MsgQ:
             sock.setblocking(1)
 
     def send_prepared_msg(self, sock, msg):
+        '''
+        Add a message to the queue. If there's nothing waiting, try
+        to send it right away.
+
+        Return if the socket is still alive. It can return false if the
+        socket dies (for example due to EPIPE in the attempt to send).
+        Returning true does not guarantee the message will be delivered,
+        but returning false means it won't.
+        '''
         # Try to send the data, but only if there's nothing waiting
         fileno = sock.fileno()
         if fileno in self.sendbuffs:
@@ -473,7 +482,7 @@ class MsgQ:
             amount_sent = self.__send_data(sock, msg)
             if amount_sent is None:
                 # Socket has been killed, drop the send
-                return
+                return False
 
         # Still something to send, add it to outgoing queue
         if amount_sent < len(msg):
@@ -483,7 +492,7 @@ class MsgQ:
                 (last_sent, buff) = self.sendbuffs[fileno]
                 if now - last_sent > 0.1:
                     self.kill_socket(fileno, sock)
-                    return
+                    return False
                 buff += msg
             else:
                 buff = msg[amount_sent:]
@@ -494,6 +503,7 @@ class MsgQ:
                 else:
                     self.add_kqueue_socket(sock, True)
             self.sendbuffs[fileno] = (last_sent, buff)
+        return True
 
     def __process_write(self, fileno):
         # Try to send some data from the buffer
@@ -549,10 +559,11 @@ class MsgQ:
             # Don't bounce to self
             sockets.remove(sock)
 
-        if sockets:
-            for socket in sockets:
-                self.send_prepared_msg(socket, msg)
-        elif routing.get(CC_HEADER_WANT_ANSWER) and \
+        has_recipient = False
+        for socket in sockets:
+            if self.send_prepared_msg(socket, msg):
+                has_recipient = True
+        if not has_recipient and routing.get(CC_HEADER_WANT_ANSWER) and \
             CC_HEADER_REPLY not in routing:
             # We have no recipients. But the sender insists on a reply
             # (and the message isn't a reply itself). We need to send
