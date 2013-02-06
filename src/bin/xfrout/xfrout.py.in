@@ -227,9 +227,9 @@ class XfroutSession():
                                                   self._tsig_key_ring)
             tsig_error = self._tsig_ctx.verify(tsig_record, request_data)
             if tsig_error != TSIGError.NOERROR:
-                return Rcode.NOTAUTH()
+                return Rcode.NOTAUTH
 
-        return Rcode.NOERROR()
+        return Rcode.NOERROR
 
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
@@ -239,11 +239,11 @@ class XfroutSession():
             Message.from_wire(msg, mdata)
         except Exception as err: # Exception is too broad
             logger.error(XFROUT_PARSE_QUERY_ERROR, err)
-            return Rcode.FORMERR(), None
+            return Rcode.FORMERR, None
 
         # TSIG related checks
         rcode = self._check_request_tsig(msg, mdata)
-        if rcode != Rcode.NOERROR():
+        if rcode != Rcode.NOERROR:
             return rcode, msg
 
         # Make sure the question is valid.  This should be ensured by
@@ -257,9 +257,9 @@ class XfroutSession():
 
         # Identify the request type
         self._request_type = question.get_type()
-        if self._request_type == RRType.AXFR():
+        if self._request_type == RRType.AXFR:
             self._request_typestr = 'AXFR'
-        elif self._request_type == RRType.IXFR():
+        elif self._request_type == RRType.IXFR:
             self._request_typestr = 'IXFR'
         else:
             # Likewise, this should be impossible.
@@ -283,7 +283,7 @@ class XfroutSession():
             logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_REJECTED,
                          self._request_type, format_addrinfo(self._remote),
                          format_zone_str(zone_name, zone_class))
-            return Rcode.REFUSED(), msg
+            return Rcode.REFUSED, msg
 
         return rcode, msg
 
@@ -351,16 +351,16 @@ class XfroutSession():
         '''
         result, finder = self._datasrc_client.find_zone(zone_name)
         if result != DataSourceClient.SUCCESS:
-            return (Rcode.NOTAUTH(), None)
-        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA())
+            return (Rcode.NOTAUTH, None)
+        result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
         if result != ZoneFinder.SUCCESS:
-            return (Rcode.SERVFAIL(), None)
+            return (Rcode.SERVFAIL, None)
         # Especially for database-based zones, a working zone may be in
         # a broken state where it has more than one SOA RR.  We proactively
         # check the condition and abort the xfr attempt if we identify it.
         if soa_rrset.get_rdata_count() != 1:
-            return (Rcode.SERVFAIL(), None)
-        return (Rcode.NOERROR(), soa_rrset)
+            return (Rcode.SERVFAIL, None)
+        return (Rcode.NOERROR, soa_rrset)
 
     def __axfr_setup(self, zone_name):
         '''Setup a zone iterator for AXFR or AXFR-style IXFR.
@@ -379,16 +379,16 @@ class XfroutSession():
             # update get_iterator() API so that we can distinguish "no such
             # zone" and other cases (#1373).  For now we consider all these
             # cases as NOTAUTH.
-            return Rcode.NOTAUTH()
+            return Rcode.NOTAUTH
 
         # If we are an authoritative name server for the zone, but fail
         # to find the zone's SOA record in datasource, xfrout can't
         # provide zone transfer for it.
         self._soa = self._iterator.get_soa()
         if self._soa is None or self._soa.get_rdata_count() != 1:
-            return Rcode.SERVFAIL()
+            return Rcode.SERVFAIL
 
-        return Rcode.NOERROR()
+        return Rcode.NOERROR
 
     def __ixfr_setup(self, request_msg, zone_name, zone_class):
         '''Setup a zone journal reader for IXFR.
@@ -405,21 +405,21 @@ class XfroutSession():
             # Ignore data whose owner name is not the zone apex, and
             # ignore non-SOA or different class of records.
             if auth_rrset.get_name() != zone_name or \
-                    auth_rrset.get_type() != RRType.SOA() or \
+                    auth_rrset.get_type() != RRType.SOA or \
                     auth_rrset.get_class() != zone_class:
                 continue
             if auth_rrset.get_rdata_count() != 1:
                 logger.info(XFROUT_IXFR_MULTIPLE_SOA,
                             format_addrinfo(self._remote))
-                return Rcode.FORMERR()
+                return Rcode.FORMERR
             remote_soa = auth_rrset
         if remote_soa is None:
             logger.info(XFROUT_IXFR_NO_SOA, format_addrinfo(self._remote))
-            return Rcode.FORMERR()
+            return Rcode.FORMERR
 
         # Retrieve the local SOA
         rcode, self._soa = self._get_zone_soa(zone_name)
-        if rcode != Rcode.NOERROR():
+        if rcode != Rcode.NOERROR:
             return rcode
 
         # RFC1995 says "If an IXFR query with the same or newer version
@@ -437,7 +437,7 @@ class XfroutSession():
             logger.info(XFROUT_IXFR_UPTODATE, format_addrinfo(self._remote),
                         format_zone_str(zone_name, zone_class),
                         begin_serial, end_serial)
-            return Rcode.NOERROR()
+            return Rcode.NOERROR
 
         # Set up the journal reader or fall back to AXFR-style IXFR
         try:
@@ -462,12 +462,12 @@ class XfroutSession():
             # between these two operations.  We treat it as NOTAUTH.
             logger.warn(XFROUT_IXFR_NO_ZONE, format_addrinfo(self._remote),
                         format_zone_str(zone_name, zone_class))
-            return Rcode.NOTAUTH()
+            return Rcode.NOTAUTH
 
         # Use the reader as the iterator to generate the response.
         self._iterator = self._jnl_reader
 
-        return Rcode.NOERROR()
+        return Rcode.NOERROR
 
     def _xfrout_setup(self, request_msg, zone_name, zone_class):
         '''Setup a context for xfr responses according to the request type.
@@ -490,7 +490,7 @@ class XfroutSession():
             self._server.get_db_file() + '"}'
         self._datasrc_client = self.ClientClass('sqlite3', datasrc_config)
 
-        if self._request_type == RRType.AXFR():
+        if self._request_type == RRType.AXFR:
             return self.__axfr_setup(zone_name)
         else:
             return self.__ixfr_setup(request_msg, zone_name, zone_class)
@@ -500,17 +500,17 @@ class XfroutSession():
         #TODO. create query message and parse header
         if rcode_ is None: # Dropped by ACL
             return
-        elif rcode_ == Rcode.NOTAUTH() or rcode_ == Rcode.REFUSED():
+        elif rcode_ == Rcode.NOTAUTH or rcode_ == Rcode.REFUSED:
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
-        elif rcode_ != Rcode.NOERROR():
+        elif rcode_ != Rcode.NOERROR:
             return self._reply_query_with_error_rcode(msg, sock_fd,
-                                                      Rcode.FORMERR())
+                                                      Rcode.FORMERR)
         elif not quota_ok:
             logger.warn(XFROUT_QUERY_QUOTA_EXCCEEDED, self._request_typestr,
                         format_addrinfo(self._remote),
                         self._server._max_transfers_out)
             return self._reply_query_with_error_rcode(msg, sock_fd,
-                                                      Rcode.REFUSED())
+                                                      Rcode.REFUSED)
 
         question = msg.get_question()[0]
         zone_name = question.get_name()
@@ -522,15 +522,15 @@ class XfroutSession():
         except Exception as ex:
             logger.error(XFROUT_XFR_TRANSFER_CHECK_ERROR, self._request_typestr,
                          format_addrinfo(self._remote), zone_str, ex)
-            rcode_ = Rcode.SERVFAIL()
-        if rcode_ != Rcode.NOERROR():
+            rcode_ = Rcode.SERVFAIL
+        if rcode_ != Rcode.NOERROR:
             logger.info(XFROUT_XFR_TRANSFER_FAILED, self._request_typestr,
                         format_addrinfo(self._remote), zone_str, rcode_)
             return self._reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
             # increment Xfr starts by RRType
-            if self._request_type == RRType.AXFR():
+            if self._request_type == RRType.AXFR:
                 self._inc_axfr_running()
             else:
                 self._inc_ixfr_running()
@@ -542,7 +542,7 @@ class XfroutSession():
                     format_addrinfo(self._remote), zone_str, err)
         finally:
             # decrement Xfr starts by RRType
-            if self._request_type == RRType.AXFR():
+            if self._request_type == RRType.AXFR:
                 self._dec_axfr_running()
             else:
                 self._dec_ixfr_running()
@@ -614,7 +614,7 @@ class XfroutSession():
 
             # For AXFR (or AXFR-style IXFR), in which case _jnl_reader is None,
             # we should skip SOAs from the iterator.
-            if self._jnl_reader is None and rrset.get_type() == RRType.SOA():
+            if self._jnl_reader is None and rrset.get_type() == RRType.SOA:
                 continue
 
             # We calculate the maximum size of the RRset (i.e. the
@@ -1215,7 +1215,7 @@ class XfroutServer:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if not zone_class:
-                zone_class = str(RRClass.IN())
+                zone_class = str(RRClass.IN)
             if zone_name:
                 logger.info(XFROUT_NOTIFY_COMMAND, zone_name, zone_class)
                 if self.send_notify(zone_name, zone_class):

@@ -148,4 +148,29 @@ TEST_F(RRClassTest, LeftShiftOperator) {
     oss << RRClass::IN();
     EXPECT_EQ(RRClass::IN().toText(), oss.str());
 }
+
+// Below, we'll check definitions for all well-known RR classes; whether they
+// are defined and have the correct parameter values.  Test data are generated
+// from the list available at:
+// http://www.iana.org/assignments/dns-parameters/dns-parameters.xml
+struct ClassParam {
+    const char* const txt;      // "IN", "CH", etc
+    const uint16_t code;        // 1, 3,
+    const RRClass& (*obj)();     // RRClass::IN(), etc
+} known_classes[] = {
+    {"IN", 1, RRClass::IN}, {"CH", 3, RRClass::CH}, {"HS", 4, RRClass::HS},
+    {"NONE", 254, RRClass::NONE}, {"ANY", 255, RRClass::ANY},
+    {NULL, 0, NULL}
+};
+
+TEST(RRClassConstTest, wellKnowns) {
+    for (int i = 0; known_classes[i].txt; ++i) {
+        SCOPED_TRACE("Checking well known RRClass: " +
+                     string(known_classes[i].txt));
+        EXPECT_EQ(known_classes[i].code,
+                  RRClass(known_classes[i].txt).getCode());
+        EXPECT_EQ(known_classes[i].code,
+                  (*known_classes[i].obj)().getCode());
+    }
+}
 }
