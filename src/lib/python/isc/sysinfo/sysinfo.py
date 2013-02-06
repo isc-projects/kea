@@ -44,7 +44,7 @@ class SysInfo:
         self._net_stats = 'Unknown\n'
         self._net_connections = 'Unknown\n'
 
-        # The following are Linux speicific, and should eventually be removed
+        # The following are Linux specific, and should eventually be removed
         # from this level; for now we simply default to None (so they won't
         # be printed)
         self._platform_distro = None
