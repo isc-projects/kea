@@ -162,8 +162,11 @@ class SysInfoPOSIX(SysInfo):
 
         u = os.uname()
         self._platform_name = u[0]
+        self._hostname = u[1]
         self._platform_version = u[2]
         self._platform_machine = u[4]
+
+        self._loadavg = os.getloadavg()
 
 class SysInfoLinux(SysInfoPOSIX):
     """Linux implementation of the SysInfo class.
@@ -508,4 +511,4 @@ def SysInfoFromFactory():
     elif osname == 'BIND10Testcase':
         return SysInfoTestcase()
     else:
-        return SysInfo()
+        return SysInfoPOSIX()
