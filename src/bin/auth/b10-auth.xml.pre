@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 18, 2012</date>
+    <date>February 5, 2013</date>
   </refentryinfo>
 
   <refmeta>
@@ -100,7 +100,7 @@
       <varname>database_file</varname> defines the path to the
       SQLite3 zone file when using the sqlite datasource.
       The default is
-      <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
+      <filename>@@LOCALSTATEDIR@@/bind10/zone.sqlite3</filename>.
     </para>
 
     <para>
@@ -144,15 +144,6 @@
     </para>
 
     <para>
-      <varname>statistics-interval</varname> is the timer interval
-      in seconds for <command>b10-auth</command> to share its
-      statistics information to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-      Statistics updates can be disabled by setting this to 0.
-      The default is 60.
-    </para>
-
-    <para>
       <varname>tcp_recv_timeout</varname> is the timeout used on
       incoming TCP connections, in milliseconds. If the query
       is not sent within this time, the connection is closed.
@@ -188,6 +179,11 @@
         In this development version, currently this only supports the
         IN class and the memory data source.
       </simpara></note>
+    </para>
+
+    <para>
+      <command>getstats</command> tells <command>b10-auth</command>
+      to send its statistics data.
     </para>
 
     <para>
@@ -230,32 +226,36 @@
       daemon for <quote>Auth</quote> include:
     </para>
 
-    <variablelist>
+<!-- ### STATISTICS DATA PLACEHOLDER ### -->
 
-      <varlistentry>
-        <term>queries.tcp</term>
-        <listitem><simpara>Total count of queries received by the
-          <command>b10-auth</command> server over TCP since startup.
-        </simpara></listitem>
-      </varlistentry>
+    <note>
+      <para>
+        Opcode of a request message will not be counted if:
+        <itemizedlist>
+          <listitem><para>
+            The request message is too short to parse the message header
+          </para></listitem>
+          <listitem><para>
+            The request message is a response (i.e. QR bit is set)
+          </para></listitem>
+        </itemizedlist>
+      </para>
 
-      <varlistentry>
-        <term>queries.udp</term>
-        <listitem><simpara>Total count of queries received by the
-          <command>b10-auth</command> server over UDP since startup.
-        </simpara></listitem>
-      </varlistentry>
-
-    </variablelist>
-
-<!-- TODO: missing stats docs. See ticket #1721 -->
+      <para>
+        Request attributes except for opcode will not be counted if TSIG
+        validation failed as they are not reliable.
+        We always count opcode mainly for compatibility with BIND 9,
+        but remember that if there's any error related to TSIG, some
+        of the counted opcode may not be trustworthy.
+      </para>
+    </note>
 
   </refsect1>
 
   <refsect1>
     <title>FILES</title>
     <para>
-      <filename>/usr/local/var/bind10/zone.sqlite3</filename>
+      <filename>@@LOCALSTATEDIR@@/bind10/zone.sqlite3</filename>
       &mdash; Location for the SQLite3 zone database
       when <emphasis>database_file</emphasis> configuration is not
       defined.
