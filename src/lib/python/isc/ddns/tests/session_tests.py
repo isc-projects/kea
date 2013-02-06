@@ -704,7 +704,7 @@ class SessionTest(SessionTestBase):
         rrset_exists_value_1 = create_rrset("example.org", RRClass.IN,
                                             RRType.NS, 0, ["ns1.example.org."])
         rrset_exists_value_2 = create_rrset("example.org", RRClass.IN,
-                                            RRType.NS, 0, "ns2.example.org."])
+                                            RRType.NS, 0, ["ns2.example.org."])
         rrset_exists_value_3 = create_rrset("example.org", RRClass.IN,
                                             RRType.NS, 0, ["ns3.example.org."])
 

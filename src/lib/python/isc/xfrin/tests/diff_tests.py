@@ -1131,8 +1131,8 @@ class DiffTest(unittest.TestCase):
         self.assertTrue(isinstance(collection, self.Collection))
         # The collection is just the mock from above, so this doesn't do much
         # testing, but we check that the mock got through and didn't get hurt.
-        self.assertIsNone(collection.find(Name('example.org'), RRClass.IN(),
-                                          RRType.SOA()))
+        self.assertIsNone(collection.find(Name('example.org'), RRClass.IN,
+                                          RRType.SOA))
 
 if __name__ == "__main__":
     isc.log.init("bind10")

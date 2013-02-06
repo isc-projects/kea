@@ -1316,8 +1316,7 @@ class TestAXFR(TestXfrinConnection):
         a_rr = self._create_a('192.0.2.1')
         self.conn._send_query(RRType.AXFR)
         self.conn.reply_data = self.conn.create_response_data(
-            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                RRType.AXFR)],
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.AXFR)],
             # begin serial=1230, end serial=1234. end will be used.
             answers=[begin_soa_rrset, ns_rr, a_rr, soa_rrset])
         self.conn._handle_xfrin_responses()
@@ -1331,10 +1330,9 @@ class TestAXFR(TestXfrinConnection):
         Test we reject a zone transfer if it fails the check_zone validation.
         """
         a_rr = self._create_a('192.0.2.1')
-        self.conn._send_query(RRType.AXFR())
+        self.conn._send_query(RRType.AXFR)
         self.conn.reply_data = self.conn.create_response_data(
-            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                RRType.AXFR())],
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.AXFR)],
             # begin serial=1230, end serial=1234. end will be used.
             answers=[begin_soa_rrset, a_rr, soa_rrset])
         # Make it fail the validation
@@ -1646,7 +1644,7 @@ class TestIXFRResponse(TestXfrinConnection):
         An IXFR that fails validation later on. Check it is rejected.
         '''
         self.conn.reply_data = self.conn.create_response_data(
-            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR())],
+            questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.IXFR)],
             answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
         self._check_zone_result = False
         self.assertRaises(XfrinZoneError, self.conn._handle_xfrin_responses)
