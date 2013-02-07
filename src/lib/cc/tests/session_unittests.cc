@@ -174,20 +174,12 @@ protected:
     }
 
     // Check two elements are equal
-    void elementsEqual(const ConstElementPtr& expected,
-                       const ConstElementPtr& actual)
-    {
-        EXPECT_TRUE(expected->equals(*actual)) <<
-            "Elements differ, expected: " << expected->toWire() <<
-            ", got: " << actual->toWire();
-    }
-
-    // The same, but with one specified as string
     void elementsEqual(const string& expected,
                        const ConstElementPtr& actual)
     {
-        const ConstElementPtr expected_el(Element::fromJSON(expected));
-        elementsEqual(expected_el, actual);
+        EXPECT_TRUE(Element::fromJSON(expected)->equals(*actual)) <<
+            "Elements differ, expected: " << expected <<
+            ", got: " << actual->toWire();
     }
 
     // Check the session sent a message with the given header. The
