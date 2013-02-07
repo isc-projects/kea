@@ -29,14 +29,12 @@
 #include <exceptions/exceptions.h>
 
 #include <utility>
-#include <vector>
 #include <list>
 #include <string>
 #include <iostream>
 
 using namespace isc::cc;
 using std::pair;
-using std::vector;
 using std::list;
 using std::string;
 using isc::data::ConstElementPtr;
@@ -65,9 +63,6 @@ TEST(AsioSession, establish) {
                   ), isc::cc::SessionError
     );
 }
-
-/// \brief Pair holding header and data of a message sent over the wire.
-typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
 
 // This class sets up a domain socket for the session to connect to
 // it will impersonate the msgq a tiny bit (if setSendLname() has
@@ -111,53 +106,6 @@ public:
         socket_.send(asio::buffer(body_wire.data(), body_wire.length()));
     }
 
-    /// \brief Read a message from the socket
-    ///
-    /// Read a message from the socket and parse it. Block until it is
-    /// read or error happens. If error happens, it asio::system_error.
-    ///
-    /// This method would block for ever if the sender is not sending.
-    /// But the whole test has a timeout of 10 seconds (see the
-    /// SessionTest::SetUp and SessionTest::TearDown).
-    ///
-    /// \note The method assumes the wire data are correct and does not check
-    ///    it. Strange things might happen if it is not the case, but the
-    ///    test would likely fail as a result, so we prefer simplicity here.
-    ///
-    /// \return Pair containing the header and body elements (in this order).
-    SentMessage readmsg() {
-        // The format is:
-        // <uint32_t in net order = total length>
-        // <uint16_t in net order = header length>
-        // <char * header length = the header>
-        // <char * the rest of the total length = the data>
-
-        // Read and convert the lengths first.
-        uint32_t total_len_data;
-        uint16_t header_len_data;
-        vector<asio::mutable_buffer> len_buffers;
-        len_buffers.push_back(asio::buffer(&total_len_data,
-                                           sizeof total_len_data));
-        len_buffers.push_back(asio::buffer(&header_len_data,
-                                           sizeof header_len_data));
-        asio::read(socket_, len_buffers);
-        const uint32_t total_len = ntohl(total_len_data);
-        const uint16_t header_len = ntohs(header_len_data);
-        string header, msg;
-        header.resize(header_len);
-        msg.resize(total_len - header_len - sizeof header_len_data);
-        vector<asio::mutable_buffer> data_buffers;
-        data_buffers.push_back(asio::buffer(&header[0], header.size()));
-        data_buffers.push_back(asio::buffer(&msg[0], msg.size()));
-        asio::read(socket_, data_buffers);
-        if (msg == "") { // The case of no msg present, for control messages
-            msg = "null";
-        }
-        // Extract the right data into each string and convert.
-        return (SentMessage(Element::fromWire(header),
-                            Element::fromWire(msg)));
-    }
-
     void sendLname() {
         isc::data::ElementPtr lname_answer1 =
             isc::data::Element::fromJSON("{ \"type\": \"lname\" }");
@@ -180,6 +128,9 @@ private:
     char data_buf[1024];
 };
 
+/// \brief Pair holding header and data of a message sent over the connection.
+typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
+
 // We specialize the tested class a little. We replace some low-level
 // methods so we can examine the rest without relying on real network IO
 class TestSession : public Session {
@@ -187,6 +138,8 @@ public:
     TestSession(asio::io_service& ioservice) :
         Session(ioservice)
     {}
+    // Get first message previously sent by sendmsg and remove it from the
+    // buffer. Expects there's at leas one message in the buffer.
     SentMessage getSentMessage() {
         assert(!sent_messages_.empty());
         SentMessage result(sent_messages_.front());
@@ -194,6 +147,8 @@ public:
         return (result);
     }
 private:
+    // Override the sendmsg. They are not sent over the real connection, but
+    // stored locally and can be extracted by getSentMessage()
     virtual void sendmsg(ConstElementPtr msg) {
         sendmsg(msg, ConstElementPtr(new isc::data::NullElement));
     }
@@ -201,6 +156,7 @@ private:
         sent_messages_.push_back(SentMessage(env, msg));
     }
 
+    // The sendmsg stores data here.
     list<SentMessage> sent_messages_;
 };
 
@@ -215,21 +171,6 @@ protected:
 
     ~SessionTest() {
         delete tds;
-    }
-
-    void SetUp() {
-        // There are blocking reads in some tests. We want to have a safety
-        // catch in case the sender didn't write enough. We set a timeout of
-        // 10 seconds per one test (which should really be enough even on
-        // slow machines). If the timeout happens, it kills the test and
-        // the whole test fails.
-        //alarm(10);
-    }
-
-    void TearDown() {
-        // Cancel the timeout scheduled in SetUp. We don't want to kill any
-        // of the other tests by it by accident.
-        alarm(0);
     }
 
     // Check two elements are equal
