@@ -135,13 +135,6 @@ A warning message issued during resolver startup, this indicates that
 no root addresses have been set.  This may be because the resolver will
 get them from a priming query.
 
-% RESOLVER_PARSE_ERROR error parsing received message: %1 - returning %2
-This is a debug message noting that the resolver received a message and
-the parsing of the body of the message failed due to some non-protocol
-related reason (although the parsing of the header succeeded).
-The message parameters give a textual description of the problem and
-the RCODE returned.
-
 % RESOLVER_PRINT_COMMAND print message command, arguments are: %1
 This debug message is logged when a "print_message" command is received
 by the resolver over the command channel.
