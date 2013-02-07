@@ -142,7 +142,7 @@ public:
     // buffer. Expects there's at leas one message in the buffer.
     SentMessage getSentMessage() {
         assert(!sent_messages_.empty());
-        SentMessage result(sent_messages_.front());
+        const SentMessage result(sent_messages_.front());
         sent_messages_.pop_front();
         return (result);
     }
@@ -187,7 +187,7 @@ protected:
     void checkSentMessage(const string& expected_hdr, const char* description)
     {
         SCOPED_TRACE(description);
-        const SentMessage &msg(sess.getSentMessage());
+        const SentMessage& msg(sess.getSentMessage());
         elementsEqual(expected_hdr, msg.first);
         elementsEqual("{\"test\": 42}", msg.second);
     }

@@ -478,7 +478,7 @@ Session::group_sendmsg(ConstElementPtr msg, std::string group,
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_SEND).arg(msg->str()).
         arg(group);
     ElementPtr env = Element::createMap();
-    long int nseq = ++impl_->sequence_;
+    const long int nseq = ++impl_->sequence_;
 
     env->set(isc::util::CC_HEADER_TYPE,
              Element::create(isc::util::CC_COMMAND_SEND));
