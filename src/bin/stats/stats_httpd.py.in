@@ -130,9 +130,9 @@ def item_name_list(element, identifier):
     return ret
 
 class HttpHandler(http.server.BaseHTTPRequestHandler):
-    """HTTP handler class for HttpServer class. The class inhrits the super
-    class http.server.BaseHTTPRequestHandler. It implemets do_GET()
-    and do_HEAD() and orverrides log_message()"""
+    """HTTP handler class for HttpServer class. The class inherits the super
+    class http.server.BaseHTTPRequestHandler. It implements do_GET()
+    and do_HEAD() and overrides log_message()"""
     def do_GET(self):
         body = self.send_head()
         if body is not None:
