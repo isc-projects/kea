@@ -22,6 +22,7 @@ import threading
 import bind10_config
 
 import isc.cc.message
+from isc.util.common_defs import *
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
@@ -256,17 +257,35 @@ class Session:
             "instance": instance,
         })
 
-    def group_sendmsg(self, msg, group, instance = "*", to = "*",
-                      want_answer=False):
+    def group_sendmsg(self, msg, group, instance=CC_INSTANCE_WILDCARD,
+                      to=CC_TO_WILDCARD, want_answer=False):
+        '''
+        Send a message over the CC session.
+
+        Parameters:
+        - msg The message to send, encoded as python structures (dicts,
+          lists, etc).
+        - group The recipient group to send to.
+        - instance Instance in the group.
+        - to Direct recipient (overrides the above, should contain the
+          lname of the recipient).
+        - want_answer If an answer is requested. If there's no recipient,
+          the message queue would send an error message instead of the
+          answer.
+
+        Return:
+          A sequence number that can be used to wait for an answer
+          (see group_recvmsg).
+        '''
         seq = self._next_sequence()
         self.sendmsg({
-            "type": "send",
-            "from": self._lname,
-            "to": to,
-            "group": group,
-            "instance": instance,
-            "seq": seq,
-            "want_answer": want_answer
+            CC_HEADER_TYPE: CC_COMMAND_SEND,
+            CC_HEADER_FROM: self._lname,
+            CC_HEADER_TO: to,
+            CC_HEADER_GROUP: group,
+            CC_HEADER_INSTANCE: instance,
+            CC_HEADER_SEQ: seq,
+            CC_HEADER_WANT_ANSWER: want_answer
         }, isc.cc.message.to_wire(msg))
         return seq
 

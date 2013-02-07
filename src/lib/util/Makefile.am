@@ -19,6 +19,7 @@ libb10_util_la_SOURCES += interprocess_sync_null.h interprocess_sync_null.cc
 libb10_util_la_SOURCES += memory_segment.h
 libb10_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 libb10_util_la_SOURCES += range_utilities.h
+libb10_util_la_SOURCES += common_defs.h common_defs.cc
 libb10_util_la_SOURCES += hash/sha1.h hash/sha1.cc
 libb10_util_la_SOURCES += encode/base16_from_binary.h
 libb10_util_la_SOURCES += encode/base32hex.h encode/base64.h
@@ -29,10 +30,14 @@ libb10_util_la_SOURCES += encode/binary_from_base16.h
 libb10_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libb10_util_la_SOURCES += random/random_number_generator.h
 
-EXTRA_DIST = python/pycppwrapper_util.h
+EXTRA_DIST = python/pycppwrapper_util.h const2hdr.py
+BUILT_SOURCES = common_defs.h
+
+common_defs.h: const2hdr.py common_defs.cc
+	$(PYTHON) $(srcdir)/const2hdr.py $(srcdir)/common_defs.cc $@
 
 libb10_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda common_defs.h
 
 libb10_util_includedir = $(includedir)/$(PACKAGE_NAME)/util
 libb10_util_include_HEADERS = buffer.h
