@@ -431,13 +431,14 @@ Resolver::processMessage(const IOMessage& io_message,
 
         // Ignore all responses.
         if (query_message->getHeaderFlag(Message::HEADERFLAG_QR)) {
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_UNEXPECTED_RESPONSE);
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
+                      RESOLVER_UNEXPECTED_RESPONSE);
             server->resume(false);
             return;
         }
     } catch (const Exception& ex) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_HEADER_ERROR)
-                  .arg(ex.what());
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
+                  RESOLVER_HEADER_PROCESSING_FAILED).arg(ex.what());
         server->resume(false);
         return;
     }
@@ -446,14 +447,16 @@ Resolver::processMessage(const IOMessage& io_message,
     try {
         query_message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_PROTOCOL_ERROR)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
+                  RESOLVER_PROTOCOL_BODY_PARSE_FAILED)
                   .arg(error.what()).arg(error.getRcode());
         makeErrorMessage(query_message, answer_message,
                          buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
-        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO, RESOLVER_MESSAGE_ERROR)
+        LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
+                  RESOLVER_MESSAGE_PROCESSING_FAILED)
                   .arg(ex.what()).arg(Rcode::SERVFAIL());
         makeErrorMessage(query_message, answer_message,
                          buffer, Rcode::SERVFAIL());

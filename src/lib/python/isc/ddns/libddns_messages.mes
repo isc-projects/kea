@@ -121,7 +121,7 @@ a bad class. The class of the update RRset must be either the same
 as the class in the Zone Section, ANY, or NONE.
 A FORMERR response is sent back to the client.
 
-% LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
+% LIBDDNS_UPDATE_DATASRC_COMMIT_FAILED error in datasource during DDNS update: %1
 An error occurred while committing the DDNS update changes to the
 datasource. The specific error is printed. A SERVFAIL response is sent
 back to the client.
@@ -167,7 +167,7 @@ rejected by the zone's update ACL.  When this library is used by
 b10-ddns, the server will then completely ignore the request; no
 response will be sent.
 
-% LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
+% LIBDDNS_UPDATE_PROCESSING_FAILED update client %1 for zone %2: %3
 Debug message.  An error is found in processing a dynamic update
 request.  This log message is used for general errors that are not
 normally expected to happen.  So, in general, it would mean some

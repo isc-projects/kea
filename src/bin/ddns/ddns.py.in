@@ -536,7 +536,7 @@ class DDNSServer:
                 else:
                     tcp_ctx.close()
         except socket.error as ex:
-            logger.warn(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
+            logger.warn(DDNS_RESPONSE_SOCKET_SEND_FAILED, ClientFormatter(dest), ex)
             return False
 
         return True
@@ -683,7 +683,7 @@ class DDNSServer:
                 result = ctx[0].send_ready()
                 if result != DNSTCPContext.SENDING:
                     if result == DNSTCPContext.CLOSED:
-                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_ERROR,
+                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_SEND_FAILED,
                                     ClientFormatter(ctx[1]))
                     ctx[0].close()
                     del self._tcp_ctxs[fileno]
