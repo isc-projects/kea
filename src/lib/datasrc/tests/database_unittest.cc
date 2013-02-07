@@ -1147,11 +1147,14 @@ TEST(DatabaseConnectionTest, getAllRecords) {
                  isc::NotImplemented);
 }
 
-// This test fixture is templated so that we can share (most of) the test
-// cases with different types of data sources.  Note that in test cases
-// we need to use 'this' to refer to member variables of the test class.
-template <typename ACCESSOR_TYPE>
-class DatabaseClientTest : public ::testing::Test {
+// This is the type used as the test parameter.  Note that this is
+// intentionally a plain old type (i.e. a function pointer), not a class;
+// otherwise it could cause initialization fiasco at the instantiation time.
+typedef boost::shared_ptr<DatabaseAccessor> (*AccessorCreator)();
+
+// This test fixture is parametized so that we can share (most of) the test
+// cases with different types of data sources.
+class DatabaseClientTest : public ::testing::TestWithParam<AccessorCreator> {
 public:
     DatabaseClientTest() : zname_("example.org"), qname_("www.example.org"),
                            qclass_(RRClass::IN()), qtype_(RRType::A()),
@@ -1213,11 +1216,10 @@ public:
                       "Error setting up; command failed: " << install_cmd);
         }
 
-        current_accessor_ = new ACCESSOR_TYPE();
-        is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_) != NULL);
-        client_.reset(new DatabaseClient(qclass_,
-                                         boost::shared_ptr<ACCESSOR_TYPE>(
-                                             current_accessor_)));
+        current_accessor_ = (*GetParam())();
+        is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) !=
+                    NULL);
+        client_.reset(new DatabaseClient(qclass_, current_accessor_));
     }
 
     /**
@@ -1233,7 +1235,7 @@ public:
         if (is_mock_) {
             EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
         }
-        EXPECT_EQ(current_accessor_, &finder->getAccessor());
+        EXPECT_EQ(current_accessor_.get(), &finder->getAccessor());
     }
 
     boost::shared_ptr<DatabaseClient::Finder> getFinder() {
@@ -1262,7 +1264,7 @@ public:
     void checkLastAdded(const char* const expected[]) const {
         if (is_mock_) {
             const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_);
+                dynamic_cast<const MockAccessor*>(current_accessor_.get());
             for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT; ++i) {
                 EXPECT_EQ(expected[i],
                           mock_accessor->getLatestClone()->getLastAdded()[i]);
@@ -1273,7 +1275,7 @@ public:
     void setUpdateAccessor() {
         if (is_mock_) {
             const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_);
+                dynamic_cast<const MockAccessor*>(current_accessor_.get());
             update_accessor_ = mock_accessor->getLatestClone();
         }
     }
@@ -1281,7 +1283,7 @@ public:
     void checkJournal(const vector<JournalEntry>& expected) {
         if (is_mock_) {
             const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_);
+                dynamic_cast<const MockAccessor*>(current_accessor_.get());
             mock_accessor->checkJournal(expected);
         } else {
             // For other generic databases, retrieve the diff using the
@@ -1335,8 +1337,7 @@ public:
     // is of that type.
     bool is_mock_;
 
-    // Will be deleted by client_, just keep the current value for comparison.
-    ACCESSOR_TYPE* current_accessor_;
+    boost::shared_ptr<DatabaseAccessor> current_accessor_;
     boost::shared_ptr<DatabaseClient> client_;
     const std::string database_name_;
 
@@ -1424,6 +1425,7 @@ public:
 // complete workaround, but for a short term workaround we'll reduce the
 // number of tested accessor classes (thus reducing the amount of code
 // to be compiled) for this particular environment.
+#if 0
 #if defined(__clang__) && defined(__FreeBSD__)
 typedef ::testing::Types<MockAccessor> TestAccessorTypes;
 #else
@@ -1431,7 +1433,23 @@ typedef ::testing::Types<MockAccessor, TestSQLite3Accessor> TestAccessorTypes;
 #endif
 
 TYPED_TEST_CASE(DatabaseClientTest, TestAccessorTypes);
+#endif
 
+boost::shared_ptr<DatabaseAccessor>
+createMockAccessor() {
+    return (boost::shared_ptr<DatabaseAccessor>(new MockAccessor()));
+}
+
+boost::shared_ptr<DatabaseAccessor>
+createSQLite3Accessor() {
+    return (boost::shared_ptr<DatabaseAccessor>(new TestSQLite3Accessor()));
+}
+
+INSTANTIATE_TEST_CASE_P(, DatabaseClientTest,
+                        ::testing::Values(createMockAccessor,
+                                          createSQLite3Accessor));
+
+#if 0
 // In some cases the entire test fixture is for the mock accessor only.
 // We use the usual TEST_F for them with the corresponding specialized class
 // to make the code simpler.
@@ -4646,5 +4664,6 @@ TYPED_TEST(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
                                   this->qclass_, RRType::A()),
                   RRsetCollectionError);
 }
+#endif  // 0
 
 }
