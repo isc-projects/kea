@@ -93,6 +93,11 @@ This message indicates that the server failed to grant (in response to
 received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
 
+% DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
+This is a general catch-all message indicating that the processing of the
+specified packet type from the indicated address failed.  The reason is given in the
+message.  The server will not send a response but will instead ignore the packet.
+
 % DHCP6_RELEASE address %1 belonging to client duid=%2, iaid=%3 was released properly.
 This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
