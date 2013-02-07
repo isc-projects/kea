@@ -173,15 +173,6 @@ protected:
         delete tds;
     }
 
-    // Check two elements are equal
-    void elementsEqual(const string& expected,
-                       const ConstElementPtr& actual) const
-    {
-        EXPECT_TRUE(Element::fromJSON(expected)->equals(*actual)) <<
-            "Elements differ, expected: " << expected <<
-            ", got: " << actual->toWire();
-    }
-
     // Check the session sent a message with the given header. The
     // message is hardcoded.
     void checkSentMessage(const string& expected_hdr, const char* description)
@@ -190,6 +181,16 @@ protected:
         const SentMessage& msg(sess.getSentMessage());
         elementsEqual(expected_hdr, msg.first);
         elementsEqual("{\"test\": 42}", msg.second);
+    }
+
+private:
+    // Check two elements are equal
+    void elementsEqual(const string& expected,
+                       const ConstElementPtr& actual) const
+    {
+        EXPECT_TRUE(Element::fromJSON(expected)->equals(*actual)) <<
+            "Elements differ, expected: " << expected <<
+            ", got: " << actual->toWire();
     }
 
 public:
