@@ -30,7 +30,7 @@
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 
-#include <datasrc/memory_datasrc.h>
+#include <datasrc/client.h>
 #include <datasrc/client_list.h>
 
 #include <auth/query.h>
