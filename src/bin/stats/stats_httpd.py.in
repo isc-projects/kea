@@ -413,7 +413,7 @@ class StatsHttpd:
         try:
             self.open_httpd()
         except HttpServerError as err:
-            logger.error(STATSHTTPD_SERVER_ERROR, err)
+            logger.error(STATSHTTPD_SERVER_INIT_ERROR, err)
             # restore old config
             self.load_config(old_config)
             self.open_httpd()
