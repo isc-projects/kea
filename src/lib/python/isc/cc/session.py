@@ -259,6 +259,24 @@ class Session:
 
     def group_sendmsg(self, msg, group, instance=CC_INSTANCE_WILDCARD,
                       to=CC_TO_WILDCARD, want_answer=False):
+        '''
+        Send a message over the CC session.
+
+        Parameters:
+        - msg The message to send, encoded as python structures (dicts,
+          lists, etc).
+        - group The recipient group to send to.
+        - instance Instance in the group.
+        - to Direct recipient (overrides the above, should contain the
+          lname of the recipient).
+        - want_answer If an answer is requested. If there's no recipient,
+          the message queue would send an error message instead of the
+          answer.
+
+        Return:
+          A sequence number that can be used to wait for an answer
+          (see group_recvmsg).
+        '''
         seq = self._next_sequence()
         self.sendmsg({
             CC_HEADER_TYPE: CC_COMMAND_SEND,
