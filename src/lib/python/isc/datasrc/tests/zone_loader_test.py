@@ -34,6 +34,7 @@ ORIG_DB_FILE = TESTDATA_PATH + '/example.com.sqlite3'
 DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
 DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '" }'
 DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '" }'
+STATIC_ZONE_CONFIG = '"' + TESTDATA_PATH + "/static.zone" + '"'
 
 ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
@@ -215,10 +216,10 @@ class ZoneLoaderTests(unittest.TestCase):
                           self.client, zone_name, self.source_client)
 
     def test_no_ds_load_support(self):
-        # This may change in the future, but atm, the in-mem ds does
+        # This may change in the future, but atm, the static ds does
         # not support the API the zone loader uses (it has direct load calls)
-        inmem_client = isc.datasrc.DataSourceClient('memory',
-                                                    '{ "type": "memory" }');
+        inmem_client = isc.datasrc.DataSourceClient('static',
+                                                    STATIC_ZONE_CONFIG);
         self.assertRaises(isc.datasrc.NotImplemented,
                           isc.datasrc.ZoneLoader,
                           inmem_client, self.test_name, self.test_file)
