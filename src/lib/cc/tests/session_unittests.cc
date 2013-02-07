@@ -184,8 +184,7 @@ protected:
 
     // Check the session sent a message with the given header. The
     // message is hardcoded.
-    void checkSentMessage(const string& expected_hdr,
-                          const char* description) const
+    void checkSentMessage(const string& expected_hdr, const char* description)
     {
         SCOPED_TRACE(description);
         const SentMessage &msg(sess.getSentMessage());
