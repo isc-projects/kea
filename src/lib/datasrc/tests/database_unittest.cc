@@ -1152,6 +1152,7 @@ TEST(DatabaseConnectionTest, getAllRecords) {
 // otherwise it could cause initialization fiasco at the instantiation time.
 struct DatabaseClientTestParam {
     boost::shared_ptr<DatabaseAccessor> (*accessor_creator)();
+    void (*enable_nsec3_fn)(DatabaseAccessor& accessor);
 };
 
 // This test fixture is parameterized so that we can share (most of) the test
@@ -1372,57 +1373,6 @@ public:
     TestNSEC3HashCreator test_nsec3_hash_creator_;
 };
 
-class TestSQLite3Accessor : public SQLite3Accessor {
-public:
-    TestSQLite3Accessor() : SQLite3Accessor(
-        TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied", "IN")
-    {
-        startUpdateZone("example.org.", true);
-        string columns[ADD_COLUMN_COUNT];
-        for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
-            columns[ADD_NAME] = TEST_RECORDS[i][0];
-            columns[ADD_REV_NAME] = Name(columns[ADD_NAME]).reverse().toText();
-            columns[ADD_TYPE] = TEST_RECORDS[i][1];
-            columns[ADD_TTL] = TEST_RECORDS[i][2];
-            columns[ADD_SIGTYPE] = TEST_RECORDS[i][3];
-            columns[ADD_RDATA] = TEST_RECORDS[i][4];
-
-            addRecordToZone(columns);
-        }
-        // We don't add NSEC3s until we are explicitly told we need them
-        // in enableNSEC3(); these would break some non NSEC3 tests.
-        commit();
-    }
-
-    void enableNSEC3() {
-        startUpdateZone("example.org.", false);
-
-        // Add NSECPARAM at the zone origin
-        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
-            const string param_columns[ADD_COLUMN_COUNT] = {
-                TEST_NSEC3PARAM_RECORDS[i][0], // name
-                Name(param_columns[ADD_NAME]).reverse().toText(), // revname
-                TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
-                TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
-                TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
-                TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
-            addRecordToZone(param_columns);
-        }
-
-        // Add NSEC3s
-        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
-            const string nsec3_columns[ADD_NSEC3_COLUMN_COUNT] = {
-                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
-                TEST_NSEC3_RECORDS[i][2], // TTL
-                TEST_NSEC3_RECORDS[i][1], // RR type
-                TEST_NSEC3_RECORDS[i][4] }; // RDATA
-            addNSEC3RecordToZone(nsec3_columns);
-        }
-
-        commit();
-    }
-};
-
 // The following two lines instantiate test cases with concrete accessor
 // classes to be tested.
 
@@ -1431,13 +1381,73 @@ createMockAccessor() {
     return (boost::shared_ptr<DatabaseAccessor>(new MockAccessor()));
 }
 
-boost::shared_ptr<DatabaseAccessor>
-createSQLite3Accessor() {
-    return (boost::shared_ptr<DatabaseAccessor>(new TestSQLite3Accessor()));
+void
+mockEnableNSEC3(DatabaseAccessor& accessor) {
+    dynamic_cast<MockAccessor&>(accessor).enableNSEC3();
 }
 
-const DatabaseClientTestParam mock_param = { createMockAccessor };
-const DatabaseClientTestParam sqlite3_param = { createSQLite3Accessor };
+boost::shared_ptr<DatabaseAccessor>
+createSQLite3Accessor() {
+    boost::shared_ptr<DatabaseAccessor> accessor(
+        new SQLite3Accessor(TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
+                            "IN"));
+
+    accessor->startUpdateZone("example.org.", true);
+    string columns[DatabaseAccessor::ADD_COLUMN_COUNT];
+    for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+        columns[DatabaseAccessor::ADD_NAME] = TEST_RECORDS[i][0];
+        columns[DatabaseAccessor::ADD_REV_NAME] =
+            Name(columns[DatabaseAccessor::ADD_NAME]).reverse().toText();
+        columns[DatabaseAccessor::ADD_TYPE] = TEST_RECORDS[i][1];
+        columns[DatabaseAccessor::ADD_TTL] = TEST_RECORDS[i][2];
+        columns[DatabaseAccessor::ADD_SIGTYPE] = TEST_RECORDS[i][3];
+        columns[DatabaseAccessor::ADD_RDATA] = TEST_RECORDS[i][4];
+
+        accessor->addRecordToZone(columns);
+    }
+    // We don't add NSEC3s until we are explicitly told we need them
+    // in enableNSEC3(); these would break some non NSEC3 tests.
+    accessor->commit();
+
+    return (accessor);
+}
+
+void
+sqlite3EnableNSEC3(DatabaseAccessor& accessor) {
+    accessor.startUpdateZone("example.org.", false);
+
+    // Add NSECPARAM at the zone origin
+    for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+        const string param_columns[DatabaseAccessor::ADD_COLUMN_COUNT] = {
+            TEST_NSEC3PARAM_RECORDS[i][0], // name
+            Name(param_columns[DatabaseAccessor::ADD_NAME]).reverse().toText(),
+            // revname
+            TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
+            TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
+            TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
+            TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
+        accessor.addRecordToZone(param_columns);
+    }
+
+    // Add NSEC3s
+    for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+        const string nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] =
+            {
+                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][2], // TTL
+                TEST_NSEC3_RECORDS[i][1], // RR type
+                TEST_NSEC3_RECORDS[i][4]  // RDATA
+            };
+        accessor.addNSEC3RecordToZone(nsec3_columns);
+    }
+
+    accessor.commit();
+}
+
+const DatabaseClientTestParam mock_param = { createMockAccessor,
+                                             mockEnableNSEC3 };
+const DatabaseClientTestParam sqlite3_param = { createSQLite3Accessor,
+                                                sqlite3EnableNSEC3 };
 
 INSTANTIATE_TEST_CASE_P(, DatabaseClientTest,
                         ::testing::Values(&mock_param, &sqlite3_param));
@@ -1817,7 +1827,6 @@ doFindTest(ZoneFinder& finder,
                    expected_flags, expected_name, options);
 }
 
-#if 0
 void
 doFindAtOriginTest(ZoneFinder& finder,
                    const isc::dns::Name& origin,
@@ -1843,6 +1852,7 @@ doFindAtOriginTest(ZoneFinder& finder,
                    expected_flags, expected_name, options);
 }
 
+#if 0
 void
 doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     ZoneFinder::Result expected_result,
@@ -2177,7 +2187,6 @@ TEST_P(DatabaseClientTest, find) {
                expected_rdatas_, expected_sig_rdatas_);
 }
 
-#if 0
 TEST_P(DatabaseClientTest, findAtOrigin) {
     ZoneFinderPtr finder(getFinder());
 
@@ -2218,7 +2227,7 @@ TEST_P(DatabaseClientTest, findAtOrigin) {
                        zname_, ZoneFinder::FIND_DNSSEC);
 
     // Specified type of RR doesn't exist, with DNSSEC, enabling NSEC3
-    current_accessor_->enableNSEC3();
+    (GetParam()->enable_nsec3_fn)(*current_accessor_);
     expected_rdatas_.clear();
     expected_sig_rdatas_.clear();
     doFindAtOriginTest(*finder, zname_, RRType::TXT(), RRType::TXT(),
@@ -2228,6 +2237,7 @@ TEST_P(DatabaseClientTest, findAtOrigin) {
                        zname_, ZoneFinder::FIND_DNSSEC);
 }
 
+#if 0
 TEST_P(DatabaseClientTest, findAtOriginWithMinTTL) {
     // First, replace the SOA of the test zone so that its RR TTL is larger
     // than MINTTL (the original data are used in many places, so replacing
