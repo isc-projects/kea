@@ -48,14 +48,10 @@ common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 run_unittests_SOURCES = $(common_sources)
 
 run_unittests_SOURCES += test_client.h test_client.cc
-run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += database_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
-run_unittests_SOURCES += memory_datasrc_unittest.cc
-run_unittests_SOURCES += rbnode_rrset_unittest.cc
-run_unittests_SOURCES += zonetable_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 run_unittests_SOURCES += client_list_unittest.cc
