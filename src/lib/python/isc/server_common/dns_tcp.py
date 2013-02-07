@@ -248,7 +248,7 @@ class DNSTCPContext:
                                  ClientFormatter(self.__remote_addr),
                                  self.__send_marker, total_len)
                     return self.SENDING
-                logger.warn(PYSERVER_COMMON_DNS_TCP_SEND_ERROR,
+                logger.warn(PYSERVER_COMMON_DNS_TCP_SEND_FAILED,
                             ClientFormatter(self.__remote_addr),
                             self.__send_marker, total_len, ex)
                 self.__sock.close()

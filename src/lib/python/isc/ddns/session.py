@@ -259,7 +259,7 @@ class UpdateSession:
             return UPDATE_SUCCESS, self.__zname, self.__zclass
         except UpdateError as e:
             if not e.nolog:
-                logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
+                logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_PROCESSING_FAILED,
                              ClientFormatter(self.__client_addr, self.__tsig),
                              ZoneFormatter(e.zname, e.zclass), e)
             # If RCODE is specified, create a corresponding resonse and return
@@ -852,7 +852,7 @@ class UpdateSession:
             self.__diff.commit()
             return Rcode.NOERROR()
         except isc.datasrc.Error as dse:
-            logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
+            logger.info(LIBDDNS_UPDATE_DATASRC_COMMIT_FAILED, dse)
             return Rcode.SERVFAIL()
         except Exception as uce:
             logger.error(LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION,

@@ -81,7 +81,7 @@ has passed a set of checks (message is well-formed, it is allowed by the
 ACL, it is a supported opcode, etc.) and is being forwarded to upstream
 servers.
 
-% RESOLVER_HEADER_ERROR message received, exception when processing header: %1
+% RESOLVER_HEADER_PROCESSING_FAILED message received, exception when processing header: %1
 This is a debug message from the resolver noting that an exception
 occurred during the processing of a received packet.  The packet has
 been dropped.
@@ -97,7 +97,7 @@ During the update of the resolver's configuration parameters, the value
 of the lookup timeout was found to be too small.  The configuration
 update will not be applied.
 
-% RESOLVER_MESSAGE_ERROR error parsing received message: %1 - returning %2
+% RESOLVER_MESSAGE_PROCESSING_FAILED error parsing received message: %1 - returning %2
 This is a debug message noting that parsing of the body of a received
 message by the resolver failed due to some error (although the parsing of
 the header succeeded).  The message parameters give a textual description
@@ -139,7 +139,7 @@ get them from a priming query.
 This debug message is logged when a "print_message" command is received
 by the resolver over the command channel.
 
-% RESOLVER_PROTOCOL_ERROR protocol error parsing received message: %1 - returning %2
+% RESOLVER_PROTOCOL_BODY_PARSE_FAILED protocol error parsing received message: %1 - returning %2
 This is a debug message noting that the resolver received a message and
 the parsing of the body of the message failed due to some protocol error
 (although the parsing of the header succeeded).  The message parameters

@@ -756,7 +756,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         """
         sock_fd = recv_fd(request.fileno())
         if sock_fd < 0:
-            logger.warn(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
+            logger.warn(XFROUT_RECEIVE_FD_FAILED)
             return False
 
         # receive request msg.  If it fails we simply terminate the thread;
