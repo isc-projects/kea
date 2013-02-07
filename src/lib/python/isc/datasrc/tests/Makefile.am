@@ -11,6 +11,7 @@ EXTRA_DIST += testdata/oldschema.sqlite3
 EXTRA_DIST += testdata/new_minor_schema.sqlite3
 EXTRA_DIST += testdata/example.com
 EXTRA_DIST += testdata/example.com.ch
+EXTRA_DIST += testdata/static.zone
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
 CLEANFILES += $(abs_builddir)/zoneloadertest.sqlite3
 
