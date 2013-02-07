@@ -54,7 +54,6 @@ sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 static_ds_la_SOURCES = static_datasrc_link.cc
 static_ds_la_LDFLAGS = -module -avoid-version
 static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-static_ds_la_LIBADD += $(top_builddir)/src/lib/datasrc/memory/libdatasrc_memory.la
 static_ds_la_LIBADD += libb10-datasrc.la
 
 libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
