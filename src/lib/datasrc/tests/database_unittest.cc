@@ -1165,14 +1165,6 @@ public:
                            qclass_(RRClass::IN()), qtype_(RRType::A()),
                            rrttl_(3600)
     {
-        createClient();
-
-        // set up the commonly used finder.
-        DataSourceClient::FindResult zone(client_->findZone(zname_));
-        assert(zone.code == result::SUCCESS);
-        finder_ = dynamic_pointer_cast<DatabaseClient::Finder>(
-            zone.zone_finder);
-
         // Test IN/A RDATA to be added in update tests.  Intentionally using
         // different data than the initial data configured in the MockAccessor.
         rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
@@ -1193,6 +1185,12 @@ public:
                                                "FAKEFAKEFAKE"));
     }
 
+    // We create accessor and other objects that depend on it in SetUp, not
+    // in the constructor, so derived test classes can override the behavior.
+    virtual void SetUp() {
+        createClient(GetParam());
+    }
+
     ~DatabaseClientTest() {
         // Make sure we return the default creator no matter if we set it or
         // not
@@ -1203,7 +1201,7 @@ public:
      * We initialize the client from a function, so we can call it multiple
      * times per test.
      */
-    void createClient() {
+    void createClient(const DatabaseClientTestParam* test_param) {
         // To make sure we always have empty diffs table at the beginning of
         // each test, we re-install the writable data source here.
         // Note: this is SQLite3 specific and a waste (though otherwise
@@ -1222,10 +1220,16 @@ public:
                       "Error setting up; command failed: " << install_cmd);
         }
 
-        current_accessor_ = (GetParam()->accessor_creator)();
+        current_accessor_ = test_param->accessor_creator();
         is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) !=
                     NULL);
         client_.reset(new DatabaseClient(qclass_, current_accessor_));
+
+        // set up the commonly used finder.
+        const DataSourceClient::FindResult result(client_->findZone(zname_));
+        assert(result.code == result::SUCCESS);
+        finder_ = dynamic_pointer_cast<DatabaseClient::Finder>(
+            result.zone_finder);
     }
 
     /**
@@ -1459,9 +1463,7 @@ class MockDatabaseClientTest : public DatabaseClientTest {
 protected:
     // Override SetUp() to avoid parameterized setup
     virtual void SetUp() {
-        current_accessor_ = createMockAccessor();
-        is_mock_ = true;
-        client_.reset(new DatabaseClient(qclass_, current_accessor_));
+        createClient(&mock_param);
     }
 };
 
@@ -4315,29 +4317,29 @@ TEST_P(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
     EXPECT_TRUE(client_->deleteZone(zname_));
 }
 
-#if 0
-TEST_P_CASE(RRsetCollectionTest, TestAccessorTypes);
+// This test fixture is parameterized so that we can share (most of) the test
+// cases with different types of data sources.
+class RRsetCollectionTest : public DatabaseClientTest {
+protected:
+    RRsetCollectionTest() : collection(NULL) {}
 
-// This test fixture is templated so that we can share (most of) the test
-// cases with different types of data sources.  Note that in test cases
-// we need to use 'this' to refer to member variables of the test class.
-template <typename ACCESSOR_TYPE>
-class RRsetCollectionTest : public DatabaseClientTest<ACCESSOR_TYPE> {
-public:
-    RRsetCollectionTest() :
-        DatabaseClientTest<ACCESSOR_TYPE>(),
-        updater(client_->getUpdater(zname_, false)),
-        collection(updater->getRRsetCollection())
-    {}
+    virtual void SetUp() {
+        DatabaseClientTest::SetUp();
+        updater = client_->getUpdater(zname_, false);
+        collection = &updater->getRRsetCollection();
+    }
 
     ZoneUpdaterPtr updater;
-    isc::dns::RRsetCollectionBase& collection;
+    isc::dns::RRsetCollectionBase* collection;
 };
+
+INSTANTIATE_TEST_CASE_P(, RRsetCollectionTest,
+                        ::testing::Values(&mock_param, &sqlite3_param));
 
 TEST_P(RRsetCollectionTest, find) {
     // Test the find() that returns ConstRRsetPtr
-    ConstRRsetPtr rrset = collection.find(Name("www.example.org."),
-                                                RRClass::IN(), RRType::A());
+    ConstRRsetPtr rrset = collection->find(Name("www.example.org."),
+                                           RRClass::IN(), RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -4345,59 +4347,55 @@ TEST_P(RRsetCollectionTest, find) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = collection.find(Name("foo.example.org"), qclass_,
-                                  RRType::A());
+    rrset = collection->find(Name("foo.example.org"), qclass_,
+                             RRType::A());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, but not with MX
-    rrset = collection.find(Name("www.example.org"), qclass_,
-                                  RRType::MX());
+    rrset = collection->find(Name("www.example.org"), qclass_, RRType::MX());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, with AAAA
-    rrset = collection.find(Name("www.example.org"), qclass_,
-                                  RRType::AAAA());
+    rrset = collection->find(Name("www.example.org"), qclass_, RRType::AAAA());
     EXPECT_TRUE(rrset);
 
     // www.example.org with AAAA does not exist in RRClass::CH()
-    rrset = collection.find(Name("www.example.org"), RRClass::CH(),
-                                  RRType::AAAA());
+    rrset = collection->find(Name("www.example.org"), RRClass::CH(),
+                             RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // Out-of-zone find()s must not throw.
-    rrset = collection.find(Name("www.example.com"), qclass_,
-                                  RRType::A());
+    rrset = collection->find(Name("www.example.com"), qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // "cname.example.org." with type CNAME should return the CNAME RRset
-    rrset = collection.find(Name("cname.example.org"), qclass_,
-                                  RRType::CNAME());
+    rrset = collection->find(Name("cname.example.org"), qclass_,
+                             RRType::CNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
     EXPECT_EQ(Name("cname.example.org"), rrset->getName());
 
     // "cname.example.org." with type A should return nothing
-    rrset = collection.find(Name("cname.example.org"), qclass_,
-                                  RRType::A());
+    rrset = collection->find(Name("cname.example.org"), qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // "dname.example.org." with type DNAME should return the DNAME RRset
-    rrset = collection.find(Name("dname.example.org"), qclass_,
-                                  RRType::DNAME());
+    rrset = collection->find(Name("dname.example.org"), qclass_,
+                             RRType::DNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::DNAME(), rrset->getType());
     EXPECT_EQ(Name("dname.example.org"), rrset->getName());
 
     // "below.dname.example.org." with type AAAA should return nothing
-    rrset = collection.find(Name("below.dname.example.org"),
-                                  qclass_, RRType::AAAA());
+    rrset = collection->find(Name("below.dname.example.org"),
+                             qclass_, RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // "below.dname.example.org." with type A does not return the record
     // (see top of file). See \c isc::datasrc::RRsetCollectionBase::find()
     // documentation for details.
-    rrset = collection.find(Name("below.dname.example.org"),
-                                  qclass_, RRType::A());
+    rrset = collection->find(Name("below.dname.example.org"), qclass_,
+                             RRType::A());
     EXPECT_FALSE(rrset);
 
     // With the FIND_GLUE_OK option passed to ZoneFinder's find(),
@@ -4405,8 +4403,8 @@ TEST_P(RRsetCollectionTest, find) {
     // return the NS record. Without FIND_GLUE_OK, ZoneFinder's find()
     // would return DELEGATION and the find() below would return
     // nothing.
-    rrset = collection.find(Name("delegation.example.org"),
-                                  qclass_, RRType::NS());
+    rrset = collection->find(Name("delegation.example.org"), qclass_,
+                             RRType::NS());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::NS(), rrset->getType());
     EXPECT_EQ(Name("delegation.example.org"), rrset->getName());
@@ -4415,14 +4413,14 @@ TEST_P(RRsetCollectionTest, find) {
     // searching for some "foo.wildcard.example.org." would make
     // ZoneFinder's find() return NXDOMAIN, and the find() below should
     // return nothing.
-    rrset = collection.find(Name("foo.wild.example.org"),
-                                  qclass_, RRType::A());
+    rrset = collection->find(Name("foo.wild.example.org"), qclass_,
+                             RRType::A());
     EXPECT_FALSE(rrset);
 
     // Searching directly for "*.wild.example.org." should return the
     // record.
-    rrset = collection.find(Name("*.wild.example.org"),
-                                  qclass_, RRType::A());
+    rrset = collection->find(Name("*.wild.example.org"), qclass_,
+                             RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(Name("*.wild.example.org"), rrset->getName());
@@ -4430,11 +4428,21 @@ TEST_P(RRsetCollectionTest, find) {
 
 TEST_P(RRsetCollectionTest, iteratorTest) {
     // Iterators are currently not implemented.
-    EXPECT_THROW(collection.begin(), isc::NotImplemented);
-    EXPECT_THROW(collection.end(), isc::NotImplemented);
+    EXPECT_THROW(collection->begin(), isc::NotImplemented);
+    EXPECT_THROW(collection->end(), isc::NotImplemented);
 }
 
-typedef RRsetCollectionTest<MockAccessor> MockRRsetCollectionTest;
+// This inherit the RRsetCollectionTest cases except for the parameterized
+// setup; it's intended to be used selected test cases that only work for mock
+// data sources.
+class MockRRsetCollectionTest : public RRsetCollectionTest {
+protected:
+    virtual void SetUp() {
+        createClient(&mock_param);
+        updater = client_->getUpdater(zname_, false);
+        collection = &updater->getRRsetCollection();
+    }
+};
 
 TEST_F(MockRRsetCollectionTest, findError) {
     // A test using the MockAccessor for checking that FindError is
@@ -4444,26 +4452,25 @@ TEST_F(MockRRsetCollectionTest, findError) {
     // The "dsexception.example.org." name is rigged by the MockAccessor
     // to throw a DataSourceError.
     EXPECT_THROW({
-        collection.find(Name("dsexception.example.org"), qclass_,
-                              RRType::A());
-    }, RRsetCollectionError);
+            collection->find(Name("dsexception.example.org"), qclass_,
+                             RRType::A());
+        }, RRsetCollectionError);
 }
 
-TEST_P_CASE(RRsetCollectionAndUpdaterTest, TestAccessorTypes);
-
-// This test fixture is templated so that we can share (most of) the test
-// cases with different types of data sources.  Note that in test cases
-// we need to use 'this' to refer to member variables of the test class.
-template <typename ACCESSOR_TYPE>
-class RRsetCollectionAndUpdaterTest : public DatabaseClientTest<ACCESSOR_TYPE> {
-public:
-    RRsetCollectionAndUpdaterTest() :
-        DatabaseClientTest<ACCESSOR_TYPE>(),
-        updater_(client_->getUpdater(zname_, false))
-    {}
+// This test fixture is parameterized so that we can share (most of) the test
+// cases with different types of data sources.
+class RRsetCollectionAndUpdaterTest : public DatabaseClientTest {
+protected:
+    virtual void SetUp() {
+        DatabaseClientTest::SetUp();
+        updater_ = client_->getUpdater(zname_, false);
+    }
 
     ZoneUpdaterPtr updater_;
 };
+
+INSTANTIATE_TEST_CASE_P(, RRsetCollectionAndUpdaterTest,
+                        ::testing::Values(&mock_param, &sqlite3_param));
 
 // Test that using addRRset() or deleteRRset() on the ZoneUpdater throws
 // after an RRsetCollection is created.
@@ -4486,8 +4493,7 @@ TEST_P(RRsetCollectionAndUpdaterTest, updateThrows) {
                  find(Name("www.example.org"), RRClass::IN(), RRType::MX()));
 
     // addRRset() must throw isc::InvalidOperation here.
-    EXPECT_THROW(updater_->addRRset(*rrset_),
-                 isc::InvalidOperation);
+    EXPECT_THROW(updater_->addRRset(*rrset_), isc::InvalidOperation);
 
     // 2. Deletion test
 
@@ -4505,12 +4511,10 @@ TEST_P(RRsetCollectionAndUpdaterTest, updateThrows) {
     // Just call getRRsetCollection() here. The .find() is unnecessary,
     // but we have it to use the result of getRRsetCollection().
     updater_->getRRsetCollection().find(Name("www.example.org"),
-                                              RRClass::IN(),
-                                              RRType::MX());
+                                        RRClass::IN(), RRType::MX());
 
     // deleteRRset() must throw isc::InvalidOperation here.
-    EXPECT_THROW(updater_->deleteRRset(*rrset_),
-                 isc::InvalidOperation);
+    EXPECT_THROW(updater_->deleteRRset(*rrset_), isc::InvalidOperation);
 }
 
 // Test that using an RRsetCollection after calling commit() on the
@@ -4526,10 +4530,8 @@ TEST_P(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
 
      // find() must throw RRsetCollectionError here, as the
      // RRsetCollection is disabled.
-     EXPECT_THROW(collection.find(Name("foo.wild.example.org"),
-                                  qclass_, RRType::A()),
-                  RRsetCollectionError);
+     EXPECT_THROW(collection.find(Name("foo.wild.example.org"), qclass_,
+                                  RRType::A()), RRsetCollectionError);
 }
-#endif  // 0
 
 }
