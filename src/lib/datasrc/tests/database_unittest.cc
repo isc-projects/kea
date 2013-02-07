@@ -3342,7 +3342,6 @@ TEST_P(DatabaseClientTest, addRRsetToNewZone) {
     checkLastAdded(rrset_added);
 }
 
-#if 0
 //
 // Below we define a set of NSEC3 update tests.
 //
@@ -3402,8 +3401,7 @@ TEST_P(DatabaseClientTest, addDeleteNSEC3InZone) {
     // Check if we can get the expected record.
     vector<ConstRRsetPtr> expected_rrsets;
     expected_rrsets.push_back(nsec3_rrset2);
-    nsec3Check(expected_rrsets, zname_, nsec3_hash,
-               *current_accessor_);
+    nsec3Check(expected_rrsets, zname_, nsec3_hash, *current_accessor_);
 }
 
 TEST_P(DatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
@@ -3429,8 +3427,7 @@ TEST_P(DatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
     vector<ConstRRsetPtr> expected_rrsets;
     expected_rrsets.push_back(nsec3_rrset);
     expected_rrsets.push_back(nsec3_sig_rrset2);
-    nsec3Check(expected_rrsets, zname_, nsec3_hash,
-               *current_accessor_);
+    nsec3Check(expected_rrsets, zname_, nsec3_hash, *current_accessor_);
 }
 
 TEST_P(DatabaseClientTest, addRRsetToCurrentZone) {
@@ -3446,16 +3443,14 @@ TEST_P(DatabaseClientTest, addRRsetToCurrentZone) {
     expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
     updater_->commit();
     {
         SCOPED_TRACE("add RRset after commit");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-                   empty_rdatas_);
+        doFindTest(*finder, qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3463,9 +3458,8 @@ TEST_P(DatabaseClientTest, addMultipleRRs) {
     // Similar to the previous case, but the added RRset contains multiple
     // RRs.
     updater_ = client_->getUpdater(zname_, false);
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.3"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.3"));
     updater_->addRRset(*rrset_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.1");
@@ -3473,9 +3467,8 @@ TEST_P(DatabaseClientTest, addMultipleRRs) {
     expected_rdatas_.push_back("192.0.2.3");
     {
         SCOPED_TRACE("add multiple RRs");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3492,9 +3485,8 @@ TEST_P(DatabaseClientTest, addRRsetOfLargerTTL) {
     expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset of larger TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3510,9 +3502,8 @@ TEST_P(DatabaseClientTest, addRRsetOfSmallerTTL) {
     expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset of smaller TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, RRTTL(1800), ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, RRTTL(1800),
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3522,20 +3513,17 @@ TEST_P(DatabaseClientTest, addSameRR) {
     // neither does the finder.  We may want to revisit it in future versions.
 
     updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_,
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.1"));
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.1"));
     updater_->addRRset(*rrset_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.1");
     expected_rdatas_.push_back("192.0.2.1");
     {
         SCOPED_TRACE("add same RR");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3543,20 +3531,16 @@ TEST_P(DatabaseClientTest, addDeviantRR) {
     updater_ = client_->getUpdater(zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
-    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(),
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "test text"));
+    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "test text"));
     EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
 
     // Out-of-zone owner name.  At a higher level this should be rejected,
     // but it doesn't happen in this interface.
-    rrset_.reset(new RRset(Name("example.com"), qclass_,
-                                 qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.100"));
+    rrset_.reset(new RRset(Name("example.com"), qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.100"));
     updater_->addRRset(*rrset_);
 
     expected_rdatas_.clear();
@@ -3566,16 +3550,14 @@ TEST_P(DatabaseClientTest, addDeviantRR) {
         // regardless of whether adding the RR succeeded, so this check
         // actually doesn't confirm it.
         SCOPED_TRACE("add out-of-zone RR");
-        EXPECT_THROW(updater_->getFinder().find(Name("example.com"),
-                                                      qtype_),
+        EXPECT_THROW(updater_->getFinder().find(Name("example.com"), qtype_),
                      OutOfZone);
     }
 }
 
 TEST_P(DatabaseClientTest, addEmptyRRset) {
     updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_,
-                                 rrttl_));
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
     EXPECT_THROW(updater_->addRRset(*rrset_), DataSourceError);
 }
 
@@ -3594,11 +3576,9 @@ TEST_P(DatabaseClientTest, addRRsetWithRRSIG) {
 TEST_P(DatabaseClientTest, deleteRRset) {
     boost::shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
-    rrset_.reset(new RRset(qname_, qclass_, qtype_,
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.1"));
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.1"));
 
     // Delete one RR from an RRset
     updater_ = client_->getUpdater(zname_, false);
@@ -3606,21 +3586,18 @@ TEST_P(DatabaseClientTest, deleteRRset) {
 
     // Delete the only RR of a name
     rrset_.reset(new RRset(Name("cname.example.org"), qclass_,
-                          RRType::CNAME(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "www.example.org."));
+                           RRType::CNAME(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "www.example.org."));
     updater_->deleteRRset(*rrset_);
 
     // The updater_ finder should immediately see the deleted results.
     {
         SCOPED_TRACE("delete RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::NXRRSET,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::NXRRSET, empty_rdatas_, empty_rdatas_);
         doFindTest(updater_->getFinder(), Name("cname.example.org"),
-                   qtype_, qtype_, rrttl_,
-                   ZoneFinder::NXDOMAIN, empty_rdatas_,
+                   qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN, empty_rdatas_,
                    empty_rdatas_);
     }
 
@@ -3629,15 +3606,13 @@ TEST_P(DatabaseClientTest, deleteRRset) {
     {
         SCOPED_TRACE("delete RRset before commit");
         expected_rdatas_.push_back("192.0.2.1");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-                   empty_rdatas_);
+        doFindTest(*finder, qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
         expected_rdatas_.clear();
         expected_rdatas_.push_back("www.example.org.");
-        doFindTest(*finder, Name("cname.example.org"), qtype_,
-                   RRType::CNAME(), rrttl_, ZoneFinder::CNAME,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(*finder, Name("cname.example.org"), qtype_, RRType::CNAME(),
+                   rrttl_, ZoneFinder::CNAME, expected_rdatas_, empty_rdatas_);
     }
 
     // once committed, the record should be removed from the original finder's
@@ -3645,12 +3620,10 @@ TEST_P(DatabaseClientTest, deleteRRset) {
     updater_->commit();
     {
         SCOPED_TRACE("delete RRset after commit");
-        doFindTest(*finder, qname_, qtype_, qtype_,
-                   rrttl_, ZoneFinder::NXRRSET, empty_rdatas_,
-                   empty_rdatas_);
-        doFindTest(*finder, Name("cname.example.org"), qtype_,
-                   qtype_, rrttl_, ZoneFinder::NXDOMAIN,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(*finder, qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::NXRRSET, empty_rdatas_, empty_rdatas_);
+        doFindTest(*finder, Name("cname.example.org"), qtype_, qtype_, rrttl_,
+                   ZoneFinder::NXDOMAIN, empty_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3659,30 +3632,25 @@ TEST_P(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
     // given name.  a subsequent find() should result in NXDOMAIN.
     rrset_.reset(new RRset(Name("cname.example.org"), qclass_,
                            RRType::CNAME(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "www.example.org."));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "www.example.org."));
 
     updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("delete RRset to NXDOMAIN");
         doFindTest(updater_->getFinder(), Name("cname.example.org"),
-                   qtype_, qtype_, rrttl_,
-                   ZoneFinder::NXDOMAIN, empty_rdatas_,
+                   qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN, empty_rdatas_,
                    empty_rdatas_);
     }
 }
 
 TEST_P(DatabaseClientTest, deleteMultipleRRs) {
-    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(),
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::1"));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::2"));
+    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::1"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::2"));
 
     updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
@@ -3696,15 +3664,12 @@ TEST_P(DatabaseClientTest, deleteMultipleRRs) {
 }
 
 TEST_P(DatabaseClientTest, partialDelete) {
-    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(),
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::1"));
+    rrset_.reset(new RRset(qname_, qclass_, RRType::AAAA(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::1"));
     // This does not exist in the test data source:
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::3"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::3"));
 
     // deleteRRset should succeed "silently", and subsequent find() should
     // find the remaining RR.
@@ -3727,26 +3692,22 @@ TEST_P(DatabaseClientTest, deleteNoMatch) {
     {
         SCOPED_TRACE("delete no match");
         expected_rdatas_.push_back("192.0.2.1");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 }
 
 TEST_P(DatabaseClientTest, deleteWithDifferentTTL) {
     // Our delete interface simply ignores TTL (may change in a future version)
-    rrset_.reset(new RRset(qname_, qclass_, qtype_,
-                                 RRTTL(1800)));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.1"));
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, RRTTL(1800)));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.1"));
     updater_ = client_->getUpdater(zname_, false);
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("delete RRset with a different TTL");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::NXRRSET,
-                   empty_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::NXRRSET, empty_rdatas_, empty_rdatas_);
     }
 }
 
@@ -3754,20 +3715,16 @@ TEST_P(DatabaseClientTest, deleteDeviantRR) {
     updater_ = client_->getUpdater(zname_, false);
 
     // RR class mismatch.  This should be detected and rejected.
-    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(),
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "test text"));
+    rrset_.reset(new RRset(qname_, RRClass::CH(), RRType::TXT(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "test text"));
     EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 
     // Out-of-zone owner name.  At a higher level this should be rejected,
     // but it doesn't happen in this interface.
-    rrset_.reset(new RRset(Name("example.com"), qclass_,
-                                 qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.100"));
+    rrset_.reset(new RRset(Name("example.com"), qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.100"));
     EXPECT_NO_THROW(updater_->deleteRRset(*rrset_));
 }
 
@@ -3779,8 +3736,7 @@ TEST_P(DatabaseClientTest, deleteAfterCommit) {
 
 TEST_P(DatabaseClientTest, deleteEmptyRRset) {
     updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(qname_, qclass_, qtype_,
-                                 rrttl_));
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
     EXPECT_THROW(updater_->deleteRRset(*rrset_), DataSourceError);
 }
 
@@ -3803,64 +3759,51 @@ TEST_P(DatabaseClientTest, compoundUpdate) {
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.1");
     expected_rdatas_.push_back("192.0.2.2");
-    doFindTest(updater_->getFinder(), qname_, qtype_,
-               qtype_, rrttl_, ZoneFinder::SUCCESS,
-               expected_rdatas_, empty_rdatas_);
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // delete an existing RR
-    rrset_.reset(new RRset(Name("www.example.org"), qclass_,
-                                 qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.1"));
+    rrset_.reset(new RRset(Name("www.example.org"), qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.1"));
     updater_->deleteRRset(*rrset_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.2");
-    doFindTest(updater_->getFinder(), qname_, qtype_,
-               qtype_, rrttl_, ZoneFinder::SUCCESS,
-               expected_rdatas_, empty_rdatas_);
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // re-add it
     updater_->addRRset(*rrset_);
     expected_rdatas_.push_back("192.0.2.1");
-    doFindTest(updater_->getFinder(), qname_, qtype_,
-               qtype_, rrttl_, ZoneFinder::SUCCESS,
-               expected_rdatas_, empty_rdatas_);
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // add a new RR with a new name
     const Name newname("newname.example.org");
     const RRType newtype(RRType::AAAA());
-    doFindTest(updater_->getFinder(), newname, newtype, newtype,
-               rrttl_, ZoneFinder::NXDOMAIN, empty_rdatas_,
-               empty_rdatas_);
-    rrset_.reset(new RRset(newname, qclass_, newtype,
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::10"));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::11"));
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::NXDOMAIN, empty_rdatas_, empty_rdatas_);
+    rrset_.reset(new RRset(newname, qclass_, newtype, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::10"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::11"));
     updater_->addRRset(*rrset_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("2001:db8::10");
     expected_rdatas_.push_back("2001:db8::11");
-    doFindTest(updater_->getFinder(), newname, newtype, newtype,
-               rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-               empty_rdatas_);
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // delete one RR from the previous set
-    rrset_.reset(new RRset(newname, qclass_, newtype,
-                                 rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "2001:db8::11"));
+    rrset_.reset(new RRset(newname, qclass_, newtype, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "2001:db8::11"));
     updater_->deleteRRset(*rrset_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("2001:db8::10");
-    doFindTest(updater_->getFinder(), newname, newtype, newtype,
-               rrttl_, ZoneFinder::SUCCESS, expected_rdatas_,
-               empty_rdatas_);
+    doFindTest(updater_->getFinder(), newname, newtype, newtype, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // Commit the changes, confirm the entire changes applied.
     updater_->commit();
@@ -3868,22 +3811,19 @@ TEST_P(DatabaseClientTest, compoundUpdate) {
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.2");
     expected_rdatas_.push_back("192.0.2.1");
-    doFindTest(*finder, qname_, qtype_, qtype_, rrttl_,
-               ZoneFinder::SUCCESS, expected_rdatas_,
-               empty_rdatas_);
+    doFindTest(*finder, qname_, qtype_, qtype_, rrttl_, ZoneFinder::SUCCESS,
+               expected_rdatas_, empty_rdatas_);
 
     expected_rdatas_.clear();
     expected_rdatas_.push_back("2001:db8::10");
-    doFindTest(*finder, newname, newtype, newtype, rrttl_,
-               ZoneFinder::SUCCESS, expected_rdatas_,
-               empty_rdatas_);
+    doFindTest(*finder, newname, newtype, newtype, rrttl_, ZoneFinder::SUCCESS,
+               expected_rdatas_, empty_rdatas_);
 }
 
 TEST_P(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
-    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."),
-                              RRType::A()),
+    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."), RRType::A()),
                  DataSourceError);
     EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."),
                               RRType::A(), ZoneFinder::FIND_DNSSEC),
@@ -3915,13 +3855,10 @@ TEST_P(DatabaseClientTest, journal) {
     updater_ = client_->getUpdater(zname_, false, true);
     updater_->deleteRRset(*soa_);
     updater_->deleteRRset(*rrset_);
-    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(),
-                               rrttl_));
-    soa_->addRdata(rdata::createRdata(soa_->getType(),
-                                            soa_->getClass(),
-                                            "ns1.example.org. "
-                                            "admin.example.org. "
-                                            "1235 3600 1800 2419200 7200"));
+    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                      "ns1.example.org. admin.example.org. "
+                                      "1235 3600 1800 2419200 7200"));
     updater_->addRRset(*soa_);
     updater_->addRRset(*rrset_);
     ASSERT_NO_THROW(updater_->commit());
@@ -3958,13 +3895,10 @@ TEST_P(DatabaseClientTest, journalForNSEC3) {
     updater_->deleteRRset(*soa_);
     updater_->deleteRRset(*nsec3_rrset);
 
-    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(),
-                               rrttl_));
-    soa_->addRdata(rdata::createRdata(soa_->getType(),
-                                            soa_->getClass(),
-                                            "ns1.example.org. "
-                                            "admin.example.org. "
-                                            "1235 3600 1800 2419200 7200"));
+    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                      "ns1.example.org. admin.example.org. "
+                                      "1235 3600 1800 2419200 7200"));
     updater_->addRRset(*soa_);
     updater_->addRRset(*nsec3_rrset);
     updater_->commit();
@@ -4009,11 +3943,9 @@ TEST_P(DatabaseClientTest, journalMultiple) {
         // Create a new SOA
         soa_rdata = "ns1.example.org. admin.example.org. " +
             lexical_cast<std::string>(1234 + i) + " 3600 1800 2419200 7200";
-        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(),
-                                   rrttl_));
-        soa_->addRdata(rdata::createRdata(soa_->getType(),
-                                                soa_->getClass(),
-                                                soa_rdata));
+        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+        soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                          soa_rdata));
         // Add the new SOA
         updater_->addRRset(*soa_);
         expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234 + i,
@@ -4040,8 +3972,7 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
     {
         SCOPED_TRACE("Delete A before SOA");
         updater_ = client_->getUpdater(zname_, false, true);
-        EXPECT_THROW(updater_->deleteRRset(*rrset_),
-                     isc::BadValue);
+        EXPECT_THROW(updater_->deleteRRset(*rrset_), isc::BadValue);
         // Make sure the journal is empty now
         checkJournal(expected);
     }
@@ -4077,7 +4008,7 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
         EXPECT_NO_THROW(updater_->deleteRRset(*soa_));
         // Commit at the wrong time
         EXPECT_THROW(updater_->commit(), isc::BadValue);
-        current_accessor_->checkJournal(expected);
+        checkJournal(expected);
     }
 
     {
@@ -4113,8 +4044,7 @@ TEST_F(MockDatabaseClientTest, journalBadSequence) {
  * erasing the whole zone.
  */
 TEST_P(DatabaseClientTest, journalOnErase) {
-    EXPECT_THROW(client_->getUpdater(zname_, true, true),
-                 isc::BadValue);
+    EXPECT_THROW(client_->getUpdater(zname_, true, true), isc::BadValue);
 }
 
 /*
@@ -4162,8 +4092,7 @@ makeSimpleDiff(DataSourceClient& client, const Name& zname,
 
 TEST_P(DatabaseClientTest, journalReader) {
     // Check the simple case made by makeSimpleDiff.
-    ConstRRsetPtr soa_end = makeSimpleDiff(*client_, zname_,
-                                           qclass_, soa_);
+    ConstRRsetPtr soa_end = makeSimpleDiff(*client_, zname_, qclass_, soa_);
     pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
         client_->getJournalReader(zname_, 1234, 1235);
     EXPECT_EQ(ZoneJournalReader::SUCCESS, result.first);
@@ -4191,8 +4120,7 @@ TEST_P(DatabaseClientTest, readLargeJournal) {
     vector<ConstRRsetPtr> expected;
     for (size_t i = 0; i < 100; ++i) {
         // Create the old SOA and remove it, and record it in the expected list
-        RRsetPtr rrset1(new RRset(zname_, qclass_, RRType::SOA(),
-                                  rrttl_));
+        RRsetPtr rrset1(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
         string soa_rdata = "ns1.example.org. admin.example.org. " +
             lexical_cast<std::string>(1234 + i) + " 3600 1800 2419200 7200";
         rrset1->addRdata(rdata::createRdata(RRType::SOA(), qclass_,
@@ -4201,8 +4129,7 @@ TEST_P(DatabaseClientTest, readLargeJournal) {
         expected.push_back(rrset1);
 
         // Create a new SOA, add it, and record it.
-        RRsetPtr rrset2(new RRset(zname_, qclass_, RRType::SOA(),
-                                  rrttl_));
+        RRsetPtr rrset2(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
         soa_rdata = "ns1.example.org. admin.example.org. " +
             lexical_cast<std::string>(1234 + i + 1) +
             " 3600 1800 2419200 7200";
@@ -4235,7 +4162,7 @@ TEST_P(DatabaseClientTest, readJournalForNoRange) {
 }
 
 TEST_P(DatabaseClientTest, journalReaderForNXZone) {
-    pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
+    const pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
         client_->getJournalReader(Name("nosuchzone"), 0, 1);
     EXPECT_EQ(ZoneJournalReader::NO_SUCH_ZONE, result.first);
     EXPECT_FALSE(result.second);
@@ -4298,7 +4225,7 @@ TEST_P(DatabaseClientTest, findNSEC3) {
     EXPECT_THROW(finder->findNSEC3(Name("example.org"), false),
                  DataSourceError);
     // And enable NSEC3 in the zone.
-    current_accessor_->enableNSEC3();
+    (GetParam()->enable_nsec3_fn)(*current_accessor_);
 
     // The rest is in the function, it is shared with in-memory tests
     performNSEC3Test(*finder, true);
@@ -4306,15 +4233,13 @@ TEST_P(DatabaseClientTest, findNSEC3) {
 
 TEST_P(DatabaseClientTest, createZone) {
     const Name new_name("example.com");
-    const DataSourceClient::FindResult
-        zone(client_->findZone(new_name));
-    ASSERT_EQ(result::NOTFOUND, zone.code);
+    const DataSourceClient::FindResult result(client_->findZone(new_name));
+    ASSERT_EQ(result::NOTFOUND, result.code);
 
     // Adding a new zone; it should work and return true
     ASSERT_TRUE(client_->createZone(new_name));
-    const DataSourceClient::FindResult
-        zone2(client_->findZone(new_name));
-    ASSERT_EQ(result::SUCCESS, zone2.code);
+    const DataSourceClient::FindResult result2(client_->findZone(new_name));
+    ASSERT_EQ(result::SUCCESS, result2.code);
     // And the second call should return false since
     // it already exists
     allowMoreTransaction(true);
@@ -4323,8 +4248,7 @@ TEST_P(DatabaseClientTest, createZone) {
 
 TEST_P(DatabaseClientTest, createZoneRollbackOnLocked) {
     const Name new_name("example.com");
-    isc::datasrc::ZoneUpdaterPtr updater =
-        client_->getUpdater(zname_, true);
+    isc::datasrc::ZoneUpdaterPtr updater = client_->getUpdater(zname_, true);
     allowMoreTransaction(false);
     ASSERT_THROW(client_->createZone(new_name), DataSourceError);
     // createZone started a transaction as well, but since it failed,
@@ -4364,8 +4288,7 @@ TEST_P(DatabaseClientTest, deleteZone) {
 }
 
 TEST_P(DatabaseClientTest, deleteZoneRollbackOnLocked) {
-    isc::datasrc::ZoneUpdaterPtr updater =
-        client_->getUpdater(zname_, true);
+    isc::datasrc::ZoneUpdaterPtr updater = client_->getUpdater(zname_, true);
 
     // updater locks the DB so deleteZone() will fail.
     allowMoreTransaction(false);
@@ -4392,6 +4315,7 @@ TEST_P(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
     EXPECT_TRUE(client_->deleteZone(zname_));
 }
 
+#if 0
 TEST_P_CASE(RRsetCollectionTest, TestAccessorTypes);
 
 // This test fixture is templated so that we can share (most of) the test
