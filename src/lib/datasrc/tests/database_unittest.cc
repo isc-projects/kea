@@ -12,9 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "faked_nsec3.h"
-
-#include <exceptions/exceptions.h>
+#include <datasrc/tests/database_unittest.h>
+#include <datasrc/tests/faked_nsec3.h>
 
 #include <dns/masterload.h>
 #include <dns/name.h>
@@ -40,6 +39,7 @@
 
 #include <cstdlib>
 #include <map>
+#include <string>
 #include <vector>
 
 using namespace isc::datasrc;
@@ -53,205 +53,10 @@ using namespace isc::testutils;
 using namespace isc::datasrc::test;
 
 namespace {
-
 // Imaginary zone IDs used in the mock accessor below.
 const int READONLY_ZONE_ID = 42;
 const int NEW_ZONE_ID = 420;
 const int WRITABLE_ZONE_ID = 4200;
-
-// Commonly used test data
-const char* const TEST_RECORDS[][5] = {
-    // some plain data
-    {"www.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"www.example.org.", "AAAA", "3600", "", "2001:db8::1"},
-    {"www.example.org.", "AAAA", "3600", "", "2001:db8::2"},
-    {"www.example.org.", "NSEC", "3600", "", "www2.example.org. A AAAA NSEC RRSIG"},
-    {"www.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    {"www2.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"www2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
-    {"www2.example.org.", "A", "3600", "", "192.0.2.2"},
-
-    {"cname.example.org.", "CNAME", "3600", "", "www.example.org."},
-
-    // some DNSSEC-'signed' data
-    {"signed1.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
-    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::1"},
-    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::2"},
-    {"signed1.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    {"signedcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
-    {"signedcname1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    // special case might fail; sig is for cname, which isn't there (should be ignored)
-    // (ignoring of 'normal' other type is done above by www.)
-    {"acnamesig1.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"acnamesig1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"acnamesig1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    // let's pretend we have a database that is not careful
-    // about the order in which it returns data
-    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::2"},
-    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
-    {"signed2.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"signed2.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
-
-    {"signedcname2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"signedcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
-
-    {"acnamesig2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"acnamesig2.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"acnamesig2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    {"acnamesig3.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"acnamesig3.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"acnamesig3.example.org.", "A", "3600", "", "192.0.2.1"},
-
-    {"ttldiff1.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"ttldiff1.example.org.", "A", "360", "", "192.0.2.2"},
-
-    {"ttldiff2.example.org.", "A", "360", "", "192.0.2.1"},
-    {"ttldiff2.example.org.", "A", "3600", "", "192.0.2.2"},
-
-    // also add some intentionally bad data
-    {"badcname1.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"badcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
-
-    {"badcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
-    {"badcname2.example.org.", "A", "3600", "", "192.0.2.1"},
-
-    {"badcname3.example.org.", "CNAME", "3600", "", "www.example.org."},
-    {"badcname3.example.org.", "CNAME", "3600", "", "www.example2.org."},
-
-    {"badrdata.example.org.", "A", "3600", "", "bad"},
-
-    {"badtype.example.org.", "BAD_TYPE", "3600", "", "192.0.2.1"},
-
-    {"badttl.example.org.", "A", "badttl", "", "192.0.2.1"},
-
-    {"badsig.example.org.", "A", "badttl", "", "192.0.2.1"},
-    {"badsig.example.org.", "RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    {"badsigtype.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"badsigtype.example.org.", "RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    // Data for testing delegation (with NS and DNAME)
-    {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
-    {"delegation.example.org.", "NS", "3600", "",
-     "ns.delegation.example.org."},
-    {"delegation.example.org.", "DS", "3600", "", "1 1 2 abcd"},
-    {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
-     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"delegation.example.org.", "RRSIG", "3600", "", "DS 5 3 3600 "
-     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"deep.below.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
-
-    {"dname.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"dname.example.org.", "DNAME", "3600", "", "dname.example.com."},
-    {"dname.example.org.", "RRSIG", "3600", "",
-     "DNAME 5 3 3600 20000101000000 20000201000000 12345 "
-     "example.org. FAKEFAKEFAKE"},
-
-    {"below.dname.example.org.", "A", "3600", "", "192.0.2.1"},
-
-    // Insecure delegation (i.e., no DS at the delegation point)
-    {"insecdelegation.example.org.", "NS", "3600", "", "ns.example.com."},
-    {"insecdelegation.example.org.", "NSEC", "3600", "",
-     "dummy.example.org. NS NSEC"},
-    // and a DS under the zone cut. Such an RR shouldn't exist in a sane zone,
-    // but it could by error or some malicious attempt.  It shouldn't confuse
-    // the implementation)
-    {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
-     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    // Delegation NS and other ordinary type of RR coexist at the same
-    // name.  This is deviant (except for some special cases like the other
-    // RR could be used for addressing the NS name), but as long as the
-    // other records are hidden behind the delegation for normal queries
-    // it's not necessarily harmful. (so "broken" may be too strong, but we
-    // keep the name since it could be in a chain of sorted names for DNSSEC
-    // processing and renaming them may have other bad effects for tests).
-    {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"brokenns1.example.org.", "NS", "3600", "", "ns.example.com."},
-
-    // Now double DNAME, to test failure mode
-    {"baddname.example.org.", "DNAME", "3600", "", "dname1.example.com."},
-    {"baddname.example.org.", "DNAME", "3600", "", "dname2.example.com."},
-
-    // Put some data into apex (including NS) so we can check our NS
-    // doesn't break anything
-    {"example.org.", "SOA", "3600", "", "ns1.example.org. admin.example.org. "
-     "1234 3600 1800 2419200 7200" },
-    {"example.org.", "NS", "3600", "", "ns.example.com."},
-    {"example.org.", "A", "3600", "", "192.0.2.1"},
-    // Note that the RDATA text is "normalized", i.e., identical to what
-    // Rdata::toText() would produce.  some tests rely on that behavior.
-    {"example.org.", "NSEC", "3600", "",
-     "acnamesig1.example.org. A NS RRSIG NSEC"},
-    {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
-              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
-              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
-              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
-
-    // This is because of empty domain test
-    {"a.b.example.org.", "A", "3600", "", "192.0.2.1"},
-
-    // Something for wildcards
-    {"*.wild.example.org.", "A", "3600", "", "192.0.2.5"},
-    {"*.wild.example.org.", "RRSIG", "3600", "A", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"*.wild.example.org.", "NSEC", "3600", "", "cancel.here.wild.example.org. A NSEC RRSIG"},
-    {"*.wild.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {"cancel.here.wild.example.org.", "AAAA", "3600", "", "2001:db8::5"},
-    {"delegatedwild.example.org.", "NS", "3600", "", "ns.example.com."},
-    {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
-    {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
-    {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
-    {"wild.*.foo.*.bar.example.org.", "NSEC", "3600", "",
-     "brokenns1.example.org. A NSEC"},
-    {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
-    {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
-    {"*.dnamewild.example.org.", "DNAME", "3600", "", "dname.example.com."},
-    {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
-    // For NSEC empty non-terminal
-    {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
-    {"empty.nonterminal.example.org.", "A", "3600", "", "192.0.2.1"},
-    // Invalid rdata
-    {"invalidrdata.example.org.", "A", "3600", "", "Bunch of nonsense"},
-    {"invalidrdata2.example.org.", "A", "3600", "", "192.0.2.1"},
-    {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
-
-    {NULL, NULL, NULL, NULL, NULL},
-};
-
-// NSEC3PARAM at the zone origin and its RRSIG.  These will be added
-// separately for some NSEC3 related tests.
-const char* TEST_NSEC3PARAM_RECORDS[][5] = {
-    {"example.org.", "NSEC3PARAM", "3600", "", "1 0 12 aabbccdd"},
-    {"example.org.", "RRSIG", "3600", "", "NSEC3PARAM 5 3 3600 20000101000000 "
-     "20000201000000 12345 example.org. FAKEFAKEFAKE"},
-    {NULL, NULL, NULL, NULL, NULL}
-};
-
-// FIXME: Taken from a different test. Fill with proper data when creating a test.
-const char* TEST_NSEC3_RECORDS[][5] = {
-    {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
-    {apex_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
-    {ns1_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
-    {ns1_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
-    {w_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
-    {w_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
-    {zzz_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
-    {zzz_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
-    {NULL, NULL, NULL, NULL, NULL}
-};
 
 /*
  * An accessor with minimum implementation, keeping the original
@@ -357,52 +162,6 @@ public:
 private:
     const std::string database_name_;
     std::map<std::string, int> zones_;
-};
-
-/**
- * Single journal entry in the mock database.
- *
- * All the members there are public for simplicity, as it only stores data.
- * We use the implicit constructor and operator. The members can't be const
- * because of the assignment operator (used in the vectors).
- */
-struct JournalEntry {
-    JournalEntry(int id, uint32_t serial,
-                 DatabaseAccessor::DiffOperation operation,
-                 const std::string (&data)[DatabaseAccessor::DIFF_PARAM_COUNT])
-        : id_(id), serial_(serial), operation_(operation)
-    {
-        data_[DatabaseAccessor::DIFF_NAME] = data[DatabaseAccessor::DIFF_NAME];
-        data_[DatabaseAccessor::DIFF_TYPE] = data[DatabaseAccessor::DIFF_TYPE];
-        data_[DatabaseAccessor::DIFF_TTL] = data[DatabaseAccessor::DIFF_TTL];
-        data_[DatabaseAccessor::DIFF_RDATA] =
-            data[DatabaseAccessor::DIFF_RDATA];
-    }
-    JournalEntry(int id, uint32_t serial,
-                 DatabaseAccessor::DiffOperation operation,
-                 const std::string& name, const std::string& type,
-                 const std::string& ttl, const std::string& rdata):
-        id_(id), serial_(serial), operation_(operation)
-    {
-        data_[DatabaseAccessor::DIFF_NAME] = name;
-        data_[DatabaseAccessor::DIFF_TYPE] = type;
-        data_[DatabaseAccessor::DIFF_TTL] = ttl;
-        data_[DatabaseAccessor::DIFF_RDATA] = rdata;
-    }
-    int id_;
-    uint32_t serial_;
-    DatabaseAccessor::DiffOperation operation_;
-    std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
-    bool operator==(const JournalEntry& other) const {
-        for (size_t i = 0; i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
-            if (data_[i] != other.data_[i]) {
-                return false;
-            }
-        }
-        // No need to check data here, checked above
-        return (id_ == other.id_ && serial_ == other.serial_ &&
-                operation_ == other.operation_);
-    }
 };
 
 /*
@@ -1133,7 +892,379 @@ public:
         }
     }
 };
+}
 
+namespace isc {
+namespace datasrc {
+namespace test {
+
+const char* const TEST_RECORDS[][5] = {
+    // some plain data
+    {"www.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"www.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"www.example.org.", "NSEC", "3600", "", "www2.example.org. A AAAA NSEC RRSIG"},
+    {"www.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"www2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"www2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"www2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    {"cname.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    // some DNSSEC-'signed' data
+    {"signed1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"signed1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+    {"signed1.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed1.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"signedcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"signedcname1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // special case might fail; sig is for cname, which isn't there (should be ignored)
+    // (ignoring of 'normal' other type is done above by www.)
+    {"acnamesig1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig1.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // let's pretend we have a database that is not careful
+    // about the order in which it returns data
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::2"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12346 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"signed2.example.org.", "RRSIG", "3600", "", "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signed2.example.org.", "AAAA", "3600", "", "2001:db8::1"},
+
+    {"signedcname2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"signedcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"acnamesig2.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "CNAME 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "RRSIG", "3600", "", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"acnamesig3.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"ttldiff1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"ttldiff1.example.org.", "A", "360", "", "192.0.2.2"},
+
+    {"ttldiff2.example.org.", "A", "360", "", "192.0.2.1"},
+    {"ttldiff2.example.org.", "A", "3600", "", "192.0.2.2"},
+
+    // also add some intentionally bad data
+    {"badcname1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badcname1.example.org.", "CNAME", "3600", "", "www.example.org."},
+
+    {"badcname2.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname2.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"badcname3.example.org.", "CNAME", "3600", "", "www.example2.org."},
+
+    {"badrdata.example.org.", "A", "3600", "", "bad"},
+
+    {"badtype.example.org.", "BAD_TYPE", "3600", "", "192.0.2.1"},
+
+    {"badttl.example.org.", "A", "badttl", "", "192.0.2.1"},
+
+    {"badsig.example.org.", "A", "badttl", "", "192.0.2.1"},
+    {"badsig.example.org.", "RRSIG", "3600", "", "A 5 3 3600 somebaddata 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    {"badsigtype.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"badsigtype.example.org.", "RRSIG", "3600", "TXT", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // Data for testing delegation (with NS and DNAME)
+    {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"delegation.example.org.", "NS", "3600", "",
+     "ns.delegation.example.org."},
+    {"delegation.example.org.", "DS", "3600", "", "1 1 2 abcd"},
+    {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"delegation.example.org.", "RRSIG", "3600", "", "DS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"deep.below.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    {"dname.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"dname.example.org.", "DNAME", "3600", "", "dname.example.com."},
+    {"dname.example.org.", "RRSIG", "3600", "",
+     "DNAME 5 3 3600 20000101000000 20000201000000 12345 "
+     "example.org. FAKEFAKEFAKE"},
+
+    {"below.dname.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Insecure delegation (i.e., no DS at the delegation point)
+    {"insecdelegation.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"insecdelegation.example.org.", "NSEC", "3600", "",
+     "dummy.example.org. NS NSEC"},
+    // and a DS under the zone cut. Such an RR shouldn't exist in a sane zone,
+    // but it could by error or some malicious attempt.  It shouldn't confuse
+    // the implementation)
+    {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // Delegation NS and other ordinary type of RR coexist at the same
+    // name.  This is deviant (except for some special cases like the other
+    // RR could be used for addressing the NS name), but as long as the
+    // other records are hidden behind the delegation for normal queries
+    // it's not necessarily harmful. (so "broken" may be too strong, but we
+    // keep the name since it could be in a chain of sorted names for DNSSEC
+    // processing and renaming them may have other bad effects for tests).
+    {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"brokenns1.example.org.", "NS", "3600", "", "ns.example.com."},
+
+    // Now double DNAME, to test failure mode
+    {"baddname.example.org.", "DNAME", "3600", "", "dname1.example.com."},
+    {"baddname.example.org.", "DNAME", "3600", "", "dname2.example.com."},
+
+    // Put some data into apex (including NS) so we can check our NS
+    // doesn't break anything
+    {"example.org.", "SOA", "3600", "", "ns1.example.org. admin.example.org. "
+     "1234 3600 1800 2419200 7200" },
+    {"example.org.", "NS", "3600", "", "ns.example.com."},
+    {"example.org.", "A", "3600", "", "192.0.2.1"},
+    // Note that the RDATA text is "normalized", i.e., identical to what
+    // Rdata::toText() would produce.  some tests rely on that behavior.
+    {"example.org.", "NSEC", "3600", "",
+     "acnamesig1.example.org. A NS RRSIG NSEC"},
+    {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"example.org.", "RRSIG", "3600", "", "NS 5 3 3600 20000101000000 "
+              "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+
+    // This is because of empty domain test
+    {"a.b.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Something for wildcards
+    {"*.wild.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"*.wild.example.org.", "RRSIG", "3600", "A", "A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"*.wild.example.org.", "NSEC", "3600", "", "cancel.here.wild.example.org. A NSEC RRSIG"},
+    {"*.wild.example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"cancel.here.wild.example.org.", "AAAA", "3600", "", "2001:db8::5"},
+    {"delegatedwild.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"*.delegatedwild.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.*.bar.example.org.", "A", "3600", "", "192.0.2.5"},
+    {"wild.*.foo.*.bar.example.org.", "NSEC", "3600", "",
+     "brokenns1.example.org. A NSEC"},
+    {"bao.example.org.", "NSEC", "3600", "", "wild.*.foo.*.bar.example.org. NSEC"},
+    {"*.cnamewild.example.org.", "CNAME", "3600", "", "www.example.org."},
+    {"*.dnamewild.example.org.", "DNAME", "3600", "", "dname.example.com."},
+    {"*.nswild.example.org.", "NS", "3600", "", "ns.example.com."},
+    // For NSEC empty non-terminal
+    {"l.example.org.", "NSEC", "3600", "", "empty.nonterminal.example.org. NSEC"},
+    {"empty.nonterminal.example.org.", "A", "3600", "", "192.0.2.1"},
+    // Invalid rdata
+    {"invalidrdata.example.org.", "A", "3600", "", "Bunch of nonsense"},
+    {"invalidrdata2.example.org.", "A", "3600", "", "192.0.2.1"},
+    {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
+
+    {NULL, NULL, NULL, NULL, NULL},
+};
+
+const char* TEST_NSEC3PARAM_RECORDS[][5] = {
+    {"example.org.", "NSEC3PARAM", "3600", "", "1 0 12 aabbccdd"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC3PARAM 5 3 3600 20000101000000 "
+     "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+
+const char* TEST_NSEC3_RECORDS[][5] = {
+    {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {apex_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {ns1_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {ns1_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {w_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {w_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {zzz_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {zzz_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+
+DatabaseClientTest::DatabaseClientTest() :
+    zname_("example.org"), qname_("www.example.org"),
+    qclass_(dns::RRClass::IN()),
+    qtype_(dns::RRType::A()),
+    rrttl_(3600)
+{
+    // Test IN/A RDATA to be added in update tests.  Intentionally using
+    // different data than the initial data configured in the MockAccessor.
+    rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
+                                        rrset_->getClass(), "192.0.2.2"));
+    soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
+    soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
+                                      "ns1.example.org. admin.example.org. "
+                                      "1234 3600 1800 2419200 7200"));
+
+    // And its RRSIG.  Also different from the configured one.
+    rrsigset_.reset(new RRset(qname_, qclass_, RRType::RRSIG(),
+                              rrttl_));
+    rrsigset_->addRdata(rdata::createRdata(rrsigset_->getType(),
+                                           rrsigset_->getClass(),
+                                           "A 5 3 0 20000101000000 "
+                                           "20000201000000 0 example.org. "
+                                           "FAKEFAKEFAKE"));
+}
+
+void
+DatabaseClientTest::createClient(const DatabaseClientTestParam* test_param) {
+    // To make sure we always have empty diffs table at the beginning of
+    // each test, we re-install the writable data source here.
+    // Note: this is SQLite3 specific and a waste (though otherwise
+    // harmless) for other types of data sources.  If and when we support
+    // more types of data sources in this test framework, we should
+    // probably move this to some specialized templated method specific
+    // to SQLite3 (or for even a longer term we should add an API to
+    // purge the diffs table).
+    const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_COMMONDIR
+        "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
+        "/rwtest.sqlite3.copied";
+    if (system(install_cmd) != 0) {
+        // any exception will do, this is failure in test setup, but nice
+        // to show the command that fails, and shouldn't be caught
+        isc_throw(isc::Exception,
+                  "Error setting up; command failed: " << install_cmd);
+    }
+
+    current_accessor_ = test_param->accessor_creator();
+    is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) !=
+                NULL);
+    client_.reset(new DatabaseClient(qclass_, current_accessor_));
+
+    // set up the commonly used finder.
+    const DataSourceClient::FindResult result(client_->findZone(zname_));
+    assert(result.code == result::SUCCESS);
+    finder_ = dynamic_pointer_cast<DatabaseClient::Finder>(
+        result.zone_finder);
+}
+
+void
+DatabaseClientTest::checkZoneFinder(const DataSourceClient::FindResult& zone) {
+    ASSERT_NE(ZoneFinderPtr(), zone.zone_finder) << "No zone finder";
+    boost::shared_ptr<DatabaseClient::Finder> finder(
+        boost::dynamic_pointer_cast<DatabaseClient::Finder>(
+            zone.zone_finder));
+    ASSERT_NE(boost::shared_ptr<DatabaseClient::Finder>(), finder) <<
+        "Wrong type of finder";
+    if (is_mock_) {
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+    }
+    EXPECT_EQ(current_accessor_.get(), &finder->getAccessor());
+}
+
+boost::shared_ptr<DatabaseClient::Finder> 
+DatabaseClientTest::getFinder() {
+    DataSourceClient::FindResult zone(client_->findZone(zname_));
+    EXPECT_EQ(result::SUCCESS, zone.code);
+    boost::shared_ptr<DatabaseClient::Finder> finder(
+        boost::dynamic_pointer_cast<DatabaseClient::Finder>(
+            zone.zone_finder));
+    if (is_mock_) {
+        EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
+    }
+
+    return (finder);
+}
+
+bool
+DatabaseClientTest::isRollbacked(bool expected) const {
+    if (is_mock_) {
+        const MockAccessor& mock_accessor =
+            dynamic_cast<const MockAccessor&>(*update_accessor_);
+        return (mock_accessor.isRollbacked());
+    } else {
+        return (expected);
+    }
+}
+
+void
+DatabaseClientTest::checkLastAdded(const char* const expected[]) const {
+    if (is_mock_) {
+        const MockAccessor* mock_accessor =
+            dynamic_cast<const MockAccessor*>(current_accessor_.get());
+        for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT; ++i) {
+            EXPECT_EQ(expected[i],
+                      mock_accessor->getLatestClone()->getLastAdded()[i]);
+        }
+    }
+}
+
+void
+DatabaseClientTest::setUpdateAccessor() {
+    if (is_mock_) {
+        const MockAccessor* mock_accessor =
+            dynamic_cast<const MockAccessor*>(current_accessor_.get());
+        update_accessor_ = mock_accessor->getLatestClone();
+    }
+}
+
+void
+DatabaseClientTest::checkJournal(const std::vector<JournalEntry>& expected) {
+    if (is_mock_) {
+        const MockAccessor* mock_accessor =
+            dynamic_cast<const MockAccessor*>(current_accessor_.get());
+        mock_accessor->checkJournal(expected);
+    } else {
+        // For other generic databases, retrieve the diff using the
+        // reader class and compare the resulting sequence of RRset.
+        // For simplicity we only consider the case where the expected
+        // sequence is not empty.
+        ASSERT_FALSE(expected.empty());
+        const Name zone_name(expected.front().
+                             data_[DatabaseAccessor::DIFF_NAME]);
+        ZoneJournalReaderPtr jnl_reader =
+            client_->getJournalReader(zone_name,
+                                      expected.front().serial_,
+                                      expected.back().serial_).second;
+        ASSERT_TRUE(jnl_reader);
+        ConstRRsetPtr rrset;
+        std::vector<JournalEntry>::const_iterator it = expected.begin();
+        for (rrset = jnl_reader->getNextDiff();
+             rrset && it != expected.end();
+             rrset = jnl_reader->getNextDiff(), ++it) {
+            typedef DatabaseAccessor Accessor;
+            RRsetPtr expected_rrset(
+                new RRset(Name((*it).data_[Accessor::DIFF_NAME]),
+                          qclass_,
+                          RRType((*it).data_[Accessor::DIFF_TYPE]),
+                          RRTTL((*it).data_[Accessor::DIFF_TTL])));
+            expected_rrset->addRdata(
+                rdata::createRdata(expected_rrset->getType(),
+                                   expected_rrset->getClass(),
+                                   (*it).data_[Accessor::DIFF_RDATA]));
+            rrsetCheck(expected_rrset, rrset);
+        }
+        // We should have examined all entries of both expected and
+        // actual data.
+        EXPECT_TRUE(it == expected.end());
+        ASSERT_FALSE(rrset);
+    }
+}
+
+void
+DatabaseClientTest::allowMoreTransaction(bool is_allowed) {
+    if (is_mock_) {
+        // Use a separate variable for MockAccessor&; some compilers
+        // would be confused otherwise.
+        MockAccessor& mock_accessor =
+            dynamic_cast<MockAccessor&>(*current_accessor_);
+        mock_accessor.allowMoreTransaction(is_allowed);
+    }
+}
+
+} // namespace test
+} // namespace datasrc
+} // namespace isc
+
+namespace {
 // This tests the default getRecords behaviour, throwing NotImplemented
 TEST(DatabaseConnectionTest, getRecords) {
     EXPECT_THROW(NopAccessor().getRecords(".", 1, false),
@@ -1146,236 +1277,6 @@ TEST(DatabaseConnectionTest, getAllRecords) {
     EXPECT_THROW(NopAccessor().getAllRecords(1),
                  isc::NotImplemented);
 }
-
-// This is the type used as the test parameter.  Note that this is
-// intentionally a plain old type (i.e. a function pointer), not a class;
-// otherwise it could cause initialization fiasco at the instantiation time.
-struct DatabaseClientTestParam {
-    boost::shared_ptr<DatabaseAccessor> (*accessor_creator)();
-    void (*enable_nsec3_fn)(DatabaseAccessor& accessor);
-};
-
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
-class DatabaseClientTest :
-        public ::testing::TestWithParam<const DatabaseClientTestParam*>
-{
-public:
-    DatabaseClientTest() : zname_("example.org"), qname_("www.example.org"),
-                           qclass_(RRClass::IN()), qtype_(RRType::A()),
-                           rrttl_(3600)
-    {
-        // Test IN/A RDATA to be added in update tests.  Intentionally using
-        // different data than the initial data configured in the MockAccessor.
-        rrset_.reset(new RRset(qname_, qclass_, qtype_, rrttl_));
-        rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                            rrset_->getClass(), "192.0.2.2"));
-        soa_.reset(new RRset(zname_, qclass_, RRType::SOA(), rrttl_));
-        soa_->addRdata(rdata::createRdata(soa_->getType(), soa_->getClass(),
-                                         "ns1.example.org. admin.example.org. "
-                                         "1234 3600 1800 2419200 7200"));
-
-        // And its RRSIG.  Also different from the configured one.
-        rrsigset_.reset(new RRset(qname_, qclass_, RRType::RRSIG(),
-                                  rrttl_));
-        rrsigset_->addRdata(rdata::createRdata(rrsigset_->getType(),
-                                               rrsigset_->getClass(),
-                                               "A 5 3 0 20000101000000 "
-                                               "20000201000000 0 example.org. "
-                                               "FAKEFAKEFAKE"));
-    }
-
-    // We create accessor and other objects that depend on it in SetUp, not
-    // in the constructor, so derived test classes can override the behavior.
-    virtual void SetUp() {
-        createClient(GetParam());
-    }
-
-    ~DatabaseClientTest() {
-        // Make sure we return the default creator no matter if we set it or
-        // not
-        setNSEC3HashCreator(NULL);
-    }
-
-    /*
-     * We initialize the client from a function, so we can call it multiple
-     * times per test.
-     */
-    void createClient(const DatabaseClientTestParam* test_param) {
-        // To make sure we always have empty diffs table at the beginning of
-        // each test, we re-install the writable data source here.
-        // Note: this is SQLite3 specific and a waste (though otherwise
-        // harmless) for other types of data sources.  If and when we support
-        // more types of data sources in this test framework, we should
-        // probably move this to some specialized templated method specific
-        // to SQLite3 (or for even a longer term we should add an API to
-        // purge the diffs table).
-        const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_COMMONDIR
-            "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
-            "/rwtest.sqlite3.copied";
-        if (system(install_cmd) != 0) {
-            // any exception will do, this is failure in test setup, but nice
-            // to show the command that fails, and shouldn't be caught
-            isc_throw(isc::Exception,
-                      "Error setting up; command failed: " << install_cmd);
-        }
-
-        current_accessor_ = test_param->accessor_creator();
-        is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) !=
-                    NULL);
-        client_.reset(new DatabaseClient(qclass_, current_accessor_));
-
-        // set up the commonly used finder.
-        const DataSourceClient::FindResult result(client_->findZone(zname_));
-        assert(result.code == result::SUCCESS);
-        finder_ = dynamic_pointer_cast<DatabaseClient::Finder>(
-            result.zone_finder);
-    }
-
-    /**
-     * Check the zone finder is a valid one and references the zone ID and
-     * database available here.
-     */
-    void checkZoneFinder(const DataSourceClient::FindResult& zone) {
-        ASSERT_NE(ZoneFinderPtr(), zone.zone_finder) << "No zone finder";
-        boost::shared_ptr<DatabaseClient::Finder> finder(
-            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-        ASSERT_NE(boost::shared_ptr<DatabaseClient::Finder>(), finder) <<
-            "Wrong type of finder";
-        if (is_mock_) {
-            EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
-        }
-        EXPECT_EQ(current_accessor_.get(), &finder->getAccessor());
-    }
-
-    boost::shared_ptr<DatabaseClient::Finder> getFinder() {
-        DataSourceClient::FindResult zone(client_->findZone(zname_));
-        EXPECT_EQ(result::SUCCESS, zone.code);
-        boost::shared_ptr<DatabaseClient::Finder> finder(
-            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
-        if (is_mock_) {
-            EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
-        }
-
-        return (finder);
-    }
-
-    // Helper methods for update tests
-    bool isRollbacked(bool expected = false) const {
-        if (is_mock_) {
-            const MockAccessor& mock_accessor =
-                dynamic_cast<const MockAccessor&>(*update_accessor_);
-            return (mock_accessor.isRollbacked());
-        } else {
-            return (expected);
-        }
-    }
-
-    void checkLastAdded(const char* const expected[]) const {
-        if (is_mock_) {
-            const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_.get());
-            for (int i = 0; i < DatabaseAccessor::ADD_COLUMN_COUNT; ++i) {
-                EXPECT_EQ(expected[i],
-                          mock_accessor->getLatestClone()->getLastAdded()[i]);
-            }
-        }
-    }
-
-    void setUpdateAccessor() {
-        if (is_mock_) {
-            const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_.get());
-            update_accessor_ = mock_accessor->getLatestClone();
-        }
-    }
-
-    void checkJournal(const vector<JournalEntry>& expected) {
-        if (is_mock_) {
-            const MockAccessor* mock_accessor =
-                dynamic_cast<const MockAccessor*>(current_accessor_.get());
-            mock_accessor->checkJournal(expected);
-        } else {
-            // For other generic databases, retrieve the diff using the
-            // reader class and compare the resulting sequence of RRset.
-            // For simplicity we only consider the case where the expected
-            // sequence is not empty.
-            ASSERT_FALSE(expected.empty());
-            const Name zone_name(expected.front().
-                                 data_[DatabaseAccessor::DIFF_NAME]);
-            ZoneJournalReaderPtr jnl_reader =
-                client_->getJournalReader(zone_name,
-                                          expected.front().serial_,
-                                          expected.back().serial_).second;
-            ASSERT_TRUE(jnl_reader);
-            ConstRRsetPtr rrset;
-            vector<JournalEntry>::const_iterator it = expected.begin();
-            for (rrset = jnl_reader->getNextDiff();
-                 rrset && it != expected.end();
-                 rrset = jnl_reader->getNextDiff(), ++it) {
-                typedef DatabaseAccessor Accessor;
-                RRsetPtr expected_rrset(
-                    new RRset(Name((*it).data_[Accessor::DIFF_NAME]),
-                              qclass_,
-                              RRType((*it).data_[Accessor::DIFF_TYPE]),
-                              RRTTL((*it).data_[Accessor::DIFF_TTL])));
-                expected_rrset->addRdata(
-                    rdata::createRdata(expected_rrset->getType(),
-                                       expected_rrset->getClass(),
-                                       (*it).data_[Accessor::DIFF_RDATA]));
-                rrsetCheck(expected_rrset, rrset);
-            }
-            // We should have examined all entries of both expected and
-            // actual data.
-            EXPECT_TRUE(it == expected.end());
-            ASSERT_FALSE(rrset);
-        }
-    }
-
-    // Mock-only; control whether to allow subsequent transaction.
-    void allowMoreTransaction(bool is_allowed) {
-        if (is_mock_) {
-            // Use a separate variable for MockAccessor&; some compilers
-            // would be confused otherwise.
-            MockAccessor& mock_accessor =
-                dynamic_cast<MockAccessor&>(*current_accessor_);
-            mock_accessor.allowMoreTransaction(is_allowed);
-        }
-    }
-
-    // Some tests only work for MockAccessor.  We remember whether our accessor
-    // is of that type.
-    bool is_mock_;
-
-    boost::shared_ptr<DatabaseAccessor> current_accessor_;
-    boost::shared_ptr<DatabaseClient> client_;
-    const std::string database_name_;
-
-    // The zone finder of the test zone commonly used in various tests.
-    boost::shared_ptr<DatabaseClient::Finder> finder_;
-
-    // Some shortcut variables for commonly used test parameters
-    const Name zname_; // the zone name stored in the test data source
-    const Name qname_; // commonly used name to be found
-    const RRClass qclass_;      // commonly used RR class used with qname
-    const RRType qtype_;        // commonly used RR type used with qname
-    const RRTTL rrttl_;         // commonly used RR TTL
-    RRsetPtr rrset_;            // for adding/deleting an RRset
-    RRsetPtr rrsigset_;         // for adding/deleting an RRset
-    RRsetPtr soa_;              // for adding/deleting an RRset
-
-    // update related objects to be tested
-    ZoneUpdaterPtr updater_;
-    boost::shared_ptr<const DatabaseAccessor> update_accessor_;
-
-    // placeholders
-    const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
-    std::vector<std::string> expected_rdatas_;
-    std::vector<std::string> expected_sig_rdatas_;
-
-    // A creator for use in several NSEC3 related tests.
-    TestNSEC3HashCreator test_nsec3_hash_creator_;
-};
 
 // The following two lines instantiate test cases with concrete accessor
 // classes to be tested.
@@ -4317,22 +4218,6 @@ TEST_P(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
     EXPECT_TRUE(client_->deleteZone(zname_));
 }
 
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
-class RRsetCollectionTest : public DatabaseClientTest {
-protected:
-    RRsetCollectionTest() : collection(NULL) {}
-
-    virtual void SetUp() {
-        DatabaseClientTest::SetUp();
-        updater = client_->getUpdater(zname_, false);
-        collection = &updater->getRRsetCollection();
-    }
-
-    ZoneUpdaterPtr updater;
-    isc::dns::RRsetCollectionBase* collection;
-};
-
 INSTANTIATE_TEST_CASE_P(, RRsetCollectionTest,
                         ::testing::Values(&mock_param, &sqlite3_param));
 
@@ -4456,18 +4341,6 @@ TEST_F(MockRRsetCollectionTest, findError) {
                              RRType::A());
         }, RRsetCollectionError);
 }
-
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
-class RRsetCollectionAndUpdaterTest : public DatabaseClientTest {
-protected:
-    virtual void SetUp() {
-        DatabaseClientTest::SetUp();
-        updater_ = client_->getUpdater(zname_, false);
-    }
-
-    ZoneUpdaterPtr updater_;
-};
 
 INSTANTIATE_TEST_CASE_P(, RRsetCollectionAndUpdaterTest,
                         ::testing::Values(&mock_param, &sqlite3_param));
