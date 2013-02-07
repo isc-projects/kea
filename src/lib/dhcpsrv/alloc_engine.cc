@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
 #include <cstring>
@@ -224,40 +225,49 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
     // left), but this has one major problem. We exactly control allocation
     // moment, but we currently do not control expiration time at all
 
-    unsigned int i = attempts_;
-    do {
-        IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
+    try {
+        unsigned int i = attempts_;
+        do {
+            IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
 
-        /// @todo: check if the address is reserved once we have host support
-        /// implemented
+            /// @todo: check if the address is reserved once we have host support
+            /// implemented
 
-        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
-        if (!existing) {
-            // there's no existing lease for selected candidate, so it is
-            // free. Let's allocate it.
-            Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                          fake_allocation);
-            if (lease) {
-                return (lease);
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
+            if (!existing) {
+                // there's no existing lease for selected candidate, so it is
+                // free. Let's allocate it.
+                Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
+                                              fake_allocation);
+                if (lease) {
+                    return (lease);
+                }
+
+                // Although the address was free just microseconds ago, it may have
+                // been taken just now. If the lease insertion fails, we continue
+                // allocation attempts.
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, duid, iaid,
+                                              fake_allocation));
+                }
             }
 
-            // Although the address was free just microseconds ago, it may have
-            // been taken just now. If the lease insertion fails, we continue
-            // allocation attempts.
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                          fake_allocation));
-            }
-        }
+            // Continue trying allocation until we run out of attempts
+            // (or attempts are set to 0, which means infinite)
+            --i;
+        } while ((i > 0) || !attempts_);
 
-        // continue trying allocation until we run out of attempts
-        // (or attempts are set to 0, which means infinite)
-        --i;
-    } while ( i || !attempts_);
+        // Unable to allocate an address, return an empty lease.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
 
-    isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
-              << " tries");
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
+    }
+
+    return (Lease6Ptr());
 }
 
 Lease4Ptr
@@ -342,40 +352,48 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     // left), but this has one major problem. We exactly control allocation
     // moment, but we currently do not control expiration time at all
 
-    unsigned int i = attempts_;
-    do {
-        IOAddress candidate = allocator_->pickAddress(subnet, clientid, hint);
+    try {
+        unsigned int i = attempts_;
+        do {
+            IOAddress candidate = allocator_->pickAddress(subnet, clientid, hint);
 
-        /// @todo: check if the address is reserved once we have host support
-        /// implemented
+            /// @todo: check if the address is reserved once we have host support
+            /// implemented
 
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(candidate);
-        if (!existing) {
-            // there's no existing lease for selected candidate, so it is
-            // free. Let's allocate it.
-            Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, candidate,
-                                          fake_allocation);
-            if (lease) {
-                return (lease);
+            Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(candidate);
+            if (!existing) {
+                // there's no existing lease for selected candidate, so it is
+                // free. Let's allocate it.
+                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, candidate,
+                                              fake_allocation);
+                if (lease) {
+                    return (lease);
+                }
+
+                // Although the address was free just microseconds ago, it may have
+                // been taken just now. If the lease insertion fails, we continue
+                // allocation attempts.
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
+                                              fake_allocation));
+                }
             }
 
-            // Although the address was free just microseconds ago, it may have
-            // been taken just now. If the lease insertion fails, we continue
-            // allocation attempts.
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
-                                          fake_allocation));
-            }
-        }
+            // Continue trying allocation until we run out of attempts
+            // (or attempts are set to 0, which means infinite)
+            --i;
+        } while ((i > 0) || !attempts_);
 
-        // Continue trying allocation until we run out of attempts
-        // (or attempts are set to 0, which means infinite)
-        --i;
-    } while ( i || !attempts_);
+        // Unable to allocate an address, return an empty lease.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_FAIL).arg(attempts_);
 
-    isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
-              << " tries");
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_ERROR).arg(e.what());
+    }
+    return (Lease4Ptr());
 }
 
 Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
