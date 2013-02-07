@@ -1852,7 +1852,6 @@ doFindAtOriginTest(ZoneFinder& finder,
                    expected_flags, expected_name, options);
 }
 
-#if 0
 void
 doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     ZoneFinder::Result expected_result,
@@ -1896,7 +1895,6 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
     EXPECT_EQ(expected_name == isc::dns::Name::ROOT_NAME() ? name :
               expected_name, result->rrset->getName());
 }
-#endif
 
 // When asking for an RRset where RRs somehow have different TTLs, it should
 // convert to the lowest one.
@@ -2857,7 +2855,6 @@ TEST_P(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
-#if 0
 // Subroutine for dnssecFlagCheck defined below.  It performs some simple
 // checks regarding DNSSEC related result flags for findAll().
 void
@@ -2982,30 +2979,25 @@ TEST_P(DatabaseClientTest, dnssecResultFlags) {
     // purpose of this test).  The zone should now be considered NSEC3-signed.
     // Note that the apex NSEC still exists; NSEC3 should override NSEC.
     updater_ = client_->getUpdater(zname_, false);
-    rrset_.reset(new RRset(zname_, qclass_,
-                                 RRType::NSEC3PARAM(), rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "1 0 12 aabbccdd"));
+    rrset_.reset(new RRset(zname_, qclass_, RRType::NSEC3PARAM(), rrttl_));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "1 0 12 aabbccdd"));
     updater_->addRRset(*rrset_);
     {
         SCOPED_TRACE("NSEC and NSEC3");
-        dnssecFlagCheck(updater_->getFinder(),
-                        ZoneFinder::RESULT_NSEC3_SIGNED);
+        dnssecFlagCheck(updater_->getFinder(), ZoneFinder::RESULT_NSEC3_SIGNED);
     }
 
     // Next, delete the apex NSEC.  Since NSEC3PARAM remains, the zone should
     // still be considered NSEC3-signed.
-    RRsetPtr nsec_rrset(new RRset(zname_, qclass_, RRType::NSEC(),
-                                  rrttl_));
+    RRsetPtr nsec_rrset(new RRset(zname_, qclass_, RRType::NSEC(), rrttl_));
     nsec_rrset->addRdata(rdata::createRdata(RRType::NSEC(), qclass_,
                                             "acnamesig1.example.org. NS A "
                                             "NSEC RRSIG"));
     updater_->deleteRRset(*nsec_rrset);
     {
         SCOPED_TRACE("NSEC3 only");
-        dnssecFlagCheck(updater_->getFinder(),
-                        ZoneFinder::RESULT_NSEC3_SIGNED);
+        dnssecFlagCheck(updater_->getFinder(), ZoneFinder::RESULT_NSEC3_SIGNED);
     }
 
     // Finally, delete the NSEC3PARAM we just added above.  The zone should
@@ -3013,8 +3005,7 @@ TEST_P(DatabaseClientTest, dnssecResultFlags) {
     updater_->deleteRRset(*rrset_);
     {
         SCOPED_TRACE("unsigned");
-        dnssecFlagCheck(updater_->getFinder(),
-                        ZoneFinder::RESULT_DEFAULT);
+        dnssecFlagCheck(updater_->getFinder(), ZoneFinder::RESULT_DEFAULT);
     }
 }
 
@@ -3023,24 +3014,22 @@ TEST_P(DatabaseClientTest, NXDOMAIN_NSEC) {
     boost::shared_ptr<DatabaseClient::Finder> finder(getFinder());
     expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
     expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
+                                   "20000201000000 12345 example.org. "
+                                   "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("www1.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               rrttl_, ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_,
-               ZoneFinder::RESULT_NSEC_SIGNED, Name("www.example.org."),
-               ZoneFinder::FIND_DNSSEC);
+               rrttl_, ZoneFinder::NXDOMAIN, expected_rdatas_,
+               expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("acnamesig1.example.org. NS A NSEC RRSIG");
     // This tests it works correctly in apex (there was a bug, where a check
     // for NS-alone was there and it would throw).
     doFindTest(*finder, isc::dns::Name("aa.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               rrttl_, ZoneFinder::NXDOMAIN,
-               expected_rdatas_, expected_sig_rdatas_,
-               ZoneFinder::RESULT_NSEC_SIGNED, Name("example.org."),
-               ZoneFinder::FIND_DNSSEC);
+               rrttl_, ZoneFinder::NXDOMAIN, expected_rdatas_,
+               expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("example.org."), ZoneFinder::FIND_DNSSEC);
 
     // Check that if the DB doesn't support it, the exception from there
     // is not propagated and it only does not include the NSEC
@@ -3050,9 +3039,8 @@ TEST_P(DatabaseClientTest, NXDOMAIN_NSEC) {
     // In this case the accessor doesn't support findPreviousName(), but the
     // zone apex has NSEC, and the zone itself is considered NSEC-signed.
     doFindTest(*finder, Name("notimplnsec.example.org."),
-               RRType::TXT(), RRType::NSEC(), rrttl_,
-               ZoneFinder::NXDOMAIN, empty_rdatas_,
-               empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               RRType::TXT(), RRType::NSEC(), rrttl_, ZoneFinder::NXDOMAIN,
+               empty_rdatas_, empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
@@ -3063,8 +3051,7 @@ TEST_P(DatabaseClientTest, emptyNonterminalNSEC) {
     expected_rdatas_.push_back("empty.nonterminal.example.org. NSEC");
     doFindTest(*finder, isc::dns::Name("nonterminal.example.org."),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), rrttl_,
-               ZoneFinder::NXRRSET, expected_rdatas_,
-               expected_sig_rdatas_,
+               ZoneFinder::NXRRSET, expected_rdatas_, expected_sig_rdatas_,
                ZoneFinder::RESULT_NSEC_SIGNED, Name("l.example.org."),
                ZoneFinder::FIND_DNSSEC);
 
@@ -3075,16 +3062,15 @@ TEST_P(DatabaseClientTest, emptyNonterminalNSEC) {
     }
     // See the corresponding case of NXDOMAIN_NSEC.
     doFindTest(*finder, Name("here.wild.example.org."),
-               RRType::TXT(), RRType::NSEC(), rrttl_,
-               ZoneFinder::NXRRSET, empty_rdatas_,
-               empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               RRType::TXT(), RRType::NSEC(), rrttl_, ZoneFinder::NXRRSET,
+               empty_rdatas_, empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TEST_P(DatabaseClientTest, anyFromFind) {
     // Find will reject answering an ANY query
     EXPECT_THROW(getFinder()->find(isc::dns::Name("www2.example.org."),
-                                         RRType::ANY()), isc::Unexpected);
+                                   RRType::ANY()), isc::Unexpected);
 }
 
 TEST_P(DatabaseClientTest, findRRSIGsWithoutDNSSEC) {
@@ -3133,19 +3119,16 @@ TEST_P(DatabaseClientTest, getAll) {
     expected_rdatas_.push_back("ns.delegation.example.org.");
     expected_rdatas_.push_back("ns.example.com.");
     doFindAllTestResult(*finder, isc::dns::Name("xx.delegation.example.org."),
-                        ZoneFinder::DELEGATION, RRType::NS(),
-                        expected_rdatas_,
+                        ZoneFinder::DELEGATION, RRType::NS(), expected_rdatas_,
                         isc::dns::Name("delegation.example.org."));
     expected_rdatas_.clear();
     expected_rdatas_.push_back("www.example.org.");
     doFindAllTestResult(*finder, isc::dns::Name("cname.example.org"),
-                        ZoneFinder::CNAME, RRType::CNAME(),
-                        expected_rdatas_);
+                        ZoneFinder::CNAME, RRType::CNAME(), expected_rdatas_);
     expected_rdatas_.clear();
     expected_rdatas_.push_back("dname.example.com.");
     doFindAllTestResult(*finder, isc::dns::Name("a.dname.example.org"),
-                        ZoneFinder::DNAME, RRType::DNAME(),
-                        expected_rdatas_,
+                        ZoneFinder::DNAME, RRType::DNAME(), expected_rdatas_,
                         isc::dns::Name("dname.example.org."));
     // It should get the data on success
     EXPECT_EQ(ZoneFinder::SUCCESS,
@@ -3158,7 +3141,7 @@ TEST_P(DatabaseClientTest, getAll) {
     size_t count(0);
     for (RdataIteratorPtr it(target[a_idx]->getRdataIterator());
          !it->isLast(); it->next()) {
-        count ++;
+        ++count;
         EXPECT_NE(previous, it->getCurrent().toText());
         EXPECT_TRUE(it->getCurrent().toText() == "192.0.2.1" ||
                     it->getCurrent().toText() == "192.0.2.2");
@@ -3192,8 +3175,8 @@ TEST_P(DatabaseClientTest, getAll) {
     ConstRRsetPtr sig(target[a_idx]->getRRsig());
     ASSERT_TRUE(sig);
     EXPECT_EQ(RRType::RRSIG(), sig->getType());
-    EXPECT_EQ("A 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE",
-              sig->getRdataIterator()->getCurrent().toText());
+    EXPECT_EQ("A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+              "FAKEFAKEFAKE", sig->getRdataIterator()->getCurrent().toText());
     EXPECT_EQ(RRType::NSEC(), target[1 - a_idx]->getType());
     it = target[1 - a_idx]->getRdataIterator();
     ASSERT_FALSE(it->isLast());
@@ -3204,16 +3187,16 @@ TEST_P(DatabaseClientTest, getAll) {
     sig = target[1 - a_idx]->getRRsig();
     ASSERT_TRUE(sig);
     EXPECT_EQ(RRType::RRSIG(), sig->getType());
-    EXPECT_EQ("NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE",
-              sig->getRdataIterator()->getCurrent().toText());
+    EXPECT_EQ("NSEC 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+              "FAKEFAKEFAKE", sig->getRdataIterator()->getCurrent().toText());
 }
 
 TEST_P(DatabaseClientTest, getOrigin) {
-    DataSourceClient::FindResult
-        zone(client_->findZone(Name("example.org")));
-    ASSERT_EQ(result::SUCCESS, zone.code);
+    const DataSourceClient::FindResult result =
+        client_->findZone(Name("example.org"));
+    ASSERT_EQ(result::SUCCESS, result.code);
     boost::shared_ptr<DatabaseClient::Finder> finder(
-        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+        dynamic_pointer_cast<DatabaseClient::Finder>(result.zone_finder));
     if (is_mock_) {
         EXPECT_EQ(READONLY_ZONE_ID, finder->zone_id());
     }
@@ -3233,9 +3216,8 @@ TEST_P(DatabaseClientTest, updaterFinder) {
     }
     expected_rdatas_.clear();
     expected_rdatas_.push_back("192.0.2.1");
-    doFindTest(updater_->getFinder(), qname_,
-               qtype_, qtype_, rrttl_, ZoneFinder::SUCCESS,
-               expected_rdatas_, empty_rdatas_);
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
 
     // When replacing the zone, the updater's finder shouldn't see anything
     // in the zone until something is added.
@@ -3247,9 +3229,8 @@ TEST_P(DatabaseClientTest, updaterFinder) {
             updater_->getFinder());
         EXPECT_EQ(WRITABLE_ZONE_ID, finder.zone_id());
     }
-    doFindTest(updater_->getFinder(), qname_, qtype_,
-               qtype_, rrttl_, ZoneFinder::NXDOMAIN,
-               empty_rdatas_, empty_rdatas_);
+    doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+               ZoneFinder::NXDOMAIN, empty_rdatas_, empty_rdatas_);
 }
 
 TEST_P(DatabaseClientTest, flushZone) {
@@ -3257,23 +3238,19 @@ TEST_P(DatabaseClientTest, flushZone) {
     boost::shared_ptr<DatabaseClient::Finder> finder(getFinder());
 
     // Before update, the name exists.
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_,
-                                                qtype_)->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_)->code);
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
     updater_ = client_->getUpdater(zname_, true);
     setUpdateAccessor();
-    EXPECT_EQ(ZoneFinder::SUCCESS,
-              finder->find(qname_, qtype_)->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_)->code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              updater_->getFinder().find(qname_,
-                                               qtype_)->code);
+              updater_->getFinder().find(qname_, qtype_)->code);
 
     // commit the update.  now the normal finder shouldn't see it.
     updater_->commit();
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(qname_,
-                                                 qtype_)->code);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(qname_, qtype_)->code);
 
     // Check rollback wasn't accidentally performed.
     EXPECT_FALSE(isRollbacked());
@@ -3283,14 +3260,12 @@ TEST_P(DatabaseClientTest, updateCancel) {
     // similar to the previous test, but destruct the updater before commit.
 
     ZoneFinderPtr finder = client_->findZone(zname_).zone_finder;
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_,
-                                                qtype_)->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_)->code);
 
     updater_ = client_->getUpdater(zname_, true);
     setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              updater_->getFinder().find(qname_,
-                                               qtype_)->code);
+              updater_->getFinder().find(qname_, qtype_)->code);
     // DB should not have been rolled back yet.
     EXPECT_FALSE(isRollbacked());
     updater_.reset();            // destruct without commit
@@ -3299,8 +3274,7 @@ TEST_P(DatabaseClientTest, updateCancel) {
     // anything to the mock accessor implementation except for the result of
     // isRollbacked())
     EXPECT_TRUE(isRollbacked(true));
-    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_,
-                                                qtype_)->code);
+    EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(qname_, qtype_)->code);
 }
 
 TEST_P(DatabaseClientTest, exceptionFromRollback) {
@@ -3308,9 +3282,8 @@ TEST_P(DatabaseClientTest, exceptionFromRollback) {
 
     rrset_.reset(new RRset(Name("throw.example.org"), qclass_,
                                  qtype_, rrttl_));
-    rrset_->addRdata(rdata::createRdata(rrset_->getType(),
-                                              rrset_->getClass(),
-                                              "192.0.2.1"));
+    rrset_->addRdata(rdata::createRdata(rrset_->getType(), rrset_->getClass(),
+                                        "192.0.2.1"));
     updater_->addRRset(*rrset_);
     // destruct without commit.  The added name will result in an exception
     // in the MockAccessor's rollback method.  It shouldn't be propagated.
@@ -3333,9 +3306,8 @@ TEST_P(DatabaseClientTest, addRRsetToNewZone) {
     expected_rdatas_.push_back("192.0.2.2");
     {
         SCOPED_TRACE("add RRset");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, empty_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_, empty_rdatas_);
     }
 
     // Similar to the previous case, but with RRSIG
@@ -3352,13 +3324,12 @@ TEST_P(DatabaseClientTest, addRRsetToNewZone) {
     checkLastAdded(rrsig_added);
 
     expected_sig_rdatas_.clear();
-    expected_sig_rdatas_.push_back(
-        rrsig_added[DatabaseAccessor::ADD_RDATA]);
+    expected_sig_rdatas_.push_back(rrsig_added[DatabaseAccessor::ADD_RDATA]);
     {
         SCOPED_TRACE("add RRset with RRSIG");
-        doFindTest(updater_->getFinder(), qname_, qtype_,
-                   qtype_, rrttl_, ZoneFinder::SUCCESS,
-                   expected_rdatas_, expected_sig_rdatas_);
+        doFindTest(updater_->getFinder(), qname_, qtype_, qtype_, rrttl_,
+                   ZoneFinder::SUCCESS, expected_rdatas_,
+                   expected_sig_rdatas_);
     }
 
     // Add the non RRSIG RRset again, to see the attempt of adding RRSIG
@@ -3371,6 +3342,7 @@ TEST_P(DatabaseClientTest, addRRsetToNewZone) {
     checkLastAdded(rrset_added);
 }
 
+#if 0
 //
 // Below we define a set of NSEC3 update tests.
 //
