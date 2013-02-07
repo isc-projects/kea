@@ -15,14 +15,16 @@
 #ifndef ISC_SESSION_H
 #define ISC_SESSION_H 1
 
-#include <string>
+#include <cc/data.h>
+#include <cc/session_config.h>
 
-#include <boost/function.hpp>
+#include <util/common_defs.h>
 
 #include <exceptions/exceptions.h>
 
-#include <cc/data.h>
-#include <cc/session_config.h>
+#include <string>
+
+#include <boost/function.hpp>
 
 namespace asio {
 class io_service;
@@ -81,8 +83,10 @@ namespace isc {
             virtual void disconnect() = 0;
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
-                                      std::string instance = "*",
-                                      std::string to = "*",
+                                      std::string instance =
+                                          isc::util::CC_INSTANCE_WILDCARD,
+                                      std::string to =
+                                          isc::util::CC_TO_WILDCARD,
                                       bool want_answer = false) = 0;
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
@@ -164,9 +168,14 @@ namespace isc {
             /// @param returns socket descriptor used for session connection
             virtual int getSocketDesc() const;
     private:
-            void sendmsg(isc::data::ConstElementPtr msg);
-            void sendmsg(isc::data::ConstElementPtr env,
-                         isc::data::ConstElementPtr msg);
+            // The following two methods are virtual to allow tests steal and
+            // replace them. It is not expected to be specialized by a derived
+            // class. Actually, it is not expected to inherit from this class
+            // to begin with.
+            virtual void sendmsg(isc::data::ConstElementPtr msg);
+            virtual void sendmsg(isc::data::ConstElementPtr env,
+                                 isc::data::ConstElementPtr msg);
+
             bool recvmsg(isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
