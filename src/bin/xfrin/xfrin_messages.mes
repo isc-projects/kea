@@ -125,10 +125,6 @@ There was a problem sending a message to the xfrout module or the
 zone manager. This most likely means that the msgq daemon has quit or
 was killed.
 
-% XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1
-There was a problem sending a message to b10-auth. This most likely
-means that the msgq daemon has quit or was killed.
-
 % XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1
 There was a problem sending a message to the zone manager. This most
 likely means that the msgq daemon has quit or was killed.
