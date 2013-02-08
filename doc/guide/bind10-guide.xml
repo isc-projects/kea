@@ -740,17 +740,13 @@ as a dependency earlier -->
             </listitem>
           </varlistentry>
 
-          <varlistentry>
-            <term>--with-dhcp-mysql</term>
-            <listitem>
-              <simpara>Enable MySQL support for BIND 10 DHCP. For notes on configuring
-              and building DHCP with MySQL see <xref linkend="dhcp-install-configure">.</xref>
-              </simpara>
-            </listitem>
-          </varlistentry>
-
           </variablelist>
-
+          <note>
+            <para>
+              For additional instructions concerning the building and installation of
+              BIND 10 DHCP, see <xref linkend="dhcp-install-configure"/>.
+            </para>
+          </note>
         </para>
   <!-- TODO: lcov -->
 
@@ -3363,7 +3359,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
           Build and install BIND 10 as described in <xref linkend="installation"/>, with
           the following modification: to enable the MySQL database code, at the
           "configure" step (see <xref linkend="configure"/>), specify the location of the
-          MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
+          MySQL configuration program "mysql_config" with the "--with-dhcp-mysql" switch,
           i.e.
           <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
           ...if MySQL was installed in the default location, or:
@@ -4031,7 +4027,7 @@ Dhcp4/subnet4	[]	list	(default)
 </screen>
     The name of the option space in which the sub-options are defined
     is set in the "encapsulate" field. The "type" field is set to "empty"
-    which imposes that this option does not carry any data other than
+    to indicate that this option does not carry any data other than
     sub-options.
     </para>
     <para>
@@ -4063,20 +4059,19 @@ Dhcp4/subnet4	[]	list	(default)
 </screen>
     Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explictly set to an empty value.
-    It is required because the default configuration values are not
-    propagated to the configuration parsers in the current version of Kea.
-    If the "data" is not set the configuration parser will assume that this
-    parameter is not specified and the error will be reported.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
     </para>
     <para>Note that it is possible to create an option which carries some data
-    apart from the sub-options defined in the encapsulated option space.
-    If the "container" option from the previous example was to carry an uint16
-    value then the "type" value would have to be set to "uint16" instead of
-    "empty" in the option definition. Such option would have the following
-    data structure: DHCP header, uint16 value, sub-options. The value specified
-    with the "data" parameter will be assigned to the uint16 field in the
-    "container" option. This value must be a valid integer enclosed in quotes,
-    e.g. "123".
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
     </para>
     </section>
         </section>
@@ -4475,8 +4470,8 @@ Dhcp6/subnet6/	list
 
     <note>
       <para>
-        In future version of Kea versions, it will not be necessary to specify
-        option code, space and csv-format fields as those fields will be set
+        In future versions of BIND 10 DHCP, it will not be necessary to specify
+        option code, space and csv-format fields, as those fields will be set
         automatically.
       </para>
     </note>
@@ -4776,20 +4771,19 @@ should include options from the isc option space:
 </screen>
     Even though the "container" option does not carry any data except
     sub-options, the "data" field must be explictly set to an empty value.
-    It is required because the default configuration values are not
-    propagated to the configuration parsers in the current version of Kea.
-    If the "data" is not set the configuration parser will assume that this
-    parameter is not specified and the error will be reported.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
     </para>
     <para>Note that it is possible to create an option which carries some data
-    apart from the sub-options defined in the encapsulated option space.
-    If the "container" option from the previous example was to carry an uint16
-    value then the "type" value would have to be set to "uint16" instead of
-    "empty" in the option definition. Such option would have the following
-    data structure: DHCP header, uint16 value, sub-options. The value specified
-    with the "data" parameter will be assigned to the uint16 field in the
-    "container" option. This value must be a valid integer enclosed in quotes,
-    e.g. "123".
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
     </para>
     </section>
        
