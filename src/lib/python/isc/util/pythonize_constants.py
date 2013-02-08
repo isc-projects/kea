@@ -13,15 +13,24 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+'''
+This script takes a C++ file with constants and converts it to a python
+module. However, the syntax it parses is very limited (it doesn't understand
+C++ at all, it just looks for lines containing the equal sign and strips
+what it thinks might be type).
+
+The purpose is to keep the same values of constants in C++ and python. This
+saves the work of keeping the constants in sync manually and is less error
+prone.
+'''
+
 import sys
 import re
 
-def die(message):
-    sys.stderr.write(message + "\n")
-    sys.exit(1)
-
 if len(sys.argv) != 3:
-    die("Usage: python3 ./pythonize_constants.py input.cpp output.py")
+    sys.stderr.write("Usage: python3 ./pythonize_constants.py input.cpp output.py\n")
+    sys.exit(1)
+    die(
 
 [filename_in, filename_out] = sys.argv[1:3]
 
