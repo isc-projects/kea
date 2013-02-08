@@ -24,19 +24,19 @@ namespace util {
 
 // The constants used in the CC protocol
 // First the header names
-const char* CC_HEADER_TYPE = "type";
-const char* CC_HEADER_FROM = "from";
-const char* CC_HEADER_TO = "to";
-const char* CC_HEADER_GROUP = "group";
-const char* CC_HEADER_INSTANCE = "instance";
-const char* CC_HEADER_SEQ = "seq";
-const char* CC_HEADER_WANT_ANSWER = "want_answer";
-const char* CC_HEADER_REPLY = "reply";
+const char* const CC_HEADER_TYPE = "type";
+const char* const CC_HEADER_FROM = "from";
+const char* const CC_HEADER_TO = "to";
+const char* const CC_HEADER_GROUP = "group";
+const char* const CC_HEADER_INSTANCE = "instance";
+const char* const CC_HEADER_SEQ = "seq";
+const char* const CC_HEADER_WANT_ANSWER = "want_answer";
+const char* const CC_HEADER_REPLY = "reply";
 // The commands in the "type" header
-const char* CC_COMMAND_SEND = "send";
+const char* const CC_COMMAND_SEND = "send";
 // The wildcards of some headers
-const char* CC_TO_WILDCARD = "*";
-const char* CC_INSTANCE_WILDCARD = "*";
+const char* const CC_TO_WILDCARD = "*";
+const char* const CC_INSTANCE_WILDCARD = "*";
 // Reply codes
 const int CC_REPLY_NO_RECPT = -1;
 
