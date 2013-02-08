@@ -269,9 +269,9 @@ class Session:
         - instance Instance in the group.
         - to Direct recipient (overrides the above, should contain the
           lname of the recipient).
-        - want_answer If an answer is requested. If there's no recipient,
-          the message queue would send an error message instead of the
-          answer.
+        - want_answer If an answer is requested. If there's no recipient
+          and this is true, the message queue would send an error message
+          instead of the answer.
 
         Return:
           A sequence number that can be used to wait for an answer
