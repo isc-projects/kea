@@ -90,13 +90,52 @@ extern const char* TEST_NSEC3PARAM_RECORDS[][5];
 /// NSEC3, this data ban be ignored.  The loaded data are expected to be
 /// retrievable by subsequent \c getNSEC3Records() calls on the tested
 /// accessor.
+///
+/// The specific realization of the load can be specific to the accessor
+/// implementation, but if it conforms to the API of the following methods
+/// of \c DatabaseAccessor, it can be done by calling \c enableNSEC3Generic():
+/// - startUpdateZone()
+/// - addRecordToZone()
+/// - addNSEC3RecordToZone()
+/// - commit()
 extern const char* TEST_NSEC3_RECORDS[][5];
 
-// This is the type used as the test parameter.  Note that this is
-// intentionally a plain old type (i.e. a function pointer), not a class;
-// otherwise it could cause initialization fiasco at the instantiation time.
+/// \brief Test parameter for DatabaseClientTest.
+///
+/// This is the type of the parameter for the parameterized DatabaseClientTest
+/// and its derived variants.  It consists of a set of function pointers,
+/// including the factory of tested accessor.  A specific accessor
+/// implementation is expected to specify an instance of this structure,
+/// filling the members with appropriate functions for that accessor
+/// implementation.
+///
+/// Note that this is intentionally defined to be of plain old type (a plain
+/// structure whose members are bare function pointers); otherwise it could
+/// cause initialization fiasco at the instantiation time.
 struct DatabaseClientTestParam {
+    /// \brief The factory of the tested accessor.
+    ///
+    /// DatabaseClientTest will call this as part of the initialization of
+    /// each test case.  This function is expected to "load" the data
+    /// specified in TEST_RECORDS so they can be used in the tests.
+    ///
+    /// The creation of the accessor will be inherently implementation
+    /// dependent, but for loading the data it may be sufficient to call
+    /// \c loadTestDataGeneric.  See TEST_RECORDS for the condition.
     boost::shared_ptr<DatabaseAccessor> (*accessor_creator)();
+
+    /// \brief Make NSEC3 records for the test.
+    ///
+    /// Some test cases call this function when they need to test NSEC3-related
+    /// scenarios.  It's expected to "load" the data specified in
+    /// TEST_NSEC3PARAM_RECORDS and TEST_NSEC3_RECORDS.
+    ///
+    /// The passed accessor will be the one created by the preceding call
+    /// to \c accessor_creator.
+    ///
+    /// If the accessor implementation meets some condition, this member can
+    /// be the generic \c enableNSEC3Generic function.  See TEST_RECORDS
+    /// and TEST_NSEC3_RECORDS for the condition.
     void (*enable_nsec3_fn)(DatabaseAccessor& accessor);
 };
 
@@ -104,8 +143,21 @@ struct DatabaseClientTestParam {
 // this is private to the test implementation internal otherwise.
 struct JournalEntry;
 
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
+/// \brief Test fixture class for the DatabaseClient implementation.
+///
+/// The primary purpose of this fixture is to test the implementation of
+/// the DatabaseClient with an internal mock DatabaseAccessor accessor.
+/// But the test cases can also be used to check specific accessor
+/// implementations.  It will be convenient for implementors of new types of
+/// accessor.
+///
+/// This fixture is therefore parameterized so that a specific accessor
+/// implementation can customize accessor-specific data of the test
+/// (most notably the accessor itself, and also the way to make test data
+/// available through the accessor).
+///
+/// See database_sqlite3_unittest.cc for how to use this test with a specific
+/// accessor implementation.
 class DatabaseClientTest :
         public ::testing::TestWithParam<const DatabaseClientTestParam*>
 {
@@ -124,16 +176,12 @@ protected:
         dns::setNSEC3HashCreator(NULL);
     }
 
-    /*
-     * We initialize the client from a function, so we can call it multiple
-     * times per test.
-     */
+    // We initialize the client from a function, so we can call it multiple
+    // times per test.
     void createClient(const DatabaseClientTestParam* test_param);
 
-    /**
-     * Check the zone finder is a valid one and references the zone ID and
-     * database available here.
-     */
+    /// Check the zone finder is a valid one and references the zone ID and
+    /// database available here.
     void checkZoneFinder(const DataSourceClient::FindResult& zone);
 
     boost::shared_ptr<DatabaseClient::Finder> getFinder();
@@ -184,8 +232,10 @@ protected:
     TestNSEC3HashCreator test_nsec3_hash_creator_;
 };
 
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
+/// \brief Test fixture for RRsetCollectionTest with database updater.
+///
+/// Inherited from DatabaseClientTest to reuse some of the setup.
+/// This test fixture is parameterized just like DatabaseClientTest.
 class RRsetCollectionTest : public DatabaseClientTest {
 protected:
     RRsetCollectionTest() : collection(NULL) {}
@@ -212,8 +262,25 @@ protected:
     ZoneUpdaterPtr updater_;
 };
 
+/// \brief Generic test data loader.
+///
+/// This function is intended to be used within the accessor_creator function
+/// of DatabaseClientTestParam for tested accessor that implements the
+/// following methods:
+/// - startUpdateZone()
+/// - addRecordToZone()
+/// - commit()
 void loadTestDataGeneric(DatabaseAccessor& accessor);
 
+/// \brief Generic helper to prepare NSEC3 related test data.
+///
+/// This function can be specified for the enable_nsec3_fn member
+/// of DatabaseClientTestParam if the tested accessor implements the
+/// following methods:
+/// - startUpdateZone()
+/// - addRecordToZone()
+/// - addNSEC3RecordToZone()
+/// - commit()
 void enableNSEC3Generic(DatabaseAccessor& accessor);
 
 } // namespace test
