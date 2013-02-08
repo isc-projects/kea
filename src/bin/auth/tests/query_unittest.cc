@@ -826,6 +826,56 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
     }
 }
 
+class MockClient : public DataSourceClient {
+public:
+    virtual FindResult findZone(const isc::dns::Name& origin) const {
+        // First, check if an exact match is available. If it is, return
+        // it.
+        std::map<Name, ZoneFinderPtr>::const_iterator it =
+            zone_finders_.find(origin);
+        if (it != zone_finders_.end()) {
+            return (FindResult(result::SUCCESS, it->second));
+        }
+
+        // Do a slow linear search for a partial match now.
+        for (it = zone_finders_.begin(); it != zone_finders_.end(); ++it) {
+             const NameComparisonResult result = origin.compare(it->first);
+             if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
+                  return (FindResult(result::PARTIALMATCH, it->second));
+             }
+        }
+
+        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+    }
+
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool, bool) const {
+        isc_throw(isc::NotImplemented,
+                  "Updater isn't supported in the MockClient");
+    }
+
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
+        isc_throw(isc::NotImplemented,
+                  "Journaling isn't supported in the MockClient");
+    }
+
+    result::Result addZone(ZoneFinderPtr finder) {
+        zone_finders_[finder->getOrigin()] = finder;
+        return (result::SUCCESS);
+    }
+
+private:
+
+    // Note that because we no longer have the old RBTree, and the new
+    // in-memory DomainTree is not useful as it returns const nodes, we
+    // use a std::map instead. This is slightly slower when no exact
+    // match occurs as far as these unittests are concerned, but they
+    // are tests anyway and there aren't many zones in the map (2-3 at
+    // most), so we can ignore this slight inefficiency. It may even be
+    // faster due to the lack of overhead.
+    std::map<Name, ZoneFinderPtr> zone_finders_;
+};
+
 class QueryTest : public ::testing::TestWithParam<DataSrcType> {
 protected:
     QueryTest() :
@@ -851,7 +901,7 @@ protected:
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
         mock_finder = new MockZoneFinder();
-        memory_client.addZone(ZoneFinderPtr(mock_finder));
+        mock_client.addZone(ZoneFinderPtr(mock_finder));
     }
 
     virtual void SetUp() {
@@ -865,7 +915,7 @@ protected:
         // doesn't happen for derived test class.  This also ensures the
         // data source clients are configured after setting NSEC3 hash in case
         // there's dependency.
-        list_ = createDataSrcClientList(GetParam(), memory_client);
+        list_ = createDataSrcClientList(GetParam(), mock_client);
     }
 
     virtual void TearDown() {
@@ -991,11 +1041,7 @@ private:
 
 protected:
     MockZoneFinder* mock_finder;
-    // We use InMemoryClient here. We could have some kind of mock client
-    // here, but historically, the Query supported only InMemoryClient
-    // (originally named MemoryDataSrc) and was tested with it, so we keep
-    // it like this for now.
-    InMemoryClient memory_client;
+    MockClient mock_client;
 
     boost::shared_ptr<ClientList> list_;
     const Name qname;
@@ -1035,7 +1081,7 @@ class QueryTestForMockOnly : public QueryTest {
 protected:
     // Override SetUp() to avoid parameterized setup
     virtual void SetUp() {
-        list_ = createDataSrcClientList(MOCK, memory_client);
+        list_ = createDataSrcClientList(MOCK, mock_client);
     }
 };
 
@@ -1079,8 +1125,8 @@ responseCheck(Message& response, const isc::dns::Rcode& rcode,
 TEST_P(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
-    InMemoryClient empty_memory_client;
-    SingletonList empty_list(empty_memory_client);
+    MockClient empty_mock_client;
+    SingletonList empty_list(empty_mock_client);
     EXPECT_NO_THROW(query.process(empty_list, qname, qtype,
                                   response));
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
@@ -2284,8 +2330,8 @@ TEST_F(QueryTestForMockOnly, dsAboveDelegation) {
     // simple addition.  For now we test it for mock only.
 
     // Pretending to have authority for the child zone, too.
-    memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
-                                            Name("delegation.example.com"))));
+    mock_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
+                                           Name("delegation.example.com"))));
 
     // The following will succeed only if the search goes to the parent
     // zone, not the child one we added above.
@@ -2307,8 +2353,8 @@ TEST_P(QueryTest, dsAboveDelegationNoData) {
     // Similar to the previous case, but the query is for an unsigned zone
     // (which doesn't have a DS at the parent).  The response should be a
     // "no data" error.  The query should still be handled at the parent.
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(
                                   Name("unsigned-delegation.example.com"))));
 
     // The following will succeed only if the search goes to the parent
@@ -2392,8 +2438,8 @@ TEST_F(QueryTestForMockOnly, dsAtGrandParentAndChild) {
 
     // Pretending to have authority for the child zone, too.
     const Name childname("grand.delegation.example.com");
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(childname)));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(childname)));
     query.process(*list_, childname, RRType::DS(), response, true);
     // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
@@ -2414,8 +2460,8 @@ TEST_F(QueryTestForMockOnly, dsAtRoot) {
     // won't be simple addition.  For now we test it for mock only.
 
     // Pretend to be a root server.
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(Name::ROOT_NAME())));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(Name::ROOT_NAME())));
     query.process(*list_, Name::ROOT_NAME(), RRType::DS(), response,
                   true);
     // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
@@ -2434,9 +2480,8 @@ TEST_F(QueryTestForMockOnly, dsAtRootWithDS) {
     // We could setup the additional zone for other data sources, but it
     // won't be simple addition.  For now we test it for mock only.
 
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(Name::ROOT_NAME(),
-                                                      true)));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(Name::ROOT_NAME(), true)));
     query.process(*list_, Name::ROOT_NAME(), RRType::DS(), response,
                   true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
