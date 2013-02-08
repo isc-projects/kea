@@ -29,6 +29,7 @@ using namespace isc::data;
 
 std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
 const std::string STATIC_DS_FILE = TEST_DATA_DIR "/static.zone";
+const std::string STATIC_BAD_DS_FILE = TEST_DATA_DIR "/static-bad.zone";
 const std::string ROOT_ZONE_FILE = TEST_DATA_DIR "/root.zone";
 
 namespace {
@@ -187,13 +188,9 @@ TEST(FactoryTest, staticDS) {
 }
 
 // Check that file not containing BIND./CH is rejected
-//
-// FIXME: This test is disabled because the InMemoryZoneFinder::load does
-// not check if the data loaded correspond with the origin. The static
-// factory is not the place to fix that.
-TEST(FactoryTest, DISABLED_staticDSBadFile) {
+TEST(FactoryTest, staticDSBadFile) {
     // The only configuration is the file to load.
-    const ConstElementPtr config(new StringElement(STATIC_DS_FILE));
+    const ConstElementPtr config(new StringElement(STATIC_BAD_DS_FILE));
     // See it does not want the file
     EXPECT_THROW(DataSourceClientContainer("static", config), DataSourceError);
 }
