@@ -149,11 +149,11 @@ public:
 private:
     // Override the sendmsg. They are not sent over the real connection, but
     // stored locally and can be extracted by getSentMessage()
-    virtual void sendmsg(ConstElementPtr msg) {
-        sendmsg(msg, ConstElementPtr(new isc::data::NullElement));
+    virtual void sendmsg(ConstElementPtr header) {
+        sendmsg(header, ConstElementPtr(new isc::data::NullElement));
     }
-    virtual void sendmsg(ConstElementPtr env, ConstElementPtr msg) {
-        sent_messages_.push_back(SentMessage(env, msg));
+    virtual void sendmsg(ConstElementPtr header, ConstElementPtr payload) {
+        sent_messages_.push_back(SentMessage(header, payload));
     }
 
     // The sendmsg stores data here.
