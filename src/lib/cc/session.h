@@ -172,9 +172,9 @@ namespace isc {
             // replace them. It is not expected to be specialized by a derived
             // class. Actually, it is not expected to inherit from this class
             // to begin with.
-            virtual void sendmsg(isc::data::ConstElementPtr msg);
-            virtual void sendmsg(isc::data::ConstElementPtr env,
-                                 isc::data::ConstElementPtr msg);
+            virtual void sendmsg(isc::data::ConstElementPtr header);
+            virtual void sendmsg(isc::data::ConstElementPtr header,
+                                 isc::data::ConstElementPtr payload);
 
             bool recvmsg(isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
