@@ -1189,7 +1189,7 @@ DatabaseClientTest::checkZoneFinder(const DataSourceClient::FindResult& zone) {
     EXPECT_EQ(current_accessor_.get(), &finder->getAccessor());
 }
 
-boost::shared_ptr<DatabaseClient::Finder> 
+boost::shared_ptr<DatabaseClient::Finder>
 DatabaseClientTest::getFinder() {
     DataSourceClient::FindResult zone(client_->findZone(zname_));
     EXPECT_EQ(result::SUCCESS, zone.code);
