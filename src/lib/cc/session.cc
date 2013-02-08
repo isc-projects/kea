@@ -343,8 +343,8 @@ Session::establish(const char* socket_file) {
 // prefix.
 //
 void
-Session::sendmsg(ConstElementPtr msg) {
-    std::string header_wire = msg->toWire();
+Session::sendmsg(ConstElementPtr header) {
+    std::string header_wire = header->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
@@ -356,9 +356,9 @@ Session::sendmsg(ConstElementPtr msg) {
 }
 
 void
-Session::sendmsg(ConstElementPtr env, ConstElementPtr msg) {
-    std::string header_wire = env->toWire();
-    std::string body_wire = msg->toWire();
+Session::sendmsg(ConstElementPtr header, ConstElementPtr payload) {
+    std::string header_wire = header->toWire();
+    std::string body_wire = payload->toWire();
     unsigned int length = 2 + header_wire.length() + body_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
