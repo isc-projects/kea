@@ -30,7 +30,6 @@ import re
 if len(sys.argv) != 3:
     sys.stderr.write("Usage: python3 ./pythonize_constants.py input.cpp output.py\n")
     sys.exit(1)
-    die(
 
 [filename_in, filename_out] = sys.argv[1:3]
 
