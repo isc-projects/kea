@@ -65,7 +65,4 @@ INSTANTIATE_TEST_CASE_P(SQLite3, DatabaseClientTest,
 
 INSTANTIATE_TEST_CASE_P(SQLite3, RRsetCollectionTest,
                         ::testing::Values(&sqlite3_param));
-
-INSTANTIATE_TEST_CASE_P(SQLite3, RRsetCollectionAndUpdaterTest,
-                        ::testing::Values(&sqlite3_param));
 }

@@ -238,28 +238,14 @@ protected:
 /// This test fixture is parameterized just like DatabaseClientTest.
 class RRsetCollectionTest : public DatabaseClientTest {
 protected:
-    RRsetCollectionTest() : collection(NULL) {}
+    RRsetCollectionTest() {}
 
     virtual void SetUp() {
         DatabaseClientTest::SetUp();
         updater = client_->getUpdater(zname_, false);
-        collection = &updater->getRRsetCollection();
     }
 
     ZoneUpdaterPtr updater;
-    isc::dns::RRsetCollectionBase* collection;
-};
-
-// This test fixture is parameterized so that we can share (most of) the test
-// cases with different types of data sources.
-class RRsetCollectionAndUpdaterTest : public DatabaseClientTest {
-protected:
-    virtual void SetUp() {
-        DatabaseClientTest::SetUp();
-        updater_ = client_->getUpdater(zname_, false);
-    }
-
-    ZoneUpdaterPtr updater_;
 };
 
 /// \brief Generic test data loader.
