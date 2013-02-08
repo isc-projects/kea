@@ -1373,17 +1373,11 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC2) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about no_txt.  In this case the best possible wildcard
     // is derived from the next domain of the NSEC that proves NXDOMAIN, and
     // the NSEC to provide the non existence of wildcard is different from
     // the first NSEC.
-    query.process(*list_, Name("(.no.example.com"), qtype, response,
+    query.process(*list_, Name("%.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_minttl_txt) +
@@ -1393,19 +1387,12 @@ TEST_P(QueryTest, nxdomainWithNSEC2) {
                          string("mx.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work.  This is probably the same type of bug
-    // as nxdomainWithNSEC2 (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about nz_txt.  In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence of wildcard.
     query.process(*list_, Name("nx.no.example.com"), qtype, response,
@@ -1415,7 +1402,7 @@ TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
                          string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
@@ -1529,7 +1516,7 @@ TEST_P(QueryTest, nxrrsetWithNSEC) {
 TEST_P(QueryTest, emptyNameWithNSEC) {
     // Empty non terminal with DNSSEC proof.  This is one of the cases of
     // Section 3.1.3.2 of RFC4035.
-    // mx.example.com. NSEC ).no.example.com. proves no.example.com. is a
+    // mx.example.com. NSEC &.no.example.com. proves no.example.com. is a
     // non empty terminal node.  Note that it also implicitly proves there
     // should be no closer wildcard match (because the empty name is an
     // exact match), so we only need one NSEC.
