@@ -92,50 +92,6 @@ extern const char* TEST_NSEC3PARAM_RECORDS[][5];
 /// accessor.
 extern const char* TEST_NSEC3_RECORDS[][5];
 
-/// Single journal entry in the mock database.
-///
-/// All the members there are public for simplicity, as it only stores data.
-/// We use the implicit constructor and operator. The members can't be const
-/// because of the assignment operator (used in the vectors).
-struct JournalEntry {
-    JournalEntry(int id, uint32_t serial,
-                 DatabaseAccessor::DiffOperation operation,
-                 const std::string (&data)[DatabaseAccessor::DIFF_PARAM_COUNT])
-        : id_(id), serial_(serial), operation_(operation)
-    {
-        data_[DatabaseAccessor::DIFF_NAME] = data[DatabaseAccessor::DIFF_NAME];
-        data_[DatabaseAccessor::DIFF_TYPE] = data[DatabaseAccessor::DIFF_TYPE];
-        data_[DatabaseAccessor::DIFF_TTL] = data[DatabaseAccessor::DIFF_TTL];
-        data_[DatabaseAccessor::DIFF_RDATA] =
-            data[DatabaseAccessor::DIFF_RDATA];
-    }
-    JournalEntry(int id, uint32_t serial,
-                 DatabaseAccessor::DiffOperation operation,
-                 const std::string& name, const std::string& type,
-                 const std::string& ttl, const std::string& rdata):
-        id_(id), serial_(serial), operation_(operation)
-    {
-        data_[DatabaseAccessor::DIFF_NAME] = name;
-        data_[DatabaseAccessor::DIFF_TYPE] = type;
-        data_[DatabaseAccessor::DIFF_TTL] = ttl;
-        data_[DatabaseAccessor::DIFF_RDATA] = rdata;
-    }
-    int id_;
-    uint32_t serial_;
-    DatabaseAccessor::DiffOperation operation_;
-    std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
-    bool operator==(const JournalEntry& other) const {
-        for (size_t i = 0; i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
-            if (data_[i] != other.data_[i]) {
-                return false;
-            }
-        }
-        // No need to check data here, checked above
-        return (id_ == other.id_ && serial_ == other.serial_ &&
-                operation_ == other.operation_);
-    }
-};
-
 // This is the type used as the test parameter.  Note that this is
 // intentionally a plain old type (i.e. a function pointer), not a class;
 // otherwise it could cause initialization fiasco at the instantiation time.
@@ -143,6 +99,10 @@ struct DatabaseClientTestParam {
     boost::shared_ptr<DatabaseAccessor> (*accessor_creator)();
     void (*enable_nsec3_fn)(DatabaseAccessor& accessor);
 };
+
+// forward declaration, needed in the definition of DatabaseClientTest.
+// this is private to the test implementation internal otherwise.
+struct JournalEntry;
 
 // This test fixture is parameterized so that we can share (most of) the test
 // cases with different types of data sources.

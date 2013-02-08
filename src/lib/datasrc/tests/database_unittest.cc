@@ -50,6 +50,56 @@ using namespace isc::dns;
 using namespace isc::testutils;
 using namespace isc::datasrc::test;
 
+namespace isc {
+namespace datasrc {
+namespace test {
+/// Single journal entry in the mock database.
+///
+/// All the members there are public for simplicity, as it only stores data.
+/// We use the implicit constructor and operator. The members can't be const
+/// because of the assignment operator (used in the vectors).
+struct JournalEntry {
+    JournalEntry(int id, uint32_t serial,
+                 DatabaseAccessor::DiffOperation operation,
+                 const std::string (&data)[DatabaseAccessor::DIFF_PARAM_COUNT])
+        : id_(id), serial_(serial), operation_(operation)
+    {
+        data_[DatabaseAccessor::DIFF_NAME] = data[DatabaseAccessor::DIFF_NAME];
+        data_[DatabaseAccessor::DIFF_TYPE] = data[DatabaseAccessor::DIFF_TYPE];
+        data_[DatabaseAccessor::DIFF_TTL] = data[DatabaseAccessor::DIFF_TTL];
+        data_[DatabaseAccessor::DIFF_RDATA] =
+            data[DatabaseAccessor::DIFF_RDATA];
+    }
+    JournalEntry(int id, uint32_t serial,
+                 DatabaseAccessor::DiffOperation operation,
+                 const std::string& name, const std::string& type,
+                 const std::string& ttl, const std::string& rdata):
+        id_(id), serial_(serial), operation_(operation)
+    {
+        data_[DatabaseAccessor::DIFF_NAME] = name;
+        data_[DatabaseAccessor::DIFF_TYPE] = type;
+        data_[DatabaseAccessor::DIFF_TTL] = ttl;
+        data_[DatabaseAccessor::DIFF_RDATA] = rdata;
+    }
+    int id_;
+    uint32_t serial_;
+    DatabaseAccessor::DiffOperation operation_;
+    std::string data_[DatabaseAccessor::DIFF_PARAM_COUNT];
+    bool operator==(const JournalEntry& other) const {
+        for (size_t i = 0; i < DatabaseAccessor::DIFF_PARAM_COUNT; ++ i) {
+            if (data_[i] != other.data_[i]) {
+                return false;
+            }
+        }
+        // No need to check data here, checked above
+        return (id_ == other.id_ && serial_ == other.serial_ &&
+                operation_ == other.operation_);
+    }
+};
+}
+}
+}
+
 namespace {
 // Imaginary zone IDs used in the mock accessor below.
 const int READONLY_ZONE_ID = 42;
