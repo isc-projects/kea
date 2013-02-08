@@ -260,6 +260,7 @@ class MsgQTest(unittest.TestCase):
         self.assertEqual(2, sent_messages[0][0]) # The recipient
         self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
         sent_messages = []
+
         # If an attempt to send fails, consider it no recipient.
         def fail_send_prepared_msg(socket, msg):
             '''
@@ -267,6 +268,8 @@ class MsgQTest(unittest.TestCase):
             usual mock, so the errors or other messages can be sent.
             '''
             self.__msgq.send_prepared_msg = fake_send_prepared_msg
+            return False
+
         self.__msgq.send_prepared_msg = fail_send_prepared_msg
         self.__msgq.process_command_send(sender, routing, data)
         self.assertEqual(1, len(sent_messages))
