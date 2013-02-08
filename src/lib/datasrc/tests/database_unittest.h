@@ -34,24 +34,69 @@ namespace isc {
 namespace datasrc {
 namespace test {
 
-// Commonly used test data
+/// \brief Commonly used test data.
+///
+/// This is an array of 5 C-string tuples, each of the tuples has the
+/// following semantics.
+/// [0] textual form of fully qualified, dot-terminated domain name
+///     (NAME_COLUMN).
+/// [1] textual form of RR type, such as "AAAA" (TYPE_COLUMN)
+/// [2] textual numeric form of RR TTL (TTL_COLUMN)
+/// [3] textual form of RR type, intended to be used to represent the
+///     "covered type" of RRSIG RRs, but actually not used at the moment.
+///     (SIGTYPE_COLUMN)
+/// [4] textual form of RDATA of the type, e.g., "2001:db8::1" for AAAA
+///     (RDATA_COLUMN)
+///
+/// These correspond to the array fields returned by
+/// \c DatabaseAccessor::IteratorContext::getNext().  The upper-cased names
+/// surrounded by parentheses specify the corresponding field for the specific
+/// entry.
+///
+/// It ends with a special entry of an all-NULL tuple.
+///
+/// For testing a custom accessor, it's expected to "load" the data of these
+/// records on a call to \c accessor_creator member of
+/// \c DatabaseClientTestParam (see the structure description).  In tests,
+/// the loaded data should be able to be retrieved by subsequent
+/// \c getRecords() or \c getNSEC3Records() calls.  The specific realization
+/// of the load can be specific to the accessor implementation, but if it
+/// conforms to the API of the following methods of \c DatabaseAccessor,
+/// it can be done by calling \c loadTestDataGeneric():
+/// - startUpdateZone()
+/// - addRecordToZone()
+/// - commit()
 extern const char* const TEST_RECORDS[][5];
 
-// NSEC3PARAM at the zone origin and its RRSIG.  These will be added
-// separately for some NSEC3 related tests.
+/// \brief NSEC3PARAM at the zone origin and its RRSIG.
+///
+/// The semantics of the data is the same as that for TEST_RECORDS.
+///
+/// These will be "loaded" on a call to
+/// \c DatabaseClientTestParam::enable_nsec3_fn for some tests that tests
+/// NSEC3 related behavior.  If the tested accessor skips the support for
+/// NSEC3, this data ban be ignored.
 extern const char* TEST_NSEC3PARAM_RECORDS[][5];
 
-// FIXME: Taken from a different test. Fill with proper data when creating a
-// test.
+/// \brief NSEC3 RR data commonly used for NSEC3-related tests.
+///
+/// This is similar to TEST_RECORDS, but the first entry is base32-hex encoded
+/// hash value (which is expected to appear as the first label of NSEC3
+/// owner names), not an FQDN.
+///
+/// These will be "loaded" on a call to
+/// \c DatabaseClientTestParam::enable_nsec3_fn for some tests that tests
+/// NSEC3 related behavior.  If the tested accessor skips the support for
+/// NSEC3, this data ban be ignored.  The loaded data are expected to be
+/// retrievable by subsequent \c getNSEC3Records() calls on the tested
+/// accessor.
 extern const char* TEST_NSEC3_RECORDS[][5];
 
-/**
- * Single journal entry in the mock database.
- *
- * All the members there are public for simplicity, as it only stores data.
- * We use the implicit constructor and operator. The members can't be const
- * because of the assignment operator (used in the vectors).
- */
+/// Single journal entry in the mock database.
+///
+/// All the members there are public for simplicity, as it only stores data.
+/// We use the implicit constructor and operator. The members can't be const
+/// because of the assignment operator (used in the vectors).
 struct JournalEntry {
     JournalEntry(int id, uint32_t serial,
                  DatabaseAccessor::DiffOperation operation,
