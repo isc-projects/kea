@@ -1,3 +1,7 @@
+567.	[doc]		marcin, stephen, tomek
+	Update DHCP sections of the BIND 10 guide.
+	(Trac #2657, git 1d0c2004865d1bf322bf78d13630d992e39179fd)
+
 566.	[func]*		jinmei
 	libdns++/Python isc.dns: In Python isc.dns, function style
 	constants for RRType, RRClass, Rcode and Opcode were deprecated
