@@ -45,6 +45,8 @@ createSQLite3Accessor() {
                   "Error setting up; command failed: " << install_cmd);
     }
 
+    // The SQLite accessor implements all API, so we can use the generic
+    // loadTestDataGeneric once accessor is created.
     boost::shared_ptr<DatabaseAccessor> accessor(
         new SQLite3Accessor(TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
                             "IN"));
@@ -53,6 +55,8 @@ createSQLite3Accessor() {
     return (accessor);
 }
 
+// The test parameter for the SQLite3 accessor.  We can use enableNSEC3Generic
+// as this accessor fully supports NSEC3 related APIs.
 const DatabaseClientTestParam sqlite3_param = { createSQLite3Accessor,
                                                 enableNSEC3Generic };
 
