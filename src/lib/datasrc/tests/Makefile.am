@@ -52,6 +52,7 @@ run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += database_unittest.h database_unittest.cc
+run_unittests_SOURCES += database_sqlite3_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
