@@ -1239,6 +1239,58 @@ DatabaseClientTest::allowMoreTransaction(bool is_allowed) {
     }
 }
 
+void
+loadTestDataGeneric(DatabaseAccessor& accessor) {
+    accessor.startUpdateZone("example.org.", true);
+    string columns[DatabaseAccessor::ADD_COLUMN_COUNT];
+    for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
+        columns[DatabaseAccessor::ADD_NAME] = TEST_RECORDS[i][0];
+        columns[DatabaseAccessor::ADD_REV_NAME] =
+            Name(columns[DatabaseAccessor::ADD_NAME]).reverse().toText();
+        columns[DatabaseAccessor::ADD_TYPE] = TEST_RECORDS[i][1];
+        columns[DatabaseAccessor::ADD_TTL] = TEST_RECORDS[i][2];
+        columns[DatabaseAccessor::ADD_SIGTYPE] = TEST_RECORDS[i][3];
+        columns[DatabaseAccessor::ADD_RDATA] = TEST_RECORDS[i][4];
+
+        accessor.addRecordToZone(columns);
+    }
+    // We don't add NSEC3s until we are explicitly told we need them
+    // in enableNSEC3(); these would break some non NSEC3 tests.
+    accessor.commit();
+}
+
+void
+enableNSEC3Generic(DatabaseAccessor& accessor) {
+    accessor.startUpdateZone("example.org.", false);
+
+    // Add NSECPARAM at the zone origin
+    for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+        const string param_columns[DatabaseAccessor::ADD_COLUMN_COUNT] = {
+            TEST_NSEC3PARAM_RECORDS[i][0], // name
+            Name(param_columns[DatabaseAccessor::ADD_NAME]).reverse().toText(),
+            // revname
+            TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
+            TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
+            TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
+            TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
+        accessor.addRecordToZone(param_columns);
+    }
+
+    // Add NSEC3s
+    for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+        const string nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] =
+            {
+                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][2], // TTL
+                TEST_NSEC3_RECORDS[i][1], // RR type
+                TEST_NSEC3_RECORDS[i][4]  // RDATA
+            };
+        accessor.addNSEC3RecordToZone(nsec3_columns);
+    }
+
+    accessor.commit();
+}
+
 } // namespace test
 } // namespace datasrc
 } // namespace isc
