@@ -588,11 +588,12 @@ class MsgQ:
             # one should be enough, we modify the dict only.
             header = routing.copy()
             header[CC_HEADER_REPLY] = routing[CC_HEADER_SEQ]
-            header[CC_HEADER_FROM] = "msgq" # Dummy lname not assigned to clients
+            # Dummy lname not assigned to clients
+            header[CC_HEADER_FROM] = "msgq"
             header[CC_HEADER_TO] = routing[CC_HEADER_FROM]
             # We keep the seq as it is. We don't need to track the message
-            # and we will not confuse the sender. The sender would use an unique
-            # id for each message, so we won't return one twice to it.
+            # and we will not confuse the sender. The sender would use an
+            # unique id for each message, so we won't return one twice to it.
             errmsg = self.preparemsg(header, payload)
             # Send it back.
             self.send_prepared_msg(sock, errmsg)
