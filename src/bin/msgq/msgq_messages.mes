@@ -62,7 +62,7 @@ Debug message. The message queue received a configuration update, handling it.
 % MSGQ_EXITING exiting
 The msgq daemon is exiting.
 
-% MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
+% MSGQ_HDR_DECODE_ERROR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
 possible to decode the routing header of the packet. The packet is ignored.
 This may be caused by a programmer error (one of the components sending invalid
@@ -85,7 +85,7 @@ Debug message. The listener is trying to open a listening socket.
 Debug message. The message queue successfully opened a listening socket and
 waits for incoming connections.
 
-% MSGQ_POLL_ERR Error while polling for events: %1
+% MSGQ_POLL_ERROR Error while polling for events: %1
 A low-level error happened when waiting for events, the error is logged. The
 reason for this varies, but it usually means the system is short on some
 resources.
@@ -96,7 +96,7 @@ happen and it is either a programmer error or OS bug. The event is ignored. The
 number noted as the event is the raw encoded value, which might be useful to
 the authors when figuring the problem out.
 
-% MSGQ_RECV_ERR Error reading from socket %1: %2
+% MSGQ_RECV_ERROR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
 the corresponding socket is dropped.  The errors include receiving
 broken or (non empty but) incomplete data.  In either case it usually suggests
@@ -119,7 +119,7 @@ on shutdown unless there's really something unexpected.
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
 
-% MSGQ_SEND_ERR Error while sending to socket %1: %2
+% MSGQ_SEND_ERROR Error while sending to socket %1: %2
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
 
