@@ -13,15 +13,24 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+'''
+The script takes a C++ file with constant definitions and creates a
+header file for the constants. It, however, does not understand C++
+syntax, it only does some heuristics to guess what looks like
+a constant and strips the values.
+
+The purpose is just to save some work with keeping both the source and
+header. The source syntax must be limited already, because it's used to
+generate the python module (by the
+lib/python/isc/util/pythonize_constants.py script).
+'''
+
 import sys
 import re
 
-def die(message):
-    sys.stderr.write(message + "\n")
-    sys.exit(1)
-
 if len(sys.argv) != 3:
-    die("Usage: python3 ./const2hdr.py input.cpp output.h")
+    sys.stderr.write("Usage: python3 ./const2hdr.py input.cc output.h\n")
+    sys.exit(1)
 
 [filename_in, filename_out] = sys.argv[1:3]
 
