@@ -298,12 +298,16 @@ AC_SUBST(COMMON_PYTHON_PATH)
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
 
-	# make a copy of python-config --ldflags, removing any spaces and tabs
+	# Add any '-L..." flags to PYTHON_LDFLAGS.  We first make a copy of
+	# python-config --ldflags, removing any spaces and tabs
 	# between "-L" and its argument (some instances of python-config
-	# insert a space, which would confuse the code below)
-	python_config_ldflags=`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`
+	# insert a space, which would confuse the code below).
+	# Notes: if -L isn't contained at all we can simply skip this process,
+	# so we only go through the flag if it's contained; also, protecting
+	# the output with [] seems necessary for environment to avoid getting
+	# an empty output accidentally.
+	python_config_ldflags=[`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`]
 	for flag in $python_config_ldflags; do
-		# add any '-L..." flags to PYTHON_LDFLAGS
 		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
 		if test "X${flag}" != X; then
 			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
