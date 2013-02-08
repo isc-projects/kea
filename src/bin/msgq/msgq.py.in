@@ -567,8 +567,8 @@ class MsgQ:
             CC_HEADER_REPLY not in routing:
             # We have no recipients. But the sender insists on a reply
             # (and the message isn't a reply itself). We need to send
-            # an error to satisfy the senders hunger for response, since
-            # nobody else will do that.
+            # an error to satisfy the request, since there's nobody
+            # else who can.
             #
             # We omit the replies on purpose. The recipient might generate
             # the response by copying and mangling the header of incoming
