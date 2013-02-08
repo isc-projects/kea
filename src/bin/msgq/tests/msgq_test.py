@@ -175,9 +175,9 @@ class MsgQTest(unittest.TestCase):
         is missing to how we hendle the value in reply header). If
         we included everything, the test would have too many scenarios.
         """
-        sent_messages = []
+        self.__sent_messages = []
         def fake_send_prepared_msg(socket, msg):
-            sent_messages.append((socket, msg))
+            self.__sent_messages.append((socket, msg))
             return True
         self.__msgq.send_prepared_msg = fake_send_prepared_msg
         # These would be real sockets in the MsgQ, but we pass them as
@@ -197,69 +197,71 @@ class MsgQTest(unittest.TestCase):
         data = {
             "data": "Just some data"
         }
+
+        # Some common checking patterns
+        def check_error():
+            self.assertEqual(1, len(self.__sent_messages))
+            self.assertEqual(1, self.__sent_messages[0][0])
+            self.assertEqual(({
+                                  'group': 'group',
+                                  'instance': '*',
+                                  'reply': 42,
+                                  'seq': 42,
+                                  'from': 'msgq',
+                                  'to': 'sender',
+                                  'want_answer': True
+                              }, {'result': [-1, "No such recipient"]}),
+                              self.parse_msg(self.__sent_messages[0][1]))
+            self.__sent_messages = []
+
+        def check_no_message():
+            self.assertEqual([], self.__sent_messages)
+
+        def check_delivered(rcpt_socket=recipient):
+            self.assertEqual(1, len(self.__sent_messages))
+            self.assertEqual(rcpt_socket, self.__sent_messages[0][0])
+            self.assertEqual((routing, data),
+                             self.parse_msg(self.__sent_messages[0][1]))
+            self.__sent_messages = []
+
         # Send the message. No recipient, but errors are not requested,
         # so none is generated.
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual([], sent_messages)
+        check_no_message()
+
         # It should act the same if we explicitly say we do not want replies.
         routing["want_answer"] = False
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual([], sent_messages)
+        check_no_message()
+
         # Ask for errors if it can't be delivered.
         routing["want_answer"] = True
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(1, sent_messages[0][0])
-        self.assertEqual(({
-                              'group': 'group',
-                              'instance': '*',
-                              'reply': 42,
-                              'seq': 42,
-                              'from': 'msgq',
-                              'to': 'sender',
-                              'want_answer': True
-                          }, {'result': [-1, "No such recipient"]}),
-                          self.parse_msg(sent_messages[0][1]))
-        # the reply header too.
-        sent_messages = []
+        check_error()
+
         # If the message is a reply itself, we never generate the errors
         routing["reply"] = 3
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual([], sent_messages)
+        check_no_message()
+
         # If there are recipients (but no "reply" header), the error should not
         # be sent and the message should get delivered.
         del routing["reply"]
         self.__msgq.subs.find = lambda group, instance: [recipient]
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(2, sent_messages[0][0]) # The recipient
-        self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
-        sent_messages = []
+        check_delivered()
+
         # When we send a direct message and the recipient is not there, we get
         # the error too
         routing["to"] = "lname"
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(1, sent_messages[0][0])
-        self.assertEqual(({
-                              'group': 'group',
-                              'instance': '*',
-                              'reply': 42,
-                              'seq': 42,
-                              'from': 'msgq',
-                              'to': 'sender',
-                              'want_answer': True
-                          }, {'result': [-1, "No such recipient"]}),
-                          self.parse_msg(sent_messages[0][1]))
-        sent_messages = []
+        check_error()
+
         # But when the recipient is there, it is delivered and no error is
         # generated.
         self.__msgq.lnames["lname"] = recipient
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(2, sent_messages[0][0]) # The recipient
-        self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
-        sent_messages = []
+        check_delivered()
 
         # If an attempt to send fails, consider it no recipient.
         def fail_send_prepared_msg(socket, msg):
@@ -272,19 +274,8 @@ class MsgQTest(unittest.TestCase):
 
         self.__msgq.send_prepared_msg = fail_send_prepared_msg
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(1, sent_messages[0][0])
-        self.assertEqual(({
-                              'group': 'group',
-                              'instance': '*',
-                              'reply': 42,
-                              'seq': 42,
-                              'from': 'msgq',
-                              'to': 'sender',
-                              'want_answer': True
-                          }, {'result': [-1, "No such recipient"]}),
-                          self.parse_msg(sent_messages[0][1]))
-        sent_messages = []
+        check_error()
+
         # But if there are more recipients and only one fails, it should
         # be delivered to the other and not considered an error
         self.__msgq.send_prepared_msg = fail_send_prepared_msg
@@ -292,10 +283,7 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.subs.find = lambda group, instance: [recipient,
                                                          another_recipiet]
         self.__msgq.process_command_send(sender, routing, data)
-        self.assertEqual(1, len(sent_messages))
-        self.assertEqual(3, sent_messages[0][0]) # The recipient
-        self.assertEqual((routing, data), self.parse_msg(sent_messages[0][1]))
-        sent_messages = []
+        check_delivered(rcpt_socket=another_recipiet)
 
 class DummySocket:
     """
