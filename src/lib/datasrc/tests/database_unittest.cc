@@ -4241,9 +4241,11 @@ TEST_P(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
 INSTANTIATE_TEST_CASE_P(, RRsetCollectionTest, ::testing::Values(&mock_param));
 
 TEST_P(RRsetCollectionTest, find) {
+    isc::dns::RRsetCollectionBase& collection = updater->getRRsetCollection();
+
     // Test the find() that returns ConstRRsetPtr
-    ConstRRsetPtr rrset = collection->find(Name("www.example.org."),
-                                           RRClass::IN(), RRType::A());
+    ConstRRsetPtr rrset = collection.find(Name("www.example.org."),
+                                          RRClass::IN(), RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
@@ -4251,55 +4253,54 @@ TEST_P(RRsetCollectionTest, find) {
     EXPECT_EQ(Name("www.example.org"), rrset->getName());
 
     // foo.example.org doesn't exist
-    rrset = collection->find(Name("foo.example.org"), qclass_,
-                             RRType::A());
+    rrset = collection.find(Name("foo.example.org"), qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, but not with MX
-    rrset = collection->find(Name("www.example.org"), qclass_, RRType::MX());
+    rrset = collection.find(Name("www.example.org"), qclass_, RRType::MX());
     EXPECT_FALSE(rrset);
 
     // www.example.org exists, with AAAA
-    rrset = collection->find(Name("www.example.org"), qclass_, RRType::AAAA());
+    rrset = collection.find(Name("www.example.org"), qclass_, RRType::AAAA());
     EXPECT_TRUE(rrset);
 
     // www.example.org with AAAA does not exist in RRClass::CH()
-    rrset = collection->find(Name("www.example.org"), RRClass::CH(),
-                             RRType::AAAA());
+    rrset = collection.find(Name("www.example.org"), RRClass::CH(),
+                            RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // Out-of-zone find()s must not throw.
-    rrset = collection->find(Name("www.example.com"), qclass_, RRType::A());
+    rrset = collection.find(Name("www.example.com"), qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // "cname.example.org." with type CNAME should return the CNAME RRset
-    rrset = collection->find(Name("cname.example.org"), qclass_,
-                             RRType::CNAME());
+    rrset = collection.find(Name("cname.example.org"), qclass_,
+                            RRType::CNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
     EXPECT_EQ(Name("cname.example.org"), rrset->getName());
 
     // "cname.example.org." with type A should return nothing
-    rrset = collection->find(Name("cname.example.org"), qclass_, RRType::A());
+    rrset = collection.find(Name("cname.example.org"), qclass_, RRType::A());
     EXPECT_FALSE(rrset);
 
     // "dname.example.org." with type DNAME should return the DNAME RRset
-    rrset = collection->find(Name("dname.example.org"), qclass_,
-                             RRType::DNAME());
+    rrset = collection.find(Name("dname.example.org"), qclass_,
+                            RRType::DNAME());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::DNAME(), rrset->getType());
     EXPECT_EQ(Name("dname.example.org"), rrset->getName());
 
     // "below.dname.example.org." with type AAAA should return nothing
-    rrset = collection->find(Name("below.dname.example.org"),
-                             qclass_, RRType::AAAA());
+    rrset = collection.find(Name("below.dname.example.org"),
+                            qclass_, RRType::AAAA());
     EXPECT_FALSE(rrset);
 
     // "below.dname.example.org." with type A does not return the record
     // (see top of file). See \c isc::datasrc::RRsetCollectionBase::find()
     // documentation for details.
-    rrset = collection->find(Name("below.dname.example.org"), qclass_,
-                             RRType::A());
+    rrset = collection.find(Name("below.dname.example.org"), qclass_,
+                            RRType::A());
     EXPECT_FALSE(rrset);
 
     // With the FIND_GLUE_OK option passed to ZoneFinder's find(),
@@ -4307,8 +4308,8 @@ TEST_P(RRsetCollectionTest, find) {
     // return the NS record. Without FIND_GLUE_OK, ZoneFinder's find()
     // would return DELEGATION and the find() below would return
     // nothing.
-    rrset = collection->find(Name("delegation.example.org"), qclass_,
-                             RRType::NS());
+    rrset = collection.find(Name("delegation.example.org"), qclass_,
+                            RRType::NS());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::NS(), rrset->getType());
     EXPECT_EQ(Name("delegation.example.org"), rrset->getName());
@@ -4317,23 +4318,25 @@ TEST_P(RRsetCollectionTest, find) {
     // searching for some "foo.wildcard.example.org." would make
     // ZoneFinder's find() return NXDOMAIN, and the find() below should
     // return nothing.
-    rrset = collection->find(Name("foo.wild.example.org"), qclass_,
-                             RRType::A());
+    rrset = collection.find(Name("foo.wild.example.org"), qclass_,
+                            RRType::A());
     EXPECT_FALSE(rrset);
 
     // Searching directly for "*.wild.example.org." should return the
     // record.
-    rrset = collection->find(Name("*.wild.example.org"), qclass_,
-                             RRType::A());
+    rrset = collection.find(Name("*.wild.example.org"), qclass_,
+                            RRType::A());
     ASSERT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(Name("*.wild.example.org"), rrset->getName());
 }
 
 TEST_P(RRsetCollectionTest, iteratorTest) {
+    isc::dns::RRsetCollectionBase& collection = updater->getRRsetCollection();
+
     // Iterators are currently not implemented.
-    EXPECT_THROW(collection->begin(), isc::NotImplemented);
-    EXPECT_THROW(collection->end(), isc::NotImplemented);
+    EXPECT_THROW(collection.begin(), isc::NotImplemented);
+    EXPECT_THROW(collection.end(), isc::NotImplemented);
 }
 
 // This inherit the RRsetCollectionTest cases except for the parameterized
@@ -4344,7 +4347,6 @@ protected:
     virtual void SetUp() {
         createClient(&mock_param);
         updater = client_->getUpdater(zname_, false);
-        collection = &updater->getRRsetCollection();
     }
 };
 
@@ -4356,69 +4358,66 @@ TEST_F(MockRRsetCollectionTest, findError) {
     // The "dsexception.example.org." name is rigged by the MockAccessor
     // to throw a DataSourceError.
     EXPECT_THROW({
-            collection->find(Name("dsexception.example.org"), qclass_,
-                             RRType::A());
+            updater->getRRsetCollection().find(
+                Name("dsexception.example.org"), qclass_, RRType::A());
         }, RRsetCollectionError);
 }
 
-INSTANTIATE_TEST_CASE_P(, RRsetCollectionAndUpdaterTest,
-                        ::testing::Values(&mock_param));
-
 // Test that using addRRset() or deleteRRset() on the ZoneUpdater throws
 // after an RRsetCollection is created.
-TEST_P(RRsetCollectionAndUpdaterTest, updateThrows) {
+TEST_P(RRsetCollectionTest, updateThrows) {
     // 1. Addition test
 
     // addRRset() must not throw.
-    updater_->addRRset(*rrset_);
+    updater->addRRset(*rrset_);
 
     // Now setup a new updater and call getRRsetCollection() on it.
-    updater_.reset();
-    updater_ = client_->getUpdater(zname_, false);
+    updater.reset();
+    updater = client_->getUpdater(zname_, false);
 
     // Just call getRRsetCollection() here. The test using .find() is
     // unnecessary for the purpose of this test case, but we have it to
     // use the result of getRRsetCollection() and silence some compiler
     // complaining about ignoring the return value of
     // getRRsetCollection().
-    EXPECT_FALSE(updater_->getRRsetCollection().
+    EXPECT_FALSE(updater->getRRsetCollection().
                  find(Name("www.example.org"), RRClass::IN(), RRType::MX()));
 
     // addRRset() must throw isc::InvalidOperation here.
-    EXPECT_THROW(updater_->addRRset(*rrset_), isc::InvalidOperation);
+    EXPECT_THROW(updater->addRRset(*rrset_), isc::InvalidOperation);
 
     // 2. Deletion test
 
     // deleteRRset() must not throw.
-    updater_.reset();
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->addRRset(*rrset_);
-    updater_->deleteRRset(*rrset_);
+    updater.reset();
+    updater = client_->getUpdater(zname_, false);
+    updater->addRRset(*rrset_);
+    updater->deleteRRset(*rrset_);
 
     // Now setup a new updater and call getRRsetCollection() on it.
-    updater_.reset();
-    updater_ = client_->getUpdater(zname_, false);
-    updater_->addRRset(*rrset_);
+    updater.reset();
+    updater = client_->getUpdater(zname_, false);
+    updater->addRRset(*rrset_);
 
     // Just call getRRsetCollection() here. The .find() is unnecessary,
     // but we have it to use the result of getRRsetCollection().
-    updater_->getRRsetCollection().find(Name("www.example.org"),
-                                        RRClass::IN(), RRType::MX());
+    updater->getRRsetCollection().find(Name("www.example.org"),
+                                       RRClass::IN(), RRType::MX());
 
     // deleteRRset() must throw isc::InvalidOperation here.
-    EXPECT_THROW(updater_->deleteRRset(*rrset_), isc::InvalidOperation);
+    EXPECT_THROW(updater->deleteRRset(*rrset_), isc::InvalidOperation);
 }
 
 // Test that using an RRsetCollection after calling commit() on the
 // ZoneUpdater throws, as the RRsetCollection is disabled.
-TEST_P(RRsetCollectionAndUpdaterTest, useAfterCommitThrows) {
+TEST_P(RRsetCollectionTest, useAfterCommitThrows) {
      isc::dns::RRsetCollectionBase& collection =
-         updater_->getRRsetCollection();
+         updater->getRRsetCollection();
 
      // find() must not throw here.
      collection.find(Name("foo.wild.example.org"), qclass_, RRType::A());
 
-     updater_->commit();
+     updater->commit();
 
      // find() must throw RRsetCollectionError here, as the
      // RRsetCollection is disabled.
