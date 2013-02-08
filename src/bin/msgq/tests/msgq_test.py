@@ -171,7 +171,8 @@ class MsgQTest(unittest.TestCase):
         of existence of the recipient, addressing schemes, want_answer
         header and the reply header. It is not needed, these should
         be mostly independant (eg. if the recipient is missing, it
-        shouldn't matter why to the handling of the reply header). If
+        shouldn't matter by which means it was discovered the recipient
+        is missing to how we hendle the value in reply header). If
         we included everything, the test would have too many scenarios.
         """
         sent_messages = []
