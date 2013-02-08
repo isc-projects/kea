@@ -104,7 +104,7 @@ struct DatabaseClientTestParam {
 class DatabaseClientTest :
         public ::testing::TestWithParam<const DatabaseClientTestParam*>
 {
-public:
+protected:
     DatabaseClientTest();
 
     // We create accessor and other objects that depend on it in SetUp, not
@@ -206,6 +206,10 @@ protected:
 
     ZoneUpdaterPtr updater_;
 };
+
+void loadTestDataGeneric(DatabaseAccessor& accessor);
+
+void enableNSEC3Generic(DatabaseAccessor& accessor);
 
 } // namespace test
 } // namespace datasrc
