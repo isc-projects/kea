@@ -27,7 +27,6 @@
 #include <datasrc/zone_finder.h>
 #include <datasrc/data_source.h>
 #include <datasrc/zone_iterator.h>
-#include <datasrc/sqlite3_accessor.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -37,7 +36,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <cstdlib>
 #include <map>
 #include <string>
 #include <vector>
@@ -1116,27 +1114,8 @@ DatabaseClientTest::DatabaseClientTest() :
 
 void
 DatabaseClientTest::createClient(const DatabaseClientTestParam* test_param) {
-    // To make sure we always have empty diffs table at the beginning of
-    // each test, we re-install the writable data source here.
-    // Note: this is SQLite3 specific and a waste (though otherwise
-    // harmless) for other types of data sources.  If and when we support
-    // more types of data sources in this test framework, we should
-    // probably move this to some specialized templated method specific
-    // to SQLite3 (or for even a longer term we should add an API to
-    // purge the diffs table).
-    const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_COMMONDIR
-        "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
-        "/rwtest.sqlite3.copied";
-    if (system(install_cmd) != 0) {
-        // any exception will do, this is failure in test setup, but nice
-        // to show the command that fails, and shouldn't be caught
-        isc_throw(isc::Exception,
-                  "Error setting up; command failed: " << install_cmd);
-    }
-
     current_accessor_ = test_param->accessor_creator();
-    is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) !=
-                NULL);
+    is_mock_ = (dynamic_cast<MockAccessor*>(current_accessor_.get()) != NULL);
     client_.reset(new DatabaseClient(qclass_, current_accessor_));
 
     // set up the commonly used finder.
@@ -1291,71 +1270,10 @@ mockEnableNSEC3(DatabaseAccessor& accessor) {
     dynamic_cast<MockAccessor&>(accessor).enableNSEC3();
 }
 
-boost::shared_ptr<DatabaseAccessor>
-createSQLite3Accessor() {
-    boost::shared_ptr<DatabaseAccessor> accessor(
-        new SQLite3Accessor(TEST_DATA_BUILDDIR "/rwtest.sqlite3.copied",
-                            "IN"));
-
-    accessor->startUpdateZone("example.org.", true);
-    string columns[DatabaseAccessor::ADD_COLUMN_COUNT];
-    for (int i = 0; TEST_RECORDS[i][0] != NULL; ++i) {
-        columns[DatabaseAccessor::ADD_NAME] = TEST_RECORDS[i][0];
-        columns[DatabaseAccessor::ADD_REV_NAME] =
-            Name(columns[DatabaseAccessor::ADD_NAME]).reverse().toText();
-        columns[DatabaseAccessor::ADD_TYPE] = TEST_RECORDS[i][1];
-        columns[DatabaseAccessor::ADD_TTL] = TEST_RECORDS[i][2];
-        columns[DatabaseAccessor::ADD_SIGTYPE] = TEST_RECORDS[i][3];
-        columns[DatabaseAccessor::ADD_RDATA] = TEST_RECORDS[i][4];
-
-        accessor->addRecordToZone(columns);
-    }
-    // We don't add NSEC3s until we are explicitly told we need them
-    // in enableNSEC3(); these would break some non NSEC3 tests.
-    accessor->commit();
-
-    return (accessor);
-}
-
-void
-sqlite3EnableNSEC3(DatabaseAccessor& accessor) {
-    accessor.startUpdateZone("example.org.", false);
-
-    // Add NSECPARAM at the zone origin
-    for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
-        const string param_columns[DatabaseAccessor::ADD_COLUMN_COUNT] = {
-            TEST_NSEC3PARAM_RECORDS[i][0], // name
-            Name(param_columns[DatabaseAccessor::ADD_NAME]).reverse().toText(),
-            // revname
-            TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
-            TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
-            TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
-            TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
-        accessor.addRecordToZone(param_columns);
-    }
-
-    // Add NSEC3s
-    for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
-        const string nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] =
-            {
-                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
-                TEST_NSEC3_RECORDS[i][2], // TTL
-                TEST_NSEC3_RECORDS[i][1], // RR type
-                TEST_NSEC3_RECORDS[i][4]  // RDATA
-            };
-        accessor.addNSEC3RecordToZone(nsec3_columns);
-    }
-
-    accessor.commit();
-}
-
 const DatabaseClientTestParam mock_param = { createMockAccessor,
                                              mockEnableNSEC3 };
-const DatabaseClientTestParam sqlite3_param = { createSQLite3Accessor,
-                                                sqlite3EnableNSEC3 };
 
-INSTANTIATE_TEST_CASE_P(, DatabaseClientTest,
-                        ::testing::Values(&mock_param, &sqlite3_param));
+INSTANTIATE_TEST_CASE_P(, DatabaseClientTest, ::testing::Values(&mock_param));
 
 // This inherit the DatabaseClientTest cases except for the parameterized
 // setup; it's intended to be used selected test cases that only work for mock
@@ -4218,8 +4136,7 @@ TEST_P(DatabaseClientTest, deleteZoneRollbackOnNotFind) {
     EXPECT_TRUE(client_->deleteZone(zname_));
 }
 
-INSTANTIATE_TEST_CASE_P(, RRsetCollectionTest,
-                        ::testing::Values(&mock_param, &sqlite3_param));
+INSTANTIATE_TEST_CASE_P(, RRsetCollectionTest, ::testing::Values(&mock_param));
 
 TEST_P(RRsetCollectionTest, find) {
     // Test the find() that returns ConstRRsetPtr
@@ -4343,7 +4260,7 @@ TEST_F(MockRRsetCollectionTest, findError) {
 }
 
 INSTANTIATE_TEST_CASE_P(, RRsetCollectionAndUpdaterTest,
-                        ::testing::Values(&mock_param, &sqlite3_param));
+                        ::testing::Values(&mock_param));
 
 // Test that using addRRset() or deleteRRset() on the ZoneUpdater throws
 // after an RRsetCollection is created.
