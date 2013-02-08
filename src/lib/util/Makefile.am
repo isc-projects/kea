@@ -37,7 +37,7 @@ common_defs.h: const2hdr.py common_defs.cc
 	$(PYTHON) $(srcdir)/const2hdr.py $(srcdir)/common_defs.cc $@
 
 libb10_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-CLEANFILES = *.gcno *.gcda common_defs.h
+CLEANFILES = *.gcno *.gcda
 
 libb10_util_includedir = $(includedir)/$(PACKAGE_NAME)/util
 libb10_util_include_HEADERS = buffer.h
