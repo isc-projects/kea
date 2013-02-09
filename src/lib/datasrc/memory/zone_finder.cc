@@ -893,9 +893,13 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         }
     }
     // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
+    // Note that we don't have to provide the "real name" even if this is
+    // a wildcard; if NSEC is needed its owner name shouldn't be subject to
+    // wildcard substitution; if NSEC isn't needed the "real name" doesn't
+    // matter anyway.
     return (createFindResult(rrclass_, zone_data_, NXRRSET, node,
                              getNSECForNXRRSET(zone_data_, options, node),
-                             options, wild, &name));
+                             options, wild));
 }
 
 isc::datasrc::ZoneFinder::FindNSEC3Result
