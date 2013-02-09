@@ -865,7 +865,8 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         const RdataSet* cur_rds = node->getData();
         while (cur_rds != NULL) {
             target->push_back(createTreeNodeRRset(node, cur_rds, rrclass_,
-                                                  options, &name));
+                                                  options,
+                                                  wild ? &name : NULL));
             cur_rds = cur_rds->getNext();
         }
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
