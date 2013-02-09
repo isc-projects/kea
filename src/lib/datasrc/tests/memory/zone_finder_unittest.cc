@@ -442,14 +442,23 @@ protected:
         }
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
                   find_result->isWildcard());
-        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                  != 0, find_result->isNSECSigned());
-        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                  != 0, find_result->isNSEC3Signed());
-        // Convert all rrsets to 'full' ones before checking
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+                  find_result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+                  find_result->isNSEC3Signed());
+        // Convert all rrsets to 'full' ones before checking.  Also, confirm
+        // each RRset of the vector is of the "same kind" as one would be
+        // found by the find() method.
         std::vector<ConstRRsetPtr> converted_rrsets;
         BOOST_FOREACH(ConstRRsetPtr cur_rrset, target) {
             converted_rrsets.push_back(convertRRset(cur_rrset));
+
+            // As we know findAll() succeeded, this find() should also
+            // succeed, and the two sets should be "identical".
+            const ZoneFinderContextPtr result =
+                finder->find(name, cur_rrset->getType());
+            ASSERT_TRUE(result->rrset);
+            EXPECT_TRUE(result->rrset->isSameKind(*cur_rrset));
         }
         rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                     converted_rrsets.begin(), converted_rrsets.end());
