@@ -1,3 +1,57 @@
+569.	[bug]		tomek
+	b10-dhcp4: Fix bug whereby a DHCP packet without a client ID
+	could crash the MySQL lease database backend.
+	(Trac #2697, git b5e2be95d21ed750ad7cf5e15de2058aa8bc45f4)
+
+568.	[func]          muks
+	Various message IDs have been renamed to remove the word 'ERROR'
+	from them when they are not logged at ERROR severity level.
+	(Trac #2672, git 660a0d164feaf055677f375977f7ed327ead893e)
+
+567.	[doc]		marcin, stephen, tomek
+	Update DHCP sections of the BIND 10 guide.
+	(Trac #2657, git 1d0c2004865d1bf322bf78d13630d992e39179fd)
+
+566.	[func]*		jinmei
+	libdns++/Python isc.dns: In Python isc.dns, function style
+	constants for RRType, RRClass, Rcode and Opcode were deprecated
+	and replaced with straightforward object constants, e.g., from
+	RRType.AAAA() to RRType.AAAA.  This is a backward incompatible
+	change (see the Trac ticket for a conversion script if needed).
+	Also, these constants are now more consistent between C++
+	and Python, and RRType constants for all currently standardized
+	types are now supported (even if Rdata for these are not yet
+	available).
+	(Trac #1866 and #2409, git e5005185351cf73d4a611407c2cfcd163f80e428)
+
+565.	[func]*		jelte
+	The main initializer script (formerly known as either 'bind10',
+	'boss', or 'bob'), has been renamed to b10-init (and Init in
+	configuration). Configuring which components are run is henceforth
+	done through '/Init/components', and the sbin/bind10 script is now
+	simply a shellscript that runs b10-init. Existing configuration is
+	automatically updated. NOTE: once configuration with this update
+	has been saved (by committing any new change with bindctl), you
+	cannot run older versions of BIND 10 anymore with this configuration.
+	(Trac #1901, git bae3798603affdb276f370c1ac6b33b011a5ed4f)
+
+564.	[func]		muks
+	libdns++: the CNAME, DNAME, MX, NS, PTR and SRV Rdata classes now
+	use the generic lexer in constructors from text.  This means that
+	the name fields in such RRs in a zone file can now be non-absolute
+	(the origin name in that context will be used), e.g., when loaded
+	by b10-loadzone. One additional change to the libdns++ API is that
+	the existing string constructors for these Rdata classes also use
+	the generic lexer, and they now expect an absolute name (with the
+	trailing '.') in the name fields.
+	(Trac #2390, git a01569277cda3f78b1171bbf79f15ecf502e81e2)
+	(Trac #2656, git 5a0d055137287f81e23fbeedd35236fee274596d)
+
+563.	[build]		jinmei
+	Added --disable-rpath configure option to avoid embedding library
+	paths to binaries.  Patch from Adam Tkac.
+	(Trac #2667, git 1c50c5a6ee7e9675e3ab154f2c7f975ef519fca2)
+
 562.	[func]*		vorner
 	The b10-xfrin now performs basic sanity check on just received
 	zone. It'll reject severely broken zones (such as missng NS

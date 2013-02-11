@@ -152,7 +152,7 @@ installListenAddresses(const AddressList& new_addresses,
         throw;
     } catch (const exception& e) {
         // Any other kind of exception is fatal. It might mean we are in
-        // inconsistent state with the boss/socket creator, so we abort
+        // inconsistent state with the b10-init/socket creator, so we abort
         // to make sure it doesn't last.
         LOG_FATAL(logger, SRVCOMM_EXCEPTION_ALLOC).arg(e.what());
         abort();

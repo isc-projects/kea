@@ -92,8 +92,9 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 /// but removes all the sockets it listened on. One of the exceptions is
 /// propagated.
 ///
-/// The ports are requested from the socket creator through boss. Therefore
-/// you need to initialize the SocketRequestor before using this function.
+/// The ports are requested from the socket creator through b10-init.
+/// Therefore you need to initialize the SocketRequestor before using this
+/// function.
 ///
 /// \param new_addresses are the addresses you want to listen on.
 /// \param address_store is the place you store your current addresses. It is
@@ -107,7 +108,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 ///
 /// \throw asiolink::IOError when initialization or closing of socket fails.
 /// \throw isc::server_common::SocketRequestor::Socket error when the
-///     boss/socket creator doesn't want to give us the socket.
+///     b10-init/socket creator doesn't want to give us the socket.
 /// \throw std::bad_alloc when allocation fails.
 /// \throw isc::InvalidOperation when the function is called and the
 ///     SocketRequestor isn't initialized yet.

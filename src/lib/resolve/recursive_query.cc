@@ -609,7 +609,7 @@ SERVFAIL:
         if (category == ResponseClassifier::RCODE) {
 
             // Special case as this message takes two arguments.
-            LOG_DEBUG(logger, RESLIB_DBG_RESULTS, RESLIB_RCODE_ERROR).
+            LOG_DEBUG(logger, RESLIB_DBG_RESULTS, RESLIB_RCODE_RETURNED).
                       arg(questionText(question_)).arg(rcode);
 
         } else {

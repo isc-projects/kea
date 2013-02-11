@@ -26,7 +26,8 @@ from optparse import OptionParser, OptionValueError
 import errno
 import select
 
-import isc
+import isc.cc
+import isc.config
 import isc.util.process
 import isc.log
 from isc.log_messages.stats_messages import *
@@ -249,17 +250,17 @@ class Stats:
 
         # It counts the number of instances of same module by
         # examining the third value from the array result of
-        # 'show_processes' of Boss
+        # 'show_processes' of Init
         seq = self.cc_session.group_sendmsg(
             isc.config.ccsession.create_command("show_processes"),
-            'Boss')
+            'Init')
         (answer, env) = self.cc_session.group_recvmsg(False, seq)
         modules = []
         if answer:
             (rcode, value) = isc.config.ccsession.parse_answer(answer)
             if rcode == 0 and type(value) is list:
                 # NOTE: For example, the "show_processes" command
-                # of Boss is assumed to return the response in this
+                # of Init is assumed to return the response in this
                 # format:
                 #  [
                 #  ...
@@ -696,3 +697,5 @@ if __name__ == "__main__":
         sys.exit(1)
     except KeyboardInterrupt as kie:
         logger.info(STATS_STOPPED_BY_KEYBOARD)
+
+    logger.info(STATS_EXITING)

@@ -9,7 +9,7 @@
             }
         ]
     },
-    "version": 2,
+    "version": 3,
     "Logging": {
         "loggers":
             [
@@ -51,7 +51,7 @@
             ]
         }
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
             "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },

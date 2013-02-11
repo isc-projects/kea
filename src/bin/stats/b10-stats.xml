@@ -56,18 +56,18 @@
       from each BIND 10 module. Its statistics information may be
       reported via <command>bindctl</command> or
       <command>b10-stats-httpd</command>.  It is started by
-      <command>bind10</command> and communicates by using the
+      <command>b10-init</command> and communicates by using the
       Command Channel by <command>b10-msgq</command> with other
-      modules like <command>bind10</command>, <command>b10-auth</command>
+      modules like <command>b10-init</command>, <command>b10-auth</command>
       and so on. <command>b10-stats</command> periodically requests statistics
       data from each module. The interval time can be configured
       via <command>bindctl</command>. <command>b10-stats</command> cannot
       accept any command from other modules for updating statistics data. The
       stats module collects data and
       aggregates it. <command>b10-stats</command> invokes an internal
-      command for <command>bind10</command> after its initial
+      command for <command>b10-init</command> after its initial
       starting to make sure it collects statistics data from
-      <command>bind10</command>.
+      <command>b10-init</command>.
     </para>
   </refsect1>
 
@@ -131,7 +131,7 @@
       <command>b10-stats</command> process.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the b10-init process may restart this service
       if configured.)
     </para>
 

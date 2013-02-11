@@ -20,10 +20,10 @@ import errno
 import copy
 import subprocess
 import copy
-from isc.log_messages.bind10_messages import *
+from isc.log_messages.init_messages import *
 from libutil_io_python import recv_fd
 
-logger = isc.log.Logger("boss")
+logger = isc.log.Logger("init")
 
 """
 Module that comunicates with the privileged socket creator (b10-sockcreator).
@@ -251,7 +251,7 @@ class Creator(Parser):
         """Function used before running a program that needs to run as a
         different user."""
         # Put us into a separate process group so we don't get
-        # SIGINT signals on Ctrl-C (the boss will shut everthing down by
+        # SIGINT signals on Ctrl-C (b10-init will shut everthing down by
         # other means).
         os.setpgrp()
 

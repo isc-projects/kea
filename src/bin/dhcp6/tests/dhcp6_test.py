@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from bind10_src import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from init import ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
 
 import unittest
 import sys
@@ -157,7 +157,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
 
     def test_alive(self):
         """
-        Simple test. Checks that b10-dhcp6 can be started and prints out info 
+        Simple test. Checks that b10-dhcp6 can be started and prints out info
         about starting DHCPv6 operation.
         """
         print("Note: Purpose of some of the tests is to check if DHCPv6 server can be started,")

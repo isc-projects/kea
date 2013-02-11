@@ -140,11 +140,11 @@ class MockCfgmgr:
     def shutdown(self):
         self.cfgmgr.running = False
 
-class MockBoss:
+class MockInit:
     spec_str = """\
 {
   "module_spec": {
-    "module_name": "Boss",
+    "module_name": "Init",
     "module_description": "Mock Master process",
     "config_data": [
       {
@@ -210,7 +210,7 @@ class MockBoss:
       },
       {
         "command_name": "ping",
-        "command_description": "Ping the boss process",
+        "command_description": "Ping the b10-init process",
         "command_args": []
       },
       {
@@ -537,9 +537,9 @@ class BaseModules:
         # MockCfgmgr
         self.cfgmgr = ThreadingServerManager(MockCfgmgr)
         self.cfgmgr.run()
-        # MockBoss
-        self.boss = ThreadingServerManager(MockBoss)
-        self.boss.run()
+        # MockInit
+        self.b10_init = ThreadingServerManager(MockInit)
+        self.b10_init.run()
         # MockAuth
         self.auth = ThreadingServerManager(MockAuth)
         self.auth.run()
@@ -558,8 +558,8 @@ class BaseModules:
         # MockAuth
         self.auth2.shutdown(True)
         self.auth.shutdown(True)
-        # MockBoss
-        self.boss.shutdown(True)
+        # MockInit
+        self.b10_init.shutdown(True)
         # MockCfgmgr
         self.cfgmgr.shutdown(True)
         # remove the unused socket file

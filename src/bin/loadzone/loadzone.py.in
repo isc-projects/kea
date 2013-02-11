@@ -164,7 +164,7 @@ class LoadZoneRunner:
             self._zone_class = RRClass(options.zone_class)
         except isc.dns.InvalidRRClass as ex:
             raise BadArgument('Invalid zone class: ' + str(ex))
-        if self._zone_class != RRClass.IN():
+        if self._zone_class != RRClass.IN:
             raise BadArgument("RR class is not supported: " +
                               str(self._zone_class))
 

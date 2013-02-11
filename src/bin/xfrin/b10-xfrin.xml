@@ -56,8 +56,8 @@
     <para>The <command>b10-xfrin</command> daemon provides the BIND 10
       incoming DNS zone transfer service.
       Normally it is started by the
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      boss process.
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      process.
       When triggered it can request and receive a zone transfer and store
       the zone in a BIND 10 zone data source.
     </para>
@@ -180,8 +180,8 @@ in separate zonemgr process.
 
     <para>
       <command>shutdown</command> stops all incoming zone transfers
-      and exits <command>b10-xfrin</command>. (Note that the BIND 10
-      boss process will restart this service.)
+      and exits <command>b10-xfrin</command>. (Note that the
+      b10-init process will restart this service.)
     </para>
 <!-- TODO:
 add a usage example of xfrin -->

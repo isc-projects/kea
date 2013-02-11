@@ -2,9 +2,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20121219, bind10-dev@isc.org)
+AC_INIT(bind10, 20130205, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
-AM_INIT_AUTOMAKE([foreign])
+# serial-tests is not available in automake version before 1.13. In
+# automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
+# that and conditionally use serial-tests.
+AM_INIT_AUTOMAKE(
+	[foreign]
+	m4_ifndef([AM_PROG_INSTALL], [serial-tests])
+)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
@@ -231,6 +237,21 @@ esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
+
+# Our experiments have shown Solaris 10 has broken support for the
+# IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value
+# previously set via setsockopt().  We know it doesn't happen on one instance
+# on Solaris 11, but we don't know whether it happens for any Solaris 10
+# implementations or for earlier versions of Solaris.  In any case, at the
+# moment this matters for only one unittest case, so we'll simply disable
+# the affected test using the following definition with the specific hardcoding
+# of that version of Solaris.
+case "$host" in
+*-solaris2.10)
+	AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
+	[Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
+	;;
+esac
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
@@ -1127,6 +1148,7 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/bind10/bind10
                  src/bin/bind10/Makefile
                  src/bin/bind10/tests/Makefile
                  src/bin/cmdctl/Makefile
@@ -1310,9 +1332,9 @@ AC_OUTPUT([doc/version.ent
            src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10_src.py
+           src/bin/bind10/init.py
            src/bin/bind10/run_bind10.sh
-           src/bin/bind10/tests/bind10_test.py
+           src/bin/bind10/tests/init_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
@@ -1376,6 +1398,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/bind10/bind10
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/dbutil/run_dbutil.sh

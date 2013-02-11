@@ -69,7 +69,7 @@ new data.
 
 % ZONEMGR_RECEIVE_SHUTDOWN received SHUTDOWN command
 This is a debug message indicating that the zone manager has received
-a SHUTDOWN command over the command channel from the Boss process.
+a SHUTDOWN command over the command channel from the Init process.
 It will act on this command and shut down.
 
 % ZONEMGR_RECEIVE_UNKNOWN received unknown command '%1'
@@ -114,7 +114,7 @@ connecting to the command channel daemon.  The most usual cause of this
 problem is that the daemon is not running.
 
 % ZONEMGR_SHUTDOWN zone manager has shut down
-A debug message, output when the zone manager has shut down completely.
+The zone manager has shut down completely.
 
 % ZONEMGR_STARTED zonemgr started
 This informational message is output by zonemgr when all initialization

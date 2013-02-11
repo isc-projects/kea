@@ -32,13 +32,16 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_MX_Test : public RdataTest {
-    // there's nothing to specialize
+public:
+    Rdata_MX_Test() :
+        rdata_mx(10, Name("mx.example.com"))
+    {}
+
+    const generic::MX rdata_mx;
 };
 
-const generic::MX rdata_mx(10, Name("mx.example.com"));
-
 TEST_F(Rdata_MX_Test, createFromText) {
-    const generic::MX rdata_mx2("10 mx.example.com");
+    const generic::MX rdata_mx2("10 mx.example.com.");
     EXPECT_EQ(0, rdata_mx2.compare(rdata_mx));
 }
 
@@ -47,6 +50,12 @@ TEST_F(Rdata_MX_Test, badText) {
     EXPECT_THROW(const generic::MX rdata_mx("10"), InvalidRdataText);
     EXPECT_THROW(const generic::MX rdata_mx("SPOON"), InvalidRdataText);
     EXPECT_THROW(const generic::MX rdata_mx("10 mx. example.com."),
+                 InvalidRdataText);
+    // No origin and relative
+    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com"),
+                 MissingNameOrigin);
+    // Extra text at end of line
+    EXPECT_THROW(const generic::MX rdata_mx("10 mx.example.com. extra."),
                  InvalidRdataText);
 }
 
@@ -65,11 +74,25 @@ TEST_F(Rdata_MX_Test, createFromWire) {
 TEST_F(Rdata_MX_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_mx.compare(
         *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
-                                     "10 mx.example.com")));
+                                     "10 mx.example.com.")));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::MX("10 mx2.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                     "10 mx2")));
 
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
-                                             "10 mx. example.com"));
+                                             "10 mx. example.com."));
+
+    // 65536 is larger than maximum possible preference
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "65536 mx.example.com."));
+
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MX(), RRClass::IN(),
+                                             "10 mx.example.com. extra."));
 }
 
 TEST_F(Rdata_MX_Test, toWireRenderer) {

@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "Logging": {
         "loggers": [ {
             "debuglevel": 99,
@@ -23,7 +23,7 @@
             "address": "127.0.0.1"
         } ]
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth": { "kind": "dispensable", "special": "auth" },
             "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
