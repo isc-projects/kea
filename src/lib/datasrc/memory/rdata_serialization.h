@@ -25,8 +25,6 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <vector>
-
 /// \file rdata_serialization.h
 ///
 /// This file defines a set of interfaces (classes, types, constants) to
