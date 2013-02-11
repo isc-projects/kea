@@ -261,7 +261,7 @@ skipChars(std::istream& in, const char* chars, int& line, int& pos) {
         } else {
             ++pos;
         }
-        in.get();
+        in.ignore();
         c = in.peek();
     }
 }
@@ -291,7 +291,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
                     pos = 1;
                     ++line;
                 }
-                in.get();
+                in.ignore();
                 ++pos;
             }
             in.putback(c);
@@ -352,7 +352,7 @@ strFromStringstream(std::istream& in, const std::string& file,
                 throwJSONError("Bad escape", file, line, pos);
             }
             // drop the escaped char
-            in.get();
+            in.ignore();
             ++pos;
         }
         ss.put(c);
@@ -490,14 +490,14 @@ fromStringstreamMap(std::istream& in, const std::string& file, int& line,
         throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
     } else if (c == '}') {
         // empty map, skip closing curly
-        c = in.get();
+        in.ignore();
     } else {
         while (c != EOF && c != '}') {
             std::string key = strFromStringstream(in, file, line, pos);
 
             skipTo(in, file, line, pos, ":", WHITESPACE);
             // skip the :
-            in.get();
+            in.ignore();
             pos++;
 
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
