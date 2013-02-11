@@ -1,7 +1,7 @@
-5XX.	[func]		marcin,tomek
+5XX.	[bug]		marcin,tomek,tmark
 	b10-dhcp4: Address renewal now works properly for DHCPv4 clients
-	that do not send client-ids.
-	(Trac #2702, git TBD)
+	that do not send client ID.
+	(Trac #2702, git daf2abe68ce9c111334a15c14e440730f3a085e2)
 
 568.	[func]          muks
 	Various message IDs have been renamed to remove the word 'ERROR'
