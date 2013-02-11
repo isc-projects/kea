@@ -145,4 +145,57 @@ TEST_F(RRTypeTest, LeftShiftOperator) {
     oss << RRType::A();
     EXPECT_EQ(RRType::A().toText(), oss.str());
 }
+
+// Below, we'll check definitions for all well-known RR types; whether they
+// are defined and have the correct parameter values.  Test data are generated
+// from the list available at:
+// http://www.iana.org/assignments/dns-parameters/dns-parameters.xml
+struct TypeParam {
+    const char* const txt;      // "A", "AAAA", "NS", etc
+    const uint16_t code;        // 1, 28, 2, etc
+    const RRType& (*obj)();     // RRType::A(), etc
+} known_types[] = {
+    {"A", 1, RRType::A}, {"NS", 2, RRType::NS}, {"MD", 3, RRType::MD},
+    {"MF", 4, RRType::MF}, {"CNAME", 5, RRType::CNAME},
+    {"SOA", 6, RRType::SOA}, {"MB", 7, RRType::MB}, {"MG", 8, RRType::MG},
+    {"MR", 9, RRType::MR}, {"NULL", 10, RRType::Null},
+    {"WKS", 11, RRType::WKS}, {"PTR", 12, RRType::PTR},
+    {"HINFO", 13, RRType::HINFO}, {"MINFO", 14, RRType::MINFO},
+    {"MX", 15, RRType::MX}, {"TXT", 16, RRType::TXT}, {"RP", 17, RRType::RP},
+    {"AFSDB", 18, RRType::AFSDB}, {"X25", 19, RRType::X25},
+    {"ISDN", 20, RRType::ISDN}, {"RT", 21, RRType::RT},
+    {"NSAP", 22, RRType::NSAP}, {"NSAP-PTR", 23, RRType::NSAP_PTR},
+    {"SIG", 24, RRType::SIG}, {"KEY", 25, RRType::KEY},
+    {"PX", 26, RRType::PX}, {"GPOS", 27, RRType::GPOS},
+    {"AAAA", 28, RRType::AAAA}, {"LOC", 29, RRType::LOC},
+    {"NXT", 30, RRType::NXT}, {"SRV", 33, RRType::SRV},
+    {"NAPTR", 35, RRType::NAPTR}, {"KX", 36, RRType::KX},
+    {"CERT", 37, RRType::CERT}, {"A6", 38, RRType::A6},
+    {"DNAME", 39, RRType::DNAME}, {"OPT", 41, RRType::OPT},
+    {"APL", 42, RRType::APL}, {"DS", 43, RRType::DS},
+    {"SSHFP", 44, RRType::SSHFP}, {"IPSECKEY", 45, RRType::IPSECKEY},
+    {"RRSIG", 46, RRType::RRSIG}, {"NSEC", 47, RRType::NSEC},
+    {"DNSKEY", 48, RRType::DNSKEY}, {"DHCID", 49, RRType::DHCID},
+    {"NSEC3", 50, RRType::NSEC3}, {"NSEC3PARAM", 51, RRType::NSEC3PARAM},
+    {"TLSA", 52, RRType::TLSA}, {"HIP", 55, RRType::HIP},
+    {"SPF", 99, RRType::SPF}, {"UNSPEC", 103, RRType::UNSPEC},
+    {"NID", 104, RRType::NID}, {"L32", 105, RRType::L32},
+    {"L64", 106, RRType::L64}, {"LP", 107, RRType::LP},
+    {"TKEY", 249, RRType::TKEY}, {"TSIG", 250, RRType::TSIG},
+    {"IXFR", 251, RRType::IXFR}, {"AXFR", 252, RRType::AXFR},
+    {"MAILB", 253, RRType::MAILB}, {"MAILA", 254, RRType::MAILA},
+    {"ANY", 255, RRType::ANY}, {"URI", 256, RRType::URI},
+    {"CAA", 257, RRType::CAA}, {"DLV", 32769, RRType::DLV},
+    {NULL, 0, NULL}
+};
+
+TEST(RRTypeConstTest, wellKnowns) {
+    for (int i = 0; known_types[i].txt; ++i) {
+        SCOPED_TRACE("Checking well known RRType: " +
+                     string(known_types[i].txt));
+        EXPECT_EQ(known_types[i].code, RRType(known_types[i].txt).getCode());
+        EXPECT_EQ(known_types[i].code,
+                  (*known_types[i].obj)().getCode());
+    }
+}
 }
