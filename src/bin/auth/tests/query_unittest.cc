@@ -1377,7 +1377,7 @@ TEST_P(QueryTest, nxdomainWithNSEC2) {
     // is derived from the next domain of the NSEC that proves NXDOMAIN, and
     // the NSEC to provide the non existence of wildcard is different from
     // the first NSEC.
-    query.process(*list_, Name("%.no.example.com"), qtype, response,
+    query.process(*list_, Name("!.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_minttl_txt) +
