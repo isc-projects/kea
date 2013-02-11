@@ -339,7 +339,7 @@ class CommandControl():
                     self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
-            #When cmdctl get 'shutdown' command from boss,
+            #When cmdctl get 'shutdown' command from b10-init,
             #shutdown the outer httpserver.
             self._module_cc.send_stopping()
             self._httpserver.shutdown()
@@ -649,5 +649,7 @@ if __name__ == '__main__':
 
     if httpd:
         httpd.shutdown()
+
+    logger.info(CMDCTL_EXITING)
 
     sys.exit(result)

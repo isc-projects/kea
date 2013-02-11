@@ -16,7 +16,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-This file implements the Boss of Bind (BoB, or bob) program.
+This file implements the b10-init program.
 
 Its purpose is to start up the BIND 10 system, and then manage the
 processes, by starting and stopping processes, plus restarting
@@ -30,7 +30,7 @@ The Python subprocess module is used for starting processes, but
 because this is not efficient for managing groups of processes,
 SIGCHLD signals are caught and processed using the signal module.
 
-Most of the logic is contained in the BoB class. However, since Python
+Most of the logic is contained in the Init class. However, since Python
 requires that signal processing happen in the main thread, we do
 signal handling outside of that class, in the code running for
 __main__.
@@ -43,11 +43,14 @@ import os
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
+    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] +\
+                        "/src/bin/bind10/init.spec"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/init.spec"\
+                         .replace("${datarootdir}", DATAROOTDIR)\
+                         .replace("${prefix}", PREFIX)
 
 import subprocess
 import signal
@@ -69,15 +72,16 @@ import isc.cc
 import isc.util.process
 import isc.net.parse
 import isc.log
-from isc.log_messages.bind10_messages import *
+import isc.config
+from isc.log_messages.init_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
 import isc.bind10.socket_cache
 import libutil_io_python
 import tempfile
 
-isc.log.init("b10-boss", buffer=True)
-logger = isc.log.Logger("boss")
+isc.log.init("b10-init", buffer=True)
+logger = isc.log.Logger("init")
 
 # Pending system-wide debug level definitions, the ones we
 # use here are hardcoded for now
@@ -93,14 +97,14 @@ CREATOR_SOCKET_ERROR = 2
 CREATOR_SHARE_ERROR = 3
 
 # Assign this process some longer name
-isc.util.process.rename(sys.argv[0])
+isc.util.process.rename()
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20110223 (BIND 10 @PACKAGE_VERSION@)"
 
-# This is for boot_time of Boss
+# This is for boot_time of Init
 _BASETIME = time.gmtime()
 
 # Detailed error message commonly used on startup failure, possibly due to
@@ -147,7 +151,7 @@ class ProcessInfo:
         """Function used before running a program that needs to run as a
         different user."""
         # First, put us into a separate process group so we don't get
-        # SIGINT signals on Ctrl-C (the boss will shut everthing down by
+        # SIGINT signals on Ctrl-C (b10-init will shut everthing down by
         # other means).
         os.setpgrp()
 
@@ -161,7 +165,7 @@ class ProcessInfo:
         else:
             spawn_stderr = None
         # Environment variables for the child process will be a copy of those
-        # of the boss process with any additional specific variables given
+        # of the b10-init process with any additional specific variables given
         # on construction (self.env).
         spawn_env = copy.deepcopy(os.environ)
         spawn_env.update(self.env)
@@ -187,18 +191,18 @@ class CChannelConnectError(Exception): pass
 
 class ProcessStartError(Exception): pass
 
-class BoB:
-    """Boss of BIND class."""
+class Init:
+    """Init of BIND class."""
 
     def __init__(self, msgq_socket_file=None, data_path=None,
                  config_filename=None, clear_config=False,
                  verbose=False, nokill=False, setuid=None, setgid=None,
                  username=None, cmdctl_port=None, wait_time=10):
         """
-            Initialize the Boss of BIND. This is a singleton (only one can run).
+            Initialize the Init of BIND. This is a singleton (only one can run).
 
             The msgq_socket_file specifies the UNIX domain socket file that the
-            msgq process listens on.  If verbose is True, then the boss reports
+            msgq process listens on.  If verbose is True, then b10-init reports
             what it is doing.
 
             Data path and config filename are passed through to config manager
@@ -207,7 +211,7 @@ class BoB:
             The cmdctl_port is passed to cmdctl and specify on which port it
             should listen.
 
-            wait_time controls the amount of time (in seconds) that Boss waits
+            wait_time controls the amount of time (in seconds) that Init waits
             for selected processes to initialize before continuing with the
             initialization.  Currently this is only the configuration manager.
         """
@@ -287,7 +291,7 @@ class BoB:
         for comp in self.__core_components:
             if comp in comps:
                 raise Exception(comp + " is core component managed by " +
-                                "bind10 boss, do not set it")
+                                "b10-init, do not set it")
             comps[comp] = self.__core_components[comp]
         # Update the configuration
         self._component_configurator.reconfigure(comps)
@@ -313,7 +317,7 @@ class BoB:
                 # We use one-shot logger after setuid here.  This will
                 # detect any permission issue regarding logging due to the
                 # result of setuid at the earliest opportunity.
-                isc.log.Logger("boss").info(BIND10_SETUID, self.__uid)
+                isc.log.Logger("b10-init").info(BIND10_SETUID, self.__uid)
         except Exception as ex:
             raise ChangeUserError('failed to change user: ' + str(ex))
 
@@ -390,7 +394,7 @@ class BoB:
 
     def _read_bind10_config(self):
         """
-            Reads the parameters associated with the BoB module itself.
+            Reads the parameters associated with the Init module itself.
 
             This means the list of components we should start now.
 
@@ -398,7 +402,7 @@ class BoB:
             it stays because of historical reasons and because the tests
             replace the method sometimes.
         """
-        logger.info(BIND10_READING_BOSS_CONFIGURATION)
+        logger.info(BIND10_READING_INIT_CONFIGURATION)
 
         config_data = self.ccs.get_full_config()
         self.__propagate_component_config(config_data['components'])
@@ -439,7 +443,7 @@ class BoB:
 
     def process_running(self, msg, who):
         """
-            Some processes return a message to the Boss after they have
+            Some processes return a message to the Init after they have
             started to indicate that they are running.  The form of the
             message is a dictionary with contents {"running:", "<process>"}.
             This method checks the passed message and returns True if the
@@ -505,7 +509,7 @@ class BoB:
         # Subscribe to the message queue.  The only messages we expect to receive
         # on this channel are once relating to process startup.
         if self.cc_session is not None:
-            self.cc_session.group_subscribe("Boss")
+            self.cc_session.group_subscribe("Init")
 
         return msgq_proc
 
@@ -578,7 +582,7 @@ class BoB:
 
     def register_process(self, pid, component):
         """
-        Put another process into boss to watch over it.  When the process
+        Put another process into b10-init to watch over it.  When the process
         dies, the component.failed() is called with the exit code.
 
         It is expected the info is a isc.bind10.component.BaseComponent
@@ -661,7 +665,7 @@ class BoB:
         # inside the configurator.
         self.start_ccsession(self.c_channel_env)
 
-        # Extract the parameters associated with Bob.  This can only be
+        # Extract the parameters associated with Init.  This can only be
         # done after the CC Session is started.  Note that the logging
         # configuration may override the "-v" switch set on the command line.
         self._read_bind10_config()
@@ -670,7 +674,7 @@ class BoB:
 
     def startup(self):
         """
-            Start the BoB instance.
+            Start the Init instance.
 
             Returns None if successful, otherwise an string describing the
             problem.
@@ -720,7 +724,7 @@ class BoB:
 
     def component_shutdown(self, exitcode=0):
         """
-        Stop the Boss instance from a components' request. The exitcode
+        Stop the Init instance from a components' request. The exitcode
         indicates the desired exit code.
 
         If we did not start yet, it raises an exception, which is meant
@@ -737,11 +741,11 @@ class BoB:
             self.runnable = False
 
     def shutdown(self):
-        """Stop the BoB instance."""
+        """Stop the Init instance."""
         logger.info(BIND10_SHUTDOWN)
         # If ccsession is still there, inform rest of the system this module
         # is stopping. Since everything will be stopped shortly, this is not
-        # really necessary, but this is done to reflect that boss is also
+        # really necessary, but this is done to reflect that b10-init is also
         # 'just' a module.
         self.ccs.send_stopping()
 
@@ -943,7 +947,7 @@ class BoB:
 
     def set_creator(self, creator):
         """
-        Registeres a socket creator into the boss. The socket creator is not
+        Registeres a socket creator into the b10-init. The socket creator is not
         used directly, but through a cache. The cache is created in this
         method.
 
@@ -1078,7 +1082,7 @@ class BoB:
 
 # global variables, needed for signal handlers
 options = None
-boss_of_bind = None
+b10_init = None
 
 def reaper(signal_number, stack_frame):
     """A child process has died (SIGCHLD received)."""
@@ -1099,10 +1103,10 @@ def get_signame(signal_number):
 def fatal_signal(signal_number, stack_frame):
     """We need to exit (SIGINT or SIGTERM received)."""
     global options
-    global boss_of_bind
+    global b10_init
     logger.info(BIND10_RECEIVED_SIGNAL, get_signame(signal_number))
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-    boss_of_bind.runnable = False
+    b10_init.runnable = False
 
 def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
@@ -1224,7 +1228,7 @@ def remove_lock_files():
 
 def main():
     global options
-    global boss_of_bind
+    global b10_init
     # Enforce line buffering on stdout, even when not a TTY
     sys.stdout = io.TextIOWrapper(sys.stdout.detach(), line_buffering=True)
 
@@ -1286,33 +1290,32 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     try:
-        # Go bob!
-        boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
-                           options.config_file, options.clear_config,
-                           options.verbose, options.nokill,
-                           setuid, setgid, username, options.cmdctl_port,
-                           options.wait_time)
-        startup_result = boss_of_bind.startup()
+        b10_init = Init(options.msgq_socket_file, options.data_path,
+                        options.config_file, options.clear_config,
+                        options.verbose, options.nokill,
+                        setuid, setgid, username, options.cmdctl_port,
+                        options.wait_time)
+        startup_result = b10_init.startup()
         if startup_result:
             logger.fatal(BIND10_STARTUP_ERROR, startup_result)
             sys.exit(1)
-        boss_of_bind.init_socket_srv()
+        b10_init.init_socket_srv()
         logger.info(BIND10_STARTUP_COMPLETE)
         dump_pid(options.pid_file)
 
         # Let it run
-        boss_of_bind.run(wakeup_pipe[0])
+        b10_init.run(wakeup_pipe[0])
 
         # shutdown
         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-        boss_of_bind.shutdown()
+        b10_init.shutdown()
     finally:
         # Clean up the filesystem
         unlink_pid_file(options.pid_file)
         remove_lock_files()
-        if boss_of_bind is not None:
-            boss_of_bind.remove_socket_srv()
-    sys.exit(boss_of_bind.exitcode)
+        if b10_init is not None:
+            b10_init.remove_socket_srv()
+    sys.exit(b10_init.exitcode)
 
 if __name__ == "__main__":
     main()

@@ -2466,7 +2466,7 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
     // It should normally just result in DELEGATION; if GLUE_OK is specified,
     // the other RR should be visible.
     this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns.example.com");
+    this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, Name("brokenns1.example.org"), this->qtype_,
                RRType::NS(), this->rrttl_, ZoneFinder::DELEGATION,
                this->expected_rdatas_, this->empty_rdatas_,
@@ -2515,7 +2515,7 @@ TYPED_TEST(DatabaseClientTest, findDS) {
     // Some insane case: DS under a zone cut.  It's included in the DB, but
     // shouldn't be visible via finder.
     this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns.example.com");
+    this->expected_rdatas_.push_back("ns.example.com.");
     doFindTest(*finder, Name("child.insecdelegation.example.org"),
                RRType::DS(), RRType::NS(), this->rrttl_,
                ZoneFinder::DELEGATION, this->expected_rdatas_,
@@ -3649,7 +3649,7 @@ TYPED_TEST(DatabaseClientTest, deleteRRset) {
                           RRType::CNAME(), this->rrttl_));
     this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
                                               this->rrset_->getClass(),
-                                              "www.example.org"));
+                                              "www.example.org."));
     this->updater_->deleteRRset(*this->rrset_);
 
     // The this->updater_ finder should immediately see the deleted results.
@@ -3701,7 +3701,7 @@ TYPED_TEST(DatabaseClientTest, deleteRRsetToNXDOMAIN) {
                            RRType::CNAME(), this->rrttl_));
     this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
                                               this->rrset_->getClass(),
-                                              "www.example.org"));
+                                              "www.example.org."));
 
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->updater_->deleteRRset(*this->rrset_);

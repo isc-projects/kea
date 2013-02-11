@@ -24,6 +24,9 @@ The stats module was unable to connect to the BIND 10 command and
 control bus. A likely problem is that the message bus daemon
 (b10-msgq) is not running. The stats module will now shut down.
 
+% STATS_EXITING exiting
+The stats module process is exiting.
+
 % STATS_RECEIVED_INVALID_STATISTICS_DATA received invalid statistics data from %1
 Invalid statistics data has been received from the module while
 polling and it has been discarded.

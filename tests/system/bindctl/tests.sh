@@ -38,8 +38,8 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Starting b10-auth and checking that it works ($n)"
-echo 'config add Boss/components b10-auth
-config set Boss/components/b10-auth { "special": "auth", "kind": "needed" }
+echo 'config add Init/components b10-auth
+config set Init/components/b10-auth { "special": "auth", "kind": "needed" }
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -68,7 +68,7 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Stopping b10-auth and checking that ($n)"
-echo 'config remove Boss/components b10-auth
+echo 'config remove Init/components b10-auth
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -79,8 +79,8 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Restarting b10-auth and checking that ($n)"
-echo 'config add Boss/components b10-auth
-config set Boss/components/b10-auth { "special": "auth", "kind": "needed" }
+echo 'config add Init/components b10-auth
+config set Init/components/b10-auth { "special": "auth", "kind": "needed" }
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -143,8 +143,8 @@ n=`expr $n + 1`
 echo "I:Starting more b10-auths and checking that ($n)"
 for i in 2 3
 do
-    echo 'config add Boss/components b10-auth-'$i'
-config set Boss/components/b10-auth-'$i' { "special": "auth", "kind": "needed" }
+    echo 'config add Init/components b10-auth-'$i'
+config set Init/components/b10-auth-'$i' { "special": "auth", "kind": "needed" }
 config commit
 quit
 ' | $RUN_BINDCTL \
@@ -180,7 +180,7 @@ n=`expr $n + 1`
 echo "I:Stopping extra b10-auths and checking that ($n)"
 for i in 3 2
 do
-    echo 'config remove Boss/components b10-auth-'$i'
+    echo 'config remove Init/components b10-auth-'$i'
 config commit
 quit
 ' | $RUN_BINDCTL \

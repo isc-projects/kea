@@ -32,9 +32,18 @@ address and port number.
 Debug message indicating that the stats-httpd module is disconnecting
 from the command and control bus.
 
+% STATSHTTPD_EXITING exiting
+The stats HTTP server is exiting.
+
 % STATSHTTPD_HANDLE_CONFIG reading configuration: %1
 The stats-httpd daemon has received new configuration data and will now
 process it. The (changed) data is printed.
+
+% STATSHTTPD_HTTPLOG %1 %2
+Debug HTTP log message. These are the messages logged by the http server
+instance. For most logs, the message shows HTTP client and query
+information like HTTP method, URI, and status code, but the http server
+can also log other information, such as extended status reports.
 
 % STATSHTTPD_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 A shutdown command was sent to the stats-httpd module, and it will
@@ -59,7 +68,7 @@ corresponding to the requested URI is incorrect.
 An internal error occurred while handling an HTTP request. An HTTP 500
 response will be sent back, and the specific error is printed. This
 is an error condition that likely points to a module that is not
-responding correctly to statistic requests.
+responding correctly to statistics requests.
 
 % STATSHTTPD_SERVER_INIT_ERROR HTTP server initialization error: %1
 There was a problem initializing the HTTP server in the stats-httpd
@@ -96,9 +105,3 @@ configuration is unknown. The new configuration is ignored, and an
 error is sent back. As possible cause is that there was an upgrade
 problem, and the stats-httpd version is out of sync with the rest of
 the system.
-
-% STATSHTTPD_HTTPLOG %1 %2
-Debug HTTP log message. These are the messages logged by the http server
-instance. For most logs, the message shows HTTP client and query
-information like HTTP method, URI, and status code, but the http server
-can also log other information, such as extended status reports.

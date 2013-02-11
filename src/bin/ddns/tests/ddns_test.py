@@ -39,9 +39,9 @@ TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 TEST_ZONE_NAME = Name('example.org')
 TEST_ZONE_NAME_STR = TEST_ZONE_NAME.to_text()
-UPDATE_RRTYPE = RRType.SOA()
+UPDATE_RRTYPE = RRType.SOA
 TEST_QID = 5353                 # arbitrary chosen
-TEST_RRCLASS = RRClass.IN()
+TEST_RRCLASS = RRClass.IN
 TEST_RRCLASS_STR = TEST_RRCLASS.to_text()
 TEST_SERVER6 = ('2001:db8::53', 53, 0, 0)
 TEST_CLIENT6 = ('2001:db8::1', 53000, 0, 0)
@@ -169,9 +169,9 @@ class FakeUpdateSession:
         self.__msg.make_response()
         self.__msg.clear_section(SECTION_ZONE)
         if self.__faked_result == UPDATE_SUCCESS:
-            self.__msg.set_rcode(Rcode.NOERROR())
+            self.__msg.set_rcode(Rcode.NOERROR)
         else:
-            self.__msg.set_rcode(Rcode.REFUSED())
+            self.__msg.set_rcode(Rcode.REFUSED)
         return self.__msg
 
 class FakeKeyringModule:
@@ -478,7 +478,7 @@ class TestDDNSServer(unittest.TestCase):
         # By default (in our faked config) it should be derived from the
         # test data source
         rrclass, datasrc_client = self.ddns_server._datasrc_info
-        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(RRClass.IN, rrclass)
         self.assertEqual(DataSourceClient.SUCCESS,
                          datasrc_client.find_zone(Name('example.org'))[0])
 
@@ -491,7 +491,7 @@ class TestDDNSServer(unittest.TestCase):
             {'database_file': './notexistentdir/somedb.sqlite3'}
         self.__cc_session.add_remote_config_by_name('Auth')
         rrclass, datasrc_client = self.ddns_server._datasrc_info
-        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(RRClass.IN, rrclass)
         self.assertRaises(isc.datasrc.Error,
                           datasrc_client.find_zone, Name('example.org'))
 
@@ -887,12 +887,12 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = ([], [10], [])
         self.assertRaises(KeyError, self.ddns_server.run)
 
-def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], prereq=[],
+def create_msg(opcode=Opcode.UPDATE, zones=[TEST_ZONE_RECORD], prereq=[],
                tsigctx=None):
     msg = Message(Message.RENDER)
     msg.set_qid(TEST_QID)
     msg.set_opcode(opcode)
-    msg.set_rcode(Rcode.NOERROR())
+    msg.set_rcode(Rcode.NOERROR)
     for z in zones:
         msg.add_question(z)
     for p in prereq:
@@ -936,7 +936,7 @@ class TestDDNSSession(unittest.TestCase):
         return FakeUpdateSession(req_message, client_addr, zone_config,
                                  self.__faked_result)
 
-    def check_update_response(self, resp_wire, expected_rcode=Rcode.NOERROR(),
+    def check_update_response(self, resp_wire, expected_rcode=Rcode.NOERROR,
                               tsig_ctx=None, tcp=False):
         '''Check if given wire data are valid form of update response.
 
@@ -963,7 +963,7 @@ class TestDDNSSession(unittest.TestCase):
             self.assertNotEqual(None, tsig_record)
             self.assertEqual(TSIGError.NOERROR,
                              tsig_ctx.verify(tsig_record, resp_wire))
-        self.assertEqual(Opcode.UPDATE(), msg.get_opcode())
+        self.assertEqual(Opcode.UPDATE, msg.get_opcode())
         self.assertEqual(expected_rcode, msg.get_rcode())
         self.assertEqual(TEST_QID, msg.get_qid())
         for section in [SECTION_ZONE, SECTION_PREREQUISITE, SECTION_UPDATE]:
@@ -977,7 +977,7 @@ class TestDDNSSession(unittest.TestCase):
         server_addr = TEST_SERVER6 if ipv6 else TEST_SERVER4
         client_addr = TEST_CLIENT6 if ipv6 else TEST_CLIENT4
         tsig = TSIGContext(tsig_key) if tsig_key is not None else None
-        rcode = Rcode.NOERROR() if result == UPDATE_SUCCESS else Rcode.REFUSED()
+        rcode = Rcode.NOERROR if result == UPDATE_SUCCESS else Rcode.REFUSED
         has_response = (result != UPDATE_DROP)
 
         self.assertEqual(has_response,
@@ -1015,7 +1015,7 @@ class TestDDNSSession(unittest.TestCase):
 
         # Opcode is not UPDATE
         self.assertFalse(self.server.handle_request(
-                (self.__sock, None, None, create_msg(opcode=Opcode.QUERY()))))
+                (self.__sock, None, None, create_msg(opcode=Opcode.QUERY))))
         self.assertEqual((None, None), (s._sent_data, s._sent_addr))
 
         # TSIG verification error.  We use UPDATE_DROP to signal check_session
@@ -1031,7 +1031,7 @@ class TestDDNSSession(unittest.TestCase):
                                                      TEST_CLIENT6,
                                                      create_msg())))
         # this check ensures sendto() was really attempted.
-        self.check_update_response(self.__sock._sent_data, Rcode.NOERROR())
+        self.check_update_response(self.__sock._sent_data, Rcode.NOERROR)
 
     def test_tcp_request(self):
         # A simple case using TCP: all resopnse data are sent out at once.
@@ -1040,7 +1040,7 @@ class TestDDNSSession(unittest.TestCase):
         self.assertTrue(self.server.handle_request((s, TEST_SERVER6,
                                                     TEST_CLIENT6,
                                                     create_msg())))
-        self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
+        self.check_update_response(s._sent_data, Rcode.NOERROR, tcp=True)
         # In the current implementation, the socket should be closed
         # immedidately after a successful send.
         self.assertEqual(1, s._close_called)
@@ -1071,7 +1071,7 @@ class TestDDNSSession(unittest.TestCase):
         s.make_send_ready()
         self.assertEqual(DNSTCPContext.SEND_DONE,
                          self.server._tcp_ctxs[s.fileno()][0].send_ready())
-        self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
+        self.check_update_response(s._sent_data, Rcode.NOERROR, tcp=True)
 
     def test_tcp_request_error(self):
         # initial send() on the TCP socket will fail.  The request handling
@@ -1127,9 +1127,9 @@ class TestDDNSSession(unittest.TestCase):
         self.__faked_result = UPDATE_DROP
         # Put the same RR twice in the prerequisite section.  We should see
         # them as separate RRs.
-        dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
+        dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS,
                              RRTTL(0))
-        dummy_record.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, "ns.example"))
+        dummy_record.add_rdata(Rdata(RRType.NS, TEST_RRCLASS, "ns.example."))
         self.server.handle_request((self.__sock, TEST_SERVER6, TEST_CLIENT6,
                                     create_msg(prereq=[dummy_record,
                                                        dummy_record])))

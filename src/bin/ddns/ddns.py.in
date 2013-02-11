@@ -134,7 +134,7 @@ def get_datasrc_client(cc_session):
     function will simply be removed.
 
     '''
-    HARDCODED_DATASRC_CLASS = RRClass.IN()
+    HARDCODED_DATASRC_CLASS = RRClass.IN
     file, is_default = cc_session.get_remote_config_value("Auth",
                                                           "database_file")
     # See xfrout.py:get_db_file() for this trick:
@@ -469,7 +469,7 @@ class DDNSServer:
             self.__request_msg.clear(Message.PARSE)
             # specify PRESERVE_ORDER as we need to handle each RR separately.
             self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
-            if self.__request_msg.get_opcode() != Opcode.UPDATE():
+            if self.__request_msg.get_opcode() != Opcode.UPDATE:
                 raise self.InternalError('Update request has unexpected '
                                          'opcode: ' +
                                          str(self.__request_msg.get_opcode()))
@@ -536,7 +536,7 @@ class DDNSServer:
                 else:
                     tcp_ctx.close()
         except socket.error as ex:
-            logger.warn(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
+            logger.warn(DDNS_RESPONSE_SOCKET_SEND_FAILED, ClientFormatter(dest), ex)
             return False
 
         return True
@@ -683,7 +683,7 @@ class DDNSServer:
                 result = ctx[0].send_ready()
                 if result != DNSTCPContext.SENDING:
                     if result == DNSTCPContext.CLOSED:
-                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_ERROR,
+                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_SEND_FAILED,
                                     ClientFormatter(ctx[1]))
                     ctx[0].close()
                     del self._tcp_ctxs[fileno]

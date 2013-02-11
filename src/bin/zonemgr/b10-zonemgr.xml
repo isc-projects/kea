@@ -55,8 +55,8 @@
       as the BIND 10 secondary manager, keeps track of timers
       and other information necessary for BIND 10 to act as a DNS slave.
       Normally it is started by the
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      boss process.
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      process.
     </para>
 
     <para>
@@ -74,7 +74,7 @@
 
 <!--
 
-            self._send_command(XFRIN_MODULE_NAME, ZONE_NOTIFY_COMMAND, param) 
+            self._send_command(XFRIN_MODULE_NAME, ZONE_NOTIFY_COMMAND, param)
             self._clear_zone_notifier_master(zone_name_class)
         # Send refresh command to xfrin module
         else:
@@ -188,7 +188,7 @@
       <command>shutdown</command> exits <command>b10-zonemgr</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the b10-init process may restart this service
       if configured.)
     </para>
 

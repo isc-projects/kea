@@ -28,12 +28,12 @@ configuration). This is yet to be designed.
 """
 
 import isc.log
-from isc.log_messages.bind10_messages import *
+from isc.log_messages.init_messages import *
 import time
 import os
 import signal
 
-logger = isc.log.Logger("boss")
+logger = isc.log.Logger("init")
 DBG_TRACE_DATA = 20
 DBG_TRACE_DETAILED = 80
 
@@ -96,13 +96,13 @@ class BaseComponent:
     that is already shutting down, impossible to stop, etc. We need to add more
     states in future to handle it properly.
     """
-    def __init__(self, boss, kind):
+    def __init__(self, b10_init, kind):
         """
         Creates the component in not running mode.
 
         The parameters are:
-        - `boss` the boss object to plug into. The component needs to plug
-          into it to know when it failed, etc.
+        - `b10_init` the b10_init object to plug into. The component needs
+           to plug into it to know when it failed, etc.
         - `kind` is the kind of component. It may be one of:
           * 'core' means the system can't run without it and it can't be
             safely restarted. If it does not start, the system is brought
@@ -127,7 +127,7 @@ class BaseComponent:
         Note that the __init__ method of child class should have these
         parameters:
 
-        __init__(self, process, boss, kind, address=None, params=None)
+        __init__(self, process, b10_init, kind, address=None, params=None)
 
         The extra parameters are:
         - `process` - which program should be started.
@@ -153,7 +153,7 @@ class BaseComponent:
             raise ValueError('Component kind can not be ' + kind)
         self.__state = STATE_STOPPED
         self._kind = kind
-        self._boss = boss
+        self._b10_init = b10_init
         self._original_start_time = None
 
     def start(self):
@@ -204,13 +204,14 @@ class BaseComponent:
 
     def failed(self, exit_code):
         """
-        Notify the component it crashed. This will be called from boss object.
+        Notify the component it crashed. This will be called from b10_init
+        object.
 
         If you try to call failed on a component that is not running,
         a ValueError is raised.
 
         If it is a core component or needed component and it was started only
-        recently, the component will become dead and will ask the boss to shut
+        recently, the component will become dead and will ask b10_init to shut
         down with error exit status. A dead component can't be started again.
 
         Otherwise the component will try to restart.
@@ -253,7 +254,7 @@ class BaseComponent:
              self._original_start_time):
             self.__state = STATE_DEAD
             logger.fatal(BIND10_COMPONENT_UNSATISFIED, self.name())
-            self._boss.component_shutdown(1)
+            self._b10_init.component_shutdown(1)
             return False
         # This means we want to restart
         else:
@@ -326,7 +327,7 @@ class BaseComponent:
         should be registered).
 
         You should register all the processes created by calling
-        self._boss.register_process.
+        self._b10_init.register_process.
         """
         pass
 
@@ -407,15 +408,15 @@ class Component(BaseComponent):
     directly. It is not recommended to override methods of this class
     on one-by-one basis.
     """
-    def __init__(self, process, boss, kind, address=None, params=None,
+    def __init__(self, process, b10_init, kind, address=None, params=None,
                  start_func=None):
         """
         Creates the component in not running mode.
 
         The parameters are:
         - `process` is the name of the process to start.
-        - `boss` the boss object to plug into. The component needs to plug
-          into it to know when it failed, etc.
+        - `b10_init` the b10-init object to plug into. The component needs to
+          plug into it to know when it failed, etc.
         - `kind` is the kind of component. Refer to the documentation of
           BaseComponent for details.
         - `address` is the address on message bus. It is used to ask it to
@@ -429,7 +430,7 @@ class Component(BaseComponent):
            There's a sensible default if not provided, which just launches
            the program without any special care.
         """
-        BaseComponent.__init__(self, boss, kind)
+        BaseComponent.__init__(self, b10_init, kind)
         self._process = process
         self._start_func = start_func
         self._address = address
@@ -443,25 +444,26 @@ class Component(BaseComponent):
         process and return the procinfo object describing the running process.
 
         If you don't provide the _start_func, the usual startup by calling
-        boss.start_simple is performed.
+        b10_init.start_simple is performed.
         """
         # This one is not tested. For one, it starts a real process
         # which is out of scope of unit tests, for another, it just
-        # delegates the starting to other function in boss (if a derived
+        # delegates the starting to other function in b10_init (if a derived
         # class does not provide an override function), which is tested
         # by use.
         if self._start_func is not None:
             procinfo = self._start_func()
         else:
             # TODO Handle params, etc
-            procinfo = self._boss.start_simple(self._process)
+            procinfo = self._b10_init.start_simple(self._process)
         self._procinfo = procinfo
-        self._boss.register_process(self.pid(), self)
+        self._b10_init.register_process(self.pid(), self)
 
     def _stop_internal(self):
-        self._boss.stop_process(self._process, self._address, self.pid())
+        self._b10_init.stop_process(self._process, self._address, self.pid())
         # TODO Some way to wait for the process that doesn't want to
-        # terminate and kill it would prove nice (or add it to boss somewhere?)
+        # terminate and kill it would prove nice (or add it to b10_init
+        # somewhere?)
 
     def name(self):
         """
@@ -498,7 +500,7 @@ class Configurator:
     b10-auth as core, it is safe to stop that one.
 
     The parameters are:
-    * `boss`: The boss we are managing for.
+    * `b10_init`: The b10-init we are managing for.
     * `specials`: Dict of specially started components. Each item is a class
       representing the component.
 
@@ -527,13 +529,14 @@ class Configurator:
       priority are started before the ones with lower priority. If it is
       not present, it defaults to 0.
     """
-    def __init__(self, boss, specials = {}):
+    def __init__(self, b10_init, specials = {}):
         """
         Initializes the configurator, but nothing is started yet.
 
-        The boss parameter is the boss object used to start and stop processes.
+        The b10_init parameter is the b10-init object used to start and stop
+        processes.
         """
-        self.__boss = boss
+        self.__b10_init = b10_init
         # These could be __private, but as we access them from within unittest,
         # it's more comfortable to have them just _protected.
 
@@ -551,7 +554,7 @@ class Configurator:
     def startup(self, configuration):
         """
         Starts the first set of processes. This configuration is expected
-        to be hardcoded from the boss itself to start the configuration
+        to be hardcoded from the b10-init itself to start the configuration
         manager and other similar things.
         """
         if self._running:
@@ -642,7 +645,7 @@ class Configurator:
                     # TODO: Better error handling
                     creator = self.__specials[component_config['special']]
                 component = creator(component_config.get('process', cname),
-                                    self.__boss, component_config['kind'],
+                                    self.__b10_init, component_config['kind'],
                                     component_config.get('address'),
                                     component_config.get('params'))
                 priority = component_config.get('priority', 0)

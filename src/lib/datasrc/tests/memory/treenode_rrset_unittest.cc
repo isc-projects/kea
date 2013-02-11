@@ -354,14 +354,18 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         const uint32_t ttl = 0;
         const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true,
                                   &ttl);
-        checkToWireResult(expected_renderer, actual_renderer, rrset,
-                          www_name_,
-                          textToRRset("www.example.com. 0 IN A 192.0.2.1\n"
-                                      "www.example.com. 0 IN A 192.0.2.2"),
-                          textToRRset("www.example.com. 0 IN RRSIG "
-                                      "A 5 2 3600 20120814220826 "
-                                      "20120715220826 1234 example.com. FAKE"),
-                          true);
+        // We need separate variable for the following two: SunStudio cannot
+        // automatically promote RRsetPtr to ConstRRsetPtr in the templated
+        // function.
+        ConstRRsetPtr expected_rrset =
+            textToRRset("www.example.com. 0 IN A 192.0.2.1\n"
+                        "www.example.com. 0 IN A 192.0.2.2");
+        ConstRRsetPtr expected_rrsig_rrset =
+            textToRRset("www.example.com. 0 IN RRSIG "
+                        "A 5 2 3600 20120814220826 "
+                        "20120715220826 1234 example.com. FAKE");
+        checkToWireResult(expected_renderer, actual_renderer, rrset, www_name_,
+                          expected_rrset, expected_rrsig_rrset, true);
     }
 
     {
