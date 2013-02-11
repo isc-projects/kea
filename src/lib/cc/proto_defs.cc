@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/common_defs.h>
+#include <cc/proto_defs.h>
 
 namespace isc {
-namespace util {
+namespace cc {
 
-// Aside from defining the values for the C++ util library, this file is also
+// Aside from defining the values for the C++ library, this file is also
 // used as direct input of the generator of the python counterpart. Please,
 // keep the syntax here simple and check the generated file
-// (lib/python/isc/util/common_defs.py) is correct and sane.
+// (lib/python/isc/cc/proto_defs.py) is correct and sane.
 
 // The constants used in the CC protocol
 // First the header names

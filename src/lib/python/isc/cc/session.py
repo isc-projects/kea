@@ -22,7 +22,7 @@ import threading
 import bind10_config
 
 import isc.cc.message
-from isc.util.common_defs import *
+from isc.cc.proto_defs import *
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass

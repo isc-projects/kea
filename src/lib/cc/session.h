@@ -17,8 +17,7 @@
 
 #include <cc/data.h>
 #include <cc/session_config.h>
-
-#include <util/common_defs.h>
+#include <cc/proto_defs.h>
 
 #include <exceptions/exceptions.h>
 
@@ -84,9 +83,8 @@ namespace isc {
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance =
-                                          isc::util::CC_INSTANCE_WILDCARD,
-                                      std::string to =
-                                          isc::util::CC_TO_WILDCARD,
+                                          CC_INSTANCE_WILDCARD,
+                                      std::string to = CC_TO_WILDCARD,
                                       bool want_answer = false) = 0;
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
