@@ -274,7 +274,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     }
 
     // Check if there's existing lease for that subnet/clientid/hwaddr combination.
-    Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(hwaddr->hwaddr_, subnet->getID());
+    Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
     if (existing) {
         // We have a lease already. This is a returning client, probably after
         // its reboot.
