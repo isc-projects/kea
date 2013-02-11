@@ -79,7 +79,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
         self.assertEqual(10000, self.__runner._report_interval) # default
-        self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
+        self.assertEqual(RRClass.IN, self.__runner._zone_class) # default
         self.assertEqual('INFO', self.__runner._log_severity) # default
         self.assertEqual(0, self.__runner._log_debuglevel)
 
@@ -135,7 +135,7 @@ class TestLoadZoneRunner(unittest.TestCase):
                           'memory')
 
     def __common_load_setup(self):
-        self.__runner._zone_class = RRClass.IN()
+        self.__runner._zone_class = RRClass.IN
         self.__runner._zone_name = TEST_ZONE_NAME
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
@@ -159,7 +159,7 @@ class TestLoadZoneRunner(unittest.TestCase):
             self.assertEqual(client.NOTFOUND, result)
             return
         self.assertEqual(client.SUCCESS, result)
-        result, rrset, _ = finder.find(zone_name, RRType.SOA())
+        result, rrset, _ = finder.find(zone_name, RRType.SOA)
         if soa_txt:
             self.assertEqual(finder.SUCCESS, result)
             self.assertEqual(soa_txt, rrset.to_text())
