@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -94,7 +94,7 @@ server is about to open sockets on the specified port.
 The IPv4 DHCP server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
-% DHCP4_PACKET_PROCESS_FAIL failed to process received packet: %1
+% DHCP4_PACKET_PROCESS_FAIL failed to process packet received from %1: %2
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.

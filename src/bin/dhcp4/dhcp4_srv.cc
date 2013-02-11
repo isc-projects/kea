@@ -173,8 +173,16 @@ Dhcpv4Srv::run() {
                 // as a debug message because debug is disabled by default -
                 // it prevents a DDOS attack based on the sending of problem
                 // packets.)
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                          DHCP4_PACKET_PROCESS_FAIL).arg(e.what());
+                if (dhcp4_logger.isDebugEnabled(DBG_DHCP4_BASIC)) {
+                    std::string source = "unknown";
+                    HWAddrPtr hwptr = query->getHWAddr();
+                    if (hwptr) {
+                        source = hwptr->toText();
+                    }
+                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                              DHCP4_PACKET_PROCESS_FAIL)
+                              .arg(source).arg(e.what());
+                }
             }
 
             if (rsp) {
