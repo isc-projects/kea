@@ -1,5 +1,5 @@
 { "version": 2,
-  "Boss": {
+  "Init": {
     "components": {
       "b10-auth": {
         "kind": "needed",

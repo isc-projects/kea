@@ -1,7 +1,7 @@
 SUBDIRS = work
 
 EXTRA_DIST = __init__.py
-EXTRA_DIST += bind10_messages.py
+EXTRA_DIST += init_messages.py
 EXTRA_DIST += cmdctl_messages.py
 EXTRA_DIST += ddns_messages.py
 EXTRA_DIST += stats_messages.py
@@ -18,9 +18,10 @@ EXTRA_DIST += loadzone_messages.py
 EXTRA_DIST += server_common_messages.py
 EXTRA_DIST += dbutil_messages.py
 EXTRA_DIST += msgq_messages.py
+EXTRA_DIST += pycc_messages.py
 
 CLEANFILES = __init__.pyc
-CLEANFILES += bind10_messages.pyc
+CLEANFILES += init_messages.pyc
 CLEANFILES += cmdctl_messages.pyc
 CLEANFILES += ddns_messages.pyc
 CLEANFILES += stats_messages.pyc
@@ -37,6 +38,7 @@ CLEANFILES += loadzone_messages.pyc
 CLEANFILES += server_common_messages.pyc
 CLEANFILES += dbutil_messages.pyc
 CLEANFILES += msgq_messages.pyc
+CLEANFILES += pycc_messages.pyc
 
 CLEANDIRS = __pycache__
 

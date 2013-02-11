@@ -25,9 +25,12 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using namespace isc::util;
 using namespace isc::util::str;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -48,45 +51,57 @@ struct SRVImpl {
 
 /// \brief Constructor from string.
 ///
-/// \c srv_str must be formatted as follows:
-/// \code <Priority> <Weight> <Port> <Target>
-/// \endcode
-/// where
-/// - &lt;Priority&gt;, &lt;Weight&gt;, and &lt;Port&gt; are an unsigned
-///   16-bit decimal integer.
-/// - &lt;Target&gt; is a valid textual representation of domain name.
+/// The given string must represent a valid SRV RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
 ///
-/// An example of valid string is:
-/// \code "1 5 1500 example.com." \endcode
+/// The TARGET name must be absolute since there's no parameter that
+/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
+/// exception will be thrown. It must not be represented as a quoted
+/// string.
 ///
-/// <b>Exceptions</b>
+/// See the construction that takes \c MasterLexer for other fields.
 ///
-/// If &lt;Target&gt; is not a valid domain name, a corresponding exception
-/// from the \c Name class will be thrown;
-/// if %any of the other bullet points above is not met, an exception of
-/// class \c InvalidRdataText will be thrown.
-/// This constructor internally involves resource allocation, and if it fails
-/// a corresponding standard exception will be thrown.
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
 SRV::SRV(const std::string& srv_str) :
     impl_(NULL)
 {
-    istringstream iss(srv_str);
-
     try {
-        const int32_t priority = tokenToNum<int32_t, 16>(getToken(iss));
-        const int32_t weight = tokenToNum<int32_t, 16>(getToken(iss));
-        const int32_t port = tokenToNum<int32_t, 16>(getToken(iss));
-        const Name targetname(getToken(iss));
+        std::istringstream ss(srv_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-        if (!iss.eof()) {
-            isc_throw(InvalidRdataText, "Unexpected input for SRV RDATA: " <<
-                    srv_str);
+        uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV priority in: " << srv_str);
+        }
+        const uint16_t priority = static_cast<uint16_t>(num);
+
+        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV weight in: " << srv_str);
+        }
+        const uint16_t weight = static_cast<uint16_t>(num);
+
+        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid SRV port in: " << srv_str);
+        }
+        const uint16_t port = static_cast<uint16_t>(num);
+
+        const Name targetname = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for SRV: "
+                      << srv_str);
         }
 
         impl_ = new SRVImpl(priority, weight, port, targetname);
-    } catch (const StringTokenError& ste) {
-        isc_throw(InvalidRdataText, "Invalid SRV text: " <<
-                  ste.what() << ": " << srv_str);
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct SRV from '" <<
+                  srv_str << "': " << ex.what());
     }
 }
 
@@ -112,10 +127,54 @@ SRV::SRV(InputBuffer& buffer, size_t rdata_len) {
         isc_throw(InvalidRdataLength, "SRV too short");
     }
 
-    uint16_t priority = buffer.readUint16();
-    uint16_t weight = buffer.readUint16();
-    uint16_t port = buffer.readUint16();
+    const uint16_t priority = buffer.readUint16();
+    const uint16_t weight = buffer.readUint16();
+    const uint16_t port = buffer.readUint16();
     const Name targetname(buffer);
+
+    impl_ = new SRVImpl(priority, weight, port, targetname);
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an SRV RDATA.  The TARGET field can be non-absolute if \c origin
+/// is non-NULL, in which case \c origin is used to make it absolute.
+/// It must not be represented as a quoted string.
+///
+/// The PRIORITY, WEIGHT and PORT fields must each be a valid decimal
+/// representation of an unsigned 16-bit integers respectively.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of TARGET when it
+/// is non-absolute.
+SRV::SRV(MasterLexer& lexer, const Name* origin,
+         MasterLoader::Options, MasterLoaderCallbacks&)
+{
+    uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV priority: " << num);
+    }
+    const uint16_t priority = static_cast<uint16_t>(num);
+
+    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV weight: " << num);
+    }
+    const uint16_t weight = static_cast<uint16_t>(num);
+
+    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid SRV port: " << num);
+    }
+    const uint16_t port = static_cast<uint16_t>(num);
+
+    const Name targetname = createNameFromLexer(lexer, origin);
 
     impl_ = new SRVImpl(priority, weight, port, targetname);
 }

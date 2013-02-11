@@ -7,9 +7,7 @@ $TTL 300
 				1814400
 				3600
 				)
-; this needs #2390
-;			NS	ns
-			NS	ns.include.
+			NS	ns
 
 ns			A	127.0.0.1
 

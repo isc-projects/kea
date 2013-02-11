@@ -34,7 +34,7 @@ Feature: Multiple instances
         If I remember the pid of process b10-auth
         And remember the pid of process b10-auth-2
 
-        When I remove bind10 configuration Boss/components value b10-auth-2
+        When I remove bind10 configuration Init/components value b10-auth-2
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
 
         Then the pid of process b10-auth should not have changed
@@ -42,9 +42,9 @@ Feature: Multiple instances
 
         When I send bind10 the following commands
         """
-        config add Boss/components b10-auth-2
-        config set Boss/components/b10-auth-2/special auth
-        config set Boss/components/b10-auth-2/kind needed
+        config add Init/components b10-auth-2
+        config set Init/components/b10-auth-2/special auth
+        config set Init/components/b10-auth-2/kind needed
         config commit
         """
         And wait for new bind10 stderr message AUTH_SERVER_STARTED
@@ -53,7 +53,7 @@ Feature: Multiple instances
         Then the pid of process b10-auth should not have changed
         A query for example.com should have rcode REFUSED
 
-        When I remove bind10 configuration Boss/components value b10-auth
+        When I remove bind10 configuration Init/components value b10-auth
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         Then the pid of process b10-auth-2 should not have changed
         A query for example.com should have rcode REFUSED

@@ -625,7 +625,7 @@ class Zonemgr:
         ZONE_NOTIFY_COMMAND is issued by Auth process;
         ZONE_NEW_DATA_READY_CMD and ZONE_XFRIN_FAILED are issued by
         Xfrin process;
-        shutdown is issued by a user or Boss process. """
+        shutdown is issued by a user or Init process. """
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""
@@ -714,4 +714,4 @@ if '__main__' == __name__:
     if zonemgrd and zonemgrd.running:
         zonemgrd.shutdown()
 
-    logger.debug(DBG_START_SHUT, ZONEMGR_SHUTDOWN)
+    logger.info(ZONEMGR_SHUTDOWN)

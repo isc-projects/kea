@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "Logging": {
         "loggers": [ {
             "debuglevel": 99,
@@ -36,7 +36,7 @@
     "Stats": {
         "poll-interval": 1
     },
-    "Boss": {
+    "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
             "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },

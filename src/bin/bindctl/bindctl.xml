@@ -218,7 +218,7 @@
        <command>config</command> for Configuration commands.
 <!-- TODO: or is config from the cfgmgr module? -->
        Additional modules may be available, such as
-       <command>Boss</command>, <command>Xfrin</command>, and
+       <command>Init</command>, <command>Xfrin</command>, and
        <command>Auth</command>.
      </para>
 

@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include "../sockcreator.h"
 
 #include <util/unittests/fork.h>
@@ -195,7 +197,12 @@ TEST(get_sock, tcp4_create) {
     testAnyCreate<sockaddr_in>(SOCK_STREAM, tcpCheck);
 }
 
-TEST(get_sock, udp6_create) {
+#ifdef HAVE_BROKEN_GET_IPV6_USE_MIN_MTU
+TEST(get_sock, DISABLED_udp6_create)
+#else
+TEST(get_sock, udp6_create)
+#endif
+{
     testAnyCreate<sockaddr_in6>(SOCK_DGRAM, udpCheck<sockaddr_in6>);
 }
 

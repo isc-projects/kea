@@ -8,7 +8,7 @@ Feature: default bind10 config
     And wait for bind10 stderr message STATS_STARTING
 
     # These should be running
-    bind10 module Boss should be running
+    bind10 module Init should be running
     And bind10 module Logging should be running
     And bind10 module Stats should be running
 
