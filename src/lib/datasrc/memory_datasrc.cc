@@ -782,6 +782,7 @@ struct RBNodeResultContext {
 };
 }
 
+// cppcheck-suppress noConstructor
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     /// \brief Constructor.
