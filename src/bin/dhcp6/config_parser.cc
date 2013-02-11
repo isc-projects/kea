@@ -996,13 +996,13 @@ public:
         return (new OptionDataListParser(param_name));
     }
 
+    /// Pointer to options instances storage.
+    OptionStorage* options_;
     /// Intermediate option storage. This storage is used by
     /// lower level parsers to add new options.  Values held
     /// in this storage are assigned to main storage (options_)
     /// if overall parsing was successful.
     OptionStorage local_options_;
-    /// Pointer to options instances storage.
-    OptionStorage* options_;
     /// Collection of parsers;
     ParserCollection parsers_;
 };
