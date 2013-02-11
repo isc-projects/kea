@@ -25,6 +25,7 @@ libb10_cc_la_SOURCES = data.cc data.h session.cc session.h
 libb10_cc_la_SOURCES += logger.cc logger.h
 nodist_libb10_cc_la_SOURCES = cc_messages.cc cc_messages.h
 libb10_cc_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
+nodist_libb10_cc_la_SOURCES += proto_defs.cc proto_defs.h
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h
 
@@ -34,6 +35,9 @@ session_config.h: session_config.h.pre
 cc_messages.cc cc_messages.h: cc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cc/cc_messages.mes
 
-BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h
+BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h proto_defs.h
+
+proto_defs.h: $(top_srcdir)/src/lib/util/python/const2hdr.py proto_defs.cc
+	$(PYTHON) $(top_srcdir)/src/lib/util/python/const2hdr.py $(srcdir)/proto_defs.cc $@
 
 EXTRA_DIST = cc_messages.mes
