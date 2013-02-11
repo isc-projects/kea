@@ -1,3 +1,19 @@
+567.	[doc]		marcin, stephen, tomek
+	Update DHCP sections of the BIND 10 guide.
+	(Trac #2657, git 1d0c2004865d1bf322bf78d13630d992e39179fd)
+
+566.	[func]*		jinmei
+	libdns++/Python isc.dns: In Python isc.dns, function style
+	constants for RRType, RRClass, Rcode and Opcode were deprecated
+	and replaced with straightforward object constants, e.g., from
+	RRType.AAAA() to RRType.AAAA.  This is a backward incompatible
+	change (see the Trac ticket for a conversion script if needed).
+	Also, these constants are now more consistent between C++
+	and Python, and RRType constants for all currently standardized
+	types are now supported (even if Rdata for these are not yet
+	available).
+	(Trac #1866 and #2409, git e5005185351cf73d4a611407c2cfcd163f80e428)
+
 565.	[func]*		jelte
 	The main initializer script (formerly known as either 'bind10',
 	'boss', or 'bob'), has been renamed to b10-init (and Init in
