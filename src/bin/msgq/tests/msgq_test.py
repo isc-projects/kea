@@ -170,10 +170,11 @@ class MsgQTest(unittest.TestCase):
         The test is not exhaustive as it doesn't test all combination
         of existence of the recipient, addressing schemes, want_answer
         header and the reply header. It is not needed, these should
-        be mostly independant (eg. if the recipient is missing, it
-        shouldn't matter by which means it was discovered the recipient
-        is missing to how we hendle the value in reply header). If
-        we included everything, the test would have too many scenarios.
+        be mostly independant. That means, for example, if the message
+        is a reply and there's no recipient to send it to, the error
+        would not be generated no matter if we addressed the recipient
+        by lname or group. If we included everything, the test would
+        have too many scenarios with little benefit.
         """
         self.__sent_messages = []
         def fake_send_prepared_msg(socket, msg):
