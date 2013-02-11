@@ -1,3 +1,8 @@
+568.	[func]          muks
+	Various message IDs have been renamed to remove the word 'ERROR'
+	from them when they are not logged at ERROR severity level.
+	(Trac #2672, git 660a0d164feaf055677f375977f7ed327ead893e)
+
 567.	[doc]		marcin, stephen, tomek
 	Update DHCP sections of the BIND 10 guide.
 	(Trac #2657, git 1d0c2004865d1bf322bf78d13630d992e39179fd)
