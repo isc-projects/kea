@@ -39,6 +39,14 @@ CREATE TABLE lease4 (
     subnet_id INT UNSIGNED                      # Subnet identification
     ) ENGINE = INNODB;
 
+
+# Create search indexes for lease4 table 
+# index by hwaddr and subnet_id
+CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
+
+# index by client_id and subnet_id
+CREATE INDEX lease4_by_client_id_subnet_id ON lease4 (client_id, subnet_id);
+
 # Holds the IPv6 leases.
 # N.B. The use of a VARCHAR for the address is temporary for development:
 # it will eventually be replaced by BINARY(16).
@@ -54,6 +62,10 @@ CREATE TABLE lease6 (
     iaid INT UNSIGNED,                          # See Section 10 of RFC 3315
     prefix_len TINYINT UNSIGNED                 # For IA_PD only
     ) ENGINE = INNODB;
+
+# Create search indexes for lease4 table 
+# index by iaid, subnet_id, and duid 
+CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
 # ... and a definition of lease6 types.  This table is a convenience for
 # users of the database - if they want to view the lease table and use the
