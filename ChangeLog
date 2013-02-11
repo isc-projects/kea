@@ -1,3 +1,8 @@
+569.	[bug]		tomek
+	b10-dhcp4: Fix bug whereby a DHCP packet without a client ID
+	could crash the MySQL lease database backend.
+	(Trac #2697, git b5e2be95d21ed750ad7cf5e15de2058aa8bc45f4)
+
 568.	[func]          muks
 	Various message IDs have been renamed to remove the word 'ERROR'
 	from them when they are not logged at ERROR severity level.
