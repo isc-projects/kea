@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,9 +56,10 @@ public:
     ///
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
+    /// \param print_cmd_line Print the command line being run to the console.
     /// \throws isc::InvalidParameter if parse fails.
     /// \return true if program has been run in help or version mode ('h' or 'v' flag).
-    bool parse(int argc, char** const argv);
+    bool parse(int argc, char** const argv, bool print_cmd_line = false);
 
     /// \brief Returns IP version.
     ///
@@ -261,9 +262,10 @@ private:
     ///
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
+    /// \param print_cmd_line Print the command line being run to the console.
     /// \throws isc::InvalidParameter if command line options initialization fails.
     /// \return true if program has been run in help or version mode ('h' or 'v' flag).
-    bool initialize(int argc, char** argv);
+    bool initialize(int argc, char** argv, bool print_cmd_line);
 
     /// \brief Validates initialized options.
     ///
