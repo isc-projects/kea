@@ -714,6 +714,21 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                       Pkt6Ptr /* question */, boost::shared_ptr<Option6IA> ia) {
+    if (!subnet) {
+        // There's no subnet select for this client. There's nothing to renew.
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid."));
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RENEW_UNKNOWN_SUBNET)
+            .arg(duid->toText())
+            .arg(ia->getIAID());
+
+        return (ia_rsp);
+    }
+
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
                                                             subnet->getID());
 
@@ -777,7 +792,9 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
 
         // perhaps this should be logged on some higher level? This is most likely
         // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED);
+        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+            .arg(renew->getRemoteAddr().toText())
+            .arg(renew->getName());
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());

@@ -222,6 +222,16 @@ as a hint for possible requested address.
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
 
+% DHCP6_RENEW_UNKNOWN_SUBNET RENEW message received from client on unknown subnet (duid=%1, iaid=%2)
+A warning message indicating that a client is attempting to renew his lease,
+but the server does not have any information about the subnet this client belongs
+to. This may mean that faulty the mobile client changed its location and is trying to
+renew its old address (client is supposed to send confirm, not rewew in such cases,
+according to RFC3315) or the server configuration has changed and information about
+existing subnet was removed. Note that in a sense this is worse case of DHCP6_UNKNOWN_RENEW,
+as not only the lease is unknown, but also the subnet is. Depending on the reasons
+of this condition, it may or may not correct on its own.
+
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
 This message indicates that received DHCPv6 packet is invalid.  This may be due
 to a number of reasons, e.g. the mandatory client-id option is missing,
