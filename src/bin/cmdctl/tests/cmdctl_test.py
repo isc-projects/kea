@@ -470,6 +470,15 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
 
+    def test_get_num_users(self):
+        self.server._create_user_info('/local/not-exist')
+        self.assertEqual(0, self.server.get_num_users())
+
+        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
+        self.assertEqual(1, self.server.get_num_users())
+        self.assertIn('6f0c73bd33101a5ec0294b3ca39fec90ef4717fe',
+                      self.server.get_user_info('root'))
+
     def test_check_file(self):
         # Just some file that we know exists
         file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
