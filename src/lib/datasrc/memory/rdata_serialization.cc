@@ -375,6 +375,7 @@ private:
 } // end of unnamed namespace
 
 namespace {
+// A trivial comparison function used for std::set<ConstRdataPtr> below.
 bool
 RdataLess(const ConstRdataPtr& rdata1, const ConstRdataPtr& rdata2) {
     return (rdata1->compare(*rdata2) < 0);
@@ -395,6 +396,8 @@ struct RdataEncoder::RdataEncoderImpl {
     boost::optional<RRClass> current_class_;
     boost::optional<RRType> current_type_;
 
+    // Temporary storage of Rdata and RRSIGs to be encoded.  They are used
+    // to detect and ignore duplicate data.
     typedef boost::function<bool(const ConstRdataPtr&, const ConstRdataPtr&)>
     RdataCmp;
     // added unique Rdatas
@@ -454,6 +457,14 @@ RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
         isc_throw(InvalidOperation,
                   "RdataEncoder::addSIGRdata performed before start");
     }
+
+    // Ignore duplicate RRSIGs
+    ConstRdataPtr rdatap = createRdata(RRType::RRSIG(), *impl_->current_class_,
+                                       sig_rdata);
+    if (impl_->rrsigs_.find(rdatap) != impl_->rrsigs_.end()) {
+        return;
+    }
+
     const size_t cur_pos = impl_->rrsig_buffer_.getLength();
     sig_rdata.toWire(impl_->rrsig_buffer_);
     const size_t rrsig_datalen = impl_->rrsig_buffer_.getLength() - cur_pos;
@@ -461,6 +472,7 @@ RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
         isc_throw(RdataEncodingError, "RRSIG is too large: "
                   << rrsig_datalen << " bytes");
     }
+    impl_->rrsigs_.insert(rdatap);
     impl_->rrsig_lengths_.push_back(rrsig_datalen);
 }
 
