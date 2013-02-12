@@ -564,9 +564,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         // thing this client can get is some global information (like DNS
         // servers).
 
-        // perhaps this should be logged on some higher level? This is most likely
-        // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+        LOG_WARN(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
             .arg(question->getRemoteAddr().toText())
             .arg(question->getName());
 
@@ -790,9 +788,7 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
         // thing this client can get is some global information (like DNS
         // servers).
 
-        // perhaps this should be logged on some higher level? This is most likely
-        // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+        LOG_WARN(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
             .arg(renew->getRemoteAddr().toText())
             .arg(renew->getName());
     } else {
