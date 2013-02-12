@@ -23,7 +23,7 @@ BINDCTL_PATH=@abs_top_builddir@/src/bin/bindctl
 # Note: lib/dns/python/.libs is necessary because __init__.py of isc package
 # automatically imports isc.datasrc, which then requires the DNS loadable
 # module.  #2145 should eliminate the need for it.
-PYTHONPATH=@abs_top_srcdir@/src/bin:@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs
+PYTHONPATH=@abs_top_srcdir@/src/bin:@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python/isc/cc:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
