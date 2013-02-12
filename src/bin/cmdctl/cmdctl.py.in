@@ -152,7 +152,9 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.session_id = self.headers.get('cookie')
         rcode, reply = http.client.OK, []
         if self._is_session_valid():
-            if self.path == '/login':
+            if self.path == '/users-exist':
+                rcode, reply = self._handle_users_exist()
+            elif self.path == '/login':
                 rcode, reply = self._handle_login()
             elif self._is_user_logged_in():
                 rcode, reply = self._handle_post_request()
@@ -174,6 +176,12 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             return http.client.OK, ["login success "]
         else:
             return http.client.UNAUTHORIZED, error_info
+
+    def _handle_users_exist(self):
+        if self.server.get_num_users() > 0:
+            return http.client.OK, True
+        else:
+            return http.client.OK, False
 
     def _check_user_name_and_pwd(self):
         '''Check user name and its password '''
