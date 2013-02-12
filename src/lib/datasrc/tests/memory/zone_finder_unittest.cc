@@ -442,14 +442,23 @@ protected:
         }
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
                   find_result->isWildcard());
-        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                  != 0, find_result->isNSECSigned());
-        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                  != 0, find_result->isNSEC3Signed());
-        // Convert all rrsets to 'full' ones before checking
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+                  find_result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+                  find_result->isNSEC3Signed());
+        // Convert all rrsets to 'full' ones before checking.  Also, confirm
+        // each RRset of the vector is of the "same kind" as one would be
+        // found by the find() method.
         std::vector<ConstRRsetPtr> converted_rrsets;
         BOOST_FOREACH(ConstRRsetPtr cur_rrset, target) {
             converted_rrsets.push_back(convertRRset(cur_rrset));
+
+            // As we know findAll() succeeded, this find() should also
+            // succeed, and the two sets should be "identical".
+            const ZoneFinderContextPtr result =
+                finder->find(name, cur_rrset->getType());
+            ASSERT_TRUE(result->rrset);
+            EXPECT_TRUE(result->rrset->isSameKind(*cur_rrset));
         }
         rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                     converted_rrsets.begin(), converted_rrsets.end());
@@ -1133,21 +1142,42 @@ InMemoryZoneFinderTest::wildcardCheck(
     }
 }
 
+// We have combinations of these cases (6 in total)
+// expected_flags: NSEC, NSEC3, RESULT_DEFAULT
+// options: NO_WILDCARD, FIND_DEFAULT
+
+// 1. Normal case: expected = DEFAULT, options = DEFAULT
 TEST_F(InMemoryZoneFinderTest, wildcard) {
-    // Normal case
     wildcardCheck();
 }
 
+// 2. options: expected = DEFAULT, options = NO_WILDCARD
+TEST_F(InMemoryZoneFinderTest, wildcardDisabled) {
+    // Similar to the previous once, but check the behavior for a non signed
+    // zone just in case.
+    wildcardCheck(ZoneFinder::RESULT_DEFAULT, ZoneFinder::NO_WILDCARD);
+}
+
+// 3. options: expected = NSEC_SIGNED, options = DEFAULT
+TEST_F(InMemoryZoneFinderTest, wildcardWithNSEC) {
+    wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED, ZoneFinder::FIND_DEFAULT);
+}
+
+// 4. options: expected = NSEC_SIGNED, options = NO_WILDCARD
 TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithNSEC) {
     // Wildcard is disabled.  In practice, this is used as part of query
     // processing for an NSEC-signed zone, so we test that case specifically.
     wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED, ZoneFinder::NO_WILDCARD);
 }
 
-TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithoutNSEC) {
-    // Similar to the previous once, but check the behavior for a non signed
-    // zone just in case.
-    wildcardCheck(ZoneFinder::RESULT_DEFAULT, ZoneFinder::NO_WILDCARD);
+// 5. options: expected = NSEC3_SIGNED, options = DEFAULT
+TEST_F(InMemoryZoneFinderTest, wildcardWithNSEC3) {
+    wildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED, ZoneFinder::FIND_DEFAULT);
+}
+
+// 6. options: expected = NSEC3_SIGNED, options = DEFAULT
+TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithNSEC3) {
+    wildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED, ZoneFinder::NO_WILDCARD);
 }
 
 /*
