@@ -60,6 +60,9 @@ error is given in the log message.
 There was an error opening a connection to the master. The error is
 shown in the log message.
 
+% XFRIN_EXITING exiting
+The xfrin daemon is exiting.
+
 % XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
 In an attempt of IXFR processing, the beginning SOA of the first difference
 (following the initial SOA that specified the final SOA for all the
@@ -121,10 +124,6 @@ aborts the transfer just like a successful case.
 There was a problem sending a message to the xfrout module or the
 zone manager. This most likely means that the msgq daemon has quit or
 was killed.
-
-% XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1
-There was a problem sending a message to b10-auth. This most likely
-means that the msgq daemon has quit or was killed.
 
 % XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1
 There was a problem sending a message to the zone manager. This most

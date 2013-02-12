@@ -40,7 +40,7 @@ class TSIGContextTest(unittest.TestCase):
         self.keyring = TSIGKeyRing()
         self.message = Message(Message.RENDER)
         self.renderer = MessageRenderer()
-        self.test_class = RRClass.IN()
+        self.test_class = RRClass.IN
         self.test_ttl = RRTTL(86400)
         self.secret = base64.b64decode(b"SFuWd/q99SzF8Yzd1QbB9g==")
         self.tsig_ctx = TSIGContext(TSIGKey(self.test_name,
@@ -59,12 +59,12 @@ class TSIGContextTest(unittest.TestCase):
     # Note: intentionally use camelCase so that we can easily copy-paste
     # corresponding C++ tests.
     def createMessageAndSign(self, id, qname, ctx, message_flags=RD_FLAG,
-                             qtype=RRType.A(), answer_data=None,
+                             qtype=RRType.A, answer_data=None,
                              answer_type=None, add_question=True,
-                             rcode=Rcode.NOERROR()):
+                             rcode=Rcode.NOERROR):
         self.message.clear(Message.RENDER)
         self.message.set_qid(id)
-        self.message.set_opcode(Opcode.QUERY())
+        self.message.set_opcode(Opcode.QUERY)
         self.message.set_rcode(rcode)
         if (message_flags & QR_FLAG) != 0:
             self.message.set_header_flag(Message.HEADERFLAG_QR)
@@ -120,7 +120,7 @@ class TSIGContextTest(unittest.TestCase):
         self.assertEqual(TSIGContext.STATE_INIT, self.tsig_ctx.get_state())
 
         # And there should be no error code.
-        self.assertEqual(TSIGError(Rcode.NOERROR()), self.tsig_ctx.get_error())
+        self.assertEqual(TSIGError(Rcode.NOERROR), self.tsig_ctx.get_error())
 
         # No message signed yet
         self.assertRaises(TSIGContextError, self.tsig_ctx.last_had_signature)
@@ -249,7 +249,7 @@ class TSIGContextTest(unittest.TestCase):
         tsig = self.createMessageAndSign(self.qid, self.test_name,
                                          self.tsig_verify_ctx,
                                          QR_FLAG|AA_FLAG|RD_FLAG,
-                                         RRType.A(), "192.0.2.1")
+                                         RRType.A, "192.0.2.1")
 
         expected_mac = b"\x8f\xcd\xa6\x6a\x7c\xd1\xa3\xb9\x94\x8e\xb1\x86" + \
             b"\x9d\x38\x4a\x9f"
@@ -280,7 +280,7 @@ class TSIGContextTest(unittest.TestCase):
         zone_name = Name("example.com")
 
         tsig = self.createMessageAndSign(axfr_qid, zone_name, self.tsig_ctx,
-                                         0, RRType.AXFR())
+                                         0, RRType.AXFR)
 
         received_data = read_wire_data("tsig_verify1.wire")
         self.commonVerifyChecks(self.tsig_verify_ctx, tsig, received_data,
@@ -289,10 +289,10 @@ class TSIGContextTest(unittest.TestCase):
 
         tsig = self.createMessageAndSign(axfr_qid, zone_name,
                                          self.tsig_verify_ctx,
-                                         AA_FLAG|QR_FLAG, RRType.AXFR(),
+                                         AA_FLAG|QR_FLAG, RRType.AXFR,
                                          "ns.example.com. root.example.com." +\
                                          " 2011041503 7200 3600 2592000 1200",
-                                         RRType.SOA())
+                                         RRType.SOA)
 
         received_data = read_wire_data("tsig_verify2.wire")
         self.commonVerifyChecks(self.tsig_ctx, tsig, received_data,
@@ -302,8 +302,8 @@ class TSIGContextTest(unittest.TestCase):
             b"\x60\x34\x13\x09\x68"
         tsig = self.createMessageAndSign(axfr_qid, zone_name,
                                          self.tsig_verify_ctx,
-                                         AA_FLAG|QR_FLAG, RRType.AXFR(),
-                                         "ns.example.com.", RRType.NS(),
+                                         AA_FLAG|QR_FLAG, RRType.AXFR,
+                                         "ns.example.com.", RRType.NS,
                                          False)
         self.commonSignChecks(tsig, axfr_qid, 0x4da8e951, expected_mac)
 
@@ -316,7 +316,7 @@ class TSIGContextTest(unittest.TestCase):
 
         test_qid = 0x7fc4
         tsig = self.createMessageAndSign(test_qid, self.test_name,
-                                         self.tsig_ctx, 0, RRType.SOA())
+                                         self.tsig_ctx, 0, RRType.SOA)
 
         # "advance the clock" and try validating, which should fail due to
         # BADTIME
@@ -328,8 +328,8 @@ class TSIGContextTest(unittest.TestCase):
         # make and sign a response in the context of TSIG error.
         tsig = self.createMessageAndSign(test_qid, self.test_name,
                                          self.tsig_verify_ctx,
-                                         QR_FLAG, RRType.SOA(), None, None,
-                                         True, Rcode.NOTAUTH())
+                                         QR_FLAG, RRType.SOA, None, None,
+                                         True, Rcode.NOTAUTH)
 
         expected_otherdata = b"\x00\x00\x4d\xa8\xbe\x86"
         expected_mac = b"\xd4\xb0\x43\xf6\xf4\x44\x95\xec\x8a\x01\x26" +\
@@ -344,7 +344,7 @@ class TSIGContextTest(unittest.TestCase):
         fix_current_time(0x4da8b9d6)
 
         tsig = self.createMessageAndSign(self.qid, self.test_name,
-                                         self.tsig_ctx, 0, RRType.SOA())
+                                         self.tsig_ctx, 0, RRType.SOA)
 
         # "rewind the clock" and try validating, which should fail due to
         # BADTIME
@@ -361,7 +361,7 @@ class TSIGContextTest(unittest.TestCase):
         fix_current_time(0x4da8b9d6)
 
         tsig = self.createMessageAndSign(self.qid, self.test_name,
-                                         self.tsig_ctx, 0, RRType.SOA())
+                                         self.tsig_ctx, 0, RRType.SOA)
 
         fix_current_time(0x4da8b9d6 + 301)
         self.assertEqual(TSIGError.BAD_TIME,
@@ -382,7 +382,7 @@ class TSIGContextTest(unittest.TestCase):
     def test_badtime_overflow(self):
         fix_current_time(200)
         tsig = self.createMessageAndSign(self.qid, self.test_name,
-                                         self.tsig_ctx, 0, RRType.SOA())
+                                         self.tsig_ctx, 0, RRType.SOA)
 
         # This should be in the okay range, but since "200 - fudge" overflows
         # and we compare them as 64-bit unsigned integers, it results in a
@@ -522,7 +522,7 @@ class TSIGContextTest(unittest.TestCase):
                          self.tsig_verify_ctx.get_state())
         self.createMessageAndSign(self.qid, self.test_name,
                                   self.tsig_verify_ctx,
-                                  QR_FLAG|AA_FLAG|RD_FLAG, RRType.A(),
+                                  QR_FLAG|AA_FLAG|RD_FLAG, RRType.A,
                                   "192.0.2.1")
         self.assertEqual(TSIGContext.STATE_SENT_RESPONSE,
                          self.tsig_verify_ctx.get_state())

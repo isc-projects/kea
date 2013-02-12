@@ -46,9 +46,30 @@ new_rdata_factory_users = [('aaaa', 'in'),
                            ('txt', 'generic')
                           ]
 
-re_typecode = re.compile('([\da-z]+)_(\d+)')
+re_typecode = re.compile('([\da-z\-]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
+# For meta types and types well-known but not implemented.  This is a dict from
+# type code values (as string) to textual mnemonic.
+meta_types = {
+    # Real meta types.  We won't have Rdata implement for them, but we need
+    # RRType constants.
+    '251': 'ixfr', '252': 'axfr', '255': 'any',
+    # Obsolete types.  We probalby won't implement Rdata for them, but it's
+    # better to have RRType constants.
+    '3': 'md', '4': 'mf', '7': 'mb', '8': 'mg', '9': 'mr', '30': 'nxt',
+    '38': 'a6', '254': 'maila',
+    # Types officially assigned but not yet supported in our implementation.
+    '10': 'null', '11': 'wks', '19': 'x25', '21': 'rt', '22': 'nsap',
+    '23': 'nsap-ptr', '24': 'sig', '20': 'isdn', '25': 'key', '26': 'px',
+    '27': 'gpos', '29': 'loc', '36': 'kx', '37': 'cert', '42': 'apl',
+    '45': 'ipseckey', '52': 'tlsa', '55': 'hip', '103': 'unspec',
+    '104': 'nid', '105': 'l32', '106': 'l64', '107': 'lp', '249':  'tkey',
+    '253': 'mailb', '256': 'uri', '257': 'caa'
+    }
+# Classes that don't have any known types.  This is a dict from type code
+# values (as string) to textual mnemonic.
+meta_classes = {'254': 'none'}
 typeandclass = []
 generic_code = 65536            # something larger than any code value
 rdata_declarations = ''
@@ -191,11 +212,11 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
                     type_code = m.group(2)
                     if not type_code in typecode2txt:
                         typecode2txt[type_code] = type_txt
-                    if re.search('\cc$', file):
+                    if re.search('\.cc$', file):
                         if rdatadef_mtime < getmtime(file):
                             rdatadef_mtime = getmtime(file)
                         class_definitions += import_classdef(class_txt, file)
-                    elif re.search('\h$', file):
+                    elif re.search('\.h$', file):
                         if rdatahdr_mtime < getmtime(file):
                             rdatahdr_mtime = getmtime(file)
                         rdata_declarations += import_classheader(class_txt,
@@ -261,36 +282,66 @@ class MasterLoaderCallbacks;
 def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
     placeholder = '@srcdir@/' + fileprefix + '-placeholder.h'
     outputfile = '@builddir@/' + fileprefix + '.h'
+    py_outputfile = '@builddir@/python/' + fileprefix + '_constants_inc.cc'
     upper_key = type_or_class.upper() # TYPE or CLASS
     lower_key = 'rr' + type_or_class.lower() # rrtype or rrclass
     cap_key = type_or_class           # Type or Class
 
-    if not need_generate(outputfile, basemtime) and getmtime(outputfile) > getmtime(placeholder):
+    # We only decide whether to generate files for libdns++ files; Python
+    # files are generated if and only if libdns++ files are generated.
+    # In practice it should be sufficient.
+    if (not need_generate(outputfile, basemtime) and
+        getmtime(outputfile) > getmtime(placeholder)):
         print('skip generating ' + outputfile)
         return
 
-    declarationtxt = ''
-    deftxt = ''
-    for code in code2txt.keys():
-        codetxt = code2txt[code].upper()
-        declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + codetxt + '();\n'
-        deftxt += '''inline const RR''' + cap_key + '''&
-RR''' + cap_key + '''::''' + codetxt + '''() {
-    static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code + ''');
+    # Create a list of (code, code-text) pairs, where code-text is generally
+    # upper-cased, with applying speicial filters when necessary.
+    def convert(code_txt):
+        # Workaround by heuristics: there's a "NULL" RR type, but it would
+        # cause conflict with the C/C++ macro.  We use Null as a special case.
+        if code_txt == 'null':
+            return 'Null'
+        # Likewise, convert "nsap-ptr" to "NSAP_PTR" as a dash cannot be part
+        # of a C/C++ variable.
+        if code_txt == 'nsap-ptr':
+            return 'NSAP_PTR'
+        return code_txt.upper()
+    codes = [ (code, convert(txt)) for code, txt in code2txt.items() ]
+
+    # Dump source code for libdns++
+    with  open(placeholder, 'r') as header_temp:
+        with open(outputfile, 'w') as header_out:
+            header_out.write(heading_txt)
+            for line in header_temp:
+                header_out.write(line)
+                if re.match('\s+// BEGIN_WELL_KNOWN_' + upper_key +
+                            '_DECLARATIONS$', line):
+                    for code in codes:
+                        header_out.write(' ' * 4 + 'static const RR' +
+                                         cap_key + '& ' + code[1] + '();\n')
+                if re.match('// BEGIN_WELL_KNOWN_' + upper_key +
+                            '_DEFINITIONS$', line):
+                    for code in codes:
+                        header_out.write('''inline const RR''' + cap_key +
+                                         '''&
+RR''' + cap_key + '''::''' + code[1] + '''() {
+    static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code[0] + ''');
     return (''' + lower_key + ''');
 }\n
-'''
-    header_temp = open(placeholder, 'r')
-    header_out = open(outputfile, 'w')
-    header_out.write(heading_txt)
-    for line in header_temp.readlines():
-        header_out.write(line)
-        if re.match('\s+// BEGIN_WELL_KNOWN_' + upper_key + '_DECLARATIONS$', line):
-            header_out.write(declarationtxt)
-        if re.match('// BEGIN_WELL_KNOWN_' + upper_key + '_DEFINITIONS$', line):
-            header_out.write('\n' + deftxt)
-    header_out.close()
-    header_temp.close()
+''')
+
+    # Dump source code snippet for isc.dns Python module
+    with open(py_outputfile, 'w') as py_out:
+        py_out.write("    // auto-generated by ../gen-rdatacode.py."
+                     "  Don't edit this file.\n")
+        py_out.write("\n")
+        for code in codes:
+            py_out.write('''\
+    installClassVariable(''' + lower_key + '''_type, "''' + code[1] + '''",
+                         createRR''' + cap_key + '''Object(RR''' + \
+        cap_key + '''::''' + code[1] + '''()));
+''')
 
 def generate_rrparam(fileprefix, basemtime):
     placeholder = '@srcdir@/' + fileprefix + '-placeholder.cc'
@@ -337,6 +388,16 @@ def generate_rrparam(fileprefix, basemtime):
             typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
+    typeandclassparams += indent + '// Meta and non-implemented RR types\n'
+    for type_code, type_txt in meta_types.items():
+        typeandclassparams += indent + \
+            'addType("' + type_txt.upper() + '", ' + type_code + ');\n'
+
+    typeandclassparams += indent + '// Meta classes\n'
+    for cls_code, cls_txt in meta_classes.items():
+        typeandclassparams += indent + \
+            'addClass("' + cls_txt.upper() + '", ' + cls_code + ');\n'
+
     rrparam_temp = open(placeholder, 'r')
     rrparam_out = open(outputfile, 'w')
     rrparam_out.write(heading_txt)
@@ -353,9 +414,14 @@ if __name__ == "__main__":
         generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
         generate_rdatahdr('@builddir@/rdataclass.h', heading_txt,
                           rdata_declarations, rdatahdr_mtime)
-        generate_typeclasscode('rrtype', rdatahdr_mtime, typecode2txt, 'Type')
+
+        # merge auto-generated types/classes with meta maps and generate the
+        # corresponding code.
+        generate_typeclasscode('rrtype', rdatahdr_mtime,
+                               dict(typecode2txt, **meta_types), 'Type')
         generate_typeclasscode('rrclass', classdir_mtime,
-                               classcode2txt, 'Class')
+                               dict(classcode2txt, **meta_classes), 'Class')
+
         generate_rrparam('rrparamregistry', rdatahdr_mtime)
     except:
         sys.stderr.write('Code generation failed due to exception: %s\n' %

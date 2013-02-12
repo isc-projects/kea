@@ -43,6 +43,9 @@ specific error is printed in the message.
 This debug message indicates that the given command has been sent to
 the given module.
 
+% CMDCTL_EXITING exiting
+The b10-cmdctl daemon is exiting.
+
 % CMDCTL_NO_SUCH_USER username not found in user database: %1
 A login attempt was made to b10-cmdctl, but the username was not known.
 Users can be added with the tool b10-cmdctl-usermgr.

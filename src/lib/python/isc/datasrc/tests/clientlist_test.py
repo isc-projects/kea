@@ -43,8 +43,8 @@ class ClientListTest(unittest.TestCase):
         Test the constructor. It should accept an RRClass. Check it
         reject invalid inputs.
         """
-        isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN())
-        isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH())
+        isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
         # Not enough arguments
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList)
         # Bad types of arguments
@@ -52,7 +52,7 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList, "IN")
         # Too many arguments
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList,
-                         isc.dns.RRClass.IN(), isc.dns.RRClass.IN())
+                         isc.dns.RRClass.IN, isc.dns.RRClass.IN)
 
     def test_configure(self):
         """
@@ -60,7 +60,7 @@ class ClientListTest(unittest.TestCase):
         ones are acceptend and invalid rejected. We check the changes
         have effect.
         """
-        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN())
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         # This should be NOP now
         self.clist.configure("[]", True)
         # Check the zone is not there yet
@@ -102,7 +102,7 @@ class ClientListTest(unittest.TestCase):
         Test the find accepts the right arguments, some of them can be omitted,
         etc.
         """
-        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN())
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.clist.configure('''[{
             "type": "MasterFiles",
             "params": {

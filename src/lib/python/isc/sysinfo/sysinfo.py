@@ -44,7 +44,7 @@ class SysInfo:
         self._net_stats = 'Unknown\n'
         self._net_connections = 'Unknown\n'
 
-        # The following are Linux speicific, and should eventually be removed
+        # The following are Linux specific, and should eventually be removed
         # from this level; for now we simply default to None (so they won't
         # be printed)
         self._platform_distro = None
@@ -162,8 +162,11 @@ class SysInfoPOSIX(SysInfo):
 
         u = os.uname()
         self._platform_name = u[0]
+        self._hostname = u[1]
         self._platform_version = u[2]
         self._platform_machine = u[4]
+
+        self._loadavg = os.getloadavg()
 
 class SysInfoLinux(SysInfoPOSIX):
     """Linux implementation of the SysInfo class.
@@ -322,8 +325,8 @@ class SysInfoBSD(SysInfoPOSIX):
         except (subprocess.CalledProcessError, OSError):
             self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
-class SysInfoOpenBSD(SysInfoBSD):
-    """OpenBSD implementation of the SysInfo class.
+class SysInfoNetBSD(SysInfoBSD):
+    """NetBSD and OpenBSD implementation of the SysInfo class.
     See the SysInfo class documentation for more information.
     """
     def __init__(self):
@@ -499,8 +502,8 @@ def SysInfoFromFactory():
     osname = platform.system()
     if osname == 'Linux':
         return SysInfoLinux()
-    elif osname == 'OpenBSD':
-        return SysInfoOpenBSD()
+    elif (osname == 'NetBSD') or (osname == 'OpenBSD'):
+        return SysInfoNetBSD()
     elif osname == 'FreeBSD':
         return SysInfoFreeBSD()
     elif osname == 'Darwin':
@@ -508,4 +511,4 @@ def SysInfoFromFactory():
     elif osname == 'BIND10Testcase':
         return SysInfoTestcase()
     else:
-        return SysInfo()
+        return SysInfoPOSIX()

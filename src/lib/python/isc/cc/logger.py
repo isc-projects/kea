@@ -1,6 +1,4 @@
-#! /bin/sh
-
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +13,14 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
-export PYTHON_EXEC
+""" This is a logging utility module for other modules of the cc library
+package.
 
-SYSINFO_PATH=@abs_top_builddir@/src/bin/sysinfo
+"""
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/lib/python
-export PYTHONPATH
+import isc.log
 
-cd ${SYSINFO_PATH}
-exec ${PYTHON_EXEC} -O sysinfo.py "$@"
+# C++ version of the CC module uses 'cc'; using the same name does not
+# necessarily cause disruption, but we use a different name to minimize
+# possible confusion.
+logger = isc.log.Logger('pycc')
