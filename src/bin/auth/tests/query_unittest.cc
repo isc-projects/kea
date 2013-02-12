@@ -1167,12 +1167,6 @@ TEST_P(QueryTest, apexNSMatch) {
 
 // test type any query logic
 TEST_P(QueryTest, exactAnyMatch) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
     EXPECT_NO_THROW(query.process(*list_, Name("noglue.example.com"),
@@ -1705,12 +1699,6 @@ TEST_F(QueryTestForMockOnly, badWildcardProof3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
@@ -1728,12 +1716,6 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence RRSETs of
