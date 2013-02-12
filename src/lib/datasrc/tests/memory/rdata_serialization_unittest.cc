@@ -34,7 +34,9 @@
 #include <boost/foreach.hpp>
 
 #include <cstring>
+#include <algorithm>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -166,7 +168,8 @@ public:
                      vector<ConstRdataPtr>());
 
     void addRdataCommon(const vector<ConstRdataPtr>& rrsigs);
-    void addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs);
+    void addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs,
+                             bool duplicate = false);
 };
 
 // Used across more classes and scopes. But it's just uninteresting
@@ -532,6 +535,11 @@ RdataSerializationTest::encodeWrapper(size_t data_len) {
     encoded_data_.resize(data_len);
 }
 
+bool
+rdataMatch(ConstRdataPtr rdata1, ConstRdataPtr rdata2) {
+    return (rdata1->compare(*rdata2) == 0);
+}
+
 template<class DecoderStyle>
 void
 RdataEncodeDecodeTest<DecoderStyle>::
@@ -552,14 +560,26 @@ checkEncode(RRClass rrclass, RRType rrtype,
     actual_renderer_.clear();
     encoded_data_.clear();
 
-    // Build expected wire-format data
+    // Build expected wire-format data, skipping duplicate Rdata.
     expected_renderer_.writeName(dummy_name);
+    vector<ConstRdataPtr> rdata_uniq_list;
     BOOST_FOREACH(const ConstRdataPtr& rdata, rdata_list) {
-        rdata->toWire(expected_renderer_);
+        if (std::find_if(rdata_uniq_list.begin(), rdata_uniq_list.end(),
+                         boost::bind(rdataMatch, rdata, _1)) ==
+            rdata_uniq_list.end()) {
+            rdata_uniq_list.push_back(rdata);
+            rdata->toWire(expected_renderer_);
+        }
     }
     expected_renderer_.writeName(dummyName2());
+    vector<ConstRdataPtr> rrsig_uniq_list;
     BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
-        rdata->toWire(expected_renderer_);
+        if (std::find_if(rrsig_uniq_list.begin(), rrsig_uniq_list.end(),
+                         boost::bind(rdataMatch, rdata, _1)) ==
+            rrsig_uniq_list.end()) {
+            rrsig_uniq_list.push_back(rdata);
+            rdata->toWire(expected_renderer_);
+        }
     }
 
     // Then build wire format data using the encoded data.
@@ -577,9 +597,9 @@ checkEncode(RRClass rrclass, RRType rrtype,
     const size_t storage_len = encoder_.getStorageLength();
     encodeWrapper(storage_len);
 
-    DecoderStyle::decode(rrclass, rrtype, rdata_list.size(), rrsig_list.size(),
-                         expected_varlen_fields, encoded_data_, storage_len,
-                         actual_renderer_);
+    DecoderStyle::decode(rrclass, rrtype, rdata_uniq_list.size(),
+                         rrsig_uniq_list.size(), expected_varlen_fields,
+                         encoded_data_, storage_len, actual_renderer_);
 
     // Two sets of wire-format data should be identical.
     matchWireData(expected_renderer_.getData(), expected_renderer_.getLength(),
@@ -619,7 +639,7 @@ TYPED_TEST(RdataEncodeDecodeTest, addRdata) {
 template<class DecoderStyle>
 void
 RdataEncodeDecodeTest<DecoderStyle>::
-addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
+addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs, bool duplicate) {
     // Similar to addRdata(), but test with multiple RDATAs.
     // Four different cases are tested: a single fixed-len RDATA (A),
     // fixed-len data + domain name (MX), variable-len data only (TXT),
@@ -629,12 +649,19 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     rdata_list_.clear();
     rdata_list_.push_back(a_rdata_);
     rdata_list_.push_back(a_rdata2);
+    if (duplicate) {      // if duplicate is true, add duplicate Rdata
+        rdata_list_.push_back(a_rdata_);
+    }
     checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, rrsigs);
 
     ConstRdataPtr mx_rdata1 = createRdata(RRType::MX(), RRClass::IN(),
                                           "5 mx1.example.com.");
     ConstRdataPtr mx_rdata2 = createRdata(RRType::MX(), RRClass::IN(),
                                           "10 mx2.example.com.");
+    if (duplicate) { // check duplicate detection is case insensitive for names
+        rdata_list_.push_back(createRdata(RRType::MX(), RRClass::IN(),
+                                          "5 MX1.example.COM."));
+    }
     rdata_list_.clear();
     rdata_list_.push_back(mx_rdata1);
     rdata_list_.push_back(mx_rdata2);
@@ -644,6 +671,9 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
                                            "foo bar baz");
     ConstRdataPtr txt_rdata2 = createRdata(RRType::TXT(), RRClass::IN(),
                                           "another text data");
+    if (duplicate) {
+        rdata_list_.push_back(txt_rdata1);
+    }
     rdata_list_.clear();
     rdata_list_.push_back(txt_rdata1);
     rdata_list_.push_back(txt_rdata2);
@@ -655,6 +685,9 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     ConstRdataPtr naptr_rdata2 =
         createRdata(RRType::NAPTR(), RRClass::IN(),
                     "200 100 \"s\" \"http\" \"\" _http._tcp.example.com");
+    if (duplicate) {
+        rdata_list_.push_back(naptr_rdata1);
+    }
     rdata_list_.clear();
     rdata_list_.push_back(naptr_rdata1);
     rdata_list_.push_back(naptr_rdata2);
@@ -705,6 +738,8 @@ TYPED_TEST(RdataEncodeDecodeTest, addRdataMulti) {
     vector<ConstRdataPtr> rrsigs;
     this->addRdataMultiCommon(rrsigs); // test without RRSIGs (empty vector)
 
+    this->addRdataMultiCommon(rrsigs, true); // ditto, but with duplicated data
+
     // Tests with two RRSIGs
     rrsigs.push_back(this->rrsig_rdata_);
     rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
@@ -732,50 +767,44 @@ TEST_F(RdataSerializationTest, badAddRdata) {
     EXPECT_THROW(encoder_.encode(&encoded_data_[0], buf_len - 1),
                  isc::BadValue);
 
-    // Type of RDATA and the specified RR type don't match.  addRdata() should
-    // detect this inconsistency.
+    // Some of the following checks confirm that adding an Rdata of the
+    // wrong RR type will be rejected.  Several different cases are checked,
+    // but there shouldn't be any essential difference among these cases in
+    // the tested code; these cases were considered because in an older version
+    // of implementation rejected them for possibly different reasons, and
+    // we simply keep these cases as they are not so many (and may help detect
+    // future possible regression).
     encoder_.start(RRClass::IN(), RRType::AAAA());
-    EXPECT_THROW(encoder_.addRdata(*a_rdata_), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*a_rdata_), std::bad_cast);
 
-    // Likewise.
     encoder_.start(RRClass::IN(), RRType::A());
-    EXPECT_THROW(encoder_.addRdata(*aaaa_rdata_), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*aaaa_rdata_), std::bad_cast);
 
-    // Likewise.  The encoder expects the first name completes the data, and
-    // throws on the second due as an unexpected name field.
     const ConstRdataPtr rp_rdata =
         createRdata(RRType::RP(), RRClass::IN(), "a.example. b.example");
     encoder_.start(RRClass::IN(), RRType::NS());
-    EXPECT_THROW(encoder_.addRdata(*rp_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*rp_rdata), std::bad_cast);
 
-    // Likewise.  The encoder considers the name data a variable length data
-    // field, and throws on the first name.
     encoder_.start(RRClass::IN(), RRType::DHCID());
-    EXPECT_THROW(encoder_.addRdata(*rp_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*rp_rdata), std::bad_cast);
 
-    // Likewise.  The text RDATA (2 bytes) will be treated as MX preference,
-    // and the encoder will still expect to see a domain name.
     const ConstRdataPtr txt_rdata = createRdata(RRType::TXT(), RRClass::IN(),
                                                 "a");
     encoder_.start(RRClass::IN(), RRType::MX());
-    EXPECT_THROW(encoder_.addRdata(*txt_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*txt_rdata), std::bad_cast);
 
-    // Similar to the previous one, but in this case there's no data field
-    // in the spec.
     encoder_.start(RRClass::IN(), RRType::NS());
-    EXPECT_THROW(encoder_.addRdata(*txt_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*txt_rdata), std::bad_cast);
 
-    // Likewise.  Inconsistent name compression policy.
     const ConstRdataPtr ns_rdata =
         createRdata(RRType::NS(), RRClass::IN(), "ns.example.");
     encoder_.start(RRClass::IN(), RRType::DNAME());
-    EXPECT_THROW(encoder_.addRdata(*ns_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*ns_rdata), std::bad_cast);
 
-    // Same as the previous one, opposite inconsistency.
     const ConstRdataPtr dname_rdata =
         createRdata(RRType::DNAME(), RRClass::IN(), "dname.example.");
     encoder_.start(RRClass::IN(), RRType::NS());
-    EXPECT_THROW(encoder_.addRdata(*dname_rdata), isc::BadValue);
+    EXPECT_THROW(encoder_.addRdata(*dname_rdata), std::bad_cast);
 
     // RDATA len exceeds the 16-bit range.  Technically not invalid, but
     // we don't support that (and it's practically useless anyway).
