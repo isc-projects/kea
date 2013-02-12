@@ -408,29 +408,21 @@ Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
     // add server-id
     answer->addOption(getServerID());
-
-    // Get the subnet object. It holds options to be sent to the client
-    // that belongs to the particular subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
-    // Warn if subnet is not supported and quit.
-    if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_DEF_OPT)
-            .arg(question->getRemoteAddr().toText());
-        return;
-    }
-
 }
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    // Get the subnet for a particular address.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet6Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
     if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_REQ_OPT)
-            .arg(question->getRemoteAddr().toText());
         return;
     }
 
@@ -564,9 +556,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         // thing this client can get is some global information (like DNS
         // servers).
 
-        // perhaps this should be logged on some higher level? This is most likely
-        // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+        LOG_WARN(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
             .arg(question->getRemoteAddr().toText())
             .arg(question->getName());
 
@@ -714,6 +704,21 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                       Pkt6Ptr /* question */, boost::shared_ptr<Option6IA> ia) {
+    if (!subnet) {
+        // There's no subnet select for this client. There's nothing to renew.
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid."));
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RENEW_UNKNOWN_SUBNET)
+            .arg(duid->toText())
+            .arg(ia->getIAID());
+
+        return (ia_rsp);
+    }
+
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
                                                             subnet->getID());
 
@@ -775,9 +780,9 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
         // thing this client can get is some global information (like DNS
         // servers).
 
-        // perhaps this should be logged on some higher level? This is most likely
-        // configuration bug.
-        LOG_ERROR(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED);
+        LOG_WARN(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
+            .arg(renew->getRemoteAddr().toText())
+            .arg(renew->getName());
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
             .arg(subnet->toText());
