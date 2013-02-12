@@ -1,11 +1,30 @@
-574.    [func]		tmark
+577.	[func]		muks
+	Added an SQLite3 index on records(rname, rdtype). This decreases
+	insert performance by ~28% and adds about ~20% to the file size,
+	but increases zone iteration performance. As it introduces a new
+	index, a database upgrade would be required.
+	(Trac #1756, git 9b3c959af13111af1fa248c5010aa33ee7e307ee)
+
+576.	[bug]		tmark, tomek
+	b10-dhcp6: Fixed bug when the server aborts operation when
+	receiving renew and there are no IPv6 subnets configured.
+	(Trac 2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
+
+575.	[bug]		marcin
+	b10-dhcp6: Fixed the bug whereby the subnet for the incoming
+	packet was selected using only its source address. The subnet
+	is now selected using either source address or the name of the
+	server's interface on which the packet has been received.
+	(Trac #2704, git 1cbacf19a28bdae50bb9bd3767bca0147fde37ed)
+
+574.	[func]		tmark
 	b10-dhcp4, b10-dhcp6: Composite key indexes were added to the lease
 	tables to reduce lease search time. The lease4 table now has two
 	additional indexes: a) hwaddr/subnet_id and b) client_id/subnet_id.
 	The lease6 now has the one additional index: iaid/subnet_id/duid.
 	Adding these indexes significantly improves lease acquisition
 	performance.
-	(Trac #2699,#2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)}}}
+	(Trac #2699,#2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)
 
 573.	[bug]		stephen
 	Fixed problem whereby the DHCP server crashed if it ran out of
