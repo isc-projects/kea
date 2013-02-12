@@ -746,6 +746,10 @@ TYPED_TEST(RdataEncodeDecodeTest, addRdataMulti) {
                                  "A 5 2 3600 20120814220826 "
                                  "20120715220826 54321 com. FAKE"));
     this->addRdataMultiCommon(rrsigs);
+
+    // Similar to the previous, but with duplicate RRSIG.
+    rrsigs.push_back(this->rrsig_rdata_);
+    this->addRdataMultiCommon(rrsigs, true);
 }
 
 TEST_F(RdataSerializationTest, badAddRdata) {
