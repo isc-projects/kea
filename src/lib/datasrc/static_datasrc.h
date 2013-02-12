@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#ifndef DATASRC_FACTORY_LINK_H
-#define DATASRC_FACTORY_LINK_H
+#ifndef DATASRC_STATIC_H
+#define DATASRC_STATIC_H
 
 #include <datasrc/database.h>
 #include <cc/data.h>
@@ -32,7 +32,7 @@ extern "C" void destroyInstance(DataSourceClient* instance);
 }
 }
 
-#endif  // DATASRC_FACTORY_LINK_H
+#endif  // DATASRC_STATIC_H
 
 // Local Variables:
 // mode: c++

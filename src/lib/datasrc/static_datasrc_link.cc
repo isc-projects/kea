@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "client.h"
-#include "factory_link.h"
+#include "static_datasrc.h"
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 
