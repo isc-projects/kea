@@ -8,6 +8,10 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
+# These two are created with rrtype/class.h, so not explicitly listed in
+# BUILT_SOURCES.
+CLEANFILES += python/rrtype_constants_inc.cc
+CLEANFILES += python/rrclass_constants_inc.cc
 
 EXTRA_DIST = rrclass-placeholder.h
 EXTRA_DIST += rrparamregistry-placeholder.cc

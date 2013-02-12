@@ -294,38 +294,83 @@ initModulePart_Opcode(PyObject* mod) {
         return (false);
     }
 
-    addClassVariable(opcode_type, "QUERY_CODE",
-                     Py_BuildValue("h", Opcode::QUERY_CODE));
-    addClassVariable(opcode_type, "IQUERY_CODE",
-                     Py_BuildValue("h", Opcode::IQUERY_CODE));
-    addClassVariable(opcode_type, "STATUS_CODE",
-                     Py_BuildValue("h", Opcode::STATUS_CODE));
-    addClassVariable(opcode_type, "RESERVED3_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED3_CODE));
-    addClassVariable(opcode_type, "NOTIFY_CODE",
-                     Py_BuildValue("h", Opcode::NOTIFY_CODE));
-    addClassVariable(opcode_type, "UPDATE_CODE",
-                     Py_BuildValue("h", Opcode::UPDATE_CODE));
-    addClassVariable(opcode_type, "RESERVED6_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED6_CODE));
-    addClassVariable(opcode_type, "RESERVED7_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED7_CODE));
-    addClassVariable(opcode_type, "RESERVED8_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED8_CODE));
-    addClassVariable(opcode_type, "RESERVED9_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED9_CODE));
-    addClassVariable(opcode_type, "RESERVED10_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED10_CODE));
-    addClassVariable(opcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED11_CODE));
-    addClassVariable(opcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED12_CODE));
-    addClassVariable(opcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED13_CODE));
-    addClassVariable(opcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED14_CODE));
-    addClassVariable(opcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Opcode::RESERVED15_CODE));
+    try {
+        installClassVariable(opcode_type, "QUERY_CODE",
+                             Py_BuildValue("h", Opcode::QUERY_CODE));
+        installClassVariable(opcode_type, "IQUERY_CODE",
+                             Py_BuildValue("h", Opcode::IQUERY_CODE));
+        installClassVariable(opcode_type, "STATUS_CODE",
+                             Py_BuildValue("h", Opcode::STATUS_CODE));
+        installClassVariable(opcode_type, "RESERVED3_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED3_CODE));
+        installClassVariable(opcode_type, "NOTIFY_CODE",
+                             Py_BuildValue("h", Opcode::NOTIFY_CODE));
+        installClassVariable(opcode_type, "UPDATE_CODE",
+                             Py_BuildValue("h", Opcode::UPDATE_CODE));
+        installClassVariable(opcode_type, "RESERVED6_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED6_CODE));
+        installClassVariable(opcode_type, "RESERVED7_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED7_CODE));
+        installClassVariable(opcode_type, "RESERVED8_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED8_CODE));
+        installClassVariable(opcode_type, "RESERVED9_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED9_CODE));
+        installClassVariable(opcode_type, "RESERVED10_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED10_CODE));
+        installClassVariable(opcode_type, "RESERVED11_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED11_CODE));
+        installClassVariable(opcode_type, "RESERVED12_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED12_CODE));
+        installClassVariable(opcode_type, "RESERVED13_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED13_CODE));
+        installClassVariable(opcode_type, "RESERVED14_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED14_CODE));
+        installClassVariable(opcode_type, "RESERVED15_CODE",
+                             Py_BuildValue("h", Opcode::RESERVED15_CODE));
+
+        installClassVariable(opcode_type, "QUERY",
+                             createOpcodeObject(Opcode::QUERY()));
+        installClassVariable(opcode_type, "IQUERY",
+                             createOpcodeObject(Opcode::IQUERY()));
+        installClassVariable(opcode_type, "STATUS",
+                             createOpcodeObject(Opcode::STATUS()));
+        installClassVariable(opcode_type, "RESERVED3",
+                             createOpcodeObject(Opcode::RESERVED3()));
+        installClassVariable(opcode_type, "NOTIFY",
+                             createOpcodeObject(Opcode::NOTIFY()));
+        installClassVariable(opcode_type, "UPDATE",
+                             createOpcodeObject(Opcode::UPDATE()));
+        installClassVariable(opcode_type, "RESERVED6",
+                             createOpcodeObject(Opcode::RESERVED6()));
+        installClassVariable(opcode_type, "RESERVED7",
+                             createOpcodeObject(Opcode::RESERVED7()));
+        installClassVariable(opcode_type, "RESERVED8",
+                             createOpcodeObject(Opcode::RESERVED8()));
+        installClassVariable(opcode_type, "RESERVED9",
+                             createOpcodeObject(Opcode::RESERVED9()));
+        installClassVariable(opcode_type, "RESERVED10",
+                             createOpcodeObject(Opcode::RESERVED10()));
+        installClassVariable(opcode_type, "RESERVED11",
+                             createOpcodeObject(Opcode::RESERVED11()));
+        installClassVariable(opcode_type, "RESERVED12",
+                             createOpcodeObject(Opcode::RESERVED12()));
+        installClassVariable(opcode_type, "RESERVED13",
+                             createOpcodeObject(Opcode::RESERVED13()));
+        installClassVariable(opcode_type, "RESERVED14",
+                             createOpcodeObject(Opcode::RESERVED14()));
+        installClassVariable(opcode_type, "RESERVED15",
+                             createOpcodeObject(Opcode::RESERVED15()));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Opcode initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Opcode initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -341,40 +386,87 @@ initModulePart_Rcode(PyObject* mod) {
         return (false);
     }
 
-    addClassVariable(rcode_type, "NOERROR_CODE",
-                     Py_BuildValue("h", Rcode::NOERROR_CODE));
-    addClassVariable(rcode_type, "FORMERR_CODE",
-                     Py_BuildValue("h", Rcode::FORMERR_CODE));
-    addClassVariable(rcode_type, "SERVFAIL_CODE",
-                     Py_BuildValue("h", Rcode::SERVFAIL_CODE));
-    addClassVariable(rcode_type, "NXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::NXDOMAIN_CODE));
-    addClassVariable(rcode_type, "NOTIMP_CODE",
-                     Py_BuildValue("h", Rcode::NOTIMP_CODE));
-    addClassVariable(rcode_type, "REFUSED_CODE",
-                     Py_BuildValue("h", Rcode::REFUSED_CODE));
-    addClassVariable(rcode_type, "YXDOMAIN_CODE",
-                     Py_BuildValue("h", Rcode::YXDOMAIN_CODE));
-    addClassVariable(rcode_type, "YXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::YXRRSET_CODE));
-    addClassVariable(rcode_type, "NXRRSET_CODE",
-                     Py_BuildValue("h", Rcode::NXRRSET_CODE));
-    addClassVariable(rcode_type, "NOTAUTH_CODE",
-                     Py_BuildValue("h", Rcode::NOTAUTH_CODE));
-    addClassVariable(rcode_type, "NOTZONE_CODE",
-                     Py_BuildValue("h", Rcode::NOTZONE_CODE));
-    addClassVariable(rcode_type, "RESERVED11_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED11_CODE));
-    addClassVariable(rcode_type, "RESERVED12_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED12_CODE));
-    addClassVariable(rcode_type, "RESERVED13_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED13_CODE));
-    addClassVariable(rcode_type, "RESERVED14_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED14_CODE));
-    addClassVariable(rcode_type, "RESERVED15_CODE",
-                     Py_BuildValue("h", Rcode::RESERVED15_CODE));
-    addClassVariable(rcode_type, "BADVERS_CODE",
-                     Py_BuildValue("h", Rcode::BADVERS_CODE));
+    try {
+        installClassVariable(rcode_type, "NOERROR_CODE",
+                             Py_BuildValue("h", Rcode::NOERROR_CODE));
+        installClassVariable(rcode_type, "FORMERR_CODE",
+                             Py_BuildValue("h", Rcode::FORMERR_CODE));
+        installClassVariable(rcode_type, "SERVFAIL_CODE",
+                             Py_BuildValue("h", Rcode::SERVFAIL_CODE));
+        installClassVariable(rcode_type, "NXDOMAIN_CODE",
+                             Py_BuildValue("h", Rcode::NXDOMAIN_CODE));
+        installClassVariable(rcode_type, "NOTIMP_CODE",
+                             Py_BuildValue("h", Rcode::NOTIMP_CODE));
+        installClassVariable(rcode_type, "REFUSED_CODE",
+                             Py_BuildValue("h", Rcode::REFUSED_CODE));
+        installClassVariable(rcode_type, "YXDOMAIN_CODE",
+                             Py_BuildValue("h", Rcode::YXDOMAIN_CODE));
+        installClassVariable(rcode_type, "YXRRSET_CODE",
+                             Py_BuildValue("h", Rcode::YXRRSET_CODE));
+        installClassVariable(rcode_type, "NXRRSET_CODE",
+                             Py_BuildValue("h", Rcode::NXRRSET_CODE));
+        installClassVariable(rcode_type, "NOTAUTH_CODE",
+                             Py_BuildValue("h", Rcode::NOTAUTH_CODE));
+        installClassVariable(rcode_type, "NOTZONE_CODE",
+                             Py_BuildValue("h", Rcode::NOTZONE_CODE));
+        installClassVariable(rcode_type, "RESERVED11_CODE",
+                             Py_BuildValue("h", Rcode::RESERVED11_CODE));
+        installClassVariable(rcode_type, "RESERVED12_CODE",
+                             Py_BuildValue("h", Rcode::RESERVED12_CODE));
+        installClassVariable(rcode_type, "RESERVED13_CODE",
+                             Py_BuildValue("h", Rcode::RESERVED13_CODE));
+        installClassVariable(rcode_type, "RESERVED14_CODE",
+                             Py_BuildValue("h", Rcode::RESERVED14_CODE));
+        installClassVariable(rcode_type, "RESERVED15_CODE",
+                             Py_BuildValue("h", Rcode::RESERVED15_CODE));
+        installClassVariable(rcode_type, "BADVERS_CODE",
+                             Py_BuildValue("h", Rcode::BADVERS_CODE));
+
+        installClassVariable(rcode_type, "NOERROR",
+                             createRcodeObject(Rcode::NOERROR()));
+        installClassVariable(rcode_type, "FORMERR",
+                             createRcodeObject(Rcode::FORMERR()));
+        installClassVariable(rcode_type, "SERVFAIL",
+                             createRcodeObject(Rcode::SERVFAIL()));
+        installClassVariable(rcode_type, "NXDOMAIN",
+                             createRcodeObject(Rcode::NXDOMAIN()));
+        installClassVariable(rcode_type, "NOTIMP",
+                             createRcodeObject(Rcode::NOTIMP()));
+        installClassVariable(rcode_type, "REFUSED",
+                             createRcodeObject(Rcode::REFUSED()));
+        installClassVariable(rcode_type, "YXDOMAIN",
+                             createRcodeObject(Rcode::YXDOMAIN()));
+        installClassVariable(rcode_type, "YXRRSET",
+                             createRcodeObject(Rcode::YXRRSET()));
+        installClassVariable(rcode_type, "NXRRSET",
+                             createRcodeObject(Rcode::NXRRSET()));
+        installClassVariable(rcode_type, "NOTAUTH",
+                             createRcodeObject(Rcode::NOTAUTH()));
+        installClassVariable(rcode_type, "NOTZONE",
+                             createRcodeObject(Rcode::NOTZONE()));
+        installClassVariable(rcode_type, "RESERVED11",
+                             createRcodeObject(Rcode::RESERVED11()));
+        installClassVariable(rcode_type, "RESERVED12",
+                             createRcodeObject(Rcode::RESERVED12()));
+        installClassVariable(rcode_type, "RESERVED13",
+                             createRcodeObject(Rcode::RESERVED13()));
+        installClassVariable(rcode_type, "RESERVED14",
+                             createRcodeObject(Rcode::RESERVED14()));
+        installClassVariable(rcode_type, "RESERVED15",
+                             createRcodeObject(Rcode::RESERVED15()));
+        installClassVariable(rcode_type, "BADVERS",
+                             createRcodeObject(Rcode::BADVERS()));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in Rcode initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in Rcode initialization");
+        return (false);
+    }
 
     return (true);
 }
@@ -432,6 +524,9 @@ initModulePart_RRClass(PyObject* mod) {
                                                   NULL, NULL);
         PyObjectContainer(po_IncompleteRRClass).installToModule(
             mod, "IncompleteRRClass");
+
+        // Incorporate auto-generated RRClass constants
+#include <dns/python/rrclass_constants_inc.cc>
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRClass initialization: " +
@@ -518,6 +613,9 @@ initModulePart_RRType(PyObject* mod) {
                                                  NULL, NULL);
         PyObjectContainer(po_IncompleteRRType).installToModule(
             mod, "IncompleteRRType");
+
+        // Incorporate auto-generated RRType constants
+#include <dns/python/rrtype_constants_inc.cc>
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in RRType initialization: " +

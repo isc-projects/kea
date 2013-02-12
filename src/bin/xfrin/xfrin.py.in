@@ -78,7 +78,7 @@ DBG_XFRIN_TRACE = logger.DBGLVL_TRACE_BASIC
 # (TODO: have similar support to get default values for command
 # arguments as we do for config options)
 DEFAULT_MASTER_PORT = 53
-DEFAULT_ZONE_CLASS = RRClass.IN()
+DEFAULT_ZONE_CLASS = RRClass.IN
 
 __version__ = 'BIND10'
 
@@ -135,7 +135,7 @@ def _check_zone_class(zone_class_str):
     """If the given argument is a string: checks if the given class is
        a valid one, and returns an RRClass object if so.
        Raises XfrinZoneInfoException if not.
-       If it is None, this function returns the default RRClass.IN()"""
+       If it is None, this function returns the default RRClass.IN"""
     if zone_class_str is None:
         return DEFAULT_ZONE_CLASS
     try:
@@ -316,12 +316,12 @@ class XfrinState:
 
 class XfrinInitialSOA(XfrinState):
     def handle_rr(self, conn, rr):
-        if rr.get_type() != RRType.SOA():
+        if rr.get_type() != RRType.SOA:
             raise XfrinProtocolError('First RR in zone transfer must be SOA ('
                                      + rr.get_type().to_text() + ' received)')
         conn._end_serial = get_soa_serial(rr.get_rdata()[0])
 
-        if conn._request_type == RRType.IXFR() and \
+        if conn._request_type == RRType.IXFR and \
                 conn._end_serial <= conn._request_serial:
             logger.info(XFRIN_IXFR_UPTODATE, conn.zone_str(),
                         conn._request_serial, conn._end_serial)
@@ -364,8 +364,8 @@ class XfrinFirstData(XfrinState):
         http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
 
         '''
-        if conn._request_type == RRType.IXFR() and \
-                rr.get_type() == RRType.SOA() and \
+        if conn._request_type == RRType.IXFR and \
+                rr.get_type() == RRType.SOA and \
                 conn._request_serial == get_soa_serial(rr.get_rdata()[0]):
             logger.debug(DBG_XFRIN_TRACE, XFRIN_GOT_INCREMENTAL_RESP,
                          conn.zone_str())
@@ -382,7 +382,7 @@ class XfrinFirstData(XfrinState):
 
 class XfrinIXFRDeleteSOA(XfrinState):
     def handle_rr(self, conn, rr):
-        if rr.get_type() != RRType.SOA():
+        if rr.get_type() != RRType.SOA:
             # this shouldn't happen; should this occur it means an internal
             # bug.
             raise XfrinException(rr.get_type().to_text() +
@@ -402,7 +402,7 @@ class XfrinIXFRDeleteSOA(XfrinState):
 
 class XfrinIXFRDelete(XfrinState):
     def handle_rr(self, conn, rr):
-        if rr.get_type() == RRType.SOA():
+        if rr.get_type() == RRType.SOA:
             # This is the only place where current_serial is set
             conn._current_serial = get_soa_serial(rr.get_rdata()[0])
             self.set_xfrstate(conn, XfrinIXFRAddSOA())
@@ -413,7 +413,7 @@ class XfrinIXFRDelete(XfrinState):
 
 class XfrinIXFRAddSOA(XfrinState):
     def handle_rr(self, conn, rr):
-        if rr.get_type() != RRType.SOA():
+        if rr.get_type() != RRType.SOA:
             # this shouldn't happen; should this occur it means an internal
             # bug.
             raise XfrinException(rr.get_type().to_text() +
@@ -425,7 +425,7 @@ class XfrinIXFRAddSOA(XfrinState):
 
 class XfrinIXFRAdd(XfrinState):
     def handle_rr(self, conn, rr):
-        if rr.get_type() == RRType.SOA():
+        if rr.get_type() == RRType.SOA:
             # This SOA marks the end of a difference sequence
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
@@ -480,7 +480,7 @@ class XfrinAXFR(XfrinState):
         Handle the RR by putting it into the zone.
         """
         conn._diff.add_data(rr)
-        if rr.get_type() == RRType.SOA():
+        if rr.get_type() == RRType.SOA:
             # SOA means end.  Don't commit it yet - we need to perform
             # post-transfer checks
 
@@ -662,7 +662,7 @@ class XfrinConnection(asyncore.dispatcher):
             result, finder = self._datasrc_client.find_zone(self._zone_name)
         if result != DataSourceClient.SUCCESS:
             return None
-        result, soa_rrset, _ = finder.find(self._zone_name, RRType.SOA())
+        result, soa_rrset, _ = finder.find(self._zone_name, RRType.SOA)
         if result != ZoneFinder.SUCCESS:
             logger.info(XFRIN_ZONE_NO_SOA, self.zone_str())
             return None
@@ -714,8 +714,8 @@ class XfrinConnection(asyncore.dispatcher):
         query_id = random.randint(0, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
-        msg.set_opcode(Opcode.QUERY())
-        msg.set_rcode(Rcode.NOERROR())
+        msg.set_opcode(Opcode.QUERY)
+        msg.set_rcode(Rcode.NOERROR)
         msg.add_question(Question(self._zone_name, self._rrclass, query_type))
 
         # Remember our serial, if known
@@ -723,7 +723,7 @@ class XfrinConnection(asyncore.dispatcher):
             if self._zone_soa is not None else None
 
         # Set the authority section with our SOA for IXFR
-        if query_type == RRType.IXFR():
+        if query_type == RRType.IXFR:
             if self._zone_soa is None:
                 # (incremental) IXFR doesn't work without known SOA
                 raise XfrinException('Failed to create IXFR query due to no ' +
@@ -855,7 +855,7 @@ class XfrinConnection(asyncore.dispatcher):
         resp_question = msg.get_question()[0]
         if resp_question.get_name() != self._zone_name or \
                 resp_question.get_class() != self._rrclass or \
-                resp_question.get_type() != RRType.SOA():
+                resp_question.get_type() != RRType.SOA:
             raise XfrinProtocolError('Invalid response to SOA query: '
                                      'question mismatch: ' +
                                      str(resp_question))
@@ -863,21 +863,21 @@ class XfrinConnection(asyncore.dispatcher):
         # Look into the answer section for SOA
         soa = None
         for rr in msg.get_section(Message.SECTION_ANSWER):
-            if rr.get_type() == RRType.SOA():
+            if rr.get_type() == RRType.SOA:
                 if soa is not None:
                     raise XfrinProtocolError('SOA response had multiple SOAs')
                 soa = rr
             # There should not be a CNAME record at top of zone.
-            if rr.get_type() == RRType.CNAME():
+            if rr.get_type() == RRType.CNAME:
                 raise XfrinProtocolError('SOA query resulted in CNAME')
 
         # If SOA is not found, try to figure out the reason then report it.
         if soa is None:
             # See if we have any SOA records in the authority section.
             for rr in msg.get_section(Message.SECTION_AUTHORITY):
-                if rr.get_type() == RRType.NS():
+                if rr.get_type() == RRType.NS:
                     raise XfrinProtocolError('SOA query resulted in referral')
-                if rr.get_type() == RRType.SOA():
+                if rr.get_type() == RRType.SOA:
                     raise XfrinProtocolError('SOA query resulted in NODATA')
             raise XfrinProtocolError('No SOA record found in response to ' +
                                      'SOA query')
@@ -901,7 +901,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         '''
 
-        self._send_query(RRType.SOA())
+        self._send_query(RRType.SOA)
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -925,7 +925,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         return XFRIN_OK
 
-    def do_xfrin(self, check_soa, request_type=RRType.AXFR()):
+    def do_xfrin(self, check_soa, request_type=RRType.AXFR):
         '''Do an xfr session by sending xfr request and parsing responses.'''
 
         try:
@@ -933,7 +933,7 @@ class XfrinConnection(asyncore.dispatcher):
             self._request_type = request_type
             # Right now RRType.[IA]XFR().to_text() is 'TYPExxx', so we need
             # to hardcode here.
-            req_str = 'IXFR' if request_type == RRType.IXFR() else 'AXFR'
+            req_str = 'IXFR' if request_type == RRType.IXFR else 'AXFR'
             if check_soa:
                 self._check_soa_serial()
                 self.close()
@@ -1024,7 +1024,7 @@ class XfrinConnection(asyncore.dispatcher):
         # cause interoperability trouble with stricter checks.
 
         msg_rcode = msg.get_rcode()
-        if msg_rcode != Rcode.NOERROR():
+        if msg_rcode != Rcode.NOERROR:
             raise XfrinProtocolError('error response: %s' %
                                      msg_rcode.to_text())
 
@@ -1120,13 +1120,13 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             ret = XFRIN_FAIL
             if conn.connect_to_master():
                 ret = conn.do_xfrin(check_soa, request_type)
-                if ret == XFRIN_FAIL and request_type == RRType.IXFR():
+                if ret == XFRIN_FAIL and request_type == RRType.IXFR:
                     # IXFR failed for some reason. It might mean the server can't
                     # handle it, or we don't have the zone or we are out of sync or
                     # whatever else. So we retry with with AXFR, as it may succeed
                     # in many such cases.
                     retry = True
-                    request_type = RRType.AXFR()
+                    request_type = RRType.AXFR
                     logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
                     conn.close()
                     conn = None
@@ -1172,7 +1172,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     xfrin_recorder.decrement(zone_name)
 
     if exception is not None:
-        typestr = "AXFR" if request_type == RRType.AXFR() else "IXFR"
+        typestr = "AXFR" if request_type == RRType.AXFR else "IXFR"
         logger.error(XFRIN_XFR_PROCESS_FAILURE, typestr, zone_name.to_text(),
                      str(rrclass), str(exception))
 
@@ -1507,9 +1507,9 @@ class Xfrin:
                     logger.info(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_str)
                     answer = create_answer(1, errmsg)
                 else:
-                    request_type = RRType.AXFR()
+                    request_type = RRType.AXFR
                     if zone_info.use_ixfr:
-                        request_type = RRType.IXFR()
+                        request_type = RRType.IXFR
                     master_addr = zone_info.get_master_addr_info()
                     if notify_addr[0] == master_addr[0] and\
                        notify_addr[2] == master_addr[2]:
@@ -1538,11 +1538,11 @@ class Xfrin:
                                                           rrclass)
                 zone_info = self._get_zone_info(zone_name, rrclass)
                 tsig_key = None
-                request_type = RRType.AXFR()
+                request_type = RRType.AXFR
                 if zone_info:
                     tsig_key = zone_info.get_tsig_key()
                     if zone_info.use_ixfr:
-                        request_type = RRType.IXFR()
+                        request_type = RRType.IXFR
                 db_file = args.get('db_file') or self._get_db_file()
                 ret = self.xfrin_start(zone_name,
                                        rrclass,

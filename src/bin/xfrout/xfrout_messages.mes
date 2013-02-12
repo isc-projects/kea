@@ -155,7 +155,7 @@ statistics data should be sent to the stats daemon.
 The xfrout daemon received a shutdown command from the command channel
 and will now shut down.
 
-% XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
+% XFROUT_RECEIVE_FD_FAILED error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer
 request from b10-auth.  There can be several reasons for this, but
 the most likely cause is that b10-auth terminates for some reason

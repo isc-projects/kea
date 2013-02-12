@@ -108,8 +108,8 @@ class EDNSTest(unittest.TestCase):
 
     def test_towire_renderer(self):
         renderer = MessageRenderer()
-        extrcode_noerror = Rcode.NOERROR().get_extended_code()
-        extrcode_badvers = Rcode.BADVERS().get_extended_code()
+        extrcode_noerror = Rcode.NOERROR.get_extended_code()
+        extrcode_badvers = Rcode.BADVERS.get_extended_code()
 
         self.assertEqual(1, self.edns_base.to_wire(renderer, extrcode_noerror))
         wiredata = read_wire_data("edns_toWire1.wire")
@@ -148,7 +148,7 @@ class EDNSTest(unittest.TestCase):
         self.assertEqual(0, renderer.get_length())
 
     def test_towire_buffer(self):
-        extrcode_noerror = Rcode.NOERROR().get_extended_code()
+        extrcode_noerror = Rcode.NOERROR.get_extended_code()
 
         obuffer = bytes()
         obuffer = self.edns_base.to_wire(obuffer, extrcode_noerror)
