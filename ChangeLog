@@ -1,3 +1,8 @@
+576.	[bug]		tmark, tomek
+	b10-dhcp6: Fixed bug when the server aborts operation when
+	receiving renew and there are no IPv6 subnets configured.
+	(Trac 2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
+
 575.	[bug]		marcin
 	b10-dhcp6: Fixed the bug whereby the subnet for the incoming
 	packet was selected using only its source address. The subnet
