@@ -24,9 +24,20 @@
 namespace isc {
 namespace datasrc {
 
+/// \brief Creates an instance of the static datasource client
+///
+/// Currently the configuration passed here must be a StringElement,
+/// containing the path to a zone file for the BIND./CH zone.
+///
+/// \param config The configuration for the datasource instance (see above)
+/// \param error This string will be set to an error message if an error occurs
+///              during initialization
+/// \return An instance of the static datasource client, or NULL if there was
+///         an error
 extern "C" DataSourceClient* createInstance(isc::data::ConstElementPtr config,
                                             std::string& error);
 
+/// \brief Destroy the instance created by createInstance()
 extern "C" void destroyInstance(DataSourceClient* instance);
 
 }
