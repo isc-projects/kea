@@ -1,3 +1,8 @@
+572.	[bug]		marcin
+	perfdhcp: Fixed bug where the command line switches used to
+	run the perfdhcp where printed as ASCII codes.
+	(Trac #2700, git b8d6b949eb7f4705e32fbdfd7694ca2e6a6a5cdc)
+
 571.	[build]		jinmei
 	The ./configure script can now handle output from python-config
 	--ldflags that contains a space after -L switches.  This fixes
