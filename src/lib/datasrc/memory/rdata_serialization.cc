@@ -25,13 +25,20 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
+#include <boost/static_assert.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <boost/optional.hpp>
+
 #include <cassert>
 #include <cstring>
+#include <set>
 #include <vector>
-#include <boost/static_assert.hpp>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using std::vector;
+using std::set;
 
 namespace isc {
 namespace datasrc {
@@ -222,7 +229,6 @@ getRdataEncodeSpec(const RRClass& rrclass, const RRType& rrtype) {
 }
 
 namespace {
-
 // This class is a helper for RdataEncoder to divide the content of RDATA
 // fields for encoding by "abusing" the  message rendering logic.
 // The idea is to identify domain name fields in the writeName() method,
@@ -368,16 +374,33 @@ private:
 
 } // end of unnamed namespace
 
+namespace {
+bool
+RdataLess(const ConstRdataPtr& rdata1, const ConstRdataPtr& rdata2) {
+    return (rdata1->compare(*rdata2) < 0);
+}
+}
+
 struct RdataEncoder::RdataEncoderImpl {
     RdataEncoderImpl() : encode_spec_(NULL), rrsig_buffer_(0),
-                         rdata_count_(0)
+                         rdatas_(boost::bind(RdataLess, _1, _2)),
+                         rrsigs_(boost::bind(RdataLess, _1, _2))
     {}
 
     const RdataEncodeSpec* encode_spec_; // encode spec of current RDATA set
     RdataFieldComposer field_composer_;
     util::OutputBuffer rrsig_buffer_;
-    size_t rdata_count_;
     vector<uint16_t> rrsig_lengths_;
+
+    boost::optional<RRClass> current_class_;
+    boost::optional<RRType> current_type_;
+
+    typedef boost::function<bool(const ConstRdataPtr&, const ConstRdataPtr&)>
+    RdataCmp;
+    // added unique Rdatas
+    set<ConstRdataPtr, RdataCmp> rdatas_;
+    // added unique RRSIG Rdatas
+    set<ConstRdataPtr, RdataCmp> rrsigs_;
 };
 
 RdataEncoder::RdataEncoder() :
@@ -395,27 +418,38 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype) {
     }
 
     impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
+    impl_->current_class_ = rrclass;
+    impl_->current_type_ = rrtype;
     impl_->field_composer_.clearLocal(impl_->encode_spec_);
     impl_->rrsig_buffer_.clear();
-    impl_->rdata_count_ = 0;
     impl_->rrsig_lengths_.clear();
+    impl_->rdatas_.clear();
+    impl_->rrsigs_.clear();
 }
 
 void
-RdataEncoder::addRdata(const rdata::Rdata& rdata) {
+RdataEncoder::addRdata(const Rdata& rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
                   "RdataEncoder::addRdata performed before start");
     }
 
+    // Simply ignore duplicate RDATA.  Creating RdataPtr also checks the
+    // given Rdata is of the correct RR type.
+    ConstRdataPtr rdatap = createRdata(*impl_->current_type_,
+                                       *impl_->current_class_, rdata);
+    if (impl_->rdatas_.find(rdatap) != impl_->rdatas_.end()) {
+        return;
+    }
+
     impl_->field_composer_.startRdata();
     rdata.toWire(impl_->field_composer_);
     impl_->field_composer_.endRdata();
-    ++impl_->rdata_count_;
+    impl_->rdatas_.insert(rdatap);
 }
 
 void
-RdataEncoder::addSIGRdata(const rdata::Rdata& sig_rdata) {
+RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
                   "RdataEncoder::addSIGRdata performed before start");
