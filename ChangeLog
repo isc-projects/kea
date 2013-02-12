@@ -1,3 +1,9 @@
+573.	[bug]		stephen
+	Fixed problem whereby the DHCP server crashed if it ran out of
+	addresses.  Such a condition now causes a packet to be returned
+	to the client refusing the allocation of an address.
+	(Trac #2681, git 87ce14cdb121b37afb5b1931af51bed7f6323dd6)
+
 572.	[bug]		marcin
 	perfdhcp: Fixed bug where the command line switches used to
 	run the perfdhcp where printed as ASCII codes.
