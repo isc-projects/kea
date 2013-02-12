@@ -34,6 +34,10 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+if USE_CLANGPP
+# Disable unused parameter warning caused by some Boost headers when compiling with clang
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -55,12 +59,6 @@ dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
 nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-dhcp4_unittests_CXXFLAGS = -Wno-unused-parameter
-endif
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

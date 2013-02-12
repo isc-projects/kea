@@ -113,11 +113,22 @@ Lease4::toText() const {
 
 bool
 Lease4::operator==(const Lease4& other) const {
+    if ( (client_id_ && !other.client_id_) ||
+         (!client_id_ && other.client_id_) ) {
+        // One lease has client-id, but the other doesn't
+        return false;
+    }
+
+    if (client_id_ && other.client_id_ &&
+        *client_id_ != *other.client_id_) {
+        // Different client-ids
+        return false;
+    }
+
     return (
         addr_ == other.addr_ &&
         ext_ == other.ext_ &&
         hwaddr_ == other.hwaddr_ &&
-        *client_id_ == *other.client_id_ &&
         t1_ == other.t1_ &&
         t2_ == other.t2_ &&
         valid_lft_ == other.valid_lft_ &&
