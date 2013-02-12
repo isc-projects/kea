@@ -532,6 +532,11 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             info = self._user_infos.get(username)
         return info
 
+    def get_num_users(self):
+        with self._lock:
+            num = len(self._user_infos)
+        return num
+
     def save_user_session_id(self, session_id):
         ''' Record user's id and login time. '''
         self.user_sessions[session_id] = time.time()
