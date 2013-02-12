@@ -137,18 +137,6 @@ IPv6 DHCP server but it is not running.
 During startup the IPv6 DHCP server failed to detect any network
 interfaces and is therefore shutting down.
 
-% DHCP6_NO_SUBNET_DEF_OPT failed to find subnet for address %1 when adding default options
-This warning message indicates that when attempting to add default options
-to a response, the server found that it was not configured to support
-the subnet from which the DHCPv6 request was received.  The packet has
-been ignored.
-
-% DHCP6_NO_SUBNET_REQ_OPT failed to find subnet for address %1 when adding requested options
-This warning message indicates that when attempting to add requested
-options to a response, the server found that it was not configured
-to support the subnet from which the DHCPv6 request was received.
-The packet has been ignored.
-
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
