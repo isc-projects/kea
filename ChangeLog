@@ -1,3 +1,8 @@
+5XX.	[bug]		tmark, tomek
+	b10-dhcp6: Server aborts operation when receiving renew and there
+	are no IPv6 subnets configured.
+	(Trac 2719, git TBD)
+
 573.	[bug]		stephen
 	Fixed problem whereby the DHCP server crashed if it ran out of
 	addresses.  Such a condition now causes a packet to be returned
