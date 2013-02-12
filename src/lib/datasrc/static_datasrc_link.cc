@@ -34,8 +34,12 @@ namespace datasrc {
 DataSourceClient*
 createInstance(ConstElementPtr config, string& error) {
     try {
+        // FIXME: Fix the config that should be passed to
+        // ZoneTableSegment::create() when it actually uses the config
+        // to do something.
         shared_ptr<memory::ZoneTableSegment> ztable_segment(
-            memory::ZoneTableSegment::create(*config, RRClass::CH()));
+            memory::ZoneTableSegment::create(isc::data::NullElement(),
+                                             RRClass::CH()));
         // Create the data source
         auto_ptr<memory::InMemoryClient> client
             (new memory::InMemoryClient(ztable_segment, RRClass::CH()));
