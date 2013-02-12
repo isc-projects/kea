@@ -234,3 +234,8 @@ bad-delegation.example.com. 3600 IN NS ns.example.net.
 ;; or NSEC3 that proves it.
 ;var=nosec_delegation_txt
 nosec-delegation.example.com. 3600 IN NS ns.nosec.example.net.
+
+;; Setup for emulating insecure delegation that contain an empty name.
+;; the delegation itself isn't expected to be used directly in tests.
+;var=
+delegation.empty.example.com. 3600 IN NS ns.delegation.empty.example
