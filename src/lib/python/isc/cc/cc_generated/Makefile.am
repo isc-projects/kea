@@ -3,8 +3,8 @@
 # not the src dir, which means it is not found when these are different.
 #
 # We have a forwarder module in the src dir and build the real one in different
-# location. This is similar to whan happens in log_messages/work. We can't reuse
-# the name `work`, since it would collide, so we use less generic name.
+# location. This is similar to what happens in log_messages/work. We can't
+# reuse the name `work`, since it would collide, so we use less generic name.
 
 nodist_python_PYTHON = proto_defs.py
 BUILT_SOURCES = proto_defs.py __init__.py
