@@ -344,7 +344,7 @@ WARNING: Python readline module isn't available, so the command line editor
             return {}
 
 
-    def send_POST(self, url, post_param = None):
+    def send_POST(self, url, post_param=None):
         '''Send POST request to cmdctl, session id is send with the name
         'cookie' in header.
         Format: /module_name/command_name
