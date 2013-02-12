@@ -829,20 +829,33 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
 class MockClient : public DataSourceClient {
 public:
     virtual FindResult findZone(const isc::dns::Name& origin) const {
-        // First, check if an exact match is available. If it is, return
-        // it.
+        const Name r_origin(origin.reverse());
         std::map<Name, ZoneFinderPtr>::const_iterator it =
-            zone_finders_.find(origin);
+            zone_finders_.lower_bound(r_origin);
+
         if (it != zone_finders_.end()) {
-            return (FindResult(result::SUCCESS, it->second));
+            const NameComparisonResult result =
+                origin.compare((it->first).reverse());
+            if (result.getRelation() == NameComparisonResult::EQUAL) {
+                return (FindResult(result::SUCCESS, it->second));
+            } else if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
+                return (FindResult(result::PARTIALMATCH, it->second));
+            }
         }
 
-        // Do a slow linear search for a partial match now.
-        for (it = zone_finders_.begin(); it != zone_finders_.end(); ++it) {
-             const NameComparisonResult result = origin.compare(it->first);
-             if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
-                  return (FindResult(result::PARTIALMATCH, it->second));
-             }
+        // If it is at the beginning of the map, then the name was not
+        // found (we have already handled the element the iterator
+        // points to).
+        if (it == zone_finders_.begin()) {
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
+
+        // Check if the previous element is a partial match.
+        --it;
+        const NameComparisonResult result =
+            origin.compare((it->first).reverse());
+        if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
+            return (FindResult(result::PARTIALMATCH, it->second));
         }
 
         return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
@@ -860,19 +873,18 @@ public:
     }
 
     result::Result addZone(ZoneFinderPtr finder) {
-        zone_finders_[finder->getOrigin()] = finder;
+        // Use the reverse of the name as the key, so we can quickly
+        // find partial matches in the map.
+        zone_finders_[finder->getOrigin().reverse()] = finder;
         return (result::SUCCESS);
     }
 
 private:
-
     // Note that because we no longer have the old RBTree, and the new
     // in-memory DomainTree is not useful as it returns const nodes, we
-    // use a std::map instead. This is slightly slower when no exact
-    // match occurs as far as these unittests are concerned, but they
-    // are tests anyway and there aren't many zones in the map (2-3 at
-    // most), so we can ignore this slight inefficiency. It may even be
-    // faster due to the lack of overhead.
+    // use a std::map instead. In this map, the key is a name stored in
+    // reverse order of labels to aid in finding partial matches
+    // quickly.
     std::map<Name, ZoneFinderPtr> zone_finders_;
 };
 
