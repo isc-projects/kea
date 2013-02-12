@@ -250,6 +250,26 @@ WARNING: Python readline module isn't available, so the command line editor
             pass
         raise FailToLogin()
 
+    def _have_users(self):
+        try:
+            response = self.send_POST('/users-exist')
+            if response.status == http.client.OK:
+                return json.loads(response.read().decode())
+            # if not OK, fall through to raise error
+            self._print("Failure in cmdctl when checking if users already exist")
+        except ssl.SSLError as err:
+            self._print("SSL error checking if users exist: ", err)
+            if err.errno == ssl.SSL_ERROR_EOF:
+                self.__print_check_ssl_msg()
+        except socket.error as err:
+            self._print("Socket error checking if users exist: ", err)
+            # An SSL setup error can also bubble up as a plain CONNRESET...
+            # (on some systems it usually does)
+            if err.errno == errno.ECONNRESET:
+                self.__print_check_ssl_msg()
+            pass
+        raise FailToLogin()
+
     def login_to_cmdctl(self):
         '''Login to cmdctl with the username and password given by
         the user. After the login is sucessful, the username and
@@ -257,6 +277,13 @@ WARNING: Python readline module isn't available, so the command line editor
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
+        # First, check that valid users exist. If not, ask the person at
+        # the tty to configure one using b10-cmdctl-usermgr.
+        if not self._have_users():
+            self._print('There are no existing users. Please configure '
+                        'a user account using b10-cmdctl-usermgr.')
+            return False
+
         # Look at existing username/password combinations and try to log in
         users = self._get_saved_user_info(self.csv_file_dir, CSV_FILE_NAME)
         for row in users:
@@ -324,7 +351,7 @@ WARNING: Python readline module isn't available, so the command line editor
         parameters of command is encoded as a map
         '''
         param = None
-        if (len(post_param) != 0):
+        if (post_param and len(post_param) != 0):
             param = json.dumps(post_param)
 
         headers = {"cookie" : self.session_id}
@@ -938,5 +965,3 @@ WARNING: Python readline module isn't available, so the command line editor
         if data != "" and data != "{}":
             self._print(json.dumps(json.loads(data), sort_keys=True,
                                    indent=4))
-
-
