@@ -43,62 +43,12 @@ void Opcode_destroy(s_Opcode* const self);
 PyObject* Opcode_getCode(const s_Opcode* const self);
 PyObject* Opcode_toText(const s_Opcode* const self);
 PyObject* Opcode_str(PyObject* self);
-PyObject* Opcode_QUERY(const s_Opcode* self);
-PyObject* Opcode_IQUERY(const s_Opcode* self);
-PyObject* Opcode_STATUS(const s_Opcode* self);
-PyObject* Opcode_RESERVED3(const s_Opcode* self);
-PyObject* Opcode_NOTIFY(const s_Opcode* self);
-PyObject* Opcode_UPDATE(const s_Opcode* self);
-PyObject* Opcode_RESERVED6(const s_Opcode* self);
-PyObject* Opcode_RESERVED7(const s_Opcode* self);
-PyObject* Opcode_RESERVED8(const s_Opcode* self);
-PyObject* Opcode_RESERVED9(const s_Opcode* self);
-PyObject* Opcode_RESERVED10(const s_Opcode* self);
-PyObject* Opcode_RESERVED11(const s_Opcode* self);
-PyObject* Opcode_RESERVED12(const s_Opcode* self);
-PyObject* Opcode_RESERVED13(const s_Opcode* self);
-PyObject* Opcode_RESERVED14(const s_Opcode* self);
-PyObject* Opcode_RESERVED15(const s_Opcode* self);
-PyObject* Opcode_richcmp(const s_Opcode* const self,
-                         const s_Opcode* const other, int op);
 
 PyMethodDef Opcode_methods[] = {
     { "get_code", reinterpret_cast<PyCFunction>(Opcode_getCode), METH_NOARGS,
       "Returns the code value" },
     { "to_text", reinterpret_cast<PyCFunction>(Opcode_toText), METH_NOARGS,
       "Returns the text representation" },
-    { "QUERY", reinterpret_cast<PyCFunction>(Opcode_QUERY),
-      METH_NOARGS | METH_STATIC, "Creates a QUERY Opcode" },
-    { "IQUERY", reinterpret_cast<PyCFunction>(Opcode_IQUERY),
-      METH_NOARGS | METH_STATIC, "Creates a IQUERY Opcode" },
-    { "STATUS", reinterpret_cast<PyCFunction>(Opcode_STATUS),
-      METH_NOARGS | METH_STATIC, "Creates a STATUS Opcode" },
-    { "RESERVED3", reinterpret_cast<PyCFunction>(Opcode_RESERVED3),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED3 Opcode" },
-    { "NOTIFY", reinterpret_cast<PyCFunction>(Opcode_NOTIFY),
-      METH_NOARGS | METH_STATIC, "Creates a NOTIFY Opcode" },
-    { "UPDATE", reinterpret_cast<PyCFunction>(Opcode_UPDATE),
-      METH_NOARGS | METH_STATIC, "Creates a UPDATE Opcode" },
-    { "RESERVED6", reinterpret_cast<PyCFunction>(Opcode_RESERVED6),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED6 Opcode" },
-    { "RESERVED7", reinterpret_cast<PyCFunction>(Opcode_RESERVED7),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED7 Opcode" },
-    { "RESERVED8", reinterpret_cast<PyCFunction>(Opcode_RESERVED8),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED8 Opcode" },
-    { "RESERVED9", reinterpret_cast<PyCFunction>(Opcode_RESERVED9),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED9 Opcode" },
-    { "RESERVED10", reinterpret_cast<PyCFunction>(Opcode_RESERVED10),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED10 Opcode" },
-    { "RESERVED11", reinterpret_cast<PyCFunction>(Opcode_RESERVED11),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED11 Opcode" },
-    { "RESERVED12", reinterpret_cast<PyCFunction>(Opcode_RESERVED12),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED12 Opcode" },
-    { "RESERVED13", reinterpret_cast<PyCFunction>(Opcode_RESERVED13),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED13 Opcode" },
-    { "RESERVED14", reinterpret_cast<PyCFunction>(Opcode_RESERVED14),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED14 Opcode" },
-    { "RESERVED15", reinterpret_cast<PyCFunction>(Opcode_RESERVED15),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED15 Opcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -153,96 +103,6 @@ Opcode_str(PyObject* self) {
     return (PyObject_CallMethod(self,
                                 const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
-}
-
-PyObject*
-Opcode_createStatic(const Opcode& opcode) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->cppobj = &opcode;
-        ret->static_code = true;
-    }
-    return (ret);
-}
-
-PyObject*
-Opcode_QUERY(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::QUERY()));
-}
-
-PyObject*
-Opcode_IQUERY(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::IQUERY()));
-}
-
-PyObject*
-Opcode_STATUS(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::STATUS()));
-}
-
-PyObject*
-Opcode_RESERVED3(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED3()));
-}
-
-PyObject*
-Opcode_NOTIFY(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::NOTIFY()));
-}
-
-PyObject*
-Opcode_UPDATE(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::UPDATE()));
-}
-
-PyObject*
-Opcode_RESERVED6(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED6()));
-}
-
-PyObject*
-Opcode_RESERVED7(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED7()));
-}
-
-PyObject*
-Opcode_RESERVED8(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED8()));
-}
-
-PyObject*
-Opcode_RESERVED9(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED9()));
-}
-
-PyObject*
-Opcode_RESERVED10(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED10()));
-}
-
-PyObject*
-Opcode_RESERVED11(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED11()));
-}
-
-PyObject*
-Opcode_RESERVED12(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED12()));
-}
-
-PyObject*
-Opcode_RESERVED13(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED13()));
-}
-
-PyObject*
-Opcode_RESERVED14(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED14()));
-}
-
-PyObject*
-Opcode_RESERVED15(const s_Opcode*) {
-    return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 
 PyObject*

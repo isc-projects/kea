@@ -60,6 +60,10 @@ and its length (2 bytes) is counted in the total length.
 There should be data representing the length of message on the socket, but it
 is not there.
 
+% CC_LNAME_RECEIVED received local name: %1
+Debug message: the local module received its unique identifier (name)
+from msgq on completion of establishing the session with msgq.
+
 % CC_NO_MESSAGE no message ready to be received yet
 The program polled for incoming messages, but there was no message waiting.
 This is a debug message which may happen only after CC_GROUP_RECEIVE.

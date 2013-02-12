@@ -277,9 +277,9 @@ public:
                             expected_data_len));
     }
 
+    int rcode_;
     Dhcpv6Srv srv_;
 
-    int rcode_;
     ConstElementPtr comment_;
 
     string valid_iface_;

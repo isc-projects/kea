@@ -106,7 +106,7 @@ public:
         rollbackAddresses_ = old;
     }
     virtual void commit() {
-        rollbackAddresses_.release();
+        rollbackAddresses_.reset();
     }
 private:
     AuthSrv& server_;

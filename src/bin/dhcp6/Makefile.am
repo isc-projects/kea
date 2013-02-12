@@ -6,6 +6,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+if USE_CLANGPP
+# Disable unused parameter warning caused by some Boost headers when compiling with clang
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -52,12 +56,6 @@ b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-b10_dhcp6_CXXFLAGS = -Wno-unused-parameter
-endif
 
 b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
