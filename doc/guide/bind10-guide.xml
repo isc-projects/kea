@@ -419,6 +419,13 @@ var/
         </listitem>
 
         <listitem>
+          <para>Create a user for yourself:
+            <screen>$ <userinput>cd /usr/local/etc/bind10/</userinput></screen>
+            <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
           <para>Start the server (as root):
             <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
           </para>
@@ -430,7 +437,7 @@ var/
 	    DNS service (by using the <command>bindctl</command> utility
 	    to configure the <command>b10-auth</command> component to
 	    run): <screen>$ <userinput>bindctl</userinput></screen>
-	    (Login with the provided default username and password.)
+	    (Login with the username and password you used above to create a user.)
             <screen>
 &gt; <userinput>config add Init/components b10-auth</userinput>
 &gt; <userinput>config set Init/components/b10-auth/special auth</userinput>
@@ -1113,10 +1120,6 @@ but that is a single file, maybe this should go back to that format?
       <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
       This comma-delimited file lists the accounts with a user name,
       hashed password, and salt.
-      (A sample file is at
-      <filename>/usr/local/share/bind10/cmdctl-accounts.csv</filename>.
-      It contains the user named <quote>root</quote> with the password
-      <quote>bind10</quote>.)
     </para>
 
     <para>
