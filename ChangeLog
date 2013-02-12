@@ -1,3 +1,12 @@
+579.	[bug]		jinmei
+	libdatasrc/b10-auth: corrected some corner cases in query handling
+	of in-memory data source that led to the following invalid/odd
+	responses from b10-auth:
+	- duplicate RRs in answer and additional for type ANY query
+	- incorrect NSEC for no error, no data (NXRRSET) response that
+	  matches a wildcard
+	(Trac #2585, git abe78fae4ba3aca5eb01806dd4e05607b1241745)
+
 578.	[bug]		jinmei
 	b10-auth now returns closest encloser NSEC3 proof to queries for
 	an empty non terminal derived from an Opt-Out NSEC RR, as clarified
