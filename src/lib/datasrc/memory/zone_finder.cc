@@ -573,6 +573,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
 /// For (successful) type ANY query, found_node points to the
 /// corresponding zone node, which is recorded within this specialized
 /// context.
+// cppcheck-suppress noConstructor
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     Context(InMemoryZoneFinder& finder, ZoneFinder::FindOptions options,

@@ -149,32 +149,53 @@ Dhcpv4Srv::run() {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
                       .arg(query->toText());
 
-            switch (query->getType()) {
-            case DHCPDISCOVER:
-                rsp = processDiscover(query);
-                break;
+            try {
+                switch (query->getType()) {
+                case DHCPDISCOVER:
+                    rsp = processDiscover(query);
+                    break;
 
-            case DHCPREQUEST:
-                rsp = processRequest(query);
-                break;
+                case DHCPREQUEST:
+                    rsp = processRequest(query);
+                    break;
 
-            case DHCPRELEASE:
-                processRelease(query);
-                break;
+                case DHCPRELEASE:
+                    processRelease(query);
+                    break;
 
-            case DHCPDECLINE:
-                processDecline(query);
-                break;
+                case DHCPDECLINE:
+                    processDecline(query);
+                    break;
 
-            case DHCPINFORM:
-                processInform(query);
-                break;
+                case DHCPINFORM:
+                    processInform(query);
+                    break;
 
-            default:
-                // Only action is to output a message if debug is enabled,
-                // and that will be covered by the debug statement before
-                // the "switch" statement.
-                ;
+                default:
+                    // Only action is to output a message if debug is enabled,
+                    // and that is covered by the debug statement before the
+                    // "switch" statement.
+                    ;
+                }
+            } catch (const isc::Exception& e) {
+
+                // Catch-all exception (at least for ones based on the isc
+                // Exception class, which covers more or less all that
+                // are explicitly raised in the BIND 10 code).  Just log
+                // the problem and ignore the packet. (The problem is logged
+                // as a debug message because debug is disabled by default -
+                // it prevents a DDOS attack based on the sending of problem
+                // packets.)
+                if (dhcp4_logger.isDebugEnabled(DBG_DHCP4_BASIC)) {
+                    std::string source = "unknown";
+                    HWAddrPtr hwptr = query->getHWAddr();
+                    if (hwptr) {
+                        source = hwptr->toText();
+                    }
+                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                              DHCP4_PACKET_PROCESS_FAIL)
+                              .arg(source).arg(e.what());
+                }
             }
 
             if (rsp) {

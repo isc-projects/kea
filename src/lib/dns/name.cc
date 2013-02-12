@@ -227,7 +227,6 @@ stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
                 isc_throw(BadLabelType,
                           "invalid label type in " << string(orig_s, send));
             }
-            state = ft_escape;
             // FALLTHROUGH
         case ft_escape:
             if (!isdigit(c & 0xff)) {

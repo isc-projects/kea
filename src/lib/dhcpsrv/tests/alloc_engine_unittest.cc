@@ -461,9 +461,9 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
     // There is just a single address in the pool and allocated it to someone
     // else, so the allocation should fail
-
-    EXPECT_THROW(engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),false),
-                 AllocFailed);
+    Lease6Ptr lease2 = engine->allocateAddress6(subnet_, duid_, iaid_,
+                                                IOAddress("::"), false);
+    EXPECT_FALSE(lease2);
 }
 
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
@@ -838,8 +838,9 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     // There is just a single address in the pool and allocated it to someone
     // else, so the allocation should fail
 
-    EXPECT_THROW(engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),false),
-                 AllocFailed);
+    Lease4Ptr lease2 = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
+                                                IOAddress("0.0.0.0"), false);
+    EXPECT_FALSE(lease2);
 }
 
 // This test checks if an expired lease can be reused in DISCOVER (fake allocation)
