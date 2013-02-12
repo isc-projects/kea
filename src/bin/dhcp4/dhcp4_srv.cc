@@ -42,6 +42,18 @@ using namespace isc::dhcp;
 using namespace isc::log;
 using namespace std;
 
+namespace isc {
+namespace dhcp {
+
+/// @brief file name of a server-id file
+///
+/// Server must store its server identifier in persistent storage that must not
+/// change between restarts. This is name of the file that is created in dataDir
+/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
+/// regular IPv4 address, e.g. 192.0.2.1. Server will create it during
+/// first run and then use it afterwards.
+static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
+
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
 
@@ -98,7 +110,8 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     IfaceMgr::instance().closeSockets();
 }
 
-void Dhcpv4Srv::shutdown() {
+void
+Dhcpv4Srv::shutdown() {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_SHUTDOWN_REQUEST);
     shutdown_ = true;
 }
@@ -220,7 +233,8 @@ Dhcpv4Srv::run() {
     return (true);
 }
 
-bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
+bool
+Dhcpv4Srv::loadServerID(const std::string& file_name) {
 
     // load content of the file into a string
     fstream f(file_name.c_str(), ios::in);
@@ -254,7 +268,8 @@ bool Dhcpv4Srv::loadServerID(const std::string& file_name) {
     return (true);
 }
 
-void Dhcpv4Srv::generateServerID() {
+void
+Dhcpv4Srv::generateServerID() {
 
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
 
@@ -291,16 +306,19 @@ void Dhcpv4Srv::generateServerID() {
     isc_throw(BadValue, "No suitable interfaces for server-identifier found");
 }
 
-bool Dhcpv4Srv::writeServerID(const std::string& file_name) {
+bool
+Dhcpv4Srv::writeServerID(const std::string& file_name) {
     fstream f(file_name.c_str(), ios::out | ios::trunc);
     if (!f.good()) {
         return (false);
     }
     f << srvidToString(getServerID());
     f.close();
+    return (true);
 }
 
-string Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
+string 
+Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     if (!srvid) {
         isc_throw(BadValue, "NULL pointer passed to srvidToString()");
     }
@@ -319,7 +337,8 @@ string Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     return (addrs[0].toText());
 }
 
-void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+void
+Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIface(question->getIface());
     answer->setIndex(question->getIndex());
     answer->setCiaddr(question->getCiaddr());
@@ -348,7 +367,8 @@ void Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     }
 }
 
-void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
+void
+Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
     OptionPtr opt;
 
     // add Message Type Option (type 53)
@@ -360,8 +380,8 @@ void Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
     // more options will be added here later
 }
 
-
-void Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+void
+Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
@@ -432,7 +452,8 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     }
 }
 
-void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+void
+Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // We need to select a subnet the client is connected in.
     Subnet4Ptr subnet = selectSubnet(question);
@@ -530,7 +551,8 @@ void Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     }
 }
 
-OptionPtr Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
+OptionPtr
+Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
     uint32_t netmask = getNetmask4(subnet->get().second);
 
     OptionPtr opt(new OptionInt<uint32_t>(Option::V4,
@@ -539,7 +561,8 @@ OptionPtr Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
     return (opt);
 }
 
-Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+Pkt4Ptr
+Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     Pkt4Ptr offer = Pkt4Ptr
         (new Pkt4(DHCPOFFER, discover->getTransid()));
 
@@ -557,7 +580,8 @@ Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     return (offer);
 }
 
-Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+Pkt4Ptr
+Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     Pkt4Ptr ack = Pkt4Ptr
         (new Pkt4(DHCPACK, request->getTransid()));
 
@@ -575,7 +599,8 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     return (ack);
 }
 
-void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+void
+Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
     // Try to find client-id
     ClientIdPtr client_id;
@@ -643,11 +668,13 @@ void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
 }
 
-void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+void
+Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
     /// TODO: Implement this.
 }
 
-Pkt4Ptr Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
+Pkt4Ptr
+Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
 }
@@ -683,7 +710,8 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
     return (UNKNOWN);
 }
 
-Subnet4Ptr Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
+Subnet4Ptr
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
 
     // Is this relayed message?
     IOAddress relay = question->getGiaddr();
@@ -698,7 +726,8 @@ Subnet4Ptr Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     }
 }
 
-void Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
+void
+Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
     OptionPtr server_id = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     switch (serverid) {
     case FORBIDDEN:
@@ -721,3 +750,6 @@ void Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
         ;
     }
 }
+
+}   // namespace dhcp
+}   // namespace isc

@@ -682,6 +682,8 @@ convertToPlainChar(const unsigned char* ucp, sqlite3 *db) {
 }
 
 }
+
+// cppcheck-suppress noConstructor
 class SQLite3Accessor::Context : public DatabaseAccessor::IteratorContext {
 public:
     // Construct an iterator for all records. When constructed this
@@ -887,6 +889,7 @@ SQLite3Accessor::getAllRecords(int id) const {
 /// This iterator is used to search through the differences table for the
 /// resouce records making up an IXFR between two versions of a zone.
 
+// cppcheck-suppress noConstructor
 class SQLite3Accessor::DiffContext : public DatabaseAccessor::IteratorContext {
 public:
 
