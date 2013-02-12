@@ -1,3 +1,12 @@
+574.    [func]		tmark
+	b10-dhcp4, b10-dhcp6: Composite key indexes were added to the lease
+	tables to reduce lease search time. The lease4 table now has two
+	additional indexes: a) hwaddr/subnet_id and b) client_id/subnet_id.
+	The lease6 now has the one additional index: iaid/subnet_id/duid.
+	Adding these indexes significantly improves lease acquisition
+	performance.
+	(Trac #2699,#2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)}}}
+
 573.	[bug]		stephen
 	Fixed problem whereby the DHCP server crashed if it ran out of
 	addresses.  Such a condition now causes a packet to be returned
