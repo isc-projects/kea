@@ -33,7 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
-from isc.util.common_defs import *
+from isc.cc.proto_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
 
