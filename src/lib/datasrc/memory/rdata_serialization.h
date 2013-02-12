@@ -181,7 +181,7 @@ public:
     /// new session from \c start() should this method throws an exception.
     ///
     /// \throw InvalidOperation called before start().
-    /// \throw BadValue inconsistent data found.
+    /// \throw std::bad_cast The given Rdata is of different RR type.
     /// \throw RdataEncodingError A very unusual case, such as over 64KB RDATA.
     /// \throw std::bad_alloc Internal memory allocation failure.
     ///
