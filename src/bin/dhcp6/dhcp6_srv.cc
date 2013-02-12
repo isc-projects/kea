@@ -408,29 +408,21 @@ Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer) {
     // add server-id
     answer->addOption(getServerID());
-
-    // Get the subnet object. It holds options to be sent to the client
-    // that belongs to the particular subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
-    // Warn if subnet is not supported and quit.
-    if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_DEF_OPT)
-            .arg(question->getRemoteAddr().toText());
-        return;
-    }
-
 }
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
-    // Get the subnet for a particular address.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet6Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
     if (!subnet) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SUBNET_REQ_OPT)
-            .arg(question->getRemoteAddr().toText());
         return;
     }
 
