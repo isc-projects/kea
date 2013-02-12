@@ -1,3 +1,10 @@
+578.	[bug]		jinmei
+	b10-auth now returns closest encloser NSEC3 proof to queries for
+	an empty non terminal derived from an Opt-Out NSEC RR, as clarified
+	in errata 3441 for RFC5155.  Previously it regarded such case as
+	broken zone and returned SERVFAIL.
+	(Trac #2659, git 24c235cb1b379c6472772d340e21577c3460b742)
+
 577.	[func]		muks
 	Added an SQLite3 index on records(rname, rdtype). This decreases
 	insert performance by ~28% and adds about ~20% to the file size,
