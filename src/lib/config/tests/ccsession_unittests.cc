@@ -343,6 +343,7 @@ TEST_F(CCSessionTest, checkCommand) {
     session.addMessage(el("{ \"command\": \"bad_command\" }"), "Spec29", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(0, session.getMsgQueue()->size());
+    EXPECT_EQ(0, result);
 
     session.addMessage(el("{ \"command\": [ \"bad_command\" ] }"),
                        "Spec29", "*");
@@ -627,6 +628,7 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     EXPECT_EQ(1, session.getMsgQueue()->size());
     result = mccs.checkCommand();
     EXPECT_EQ(0, session.getMsgQueue()->size());
+    EXPECT_EQ(0, result);
 }
 
 TEST_F(CCSessionTest, initializationFail) {

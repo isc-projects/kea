@@ -1,3 +1,20 @@
+573.	[bug]		stephen
+	Fixed problem whereby the DHCP server crashed if it ran out of
+	addresses.  Such a condition now causes a packet to be returned
+	to the client refusing the allocation of an address.
+	(Trac #2681, git 87ce14cdb121b37afb5b1931af51bed7f6323dd6)
+
+572.	[bug]		marcin
+	perfdhcp: Fixed bug where the command line switches used to
+	run the perfdhcp where printed as ASCII codes.
+	(Trac #2700, git b8d6b949eb7f4705e32fbdfd7694ca2e6a6a5cdc)
+
+571.	[build]		jinmei
+	The ./configure script can now handle output from python-config
+	--ldflags that contains a space after -L switches.  This fixes
+	failure reported on some Solaris environments.
+	(Trac #2661, git e6f86f2f5eec8e6003c13d36804a767a840d96d6)
+
 570.	[bug]		tmark, marcin, tomek
 	b10-dhcp4: Address renewal now works properly for DHCPv4 clients
 	that do not send client ID.

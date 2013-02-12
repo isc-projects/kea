@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,11 @@ main(int argc, char* argv[]) {
         // If parser returns true it means that user specified
         // 'h' or 'v' command line option. Program shows the
         // help or version message and exits here.
-        if (command_options.parse(argc, argv)) {
+        // The third argument indicates that the command line
+        // should be printed when it gets parsed. This is useful
+        // in particular when the command line needs to be
+        // extracted from the log file.
+        if (command_options.parse(argc, argv, true)) {
             return (ret_code);
         }
     } catch(isc::Exception& e) {
