@@ -182,8 +182,8 @@ bool Dhcpv6Srv::run() {
                     break;
 
                 case DHCPV6_RELEASE:
-                rsp = processRelease(query);
-                break;
+                    rsp = processRelease(query);
+                    break;
 
                 case DHCPV6_DECLINE:
                     rsp = processDecline(query);
@@ -199,8 +199,23 @@ bool Dhcpv6Srv::run() {
                     // the "switch" statement.
                     ;
                 }
+
             } catch (const RFCViolation& e) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+                    .arg(query->getName())
+                    .arg(query->getRemoteAddr())
+                    .arg(e.what());
+
+            } catch (const isc::Exception& e) {
+
+                // Catch-all exception (at least for ones based on the isc
+                // Exception class, which covers more or less all that
+                // are explicitly raised in the BIND 10 code).  Just log
+                // the problem and ignore the packet. (The problem is logged
+                // as a debug message because debug is disabled by default -
+                // it prevents a DDOS attack based on the sending of problem
+                // packets.)
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
                     .arg(query->getName())
                     .arg(query->getRemoteAddr())
                     .arg(e.what());
@@ -685,11 +700,10 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation?
-                  DHCP6_LEASE_ADVERT_FAIL:DHCP6_LEASE_ALLOC_FAIL)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+                  DHCP6_LEASE_ADVERT_FAIL : DHCP6_LEASE_ALLOC_FAIL)
             .arg(duid?duid->toText():"(no-duid)")
-            .arg(ia->getIAID())
-            .arg(subnet->toText());
+            .arg(ia->getIAID());
 
         ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail,
                           "Sorry, no address could be allocated."));
