@@ -56,6 +56,11 @@
       process.
     </para>
 
+    <note><simpara>
+      The <command>b10-resolver</command> is an experimental proof
+      of concept.
+    </simpara></note>
+
     <para>
       This daemon communicates with other BIND 10 components over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -227,7 +232,7 @@ once that is merged you can for instance do 'config add Resolver/forward_address
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
