@@ -65,13 +65,6 @@ This informational message is printed every time the IPv6 DHCP server
 is started.  It indicates what database backend type is being to store
 lease and other information.
 
-% DHCP6_LEASE_WITHOUT_DUID lease for address %1 does not have a DUID
-This error message indicates a database consistency failure. The lease
-database has an entry indicating that the given address is in use,
-but the lease does not contain any client identification. This is most
-likely due to a software error: please raise a bug report. As a temporary
-workaround, manually remove the lease entry from the database.
-
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of the
@@ -93,41 +86,12 @@ This message indicates that the server failed to grant (in response to
 received REQUEST) a lease for a given client. There may be many reasons for
 such failure. Each specific failure is logged in a separate log entry.
 
-% DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
-This is a general catch-all message indicating that the processing of the
-specified packet type from the indicated address failed.  The reason is given in the
-message.  The server will not send a response but will instead ignore the packet.
-
-% DHCP6_RELEASE address %1 belonging to client duid=%2, iaid=%3 was released properly.
-This debug message indicates that an address was released properly. It
-is a normal operation during client shutdown.
-
-% DHCP6_RELEASE_FAIL failed to remove lease for address %1 for duid=%2, iaid=%3
-This error message indicates that the software failed to remove a
-lease from the lease database.  It probably due to an error during a
-database operation: resolution will most likely require administrator
-intervention (e.g. check if DHCP process has sufficient privileges to
-update the database). It may also be triggered if a lease was manually
-removed from the database during RELEASE message processing.
-
-% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
-This warning message indicates that client tried to release an address
-that belongs to a different client. This should not happen in normal
-circumstances and may indicate a misconfiguration of the client.  However,
-since the client releasing the address will stop using it anyway, there
-is a good chance that the situation will correct itself.
-
-% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
-This warning message indicates that client tried to release an address
-that does belong to it, but the address was expected to be in a different
-IA (identity association) container. This probably means that the client's
-support for multiple addresses is flawed.
-
-% DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
-This warning message indicates that client sent RELEASE message without
-mandatory client-id option. This is most likely caused by a buggy client
-(or a relay that malformed forwarded message). This request will not be
-processed and a response with error status code will be sent back.
+% DHCP6_LEASE_WITHOUT_DUID lease for address %1 does not have a DUID
+This error message indicates a database consistency failure. The lease
+database has an entry indicating that the given address is in use,
+but the lease does not contain any client identification. This is most
+likely due to a software error: please raise a bug report. As a temporary
+workaround, manually remove the lease entry from the database.
 
 % DHCP6_NOT_RUNNING IPv6 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -143,6 +107,11 @@ server is about to open sockets on the specified port.
 
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
+
+% DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
+This is a general catch-all message indicating that the processing of the
+specified packet type from the indicated address failed.  The reason is given in the
+message.  The server will not send a response but will instead ignore the packet.
 
 % DHCP6_PACKET_RECEIVED %1 packet received
 A debug message noting that the server has received the specified type
@@ -182,13 +151,6 @@ A debug message output during a configuration update of the IPv6 DHCP
 server, notifying that the parser for the specified configuration element
 has been successfully created.
 
-% DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
-On receipt of message containing details to a change of its configuration,
-the IPv6 DHCP server failed to create a parser to decode the contents
-of the named configuration element, or the creation succeeded but the
-parsing actions and committal of changes failed.  The reason for the
-failure is given in the message.
-
 % DHCP6_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
 the IPv6 DHCP server failed to create a parser to decode the contents of
@@ -202,6 +164,13 @@ The most likely cause of this is that the specification file for the server
 this version of BIND 10.  This former may be the result of an interrupted
 installation of an update to BIND 10.
 
+% DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
+On receipt of message containing details to a change of its configuration,
+the IPv6 DHCP server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
 % DHCP6_PROCESS_IA_NA_REQUEST server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
 This is a debug message that indicates a processing of received IA_NA
 option. It may optionally contain an address that may be used by the server
@@ -209,6 +178,37 @@ as a hint for possible requested address.
 
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
+
+% DHCP6_RELEASE address %1 belonging to client duid=%2, iaid=%3 was released properly.
+This debug message indicates that an address was released properly. It
+is a normal operation during client shutdown.
+
+% DHCP6_RELEASE_FAIL failed to remove lease for address %1 for duid=%2, iaid=%3
+This error message indicates that the software failed to remove a
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
+
+% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
+This warning message indicates that client tried to release an address
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the address will stop using it anyway, there
+is a good chance that the situation will correct itself.
+
+% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
+This warning message indicates that client tried to release an address
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple addresses is flawed.
+
+% DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
+This warning message indicates that client sent RELEASE message without
+mandatory client-id option. This is most likely caused by a buggy client
+(or a relay that malformed forwarded message). This request will not be
+processed and a response with error status code will be sent back.
 
 % DHCP6_RENEW_UNKNOWN_SUBNET RENEW message received from client on unknown subnet (duid=%1, iaid=%2)
 A warning message indicating that a client is attempting to renew his lease,
@@ -229,10 +229,6 @@ etc. The exact reason for rejecting the packet is included in the message.
 
 % DHCP6_RESPONSE_DATA responding with packet type %1 data is %2
 A debug message listing the data returned to the client.
-
-% DHCP6_SERVER_FAILED server failed: %1
-The IPv6 DHCP server has encountered a fatal error and is terminating.
-The reason for the failure is included in the message.
 
 % DHCP6_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
 This informational messages indicates that the server was not able to read
@@ -261,6 +257,10 @@ permission to a given file or directory. This is not cricital and the
 server will continue to operate, but server will generate different DUID
 during every start and clients will need to go through a rebind phase
 to recover.
+
+% DHCP6_SERVER_FAILED server failed: %1
+The IPv6 DHCP server has encountered a fatal error and is terminating.
+The reason for the failure is included in the message.
 
 % DHCP6_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND
@@ -308,6 +308,11 @@ to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
 
+% DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
+This warning message is printed when client attempts to release a lease,
+but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW for
+possible reasons for such behavior.
+
 % DHCP6_UNKNOWN_RENEW received RENEW from client (duid=%1, iaid=%2) in subnet %3
 This warning message is printed when client attempts to renew a lease,
 but no such lease is known by the server. It typically means that
@@ -322,8 +327,3 @@ recently and does not recognize its well-behaving clients. This is more
 probable if you see many such messages. Clients will recover from this,
 but they will most likely get a different IP addresses and experience
 a brief service interruption.
-
-% DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
-This warning message is printed when client attempts to release a lease,
-but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW for
-possible reasons for such behavior.
