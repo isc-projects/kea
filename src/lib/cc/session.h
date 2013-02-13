@@ -15,14 +15,15 @@
 #ifndef ISC_SESSION_H
 #define ISC_SESSION_H 1
 
-#include <string>
-
-#include <boost/function.hpp>
+#include <cc/data.h>
+#include <cc/session_config.h>
+#include <cc/proto_defs.h>
 
 #include <exceptions/exceptions.h>
 
-#include <cc/data.h>
-#include <cc/session_config.h>
+#include <string>
+
+#include <boost/function.hpp>
 
 namespace asio {
 class io_service;
@@ -81,8 +82,10 @@ namespace isc {
             virtual void disconnect() = 0;
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
-                                      std::string instance = "*",
-                                      std::string to = "*") = 0;
+                                      std::string instance =
+                                          CC_INSTANCE_WILDCARD,
+                                      std::string to = CC_TO_WILDCARD,
+                                      bool want_answer = false) = 0;
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
@@ -128,10 +131,26 @@ namespace isc {
                                    std::string instance = "*");
             virtual void unsubscribe(std::string group,
                              std::string instance = "*");
+
+            /// \brief Send a message to a group.
+            ///
+            /// \todo Can someone explain how the group, instance and to work?
+            ///     What is the desired semantics here?
+            /// \param msg The message to send.
+            /// \param group Part of addressing.
+            /// \param instance Part of addressing.
+            /// \param to Part of addressing.
+            /// \param want_answer Require an answer? If it is true and there's
+            ///     no recipient, the message queue answers by an error
+            ///     instead.
+            /// \return The squence number of the message sent. It can be used
+            ///     to wait for an answer by group_recvmsg.
             virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance = "*",
-                                      std::string to = "*");
+                                      std::string to = "*",
+                                      bool want_answer = false);
+
             virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                        isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
@@ -147,9 +166,14 @@ namespace isc {
             /// @param returns socket descriptor used for session connection
             virtual int getSocketDesc() const;
     private:
-            void sendmsg(isc::data::ConstElementPtr msg);
-            void sendmsg(isc::data::ConstElementPtr env,
-                         isc::data::ConstElementPtr msg);
+            // The following two methods are virtual to allow tests steal and
+            // replace them. It is not expected to be specialized by a derived
+            // class. Actually, it is not expected to inherit from this class
+            // to begin with.
+            virtual void sendmsg(isc::data::ConstElementPtr header);
+            virtual void sendmsg(isc::data::ConstElementPtr header,
+                                 isc::data::ConstElementPtr payload);
+
             bool recvmsg(isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
