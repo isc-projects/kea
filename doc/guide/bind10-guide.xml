@@ -164,12 +164,12 @@
 
       <para>
         At first, running many different processes may seem confusing.
-        However, these processes are started, stopped, and maintained
-        by a single command, <command>bind10</command>.
-        This command starts a master process which will start other
-        required processes and other processes when configured.
-        The processes that may be started by the <command>bind10</command>
-        command have names starting with "b10-", including:
+        However, these processes are started by running a single
+	command, <command>bind10</command>.  This command starts
+	a master process, <command>b10-init</command>, which will
+	start other required processes and other processes when
+	configured.  The processes that may be started have names
+	starting with "b10-", including:
       </para>
 
       <para>
@@ -225,6 +225,7 @@
               Recursive name server.
               This process handles incoming DNS queries and provides
               answers from its cache or by recursively doing remote lookups.
+              (This is an experimental proof of concept.)
             </simpara>
           </listitem>
 
@@ -519,7 +520,7 @@ var/
               executables that a user wouldn't normally run directly and
               are not run independently.
               These are the BIND 10 modules which are daemons started by
-              the <command>bind10</command> tool.
+              the <command>b10-init</command> master process.
             </simpara>
           </listitem>
           <listitem>
@@ -826,16 +827,17 @@ as a dependency earlier -->
   <chapter id="bind10">
     <title>Starting BIND 10 with <command>bind10</command></title>
     <para>
-      BIND 10 provides the <command>bind10</command> command which
-      starts up the required processes.
-      <command>bind10</command>
+      BIND 10 is started with the <command>bind10</command> command.
+      It runs the <command>b10-init</command> daemon which
+      starts up the required processes, and
       will also restart some processes that exit unexpectedly.
-      This is the only command needed to start the BIND 10 system.
+      <command>bind10</command> is the only command needed to start
+      the BIND 10 system.
     </para>
 
     <para>
       After starting the <command>b10-msgq</command> communications channel,
-      <command>bind10</command> connects to it,
+      <command>b10-init</command> connects to it,
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
@@ -854,7 +856,7 @@ as a dependency earlier -->
     </para>
 
     <para>
-      In its default configuration, the <command>bind10</command>
+      In its default configuration, the <command>b10-init</command>
       master process will also start up
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
@@ -1003,7 +1005,7 @@ through bindctl and friends
     <para>
       The configuration manager does not have any command line arguments.
       Normally it is not started manually, but is automatically
-      started using the <command>bind10</command> master process
+      started using the <command>b10-init</command> master process
       (as covered in <xref linkend="bind10"/>).
     </para>
 
@@ -2077,7 +2079,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 
     <para>
       This chapter explains how to control and configure the
-      <command>bind10</command> parent.
+      <command>b10-init</command> parent.
       The startup of this resident process that runs the BIND 10
       daemons is covered in <xref linkend="bind10"/>.
     </para>
@@ -2086,7 +2088,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       <title>Stopping bind10</title>
       <para>
         The BIND 10 suite may be shut down by stopping the
-        parent <command>bind10</command> process. This may be done
+        parent <command>b10-init</command> process. This may be done
         by running the <userinput>Init shutdown</userinput> command
         at the <command>bindctl</command> prompt.
       </para>
@@ -2097,7 +2099,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 
       <para>
 	The processes to be used can be configured for
-	<command>bind10</command> to start, with the exception
+	<command>b10-init</command> to start, with the exception
 	of the required <command>b10-sockcreator</command>,
 	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
 	components.
@@ -2154,7 +2156,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 	<quote>dispensable</quote> (the default unless you set
 	something else), it will get started again if it fails. If
 	it is set to <quote>needed</quote> and it fails at startup,
-	the whole <command>bind10</command> shuts down and exits
+	the whole <command>b10-init</command> shuts down and exits
 	with an error exit code. But if it fails some time later, it
 	is just started again. If you set it to <quote>core</quote>,
 	you indicate that the system is not usable without the
@@ -2243,7 +2245,7 @@ address, but the usual ones don't." mean? -->
       </para>
 
       <para>
-        The running processes started by <command>bind10</command>
+        The running processes started by <command>b10-init</command>
         may be listed by running <userinput>Init show_processes</userinput>
         using <command>bindctl</command>.
       </para>
@@ -2258,7 +2260,7 @@ address, but the usual ones don't." mean? -->
       The <command>b10-auth</command> is the authoritative DNS server.
       It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
       data backends.
-      Normally it is started by the <command>bind10</command> master
+      Normally it is started by the <command>b10-init</command> master
       process.
     </para>
 
@@ -2675,7 +2677,7 @@ TODO
 
     <para>
       Incoming zones are transferred using the <command>b10-xfrin</command>
-      process which is started by <command>bind10</command>.
+      process which is started by <command>b10-init</command>.
       When received, the zone is stored in the corresponding BIND 10
       data source, and its records can be served by
       <command>b10-auth</command>.
@@ -2770,7 +2772,7 @@ what if a NOTIFY is sent?
 
       <para>
         The <command>b10-zonemgr</command> process is started by
-        <command>bind10</command>.
+        <command>b10-init</command>.
         It keeps track of SOA refresh, retry, and expire timers
         and other details for BIND 10 to perform as a slave.
         When the <command>b10-auth</command> authoritative DNS server
@@ -2849,7 +2851,7 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
     <title>Outbound Zone Transfers</title>
     <para>
       The <command>b10-xfrout</command> process is started by
-      <command>bind10</command>.
+      <command>b10-init</command>.
       When the <command>b10-auth</command> authoritative DNS server
       receives an AXFR or IXFR request, <command>b10-auth</command>
       internally forwards the request to <command>b10-xfrout</command>,
@@ -2915,7 +2917,7 @@ what is XfroutClient xfr_client??
       BIND 10 supports the server side of the Dynamic DNS Update
       (DDNS) protocol as defined in RFC 2136.
       This service is provided by the <command>b10-ddns</command>
-      component, which is started by the <command>bind10</command>
+      component, which is started by the <command>b10-init</command>
       process if configured so.
     </para>
 
@@ -3197,9 +3199,15 @@ what is XfroutClient xfr_client??
   <chapter id="resolverserver">
     <title>Recursive Name Server</title>
 
+    <note><simpara>
+      The <command>b10-resolver</command> is an experimental proof
+      of concept.
+    </simpara></note>
+
     <para>
-      The <command>b10-resolver</command> process is started by
-      <command>bind10</command>.
+      The <command>b10-resolver</command> daemon provides an
+      iterative caching and forwarding DNS server.
+      The process is started by <command>b10-init</command>.
 <!-- TODO
       It provides a resolver so DNS clients can ask it to do recursion
       and it will return answers.
@@ -3207,7 +3215,7 @@ what is XfroutClient xfr_client??
     </para>
 
     <para>
-      The main <command>bind10</command> process can be configured
+      The main <command>b10-init</command> process can be configured
       to select to run either the authoritative or resolver or both.
       By default, it doesn't start either one. You may change this using
       <command>bindctl</command>, for example:
@@ -3223,7 +3231,7 @@ what is XfroutClient xfr_client??
     </para>
 
     <para>
-       The master <command>bind10</command> will stop and start
+       The master <command>b10-init</command> process will stop and start
        the desired services.
     </para>
 
@@ -3983,9 +3991,9 @@ Dhcp4/subnet4	[]	list	(default)
       created by default if the standard option is meant to convey any
       sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
       </para>
-      <para>      
+      <para>
       Assume that we want to have a DHCPv4 option called "container" with
-      code 222 that conveys two sub-options with codes 1 and 2. 
+      code 222 that conveys two sub-options with codes 1 and 2.
       First we need to define the new sub-options:
 <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
@@ -4697,7 +4705,7 @@ Dhcp6/subnet6/	list
       </para>
       <para>
       Assume that we want to have a DHCPv6 option called "container"
-      with code 102 that conveys two sub-options with codes 1 and 2. 
+      with code 102 that conveys two sub-options with codes 1 and 2.
       First we need to define the new sub-options:
 <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
@@ -4968,7 +4976,7 @@ Dhcp6/renew-timer	1000	integer	(default)
 
     <para>
       The <command>b10-stats</command> process is started by
-      <command>bind10</command>.
+      <command>b10-init</command>.
       It periodically collects statistics data from various modules
       and aggregates it.
 <!-- TODO -->
