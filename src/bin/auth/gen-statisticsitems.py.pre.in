@@ -194,7 +194,7 @@ def generate_docfile(docfile, def_mtime):
             <varlistentry>
               <term>##item_full_name##</term>
               <listitem><simpara>##item_description##</simpara></listitem>
-            <varlistentry>
+            </varlistentry>
         xmldocument_command_name in item_description is put inside <command>
         element.
         '''
@@ -216,7 +216,7 @@ def generate_docfile(docfile, def_mtime):
                         command.text = word
                         # at this point command.tail is None
                         # append a space as trailing text for the next word
-                        # so it can be concatinated with trailing words
+                        # so it can be concatenated with trailing words
                         command.tail = ' '
                         prev = command
                     else:
@@ -248,16 +248,13 @@ def generate_docfile(docfile, def_mtime):
             pretty_xml = pretty_xml.decode('utf-8')
         # put newline around <variablelist> and <varlistentry> element
         pretty_xml = \
-            re.sub(r'(</?var(?:iablelist|listentry)>)', r'\1\n',
-                pretty_xml)
+            re.sub(r'(</?var(?:iablelist|listentry)>)', r'\1\n', pretty_xml)
         # indent <term> and <listitem>
         pretty_xml = \
-            re.sub(r'(<(?:term|listitem)>)', r'  \1',
-                pretty_xml)
+            re.sub(r'(<(?:term|listitem)>)', r'  \1', pretty_xml)
         # put newline after </term> and </listitem>
         pretty_xml = \
-            re.sub(r'(</(?:term|listitem)>)', r'\1\n',
-                pretty_xml)
+            re.sub(r'(</(?:term|listitem)>)', r'\1\n', pretty_xml)
 
         with open(builddir+os.sep+docfile, 'w') as doc:
             doc.write(doc_pre_xml.replace(
