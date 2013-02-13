@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -87,7 +87,7 @@ CommandOptions::reset() {
 }
 
 bool
-CommandOptions::parse(int argc, char** const argv) {
+CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
     // Reset internal variables used by getopt
     // to eliminate undefined behavior when
     // parsing different command lines multiple times
@@ -125,7 +125,7 @@ CommandOptions::parse(int argc, char** const argv) {
     reset();
 
     // Informs if program has been run with 'h' or 'v' option.
-    bool help_or_version_mode = initialize(argc, argv);
+    bool help_or_version_mode = initialize(argc, argv, print_cmd_line);
     if (!help_or_version_mode) {
         validate();
     }
@@ -133,7 +133,7 @@ CommandOptions::parse(int argc, char** const argv) {
 }
 
 bool
-CommandOptions::initialize(int argc, char** argv) {
+CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     int opt = 0;                // Subsequent options returned by getopt()
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
@@ -151,10 +151,10 @@ CommandOptions::initialize(int argc, char** argv) {
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:"
                         "s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
-        stream << " -" << opt;
+        stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
-        }  
+        }
         switch (opt) {
         case '1':
             use_first_ = true;
@@ -416,7 +416,9 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
-    std::cout << "Running: " << stream.str() << std::endl;
+    if (print_cmd_line) {
+        std::cout << "Running: " << stream.str() << std::endl;
+    }
 
     // Handle the local '-l' address/interface
     if (!localname_.empty()) {

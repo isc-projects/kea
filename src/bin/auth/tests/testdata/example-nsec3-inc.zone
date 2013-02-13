@@ -1,4 +1,4 @@
-;; See query_testzone_data.txt for general notes.
+;; See example-base-inc.zone for general notes.
 
 ;; NSEC3PARAM.  This is needed for database-based data source to
 ;; signal the zone is NSEC3-signed

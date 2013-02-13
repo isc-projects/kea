@@ -133,7 +133,7 @@ A debug message indicating that a protocol error was received and that
 the resolver is repeating the query to the same nameserver.  After this
 repeated query, there will be the indicated number of retries left.
 
-% RESLIB_RCODE_ERROR response to query for <%1> returns RCODE of %2
+% RESLIB_RCODE_RETURNED response to query for <%1> returns RCODE of %2
 A debug message, the response to the specified query indicated an error
 that is not covered by a specific code path.  A SERVFAIL will be returned.
 

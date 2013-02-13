@@ -234,11 +234,13 @@ public:
     /// Check that address was returned from proper range, that its lease
     /// lifetime is correct, that T1 and T2 are returned properly
     /// @param rsp response to be checked
-    /// @param subnet subnet that should be used to verify assigned address and options
+    /// @param subnet subnet that should be used to verify assigned address
+    ///        and options
     /// @param t1_mandatory is T1 mandatory?
     /// @param t2_mandatory is T2 mandatory?
     void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
-                            bool t1_mandatory = false, bool t2_mandatory = false) {
+                            bool t1_mandatory = false,
+                            bool t2_mandatory = false) {
 
         // Technically inPool implies inRange, but let's be on the safe
         // side and check both.
@@ -268,7 +270,7 @@ public:
         if (opt) {
             EXPECT_EQ(opt->getUint32(), subnet->getT2());
         } else {
-            if (t1_mandatory) {
+            if (t2_mandatory) {
                 ADD_FAILURE() << "Required T2 option missing";
             }
         }
