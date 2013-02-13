@@ -31,7 +31,7 @@
 576.	[bug]		tmark, tomek
 	b10-dhcp6: Fixed bug when the server aborts operation when
 	receiving renew and there are no IPv6 subnets configured.
-	(Trac 2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
+	(Trac #2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
 
 575.	[bug]		marcin
 	b10-dhcp6: Fixed the bug whereby the subnet for the incoming
@@ -76,7 +76,7 @@
 	could crash the MySQL lease database backend.
 	(Trac #2697, git b5e2be95d21ed750ad7cf5e15de2058aa8bc45f4)
 
-568.	[func]          muks
+568.	[func]		muks
 	Various message IDs have been renamed to remove the word 'ERROR'
 	from them when they are not logged at ERROR severity level.
 	(Trac #2672, git 660a0d164feaf055677f375977f7ed327ead893e)
