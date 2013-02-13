@@ -529,14 +529,14 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // Parse the message.
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_FAILURE)
                   .arg(error.getRcode().toText()).arg(error.what());
         makeErrorMessage(impl_->renderer_, message, buffer, error.getRcode(),
                          stats_attrs);
         impl_->resumeServer(server, message, stats_attrs, true);
         return;
     } catch (const Exception& ex) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_FAILED)
                   .arg(ex.what());
         makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL(),
                          stats_attrs);
@@ -731,7 +731,7 @@ AuthSrvImpl::processXfrQuery(const IOMessage& io_message, Message& message,
             xfrout_connected_ = false;
         }
 
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_ERROR)
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_PROBLEM)
                   .arg(err.what());
         makeErrorMessage(renderer_, message, buffer, Rcode::SERVFAIL(),
                          stats_attrs, tsig_context);

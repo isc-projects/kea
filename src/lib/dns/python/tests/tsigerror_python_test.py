@@ -28,7 +28,7 @@ class TSIGErrorTest(unittest.TestCase):
 
     def test_from_rcode(self):
         # We use RCODE for code values from 0-15.
-        self.assertEqual(0, TSIGError(Rcode.NOERROR()).get_code())
+        self.assertEqual(0, TSIGError(Rcode.NOERROR).get_code())
         self.assertEqual(15, TSIGError(Rcode(15)).get_code())
 
         # From error code 16 TSIG errors define a separate space, so passing
@@ -50,19 +50,19 @@ class TSIGErrorTest(unittest.TestCase):
         self.assertEqual(TSIGError.BAD_TIME_CODE, TSIGError.BAD_TIME.get_code())
 
     def test_equal(self):
-        self.assertTrue(TSIGError.NOERROR == TSIGError(Rcode.NOERROR()))
-        self.assertTrue(TSIGError(Rcode.NOERROR()) == TSIGError.NOERROR)
+        self.assertTrue(TSIGError.NOERROR == TSIGError(Rcode.NOERROR))
+        self.assertTrue(TSIGError(Rcode.NOERROR) == TSIGError.NOERROR)
 
         self.assertTrue(TSIGError.BAD_SIG == TSIGError(16))
         self.assertTrue(TSIGError(16) == TSIGError.BAD_SIG)
 
     def test_nequal(self):
-        self.assertTrue(TSIGError.BAD_KEY != TSIGError(Rcode.NOERROR()))
-        self.assertTrue(TSIGError(Rcode.NOERROR()) != TSIGError.BAD_KEY)
+        self.assertTrue(TSIGError.BAD_KEY != TSIGError(Rcode.NOERROR))
+        self.assertTrue(TSIGError(Rcode.NOERROR) != TSIGError.BAD_KEY)
 
     def test_to_text(self):
         # TSIGError derived from the standard Rcode
-        self.assertEqual("NOERROR", TSIGError(Rcode.NOERROR()).to_text())
+        self.assertEqual("NOERROR", TSIGError(Rcode.NOERROR).to_text())
 
         # Well known TSIG errors
         self.assertEqual("BADSIG", TSIGError.BAD_SIG.to_text())
@@ -74,21 +74,21 @@ class TSIGErrorTest(unittest.TestCase):
         self.assertEqual("65535", TSIGError(65535).to_text());
 
         # also check str() works same way
-        self.assertEqual("NOERROR", str(TSIGError(Rcode.NOERROR())))
+        self.assertEqual("NOERROR", str(TSIGError(Rcode.NOERROR)))
         self.assertEqual("BADSIG", str(TSIGError.BAD_SIG))
 
     def test_to_rcode(self):
         # TSIGError derived from the standard Rcode
-        self.assertEqual(Rcode.NOERROR(), TSIGError(Rcode.NOERROR()).to_rcode())
+        self.assertEqual(Rcode.NOERROR, TSIGError(Rcode.NOERROR).to_rcode())
 
         # Well known TSIG errors
-        self.assertEqual(Rcode.NOTAUTH(), TSIGError.BAD_SIG.to_rcode())
-        self.assertEqual(Rcode.NOTAUTH(), TSIGError.BAD_KEY.to_rcode())
-        self.assertEqual(Rcode.NOTAUTH(), TSIGError.BAD_TIME.to_rcode())
+        self.assertEqual(Rcode.NOTAUTH, TSIGError.BAD_SIG.to_rcode())
+        self.assertEqual(Rcode.NOTAUTH, TSIGError.BAD_KEY.to_rcode())
+        self.assertEqual(Rcode.NOTAUTH, TSIGError.BAD_TIME.to_rcode())
 
         # Unknown (or not yet supported) codes are treated as SERVFAIL.
-        self.assertEqual(Rcode.SERVFAIL(), TSIGError(19).to_rcode())
-        self.assertEqual(Rcode.SERVFAIL(), TSIGError(65535).to_rcode())
+        self.assertEqual(Rcode.SERVFAIL, TSIGError(19).to_rcode())
+        self.assertEqual(Rcode.SERVFAIL, TSIGError(65535).to_rcode())
 
         # Check there's no redundant refcount (which would cause leak)
         self.assertEqual(1, sys.getrefcount(TSIGError.BAD_SIG.to_rcode()))

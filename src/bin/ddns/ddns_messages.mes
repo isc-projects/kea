@@ -134,12 +134,12 @@ appropriate ACL configuration or some lower layer filtering.  The
 number of existing TCP clients are shown in the log, which should be
 identical to the current quota.
 
-% DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
+% DDNS_RESPONSE_SOCKET_SEND_FAILED failed to send update response to %1: %2
 Network I/O error happens in sending an update response.  The
 client's address that caused the error and error details are also
 logged.
 
-% DDNS_RESPONSE_TCP_SOCKET_ERROR failed to complete sending update response to %1 over TCP
+% DDNS_RESPONSE_TCP_SOCKET_SEND_FAILED failed to complete sending update response to %1 over TCP
 b10-ddns had tried to send an update response over TCP, and it hadn't
 been completed at that time, and a followup attempt to complete the
 send operation failed due to some network I/O error.  While a network

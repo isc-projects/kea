@@ -411,7 +411,7 @@ class MsgQ:
             if isinstance(err, MsgQCloseOnReceive) and not err.partial_read:
                 logger.debug(TRACE_BASIC, MSGQ_CLOSE_ON_RECV, fd)
             else:
-                logger.error(MSGQ_RECV_ERR, fd, err)
+                logger.error(MSGQ_RECV_ERROR, fd, err)
             self.kill_socket(fd, sock)
             return
 
@@ -419,7 +419,7 @@ class MsgQ:
             routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
-            logger.error(MSGQ_HDR_DECODE_ERR, fd, err)
+            logger.error(MSGQ_HDR_DECODE_ERROR, fd, err)
             return
 
         self.process_command(fd, sock, routingmsg, data)
@@ -492,7 +492,7 @@ class MsgQ:
                 if e.errno == errno.EPIPE:
                     logger.warn(MSGQ_CLOSE_ON_SEND, sock.fileno())
                 else:
-                    logger.error(MSGQ_SEND_ERR, sock.fileno(),
+                    logger.error(MSGQ_SEND_ERROR, sock.fileno(),
                                  errno.errorcode[e.errno])
                 self.kill_socket(sock.fileno(), sock)
                 return None
@@ -620,7 +620,7 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    logger.fatal(MSGQ_POLL_ERR, err)
+                    logger.fatal(MSGQ_POLL_ERROR, err)
                     break
             with self.__lock:
                 for (fd, event) in events:

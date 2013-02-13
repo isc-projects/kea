@@ -55,23 +55,6 @@ PyObject* Rcode_getCode(const s_Rcode* const self);
 PyObject* Rcode_getExtendedCode(const s_Rcode* const self);
 PyObject* Rcode_toText(const s_Rcode* const self);
 PyObject* Rcode_str(PyObject* self);
-PyObject* Rcode_NOERROR(const s_Rcode* self);
-PyObject* Rcode_FORMERR(const s_Rcode* self);
-PyObject* Rcode_SERVFAIL(const s_Rcode* self);
-PyObject* Rcode_NXDOMAIN(const s_Rcode* self);
-PyObject* Rcode_NOTIMP(const s_Rcode* self);
-PyObject* Rcode_REFUSED(const s_Rcode* self);
-PyObject* Rcode_YXDOMAIN(const s_Rcode* self);
-PyObject* Rcode_YXRRSET(const s_Rcode* self);
-PyObject* Rcode_NXRRSET(const s_Rcode* self);
-PyObject* Rcode_NOTAUTH(const s_Rcode* self);
-PyObject* Rcode_NOTZONE(const s_Rcode* self);
-PyObject* Rcode_RESERVED11(const s_Rcode* self);
-PyObject* Rcode_RESERVED12(const s_Rcode* self);
-PyObject* Rcode_RESERVED13(const s_Rcode* self);
-PyObject* Rcode_RESERVED14(const s_Rcode* self);
-PyObject* Rcode_RESERVED15(const s_Rcode* self);
-PyObject* Rcode_BADVERS(const s_Rcode* self);
 PyObject* Rcode_richcmp(const s_Rcode* const self,
                          const s_Rcode* const other, int op);
 
@@ -83,40 +66,6 @@ PyMethodDef Rcode_methods[] = {
       "Returns the upper 8-bit part of the extended code value" },
     { "to_text", reinterpret_cast<PyCFunction>(Rcode_toText), METH_NOARGS,
       "Returns the text representation" },
-    { "NOERROR", reinterpret_cast<PyCFunction>(Rcode_NOERROR),
-      METH_NOARGS | METH_STATIC, "Creates a NOERROR Rcode" },
-    { "FORMERR", reinterpret_cast<PyCFunction>(Rcode_FORMERR),
-      METH_NOARGS | METH_STATIC, "Creates a FORMERR Rcode" },
-    { "SERVFAIL", reinterpret_cast<PyCFunction>(Rcode_SERVFAIL),
-      METH_NOARGS | METH_STATIC, "Creates a SERVFAIL Rcode" },
-    { "NXDOMAIN", reinterpret_cast<PyCFunction>(Rcode_NXDOMAIN),
-      METH_NOARGS | METH_STATIC, "Creates a NXDOMAIN Rcode" },
-    { "NOTIMP", reinterpret_cast<PyCFunction>(Rcode_NOTIMP),
-      METH_NOARGS | METH_STATIC, "Creates a NOTIMP Rcode" },
-    { "REFUSED", reinterpret_cast<PyCFunction>(Rcode_REFUSED),
-      METH_NOARGS | METH_STATIC, "Creates a REFUSED Rcode" },
-    { "YXDOMAIN", reinterpret_cast<PyCFunction>(Rcode_YXDOMAIN),
-      METH_NOARGS | METH_STATIC, "Creates a YXDOMAIN Rcode" },
-    { "YXRRSET", reinterpret_cast<PyCFunction>(Rcode_YXRRSET),
-      METH_NOARGS | METH_STATIC, "Creates a YYRRSET Rcode" },
-    { "NXRRSET", reinterpret_cast<PyCFunction>(Rcode_NXRRSET),
-      METH_NOARGS | METH_STATIC, "Creates a NXRRSET Rcode" },
-    { "NOTAUTH", reinterpret_cast<PyCFunction>(Rcode_NOTAUTH),
-      METH_NOARGS | METH_STATIC, "Creates a NOTAUTH Rcode" },
-    { "NOTZONE", reinterpret_cast<PyCFunction>(Rcode_NOTZONE),
-      METH_NOARGS | METH_STATIC, "Creates a NOTZONE Rcode" },
-    { "RESERVED11", reinterpret_cast<PyCFunction>(Rcode_RESERVED11),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED11 Rcode" },
-    { "RESERVED12", reinterpret_cast<PyCFunction>(Rcode_RESERVED12),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED12 Rcode" },
-    { "RESERVED13", reinterpret_cast<PyCFunction>(Rcode_RESERVED13),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED13 Rcode" },
-    { "RESERVED14", reinterpret_cast<PyCFunction>(Rcode_RESERVED14),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED14 Rcode" },
-    { "RESERVED15", reinterpret_cast<PyCFunction>(Rcode_RESERVED15),
-      METH_NOARGS | METH_STATIC, "Creates a RESERVED15 Rcode" },
-    { "BADVERS", reinterpret_cast<PyCFunction>(Rcode_BADVERS),
-      METH_NOARGS | METH_STATIC, "Creates a BADVERS Rcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -190,101 +139,6 @@ Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
-}
-
-PyObject*
-Rcode_createStatic(const Rcode& rcode) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->cppobj = &rcode;
-        ret->static_code = true;
-    }
-    return (ret);
-}
-
-PyObject*
-Rcode_NOERROR(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NOERROR()));
-}
-
-PyObject*
-Rcode_FORMERR(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::FORMERR()));
-}
-
-PyObject*
-Rcode_SERVFAIL(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::SERVFAIL()));
-}
-
-PyObject*
-Rcode_NXDOMAIN(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NXDOMAIN()));
-}
-
-PyObject*
-Rcode_NOTIMP(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NOTIMP()));
-}
-
-PyObject*
-Rcode_REFUSED(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::REFUSED()));
-}
-
-PyObject*
-Rcode_YXDOMAIN(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::YXDOMAIN()));
-}
-
-PyObject*
-Rcode_YXRRSET(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::YXRRSET()));
-}
-
-PyObject*
-Rcode_NXRRSET(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NXRRSET()));
-}
-
-PyObject*
-Rcode_NOTAUTH(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NOTAUTH()));
-}
-
-PyObject*
-Rcode_NOTZONE(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::NOTZONE()));
-}
-
-PyObject*
-Rcode_RESERVED11(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::RESERVED11()));
-}
-
-PyObject*
-Rcode_RESERVED12(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::RESERVED12()));
-}
-
-PyObject*
-Rcode_RESERVED13(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::RESERVED13()));
-}
-
-PyObject*
-Rcode_RESERVED14(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::RESERVED14()));
-}
-
-PyObject*
-Rcode_RESERVED15(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::RESERVED15()));
-}
-
-PyObject*
-Rcode_BADVERS(const s_Rcode*) {
-    return (Rcode_createStatic(Rcode::BADVERS()));
 }
 
 PyObject*

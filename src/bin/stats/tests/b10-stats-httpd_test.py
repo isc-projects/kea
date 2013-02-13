@@ -34,6 +34,7 @@ import http.client
 import xml.etree.ElementTree
 import random
 import urllib.parse
+import sys
 # load this module for xml validation with xsd. For this test, an
 # installation of lxml is required in advance. See http://lxml.de/.
 try:
@@ -250,6 +251,7 @@ class TestHttpHandler(unittest.TestCase):
         # reset the signal handler
         self.sig_handler.reset()
 
+    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
