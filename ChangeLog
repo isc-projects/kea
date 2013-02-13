@@ -1,3 +1,10 @@
+580.	[func]*		muks
+	There is no longer a default user account. The old default account
+	with username 'root' has been removed. In a fresh installation of
+	BIND 10, the administrator has to configure a user account using
+	the b10-cmdctl-usermgr program.
+	(Trac #2641, git 54e8f4061f92c2f9e5b8564240937515efa6d934)
+
 579.	[bug]		jinmei
 	libdatasrc/b10-auth: corrected some corner cases in query handling
 	of in-memory data source that led to the following invalid/odd
