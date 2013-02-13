@@ -24,7 +24,6 @@ import re
 import sys
 import json
 from xml.etree import ElementTree
-from xml.dom.minidom import parseString
 
 item_list = []
 localstatedir = '@@LOCALSTATEDIR@@'
@@ -194,14 +193,10 @@ def generate_docfile(docfile, def_mtime):
         Build XML tree from items.
             <varlistentry>
               <term>##item_full_name##</term>
-              <listitem>
-              <simpara>
-              ##item_description##
-              </simpara>
-              </listitem>
+              <listitem><simpara>##item_description##</simpara></listitem>
             <varlistentry>
-        xmldocument_command_name in item_description is surrounded with
-        <command>.
+        xmldocument_command_name in item_description is put inside <command>
+        element.
         '''
         for item in items:
             full_item_name = prefix + item['name']
@@ -220,18 +215,19 @@ def generate_docfile(docfile, def_mtime):
                         command = ElementTree.SubElement(sim_para, 'command')
                         command.text = word
                         # at this point command.tail is None
-                        # append empty string as trailing text for the next
-                        # word so it can be concatinated with trailing words
-                        command.tail = ''
+                        # append a space as trailing text for the next word
+                        # so it can be concatinated with trailing words
+                        command.tail = ' '
                         prev = command
                     else:
                         if prev is None:
                             sim_para.text += word + ' '
                         else:
                             prev.tail += word + ' '
-                # remove extra trailing whitespaces
-                sim_para.text = sim_para.text.rstrip()
-                if prev is not None:
+                # remove trailing whitespaces at the end of the description
+                if prev is None:
+                    sim_para.text = sim_para.text.rstrip()
+                else:
                     prev.tail = prev.tail.rstrip()
             else:
                 # the item is a branch node: call myself for child nodes
@@ -247,14 +243,22 @@ def generate_docfile(docfile, def_mtime):
 
         variable_tree = ElementTree.Element('variablelist')
         convert_list(item_list, variable_tree)
+        pretty_xml = ElementTree.tostring(variable_tree)
+        if not isinstance(pretty_xml, str):
+            pretty_xml = pretty_xml.decode('utf-8')
+        # put newline around <variablelist> and <varlistentry> element
         pretty_xml = \
-            parseString(ElementTree.tostring(variable_tree)).toprettyxml()
-        # remove XML declaration
-        pretty_xml = re.sub('<\?xml[^?]+\?>', '', pretty_xml)
-        # remove extra whitespaces inside <command> and <term>
+            re.sub(r'(</?var(?:iablelist|listentry)>)', r'\1\n',
+                pretty_xml)
+        # indent <term> and <listitem>
         pretty_xml = \
-            re.sub(r'<(command|term)>\s+([^<\s]+)\s+</\1>', r'<\1>\2</\1>',
-                   pretty_xml)
+            re.sub(r'(<(?:term|listitem)>)', r'  \1',
+                pretty_xml)
+        # put newline after </term> and </listitem>
+        pretty_xml = \
+            re.sub(r'(</(?:term|listitem)>)', r'\1\n',
+                pretty_xml)
+
         with open(builddir+os.sep+docfile, 'w') as doc:
             doc.write(doc_pre_xml.replace(
                 '<!-- ### STATISTICS DATA PLACEHOLDER ### -->',
