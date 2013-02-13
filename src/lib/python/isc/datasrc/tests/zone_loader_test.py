@@ -216,8 +216,13 @@ class ZoneLoaderTests(unittest.TestCase):
                           self.client, zone_name, self.source_client)
 
     def test_no_ds_load_support(self):
-        # This may change in the future, but atm, the static ds does
-        # not support the API the zone loader uses (it has direct load calls)
+        # As the memory datasource module no longer exists, we check the
+        # static datasource instead (as that uses the memory datasource
+        # anyway).
+        #
+        # This may change in the future, but ATM, the static ds does not
+        # support the API the zone loader uses (it has direct load
+        # calls).
         inmem_client = isc.datasrc.DataSourceClient('static',
                                                     STATIC_ZONE_CONFIG);
         self.assertRaises(isc.datasrc.NotImplemented,

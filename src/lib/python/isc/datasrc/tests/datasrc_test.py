@@ -563,7 +563,10 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(updater_refs, sys.getrefcount(updater))
 
     def test_two_modules(self):
-        # load two modules, and check if they don't interfere
+        # load two modules, and check if they don't interfere; as the
+        # memory datasource module no longer exists, we check the static
+        # datasource instead (as that uses the memory datasource
+        # anyway).
         dsc_static = isc.datasrc.DataSourceClient("static", STATIC_ZONE_CONFIG)
         dsc_sql = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
@@ -721,6 +724,9 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertTrue(dsc.delete_zone(zone_name))
 
     def test_create_zone_not_implemented(self):
+        # As the memory datasource module no longer exists, we check the
+        # static datasource instead (as that uses the memory datasource
+        # anyway).
         dsc = isc.datasrc.DataSourceClient("static", STATIC_ZONE_CONFIG)
         self.assertRaises(isc.datasrc.NotImplemented, dsc.create_zone,
                           isc.dns.Name("example.com"))
