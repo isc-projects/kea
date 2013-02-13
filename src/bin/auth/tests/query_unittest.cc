@@ -217,6 +217,13 @@ public:
             "t644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("www1.uwild.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+
+        // For empty-non-terminal derived from insecure delegation (we don't
+        // need a hash for the delegation point itself for that test).  the
+        // hash for empty name is the same as that for unsigned-delegation
+        // above, as the case is similar to that.
+        hash_map_[Name("empty.example.com")] =
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
     }
     virtual string calculate(const Name& name) const {
         const NSEC3HashMap::const_iterator found = hash_map_.find(name);
@@ -262,8 +269,6 @@ public:
 // to child zones are identified by the existence of non origin NS records.
 // Another special name is "dname.example.com".  Query names under this name
 // will result in DNAME.
-// This mock zone doesn't handle empty non terminal nodes (if we need to test
-// such cases find() should have specialized code for it).
 class MockZoneFinder : public ZoneFinder {
 public:
     MockZoneFinder() :
@@ -1162,12 +1167,6 @@ TEST_P(QueryTest, apexNSMatch) {
 
 // test type any query logic
 TEST_P(QueryTest, exactAnyMatch) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
     EXPECT_NO_THROW(query.process(*list_, Name("noglue.example.com"),
@@ -1373,17 +1372,11 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC2) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about no_txt.  In this case the best possible wildcard
     // is derived from the next domain of the NSEC that proves NXDOMAIN, and
     // the NSEC to provide the non existence of wildcard is different from
     // the first NSEC.
-    query.process(*list_, Name("(.no.example.com"), qtype, response,
+    query.process(*list_, Name("!.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_minttl_txt) +
@@ -1393,19 +1386,12 @@ TEST_P(QueryTest, nxdomainWithNSEC2) {
                          string("mx.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work.  This is probably the same type of bug
-    // as nxdomainWithNSEC2 (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about nz_txt.  In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence of wildcard.
     query.process(*list_, Name("nx.no.example.com"), qtype, response,
@@ -1415,7 +1401,7 @@ TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
                          string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
@@ -1529,7 +1515,7 @@ TEST_P(QueryTest, nxrrsetWithNSEC) {
 TEST_P(QueryTest, emptyNameWithNSEC) {
     // Empty non terminal with DNSSEC proof.  This is one of the cases of
     // Section 3.1.3.2 of RFC4035.
-    // mx.example.com. NSEC ).no.example.com. proves no.example.com. is a
+    // mx.example.com. NSEC &.no.example.com. proves no.example.com. is a
     // non empty terminal node.  Note that it also implicitly proves there
     // should be no closer wildcard match (because the empty name is an
     // exact match), so we only need one NSEC.
@@ -1700,12 +1686,6 @@ TEST_F(QueryTestForMockOnly, badWildcardProof3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
@@ -1723,12 +1703,6 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence RRSETs of
@@ -2468,21 +2442,32 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   NULL, mock_finder->getOrigin());
 }
 
-// Check the exception is correctly raised when the NSEC3 thing isn't in the
-// zone
-TEST_F(QueryTestForMockOnly, nxrrsetMissingNSEC3) {
-    // This is a broken data source scenario; works only with mock.
+TEST_P(QueryTest, nxrrsetDerivedFromOptOutNSEC3) {
+    // In this test we emulate the situation where an empty non-terminal name
+    // is derived from insecure delegation and covered by an opt-out NSEC3.
+    // In the actual test data the covering NSEC3 really has the opt-out
+    // bit set, although the implementation doesn't check it anyway.
+    enableNSEC3(rrsets_to_add_);
+    query.process(*list_, Name("empty.example.com"), RRType::TXT(), response,
+                  true);
 
-    mock_finder->setNSEC3Flag(true);
-    // We just need it to return false for "matched". This indicates
-    // there's no exact match for NSEC3 on www.example.com.
-    ZoneFinder::FindNSEC3Result nsec3(false, 0, ConstRRsetPtr(),
-                                      ConstRRsetPtr());
-    mock_finder->setNSEC3Result(&nsec3);
-
-    EXPECT_THROW(query.process(*list_, Name("www.example.com"),
-                               RRType::TXT(), response, true),
-                 Query::BadNSEC3);
+    // The closest provable encloser is the origin name (example.com.), and
+    // the next closer is the empty name itself, which is expected to be
+    // covered by an opt-out NSEC3 RR.  The response should contain these 2
+    // NSEC3s.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
