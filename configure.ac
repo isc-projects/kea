@@ -306,7 +306,7 @@ AC_SUBST(PYTHON_LOGMSGPKG_DIR)
 # lib/dns/python/.libs is necessary because __init__.py of isc package
 # automatically imports isc.datasrc, which then requires the DNS loadable
 # module.  #2145 should eliminate the need for it.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_builddir)/src/lib/python/isc/cc:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
 AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
@@ -1225,6 +1225,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/dns/Makefile
                  src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/cc/cc_generated/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile

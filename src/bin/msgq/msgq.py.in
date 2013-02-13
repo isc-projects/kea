@@ -33,6 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+from isc.cc.proto_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
 
@@ -503,6 +504,15 @@ class MsgQ:
             sock.setblocking(1)
 
     def send_prepared_msg(self, sock, msg):
+        '''
+        Add a message to the queue. If there's nothing waiting, try
+        to send it right away.
+
+        Return if the socket is still alive. It can return false if the
+        socket dies (for example due to EPIPE in the attempt to send).
+        Returning true does not guarantee the message will be delivered,
+        but returning false means it won't.
+        '''
         # Try to send the data, but only if there's nothing waiting
         fileno = sock.fileno()
         if fileno in self.sendbuffs:
@@ -511,7 +521,7 @@ class MsgQ:
             amount_sent = self._send_data(sock, msg)
             if amount_sent is None:
                 # Socket has been killed, drop the send
-                return
+                return False
 
         # Still something to send, add it to outgoing queue
         if amount_sent < len(msg):
@@ -521,7 +531,7 @@ class MsgQ:
                 (last_sent, buff) = self.sendbuffs[fileno]
                 if now - last_sent > 0.1:
                     self.kill_socket(fileno, sock)
-                    return
+                    return False
                 buff += msg
             else:
                 buff = msg[amount_sent:]
@@ -532,6 +542,7 @@ class MsgQ:
                 else:
                     self.add_kqueue_socket(sock, True)
             self.sendbuffs[fileno] = (last_sent, buff)
+        return True
 
     def __process_write(self, fileno):
         # Try to send some data from the buffer
@@ -566,26 +577,65 @@ class MsgQ:
         self.sendmsg(sock, { "type" : "getlname" }, { "lname" : lname })
 
     def process_command_send(self, sock, routing, data):
-        group = routing["group"]
-        instance = routing["instance"]
-        to = routing["to"]
+        group = routing[CC_HEADER_GROUP]
+        instance = routing[CC_HEADER_INSTANCE]
+        to = routing[CC_HEADER_TO]
         if group == None or instance == None:
+            # FIXME: Should we log them instead?
             return  # ignore invalid packets entirely
 
-        if to == "*":
+        if to == CC_TO_WILDCARD:
             sockets = self.subs.find(group, instance)
         else:
             if to in self.lnames:
                 sockets = [ self.lnames[to] ]
             else:
-                return # recipient doesn't exist
+                sockets = []
 
         msg = self.preparemsg(routing, data)
 
         if sock in sockets:
+            # Don't bounce to self
             sockets.remove(sock)
+
+        has_recipient = False
         for socket in sockets:
-            self.send_prepared_msg(socket, msg)
+            if self.send_prepared_msg(socket, msg):
+                has_recipient = True
+        if not has_recipient and routing.get(CC_HEADER_WANT_ANSWER) and \
+            CC_HEADER_REPLY not in routing:
+            # We have no recipients. But the sender insists on a reply
+            # (and the message isn't a reply itself). We need to send
+            # an error to satisfy the request, since there's nobody
+            # else who can.
+            #
+            # We omit the replies on purpose. The recipient might generate
+            # the response by copying and mangling the header of incoming
+            # message (just like we do below) and would include the want_answer
+            # by accident. And we want to avoid loops of errors. Also, it
+            # is unclear if the knowledge of undeliverable reply would be
+            # of any use to the sender, and it should be much rarer situation.
+
+            # The real errors would be positive, 1 most probably. We use
+            # negative errors for delivery errors to distinguish them a
+            # little. We probably should have a way to provide more data
+            # in the error message.
+            payload = isc.config.ccsession.create_answer(CC_REPLY_NO_RECPT,
+                                                         "No such recipient")
+            # We create the header based on the current one. But we don't
+            # want to mangle it for the caller, so we get a copy. A shallow
+            # one should be enough, we modify the dict only.
+            header = routing.copy()
+            header[CC_HEADER_REPLY] = routing[CC_HEADER_SEQ]
+            # Dummy lname not assigned to clients
+            header[CC_HEADER_FROM] = "msgq"
+            header[CC_HEADER_TO] = routing[CC_HEADER_FROM]
+            # We keep the seq as it is. We don't need to track the message
+            # and we will not confuse the sender. The sender would use an
+            # unique id for each message, so we won't return one twice to it.
+            errmsg = self.preparemsg(header, payload)
+            # Send it back.
+            self.send_prepared_msg(sock, errmsg)
 
     def process_command_subscribe(self, sock, routing, data):
         group = routing["group"]
