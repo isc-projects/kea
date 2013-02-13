@@ -71,7 +71,7 @@ if INSTALL_CONFIGURATIONS
 # because these file will contain sensitive information.
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
-	for f in $(USERSFILES) $(CERTFILES) ; do	\
+	for f in $(CERTFILES) ; do	\
 	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
 	    ${INSTALL} -m 640 $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
 	  fi ;	\
