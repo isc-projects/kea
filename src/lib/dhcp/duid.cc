@@ -91,7 +91,7 @@ ClientId::ClientId(const uint8_t *clientid, size_t len)
 }
 
 // Returns a copy of client-id data
-const std::vector<uint8_t> ClientId::getClientId() const {
+std::vector<uint8_t> ClientId::getClientId() const {
     return (duid_);
 }
 
