@@ -56,7 +56,9 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) cons
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
 
-    Lease4Storage::iterator l = storage4_.find(addr);
+    typedef Lease4Storage::nth_index<0>::type SearchIndex;
+    const SearchIndex& idx = storage4_.get<0>();
+    Lease4Storage::iterator l = idx.find(addr);
     if (l == storage4_.end()) {
         return (Lease4Ptr());
     } else {
@@ -76,6 +78,16 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
         .arg(hwaddr.toText());
+
+    typedef Lease4Storage::nth_index<1>::type SearchIndex;
+    const SearchIndex& idx = storage4_.get<1>();
+    SearchIndex::const_iterator lease = idx.find(boost::make_tuple(hwaddr.hwaddr_,
+                                                                   subnet_id));
+    if (lease == idx.end()) {
+        return Lease4Ptr();
+    }
+
+    return (*lease);
 
     Lease4Storage::iterator l;
     for (l = storage4_.begin(); l != storage4_.end(); ++l) {
@@ -100,6 +112,17 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& client_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
               .arg(client_id.toText());
+
+    typedef Lease4Storage::nth_index<2>::type SearchIndex;
+    const SearchIndex& idx = storage4_.get<2>();
+    SearchIndex::const_iterator lease = idx.find(boost::make_tuple(client_id.getClientId(),
+                                                                   subnet_id));
+    if (lease == idx.end()) {
+        return Lease4Ptr();
+    }
+
+    return (*lease);
+
     Lease4Storage::iterator l;
     for (l = storage4_.begin(); l != storage4_.end(); ++l) {
         if ( (*(*l)->client_id_ == client_id) &&
