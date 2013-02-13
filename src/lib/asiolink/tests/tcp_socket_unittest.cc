@@ -83,7 +83,9 @@ public:
         PrivateData() :
             error_code_(), length_(0), cumulative_(0), expected_(0), offset_(0),
             name_(""), queued_(NONE), called_(NONE)
-        {}
+        {
+            memset(data_, 0, MIN_SIZE);
+        }
 
         asio::error_code    error_code_;    ///< Completion error code
         size_t              length_;        ///< Bytes transferred in this I/O
