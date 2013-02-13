@@ -22,6 +22,7 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/composite_key.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -220,6 +221,30 @@ public:
 
 protected:
 
+    template<typename KeyExtractor1, typename KeyExtractor2>
+    class KeyFromKey {
+    public:
+        typedef typename KeyExtractor1::result_type result_type;
+
+        /// @brief Constructor.
+        KeyFromKey()
+            : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
+
+        /// @brief Extract key with another key.
+        ///
+        /// @param arg the key value.
+        ///
+        /// @tparam key value type.
+        template<typename T>
+        result_type operator() (T& arg) const {
+            return (key1_(key2_(arg)));
+        }
+    private:
+        KeyExtractor1 key1_; ///< key 1.
+        KeyExtractor2 key2_; ///< key 2.
+    };
+
+
     typedef boost::multi_index_container< // this is a multi-index container...
     Lease6Ptr, // it will hold shared_ptr to leases6
         boost::multi_index::indexed_by< // and will be sorted by
@@ -238,8 +263,27 @@ protected:
             // IPv6 address that are unique. That particular key is a member
             // of the Lease6 structure, is of type IOAddress and can be accessed
             // by doing &Lease6::addr_
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
+            >,
+            boost::multi_index::ordered_unique<
+                boost::multi_index::composite_key<
+                    Lease4,
+                    boost::multi_index::member<Lease4, std::vector<uint8_t>,
+                                               &Lease4::hwaddr_>,
+                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
+                >
+            >,
+            boost::multi_index::ordered_unique<
+                boost::multi_index::composite_key<
+                    Lease4,
+                    KeyFromKey<
+                        boost::multi_index::const_mem_fun<ClientId, std::vector<uint8_t>,
+                                                          &ClientId::getClientId>,
+                        boost::multi_index::member<Lease4, ClientIdPtr, &Lease4::client_id_>
+                    >,
+                    boost::multi_index::member<Lease, uint32_t, &Lease::subnet_id_>
+                >
             >
         >
     > Lease4Storage; // Let the whole contraption be called Lease6Storage.
