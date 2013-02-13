@@ -43,22 +43,14 @@ Example:
     <refsect1>
         <title>STATISTICS DATA</title>
         <variablelist>
-            <varlistentry>
-                <term>item1</term>
-                <listitem>
-                    <simpara>
-                        statistics item
-                    </simpara>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
-                <term>item2</term>
-                <listitem>
-                    <simpara>
-                        another statistics item
-                    </simpara>
-                </listitem>
-            </varlistentry>
+        <varlistentry>
+          <term>item1</term>
+          <listitem><simpara>statistics item</simpara></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>item2</term>
+          <listitem><simpara>another statistics item</simpara></listitem>
+        </varlistentry>
         </variablelist>
     </refsect1>
 """
