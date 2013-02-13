@@ -27,6 +27,7 @@ import threading
 import io
 import time
 import imp
+import sys
 
 import stats
 import isc.log
@@ -605,6 +606,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(
                 'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
+    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
         self.stats.do_polling()
@@ -736,6 +738,7 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(0))
         self.assertFalse(self.stats.running)
 
+    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     def test_command_show(self):
         # two auth instances invoked
         list_auth = [ self.base.auth.server,
@@ -1143,6 +1146,7 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(
                 1, "module name is not specified"))
 
+    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     def test_polling(self):
         stats_server = ThreadingServerManager(MyStats)
         stat = stats_server.server

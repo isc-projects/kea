@@ -866,7 +866,8 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         const RdataSet* cur_rds = node->getData();
         while (cur_rds != NULL) {
             target->push_back(createTreeNodeRRset(node, cur_rds, rrclass_,
-                                                  options, &name));
+                                                  options,
+                                                  wild ? &name : NULL));
             cur_rds = cur_rds->getNext();
         }
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
@@ -893,9 +894,13 @@ InMemoryZoneFinder::findInternal(const isc::dns::Name& name,
         }
     }
     // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
+    // Note that we don't have to provide the "real name" even if this is
+    // a wildcard; if NSEC is needed its owner name shouldn't be subject to
+    // wildcard substitution; if NSEC isn't needed the "real name" doesn't
+    // matter anyway.
     return (createFindResult(rrclass_, zone_data_, NXRRSET, node,
                              getNSECForNXRRSET(zone_data_, options, node),
-                             options, wild, &name));
+                             options, wild));
 }
 
 isc::datasrc::ZoneFinder::FindNSEC3Result
