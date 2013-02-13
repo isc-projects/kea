@@ -1330,7 +1330,7 @@ enableNSEC3Generic(DatabaseAccessor& accessor) {
     for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
         const string nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] =
             {
-                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][0], // Hash
                 TEST_NSEC3_RECORDS[i][2], // TTL
                 TEST_NSEC3_RECORDS[i][1], // RR type
                 TEST_NSEC3_RECORDS[i][4]  // RDATA
