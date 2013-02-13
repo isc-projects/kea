@@ -30,7 +30,6 @@ libb10_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libb10_util_la_SOURCES += random/random_number_generator.h
 
 EXTRA_DIST = python/pycppwrapper_util.h
-
 libb10_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 CLEANFILES = *.gcno *.gcda
 

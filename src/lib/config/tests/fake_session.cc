@@ -183,7 +183,7 @@ FakeSession::unsubscribe(std::string group, std::string instance) {
 
 int
 FakeSession::group_sendmsg(ConstElementPtr msg, std::string group,
-                           std::string to, std::string)
+                           std::string to, std::string, bool)
 {
     if (throw_on_send_) {
         isc_throw(Exception, "Throw on send is set in FakeSession");

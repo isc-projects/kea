@@ -19,7 +19,7 @@ PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
 CMD_CTRLD_PATH=@abs_top_builddir@/src/bin/cmdctl
-PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/python/isc/config:@abs_top_builddir@/src/lib/python/isc/acl/.libs:@abs_top_builddir@/src/lib/python/isc/datasrc/.libs
+PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python/isc/cc:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs:@abs_top_builddir@/src/lib/log/.libs:@abs_top_builddir@/src/lib/util/io/.libs:@abs_top_builddir@/src/lib/python/isc/config:@abs_top_builddir@/src/lib/python/isc/acl/.libs:@abs_top_builddir@/src/lib/python/isc/datasrc/.libs
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries

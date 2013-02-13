@@ -61,7 +61,8 @@ public:
     virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                               std::string group,
                               std::string instance = "*",
-                              std::string to = "*");
+                              std::string to = "*",
+                              bool want_answer = false);
     virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
                                isc::data::ConstElementPtr& msg,
                                bool nonblock = true,
