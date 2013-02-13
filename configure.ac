@@ -238,6 +238,21 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
+# Our experiments have shown Solaris 10 has broken support for the
+# IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value
+# previously set via setsockopt().  We know it doesn't happen on one instance
+# on Solaris 11, but we don't know whether it happens for any Solaris 10
+# implementations or for earlier versions of Solaris.  In any case, at the
+# moment this matters for only one unittest case, so we'll simply disable
+# the affected test using the following definition with the specific hardcoding
+# of that version of Solaris.
+case "$host" in
+*-solaris2.10)
+	AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
+	[Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
+	;;
+esac
+
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
@@ -298,8 +313,16 @@ AC_SUBST(COMMON_PYTHON_PATH)
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
 
-	for flag in `${PYTHON}-config --ldflags`; do
-		# add any '-L..." flags to PYTHON_LDFLAGS
+	# Add any '-L..." flags to PYTHON_LDFLAGS.  We first make a copy of
+	# python-config --ldflags, removing any spaces and tabs
+	# between "-L" and its argument (some instances of python-config
+	# insert a space, which would confuse the code below).
+	# Notes: if -L isn't contained at all we can simply skip this process,
+	# so we only go through the flag if it's contained; also, protecting
+	# the output with [] seems necessary for environment to avoid getting
+	# an empty output accidentally.
+	python_config_ldflags=[`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`]
+	for flag in $python_config_ldflags; do
 		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
 		if test "X${flag}" != X; then
 			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
@@ -1319,7 +1342,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/stats/stats_httpd.py
            src/bin/bind10/init.py
            src/bin/bind10/run_bind10.sh
-           src/bin/bind10/tests/bind10_test.py
+           src/bin/bind10/tests/init_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test

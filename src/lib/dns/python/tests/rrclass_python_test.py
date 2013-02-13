@@ -23,8 +23,8 @@ from pydnspp import *
 
 class RRClassTest(unittest.TestCase):
     def setUp(self):
-        self.c1 = RRClass.IN()
-        self.c2 = RRClass.CH()
+        self.c1 = RRClass.IN
+        self.c2 = RRClass.CH
 
     def test_init(self):
         self.assertRaises(InvalidRRClass, RRClass, "wrong")
@@ -81,17 +81,17 @@ class RRClassTest(unittest.TestCase):
     def test_hash(self):
         # Exploiting the knowledge that the hash value is the numeric class
         # value, we can predict the comparison result.
-        self.assertEqual(hash(RRClass.IN()), hash(RRClass("IN")))
+        self.assertEqual(hash(RRClass.IN), hash(RRClass("IN")))
         self.assertEqual(hash(RRClass("in")), hash(RRClass("IN")))
-        self.assertNotEqual(hash(RRClass.IN()), hash(RRClass.CH()))
-        self.assertNotEqual(hash(RRClass.IN()), hash(RRClass("CLASS65535")))
+        self.assertNotEqual(hash(RRClass.IN), hash(RRClass.CH))
+        self.assertNotEqual(hash(RRClass.IN), hash(RRClass("CLASS65535")))
 
     def test_statics(self):
-        self.assertEqual(RRClass.IN(), RRClass("IN"))
-        self.assertEqual(RRClass.CH(), RRClass("CH"))
-        self.assertEqual(RRClass.HS(), RRClass("HS"))
-        self.assertEqual(254, RRClass.NONE().get_code())
-        self.assertEqual(255, RRClass.ANY().get_code())
+        self.assertEqual(RRClass.IN, RRClass("IN"))
+        self.assertEqual(RRClass.CH, RRClass("CH"))
+        self.assertEqual(RRClass.HS, RRClass("HS"))
+        self.assertEqual(254, RRClass.NONE.get_code())
+        self.assertEqual(255, RRClass.ANY.get_code())
 
 if __name__ == '__main__':
     unittest.main()

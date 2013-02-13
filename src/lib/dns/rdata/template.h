@@ -39,6 +39,10 @@
 // Note: do not remove the comment lines beginning with "BEGIN_" and "END_".
 // These are markers used by a script for auto-generating build-able source
 // files.
+//
+// On completion of implementing a new type of Rdata, remove the corresponding
+// entry from the meta_types dictionary of gen-rdatacode.py.in.  Otherwise
+// it will cause build failure.
 
 class MyType : public Rdata {
 public:
