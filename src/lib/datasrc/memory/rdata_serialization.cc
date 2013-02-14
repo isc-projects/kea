@@ -384,9 +384,37 @@ RdataLess(const ConstRdataPtr& rdata1, const ConstRdataPtr& rdata2) {
 
 struct RdataEncoder::RdataEncoderImpl {
     RdataEncoderImpl() : encode_spec_(NULL), rrsig_buffer_(0),
+                         old_rdata_count_(0), old_sig_count_(0),
+                         old_data_len_(0), old_sig_len_(0),
+                         old_length_fields_(NULL), old_data_(NULL),
+                         old_sig_data_(NULL),
                          rdatas_(boost::bind(RdataLess, _1, _2)),
                          rrsigs_(boost::bind(RdataLess, _1, _2))
     {}
+
+    // Common initialization for RdataEncoder::start().
+    void start(RRClass rrclass, RRType rrtype) {
+        if (rrtype == RRType::RRSIG()) {
+            isc_throw(BadValue, "RRSIG cannot be encoded as main RDATA type");
+        }
+
+        encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
+        current_class_ = rrclass;
+        current_type_ = rrtype;
+        field_composer_.clearLocal(encode_spec_);
+        rrsig_buffer_.clear();
+        rrsig_lengths_.clear();
+        old_rdata_count_ = 0;
+        old_sig_count_ = 0;
+        old_data_len_ = 0;
+        old_sig_len_ = 0;
+        old_length_fields_ = NULL;
+        old_data_ = NULL;
+        old_sig_data_ = NULL;
+
+        rdatas_.clear();
+        rrsigs_.clear();
+    }
 
     const RdataEncodeSpec* encode_spec_; // encode spec of current RDATA set
     RdataFieldComposer field_composer_;
@@ -395,6 +423,14 @@ struct RdataEncoder::RdataEncoderImpl {
 
     boost::optional<RRClass> current_class_;
     boost::optional<RRType> current_type_;
+
+    size_t old_rdata_count_;
+    size_t old_sig_count_;
+    size_t old_data_len_;
+    size_t old_sig_len_;
+    const void* old_length_fields_;
+    const void* old_data_;
+    const void* old_sig_data_;
 
     // Temporary storage of Rdata and RRSIGs to be encoded.  They are used
     // to detect and ignore duplicate data.
@@ -416,18 +452,29 @@ RdataEncoder::~RdataEncoder() {
 
 void
 RdataEncoder::start(RRClass rrclass, RRType rrtype) {
-    if (rrtype == RRType::RRSIG()) {
-        isc_throw(BadValue, "RRSIG cannot be encoded as main RDATA type");
-    }
+    impl_->start(rrclass, rrtype);
+}
 
-    impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
-    impl_->current_class_ = rrclass;
-    impl_->current_type_ = rrtype;
-    impl_->field_composer_.clearLocal(impl_->encode_spec_);
-    impl_->rrsig_buffer_.clear();
-    impl_->rrsig_lengths_.clear();
-    impl_->rdatas_.clear();
-    impl_->rrsigs_.clear();
+void
+RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
+                    size_t old_rdata_count, size_t old_sig_count)
+{
+    impl_->start(rrclass, rrtype);
+
+    // hardcode for initial test
+    assert(old_rdata_count == 1);
+    assert(old_sig_count == 0);
+    if (rrtype == RRType::A()) {
+        impl_->old_data_ = old_data;
+        impl_->old_data_len_ = 4;
+    } else {
+        const uint8_t* cp = static_cast<const uint8_t*>(old_data);
+        impl_->old_rdata_count_ = 1;
+        impl_->old_length_fields_ = old_data;
+        impl_->old_data_ = cp +
+            (old_rdata_count + old_sig_count) * sizeof(uint16_t);
+        impl_->old_data_len_ = 12;
+    }
 }
 
 void
@@ -483,8 +530,11 @@ RdataEncoder::getStorageLength() const {
                   "RdataEncoder::getStorageLength performed before start");
     }
 
-    return (sizeof(uint16_t) * impl_->field_composer_.data_lengths_.size() +
-            sizeof(uint16_t) * impl_->rrsig_lengths_.size() +
+    return (sizeof(uint16_t) * (impl_->old_rdata_count_ +
+                                impl_->old_sig_count_ +
+                                impl_->field_composer_.data_lengths_.size() +
+                                impl_->rrsig_lengths_.size()) +
+            impl_->old_data_len_ + impl_->old_sig_len_ +
             impl_->rrsig_buffer_.getLength() +
             impl_->field_composer_.getLength());
 }
@@ -507,6 +557,12 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
     uint8_t* dp = dp_beg;
     uint16_t* lenp = reinterpret_cast<uint16_t*>(buf);
 
+    // Encode list of lengths for variable length fields for old data (if any)
+    const size_t old_varlen_fields_len =
+        impl_->old_rdata_count_ * sizeof(uint16_t);
+    std::memcpy(lenp, impl_->old_length_fields_, old_varlen_fields_len);
+    lenp += impl_->old_rdata_count_;
+    dp += old_varlen_fields_len;
     // Encode list of lengths for variable length fields (if any)
     if (!impl_->field_composer_.data_lengths_.empty()) {
         const size_t varlen_fields_len =
@@ -516,6 +572,9 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
         lenp += impl_->field_composer_.data_lengths_.size();
         dp += varlen_fields_len;
     }
+    // Encode list of lengths for old RRSIGs (if any)
+    // TBD
+    //
     // Encode list of lengths for RRSIGs (if any)
     if (!impl_->rrsig_lengths_.empty()) {
         const size_t rrsigs_len =
@@ -523,10 +582,15 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
         std::memcpy(lenp, &impl_->rrsig_lengths_[0], rrsigs_len);
         dp += rrsigs_len;
     }
+    // Encode main old RDATA, if any
+    std::memcpy(dp, impl_->old_data_, impl_->old_data_len_);
+    dp += impl_->old_data_len_;
     // Encode main RDATA
     std::memcpy(dp, impl_->field_composer_.getData(),
                 impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
+    // Encode old RRSIGs, if any
+    // TBD
     // Encode RRSIGs, if any
     std::memcpy(dp, impl_->rrsig_buffer_.getData(),
                 impl_->rrsig_buffer_.getLength());
@@ -547,7 +611,7 @@ RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
     var_count_total_(spec_.varlen_count * rdata_count),
     sig_count_(sig_count),
     spec_count_(spec_.field_count * rdata_count),
-    // The lenghts are stored first
+    // The lengths are stored first
     lengths_(reinterpret_cast<const uint16_t*>(data)),
     // And the data just after all the lengths
     data_(reinterpret_cast<const uint8_t*>(data) +
