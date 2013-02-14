@@ -272,6 +272,9 @@
         <refentrytitle>b10-ddns</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
         <refentrytitle>b10-loadzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>

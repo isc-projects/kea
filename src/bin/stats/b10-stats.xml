@@ -223,6 +223,9 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
         <refentrytitle>b10-stats-httpd</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
@@ -230,9 +233,6 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>
