@@ -22,7 +22,6 @@
 #include <cc/data.h>
 
 #include <datasrc/data_source.h>
-#include <datasrc/memory_datasrc.h>
 
 #include <xfr/xfrout_client.h>
 

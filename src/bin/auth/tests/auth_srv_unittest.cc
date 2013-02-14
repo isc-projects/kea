@@ -29,7 +29,6 @@
 #include <server_common/portconfig.h>
 #include <server_common/keyring.h>
 
-#include <datasrc/memory_datasrc.h>
 #include <datasrc/client_list.h>
 #include <auth/auth_srv.h>
 #include <auth/command.h>
