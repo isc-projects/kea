@@ -16,6 +16,7 @@
 #define MEMFILE_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/multi_index/indexed_by.hpp>
@@ -220,29 +221,6 @@ public:
     virtual void rollback();
 
 protected:
-
-    template<typename KeyExtractor1, typename KeyExtractor2>
-    class KeyFromKey {
-    public:
-        typedef typename KeyExtractor1::result_type result_type;
-
-        /// @brief Constructor.
-        KeyFromKey()
-            : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
-
-        /// @brief Extract key with another key.
-        ///
-        /// @param arg the key value.
-        ///
-        /// @tparam key value type.
-        template<typename T>
-        result_type operator() (T& arg) const {
-            return (key1_(key2_(arg)));
-        }
-    private:
-        KeyExtractor1 key1_; ///< key 1.
-        KeyExtractor2 key2_; ///< key 2.
-    };
 
     // This is a multi-index container, which holds elements that can
     // be accessed using different search indexes.
