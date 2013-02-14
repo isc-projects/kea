@@ -72,7 +72,6 @@ import isc.cc
 import isc.util.process
 import isc.net.parse
 import isc.log
-import isc.config
 from isc.log_messages.init_messages import *
 import isc.bind10.component
 import isc.bind10.special_component

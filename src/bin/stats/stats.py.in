@@ -26,8 +26,7 @@ from optparse import OptionParser, OptionValueError
 import errno
 import select
 
-import isc.cc
-import isc.config
+import isc
 import isc.util.process
 import isc.log
 from isc.log_messages.stats_messages import *

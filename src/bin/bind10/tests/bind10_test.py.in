@@ -31,8 +31,8 @@ import signal
 import socket
 from isc.net.addr import IPAddr
 import time
+import isc
 import isc.log
-import isc.config
 import isc.bind10.socket_cache
 import errno
 import random

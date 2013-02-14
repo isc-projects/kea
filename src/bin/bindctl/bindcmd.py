@@ -25,7 +25,7 @@ from bindctl.moduleinfo import *
 from bindctl.cmdparse import BindCmdParser
 from bindctl import command_sets
 from xml.dom import minidom
-import isc.config
+import isc
 import isc.cc.data
 import http.client
 import json

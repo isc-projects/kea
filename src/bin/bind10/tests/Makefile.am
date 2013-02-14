@@ -1,7 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 #PYTESTS = args_test.py bind10_test.py
 # NOTE: this has a generated test found in the builddir
-PYTESTS = init_test.py
+PYTESTS = bind10_test.py
 noinst_SCRIPTS = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
