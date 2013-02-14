@@ -289,6 +289,26 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session.close()
         mccs.__del__() # with closed fake_session
 
+    def test_rpc_call_success(self):
+        """
+        Test we can send an RPC (command) and get an answer. The answer is
+        success in this case.
+        """
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        fake_session.message_queue = [
+            ["Spec1", None, {"result": [0, {"Hello": "a"}]}, False]
+        ]
+        result = mccs.rpc_call("Spec2", "*", "test", param1="Param 1",
+                               param2="Param 2")
+        self.assertEqual([
+                ["Spec2", "*", {"command": ["test", {
+                    "param1": "Param 1",
+                    "param2": "Param 2"
+                }]}]
+            ], fake_session.message_queue)
+        self.assertEqual({"Hello": "a"}, result)
+
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
 
