@@ -155,6 +155,9 @@ public:
     /// \param rrtype The RR type of RDATA to be encoded in the session.
     void start(dns::RRClass rrclass, dns::RRType rrtype);
 
+    void start(dns::RRClass rrclass, dns::RRType rrtype,
+               const void* old_data, size_t rdata_count, size_t sig_count);
+
     /// \brief Add an RDATA for encoding.
     ///
     /// This method updates internal state of the \c RdataEncoder() with the
