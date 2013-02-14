@@ -255,6 +255,13 @@ public:
 
     /// @brief Check if the option definition is valid.
     ///
+    /// Note that it is a responsibility of the code that created
+    /// the OptionDefinition object to validate that it is valid.
+    /// This function will not be called internally anywhere in this
+    /// class to verify that the option definition is valid. Using
+    /// invalid option definition to create an instance of the
+    /// DHCP option leads to undefined behavior.
+    ///
     /// @throw MalformedOptionDefinition option definition is invalid.
     void validate() const;
 
@@ -274,13 +281,16 @@ public:
     /// provided chunk of buffer. This function may be used to
     /// create option which is to be sent in the outgoing packet.
     ///
+    /// @warning calling this function on invalid option definition
+    /// yields undefined behavior. Use \ref validate to test that
+    /// the option definition is valid.
+    ///
     /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
     ///
     /// @return instance of the DHCP option.
-    /// @throw MalformedOptionDefinition if option definition is invalid.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
@@ -292,12 +302,15 @@ public:
     /// whole provided buffer. This function may be used to
     /// create option which is to be sent in the outgoing packet.
     ///
+    /// @warning calling this function on invalid option definition
+    /// yields undefined behavior. Use \ref validate to test that
+    /// the option definition is valid.
+    ///
     /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param buf option buffer.
     ///
     /// @return instance of the DHCP option.
-    /// @throw MalformedOptionDefinition if option definition is invalid.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             const OptionBuffer& buf = OptionBuffer()) const;
@@ -316,12 +329,15 @@ public:
     /// must be tokenized into the vector of string values and this vector
     /// can be supplied to this function.
     ///
+    /// @warning calling this function on invalid option definition
+    /// yields undefined behavior. Use \ref validate to test that
+    /// the option definition is valid.
+    ///
     /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param values a vector of values to be used to set data for an option.
     ///
     /// @return instance of the DHCP option.
-    /// @throw MalformedOptionDefinition if option definition is invalid.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             const std::vector<std::string>& values) const;
