@@ -29,8 +29,6 @@
 
 #include <config/ccsession.h>
 
-#include <datasrc/memory_datasrc.h>
-
 #include <asiolink/asiolink.h>
 
 #include <util/unittests/mock_socketsession.h>

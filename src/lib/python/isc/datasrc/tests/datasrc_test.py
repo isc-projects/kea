@@ -34,6 +34,8 @@ WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
 READ_ZONE_DB_CONFIG = "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\" }"
 WRITE_ZONE_DB_CONFIG = "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}"
 
+STATIC_ZONE_CONFIG = '"' + TESTDATA_PATH + "static.zone" + '"'
+
 def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
     rrset_to_add = isc.dns.RRset(name, rrclass, rrtype, ttl)
     if rdatas is not None:
@@ -128,9 +130,6 @@ class DataSrcClient(unittest.TestCase):
                           isc.datasrc.DataSourceClient, "sqlite3", "{}")
         self.assertRaises(isc.datasrc.Error,
                           isc.datasrc.DataSourceClient, "sqlite3",
-                          "{ \"foo\": 1 }")
-        self.assertRaises(isc.datasrc.Error,
-                          isc.datasrc.DataSourceClient, "memory",
                           "{ \"foo\": 1 }")
 
     def test_iterate(self):
@@ -564,14 +563,16 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(updater_refs, sys.getrefcount(updater))
 
     def test_two_modules(self):
-        # load two modules, and check if they don't interfere
-        mem_cfg = { "type": "memory", "class": "IN", "zones": [] };
-        dsc_mem = isc.datasrc.DataSourceClient("memory", json.dumps(mem_cfg))
+        # load two modules, and check if they don't interfere; as the
+        # memory datasource module no longer exists, we check the static
+        # datasource instead (as that uses the memory datasource
+        # anyway).
+        dsc_static = isc.datasrc.DataSourceClient("static", STATIC_ZONE_CONFIG)
         dsc_sql = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         # check if exceptions are working
         self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
-                          "memory", "{}")
+                          "static", "\"\"")
         self.assertRaises(isc.datasrc.Error, isc.datasrc.DataSourceClient,
                           "sqlite3", "{}")
 
@@ -587,10 +588,9 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual("www.example.com. 3600 IN A 192.0.2.1\n",
                          rrset.to_text())
 
-        # see if a lookup fails in mem ds
-        result, finder = dsc_mem.find_zone(isc.dns.Name("example.com"))
+        # see if a lookup fails in static ds
+        result, finder = dsc_static.find_zone(isc.dns.Name("example"))
         self.assertEqual(finder.NXDOMAIN, result)
-
 
     def test_update_delete_abort(self):
         # we don't do enything with this one, just making sure loading two
@@ -724,8 +724,10 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertTrue(dsc.delete_zone(zone_name))
 
     def test_create_zone_not_implemented(self):
-        mem_cfg = '{ "type": "memory", "class": "IN", "zones": [] }';
-        dsc = isc.datasrc.DataSourceClient("memory", mem_cfg)
+        # As the memory datasource module no longer exists, we check the
+        # static datasource instead (as that uses the memory datasource
+        # anyway).
+        dsc = isc.datasrc.DataSourceClient("static", STATIC_ZONE_CONFIG)
         self.assertRaises(isc.datasrc.NotImplemented, dsc.create_zone,
                           isc.dns.Name("example.com"))
 

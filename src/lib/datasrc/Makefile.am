@@ -24,10 +24,7 @@ CLEANFILES += static.zone
 
 lib_LTLIBRARIES = libb10-datasrc.la
 libb10_datasrc_la_SOURCES = data_source.h
-libb10_datasrc_la_SOURCES += rbnode_rrset.h
-libb10_datasrc_la_SOURCES += rbtree.h
 libb10_datasrc_la_SOURCES += exceptions.h
-libb10_datasrc_la_SOURCES += zonetable.h zonetable.cc
 libb10_datasrc_la_SOURCES += zone.h zone_finder.h zone_finder.cc
 libb10_datasrc_la_SOURCES += zone_finder_context.cc
 libb10_datasrc_la_SOURCES += zone_iterator.h
@@ -37,7 +34,6 @@ libb10_datasrc_la_SOURCES += client.h client.cc
 libb10_datasrc_la_SOURCES += database.h database.cc
 libb10_datasrc_la_SOURCES += factory.h factory.cc
 libb10_datasrc_la_SOURCES += client_list.h client_list.cc
-libb10_datasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
 libb10_datasrc_la_SOURCES += master_loader_callbacks.h
 libb10_datasrc_la_SOURCES += master_loader_callbacks.cc
 libb10_datasrc_la_SOURCES += rrset_collection_base.h rrset_collection_base.cc
@@ -45,7 +41,7 @@ libb10_datasrc_la_SOURCES += zone_loader.h zone_loader.cc
 nodist_libb10_datasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libb10_datasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-pkglib_LTLIBRARIES =  sqlite3_ds.la memory_ds.la static_ds.la
+pkglib_LTLIBRARIES = sqlite3_ds.la static_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
@@ -55,12 +51,8 @@ sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 sqlite3_ds_la_LIBADD += libb10-datasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 
-memory_ds_la_SOURCES = memory_datasrc_link.cc
-memory_ds_la_LDFLAGS = -module -avoid-version
-memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-memory_ds_la_LIBADD += libb10-datasrc.la
-
 static_ds_la_SOURCES = static_datasrc_link.cc
+static_ds_la_SOURCES += static_datasrc.h
 static_ds_la_LDFLAGS = -module -avoid-version
 static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 static_ds_la_LIBADD += libb10-datasrc.la
@@ -69,7 +61,7 @@ libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-libb10_datasrc_la_LIBADD += $(builddir)/memory/libdatasrc_memory.la
+libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/datasrc/memory/libdatasrc_memory.la
 libb10_datasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc

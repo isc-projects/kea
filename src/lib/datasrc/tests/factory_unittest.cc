@@ -29,6 +29,7 @@ using namespace isc::data;
 
 std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
 const std::string STATIC_DS_FILE = TEST_DATA_DIR "/static.zone";
+const std::string STATIC_BAD_DS_FILE = TEST_DATA_DIR "/static-bad.zone";
 const std::string ROOT_ZONE_FILE = TEST_DATA_DIR "/root.zone";
 
 namespace {
@@ -160,78 +161,6 @@ TEST(FactoryTest, sqlite3ClientBadConfig) {
         isc::dns::Name("example.org."), false));
 }
 
-TEST(FactoryTest, memoryClient) {
-    // We start out by building the configuration data bit by bit,
-    // testing each form of 'bad config', until we have a good one.
-    // Then we do some very basic operation on the client (detailed
-    // tests are left to the implementation-specific backends)
-    ElementPtr config;
-    ASSERT_THROW(DataSourceClientContainer client("memory", config),
-                 DataSourceError);
-
-    config = Element::create("asdf");
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config = Element::createMap();
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("type", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("type", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("type", Element::create("FOO"));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("type", Element::create("memory"));
-    // no config at all should result in a default empty memory client
-    ASSERT_NO_THROW(DataSourceClientContainer("memory", config));
-
-    config->set("class", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("class", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("class", Element::create("FOO"));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("class", Element::create("IN"));
-    ASSERT_NO_THROW(DataSourceClientContainer("memory", config));
-
-    config->set("zones", ElementPtr());
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("zones", Element::create(1));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
-
-    config->set("zones", Element::createList());
-    DataSourceClientContainer dsc("memory", config);
-
-    // Once it is able to load some zones, we should add a few tests
-    // here to see that it does.
-    DataSourceClient::FindResult result(
-        dsc.getInstance().findZone(isc::dns::Name("no.such.zone.")));
-    ASSERT_EQ(result::NOTFOUND, result.code);
-
-    ASSERT_THROW(dsc.getInstance().getIterator(isc::dns::Name("example.org.")),
-                 DataSourceError);
-
-    ASSERT_THROW(dsc.getInstance().getUpdater(isc::dns::Name("no.such.zone."),
-                                              false), isc::NotImplemented);
-}
-
 TEST(FactoryTest, badType) {
     ASSERT_THROW(DataSourceClientContainer("foo", ElementPtr()),
                                            DataSourceError);
@@ -259,13 +188,9 @@ TEST(FactoryTest, staticDS) {
 }
 
 // Check that file not containing BIND./CH is rejected
-//
-// FIXME: This test is disabled because the InMemoryZoneFinder::load does
-// not check if the data loaded correspond with the origin. The static
-// factory is not the place to fix that.
-TEST(FactoryTest, DISABLED_staticDSBadFile) {
+TEST(FactoryTest, staticDSBadFile) {
     // The only configuration is the file to load.
-    const ConstElementPtr config(new StringElement(STATIC_DS_FILE));
+    const ConstElementPtr config(new StringElement(STATIC_BAD_DS_FILE));
     // See it does not want the file
     EXPECT_THROW(DataSourceClientContainer("static", config), DataSourceError);
 }
