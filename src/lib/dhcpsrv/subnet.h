@@ -24,6 +24,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
@@ -81,55 +82,6 @@ public:
 
     /// A pointer to option descriptor.
     typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
-
-    /// @brief Extractor class to extract key with another key.
-    ///
-    /// This class solves the problem of accessing index key values
-    /// that are stored in objects nested in other objects.
-    /// Each OptionDescriptor structure contains the OptionPtr object.
-    /// The value retured by one of its accessors (getType) is used
-    /// as an indexing value in the multi_index_container defined below.
-    /// There is no easy way to mark that value returned by Option::getType
-    /// should be an index of this multi_index_container. There are standard
-    /// key extractors such as 'member' or 'mem_fun' but they are not
-    /// sufficient here. The former can be used to mark that member of
-    /// the structure that is held in the container should be used as an
-    /// indexing value. The latter can be used if the indexing value is
-    /// a product of the class being held in the container. In this complex
-    /// scenario when the indexing value is a product of the function that
-    /// is wrapped by the structure, this new extractor template has to be
-    /// defined. The template class provides a 'chain' of two extractors
-    /// to access the value returned by nested object and to use it as
-    /// indexing value.
-    /// For some more examples of complex keys see:
-    /// http://www.cs.brown.edu/~jwicks/boost/libs/multi_index/doc/index.html
-    ///
-    /// @tparam KeyExtractor1 extractor used to access data in
-    /// OptionDescriptor::option
-    /// @tparam KeyExtractor2 extractor used to access
-    /// OptionDescriptor::option member.
-    template<typename KeyExtractor1, typename KeyExtractor2>
-    class KeyFromKey {
-    public:
-        typedef typename KeyExtractor1::result_type result_type;
-
-        /// @brief Constructor.
-        KeyFromKey()
-            : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
-
-        /// @brief Extract key with another key.
-        ///
-        /// @param arg the key value.
-        ///
-        /// @tparam key value type.
-        template<typename T>
-        result_type operator() (T& arg) const {
-            return (key1_(key2_(arg)));
-        }
-    private:
-        KeyExtractor1 key1_; ///< key 1.
-        KeyExtractor2 key2_; ///< key 2.
-    };
 
     /// @brief Multi index container for DHCP option descriptors.
     ///
