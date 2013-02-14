@@ -868,6 +868,51 @@ struct MergeTestData {
     {NULL, NULL, NULL, NULL, 0}
 };
 
+// Identifier for slightly difference modes of "merge data" test below.
+// We test various combinations on # of old (before merge) and new (being
+// merged) RDATAs.
+enum MergeTestMode {
+    ONE_OLD_ONE_NEW = 0,
+    MULTI_OLD_NO_NEW,
+    ONE_OLD_MULTI_NEW,
+    DUPLICATE_NEW,      // The new RDATA is a duplicate of the old one
+    NO_OLD_ONE_NEW,     // no old RDATA; this can also cover the case where
+                        // the resulting RdataSet is RRSIG-only.
+    ONE_OLD_NO_NEW
+};
+
+// A helper to build vectors of Rata's for the given test mode.
+void
+createMergeData(int mode, const MergeTestData& data,
+                const RRClass& rrclass, const RRType& rrtype,
+                vector<ConstRdataPtr>& old_list,
+                vector<ConstRdataPtr>& new_list)
+{
+    old_list.clear();
+    new_list.clear();
+    old_list.push_back(createRdata(rrtype, rrclass, data.rdata_txt1));
+    new_list.push_back(createRdata(rrtype, rrclass, data.rdata_txt2));
+    switch (static_cast<MergeTestMode>(mode)) {
+    case ONE_OLD_ONE_NEW:
+        break;
+    case MULTI_OLD_NO_NEW:
+        old_list.push_back(createRdata(rrtype, rrclass, data.rdata_txt3));
+        break;
+    case ONE_OLD_MULTI_NEW:
+        new_list.push_back(createRdata(rrtype, rrclass, data.rdata_txt3));
+        break;
+    case DUPLICATE_NEW:
+        new_list.push_back(createRdata(rrtype, rrclass, data.rdata_txt1));
+        break;
+    case NO_OLD_ONE_NEW:
+        old_list.clear();
+        break;
+    case ONE_OLD_NO_NEW:
+        new_list.clear();
+        break;
+    }
+}
+
 template<class DecoderStyle>
 void
 RdataEncodeDecodeTest<DecoderStyle>::
@@ -877,42 +922,29 @@ mergeRdataCommon(const vector<ConstRdataPtr>& old_rrsigs,
     const RRClass rrclass(RRClass::IN()); // class is fixed in the test
     vector<uint8_t> old_encoded_data;
     vector<ConstRdataPtr> rrsigs_all;
+    vector<ConstRdataPtr> old_list;
+    vector<ConstRdataPtr> new_list;
 
+    // For each type of test Rdata, we check all modes of test scenarios.
     for (const MergeTestData* data = merge_test_data;
          data->type_txt;
          ++data) {
         const RRType rrtype(data->type_txt);
 
-        for (int mode = 0; mode < 3; ++mode) {
-            bool multi_old = false;
-            bool multi_new = false;
-            if (mode == 1) {
-                multi_old = true;
-            } else if (mode == 2) {
-                multi_new = true;
-            }
+        for (int mode = 0; mode <= ONE_OLD_NO_NEW; ++mode) {
+            createMergeData(mode, *data, rrclass, rrtype, old_list, new_list);
 
             // Encode the old data
-            rdata_list_.clear();
-            rdata_list_.push_back(createRdata(rrtype, rrclass,
-                                              data->rdata_txt1));
-            if (multi_old) {
-                rdata_list_.push_back(createRdata(rrtype, rrclass,
-                                                  data->rdata_txt3));
-            }
-            checkEncode(RRClass::IN(), RRType(data->type_txt), rdata_list_,
+            rdata_list_ = old_list;
+            checkEncode(rrclass, RRType(data->type_txt), rdata_list_,
                         data->varlen_fields, old_rrsigs);
             old_encoded_data = encoded_data_; // make a copy of the data
 
             // Prepare new data.  rrsigs_all is set to "old_rrsigs + rrsigs".
             // Then check the behavior in the "merge" mode.
             const size_t old_rdata_count = rdata_list_.size();
-            rdata_list_.push_back(createRdata(rrtype, rrclass,
-                                              data->rdata_txt2));
-            if (multi_new) {
-                rdata_list_.push_back(createRdata(rrtype, rrclass,
-                                                  data->rdata_txt3));
-            }
+            rdata_list_.insert(rdata_list_.end(), new_list.begin(),
+                               new_list.end());
             rrsigs_all = old_rrsigs;
             rrsigs_all.insert(rrsigs_all.end(), rrsigs.begin(), rrsigs.end());
             checkEncode(rrclass, rrtype, rdata_list_, data->varlen_fields,
@@ -952,6 +984,10 @@ TYPED_TEST(RdataEncodeDecodeTest, mergeRdata) {
     old_rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
                                      "A 5 2 3600 20120814220826 "
                                      "20120715220826 54321 com. FAKE"));
+    this->mergeRdataCommon(old_rrsigs, rrsigs);
+
+    // Tests with duplicate RRSIG in new one (keeping the old_rrsigs)
+    rrsigs.push_back(this->rrsig_rdata_);
     this->mergeRdataCommon(old_rrsigs, rrsigs);
 }
 
