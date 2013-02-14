@@ -299,13 +299,13 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session.message_queue = [
             ["Spec1", None, {"result": [0, {"Hello": "a"}]}, False]
         ]
-        result = mccs.rpc_call("Spec2", "*", "test", param1="Param 1",
+        result = mccs.rpc_call("test", "Spec2", param1="Param 1",
                                param2="Param 2")
         self.assertEqual([
                 ["Spec2", "*", {"command": ["test", {
                     "param1": "Param 1",
                     "param2": "Param 2"
-                }]}]
+                }]}, True]
             ], fake_session.message_queue)
         self.assertEqual({"Hello": "a"}, result)
 

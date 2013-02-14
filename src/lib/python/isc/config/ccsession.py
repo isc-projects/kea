@@ -37,6 +37,7 @@
 """
 
 from isc.cc import Session
+from isc.cc.proto_defs import *
 from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DATA_VERSION
 import isc.config.module_spec
 import isc
@@ -474,6 +475,16 @@ class ModuleCCSession(ConfigData):
         except isc.cc.SessionTimeout:
             raise ModuleCCSessionError("CC Session timeout waiting for configuration manager")
 
+    def rpc_call(self, command, group, instance=CC_INSTANCE_WILDCARD,
+                 to=CC_TO_WILDCARD, **params):
+        cmd = create_command(command, params)
+        seq = self._session.group_sendmsg(cmd, group, instance=instance,
+                                          to=to, want_answer=True)
+        # For non-blocking, we'll have rpc_call_async (once the nonblock actualy
+        # works)
+        reply, rheaders = self._session.group_recvmsg(nonblock=False, seq=seq)
+        code, value = parse_answer(reply)
+        return value
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains

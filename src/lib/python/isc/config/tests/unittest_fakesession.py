@@ -68,8 +68,9 @@ class FakeModuleCCSession:
         else:
             return False
 
-    def group_sendmsg(self, msg, channel, target=None, want_answer=False):
-        self.message_queue.append([ channel, target, msg, want_answer ])
+    def group_sendmsg(self, msg, group, instance=None, to=None,
+                      want_answer=False):
+        self.message_queue.append([ group, instance, msg, want_answer ])
         return 42
 
     def group_reply(self, env, msg):
