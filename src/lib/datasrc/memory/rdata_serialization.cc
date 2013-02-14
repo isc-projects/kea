@@ -387,7 +387,7 @@ struct RdataEncoder::RdataEncoderImpl {
                          old_varlen_count_(0), old_sig_count_(0),
                          old_data_len_(0), old_sig_len_(0),
                          old_length_fields_(NULL), old_data_(NULL),
-                         old_sig_data_(NULL),
+                         old_sig_data_(NULL), olddata_buffer_(0),
                          rdatas_(boost::bind(RdataLess, _1, _2)),
                          rrsigs_(boost::bind(RdataLess, _1, _2))
     {}
@@ -431,6 +431,7 @@ struct RdataEncoder::RdataEncoderImpl {
     const void* old_length_fields_;
     const void* old_data_;
     const void* old_sig_data_;
+    util::OutputBuffer olddata_buffer_;
 
     // Temporary storage of Rdata and RRSIGs to be encoded.  They are used
     // to detect and ignore duplicate data.
@@ -455,37 +456,61 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype) {
     impl_->start(rrclass, rrtype);
 }
 
+namespace {
+void
+decodeName(const LabelSequence& name_labels, RdataNameAttributes,
+           util::OutputBuffer* buffer, size_t* total_len)
+{
+    size_t name_dlen;
+    const uint8_t* name_data = name_labels.getData(&name_dlen);
+    buffer->writeData(name_data, name_dlen);
+    *total_len += name_labels.getSerializedLength();
+}
+
+void
+decodeData(const void* data, size_t data_len, util::OutputBuffer* buffer,
+           size_t* total_len)
+{
+    buffer->writeData(data, data_len);
+    *total_len += data_len;
+}
+}
+
 void
 RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
                     size_t old_rdata_count, size_t old_sig_count)
 {
     impl_->start(rrclass, rrtype);
 
-    // hardcode for initial test
-    assert(old_rdata_count == 1);
-    assert(old_sig_count == 0 || old_sig_count == 1);
     const uint8_t* cp = static_cast<const uint8_t*>(old_data);
-    impl_->old_sig_count_ = old_sig_count;
-    if (rrtype == RRType::A()) {
-        impl_->old_data_ = cp + (old_sig_count * sizeof(uint16_t));
-        impl_->old_data_len_ = 4;
-        if (old_sig_count > 0) {
-            impl_->old_length_fields_ = old_data;
-            impl_->old_sig_len_ =
-                static_cast<const uint16_t*>(impl_->old_length_fields_)[0];
-        }
-    } else {
-        impl_->old_varlen_count_ = 1;
-        impl_->old_length_fields_ = old_data;
-        impl_->old_data_ = cp +
-            (1 + old_sig_count) * sizeof(uint16_t);
-        impl_->old_data_len_ =
-            static_cast<const uint16_t*>(impl_->old_length_fields_)[0];
-        if (old_sig_count > 0) {
-            impl_->old_sig_len_ =
-                static_cast<const uint16_t*>(impl_->old_length_fields_)[1];
-        }
+    impl_->old_varlen_count_ =
+        impl_->encode_spec_->varlen_count * old_rdata_count;
+    if (impl_->old_varlen_count_ > 0 || old_sig_count > 0) {
+        impl_->old_length_fields_ = cp;
+        cp += (impl_->old_varlen_count_ + old_sig_count) * sizeof(uint16_t);
     }
+    impl_->old_data_ = cp;
+    impl_->old_sig_count_ = old_sig_count;
+
+    size_t total_len = 0;
+    RdataReader reader(rrclass, rrtype, old_data, old_rdata_count,
+                       old_sig_count,
+                       boost::bind(decodeName, _1, _2, &impl_->olddata_buffer_,
+                                   &total_len),
+                       boost::bind(decodeData, _1, _2, &impl_->olddata_buffer_,
+                                   &total_len));
+    for (size_t i = 0; i < old_rdata_count; ++i) {
+        impl_->olddata_buffer_.clear();
+        reader.iterateRdata();
+    }
+    impl_->old_data_len_ = total_len;
+
+    total_len = 0;
+    for (size_t i = 0; i < old_sig_count; ++i) {
+        impl_->olddata_buffer_.clear();
+        reader.iterateSingleSig();
+    }
+    impl_->old_sig_len_ = total_len;
 }
 
 void
