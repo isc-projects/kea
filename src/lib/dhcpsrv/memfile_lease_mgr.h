@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -244,49 +244,106 @@ protected:
         KeyExtractor2 key2_; ///< key 2.
     };
 
-
-    typedef boost::multi_index_container< // this is a multi-index container...
-    Lease6Ptr, // it will hold shared_ptr to leases6
-        boost::multi_index::indexed_by< // and will be sorted by
-            // IPv6 address that are unique. That particular key is a member
-            // of the Lease6 structure, is of type IOAddress and can be accessed
-            // by doing &Lease6::addr_
+    // This is a multi-index container, which holds elements that can
+    // be accessed using different search indexes.
+    typedef boost::multi_index_container<
+        // It holds pointers to Lease6 objects.
+        Lease6Ptr,
+        boost::multi_index::indexed_by<
+            // Specification of the first index starts here.
+            // This index sorts leases by IPv6 addresses represented as
+            // IOAddress objects.
             boost::multi_index::ordered_unique<
-                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
-            >
-        >
-    > Lease6Storage; // Let the whole contraption be called Lease6Storage.
-
-    typedef boost::multi_index_container< // this is a multi-index container...
-    Lease4Ptr, // it will hold shared_ptr to leases6
-        boost::multi_index::indexed_by< // and will be sorted by
-            // IPv6 address that are unique. That particular key is a member
-            // of the Lease6 structure, is of type IOAddress and can be accessed
-            // by doing &Lease6::addr_
-            boost::multi_index::hashed_unique<
                 boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
             >,
+
+            // Specification of the second index starts here.
             boost::multi_index::ordered_unique<
+                // This is a composite index that will be used to search for
+                // the lease using three attributes: DUID, IAID, Subnet Id.
+                boost::multi_index::composite_key<
+                    Lease6,
+                    // The DUID value can't be directly accessed from the Lease6
+                    // object because it is wrapped with the DUID object (actually
+                    // pointer to this object). Therefore we need to use KeyFromKey
+                    // class to extract the DUID value from this cascaded structure.
+                    KeyFromKey<
+                        // The value of the DUID is accessed by the getDuid() method
+                        // from the DUID object.
+                        boost::multi_index::const_mem_fun<DUID, std::vector<uint8_t>,
+                                                          &DUID::getDuid>,
+                        // The DUID object is stored in the duid_ member of the
+                        // Lease6 object.
+                        boost::multi_index::member<Lease6, DuidPtr, &Lease6::duid_>
+                    >,
+                    // The two other ingredients of this index are IAID and
+                    // subnet id.
+                    boost::multi_index::member<Lease6, uint32_t, &Lease6::iaid_>,
+                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
+                >
+            >
+        >
+     > Lease6Storage; // Specify the type name of this container.
+
+    // This is a multi-index container, which holds elements that can
+    // be accessed using different search indexes.
+    typedef boost::multi_index_container<
+        // It holds pointers to Lease4 objects.
+        Lease4Ptr, 
+        // Specification of search indexes starts here.
+        boost::multi_index::indexed_by<
+            // Specification of the first index starts here.
+            // This index sorts leases by IPv4 addresses represented as
+            // IOAddress objects.
+            boost::multi_index::ordered_unique<
+                // The IPv4 address are held in addr_ members that belong to
+                // Lease class.
+                boost::multi_index::member<Lease, isc::asiolink::IOAddress, &Lease::addr_>
+            >,
+
+            // Specification of the second index starts here.
+            boost::multi_index::ordered_unique<
+                // This is a composite index that combines two attributes of the
+                // Lease4 object: hardware address and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
+                    // The hardware address is held in the hwaddr_ member of the
+                    // Lease4 object.
                     boost::multi_index::member<Lease4, std::vector<uint8_t>,
                                                &Lease4::hwaddr_>,
+                    // The subnet id is held in the subnet_id_ member of Lease4
+                    // class. Note that the subnet_id_ is defined in the base
+                    // class (Lease) so we have to point to this class rather
+                    // than derived class: Lease4.
                     boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
                 >
             >,
+
+            // Specification of the third index starts here.
             boost::multi_index::ordered_unique<
+                // This is a composite index that uses two values to search for a
+                // lease: client id and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
+                    // The client id value is not directly accessible through the
+                    // Lease4 object as it is wrapped with the ClientIdPtr object.
+                    // Therefore we use the KeyFromKey class to specify the key
+                    // that gets the client id value through this cascade.
                     KeyFromKey<
+                        // Specify that the vector holding client id value can be obtained
+                        // from the ClientId object.
                         boost::multi_index::const_mem_fun<ClientId, std::vector<uint8_t>,
                                                           &ClientId::getClientId>,
+                        // Specify that the ClientId object (actually pointer to it) can
+                        // be accessed by the client_id_ member of Lease4 class.
                         boost::multi_index::member<Lease4, ClientIdPtr, &Lease4::client_id_>
                     >,
+                    // The subnet id is accessed through the subnet_id_ member.
                     boost::multi_index::member<Lease, uint32_t, &Lease::subnet_id_>
                 >
             >
         >
-    > Lease4Storage; // Let the whole contraption be called Lease6Storage.
+    > Lease4Storage; // Specify the type name for this container.
 
     /// @brief stores IPv4 leases
     Lease4Storage storage4_;
