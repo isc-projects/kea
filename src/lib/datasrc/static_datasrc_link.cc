@@ -13,7 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "client.h"
-#include "memory_datasrc.h"
+#include "static_datasrc.h"
+#include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_table_segment.h>
 
 #include <cc/data.h>
 #include <dns/rrclass.h>
@@ -32,16 +34,20 @@ namespace datasrc {
 DataSourceClient*
 createInstance(ConstElementPtr config, string& error) {
     try {
+        // FIXME: Fix the config that should be passed to
+        // ZoneTableSegment::create() when it actually uses the config
+        // to do something.
+        shared_ptr<memory::ZoneTableSegment> ztable_segment(
+            memory::ZoneTableSegment::create(isc::data::NullElement(),
+                                             RRClass::CH()));
         // Create the data source
-        auto_ptr<InMemoryClient> client(new InMemoryClient());
-        // Hardcode the origin and class
-        shared_ptr<InMemoryZoneFinder>
-            finder(new InMemoryZoneFinder(RRClass::CH(), Name("BIND")));
+        auto_ptr<memory::InMemoryClient> client
+            (new memory::InMemoryClient(ztable_segment, RRClass::CH()));
+
         // Fill it with data
         const string path(config->stringValue());
-        finder->load(path);
-        // And put the zone inside
-        client->addZone(finder);
+        client->load(Name("BIND"), path);
+
         return (client.release());
     }
     catch (const std::exception& e) {
