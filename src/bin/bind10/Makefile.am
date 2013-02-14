@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 sbin_SCRIPTS = bind10
 pkglibexec_SCRIPTS = b10-init
-CLEANFILES = b10-init b10-init.pyc
+CLEANFILES = b10-init b10-init.pyc init.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/init_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/init_messages.pyc
 
