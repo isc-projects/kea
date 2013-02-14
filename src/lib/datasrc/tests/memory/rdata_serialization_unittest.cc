@@ -884,6 +884,7 @@ mergeRdataCommon(const vector<ConstRdataPtr>& old_rrsigs,
     ConstRdataPtr txt_rdata2 = createRdata(RRType::TXT(), RRClass::IN(),
                                           "another text data");
     rdata_list_.push_back(txt_rdata2);
+    rrsigs_all = old_rrsigs;
     rrsigs_all.insert(rrsigs_all.end(), rrsigs.begin(), rrsigs.end());
     checkEncode(RRClass::IN(), RRType::TXT(), rdata_list_, 1, rrsigs_all,
                 &old_encoded_data[0], 1, old_rrsigs.size());
@@ -900,14 +901,17 @@ TYPED_TEST(RdataEncodeDecodeTest, mergeRdata) {
     rrsigs.push_back(this->rrsig_rdata_);
     this->mergeRdataCommon(old_rrsigs, rrsigs);
 
-#if 0
-    // Tests with two RRSIGs
-    rrsigs.push_back(this->rrsig_rdata_);
+    // Test with RRSIG for old and without RRSIG for new.
+    rrsigs.clear();
+    old_rrsigs.push_back(this->rrsig_rdata_);
+    this->mergeRdataCommon(old_rrsigs, rrsigs);
+
+    // Tests with RRSIGs for both old and new.
+    old_rrsigs.clear();
     rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
                                  "A 5 2 3600 20120814220826 "
                                  "20120715220826 54321 com. FAKE"));
-    this->addRdataMultiCommon(rrsigs);
-#endif
+    this->mergeRdataCommon(old_rrsigs, rrsigs);
 }
 
 void
