@@ -384,7 +384,7 @@ RdataLess(const ConstRdataPtr& rdata1, const ConstRdataPtr& rdata2) {
 
 struct RdataEncoder::RdataEncoderImpl {
     RdataEncoderImpl() : encode_spec_(NULL), rrsig_buffer_(0),
-                         old_rdata_count_(0), old_sig_count_(0),
+                         old_varlen_count_(0), old_sig_count_(0),
                          old_data_len_(0), old_sig_len_(0),
                          old_length_fields_(NULL), old_data_(NULL),
                          old_sig_data_(NULL),
@@ -404,7 +404,7 @@ struct RdataEncoder::RdataEncoderImpl {
         field_composer_.clearLocal(encode_spec_);
         rrsig_buffer_.clear();
         rrsig_lengths_.clear();
-        old_rdata_count_ = 0;
+        old_varlen_count_ = 0;
         old_sig_count_ = 0;
         old_data_len_ = 0;
         old_sig_len_ = 0;
@@ -424,7 +424,7 @@ struct RdataEncoder::RdataEncoderImpl {
     boost::optional<RRClass> current_class_;
     boost::optional<RRType> current_type_;
 
-    size_t old_rdata_count_;
+    size_t old_varlen_count_;
     size_t old_sig_count_;
     size_t old_data_len_;
     size_t old_sig_len_;
@@ -463,17 +463,28 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
 
     // hardcode for initial test
     assert(old_rdata_count == 1);
-    assert(old_sig_count == 0);
+    assert(old_sig_count == 0 || old_sig_count == 1);
+    const uint8_t* cp = static_cast<const uint8_t*>(old_data);
+    impl_->old_sig_count_ = old_sig_count;
     if (rrtype == RRType::A()) {
-        impl_->old_data_ = old_data;
+        impl_->old_data_ = cp + (old_sig_count * sizeof(uint16_t));
         impl_->old_data_len_ = 4;
+        if (old_sig_count > 0) {
+            impl_->old_length_fields_ = old_data;
+            impl_->old_sig_len_ =
+                static_cast<const uint16_t*>(impl_->old_length_fields_)[0];
+        }
     } else {
-        const uint8_t* cp = static_cast<const uint8_t*>(old_data);
-        impl_->old_rdata_count_ = 1;
+        impl_->old_varlen_count_ = 1;
         impl_->old_length_fields_ = old_data;
         impl_->old_data_ = cp +
-            (old_rdata_count + old_sig_count) * sizeof(uint16_t);
-        impl_->old_data_len_ = 12;
+            (1 + old_sig_count) * sizeof(uint16_t);
+        impl_->old_data_len_ =
+            static_cast<const uint16_t*>(impl_->old_length_fields_)[0];
+        if (old_sig_count > 0) {
+            impl_->old_sig_len_ =
+                static_cast<const uint16_t*>(impl_->old_length_fields_)[1];
+        }
     }
 }
 
@@ -530,7 +541,7 @@ RdataEncoder::getStorageLength() const {
                   "RdataEncoder::getStorageLength performed before start");
     }
 
-    return (sizeof(uint16_t) * (impl_->old_rdata_count_ +
+    return (sizeof(uint16_t) * (impl_->old_varlen_count_ +
                                 impl_->old_sig_count_ +
                                 impl_->field_composer_.data_lengths_.size() +
                                 impl_->rrsig_lengths_.size()) +
@@ -559,9 +570,9 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
 
     // Encode list of lengths for variable length fields for old data (if any)
     const size_t old_varlen_fields_len =
-        impl_->old_rdata_count_ * sizeof(uint16_t);
+        impl_->old_varlen_count_ * sizeof(uint16_t);
     std::memcpy(lenp, impl_->old_length_fields_, old_varlen_fields_len);
-    lenp += impl_->old_rdata_count_;
+    lenp += impl_->old_varlen_count_;
     dp += old_varlen_fields_len;
     // Encode list of lengths for variable length fields (if any)
     if (!impl_->field_composer_.data_lengths_.empty()) {
@@ -573,8 +584,11 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
         dp += varlen_fields_len;
     }
     // Encode list of lengths for old RRSIGs (if any)
-    // TBD
-    //
+    const size_t old_rrsigs_len = impl_->old_sig_count_ * sizeof(uint16_t);
+    std::memcpy(lenp, static_cast<const uint8_t*>(impl_->old_length_fields_) +
+                old_varlen_fields_len, old_rrsigs_len);
+    lenp += impl_->old_sig_count_;
+    dp += old_rrsigs_len;
     // Encode list of lengths for RRSIGs (if any)
     if (!impl_->rrsig_lengths_.empty()) {
         const size_t rrsigs_len =
@@ -590,7 +604,9 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
                 impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
     // Encode old RRSIGs, if any
-    // TBD
+    std::memcpy(dp, static_cast<const uint8_t*>(impl_->old_data_) +
+                impl_->old_data_len_, impl_->old_sig_len_);
+    dp += impl_->old_sig_len_;
     // Encode RRSIGs, if any
     std::memcpy(dp, impl_->rrsig_buffer_.getData(),
                 impl_->rrsig_buffer_.getLength());
