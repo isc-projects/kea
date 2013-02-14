@@ -61,9 +61,35 @@
 
 <!-- TODO: acknowledge all sponsors and CNNIC and CZNIC too -->
 
-      <para>ISC would like to acknowledge generous support for
-      BIND 10 development of DHCPv4 and DHCPv6 components provided
-      by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+      <para>BIND 10 is a sponsored development project, and would not 
+      be possible without the generous support of the sponsors.</para>
+
+      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and 
+      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level 
+      sponsors.</para>
+
+      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>, 
+      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
+      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
+      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
+      <ulink url="https://www.google.com/">Google</ulink>,
+      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
+      <ulink url="https://registro.br/">Registro.br</ulink>,
+      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
+      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
+      are current sponsors.</para>
+
+      <para><ulink url="https://www.afilias.info/">Afilias</ulink>, 
+      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
+      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
+      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding 
+      sponsors of the project.</para>
+
+<!-- DHCP sponsorship by Comcast -->
+
+      <para>Support for BIND 10 development of the DHCPv4 and DHCPv6 
+      components is provided by 
+      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
 
     </section>
 
