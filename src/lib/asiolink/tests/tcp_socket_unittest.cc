@@ -82,10 +82,8 @@ public:
     struct PrivateData {
         PrivateData() :
             error_code_(), length_(0), cumulative_(0), expected_(0), offset_(0),
-            name_(""), queued_(NONE), called_(NONE)
-        {
-            memset(data_, 0, MIN_SIZE);
-        }
+            name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0)
+        {}
 
         asio::error_code    error_code_;    ///< Completion error code
         size_t              length_;        ///< Bytes transferred in this I/O
@@ -95,8 +93,7 @@ public:
         std::string         name_;          ///< Which of the objects this is
         Operation           queued_;        ///< Queued operation
         Operation           called_;        ///< Which callback called
-        uint8_t             data_[MIN_SIZE];  ///< Receive buffer
-
+        std::vector<uint8_t> data_;  ///< Receive buffer
     };
 
     /// \brief Constructor
@@ -171,7 +168,7 @@ public:
 
     /// \brief Get data member
     uint8_t* data() {
-        return (ptr_->data_);
+        return (&ptr_->data_[0]);
     }
 
     /// \brief Get flag to say what was queued
