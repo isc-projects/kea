@@ -79,26 +79,22 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
               DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
         .arg(hwaddr.toText());
 
+    // We are going to use index #1 of the multi index container.
+    // We define SearchIndex locally in this function because
+    // currently only this function uses this index.
     typedef Lease4Storage::nth_index<1>::type SearchIndex;
+    // Get the index.
     const SearchIndex& idx = storage4_.get<1>();
-    SearchIndex::const_iterator lease = idx.find(boost::make_tuple(hwaddr.hwaddr_,
-                                                                   subnet_id));
+    // Try to find the lease using HWAddr and subnet id.
+    SearchIndex::const_iterator lease =
+        idx.find(boost::make_tuple(hwaddr.hwaddr_, subnet_id));
+    // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
         return Lease4Ptr();
     }
 
+    // Lease was found. Return it to the caller.
     return (*lease);
-
-    Lease4Storage::iterator l;
-    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
-        if ( ((*l)->hwaddr_ == hwaddr.hwaddr_) &&
-             ((*l)->subnet_id_ == subnet_id)) {
-            return (*l);
-        }
-    }
-
-    // not found
-    return (Lease4Ptr());
 }
 
 Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
@@ -113,26 +109,21 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& client_id,
               DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
               .arg(client_id.toText());
 
+    // We are going to use index #2 of the multi index container.
+    // We define SearchIndex locally in this function because
+    // currently only this function uses this index.
     typedef Lease4Storage::nth_index<2>::type SearchIndex;
+    // Get the index.
     const SearchIndex& idx = storage4_.get<2>();
-    SearchIndex::const_iterator lease = idx.find(boost::make_tuple(client_id.getClientId(),
-                                                                   subnet_id));
+    // Try to get the lease using client id and subnet id.
+    SearchIndex::const_iterator lease =
+        idx.find(boost::make_tuple(client_id.getClientId(), subnet_id));
+    // Lease was not found. Return empty pointer to the caller.
     if (lease == idx.end()) {
         return Lease4Ptr();
     }
-
+    // Lease was found. Return it to the caller.
     return (*lease);
-
-    Lease4Storage::iterator l;
-    for (l = storage4_.begin(); l != storage4_.end(); ++l) {
-        if ( (*(*l)->client_id_ == client_id) &&
-             ((*l)->subnet_id_ == subnet_id)) {
-            return (*l);
-        }
-    }
-
-    // not found
-    return (Lease4Ptr());
 }
 
 Lease6Ptr Memfile_LeaseMgr::getLease6(
@@ -162,15 +153,21 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
               DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID)
               .arg(iaid).arg(subnet_id).arg(duid.toText());
 
-    /// @todo: Slow, naive implementation. Write it using additional indexes
-    for (Lease6Storage::iterator l = storage6_.begin(); l != storage6_.end(); ++l) {
-        if ( (*((*l)->duid_) == duid) &&
-             ( (*l)->iaid_ == iaid) &&
-             ( (*l)->subnet_id_ == subnet_id)) {
-            return (*l);
-        }
+    // We are going to use index #1 of the multi index container.
+    // We define SearchIndex locally in this function because
+    // currently only this function uses this index.
+    typedef Lease6Storage::nth_index<1>::type SearchIndex;
+    // Get the index.
+    const SearchIndex& idx = storage6_.get<1>();
+    // Try to get the lease using the DUID, IAID and Subnet ID.
+    SearchIndex::const_iterator lease =
+        idx.find(boost::make_tuple(duid.getDuid(), iaid, subnet_id));
+    // Lease was not found. Return empty pointer.
+    if (lease == idx.end()) {
+        return (Lease6Ptr());
     }
-    return (Lease6Ptr());
+    // Lease was found, return it to the caller.
+    return (*lease);
 }
 
 void Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
