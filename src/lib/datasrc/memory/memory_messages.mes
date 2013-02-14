@@ -23,6 +23,19 @@ It isn't explicitly forbidden, but no sane zone wouldn have such names
 for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
 compatible with BIND 9.
 
+% DATASRC_MEMORY_CHECK_ERROR post-load check of zone %1/%2 failed: %3
+The zone was loaded into the data source successfully, but the content fails
+basic sanity checks. See the message if you want to know what exactly is wrong
+with the data. The data can not be used and previous version, if any, will be
+preserved.
+
+% DATASRC_MEMORY_CHECK_WARNING %1/%2: %3
+The zone was loaded into the data source successfully, but there's some problem
+with the content. The problem does not stop the new version from being used
+(though there may be other problems that do, see DATASRC_MEMORY_CHECK_ERROR),
+but it should still be checked and fixed. See the message to know what exactly
+is wrong with the data.
+
 % DATASRC_MEMORY_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
 
@@ -88,16 +101,3 @@ The software refuses to load NS records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
-
-% DATASRC_MEMORY_CHECK_ERROR post-load check of zone %1/%2 failed: %3
-The zone was loaded into the data source successfully, but the content fails
-basic sanity checks. See the message if you want to know what exactly is wrong
-with the data. The data can not be used and previous version, if any, will be
-preserved.
-
-% DATASRC_MEMORY_CHECK_WARNING %1/%2: %3
-The zone was loaded into the data source successfully, but there's some problem
-with the content. The problem does not stop the new version from being used
-(though there may be other problems that do, see DATASRC_MEMORY_CHECK_ERROR),
-but it should still be checked and fixed. See the message to know what exactly
-is wrong with the data.

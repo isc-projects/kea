@@ -65,7 +65,7 @@
       The <command>bindctl</command> can be used to talk to this
       configuration manager via a <command>b10-cmdctl</command> connection.
     </para>
-     
+
 <!-- TODO: briefly explain why both msqg channel and cmdctl communication -->
     <para>
       This daemon communicates over a <command>b10-msgq</command> C-Channel
@@ -148,7 +148,13 @@
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>.
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>.
     </para>
   </refsect1>

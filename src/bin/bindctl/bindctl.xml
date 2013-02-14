@@ -305,16 +305,13 @@ configuration location.
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>

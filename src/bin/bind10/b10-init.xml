@@ -458,6 +458,9 @@ xfrin
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
         <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citerefentry>
@@ -483,6 +486,9 @@ xfrin
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-stats-httpd</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

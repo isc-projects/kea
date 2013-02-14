@@ -26,6 +26,12 @@ to establish a session with the BIND 10 control channel.
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the IPv4 DHCP server.
 
+% DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
+This is an informational message announcing the successful processing of a
+new configuration. It is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
 % DHCP4_CONFIG_LOAD_FAIL failed to load configuration: %1
 This critical error message indicates that the initial DHCPv4
 configuration has failed. The server will start, but nothing will be
@@ -40,20 +46,14 @@ This warning message is issued on an attempt to configure multiple options
 with the same option code for a particular subnet. Adding multiple options
 is uncommon for DHCPv4, but is not prohibited.
 
-% DHCP4_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the IPv4 DHCP server has received an
-updated configuration from the BIND 10 configuration system.
-
 % DHCP4_CONFIG_START DHCPv4 server is processing the following configuration: %1
 This is a debug message that is issued every time the server receives a
 configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
 
-% DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
-This is an informational message announcing the successful processing of a
-new configuration. It is output during server startup, and when an updated
-configuration is committed by the administrator.  Additional information
-may be provided.
+% DHCP4_CONFIG_UPDATE updated configuration received: %1
+A debug message indicating that the IPv4 DHCP server has received an
+updated configuration from the BIND 10 configuration system.
 
 % DHCP4_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
 This informational message is printed every time DHCPv4 server is started
@@ -137,13 +137,6 @@ A debug message output during a configuration update of the IPv4 DHCP
 server, notifying that the parser for the specified configuration element
 has been successfully created.
 
-% DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
-On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents
-of the named configuration element, or the creation succeeded but the
-parsing actions and committal of changes failed.  The reason for the
-failure is given in the message.
-
 % DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
 the IPv4 DHCP server failed to create a parser to decode the contents of
@@ -151,6 +144,13 @@ the named configuration element, or the creation succeeded but the parsing
 actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
 may give further information.
+
+% DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
+On receipt of message containing details to a change of its configuration,
+the IPv4 DHCP server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
 
 % DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
@@ -195,10 +195,6 @@ both clones use the same client-id.
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.
 
-% DHCP4_SERVER_FAILED server failed: %1
-The IPv4 DHCP server has encountered a fatal error and is terminating.
-The reason for the failure is included in the message.
-
 % DHCP4_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
 This informational messages indicates that the server was not able to
 read its server identifier and has generated a new one. This server-id
@@ -218,6 +214,10 @@ reconfiguration procedure.
 This warning message indicates that server was not able to write its
 server identifier to a file. The most likely cause is is that the server
 does not have permissions to write the server id file.
+
+% DHCP4_SERVER_FAILED server failed: %1
+The IPv4 DHCP server has encountered a fatal error and is terminating.
+The reason for the failure is included in the message.
 
 % DHCP4_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND

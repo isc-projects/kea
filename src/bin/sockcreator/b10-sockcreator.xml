@@ -53,7 +53,7 @@
       The <command>b10-sockcreator</command> daemon's entire job
       is to create sockets and assign names to them.
       It is started by
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       and communicates with it.
       The new socket is sent over a file descriptor.
     </para>
@@ -70,6 +70,9 @@
   <refsect1>
     <title>SEE ALSO</title>
     <para>
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
