@@ -1,3 +1,12 @@
+bind10-1.0.0-rc released on February 14, 2013
+
+580.	[func]*		muks
+	There is no longer a default user account. The old default account
+	with username 'root' has been removed. In a fresh installation of
+	BIND 10, the administrator has to configure a user account using
+	the b10-cmdctl-usermgr program.
+	(Trac #2641, git 54e8f4061f92c2f9e5b8564240937515efa6d934)
+
 579.	[bug]		jinmei
 	libdatasrc/b10-auth: corrected some corner cases in query handling
 	of in-memory data source that led to the following invalid/odd
@@ -24,7 +33,7 @@
 576.	[bug]		tmark, tomek
 	b10-dhcp6: Fixed bug when the server aborts operation when
 	receiving renew and there are no IPv6 subnets configured.
-	(Trac 2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
+	(Trac #2719, git 3132b8b19495470bbfd0f2ba0fe7da443926034b)
 
 575.	[bug]		marcin
 	b10-dhcp6: Fixed the bug whereby the subnet for the incoming
@@ -69,7 +78,7 @@
 	could crash the MySQL lease database backend.
 	(Trac #2697, git b5e2be95d21ed750ad7cf5e15de2058aa8bc45f4)
 
-568.	[func]          muks
+568.	[func]		muks
 	Various message IDs have been renamed to remove the word 'ERROR'
 	from them when they are not logged at ERROR severity level.
 	(Trac #2672, git 660a0d164feaf055677f375977f7ed327ead893e)
@@ -120,7 +129,7 @@
 
 562.	[func]*		vorner
 	The b10-xfrin now performs basic sanity check on just received
-	zone. It'll reject severely broken zones (such as missng NS
+	zone. It'll reject severely broken zones (such as missing NS
 	records).
 	(Trac #2439, git 44699b4b18162581cd1dd39be5fb76ca536012e6)
 
@@ -901,7 +910,7 @@ bind10-devel-20120816 released on August 16, 2012
 460.	[bug]		muks
 	SSHFP's algorithm and fingerprint type checks have been relaxed
 	such that they will accept any values in [0,255]. This is so that
-	future algorithm and fingerprint types are accomodated.
+	future algorithm and fingerprint types are accommodated.
 	(Trac #2124, git 49e6644811a7ad09e1326f20dd73ab43116dfd21)
 
 459.	[func]		tomek

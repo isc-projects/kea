@@ -151,7 +151,7 @@
 	    is http://127.0.0.1:8000/bind10/statistics/xml. And also IPv6
 	    addresses can be configured and they works in the runtime
 	    environment for dual stack. You can change the settings
-	    through <refentrytitle>bindctl</refentrytitle><manvolnum>8</manvolnum>.
+	    through <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>.
 	  </para>
         </listitem>
       </varlistentry>
@@ -188,13 +188,16 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
