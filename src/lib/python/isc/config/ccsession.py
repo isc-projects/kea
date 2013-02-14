@@ -502,6 +502,28 @@ class ModuleCCSession(ConfigData):
 
     def rpc_call(self, command, group, instance=CC_INSTANCE_WILDCARD,
                  to=CC_TO_WILDCARD, **params):
+        """
+        Create a command with the given name and parameters. Send it to a
+        recipient, wait for the answer and parse it.
+
+        This is a wrapper around the group_sendmsg and group_recvmsg on the CC
+        session. It exists mostly for convenience.
+
+        Params:
+        - command: Name of the command to call on the remote side.
+        - group, instance, to: Address specification of the recipient.
+        - params: Parameters to pass to the command (as keyword arguments).
+
+        Return: The return value of the remote call (just the value, no status
+          code or anything). May be None.
+
+        Raise:
+        - RPCRecipientMissing if the given recipient doesn't exist.
+        - RPCError if the other side sent an error response. The error string
+          is in the exception.
+        - ModuleCCSessionError in case of protocol errors, like malformed
+          answer.
+        """
         cmd = create_command(command, params)
         seq = self._session.group_sendmsg(cmd, group, instance=instance,
                                           to=to, want_answer=True)
