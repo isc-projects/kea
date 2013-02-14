@@ -411,6 +411,7 @@ struct RdataEncoder::RdataEncoderImpl {
         old_length_fields_ = NULL;
         old_data_ = NULL;
         old_sig_data_ = NULL;
+        olddata_buffer_.clear();
 
         rdatas_.clear();
         rrsigs_.clear();
@@ -499,16 +500,22 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
                                    &total_len),
                        boost::bind(decodeData, _1, _2, &impl_->olddata_buffer_,
                                    &total_len));
-    for (size_t i = 0; i < old_rdata_count; ++i) {
+    while (reader.iterateRdata()) {
+        util::InputBuffer ibuffer(impl_->olddata_buffer_.getData(),
+                                  impl_->olddata_buffer_.getLength());
+        impl_->rdatas_.insert(createRdata(rrtype, rrclass, ibuffer,
+                                          impl_->olddata_buffer_.getLength()));
         impl_->olddata_buffer_.clear();
-        reader.iterateRdata();
     }
     impl_->old_data_len_ = total_len;
 
     total_len = 0;
-    for (size_t i = 0; i < old_sig_count; ++i) {
+    while (reader.iterateSingleSig()) {
+        util::InputBuffer ibuffer(impl_->olddata_buffer_.getData(),
+                                  impl_->olddata_buffer_.getLength());
+        impl_->rrsigs_.insert(createRdata(RRType::RRSIG(), rrclass, ibuffer,
+                                          impl_->olddata_buffer_.getLength()));
         impl_->olddata_buffer_.clear();
-        reader.iterateSingleSig();
     }
     impl_->old_sig_len_ = total_len;
 }
