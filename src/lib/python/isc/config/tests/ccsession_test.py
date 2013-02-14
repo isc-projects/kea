@@ -335,6 +335,19 @@ class TestModuleCCSession(unittest.TestCase):
         """
         self.assertRaises(ModuleCCSessionError, self.rpc_check, ["Nonsense"])
 
+    def test_rpc_call_error(self):
+        """
+        Test it raises an exception when the remote side reports an error.
+        """
+        self.assertRaises(RPCError, self.rpc_check, {"result": [1, "Error"]})
+
+    def test_rpc_call_no_recpt(self):
+        """
+        Test RPC raises an error when the recipient is not there.
+        """
+        self.assertRaises(RPCRecipientMissing, self.rpc_check,
+                          {"result": [-1, "Error"]})
+
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
 
