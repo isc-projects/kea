@@ -51,6 +51,31 @@ logger = isc.log.Logger("config")
 
 class ModuleCCSessionError(Exception): pass
 
+class RPCError(ModuleCCSessionError):
+    """
+    An exception raised by rpc_call in case the remote side reports
+    an error. It can be used to distinguish remote errors from protocol errors.
+    Also, it holds the code as well as the error message.
+    """
+    def __init__(self, code, message):
+        ModuleCCSessionError.__init__(self, message)
+        self.__code = code
+
+    def code(self):
+        """
+        The code as sent over the CC.
+        """
+        return self.__code
+
+class RPCRecipientMissing(RPCError):
+    """
+    Special version of the RPCError, for cases the recipient of the call
+    isn't connected to the bus. The code is always
+    isc.cc.proto_defs.CC_REPLY_NO_RECPT.
+    """
+    def __init__(self, message):
+        RPCError.__init__(self, CC_REPLY_NO_RECPT, message)
+
 def parse_answer(msg):
     """Returns a tuple (rcode, value), where value depends on the
        command that was called. If rcode != 0, value is a string
@@ -484,6 +509,10 @@ class ModuleCCSession(ConfigData):
         # works)
         reply, rheaders = self._session.group_recvmsg(nonblock=False, seq=seq)
         code, value = parse_answer(reply)
+        if code == CC_REPLY_NO_RECPT:
+            raise RPCRecipientMissing(value)
+        elif code != 0:
+            raise RPCError(code, value)
         return value
 
 class UIModuleCCSession(MultiConfigData):
