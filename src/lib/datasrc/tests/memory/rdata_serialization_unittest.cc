@@ -852,42 +852,74 @@ TEST_F(RdataSerializationTest, badAddRdata) {
                  isc::BadValue);
 }
 
+struct MergeTestData {
+    const char* const type_txt; // "AAAA", "NS", etc
+    const char* const rdata_txt1;
+    const char* const rdata_txt2;
+    const char* const rdata_txt3;
+    const size_t varlen_fields; // number of variable-len fields in RDATA
+} merge_test_data[] = {
+    // For test with fixed-length RDATA
+    {"A", "192.0.2.53", "192.0.2.54", "192.0.2.55", 0},
+    // For test with variable-length RDATA
+    {"TXT", "foo bar baz", "another text data", "yet another", 1},
+    // For test with RDATA containing domain name
+    {"MX", "5 mx1.example.com.", "10 mx2.example.com.", "20 mx.example.", 0},
+    {NULL, NULL, NULL, NULL, 0}
+};
+
 template<class DecoderStyle>
 void
 RdataEncodeDecodeTest<DecoderStyle>::
 mergeRdataCommon(const vector<ConstRdataPtr>& old_rrsigs,
                  const vector<ConstRdataPtr>& rrsigs)
 {
-    // Test with fixed-length old RDATA
-    rdata_list_.clear();
-    rdata_list_.push_back(a_rdata_);
-    checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, old_rrsigs);
-    vector<uint8_t> old_encoded_data = encoded_data_;
+    const RRClass rrclass(RRClass::IN()); // class is fixed in the test
+    vector<uint8_t> old_encoded_data;
+    vector<ConstRdataPtr> rrsigs_all;
 
-    ConstRdataPtr a_rdata2 = createRdata(RRType::A(), RRClass::IN(),
-                                         "192.0.2.54");
-    rdata_list_.push_back(a_rdata2);
-    vector<ConstRdataPtr> rrsigs_all = old_rrsigs;
-    rrsigs_all.insert(rrsigs_all.end(), rrsigs.begin(), rrsigs.end());
-    checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, rrsigs_all,
-                &old_encoded_data[0], 1, old_rrsigs.size());
+    for (const MergeTestData* data = merge_test_data;
+         data->type_txt;
+         ++data) {
+        const RRType rrtype(data->type_txt);
 
-    // Test with variable-length old RDATA
-    rdata_list_.clear();
-    rrsigs_all.clear();
-    ConstRdataPtr txt_rdata1 = createRdata(RRType::TXT(), RRClass::IN(),
-                                           "foo bar baz");
-    rdata_list_.push_back(txt_rdata1);
-    checkEncode(RRClass::IN(), RRType::TXT(), rdata_list_, 1, old_rrsigs);
-    old_encoded_data = encoded_data_;
+        for (int mode = 0; mode < 3; ++mode) {
+            bool multi_old = false;
+            bool multi_new = false;
+            if (mode == 1) {
+                multi_old = true;
+            } else if (mode == 2) {
+                multi_new = true;
+            }
 
-    ConstRdataPtr txt_rdata2 = createRdata(RRType::TXT(), RRClass::IN(),
-                                          "another text data");
-    rdata_list_.push_back(txt_rdata2);
-    rrsigs_all = old_rrsigs;
-    rrsigs_all.insert(rrsigs_all.end(), rrsigs.begin(), rrsigs.end());
-    checkEncode(RRClass::IN(), RRType::TXT(), rdata_list_, 1, rrsigs_all,
-                &old_encoded_data[0], 1, old_rrsigs.size());
+            // Encode the old data
+            rdata_list_.clear();
+            rdata_list_.push_back(createRdata(rrtype, rrclass,
+                                              data->rdata_txt1));
+            if (multi_old) {
+                rdata_list_.push_back(createRdata(rrtype, rrclass,
+                                                  data->rdata_txt3));
+            }
+            checkEncode(RRClass::IN(), RRType(data->type_txt), rdata_list_,
+                        data->varlen_fields, old_rrsigs);
+            old_encoded_data = encoded_data_; // make a copy of the data
+
+            // Prepare new data.  rrsigs_all is set to "old_rrsigs + rrsigs".
+            // Then check the behavior in the "merge" mode.
+            const size_t old_rdata_count = rdata_list_.size();
+            rdata_list_.push_back(createRdata(rrtype, rrclass,
+                                              data->rdata_txt2));
+            if (multi_new) {
+                rdata_list_.push_back(createRdata(rrtype, rrclass,
+                                                  data->rdata_txt3));
+            }
+            rrsigs_all = old_rrsigs;
+            rrsigs_all.insert(rrsigs_all.end(), rrsigs.begin(), rrsigs.end());
+            checkEncode(rrclass, rrtype, rdata_list_, data->varlen_fields,
+                        rrsigs_all, &old_encoded_data[0], old_rdata_count,
+                        old_rrsigs.size());
+        }
+    }
 }
 
 TYPED_TEST(RdataEncodeDecodeTest, mergeRdata) {
@@ -911,6 +943,15 @@ TYPED_TEST(RdataEncodeDecodeTest, mergeRdata) {
     rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
                                  "A 5 2 3600 20120814220826 "
                                  "20120715220826 54321 com. FAKE"));
+    this->mergeRdataCommon(old_rrsigs, rrsigs);
+
+    // Tests with multiple old RRSIGs.
+    rrsigs.clear();
+    old_rrsigs.clear();
+    old_rrsigs.push_back(this->rrsig_rdata_);
+    old_rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                     "A 5 2 3600 20120814220826 "
+                                     "20120715220826 54321 com. FAKE"));
     this->mergeRdataCommon(old_rrsigs, rrsigs);
 }
 
