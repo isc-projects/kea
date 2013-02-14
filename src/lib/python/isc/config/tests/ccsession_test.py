@@ -289,25 +289,51 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session.close()
         mccs.__del__() # with closed fake_session
 
-    def test_rpc_call_success(self):
-        """
-        Test we can send an RPC (command) and get an answer. The answer is
-        success in this case.
-        """
+    def rpc_check(self, reply):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         fake_session.message_queue = [
-            ["Spec1", None, {"result": [0, {"Hello": "a"}]}, False]
+            ["Spec1", None, reply, False]
         ]
-        result = mccs.rpc_call("test", "Spec2", param1="Param 1",
-                               param2="Param 2")
+        exception = None
+        try:
+            result = mccs.rpc_call("test", "Spec2", param1="Param 1",
+                                   param2="Param 2")
+        except Exception as e:
+            # We first want to check the value sent, raise the exception
+            # afterwards. So store it for a short while.
+            exception = e
         self.assertEqual([
                 ["Spec2", "*", {"command": ["test", {
                     "param1": "Param 1",
                     "param2": "Param 2"
                 }]}, True]
             ], fake_session.message_queue)
+        if exception is not None:
+            raise exception
+        return result
+
+    def test_rpc_call_success(self):
+        """
+        Test we can send an RPC (command) and get an answer. The answer is
+        success in this case.
+        """
+        result = self.rpc_check({"result": [0, {"Hello": "a"}]})
         self.assertEqual({"Hello": "a"}, result)
+
+    def test_rpc_call_success_none(self):
+        """
+        Test the success case of RPC command, but the answer is empty
+        (eg. a "void" function on the remote side).
+        """
+        self.assertIsNone(self.rpc_check({"result": [0]}))
+
+    def test_rpc_call_malformed_answer(self):
+        """
+        Test it successfully raises ModuleCCSessionError when a malformed
+        reply is sent.
+        """
+        self.assertRaises(ModuleCCSessionError, self.rpc_check, ["Nonsense"])
 
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
