@@ -121,6 +121,53 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     return (rdataset);
 }
 
+RdataSet*
+RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
+                 const RdataSet& old_rdataset, ConstRRsetPtr rrset,
+                 ConstRRsetPtr sig_rrset)
+{
+    // TODO: consistency check and taking min
+    const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
+    const RRType rrtype = rrset ? rrset->getType() :
+        getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
+    const RRTTL rrttl = rrset ? rrset->getTTL() : sig_rrset->getTTL();
+    const size_t old_rdata_count = old_rdataset.getRdataCount();
+    const size_t old_sig_count = old_rdataset.getSigRdataCount();
+    encoder.start(rrclass, rrtype, old_rdataset.getDataBuf(), old_rdata_count,
+                  old_sig_count);
+    if (rrset) {
+        for (RdataIteratorPtr it = rrset->getRdataIterator();
+             !it->isLast();
+             it->next()) {
+            encoder.addRdata(it->getCurrent());
+        }
+    }
+    if (sig_rrset) {
+        for (RdataIteratorPtr it = sig_rrset->getRdataIterator();
+             !it->isLast();
+             it->next())
+        {
+            if (getCoveredType(it->getCurrent()) != rrtype) {
+                isc_throw(BadValue, "Type covered doesn't match");
+            }
+            encoder.addSIGRdata(it->getCurrent());
+        }
+    }
+    const size_t rrsig_count =
+        old_sig_count + (sig_rrset ? sig_rrset->getRdataCount() : 0);
+    const size_t ext_rrsig_count_len =
+        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
+    const size_t data_len = encoder.getStorageLength();
+    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
+                                data_len);
+    const size_t rdata_count =
+        old_rdata_count + (rrset ? rrset->getRdataCount() : 0);
+    RdataSet* rdataset = new(p) RdataSet(rrtype, rdata_count, rrsig_count,
+                                         rrttl);
+    encoder.encode(rdataset->getDataBuf(), data_len);
+    return (rdataset);
+}
+
 void
 RdataSet::destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset,
                   RRClass rrclass)
