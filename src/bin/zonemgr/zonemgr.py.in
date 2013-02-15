@@ -105,6 +105,7 @@ class ZonemgrRefresh:
 
     def __init__(self, cc, db_file, slave_socket, module_cc_session):
         self._cc = cc
+        self._mccs = module_cc_session
         self._check_sock = slave_socket
         self._db_file = db_file
         self._zonemgr_refresh_info = {}
@@ -277,15 +278,12 @@ class ZonemgrRefresh:
 
     def _send_command(self, module_name, command_name, params):
         """Send command between modules."""
-        msg = create_command(command_name, params)
         try:
-            seq = self._cc.group_sendmsg(msg, module_name)
-            try:
-                answer, env = self._cc.group_recvmsg(False, seq)
-            except isc.cc.session.SessionTimeout:
-                pass        # for now we just ignore the failure
-        except socket.error:
+            self._mccs.rpc_call(command_name, module_name, params=params)
+        except socket.error: # FIXME: WTF?
             logger.error(ZONEMGR_SEND_FAIL, module_name)
+        except (isc.cc.session.SessionTimeout, isc.config.RPCError):
+            pass        # for now we just ignore the failure
 
     def _find_need_do_refresh_zone(self):
         """Find the first zone need do refresh, if no zone need
