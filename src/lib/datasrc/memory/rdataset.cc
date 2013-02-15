@@ -55,7 +55,7 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                  const RdataSet* old_rdataset, ConstRRsetPtr rrset,
                  ConstRRsetPtr sig_rrset)
 {
-    // TODO: consistency check and taking min
+    // TODO: taking min TTL
     // Check basic validity
     if (!rrset && !sig_rrset) {
         isc_throw(BadValue, "Both RRset and RRSIG are NULL");
@@ -73,6 +73,9 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
     const RRType rrtype = rrset ? rrset->getType() :
         getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
+    if (old_rdataset && old_rdataset->type != rrtype) {
+        isc_throw(BadValue, "RR type doesn't match for merging RdataSet");
+    }
     const RRTTL rrttl = rrset ? rrset->getTTL() : sig_rrset->getTTL();
     if (old_rdataset) {
         encoder.start(rrclass, rrtype, old_rdataset->getDataBuf(),
