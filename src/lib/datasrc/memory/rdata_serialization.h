@@ -155,6 +155,9 @@ public:
     /// \param rrtype The RR type of RDATA to be encoded in the session.
     void start(dns::RRClass rrclass, dns::RRType rrtype);
 
+    /// \brief Start the encoding session in the merge mode.
+    ///
+    /// TBD for details.
     void start(dns::RRClass rrclass, dns::RRType rrtype,
                const void* old_data, size_t rdata_count, size_t sig_count);
 
@@ -168,6 +171,14 @@ public:
     /// the prior call to \c start().  This method checks the assumption
     /// to some extent, but the check is not complete; this is generally
     /// the responsibility of the caller.
+    ///
+    /// This method checks if the given RDATA is a duplicate of already
+    /// added one (including ones encoded in the old data if the session
+    /// began with the merge mode).  If it's a duplicate this method ignores
+    /// the given RDATA and returns false; otherwise it returns true.
+    /// The check is based on the comparison in the "canonical form" as
+    /// described in RFC4034 Section 6.2.  In particular, domain name fields
+    /// of the RDATA are generally compared in case-insensitive manner.
     ///
     /// The caller can destroy \c rdata after this call is completed.
     ///
@@ -189,7 +200,9 @@ public:
     /// \throw std::bad_alloc Internal memory allocation failure.
     ///
     /// \param rdata An RDATA to be encoded in the session.
-    void addRdata(const dns::rdata::Rdata& rdata);
+    /// \return true if the given RDATA was added to encode; false if
+    /// it's a duplicate and ignored.
+    bool addRdata(const dns::rdata::Rdata& rdata);
 
     /// \brief Add an RRSIG RDATA for encoding.
     ///
@@ -205,6 +218,13 @@ public:
     /// it could even accept any type of RDATA as opaque data.  It's caller's
     /// responsibility to ensure the assumption.
     ///
+    /// This method checks if the given RRSIG RDATA is a duplicate of already
+    /// added one (including ones encoded in the old data if the session
+    /// began with the merge mode).  If it's a duplicate this method ignores
+    /// the given RRSIG and returns false; otherwise it returns true.
+    /// The check is based on the comparison in the "canonical form" as
+    /// described in RFC4034 Section 6.2.
+    ///
     /// The caller can destroy \c rdata after this call is completed.
     ///
     /// \note Like addRdata(), this implementation does not support
@@ -219,7 +239,9 @@ public:
     ///
     /// \param sig_rdata An RDATA to be encoded in the session.  Supposed to
     /// be of type RRSIG.
-    void addSIGRdata(const dns::rdata::Rdata& sig_rdata);
+    /// \return true if the given RRSIG RDATA was added to encode; false if
+    /// it's a duplicate and ignored.
+    bool addSIGRdata(const dns::rdata::Rdata& sig_rdata);
 
     /// \brief Return the length of space for encoding for the session.
     ///

@@ -611,16 +611,28 @@ checkEncode(RRClass rrclass, RRType rrtype,
         encoder_.start(rrclass, rrtype);
     }
     size_t count = 0;
+    std::vector<ConstRdataPtr> encoded; // for duplicate check include old
     BOOST_FOREACH(const ConstRdataPtr& rdata, rdata_list) {
         if (++count > old_rdata_count) {
-            encoder_.addRdata(*rdata);
+            const bool uniq =
+                (std::find_if(encoded.begin(), encoded.end(),
+                              boost::bind(rdataMatch, rdata, _1)) ==
+                 encoded.end());
+            EXPECT_EQ(uniq, encoder_.addRdata(*rdata));
         }
+        encoded.push_back(rdata); // we need to remember old rdata too
     }
     count = 0;
+    encoded.clear();
     BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
         if (++count > old_rrsig_count) {
-            encoder_.addSIGRdata(*rdata);
+            const bool uniq =
+                (std::find_if(encoded.begin(), encoded.end(),
+                              boost::bind(rdataMatch, rdata, _1)) ==
+                 encoded.end());
+            EXPECT_EQ(uniq, encoder_.addSIGRdata(*rdata));
         }
+        encoded.push_back(rdata);
     }
     const size_t storage_len = encoder_.getStorageLength();
     encodeWrapper(storage_len);
