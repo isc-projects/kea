@@ -559,13 +559,22 @@ TEST_F(RdataSetTest, badCreate) {
 }
 
 TEST_F(RdataSetTest, badMergeCreate) {
-    // The 'old RdataSet' for merge.  Its content doesn't matter; the test
-    // should trigger exception before examining it.
+    // The 'old RdataSet' for merge.  Its content doesn't matter much; the test
+    // should trigger exception before examining it except for the last checks.
     SegmentObjectHolder<RdataSet, RRClass> holder(
         mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr()),
+        RdataSet::create(mem_sgmt_, encoder_,
+                         textToRRset("www.example.com. 0 IN AAAA 2001:db8::1"),
+                         ConstRRsetPtr()),
         RRClass::IN());
 
     checkBadCreate(boost::bind(createWrapper, _1, _2, holder.get(), _3, _4));
+
+    // Type mismatch: this case is specific to the merge create.
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, *holder.get(), a_rrset_,
+                                  ConstRRsetPtr()), isc::BadValue);
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, *holder.get(),
+                                  ConstRRsetPtr(), rrsig_rrset_),
+                 isc::BadValue);
 }
 }
