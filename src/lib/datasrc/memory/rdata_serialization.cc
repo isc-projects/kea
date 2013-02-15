@@ -520,7 +520,7 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
     impl_->old_sig_len_ = total_len;
 }
 
-void
+bool
 RdataEncoder::addRdata(const Rdata& rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
@@ -532,16 +532,18 @@ RdataEncoder::addRdata(const Rdata& rdata) {
     ConstRdataPtr rdatap = createRdata(*impl_->current_type_,
                                        *impl_->current_class_, rdata);
     if (impl_->rdatas_.find(rdatap) != impl_->rdatas_.end()) {
-        return;
+        return (false);
     }
 
     impl_->field_composer_.startRdata();
     rdata.toWire(impl_->field_composer_);
     impl_->field_composer_.endRdata();
     impl_->rdatas_.insert(rdatap);
+
+    return (true);
 }
 
-void
+bool
 RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
@@ -552,7 +554,7 @@ RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
     ConstRdataPtr rdatap = createRdata(RRType::RRSIG(), *impl_->current_class_,
                                        sig_rdata);
     if (impl_->rrsigs_.find(rdatap) != impl_->rrsigs_.end()) {
-        return;
+        return (false);
     }
 
     const size_t cur_pos = impl_->rrsig_buffer_.getLength();
@@ -564,6 +566,8 @@ RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
     }
     impl_->rrsigs_.insert(rdatap);
     impl_->rrsig_lengths_.push_back(rrsig_datalen);
+
+    return (true);
 }
 
 size_t
