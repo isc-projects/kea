@@ -41,22 +41,15 @@ TEST_SQLITE3_DBFILE = os.getenv("TESTDATAOBJDIR") + '/initdb.file'
 class ZonemgrTestException(Exception):
     pass
 
-class MySession():
-    def __init__(self):
-        pass
-
-    def group_sendmsg(self, msg, module_name):
-        if module_name not in ("Auth", "Xfrin"):
-            raise ZonemgrTestException("module name not exist")
-
-    def group_recvmsg(self, nonblock, seq):
-        return None, None
-
 class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
     def __init__(self):
         module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
         MockModuleCCSession.__init__(self)
+
+    def rpc_call(self, command, module, instance="*", to="*", params=None):
+        if module not in ("Auth", "Xfrin"):
+            raise ZonemgrTestException("module name not exist")
 
     def get_remote_config_value(self, module_name, identifier):
         if module_name == "Auth" and identifier == "database_file":
@@ -84,7 +77,7 @@ class MyZonemgrRefresh(ZonemgrRefresh):
                 return None
         sqlite3_ds.get_zone_soa = get_zone_soa
 
-        ZonemgrRefresh.__init__(self, MySession(), TEST_SQLITE3_DBFILE,
+        ZonemgrRefresh.__init__(self, None, TEST_SQLITE3_DBFILE,
                                 self._slave_socket, FakeCCSession())
         current_time = time.time()
         self._zonemgr_refresh_info = {
@@ -619,7 +612,6 @@ class MyZonemgr(Zonemgr):
         self._db_file = TEST_SQLITE3_DBFILE
         self._zone_refresh = None
         self._shutdown_event = threading.Event()
-        self._cc = MySession()
         self._module_cc = FakeCCSession()
         self._config_data = {
                     "lowerbound_refresh" : 10,
