@@ -389,6 +389,12 @@ private:
     RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
              dns::RRTTL ttl);
 
+    static RdataSet* create(util::MemorySegment& mem_sgmt,
+                            RdataEncoder& encoder,
+                            const RdataSet* old_rdataset,
+                            dns::ConstRRsetPtr rrset,
+                            dns::ConstRRsetPtr sig_rrset);
+
     /// \brief The destructor.
     ///
     /// An object of this class is always expected to be destroyed explicitly
