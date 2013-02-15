@@ -297,8 +297,10 @@ class TestModuleCCSession(unittest.TestCase):
         ]
         exception = None
         try:
-            result = mccs.rpc_call("test", "Spec2", param1="Param 1",
-                                   param2="Param 2")
+            result = mccs.rpc_call("test", "Spec2", params={
+                                       "param1": "Param 1",
+                                       "param2": "Param 2"
+                                   })
         except Exception as e:
             # We first want to check the value sent, raise the exception
             # afterwards. So store it for a short while.
