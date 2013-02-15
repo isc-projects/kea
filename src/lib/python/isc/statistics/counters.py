@@ -393,9 +393,7 @@ class Counters():
             for name in zones:
                 if attr in zones[name]:
                     sum_ += zones[name][attr]
-            if  sum_ > 0:
-                _set_counter(zones_data, zones_spec,
-                             id_str, sum_)
+            _set_counter(zones_data, zones_spec, id_str, sum_)
         # insert entire-server counts
         statistics_data[self._perzone_prefix] = dict(
             statistics_data[self._perzone_prefix],
