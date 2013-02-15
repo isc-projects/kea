@@ -238,6 +238,32 @@ TEST_F(RdataSetTest, mergeCreate) {
     }
 }
 
+TEST_F(RdataSetTest, duplicate) {
+    // Create RRset and RRSIG containing duplicate RDATA.
+    ConstRRsetPtr dup_rrset =
+        textToRRset("www.example.com. 1076895760 IN A 192.0.2.1\n"
+                    "www.example.com. 1076895760 IN A 192.0.2.1\n");
+    ConstRRsetPtr dup_rrsig =
+        textToRRset("www.example.com. 1076895760 IN RRSIG " +
+                    def_rrsig_txt_[0] +
+                    "\nwww.example.com. 1076895760 IN RRSIG " +
+                    def_rrsig_txt_[0]);
+
+    // After suppressing duplicates, it should be the same as the default
+    // RdataSet.  Check that.
+    SegmentObjectHolder<RdataSet, RRClass> holder1(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, dup_rrset, dup_rrsig), rrclass);
+    checkRdataSet(*holder1.get(), def_rdata_txt_, def_rrsig_txt_);
+
+    // Confirm the same thing for the merge mode.
+    SegmentObjectHolder<RdataSet, RRClass> holder2(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, *holder1.get(), a_rrset_,
+                         rrsig_rrset_), rrclass);
+    checkRdataSet(*holder2.get(), def_rdata_txt_, def_rrsig_txt_);
+}
+
 TEST_F(RdataSetTest, getNext) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
@@ -313,8 +339,8 @@ TEST_F(RdataSetTest, find) {
 }
 
 // A helper function to create an RRset containing the given number of
-// unique RDATAs.
-ConstRRsetPtr
+// unique RDATAs.  We return non const pointer so that we can extend it.
+RRsetPtr
 getRRsetWithRdataCount(size_t rdata_count) {
     RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(), RRType::TXT(),
                              RRTTL(3600)));
@@ -329,17 +355,22 @@ void
 RdataSetTest::checkCreateManyRRs(CreateFn create_fn, size_t n_old_rdata) {
     // RRset with possible maximum number of RDATAs, taking into account
     // "pre-existing" RDATAs
-    RdataSet* rdataset = create_fn(mem_sgmt_, encoder_,
-                                   getRRsetWithRdataCount(8191 - n_old_rdata),
+    RRsetPtr large_rrset = getRRsetWithRdataCount(8191 - n_old_rdata);
+    RdataSet* rdataset = create_fn(mem_sgmt_, encoder_, large_rrset,
                                    ConstRRsetPtr());
     EXPECT_EQ(8191, rdataset->getRdataCount());
     EXPECT_EQ(0, rdataset->getSigRdataCount());
-    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Duplicate RDATA will be ignored in this check.
+    large_rrset->addRdata(createRdata(RRType::TXT(), rrclass, "0"));
+    rdataset = create_fn(mem_sgmt_, encoder_, large_rrset, ConstRRsetPtr());
+    EXPECT_EQ(8191, rdataset->getRdataCount());
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
 
     // Exceeding that will result in an exception.
-    EXPECT_THROW(create_fn(mem_sgmt_, encoder_,
-                           getRRsetWithRdataCount(8192 - n_old_rdata),
-                           ConstRRsetPtr()),
+    large_rrset->addRdata(createRdata(RRType::TXT(), rrclass, "8192"));
+    EXPECT_THROW(create_fn(mem_sgmt_, encoder_, large_rrset, ConstRRsetPtr()),
                  RdataSetError);
     // To be very sure even try larger number than the threshold
     EXPECT_THROW(create_fn(mem_sgmt_, encoder_,
@@ -383,7 +414,7 @@ TEST_F(RdataSetTest, createWithRRSIG) {
 
 // A helper function to create an RRSIG RRset containing the given number of
 // unique RDATAs.
-ConstRRsetPtr
+RRsetPtr
 getRRSIGWithRdataCount(size_t sig_count) {
     RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(),
                              RRType::RRSIG(), RRTTL(3600)));
@@ -425,14 +456,26 @@ RdataSetTest::checkCreateManyRRSIGs(CreateFn create_fn, size_t n_old_sig) {
 
     // Up to 2^16-1 RRSIGs are allowed (although that would be useless
     // in practice)
-    rdataset = create_fn(mem_sgmt_, encoder_, a_rrset_,
-                         getRRSIGWithRdataCount(65535 - n_old_sig));
+    RRsetPtr large_rrsig = getRRSIGWithRdataCount(65535 - n_old_sig);
+    rdataset = create_fn(mem_sgmt_, encoder_, a_rrset_, large_rrsig);
+    EXPECT_EQ(65535, rdataset->getSigRdataCount());
+    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
+
+    // Duplicate shouldn't be counted
+    large_rrsig->addRdata(
+        createRdata(RRType::RRSIG(), rrclass,
+                    "A 5 2 0 20120814220826 20120715220826 1234 "
+                    "example.com. FAKE"));
+    rdataset = create_fn(mem_sgmt_, encoder_, a_rrset_, large_rrsig);
     EXPECT_EQ(65535, rdataset->getSigRdataCount());
     RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 
     // Exceeding this limit will result in an exception.
-    EXPECT_THROW(create_fn(mem_sgmt_, encoder_, a_rrset_,
-                           getRRSIGWithRdataCount(65536 - n_old_sig)),
+    large_rrsig->addRdata(
+        createRdata(RRType::RRSIG(), rrclass,
+                    "A 5 2 65536 20120814220826 20120715220826 1234 "
+                    "example.com. FAKE"));
+    EXPECT_THROW(create_fn(mem_sgmt_, encoder_, a_rrset_, large_rrsig),
                  RdataSetError);
     // To be very sure even try larger number than the threshold
     EXPECT_THROW(create_fn(mem_sgmt_, encoder_, a_rrset_,
@@ -511,11 +554,11 @@ RdataSetTest::checkBadCreate(CreateFn create_fn) {
                  isc::BadValue);
 }
 
-TEST_F(RdataSetTest, badCeate) {
+TEST_F(RdataSetTest, badCreate) {
     checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4));
 }
 
-TEST_F(RdataSetTest, badMergeCeate) {
+TEST_F(RdataSetTest, badMergeCreate) {
     // The 'old RdataSet' for merge.  Its content doesn't matter; the test
     // should trigger exception before examining it.
     SegmentObjectHolder<RdataSet, RRClass> holder(
