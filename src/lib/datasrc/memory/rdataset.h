@@ -171,6 +171,14 @@ public:
                             dns::ConstRRsetPtr rrset,
                             dns::ConstRRsetPtr sig_rrset);
 
+    /// \brief Merge an \c RdataSet with RRsets and create new one for the
+    /// merged data.
+    static RdataSet* create(util::MemorySegment& mem_sgmt,
+                            RdataEncoder& encoder,
+                            const RdataSet& old_rdataset,
+                            dns::ConstRRsetPtr rrset,
+                            dns::ConstRRsetPtr sig_rrset);
+
     /// \brief Destruct and deallocate \c RdataSet
     ///
     /// Note that this method needs to know the expected RR class of the
