@@ -501,7 +501,7 @@ class ModuleCCSession(ConfigData):
             raise ModuleCCSessionError("CC Session timeout waiting for configuration manager")
 
     def rpc_call(self, command, group, instance=CC_INSTANCE_WILDCARD,
-                 to=CC_TO_WILDCARD, **params):
+                 to=CC_TO_WILDCARD, params=None):
         """
         Create a command with the given name and parameters. Send it to a
         recipient, wait for the answer and parse it.
