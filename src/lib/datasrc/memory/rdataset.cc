@@ -70,42 +70,37 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
         isc_throw(BadValue, "RR class doesn't match between RRset and RRSIG");
     }
 
-    // Check assumptions on the number of RDATAs
-    const size_t old_rdata_count =
-        old_rdataset ? old_rdataset->getRdataCount() : 0;
-    const size_t old_sig_count =
-        old_rdataset ? old_rdataset->getSigRdataCount() : 0;
-    if (rrset && (rrset->getRdataCount() + old_rdata_count) > MAX_RDATA_COUNT)
-    {
-        isc_throw(RdataSetError, "Too many RDATAs for RdataSet: "
-                  << rrset->getRdataCount() << ", must be <= "
-                  << MAX_RDATA_COUNT);
-    }
-    if (sig_rrset && (sig_rrset->getRdataCount() + old_sig_count) >
-        MAX_RRSIG_COUNT) {
-        isc_throw(RdataSetError, "Too many RRSIGs for RdataSet: "
-                  << sig_rrset->getRdataCount() << ", must be <= "
-                  << MAX_RRSIG_COUNT);
-    }
-
     const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
     const RRType rrtype = rrset ? rrset->getType() :
         getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
     const RRTTL rrttl = rrset ? rrset->getTTL() : sig_rrset->getTTL();
     if (old_rdataset) {
         encoder.start(rrclass, rrtype, old_rdataset->getDataBuf(),
-                      old_rdata_count, old_sig_count);
+                      old_rdataset->getRdataCount(),
+                      old_rdataset->getSigRdataCount());
     } else {
         encoder.start(rrclass, rrtype);
     }
 
+    // Store RDATAs to be added and check assumptions on the number of them
+    size_t rdata_count = old_rdataset ? old_rdataset->getRdataCount() : 0;
     if (rrset) {
         for (RdataIteratorPtr it = rrset->getRdataIterator();
              !it->isLast();
              it->next()) {
-            encoder.addRdata(it->getCurrent());
+            if (encoder.addRdata(it->getCurrent())) {
+                ++rdata_count;
+            }
         }
     }
+    if (rdata_count > MAX_RDATA_COUNT) {
+        isc_throw(RdataSetError, "Too many RDATAs for RdataSet: "
+                  << rrset->getRdataCount() << ", must be <= "
+                  << MAX_RDATA_COUNT);
+    }
+
+    // Same for RRSIG
+    size_t rrsig_count = old_rdataset ? old_rdataset->getSigRdataCount() : 0;
     if (sig_rrset) {
         for (RdataIteratorPtr it = sig_rrset->getRdataIterator();
              !it->isLast();
@@ -114,18 +109,22 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
             if (getCoveredType(it->getCurrent()) != rrtype) {
                 isc_throw(BadValue, "Type covered doesn't match");
             }
-            encoder.addSIGRdata(it->getCurrent());
+            if (encoder.addSIGRdata(it->getCurrent())) {
+                ++rrsig_count;
+            }
         }
     }
-    const size_t rrsig_count =
-        old_sig_count + (sig_rrset ? sig_rrset->getRdataCount() : 0);
+    if (rrsig_count > MAX_RRSIG_COUNT) {
+        isc_throw(RdataSetError, "Too many RRSIGs for RdataSet: "
+                  << sig_rrset->getRdataCount() << ", must be <= "
+                  << MAX_RRSIG_COUNT);
+    }
+
     const size_t ext_rrsig_count_len =
         rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     const size_t data_len = encoder.getStorageLength();
     void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
                                 data_len);
-    const size_t rdata_count =
-        old_rdata_count + (rrset ? rrset->getRdataCount() : 0);
     RdataSet* rdataset = new(p) RdataSet(rrtype, rdata_count, rrsig_count,
                                          rrttl);
     if (rrsig_count >= MANY_RRSIG_COUNT) {
