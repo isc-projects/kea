@@ -50,18 +50,18 @@ getCoveredType(const Rdata& rdata) {
     }
 }
 
-// A helper for smallestTTL: restore RRTTL object from wire-format 32-bit data.
+// A helper for lowestTTL: restore RRTTL object from wire-format 32-bit data.
 RRTTL
 restoreTTL(const void* ttl_data) {
     isc::util::InputBuffer b(ttl_data, sizeof(uint32_t));
     return (RRTTL(b));
 }
 
-// A helper function for create(): return the TTL that has smallest value
+// A helper function for create(): return the TTL that has lowest value
 // amount the given those of given rdataset (if non NULL), rrset, sig_rrset.
 RRTTL
-smallestTTL(const RdataSet* rdataset, ConstRRsetPtr& rrset,
-            ConstRRsetPtr& sig_rrset)
+lowestTTL(const RdataSet* rdataset, ConstRRsetPtr& rrset,
+          ConstRRsetPtr& sig_rrset)
 {
     if (rrset && sig_rrset) {
         const RRTTL tmp(std::min(rrset->getTTL(), sig_rrset->getTTL()));
@@ -103,7 +103,7 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     if (old_rdataset && old_rdataset->type != rrtype) {
         isc_throw(BadValue, "RR type doesn't match for merging RdataSet");
     }
-    const RRTTL rrttl = smallestTTL(old_rdataset, rrset, sig_rrset);
+    const RRTTL rrttl = lowestTTL(old_rdataset, rrset, sig_rrset);
     if (old_rdataset) {
         encoder.start(rrclass, rrtype, old_rdataset->getDataBuf(),
                       old_rdataset->getRdataCount(),
