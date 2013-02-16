@@ -164,20 +164,15 @@ public:
     /// created.  Can be NULL if sig_rrset is not.
     /// \param sig_rrset An RRSIG RRset from which the \c RdataSet is to be
     /// created.  Can be NULL if rrset is not.
+    /// \param old_rdataset If non NULL, create RdataSet merging old_rdataset
+    /// into given rrset and sig_rrset.
     ///
     /// \return A pointer to the created \c RdataSet.
     static RdataSet* create(util::MemorySegment& mem_sgmt,
                             RdataEncoder& encoder,
                             dns::ConstRRsetPtr rrset,
-                            dns::ConstRRsetPtr sig_rrset);
-
-    /// \brief Merge an \c RdataSet with RRsets and create new one for the
-    /// merged data.
-    static RdataSet* create(util::MemorySegment& mem_sgmt,
-                            RdataEncoder& encoder,
-                            const RdataSet& old_rdataset,
-                            dns::ConstRRsetPtr rrset,
-                            dns::ConstRRsetPtr sig_rrset);
+                            dns::ConstRRsetPtr sig_rrset,
+                            const RdataSet* old_rdataset = NULL);
 
     /// \brief Destruct and deallocate \c RdataSet
     ///
@@ -388,12 +383,6 @@ private:
     /// It never throws an exception.
     RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
              dns::RRTTL ttl);
-
-    static RdataSet* create(util::MemorySegment& mem_sgmt,
-                            RdataEncoder& encoder,
-                            const RdataSet* old_rdataset,
-                            dns::ConstRRsetPtr rrset,
-                            dns::ConstRRsetPtr sig_rrset);
 
     /// \brief The destructor.
     ///
