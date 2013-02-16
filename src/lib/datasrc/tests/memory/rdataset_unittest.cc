@@ -70,7 +70,7 @@ protected:
 
     // Helper for checking common cases against both versions of create()
     typedef boost::function<RdataSet*(isc::util::MemorySegment&, RdataEncoder&,
-                                  ConstRRsetPtr, ConstRRsetPtr)> CreateFn;
+                                      ConstRRsetPtr, ConstRRsetPtr)> CreateFn;
     void checkCreateManyRRs(CreateFn create_fn, size_t n_old_rdata);
     void checkCreateManyRRSIGs(CreateFn create_fn, size_t n_old_sig);
     void checkBadCreate(CreateFn create_fn);
@@ -84,17 +84,6 @@ protected:
     vector<string> def_rdata_txt_;
     vector<string> def_rrsig_txt_;
 };
-
-// A helper adaptor for some checkXXX functions as boost::bind() can't
-// directly take a reference to non-copyable object.
-RdataSet*
-createWrapper(isc::util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
-              const RdataSet* old_rdataset, ConstRRsetPtr rrset,
-              ConstRRsetPtr sig_rrset)
-{
-    return (RdataSet::create(mem_sgmt, encoder, *old_rdataset, rrset,
-                             sig_rrset));
-}
 
 // Convert the given 32-bit integer (network byte order) to the corresponding
 // RRTTL object.
@@ -211,9 +200,10 @@ TEST_F(RdataSetTest, mergeCreate) {
             // Create merged rdataset, based on the old one and RRsets
             SegmentObjectHolder<RdataSet, RRClass> holder2(
                 mem_sgmt_,
-                RdataSet::create(mem_sgmt_, encoder_, *holder1.get(),
+                RdataSet::create(mem_sgmt_, encoder_,
                                  (j & 1) != 0 ? a_rrsets[1] : null_rrset,
-                                 (j & 2) != 0 ? rrsig_rrsets[1] : null_rrset),
+                                 (j & 2) != 0 ? rrsig_rrsets[1] : null_rrset,
+                                 holder1.get()),
                 rrclass);
 
             // Set up the expected data for the case.
@@ -259,8 +249,8 @@ TEST_F(RdataSetTest, duplicate) {
     // Confirm the same thing for the merge mode.
     SegmentObjectHolder<RdataSet, RRClass> holder2(
         mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, *holder1.get(), a_rrset_,
-                         rrsig_rrset_), rrclass);
+        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_rrset_,
+                         holder1.get()), rrclass);
     checkRdataSet(*holder2.get(), def_rdata_txt_, def_rrsig_txt_);
 }
 
@@ -380,7 +370,8 @@ RdataSetTest::checkCreateManyRRs(CreateFn create_fn, size_t n_old_rdata) {
 }
 
 TEST_F(RdataSetTest, createManyRRs) {
-    checkCreateManyRRs(boost::bind(&RdataSet::create, _1, _2, _3, _4), 0);
+    checkCreateManyRRs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                                   static_cast<const RdataSet*>(NULL)), 0);
 }
 
 TEST_F(RdataSetTest, mergeCreateManyRRs) {
@@ -390,8 +381,8 @@ TEST_F(RdataSetTest, mergeCreateManyRRs) {
         RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr()),
         RRClass::IN());
 
-    checkCreateManyRRs(boost::bind(createWrapper, _1, _2, holder.get(), _3,
-                                   _4), rrset->getRdataCount());
+    checkCreateManyRRs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                                   holder.get()), rrset->getRdataCount());
 }
 
 TEST_F(RdataSetTest, createWithRRSIG) {
@@ -484,7 +475,8 @@ RdataSetTest::checkCreateManyRRSIGs(CreateFn create_fn, size_t n_old_sig) {
 }
 
 TEST_F(RdataSetTest, createManyRRSIGs) {
-    checkCreateManyRRSIGs(boost::bind(&RdataSet::create, _1, _2, _3, _4), 0);
+    checkCreateManyRRSIGs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                                      static_cast<const RdataSet*>(NULL)), 0);
 }
 
 TEST_F(RdataSetTest, mergeCreateManyRRSIGs) {
@@ -498,8 +490,8 @@ TEST_F(RdataSetTest, mergeCreateManyRRSIGs) {
         RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), rrsig),
         rrclass);
 
-    checkCreateManyRRSIGs(boost::bind(createWrapper, _1, _2, holder.get(), _3,
-                                      _4), rrsig->getRdataCount());
+    checkCreateManyRRSIGs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                                      holder.get()), rrsig->getRdataCount());
 }
 
 TEST_F(RdataSetTest, createWithRRSIGOnly) {
@@ -555,7 +547,8 @@ RdataSetTest::checkBadCreate(CreateFn create_fn) {
 }
 
 TEST_F(RdataSetTest, badCreate) {
-    checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4));
+    checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                               static_cast<const RdataSet*>(NULL)));
 }
 
 TEST_F(RdataSetTest, badMergeCreate) {
@@ -568,13 +561,15 @@ TEST_F(RdataSetTest, badMergeCreate) {
                          ConstRRsetPtr()),
         RRClass::IN());
 
-    checkBadCreate(boost::bind(createWrapper, _1, _2, holder.get(), _3, _4));
+    checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4,
+                               holder.get()));
 
     // Type mismatch: this case is specific to the merge create.
-    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, *holder.get(), a_rrset_,
-                                  ConstRRsetPtr()), isc::BadValue);
-    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, *holder.get(),
-                                  ConstRRsetPtr(), rrsig_rrset_),
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                  ConstRRsetPtr(), holder.get()),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
+                                  rrsig_rrset_, holder.get()),
                  isc::BadValue);
 }
 }
