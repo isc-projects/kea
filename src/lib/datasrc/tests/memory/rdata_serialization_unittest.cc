@@ -866,9 +866,9 @@ TEST_F(RdataSerializationTest, badAddRdata) {
 
 struct MergeTestData {
     const char* const type_txt; // "AAAA", "NS", etc
-    const char* const rdata_txt1;
-    const char* const rdata_txt2;
-    const char* const rdata_txt3;
+    const char* const rdata_txt1; // RDATA possibly used for old data
+    const char* const rdata_txt2; // RDATA possibly used for new data
+    const char* const rdata_txt3; // optional data to check with multi-RDATAs
     const size_t varlen_fields; // number of variable-len fields in RDATA
 } merge_test_data[] = {
     // For test with fixed-length RDATA
