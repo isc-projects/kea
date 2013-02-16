@@ -386,19 +386,8 @@ TEST_F(RdataSetTest, mergeCreateManyRRs) {
 }
 
 TEST_F(RdataSetTest, createWithRRSIG) {
-    // Normal case.
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           rrsig_rrset_);
-    checkRdataSet(*rdataset, def_rdata_txt_, def_rrsig_txt_);
-    RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
-
-    // Unusual case: TTL doesn't match.  This implementation accepts that,
-    // using the TTL of the covered RRset.
-    ConstRRsetPtr rrsig_badttl(textToRRset(
-                                   "www.example.com. 3600 IN RRSIG "
-                                   "A 5 2 3600 20120814220826 "
-                                   "20120715220826 1234 example.com. FAKE"));
-    rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_badttl);
     checkRdataSet(*rdataset, def_rdata_txt_, def_rrsig_txt_);
     RdataSet::destroy(mem_sgmt_, rdataset, RRClass::IN());
 }
@@ -571,5 +560,70 @@ TEST_F(RdataSetTest, badMergeCreate) {
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
                                   rrsig_rrset_, holder.get()),
                  isc::BadValue);
+}
+
+TEST_F(RdataSetTest, varyingTTL) {
+    // Creating RdataSets with different TTLs.  The smallest one should win.
+
+    ConstRRsetPtr aaaa_smaller = textToRRset("example. 5 IN AAAA 2001:db8::");
+    ConstRRsetPtr aaaa_small = textToRRset("example. 10 IN AAAA 2001:db8::1");
+    ConstRRsetPtr aaaa_large = textToRRset("example. 20 IN AAAA 2001:db8::2");
+    ConstRRsetPtr sig_smaller =
+        textToRRset("www.example.com. 5 IN RRSIG AAAA 5 2 3600 "
+                    "20120814220826 20120715220826 1111 example.com. FAKE");
+    ConstRRsetPtr sig_small =
+        textToRRset("www.example.com. 10 IN RRSIG AAAA 5 2 3600 "
+                    "20120814220826 20120715220826 1234 example.com. FAKE");
+    ConstRRsetPtr sig_large =
+        textToRRset("www.example.com. 20 IN RRSIG AAAA 5 2 3600 "
+                    "20120814220826 20120715220826 4321 example.com. FAKE");
+
+    // RRSIG's TTL is larger
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, aaaa_small,
+                                          sig_large);
+    EXPECT_EQ(RRTTL(10), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // RRSIG's TTL is smaller
+    SegmentObjectHolder<RdataSet, RRClass> holder1(
+        mem_sgmt_,
+        RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_small), rrclass);
+    EXPECT_EQ(RRTTL(10), restoreTTL(holder1.get()->getTTLData()));
+
+    // Merging another RRset (w/o sig) that has larger TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, aaaa_large,
+                                ConstRRsetPtr(), holder1.get());
+    EXPECT_EQ(RRTTL(10), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Merging another RRset (w/o sig) that has smaller TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, aaaa_smaller,
+                                ConstRRsetPtr(), holder1.get());
+    EXPECT_EQ(RRTTL(5), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Merging another RRSIG (w/o RRset) that has larger TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
+                                sig_large, holder1.get());
+    EXPECT_EQ(RRTTL(10), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Merging another RRSIG (w/o RRset) that has smaller TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
+                                sig_smaller, holder1.get());
+    EXPECT_EQ(RRTTL(5), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Merging another RRset and RRSIG that have larger TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_large,
+                                holder1.get());
+    EXPECT_EQ(RRTTL(10), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+
+    // Merging another RRset and RRSIG that have smaller TTL
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, aaaa_smaller, sig_smaller,
+                                holder1.get());
+    EXPECT_EQ(RRTTL(5), restoreTTL(rdataset->getTTLData()));
+    RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
 }
 }

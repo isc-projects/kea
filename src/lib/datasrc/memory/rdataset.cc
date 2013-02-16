@@ -26,6 +26,7 @@
 #include <boost/static_assert.hpp>
 
 #include <stdint.h>
+#include <algorithm>
 #include <cstring>
 #include <typeinfo>             // for bad_cast
 #include <new>                  // for the placement new
@@ -48,6 +49,33 @@ getCoveredType(const Rdata& rdata) {
         isc_throw(BadValue, "Non RRSIG is given where it's expected");
     }
 }
+
+// A helper for smallestTTL: restore RRTTL object from wire-format 32-bit data.
+RRTTL
+restoreTTL(const void* ttl_data) {
+    isc::util::InputBuffer b(ttl_data, sizeof(uint32_t));
+    return (RRTTL(b));
+}
+
+// A helper function for create(): return the TTL that has smallest value
+// amount the given those of given rdataset (if non NULL), rrset, sig_rrset.
+RRTTL
+smallestTTL(const RdataSet* rdataset, ConstRRsetPtr& rrset,
+            ConstRRsetPtr& sig_rrset)
+{
+    if (rrset && sig_rrset) {
+        const RRTTL tmp(std::min(rrset->getTTL(), sig_rrset->getTTL()));
+        return (rdataset ?
+                std::min(restoreTTL(rdataset->getTTLData()), tmp) : tmp);
+    } else if (rrset) {
+        return (rdataset ? std::min(restoreTTL(rdataset->getTTLData()),
+                                    rrset->getTTL()) : rrset->getTTL());
+    } else {
+        return (rdataset ? std::min(restoreTTL(rdataset->getTTLData()),
+                                    sig_rrset->getTTL()) :
+                sig_rrset->getTTL());
+    }
+}
 }
 
 RdataSet*
@@ -55,7 +83,6 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                  ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset,
                  const RdataSet* old_rdataset)
 {
-    // TODO: taking min TTL
     // Check basic validity
     if (!rrset && !sig_rrset) {
         isc_throw(BadValue, "Both RRset and RRSIG are NULL");
@@ -76,7 +103,7 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     if (old_rdataset && old_rdataset->type != rrtype) {
         isc_throw(BadValue, "RR type doesn't match for merging RdataSet");
     }
-    const RRTTL rrttl = rrset ? rrset->getTTL() : sig_rrset->getTTL();
+    const RRTTL rrttl = smallestTTL(old_rdataset, rrset, sig_rrset);
     if (old_rdataset) {
         encoder.start(rrclass, rrtype, old_rdataset->getDataBuf(),
                       old_rdataset->getRdataCount(),
