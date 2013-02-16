@@ -52,8 +52,8 @@ getCoveredType(const Rdata& rdata) {
 
 RdataSet*
 RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
-                 const RdataSet* old_rdataset, ConstRRsetPtr rrset,
-                 ConstRRsetPtr sig_rrset)
+                 ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset,
+                 const RdataSet* old_rdataset)
 {
     // TODO: taking min TTL
     // Check basic validity
@@ -135,21 +135,6 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     }
     encoder.encode(rdataset->getDataBuf(), data_len);
     return (rdataset);
-}
-
-RdataSet*
-RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
-                 ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset)
-{
-    return (create(mem_sgmt, encoder, NULL, rrset, sig_rrset));
-}
-
-RdataSet*
-RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
-                 const RdataSet& old_rdataset, ConstRRsetPtr rrset,
-                 ConstRRsetPtr sig_rrset)
-{
-    return (create(mem_sgmt, encoder, &old_rdataset, rrset, sig_rrset));
 }
 
 void
