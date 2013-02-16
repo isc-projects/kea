@@ -422,9 +422,13 @@ struct RdataEncoder::RdataEncoderImpl {
     util::OutputBuffer rrsig_buffer_;
     vector<uint16_t> rrsig_lengths_;
 
+    // Placeholder for the RR class and type of the current session;
+    // initially null, and will be (re)set at the beginning of each session.
     boost::optional<RRClass> current_class_;
     boost::optional<RRType> current_type_;
 
+    // Parameters corresponding to the previously encoded data in the
+    // merge mode.
     size_t old_varlen_count_;
     size_t old_sig_count_;
     size_t old_data_len_;
@@ -458,6 +462,9 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype) {
 }
 
 namespace {
+// Helper callbacks used in the merge mode of start().  These re-construct
+// each RDATA and RRSIG in the wire-format, counting the total length of the
+// encoded data fields.
 void
 decodeName(const LabelSequence& name_labels, RdataNameAttributes,
            util::OutputBuffer* buffer, size_t* total_len)
@@ -483,6 +490,8 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
 {
     impl_->start(rrclass, rrtype);
 
+    // Identify start points of various fields of the encoded data and
+    // remember it in class variables.
     const uint8_t* cp = static_cast<const uint8_t*>(old_data);
     impl_->old_varlen_count_ =
         impl_->encode_spec_->varlen_count * old_rdata_count;
@@ -493,6 +502,11 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
     impl_->old_data_ = cp;
     impl_->old_sig_count_ = old_sig_count;
 
+    // Re-construct RDATAs and RRSIGs in the form of Rdata objects, and
+    // keep them in rdatas_ and rrsigs_ so we can detect and ignore duplicate
+    // data with the existing one later.  We'll also figure out the lengths
+    // of the RDATA and RRSIG part of the data by iterating over the data
+    // fields.
     size_t total_len = 0;
     RdataReader reader(rrclass, rrtype, old_data, old_rdata_count,
                        old_sig_count,
