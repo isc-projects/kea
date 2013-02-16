@@ -563,7 +563,7 @@ TEST_F(RdataSetTest, badMergeCreate) {
 }
 
 TEST_F(RdataSetTest, varyingTTL) {
-    // Creating RdataSets with different TTLs.  The smallest one should win.
+    // Creating RdataSets with different TTLs.  The lowest one should win.
 
     ConstRRsetPtr aaaa_smaller = textToRRset("example. 5 IN AAAA 2001:db8::");
     ConstRRsetPtr aaaa_small = textToRRset("example. 10 IN AAAA 2001:db8::1");
