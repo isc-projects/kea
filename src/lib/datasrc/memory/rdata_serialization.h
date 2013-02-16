@@ -157,9 +157,29 @@ public:
 
     /// \brief Start the encoding session in the merge mode.
     ///
-    /// TBD for details.
+    /// This method is similar to the other version, but begins with a copy
+    /// of previously encoded data and merges Rdata and RRSIGs into it
+    /// that will be given via subsequent calls to \c addRdata() and
+    /// \c addSIGRdata().  \c old_data, \c old_rdata_count, and
+    /// \c old_sig_count correspond to parameters given to the
+    /// \c RdataReader constructor, and must have valid values for encoded
+    /// data by this class for the same \c rrclass and \c rrtype.
+    /// It's the caller's responsibility to ensure this condition; if it's
+    /// not met, the behavior will be undefined.
+    ///
+    /// The caller must also ensure that previously encoded data (pointed
+    /// to by \c old_data) will be valid and intact throughout the encoding
+    /// session started by this method.
+    ///
+    /// \param rrclass The RR class of RDATA to be encoded in the session.
+    /// \param rrtype The RR type of RDATA to be encoded in the session.
+    /// \param old_data Point to previously encoded data for the same RR
+    /// class and type.
+    /// \param old_rdata_count The number of RDATAs stored in \c old_data.
+    /// \param old_sig_count The number of RRSIGs stored in \c old_data.
     void start(dns::RRClass rrclass, dns::RRType rrtype,
-               const void* old_data, size_t rdata_count, size_t sig_count);
+               const void* old_data, size_t old_rdata_count,
+               size_t old_sig_count);
 
     /// \brief Add an RDATA for encoding.
     ///
