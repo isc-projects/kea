@@ -18,7 +18,7 @@ bind10-1.0.0-rc released on February 14, 2013
 
 578.	[bug]		jinmei
 	b10-auth now returns closest encloser NSEC3 proof to queries for
-	an empty non terminal derived from an Opt-Out NSEC RR, as clarified
+	an empty non terminal derived from an Opt-Out NSEC3 RR, as clarified
 	in errata 3441 for RFC5155.  Previously it regarded such case as
 	broken zone and returned SERVFAIL.
 	(Trac #2659, git 24c235cb1b379c6472772d340e21577c3460b742)
