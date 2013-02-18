@@ -251,6 +251,13 @@ WARNING: Python readline module isn't available, so the command line editor
         raise FailToLogin()
 
     def _have_users(self):
+        '''
+        Checks if cmdctl knows of any users by making a POST to it.  On
+        success of the POST, it returns True if cmdctl has users
+        configured, and False otherwise. On failure, a FailToLogin
+        exception is raised, and some information on the failure is
+        printed.
+        '''
         try:
             response = self.send_POST('/users-exist')
             if response.status == http.client.OK:
