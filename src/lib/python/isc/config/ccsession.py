@@ -527,8 +527,8 @@ class ModuleCCSession(ConfigData):
         cmd = create_command(command, params)
         seq = self._session.group_sendmsg(cmd, group, instance=instance,
                                           to=to, want_answer=True)
-        # For non-blocking, we'll have rpc_call_async (once the nonblock actualy
-        # works)
+        # For non-blocking, we'll have rpc_call_async (once the nonblock
+        # actualy works)
         reply, rheaders = self._session.group_recvmsg(nonblock=False, seq=seq)
         code, value = parse_answer(reply)
         if code == CC_REPLY_NO_RECPT:
