@@ -2909,7 +2909,7 @@ class TestXfrinProcessMockCCSession:
         self.recv_called = False
         self.recv_called_correctly = False
 
-    def group_sendmsg(self, msg, module):
+    def group_sendmsg(self, msg, module, want_answer=False):
         self.send_called = True
         if module == 'Auth' and msg['command'][0] == 'loadzone':
             self.send_called_correctly = True
