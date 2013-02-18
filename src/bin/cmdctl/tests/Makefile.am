@@ -4,6 +4,7 @@ EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += testdata/expired-certfile.pem
 EXTRA_DIST += testdata/mangled-certfile.pem
 EXTRA_DIST += testdata/noca-certfile.pem
+EXTRA_DIST += cmdctl-accounts.csv
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -26,7 +27,7 @@ endif
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/cmdctl \
 	CMDCTL_BUILD_PATH=$(abs_top_builddir)/src/bin/cmdctl \
-	CMDCTL_SRC_PATH=$(abs_top_srcdir)/src/bin/cmdctl \
+	CMDCTL_TESTDATA_PATH=$(abs_top_srcdir)/src/bin/cmdctl/tests/testdata \
 	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
