@@ -164,6 +164,13 @@
     <variablelist>
 
       <varlistentry>
+        <term>zones</term>
+        <listitem><simpara>
+         A directory name of per-zone statistics
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>notifyoutv4</term>
         <listitem><simpara>
          Number of IPv4 notifies per zone name sent out from Xfrout
@@ -191,6 +198,10 @@
         </simpara></listitem>
       </varlistentry>
 
+    </variablelist>
+
+    <variablelist>
+
       <varlistentry>
         <term>ixfr_running</term>
         <listitem><simpara>
@@ -202,6 +213,24 @@
         <term>axfr_running</term>
         <listitem><simpara>
          Number of AXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>socket</term>
+        <listitem><simpara>
+         A directory name of socket statistics
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>unixdomain</term>
+        <listitem><simpara>
+         A directory name of UNIX domain statistics
         </simpara></listitem>
       </varlistentry>
 
