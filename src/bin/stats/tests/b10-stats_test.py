@@ -32,7 +32,7 @@ import sys
 import stats
 import isc.log
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -302,7 +302,7 @@ class TestStats(unittest.TestCase):
         # See ticket #1668
         # Override moduleCCSession so we can check if send_stopping is called
         #self.stats.mccs = MockModuleCCSession()
-        self.assertEqual(send_shutdown("Stats"), (0, None))
+        self.assertEqual(send_command("shutdown", "Stats"), (0, None))
         self.assertFalse(self.stats.running)
         # Call server.shutdown with argument True so the thread.join() call
         # blocks and we are sure the main loop has finished (and set

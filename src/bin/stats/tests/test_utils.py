@@ -51,30 +51,18 @@ class SignalHandler():
         """envokes unittest.TestCase.fail as a signal handler"""
         self.fail_handler("A deadlock might be detected")
 
-def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=None):
-    if session is not None:
-        cc_session = session
-    else:
-        cc_session = isc.cc.Session()
-    if timeout is not None:
-        orig_timeout = cc_session.get_timeout()
-        cc_session.set_timeout(timeout * 1000)
+def send_command(command_name, module_name, params=None):
+    cc_session = isc.cc.Session()
     command = isc.config.ccsession.create_command(command_name, params)
     seq = cc_session.group_sendmsg(command, module_name)
     try:
-        (answer, env) = cc_session.group_recvmsg(nonblock, seq)
+        (answer, env) = cc_session.group_recvmsg(False, seq)
         if answer:
             return isc.config.ccsession.parse_answer(answer)
     except isc.cc.SessionTimeout:
         pass
     finally:
-        if timeout is not None:
-            cc_session.set_timeout(orig_timeout)
-        if session is None:
-            cc_session.close()
-
-def send_shutdown(module_name, **kwargs):
-    return send_command("shutdown", module_name, **kwargs)
+        cc_session.close()
 
 class ThreadingServerManager:
     def __init__(self, server, *args, **kwargs):
