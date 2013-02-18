@@ -429,8 +429,13 @@ class CommandControl():
             # Process the command sent to cmdctl directly.
             answer = self.command_handler(command_name, params)
         else:
+            # FIXME: Due to the fact that we use a separate session
+            # from the module one (due to threads and blocking), and
+            # because the plain cc session does not have the high-level
+            # rpc-call method, we use the low-level way and create the
+            # command ourself.
             msg = ccsession.create_command(command_name, params)
-            seq = self._cc.group_sendmsg(msg, module_name)
+            seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
             logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
                          command_name, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
