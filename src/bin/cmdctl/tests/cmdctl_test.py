@@ -22,9 +22,9 @@ import sys
 from cmdctl import *
 import isc.log
 
-assert 'CMDCTL_SRC_PATH' in os.environ,\
+assert 'CMDCTL_TESTDATA_PATH' in os.environ,\
        "Please run this test with 'make check'"
-SRC_FILE_PATH = os.environ['CMDCTL_SRC_PATH'] + os.sep
+SRC_FILE_PATH = os.environ['CMDCTL_TESTDATA_PATH'] + os.sep
 
 assert 'CMDCTL_BUILD_PATH' in os.environ,\
        "Please run this test with 'make check'"
