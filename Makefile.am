@@ -29,7 +29,7 @@ install-exec-hook:
 
 check-valgrind:
 if HAVE_VALGRIND
-	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --num-callers=48 --leak-check=full --child-silent-after-fork=yes --fullpath-after=" \
+	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --num-callers=48 --leak-check=full --fullpath-after=" \
 	make -C $(abs_top_builddir) check
 else
 	@echo "*** Valgrind is required for check-valgrind ***"; exit 1;
@@ -37,7 +37,7 @@ endif
 
 check-valgrind-suppress:
 if HAVE_VALGRIND
-	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 --child-silent-after-fork=yes --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions.revisit --num-callers=48 --leak-check=full --fullpath-after=" \
+	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --error-exitcode=1 --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions.revisit --num-callers=48 --leak-check=full --fullpath-after=" \
 	make -C $(abs_top_builddir) check
 else
 	@echo "*** Valgrind is required for check-valgrind-suppress ***"; exit 1;
