@@ -279,17 +279,14 @@ class BaseTestCounters():
         for name in self.counters._zones_item_list:
             args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
             if name.find('time_to_') == 0:
-                # set zero
-                self.counters._incdec(*args, step=0.0)
-                for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
-                    isc.cc.data.set(self._statistics_data,
-                                    '%s/%s/%s' % (args[0], zone_str, name), 0.0)
+                zero = 0.0
             else:
-                # set zero
-                self.counters._incdec(*args, step=0)
-                for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
-                    isc.cc.data.set(self._statistics_data,
-                                    '%s/%s/%s' % (args[0], zone_str, name), 0)
+                zero = 0
+            # set zero
+            self.counters._incdec(*args, step=zero)
+            for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
+                isc.cc.data.set(self._statistics_data,
+                                '%s/%s/%s' % (args[0], zone_str, name), zero)
         self.check_get_statistics()
 
     def test_undefined_item(self):
