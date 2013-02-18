@@ -20,6 +20,7 @@
 
 #include <cc/session.h>
 #include <cc/data.h>
+#include <cc/proto_defs.h>
 
 #include <string>
 #include <list>
@@ -144,6 +145,33 @@ class CCSessionInitError : public isc::Exception {
 public:
     CCSessionInitError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
+};
+
+/// \brief Exception thrown when there's a problem with the remote call.
+///
+/// This usually means either the command couldn't be called or the remote
+/// side sent an error as a response.
+class RPCError: public CCSessionError {
+public:
+    RPCError(const char* file, size_t line, const char* what, int rcode) :
+        CCSessionError(file, line, what),
+        rcode_(rcode)
+    {}
+    /// \brief The error code for the error.
+    int rcode() const {
+        return (rcode_);
+    }
+private:
+    int rcode_;
+};
+
+/// \brief Specific version of RPCError for the case the recipient of command
+///     doesn't exist.
+class RPCRecipientMissing: public RPCError {
+public:
+    RPCRecipientMissing(const char* file, size_t line, const char* what) :
+        RPCError(file, line, what, isc::cc::CC_REPLY_NO_RECPT)
+    {}
 };
 
 ///
@@ -360,6 +388,35 @@ public:
                       int seq = -1) {
         return (session_.group_recvmsg(envelope, msg, nonblock, seq));
     };
+
+    /// \brief Send a command message and wait for the answer.
+    ///
+    /// This is mostly a convenience wrapper around groupSendMsg
+    /// and groupRecvMsg, with some error handling.
+    ///
+    /// \param command Name of the command to call.
+    /// \param group Name of the remote module to call the command on.
+    /// \param instance Instance part of recipient address.
+    /// \param to The lname to send it to. Can be used to override the
+    ///     addressing and use a direct recipient.
+    /// \param params Parameters for the command. Can be left NULL if
+    ///     no parameters are needed.
+    /// \return Return value of the successfull remote call. It can be
+    ///     NULL if the remote command is void function (returns nothing).
+    /// \throw RPCError if the call fails (for example when the other
+    ///     side responds with error code).
+    /// \throw RPCRecipientMissing if the recipient doesn't exist.
+    /// \throw CCSessionError if some lower-level error happens (eg.
+    ///     the response was malformed).
+    isc::data::ConstElementPtr rpcCall(const std::string& command,
+                                       const std::string& group,
+                                       const std::string& instance =
+                                           isc::cc::CC_INSTANCE_WILDCARD,
+                                       const std::string& to =
+                                           isc::cc::CC_TO_WILDCARD,
+                                       const isc::data::ConstElementPtr&
+                                           params =
+                                           isc::data::ConstElementPtr());
 
     /// \brief Forward declaration of internal data structure.
     ///
