@@ -129,7 +129,7 @@
             }
           },
           "item_title": "Zone names",
-          "item_description": "Zone names for Xfrout statistics",
+          "item_description": "A directory name of per-zone statistics",
           "named_set_item_spec": {
             "item_name": "zonename",
             "item_type": "map",
@@ -206,7 +206,7 @@
             }
           },
           "item_title": "Socket",
-          "item_description": "Socket",
+          "item_description": "A directory name of socket statistics",
           "map_item_spec": [
             {
               "item_name": "unixdomain",
@@ -223,7 +223,7 @@
                 "recverr": 0
               },
               "item_title": "UNIX domain",
-              "item_description": "UNIX domain",
+              "item_description": "A directory name of UNIX domain statistics",
               "map_item_spec": [
                 {
                   "item_name": "open",
