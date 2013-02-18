@@ -351,7 +351,7 @@ WARNING: Python readline module isn't available, so the command line editor
         parameters of command is encoded as a map
         '''
         param = None
-        if (post_param and len(post_param) != 0):
+        if post_param is not None and len(post_param) != 0:
             param = json.dumps(post_param)
 
         headers = {"cookie" : self.session_id}
