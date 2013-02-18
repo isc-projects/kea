@@ -222,14 +222,12 @@ WARNING: Python readline module isn't available, so the command line editor
 
     def _try_login(self, username, password):
         '''
-        Attempts to log in to cmdctl by sending a POST with
-        the given username and password.
-        On success of the POST (mind, not the login, only the network
-        operation), returns a tuple (response, data).
-        On failure, raises a FailToLogin exception, and prints some
-        information on the failure.
-        This call is essentially 'private', but made 'protected' for
-        easier testing.
+        Attempts to log into cmdctl by sending a POST with the given
+        username and password. On success of the POST (not the login,
+        but the network operation), it returns a tuple (response, data).
+        On failure, it raises a FailToLogin exception and prints some
+        information on the failure.  This call is essentially 'private',
+        but made 'protected' for easier testing.
         '''
         param = {'username': username, 'password' : password}
         try:
