@@ -33,7 +33,7 @@ BUILD_FILE_PATH = os.environ['CMDCTL_BUILD_PATH'] + os.sep
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
     def __init__(self):
-        pass
+        self.session_id = None
 
     def send_response(self, rcode):
         self.rcode = rcode
@@ -100,6 +100,12 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         sys.stdout = self.old_stdout
         self.handler.rfile.close()
         os.remove('check.tmp')
+
+    def test_is_session_valid(self):
+        self.assertIsNone(self.handler.session_id)
+        self.assertFalse(self.handler._is_session_valid())
+        self.handler.session_id = 4234
+        self.assertTrue(self.handler._is_session_valid())
 
     def test_parse_request_path(self):
         self.handler.path = ''
