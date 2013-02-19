@@ -547,7 +547,7 @@ class DDNSServer:
         try:
             self._cc.rpc_call("start_ddns_forwarder", AUTH_MODULE_NAME)
         except (SessionTimeout, SessionError, ProtocolError,
-            RPCRecipientMissing) as ex:
+                RPCRecipientMissing) as ex:
             logger.error(DDNS_START_FORWARDER_FAIL, ex)
         except RPCError as e:
             logger.error(DDNS_START_FORWARDER_ERROR, e)
@@ -559,7 +559,7 @@ class DDNSServer:
         try:
             self._cc.rpc_call("stop_ddns_forwarder", AUTH_MODULE_NAME)
         except (SessionTimeout, SessionError, ProtocolError,
-            RPCRecipientMissing) as ex:
+                RPCRecipientMissing) as ex:
             logger.error(DDNS_STOP_FORWARDER_FAIL, ex)
         except RPCError as e:
             logger.error(DDNS_STOP_FORWARDER_ERROR, e)
