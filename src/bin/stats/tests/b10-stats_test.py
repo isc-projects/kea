@@ -490,7 +490,28 @@ class TestStats(unittest.TestCase):
         stats.isc.config.ccsession.parse_answer = orig_parse_answer
 
     def test_get_statistics_data(self):
-        self.stats = stats.Stats()
+        """Confirm the behavior of Stats.get_statistics_data().
+
+        It should first call update_modules(), and then retrieve the requested
+        data from statistics_data.  We confirm this by fake update_modules()
+        where we set the expected data in statistics_data.
+
+        """
+        self.stats = self.SimpleStat()
+        def __faked_update_modules():
+            self.stats.statistics_data = { \
+                'Stats': {
+                    'report_time': self.const_default_datetime,
+                    'boot_time': None,
+                    'last_update_time': None,
+                    'timestamp': 0.0,
+                    'lname': 'dummy name'
+                    },
+                'Init': { 'boot_time': None }
+                }
+
+        self.stats.update_modules = __faked_update_modules
+
         my_statistics_data = self.stats.get_statistics_data()
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('Init' in my_statistics_data)
