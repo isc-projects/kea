@@ -103,8 +103,7 @@ class ZonemgrRefresh:
     can be stopped by calling shutdown() in another thread.
     """
 
-    def __init__(self, cc, db_file, slave_socket, module_cc_session):
-        self._cc = cc
+    def __init__(self, db_file, slave_socket, module_cc_session):
         self._mccs = module_cc_session
         self._check_sock = slave_socket
         self._db_file = db_file
@@ -523,7 +522,7 @@ class Zonemgr:
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket, self._module_cc)
+        self._zone_refresh = ZonemgrRefresh(self._db_file, self._slave_socket, self._module_cc)
         self._zone_refresh.run_timer()
 
         self._lock = threading.Lock()
@@ -534,7 +533,6 @@ class Zonemgr:
         """Setup two sessions for zonemgr, one(self._module_cc) is used for receiving
         commands and config data sent from other modules, another one (self._cc)
         is used to send commands to proper modules."""
-        self._cc = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                                   self.config_handler,
                                                   self.command_handler)
