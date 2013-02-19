@@ -596,8 +596,9 @@ class DDNSServer:
 
         '''
         try:
-            # FIXME? Do we really need to wait for the answer here? Shouldn't
-            # this be some kind of notification instead?
+            # FIXME? Is really rpc_call the correct one? What if there are more
+            # than one recipient of the given kind? What if none? We need to
+            # think of some kind of notification/broadcast mechanism.
             self._cc.rpc_call(command, modname, params=params)
             logger.debug(TRACE_BASIC, DDNS_UPDATE_NOTIFY, modname,
                          ZoneFormatter(zname, zclass))
