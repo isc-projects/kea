@@ -1,0 +1,28 @@
+02-mixed-recursive-authority-setup
+
+Introduction
+------------
+Ideally we will run the authoritative server independently of the
+recursive resolver.
+
+We need a way to run both an authoritative and a recursive resolver on
+a single platform, listening on the same IP/port.
+
+We have 3 basic components involved in this mix:
+
+1. Authoritative zones
+2. Cached RRSETs
+3. Non-cached information
+
+There are a number of possible approaches to this:
+
+a. Make a module that includes all logic. (The BIND 9 module?)
+b. Look at authoritative server first, and pass queries to the
+   recursive component.
+c. Make a module that combines authoritative and cache. Queries not
+   found get passed to a resolver, which also has to update the cache.
+d. Have a simple "receptionist" module which knows which zones we are
+   authoritative for and sends all queries to another daemon.
+
+Stephen did some modeling work on this already. We need to understand
+the latency and throughput implications of any of these approaches.
