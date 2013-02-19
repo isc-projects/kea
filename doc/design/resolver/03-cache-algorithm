@@ -1,0 +1,22 @@
+03-cache-algorithm
+
+Introduction
+------------
+Cache performance may be important for the resolver. It might not be
+critical. We need to research this.
+
+One key question is: given a specific cache hit rate, how much of an
+impact does cache performance have?
+
+For example, if we have 90% cache hit rate, will we still be spending
+most of our time in system calls or in looking things up in our cache?
+
+There are several ways we can consider figuring this out, including
+measuring this in existing resolvers (BIND 9, Unbound) or modeling
+with specific values.
+
+Once we know how critical the cache performance is, we can consider
+which algorithm is best for that. If it is very critical, then a
+custom algorithm designed for DNS caching makes sense. If it is not,
+then we can consider using an STL-based data structure.
+
