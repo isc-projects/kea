@@ -26,6 +26,7 @@ import http.client
 import pwd
 import getpass
 import re
+import json
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
@@ -452,6 +453,137 @@ class TestConfigCommands(unittest.TestCase):
             self.tool.send_POST =\
                 create_send_POST_raiseOnRead(ImportError())
             self.assertRaises(ImportError, self.tool._try_login, "foo", "bar")
+            self.__check_printed_messages(expected_printed_messages)
+
+        finally:
+            self.tool.send_POST = orig_send_POST
+
+    def test_have_users(self):
+        # Make sure __have_users raises the correct exception
+        # upon failure of either send_POST or the read() on the
+        # response
+
+        orig_send_POST = self.tool.send_POST
+        expected_printed_messages = []
+        try:
+            # Check what happens when cmdctl returns a HTTP server failure
+            def send_POST_HTTPFailure(self, params=None):
+                '''Replacement send_POST() method that returns a
+                HTTP failure code.'''
+                class MyResponse:
+                    def __init__(self):
+                        self.status = http.client.SERVICE_UNAVAILABLE
+                    def read(self):
+                        return ''
+                return MyResponse()
+
+            self.tool.send_POST = send_POST_HTTPFailure
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'Failure in cmdctl when checking if users already exist')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # Check what happens when cmdctl returns a result successfully
+            def create_send_POST_success(status):
+                '''Create a replacement send_POST() method that
+                successfully returns status.'''
+                def send_POST_success(self, params=None):
+                    class MyResponse:
+                        def __init__(self):
+                            self.status = http.client.OK
+                        def read(self):
+                            class MyData:
+                                def decode(self):
+                                    return json.dumps(status)
+                            return MyData()
+                    return MyResponse()
+                return send_POST_success
+
+            # Users exist
+            self.tool.send_POST = create_send_POST_success(True)
+            self.assertTrue(self.tool._have_users())
+
+            # Users don't exist
+            self.tool.send_POST = create_send_POST_success(False)
+            self.assertFalse(self.tool._have_users())
+
+            # Check what happens when send_POST() raises an exception
+            def send_POST_raiseImmediately(self, params=None):
+                raise socket.error("test error")
+
+            self.tool.send_POST = send_POST_raiseImmediately
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'Socket error checking if users exist:  test error')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # Check what happens when reading a HTTP response raises an
+            # exception
+            def create_send_POST_raiseOnRead(exception):
+                '''Create a replacement send_POST() method that raises
+                   the given exception when read() is called on the value
+                   returned from send_POST()'''
+                def send_POST_raiseOnRead(self, params=None):
+                    class MyResponse:
+                        def __init__(self):
+                            self.status = http.client.OK
+                        def read(self):
+                            raise exception
+                    return MyResponse()
+                return send_POST_raiseOnRead
+
+            # basic socket error
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(socket.error("read error"))
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'Socket error checking if users exist:  read error')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # connection reset
+            exc = socket.error("connection reset")
+            exc.errno = errno.ECONNRESET
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'Socket error checking if users exist:  '
+                'connection reset')
+            expected_printed_messages.append(
+                'Please check the logs of b10-cmdctl, there may be a '
+                'problem accepting SSL connections, such as a permission '
+                'problem on the server certificate file.'
+            )
+            self.__check_printed_messages(expected_printed_messages)
+
+            # 'normal' SSL error
+            exc = ssl.SSLError()
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'SSL error checking if users exist:  .*')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # 'EOF' SSL error
+            exc = ssl.SSLError()
+            exc.errno = ssl.SSL_ERROR_EOF
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._have_users)
+            expected_printed_messages.append(
+                'SSL error checking if users exist: .*')
+            expected_printed_messages.append(
+                'Please check the logs of b10-cmdctl, there may be a '
+                'problem accepting SSL connections, such as a permission '
+                'problem on the server certificate file.'
+            )
+            self.__check_printed_messages(expected_printed_messages)
+
+            # any other exception should be passed through
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(ImportError())
+            self.assertRaises(ImportError, self.tool._have_users)
             self.__check_printed_messages(expected_printed_messages)
 
         finally:
