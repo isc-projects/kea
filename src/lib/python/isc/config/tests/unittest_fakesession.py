@@ -28,7 +28,7 @@ class WouldBlockForever(Exception):
 class FakeModuleCCSession:
     def __init__(self):
         self.subscriptions = {}
-        # each entry is of the form [ channel, instance, message ]
+        # each entry is of the form [ channel, instance, message, want_answer ]
         self.message_queue = []
         self._socket = "ok we just need something not-None here atm"
         # if self.timeout is set to anything other than 0, and

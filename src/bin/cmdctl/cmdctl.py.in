@@ -433,7 +433,7 @@ class CommandControl():
             # from the module one (due to threads and blocking), and
             # because the plain cc session does not have the high-level
             # rpc-call method, we use the low-level way and create the
-            # command ourself.
+            # command ourselves.
             msg = ccsession.create_command(command_name, params)
             seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
             logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
