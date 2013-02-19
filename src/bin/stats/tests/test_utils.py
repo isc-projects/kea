@@ -502,15 +502,8 @@ class SimpleStats(stats.Stats):
 
     def __check_group_recvmsg(self, nonblocking, seq):
         answer = isc.config.ccsession.create_answer(
-            0, {'Init': [{
-                        "item_name": "boot_time",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "1970-01-01T00:00:00Z",
-                        "item_title": "Boot time",
-                        "item_description": "dummy desc",
-                        "item_format": "date-time"
-                        }],
+            0, {'Init':
+                    json.loads(MockInit.spec_str)['module_spec']['statistics'],
                 'Auth':
                     json.loads(MockAuth.spec_str)['module_spec']['statistics']
                 })
