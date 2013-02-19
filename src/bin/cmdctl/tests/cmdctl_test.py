@@ -156,7 +156,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
             self.handler.do_GET()
             self.assertEqual(self.handler.rcode, http.client.OK)
 
-    def test_user_logged_in(self):
+    def test_is_user_logged_in(self):
         self.handler.server.user_sessions = {}
         self.handler.session_id = 12345
         self.assertTrue(self.handler._is_user_logged_in() == False)
