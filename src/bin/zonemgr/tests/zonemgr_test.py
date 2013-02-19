@@ -77,8 +77,8 @@ class MyZonemgrRefresh(ZonemgrRefresh):
                 return None
         sqlite3_ds.get_zone_soa = get_zone_soa
 
-        ZonemgrRefresh.__init__(self, None, TEST_SQLITE3_DBFILE,
-                                self._slave_socket, FakeCCSession())
+        ZonemgrRefresh.__init__(self, TEST_SQLITE3_DBFILE, self._slave_socket,
+                                FakeCCSession())
         current_time = time.time()
         self._zonemgr_refresh_info = {
          ('example.net.', 'IN'): {
@@ -656,8 +656,8 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr.config_handler(config_data3)
         self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
         # The zone doesn't exist in database, simply skip loading soa for it and log an warning
-        self.zonemgr._zone_refresh = ZonemgrRefresh(None, TEST_SQLITE3_DBFILE,
-                                                    None, FakeCCSession())
+        self.zonemgr._zone_refresh = ZonemgrRefresh(TEST_SQLITE3_DBFILE, None,
+                                                    FakeCCSession())
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
         self.assertEqual(self.zonemgr.config_handler(config_data1),
