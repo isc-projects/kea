@@ -982,7 +982,6 @@ class XfrinConnection(asyncore.dispatcher):
                          format_addrinfo(self._master_addrinfo))
             ret = XFRIN_FAIL
         except XfrinProtocolError as e:
-            # FIXME: Why is this .info? Even the messageID contains "ERROR".
             logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION, req_str,
                         self.zone_str(),
                         format_addrinfo(self._master_addrinfo), str(e))
