@@ -190,12 +190,19 @@ class Stats:
     """
     Main class of stats module
     """
-    def __init__(self):
+    def __init__(self, module_ccsession_class=isc.config.ModuleCCSession):
+        '''Constructor
+
+        module_ccsession_class is parameterized so that test can specify
+        a mocked class to test the behavior without involing network I/O.
+        In other cases this parameter shouldn't be specified.
+
+        '''
         self.running = False
         # create ModuleCCSession object
-        self.mccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
-                                               self.config_handler,
-                                               self.command_handler)
+        self.mccs = module_ccsession_class(SPECFILE_LOCATION,
+                                           self.config_handler,
+                                           self.command_handler)
         self.cc_session = self.mccs._session
         # get module spec
         self.module_name = self.mccs.get_module_spec().get_module_name()
@@ -225,7 +232,16 @@ class Stats:
                 ])
         # set a absolute timestamp polling at next time
         self.next_polltime = get_timestamp() + self.get_interval()
-        # initialized Statistics data
+
+        self._init_statistics_data()
+
+    def _init_statistics_data(self):
+        """initialized Statistics data.
+
+        This method is a dedicated subroutine of __int__(), but extracted
+        so tests can override it to avoid blocking network operation.
+
+        """
         self.update_modules()
         if self.update_statistics_data(
             self.module_name,
@@ -338,31 +354,35 @@ class Stats:
         # if successfully done, set the last time of polling
         self._lasttime_poll = get_timestamp()
 
+    def _check_command(self, nonblock=False):
+        """check invoked command by waiting for 'poll-interval' seconds
+
+        This is a dedicated subroutine of start(), but extracted and defined
+        as a 'protected' method so that tests can replace it.
+
+        """
+        # backup original timeout
+        orig_timeout = self.cc_session.get_timeout()
+        # set cc-session timeout to half of a second(500ms)
+        self.cc_session.set_timeout(500)
+        try:
+            answer, env = self.cc_session.group_recvmsg(nonblock)
+            self.mccs.check_command_without_recvmsg(answer, env)
+        except isc.cc.session.SessionTimeout:
+            pass # waited for poll-interval seconds
+        # restore timeout
+        self.cc_session.set_timeout(orig_timeout)
+
     def start(self):
         """
         Start stats module
         """
         logger.info(STATS_STARTING)
 
-        def _check_command(nonblock=False):
-            """check invoked command by waiting for 'poll-interval'
-            seconds"""
-            # backup original timeout
-            orig_timeout = self.cc_session.get_timeout()
-            # set cc-session timeout to half of a second(500ms)
-            self.cc_session.set_timeout(500)
-            try:
-                answer, env = self.cc_session.group_recvmsg(nonblock)
-                self.mccs.check_command_without_recvmsg(answer, env)
-            except isc.cc.session.SessionTimeout:
-                pass # waited for poll-interval seconds
-            # restore timeout
-            self.cc_session.set_timeout(orig_timeout)
-
         try:
             self.running = True
             while self.running:
-                _check_command()
+                self._check_command()
                 now = get_timestamp()
                 intval = self.get_interval()
                 if intval > 0 and now >= self.next_polltime:
