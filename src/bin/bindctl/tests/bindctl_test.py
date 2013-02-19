@@ -459,7 +459,7 @@ class TestConfigCommands(unittest.TestCase):
             self.tool.send_POST = orig_send_POST
 
     def test_have_users(self):
-        # Make sure __have_users raises the correct exception
+        # Make sure _have_users raises the correct exception
         # upon failure of either send_POST or the read() on the
         # response
 
@@ -588,6 +588,45 @@ class TestConfigCommands(unittest.TestCase):
 
         finally:
             self.tool.send_POST = orig_send_POST
+
+    def test_have_users_calls_cmdctl(self):
+        # Make sure _have_users() makes the right API call to
+        # cmdctl. This also checks that send_POST() can handle an empty
+        # post_param.
+        orig_conn = self.tool.conn
+        try:
+            class MyConn:
+                def __init__(self):
+                    self.method = None
+                    self.url = None
+                    self.param = None
+                    self.headers = None
+
+                def request(self, method, url, param, headers):
+                    self.method = method
+                    self.url = url
+                    self.param = param
+                    self.headers = headers
+
+                def getresponse(self):
+                    class MyResponse:
+                        def __init__(self):
+                            self.status = http.client.OK
+                        def read(self):
+                            class MyData:
+                                def decode(self):
+                                    return json.dumps(True)
+                            return MyData()
+                    return MyResponse()
+
+            self.tool.conn = MyConn()
+            self.assertTrue(self.tool._have_users())
+            self.assertEqual(self.tool.conn.method, 'POST')
+            self.assertEqual(self.tool.conn.url, '/users-exist')
+            self.assertIsNone(self.tool.conn.param)
+            self.assertIn('cookie', self.tool.conn.headers)
+        finally:
+            self.tool.conn = orig_conn
 
     def test_run(self):
         def login_to_cmdctl():
