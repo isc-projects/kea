@@ -176,7 +176,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         is_user_valid, error_info = self._check_user_name_and_pwd()
         if is_user_valid:
             self.server.save_user_session_id(self.session_id)
-            return http.client.OK, ["login success "]
+            return http.client.OK, ["login success"]
         else:
             return http.client.UNAUTHORIZED, error_info
 
