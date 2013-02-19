@@ -253,6 +253,10 @@ class Stats:
         # 'show_processes' of Init
         try:
             value = self.mccs.rpc_call('show_processes', 'Init')
+        except isc.config.RPCRecipientMissing:
+            # This has been SessionTimeout before, so we keep the original
+            # behavior.
+            raise
         except isc.config.RPCError:
             # TODO: Is it OK to just pass? As part of refactoring, preserving
             # the original behaviour.
