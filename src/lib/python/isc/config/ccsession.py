@@ -92,7 +92,7 @@ def parse_answer(msg):
         raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
         if len(msg['result']) > 1:
-            if (msg['result'][0] != CC_REPLY_SUCCESS and \
+            if (msg['result'][0] != CC_REPLY_SUCCESS and
                 type(msg['result'][1]) != str):
                 raise ModuleCCSessionError("rcode in answer message is non-zero, value is not a string")
             return msg['result'][0], msg['result'][1]
