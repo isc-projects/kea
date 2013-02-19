@@ -279,7 +279,10 @@ class ZonemgrRefresh:
         """Send command between modules."""
         try:
             self._mccs.rpc_call(command_name, module_name, params=params)
-        except socket.error: # FIXME: WTF?
+        except socket.error:
+            # FIXME: WTF? Where does socket.error come from? And how do we ever
+            # dare ignore such serious error? It can only be broken link to
+            # msgq, we need to terminate then.
             logger.error(ZONEMGR_SEND_FAIL, module_name)
         except (isc.cc.session.SessionTimeout, isc.config.RPCError):
             pass        # for now we just ignore the failure
