@@ -253,38 +253,38 @@ class Stats:
         # 'show_processes' of Init
         try:
             value = self.mccs.rpc_call('show_processes', 'Init')
-            if type(value) is list:
-                # NOTE: For example, the "show_processes" command
-                # of Init is assumed to return the response in this
-                # format:
-                #  [
-                #  ...
-                #    [
-                #      20061,
-                #      "b10-auth",
-                #      "Auth"
-                #    ],
-                #    [
-                #      20103,
-                #      "b10-auth-2",
-                #      "Auth"
-                #    ]
-                #  ...
-                #  ]
-                # If multiple instances of the same module are
-                # running, the address names of them, which are at the
-                # third element, must be also same. Thus, the value of
-                # the third element of each outer element is read here
-                # for counting multiple instances.  This is a
-                # workaround for counting the instances. This should
-                # be fixed in another proper way in the future
-                # release.
-                modules = [ v[2] if type(v) is list and len(v) > 2 \
-                                else None for v in value ]
         except isc.config.RPCError:
             # TODO: Is it OK to just pass? As part of refactoring, preserving
             # the original behaviour.
             pass
+        if type(value) is list:
+            # NOTE: For example, the "show_processes" command
+            # of Init is assumed to return the response in this
+            # format:
+            #  [
+            #  ...
+            #    [
+            #      20061,
+            #      "b10-auth",
+            #      "Auth"
+            #    ],
+            #    [
+            #      20103,
+            #      "b10-auth-2",
+            #      "Auth"
+            #    ]
+            #  ...
+            #  ]
+            # If multiple instances of the same module are
+            # running, the address names of them, which are at the
+            # third element, must be also same. Thus, the value of
+            # the third element of each outer element is read here
+            # for counting multiple instances.  This is a
+            # workaround for counting the instances. This should
+            # be fixed in another proper way in the future
+            # release.
+            modules = [ v[2] if type(v) is list and len(v) > 2 \
+                            else None for v in value ]
         # start requesting each module to collect statistics data
         sequences = []
         for (module_name, data) in self.get_statistics_data().items():
