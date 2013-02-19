@@ -1,0 +1,21 @@
+01-scaling-across-cores
+
+Introduction
+------------
+The general issue is how to insure that the resolver scales.
+
+Currently resolvers are CPU bound, and it seems likely that both
+instructions-per-cycle and CPU frequency will not increase radically,
+scaling will need to be across multiple cores.
+
+How can we best scale a recursive resolver across multiple cores?
+
+Some possible solutions:
+
+a. Multiple processes with independent caches
+b. Multiple processes with shared cache
+c. A mix of independent/shared cache
+d. Thread variations of the above
+
+All of these may be complicated by NUMA architectures (with
+faster/slower access to specific RAM).
