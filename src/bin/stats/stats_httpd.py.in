@@ -460,12 +460,13 @@ class StatsHttpd:
             param['name'] = name
         try:
             return self.mccs.rpc_call('show', 'Stats', params=param)
-        except isc.config.RPCError as e:
-            raise StatsHttpdDataError("Stats module: %s" % str(e))
         except (isc.cc.session.SessionTimeout,
-                isc.cc.session.SessionError) as err:
+                isc.cc.session.SessionError,
+                isc.config.RPCRecipientMissing) as err:
             raise StatsHttpdError("%s: %s" %
                                   (err.__class__.__name__, err))
+        except isc.config.RPCError as e:
+            raise StatsHttpdDataError("Stats module: %s" % str(e))
 
     def get_stats_spec(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
