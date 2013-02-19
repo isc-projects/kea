@@ -628,6 +628,22 @@ class TestConfigCommands(unittest.TestCase):
         finally:
             self.tool.conn = orig_conn
 
+    def test_login_to_cmdctl_calls_have_users(self):
+        # Test that login_to_cmdctl() calls _have_users() and fails if
+        # _have_users() returns False.
+        orig_have_users = self.tool._have_users
+        try:
+            def my_have_users():
+                return False
+
+            self.tool._have_users = my_have_users
+            self.assertFalse(self.tool.login_to_cmdctl())
+            self.__check_printed_messages(
+                ['There are no existing users. Please configure '
+                 'a user account using b10-cmdctl-usermgr.'])
+        finally:
+            self.tool._have_users = orig_have_users
+
     def test_run(self):
         def login_to_cmdctl():
             return True
