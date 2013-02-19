@@ -248,11 +248,17 @@ class TestStats(unittest.TestCase):
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
+        # Record original module-defined functions in case we replay them
+        self.__orig_timestamp = stats.get_timestamp
+        self.__orig_get_datetime = stats.get_datetime
 
     def tearDown(self):
         self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
+        # restore the stored original function in case we replaced them
+        stats.get_timestamp = self.__orig_timestamp
+        stats.get_datetime = self.__orig_get_datetime
 
     def test_init(self):
         self.stats = stats.Stats()
@@ -295,6 +301,9 @@ class TestStats(unittest.TestCase):
         def _init_statistics_data(self):
             pass
 
+        def get_datetime(self):
+            return 42
+
     def __send_command(self, stats, command_name, params=None):
         '''Emulate a command arriving to stats by directly calling callback'''
         return isc.config.ccsession.parse_answer(
@@ -335,75 +344,80 @@ class TestStats(unittest.TestCase):
         self.assertTrue(stats.mccs.stopped)
 
     def test_handlers(self):
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats = self.stats_server.server
-        self.stats_server.run()
+        """Test command_handler"""
 
-        # command_handler
+        __stats = self.SimpleStat()
+
+        # 'show' command.  We're going to check the expected methods are
+        # called in the expected order, and check the resulting response.
+        # Details of each method are tested separately.
+        call_log = []
+        def __steal_method(fn_name, *arg):
+            call_log.append((fn_name, arg))
+            if fn_name == 'update_stat':
+                return False        # "no error"
+            if fn_name == 'showschema':
+                return isc.config.create_answer(0, 'no error')
+
+        # Fake some methods and attributes for inspection
+        __stats.do_polling = lambda: __steal_method('polling')
+        __stats.update_statistics_data = \
+            lambda x, y, z: __steal_method('update_stat', x, y, z)
+        __stats.update_modules = lambda: __steal_method('update_module')
+        __stats.mccs.lname = 'test lname'
+        __stats.statistics_data = {'Init': {'boot_time': self.const_datetime}}
+
+        # skip initial polling
+        stats.get_timestamp = lambda: 0
+        __stats._lasttime_poll = 0
+
+        stats.get_datetime = lambda: 42 # make the result predictable
+
+        # now send the command
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                __stats, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
+        # Check if expected methods are called
+        self.assertEqual([('update_stat',
+                           ('Stats', 'test lname',
+                            {'timestamp': 0,
+                             'report_time': 42})),
+                          ('update_module', ())], call_log)
+
+        # Then update faked timestamp so the intial polling will happen, and
+        # confirm that.
+        call_log = []
+        stats.get_timestamp = lambda: 10
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                __stats, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
+        self.assertEqual([('polling', ()),
+                          ('update_stat',
+                           ('Stats', 'test lname',
+                            {'timestamp': 10,
+                             'report_time': 42})),
+                          ('update_module', ())], call_log)
+
+        # 'status' command.  We can confirm the behavior without any fake
         self.assertEqual(
-            send_command('status', 'Stats'),
+            self.__send_command(__stats, 'status'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
 
-        (rcode, value) = send_command('show', 'Stats')
-        self.assertEqual(rcode, 0)
-        self.assertEqual(len(value), 3)
-        self.assertTrue('Init' in value)
-        self.assertTrue('Stats' in value)
-        self.assertTrue('Auth' in value)
-        self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Init']), 1)
-        self.assertTrue('boot_time' in value['Init'])
-        self.assertEqual(value['Init']['boot_time'], self.const_datetime)
-        self.assertTrue('report_time' in value['Stats'])
-        self.assertTrue('boot_time' in value['Stats'])
-        self.assertTrue('last_update_time' in value['Stats'])
-        self.assertTrue('timestamp' in value['Stats'])
-        self.assertTrue('lname' in value['Stats'])
-        (rcode, value) = send_command('showschema', 'Stats')
-        self.assertEqual(rcode, 0)
-        self.assertEqual(len(value), 3)
-        self.assertTrue('Init' in value)
-        self.assertTrue('Stats' in value)
-        self.assertTrue('Auth' in value)
-        self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Init']), 1)
-        for item in value['Init']:
-            self.assertTrue(len(item) == 7)
-            self.assertTrue('item_name' in item)
-            self.assertTrue('item_type' in item)
-            self.assertTrue('item_optional' in item)
-            self.assertTrue('item_default' in item)
-            self.assertTrue('item_title' in item)
-            self.assertTrue('item_description' in item)
-            self.assertTrue('item_format' in item)
-        for item in value['Stats']:
-            self.assertTrue(len(item) == 6 or len(item) == 7)
-            self.assertTrue('item_name' in item)
-            self.assertTrue('item_type' in item)
-            self.assertTrue('item_optional' in item)
-            self.assertTrue('item_default' in item)
-            self.assertTrue('item_title' in item)
-            self.assertTrue('item_description' in item)
-            if len(item) == 7:
-                self.assertTrue('item_format' in item)
+        # 'showschema' command.  update_modules() will be called, which
+        # (implicitly) cofirms the correct method is called; further details
+        # are tested seprately.
+        call_log = []
+        (rcode, value) = self.__send_command(__stats, 'showschema')
+        self.assertEqual([('update_module', ())], call_log)
 
+        # Unknown command.  Error should be returned
         self.assertEqual(
-            send_command('__UNKNOWN__', 'Stats'),
+            self.__send_command(__stats, '__UNKNOWN__'),
             (1, "Unknown command: '__UNKNOWN__'"))
-
-        self.stats_server.shutdown()
 
     def test_update_modules(self):
         self.stats = stats.Stats()
