@@ -32,7 +32,8 @@ import sys
 import stats
 import isc.log
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command
+from test_utils import BaseModules, ThreadingServerManager, MyStats, \
+    SignalHandler, MyModuleCCSession, send_command
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -287,29 +288,51 @@ class TestStats(unittest.TestCase):
         self.assertRaises(stats.StatsError, stats.Stats)
         stats.SPECFILE_LOCATION = orig_spec_location
 
+    class SimpleStat(stats.Stats):
+        def __init__(self):
+            stats.Stats.__init__(self, MyModuleCCSession)
+
+        def _init_statistics_data(self):
+            pass
+
+    def __send_command(self, stats, command_name, params=None):
+        '''Emulate a command arriving to stats by directly calling callback'''
+        return isc.config.ccsession.parse_answer(
+            stats.command_handler(command_name, params))
+
     def test_start(self):
+        # Define a separate exception class so we can be sure that's actually
+        # the one raised in __check_start() below
+        class CheckException(Exception):
+            pass
+
+        def __check_start(tested_stats):
+            self.assertTrue(tested_stats.running)
+            raise CheckException # terminate the loop
+
         # start without err
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats = self.stats_server.server
-        self.assertFalse(self.stats.running)
-        self.stats_server.run()
-        self.assertEqual(send_command("status", "Stats"),
-                (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
-        self.assertTrue(self.stats.running)
-        # Due to a race-condition related to the threads used in these
-        # tests, use of the mock session and the stopped check (see
-        # below), are temporarily disabled
-        # See ticket #1668
-        # Override moduleCCSession so we can check if send_stopping is called
-        #self.stats.mccs = MockModuleCCSession()
-        self.assertEqual(send_command("shutdown", "Stats"), (0, None))
-        self.assertFalse(self.stats.running)
-        # Call server.shutdown with argument True so the thread.join() call
-        # blocks and we are sure the main loop has finished (and set
-        # mccs.stopped)
-        self.stats_server.shutdown(True)
-        # Also temporarily disabled for #1668, see above
-        #self.assertTrue(self.stats.mccs.stopped)
+        stats = self.SimpleStat()
+        self.assertFalse(stats.running)
+        stats._check_command = lambda: __check_start(stats)
+        # We are going to confirm start() will set running to True, avoidng
+        # to fall into a loop with the exception trick.
+        self.assertRaises(CheckException, stats.start)
+        self.assertEqual(self.__send_command(stats, "status"),
+                         (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+
+    def test_shutdown(self):
+        def __check_shutdown(tested_stats):
+            self.assertTrue(tested_stats.running)
+            self.assertEqual(self.__send_command(tested_stats, "shutdown"),
+                             (0, None))
+            self.assertFalse(tested_stats.running)
+            # override get_interval() so it won't go poll statistics
+            tested_stats.get_interval = lambda : 0
+
+        stats = self.SimpleStat()
+        stats._check_command = lambda: __check_shutdown(stats)
+        stats.start()
+        self.assertTrue(stats.mccs.stopped)
 
     def test_handlers(self):
         self.stats_server = ThreadingServerManager(MyStats)

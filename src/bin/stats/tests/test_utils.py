@@ -455,6 +455,26 @@ class MockAuth:
             return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
 
+class MyModuleCCSession(isc.config.ConfigData):
+    """Mocked ModuleCCSession class.
+
+    This class incorporates the module spec directly from the file,
+    and works as if the ModuleCCSession class as much as possible
+    without involving network I/O.
+
+    """
+    def __init__(self, spec_file, config_handler, command_handler):
+        module_spec = isc.config.module_spec_from_file(spec_file)
+        isc.config.ConfigData.__init__(self, module_spec)
+        self._session = self
+        self.stopped = False
+
+    def start(self):
+        pass
+
+    def send_stopping(self):
+        self.stopped = True     # just record it's called to inspect it later
+
 class MyStats(stats.Stats):
 
     stats._BASETIME = CONST_BASETIME
