@@ -97,7 +97,9 @@ def check_file(file_name):
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
-    def __init__(self):
+    def __init__(self, request, client_address, server):
+        http.server.BaseHTTPRequestHandler.__init__(self, request,
+                                                    client_address, server)
         self.session_id = None
 
     def do_GET(self):
