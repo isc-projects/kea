@@ -92,7 +92,8 @@ def parse_answer(msg):
         raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
         if len(msg['result']) > 1:
-            if (msg['result'][0] != 0 and type(msg['result'][1]) != str):
+            if (msg['result'][0] != CC_REPLY_SUCCESS and \
+                type(msg['result'][1]) != str):
                 raise ModuleCCSessionError("rcode in answer message is non-zero, value is not a string")
             return msg['result'][0], msg['result'][1]
         else:
@@ -105,7 +106,7 @@ def create_answer(rcode, arg = None):
        a string containing an error message"""
     if type(rcode) != int:
         raise ModuleCCSessionError("rcode in create_answer() must be an integer")
-    if rcode != 0 and type(arg) != str:
+    if rcode != CC_REPLY_SUCCESS and type(arg) != str:
         raise ModuleCCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
     if arg != None:
         return { 'result': [ rcode, arg ] }
@@ -325,7 +326,7 @@ class ModuleCCSession(ConfigData):
                         isc.cc.data.remove_identical(new_config, self.get_local_config())
                         answer = self._config_handler(new_config)
                         rcode, val = parse_answer(answer)
-                        if rcode == 0:
+                        if rcode == CC_REPLY_SUCCESS:
                             newc = self.get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self.set_local_config(newc)
@@ -533,7 +534,7 @@ class ModuleCCSession(ConfigData):
         code, value = parse_answer(reply)
         if code == CC_REPLY_NO_RECPT:
             raise RPCRecipientMissing(value)
-        elif code != 0:
+        elif code != CC_REPLY_SUCCESS:
             raise RPCError(code, value)
         return value
 

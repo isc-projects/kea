@@ -38,6 +38,7 @@ const char* const CC_COMMAND_SEND = "send";
 const char* const CC_TO_WILDCARD = "*";
 const char* const CC_INSTANCE_WILDCARD = "*";
 // Reply codes
+const int CC_REPLY_SUCCESS = 0;
 const int CC_REPLY_NO_RECPT = -1;
 
 }
