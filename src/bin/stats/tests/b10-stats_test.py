@@ -33,7 +33,7 @@ import stats
 import isc.log
 import isc.cc.session
 from test_utils import BaseModules, ThreadingServerManager, MyStats, \
-    SignalHandler, MyModuleCCSession, send_command
+    SimpleStats, SignalHandler, MyModuleCCSession, send_command
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -294,16 +294,6 @@ class TestStats(unittest.TestCase):
         self.assertRaises(stats.StatsError, stats.Stats)
         stats.SPECFILE_LOCATION = orig_spec_location
 
-    class SimpleStat(stats.Stats):
-        def __init__(self):
-            stats.Stats.__init__(self, MyModuleCCSession)
-
-        def _init_statistics_data(self):
-            pass
-
-        def get_datetime(self):
-            return 42
-
     def __send_command(self, stats, command_name, params=None):
         '''Emulate a command arriving to stats by directly calling callback'''
         return isc.config.ccsession.parse_answer(
@@ -320,7 +310,7 @@ class TestStats(unittest.TestCase):
             raise CheckException # terminate the loop
 
         # start without err
-        stats = self.SimpleStat()
+        stats = SimpleStats()
         self.assertFalse(stats.running)
         stats._check_command = lambda: __check_start(stats)
         # We are going to confirm start() will set running to True, avoidng
@@ -338,7 +328,7 @@ class TestStats(unittest.TestCase):
             # override get_interval() so it won't go poll statistics
             tested_stats.get_interval = lambda : 0
 
-        stats = self.SimpleStat()
+        stats = SimpleStats()
         stats._check_command = lambda: __check_shutdown(stats)
         stats.start()
         self.assertTrue(stats.mccs.stopped)
@@ -346,7 +336,7 @@ class TestStats(unittest.TestCase):
     def test_handlers(self):
         """Test command_handler"""
 
-        __stats = self.SimpleStat()
+        __stats = SimpleStats()
 
         # 'show' command.  We're going to check the expected methods are
         # called in the expected order, and check the resulting response.
@@ -443,14 +433,15 @@ class TestStats(unittest.TestCase):
                             "item_name": "boot_time",
                             "item_type": "string",
                             "item_optional": False,
-                            "item_default": "1970-01-01T00:00:00Z",
+                            # Use a different default so we can check it below
+                            "item_default": "2013-01-01T00:00:01Z",
                             "item_title": "Boot time",
                             "item_description": "dummy desc",
                             "item_format": "date-time"
                             }]})
             return answer, None
 
-        self.stats = self.SimpleStat()
+        self.stats = SimpleStats()
         self.stats.cc_session.group_sendmsg = __check_group_sendmsg
         self.stats.cc_session.group_recvmsg = __check_group_recvmsg
 
@@ -481,7 +472,7 @@ class TestStats(unittest.TestCase):
             self.stats.modules['Init'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertEqual(my_statistics_data['boot_time'],
-                         self.const_default_datetime)
+                         "2013-01-01T00:00:01Z")
 
         # Error case
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
@@ -497,7 +488,7 @@ class TestStats(unittest.TestCase):
         where we set the expected data in statistics_data.
 
         """
-        self.stats = self.SimpleStat()
+        self.stats = SimpleStats()
         def __faked_update_modules():
             self.stats.statistics_data = { \
                 'Stats': {
@@ -556,7 +547,7 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data(self):
         """test for list-type statistics"""
-        self.stats = stats.Stats()
+        self.stats = SimpleStats()
         _test_exp1 = {
               'zonename': 'test1.example',
               'queries.tcp': 5,

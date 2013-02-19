@@ -476,6 +476,46 @@ class MyModuleCCSession(isc.config.ConfigData):
     def send_stopping(self):
         self.stopped = True     # just record it's called to inspect it later
 
+class SimpleStats(stats.Stats):
+    def __init__(self):
+        # Since we replace _init_statistics_data, this doesn't cause
+        # any network I/O
+        stats.Stats.__init__(self, MyModuleCCSession)
+
+        # replace some (faked) ModuleCCSession methods so we can avoid
+        # network I/O, then call _init_statistics_data.  This will
+        # get the Stats module info from the file directly and some
+        # amount information about the Init and Auth modules (hardcoded below).
+        self.cc_session.group_sendmsg = self.__check_group_sendmsg
+        self.cc_session.group_recvmsg = self.__check_group_recvmsg
+        stats.Stats._init_statistics_data(self)
+
+    def _init_statistics_data(self):
+        pass
+
+    def get_datetime(self):
+        return 42
+
+    def __check_group_sendmsg(self, command, destination):
+        cmd, value = isc.config.ccsession.parse_command(command)
+        return 4200           # faked seq number
+
+    def __check_group_recvmsg(self, nonblocking, seq):
+        answer = isc.config.ccsession.create_answer(
+            0, {'Init': [{
+                        "item_name": "boot_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        "item_default": "1970-01-01T00:00:00Z",
+                        "item_title": "Boot time",
+                        "item_description": "dummy desc",
+                        "item_format": "date-time"
+                        }],
+                'Auth':
+                    json.loads(MockAuth.spec_str)['module_spec']['statistics']
+                })
+        return answer, None
+
 class MyStats(stats.Stats):
 
     stats._BASETIME = CONST_BASETIME
