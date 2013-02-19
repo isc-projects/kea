@@ -69,7 +69,7 @@ it's just a timing issue.  The number of total failed attempts is also
 logged.  If it reaches an internal threshold b10-ddns considers it a
 fatal error and terminates.  Even in that case, if b10-ddns is
 configured as a "dispensable" component (which is the default), the
-parent bind10 process will restart it, and there will be another
+parent ("init") process will restart it, and there will be another
 chance of getting the remote configuration successfully.  These are
 not the optimal behavior, but it's believed to be sufficient in
 practice (there would normally be no failure in the first place).  If
