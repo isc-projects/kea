@@ -299,8 +299,10 @@ class Stats:
                          module_name)
             cmd = isc.config.ccsession.create_command(
                 "getstats", None) # no argument
-            # Not using rpc_call here, we query a lot of modules in parallel
-            # here
+            # Not using rpc_call here. We first send a bunch of commands, then
+            # collect all the answers. This eliminates some of the round-time
+            # trips. Unfortunately, rpc_call is not flexible enough to allow
+            # this, though the future rpc_call_async could.
             seq = self.cc_session.group_sendmsg(cmd, module_name,
                                                 want_answer=True)
             sequences.append((module_name, seq))
