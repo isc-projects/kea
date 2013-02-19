@@ -420,26 +420,70 @@ class TestStats(unittest.TestCase):
             (1, "Unknown command: '__UNKNOWN__'"))
 
     def test_update_modules(self):
-        self.stats = stats.Stats()
-        self.assertEqual(len(self.stats.modules), 3) # Auth, Init, Stats
+        """Confirm the behavior of Stats.update_modules().
+
+        It checks whether the expected command is sent to ConfigManager,
+        and whether the answer from ConfigManager is handled as expected.
+
+        """
+
+        def __check_group_sendmsg(command, destination):
+            self.assertEqual('ConfigManager', destination)
+            cmd, value = isc.config.ccsession.parse_command(command)
+            self.assertEqual(cmd,
+                             isc.config.ccsession.COMMAND_GET_STATISTICS_SPEC)
+            self.assertEqual(None, value)
+            return 42           # faked seq number
+
+        def __check_group_recvmsg(nonblocking, seq):
+            self.assertFalse(nonblocking)
+            self.assertEqual(42, seq) # should be the one returned above
+            answer = isc.config.ccsession.create_answer(
+                0, {'Init': [{
+                            "item_name": "boot_time",
+                            "item_type": "string",
+                            "item_optional": False,
+                            "item_default": "1970-01-01T00:00:00Z",
+                            "item_title": "Boot time",
+                            "item_description": "dummy desc",
+                            "item_format": "date-time"
+                            }]})
+            return answer, None
+
+        self.stats = self.SimpleStat()
+        self.stats.cc_session.group_sendmsg = __check_group_sendmsg
+        self.stats.cc_session.group_recvmsg = __check_group_recvmsg
+
         self.stats.update_modules()
+
+        # Stats is always inconrporated.  For others, only the ones returned
+        # by group_recvmsg() above is available.
         self.assertTrue('Stats' in self.stats.modules)
         self.assertTrue('Init' in self.stats.modules)
         self.assertFalse('Dummy' in self.stats.modules)
-        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Stats'].get_statistics_spec())
+
+        my_statistics_data = stats.get_spec_defaults(
+            self.stats.modules['Stats'].get_statistics_spec())
         self.assertTrue('report_time' in my_statistics_data)
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertTrue('last_update_time' in my_statistics_data)
         self.assertTrue('timestamp' in my_statistics_data)
         self.assertTrue('lname' in my_statistics_data)
-        self.assertEqual(my_statistics_data['report_time'], self.const_default_datetime)
-        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
-        self.assertEqual(my_statistics_data['last_update_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['report_time'],
+                         self.const_default_datetime)
+        self.assertEqual(my_statistics_data['boot_time'],
+                         self.const_default_datetime)
+        self.assertEqual(my_statistics_data['last_update_time'],
+                         self.const_default_datetime)
         self.assertEqual(my_statistics_data['timestamp'], 0.0)
         self.assertEqual(my_statistics_data['lname'], "")
-        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Init'].get_statistics_spec())
+        my_statistics_data = stats.get_spec_defaults(
+            self.stats.modules['Init'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
-        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['boot_time'],
+                         self.const_default_datetime)
+
+        # Error case
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
         stats.isc.config.ccsession.parse_answer = lambda x: (99, 'error')
         self.assertRaises(stats.StatsError, self.stats.update_modules)
@@ -451,6 +495,7 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('Init' in my_statistics_data)
         self.assertTrue('boot_time' in my_statistics_data['Init'])
+
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('report_time' in my_statistics_data['Stats'])
@@ -458,16 +503,28 @@ class TestStats(unittest.TestCase):
         self.assertTrue('last_update_time' in my_statistics_data['Stats'])
         self.assertTrue('timestamp' in my_statistics_data['Stats'])
         self.assertTrue('lname' in my_statistics_data['Stats'])
-        self.assertRaises(stats.StatsError, self.stats.get_statistics_data, owner='Foo')
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
-        self.assertEqual(my_statistics_data['Stats']['report_time'], self.const_default_datetime)
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='boot_time')
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
+                          owner='Foo')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='report_time')
+        self.assertEqual(my_statistics_data['Stats']['report_time'],
+                         self.const_default_datetime)
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='boot_time')
         self.assertTrue('boot_time' in my_statistics_data['Stats'])
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='last_update_time')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='last_update_time')
         self.assertTrue('last_update_time' in my_statistics_data['Stats'])
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='timestamp')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='timestamp')
         self.assertEqual(my_statistics_data['Stats']['timestamp'], 0.0)
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='lname')
         self.assertTrue(len(my_statistics_data['Stats']['lname']) >0)
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
                           owner='Stats', name='Bar')
