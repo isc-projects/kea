@@ -468,6 +468,7 @@ class MyModuleCCSession(isc.config.ConfigData):
         isc.config.ConfigData.__init__(self, module_spec)
         self._session = self
         self.stopped = False
+        self.lname = 'mock_mod_ccs'
 
     def start(self):
         pass
