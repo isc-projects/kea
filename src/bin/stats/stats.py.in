@@ -491,16 +491,16 @@ class Stats:
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
         messages. If there is no error or if neither owner nor data is
-        specified in args, it returns None. The 'mid' argument is an identifier of
-        the sender module in order for stats to identify which
+        specified in args, it returns None. The 'mid' argument is an
+        identifier of the sender module in order for stats to identify which
         instance sends statistics data in the situation that multiple
         instances are working.
         """
         # Note:
         # The fix of #1751 is for multiple instances working. It is
         # assumed here that they send different statistics data with
-        # each sender module id (mid). Stats should save their statistics data by
-        # mid. The statistics data, which is the existing variable, is
+        # each sender module id (mid). Stats should save their statistics data
+        # by mid. The statistics data, which is the existing variable, is
         # preserved by accumlating from statistics data by the mid. This
         # is an ad-hoc fix because administrators can not see
         # statistics by each instance via bindctl or HTTP/XML. These
@@ -567,8 +567,7 @@ class Stats:
                             __data[owner][mid] = {}
                         # use the isc.cc.data.set method
                         try:
-                            isc.cc.data.set(__data[owner][mid],
-                                            _key, _val)
+                            isc.cc.data.set(__data[owner][mid], _key, _val)
                             if self.modules[owner].validate_statistics(
                                 False, __data[owner][mid], errors):
                                 _data = __data
