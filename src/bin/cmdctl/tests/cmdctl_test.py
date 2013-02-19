@@ -323,6 +323,67 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         finally:
             self.handler.server.get_num_users = orig_get_num_users
 
+    def test_handle_login(self):
+        orig_is_user_logged_in = self.handler._is_user_logged_in
+        orig_check_user_name_and_pwd = self.handler._check_user_name_and_pwd
+        try:
+            def create_is_user_logged_in(status):
+                '''Create a replacement _is_user_logged_in() method.'''
+                def my_is_user_logged_in():
+                    return status
+                return my_is_user_logged_in
+
+            # Check case where _is_user_logged_in() returns True
+            self.handler._is_user_logged_in = create_is_user_logged_in(True)
+            self.handler.headers['cookie'] = 12345
+            self.handler.path = '/login'
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.OK)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()), ['user has already login'])
+
+            # Clear the output
+            self.handler.wfile.seek(0, 0)
+            self.handler.wfile.truncate()
+
+            # Check case where _is_user_logged_in() returns False
+            self.handler._is_user_logged_in = create_is_user_logged_in(False)
+
+            def create_check_user_name_and_pwd(status, error_info=None):
+                '''Create a replacement _check_user_name_and_pwd() method.'''
+                def my_check_user_name_and_pwd():
+                    return status, error_info
+                return my_check_user_name_and_pwd
+
+            # (a) Check case where _check_user_name_and_pwd() returns
+            # valid user status
+            self.handler._check_user_name_and_pwd = \
+                create_check_user_name_and_pwd(True)
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.OK)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()), ['login success'])
+
+            # Clear the output
+            self.handler.wfile.seek(0, 0)
+            self.handler.wfile.truncate()
+
+            # (b) Check case where _check_user_name_and_pwd() returns
+            # invalid user status
+            self.handler._check_user_name_and_pwd = \
+                create_check_user_name_and_pwd(False, ['login failed'])
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.UNAUTHORIZED)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()), ['login failed'])
+
+        finally:
+            self.handler._is_user_logged_in = orig_is_user_logged_in
+            self.handler._check_user_name_and_pwd = orig_check_user_name_and_pwd
+
 class MyCommandControl(CommandControl):
     def _get_modules_specification(self):
         return {}
