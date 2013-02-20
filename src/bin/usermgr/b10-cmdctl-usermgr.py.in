@@ -19,6 +19,7 @@
 This file implements user management program. The user name and
 its password is appended to csv file.
 '''
+from bind10_config import SYSCONFPATH
 import random
 from hashlib import sha1
 import csv
@@ -31,7 +32,7 @@ import isc.util.process
 isc.util.process.rename()
 
 VERSION_STRING = 'b10-cmdctl-usermgr @PACKAGE_VERSION@'
-DEFAULT_FILE = 'cmdctl-accounts.csv'
+DEFAULT_FILE = SYSCONFPATH + '/cmdctl-accounts.csv'
 
 class UserManager:
     def __init__(self, options):
