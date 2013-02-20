@@ -478,6 +478,16 @@ class MyModuleCCSession(isc.config.ConfigData):
 
 class SimpleStats(stats.Stats):
     def __init__(self):
+        self.__seq = 4200 # for faked group_sendmsg, arbitrary choice.
+        self._answers = [] # if set, use them as faked response to recvmsg
+        self.__default_answer = isc.config.ccsession.create_answer(
+            0, {'Init':
+                    json.loads(MockInit.spec_str)['module_spec']['statistics'],
+                'Auth':
+                    json.loads(MockAuth.spec_str)['module_spec']['statistics']
+                })
+        self.__init_auth_stat()
+
         # Since we replace _init_statistics_data, this doesn't cause
         # any network I/O
         stats.Stats.__init__(self, MyModuleCCSession)
@@ -490,6 +500,30 @@ class SimpleStats(stats.Stats):
         self.cc_session.group_recvmsg = self.__check_group_recvmsg
         stats.Stats._init_statistics_data(self)
 
+    def __init_auth_stat(self):
+        self._queries_tcp = 3
+        self._queries_udp = 2
+        self.__queries_per_zone = [{
+                'zonename': 'test1.example', 'queries.tcp': 5, 'queries.udp': 4
+                }]
+        self.__nds_queries_per_zone = \
+            { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
+        self._auth_sdata = \
+            { 'queries.tcp': self._queries_tcp,
+              'queries.udp': self._queries_udp,
+              'queries.perzone' : self.__queries_per_zone,
+              'nds_queries.perzone' : {
+                'test10.example': {
+                    'queries.tcp': isc.cc.data.find(
+                        self.__nds_queries_per_zone,
+                        'test10.example/queries.tcp')
+                    }
+                },
+              'nds_queries.perzone/test10.example/queries.udp' :
+                  isc.cc.data.find(self.__nds_queries_per_zone,
+                                   'test10.example/queries.udp')
+              }
+
     def _init_statistics_data(self):
         pass
 
@@ -497,17 +531,15 @@ class SimpleStats(stats.Stats):
         return 42
 
     def __check_group_sendmsg(self, command, destination):
-        cmd, value = isc.config.ccsession.parse_command(command)
-        return 4200           # faked seq number
+        self.__seq += 1
+        return self.__seq
 
     def __check_group_recvmsg(self, nonblocking, seq):
-        answer = isc.config.ccsession.create_answer(
-            0, {'Init':
-                    json.loads(MockInit.spec_str)['module_spec']['statistics'],
-                'Auth':
-                    json.loads(MockAuth.spec_str)['module_spec']['statistics']
-                })
-        return answer, None
+        # if faked anser is given, use it; otherwise use the default.
+        # we don't actually check the sequence.
+        if len(self._answers) == 0:
+            return self.__default_answer, None
+        return self._answers.pop(0)
 
 class MyStats(stats.Stats):
 
