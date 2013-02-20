@@ -24,11 +24,13 @@ def reload():
     global PLUGIN_PATHS
     global PREFIX
     global LIBEXECPATH
+    global SYSCONFPATH
     BIND10_MSGQ_SOCKET_FILE = os.path.join("@localstatedir@",
                                            "@PACKAGE_NAME@",
                                            "msgq_socket").replace("${prefix}",
                                                                   "@prefix@")
     PREFIX = "@prefix@"
+    SYSCONFPATH="@sysconfdir@/@PACKAGE@".replace('${prefix}', PREFIX)
 
     # B10_FROM_SOURCE is set in the environment for internal tests and
     # an experimental run without installagion.  In that case we need to
