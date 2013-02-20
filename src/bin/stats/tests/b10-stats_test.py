@@ -624,42 +624,20 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data_pt2(self):
         """test for named_set-type statistics"""
-        self.stats = stats.Stats()
-        self.stats.do_polling()
-        _test_exp1 = {
-              'test10.example': {
-                  'queries.tcp': 5,
-                  'queries.udp': 4
-              }
-            }
-        _test_exp2 = {
-              'test20.example': {
-                  'queries.tcp': 3,
-                  'queries.udp': 2
-              }
-            }
+        self.stats = SimpleStats()
+        _test_exp1 = \
+            { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
+        _test_exp2 = \
+            { 'test20.example': { 'queries.tcp': 3, 'queries.udp': 2 } }
         _test_exp3 = {}
-        _test_exp4 = {
-              'test20.example': {
-                  'queries.udp': 4
-              }
-            }
-        _test_exp5_1 = {
-              'test10.example': {
-                 'queries.udp': 5432
-              }
-            }
+        _test_exp4 = { 'test20.example': { 'queries.udp': 4 } }
+        _test_exp5_1 = { 'test10.example': { 'queries.udp': 5432 } }
         _test_exp5_2 ={
               'nds_queries.perzone/test10.example/queries.udp':
-                  isc.cc.data.find(_test_exp5_1,
-                                   'test10.example/queries.udp')
+                  isc.cc.data.find(_test_exp5_1, 'test10.example/queries.udp')
             }
-        _test_exp6 = {
-              'foo/bar':  'brabra'
-            }
-        _test_exp7 = {
-              'foo[100]': 'bar'
-            }
+        _test_exp6 = { 'foo/bar':  'brabra' }
+        _test_exp7 = { 'foo[100]': 'bar' }
         # Success cases
         self.assertIsNone(self.stats.update_statistics_data(
             'Auth', 'foo1', {'nds_queries.perzone': _test_exp1}))
@@ -672,13 +650,15 @@ class TestStats(unittest.TestCase):
                              ['foo1']['nds_queries.perzone'],\
                          dict(_test_exp1,**_test_exp2))
         self.assertIsNone(self.stats.update_statistics_data(
-            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp1,**_test_exp2)}))
+            'Auth', 'foo1', {'nds_queries.perzone':
+                                 dict(_test_exp1, **_test_exp2)}))
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['nds_queries.perzone'],
-                         dict(_test_exp1,**_test_exp2))
+                         dict(_test_exp1, **_test_exp2))
         # differential update
         self.assertIsNone(self.stats.update_statistics_data(
-            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp3,**_test_exp4)}))
+            'Auth', 'foo1', {'nds_queries.perzone':
+                                 dict(_test_exp3, **_test_exp4)}))
         _new_val = dict(_test_exp1,
                         **stats.merge_oldnew(_test_exp2,_test_exp4))
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
@@ -698,7 +678,8 @@ class TestStats(unittest.TestCase):
                              _test_exp5_1)
         # Error cases
         self.assertEqual(self.stats.update_statistics_data(
-                'Auth', 'foo1', {'nds_queries.perzone': None}), ['None should be a map'])
+                'Auth', 'foo1', {'nds_queries.perzone': None}),
+                         ['None should be a map'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['nds_queries.perzone'],\
                              _new_val)
