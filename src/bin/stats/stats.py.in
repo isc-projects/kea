@@ -322,11 +322,9 @@ class Stats:
         while len(sequences) > 0:
             try:
                 (module_name, seq) = sequences.pop(0)
-                answer, env = self.cc_session.group_recvmsg(
-                    False, seq)
+                answer, env = self.cc_session.group_recvmsg(False, seq)
                 if answer:
-                    rcode, args = isc.config.ccsession.parse_answer(
-                        answer)
+                    rcode, args = isc.config.ccsession.parse_answer(answer)
                     if rcode == 0:
                         _statistics_data.append(
                             (module_name, env['from'], args))
