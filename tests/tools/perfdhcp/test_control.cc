@@ -13,6 +13,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
+#include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/option6_ia.h>
+#include <util/unittests/check_valgrind.h>
+#include "test_control.h"
+#include "command_options.h"
+#include "perf_pkt4.h"
+#include "perf_pkt6.h"
+
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,17 +34,6 @@
 #include <sys/wait.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/iface_mgr.h>
-#include <dhcp/dhcp4.h>
-#include <dhcp/option6_ia.h>
-#include "test_control.h"
-#include "command_options.h"
-#include "perf_pkt4.h"
-#include "perf_pkt6.h"
 
 using namespace std;
 using namespace boost::posix_time;
@@ -724,7 +725,7 @@ TestControl::printDiagnostics() const {
         std::cout << "Set MAC to " << vector2Hex(options.getMacTemplate(), "::")
                   << std::endl;
         if (options.getDuidTemplate().size() > 0) {
-            std::cout << "Set DUID to " << vector2Hex(options.getDuidTemplate()) << std::endl; 
+            std::cout << "Set DUID to " << vector2Hex(options.getDuidTemplate()) << std::endl;
         }
     }
 }

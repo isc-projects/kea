@@ -38,6 +38,11 @@ namespace unittests {
 
 /// \brief Check if the program is run in valgrind
 ///
+/// This is used to check for valgrind and skip (parts of) tests that fork,
+/// such as death tests, and general forking tests, and some threading tests;
+/// These tend to cause valgrind to report errors, which would hide other
+/// potential valgrind reports.
+///
 /// \return true if valgrind headers are available, and valgrind is running,
 ///         false if the headers are not available, or if valgrind is not
 ///         running
