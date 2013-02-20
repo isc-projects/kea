@@ -80,4 +80,11 @@ def test_xml_file(xmlfilepath):
 
 if __name__ == "__main__":
     xmlfilepath = sys.argv[1]
-    test_xml_file(xmlfilepath)
+    try:
+        test_xml_file(xmlfilepath)
+    except ImportError:
+        # pyexpat library is required for ElementTree.parse() but it is
+        # missing in some environment. Just skip this test.
+        print ("Required library is missing, skipping this test.")
+        print ("Detailed information:")
+        print (sys.exc_info()[1])
