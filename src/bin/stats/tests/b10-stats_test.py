@@ -693,33 +693,57 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(
                 'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
-    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     def test_update_statistics_data_withmid(self):
-        self.stats = stats.Stats()
+        self.stats = SimpleStats()
+
+        # This test relies on existing statistics data at the Stats object.
+        # This version of test prepares the data using the do_polling() method;
+        # that's a bad practice because a unittest for a method
+        # (update_statistics_data) would heavily depend on details of another
+        # method (do_polling).  However, there's currently no direct test
+        # for do_polling (which is also bad), so we still keep that approach,
+        # partly for testing do_polling indirectly.  #2781 should provide
+        # direct test for do_polling, with which this test scenario should
+        # also be changed to be more stand-alone.
+
+        # We use the knowledge of what kind of messages are sent via
+        # do_polling, and return the following faked answer directly.
+        create_answer = isc.config.ccsession.create_answer # shortcut
+        self.stats._answers = [\
+            # Answer for "show_processes"
+            (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
+                               [1035, 'b10-auth-2', 'Auth']]),  None),
+            # Answers for "getstats".  2 for Auth instances and 1 for Init.
+            # we return some bogus values for Init, but the rest of the test
+            # doesn't need it, so it's okay.
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth1'}),
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth2'}),
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth3'})
+            ]
+        # do_polling calls update_modules internally; in our scenario there's
+        # no change in modules, so we make it no-op.
+        self.stats.update_modules = lambda: None
+        # Now call do_polling.
         self.stats.do_polling()
+
         # samples of query number
         bar1_tcp = 1001
         bar2_tcp = 2001
         bar3_tcp = 1002
         bar3_udp = 1003
-        # two auth instances invoked
-        list_auth = [ self.base.auth.server,
-                      self.base.auth2.server ]
-        sum_qtcp = 0
-        for a in list_auth:
-            sum_qtcp += a.queries_tcp
-        sum_qudp = 0
-        for a in list_auth:
-            sum_qudp += a.queries_udp
+        # two auth instances invoked, so we double the pre-set stat values
+        sum_qtcp = self.stats._queries_tcp * 2
+        sum_qudp = self.stats._queries_udp * 2
         self.stats.update_statistics_data('Auth', "bar1@foo",
-                                          {'queries.tcp':bar1_tcp})
+                                          {'queries.tcp': bar1_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
                          bar1_tcp + sum_qtcp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid
+                        ['Auth']['bar1@foo'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
                          {'queries.tcp': bar1_tcp})
         # check consolidation of statistics data even if there is
@@ -745,7 +769,8 @@ class TestStats(unittest.TestCase):
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
                          bar1_tcp + bar2_tcp + sum_qtcp)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], sum_qudp)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'],
+                         sum_qudp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
         # self.base.b10_init.server.pid_list = [ killed ] + self.base.b10_init.server.pid_list[:]
