@@ -23,11 +23,8 @@ import random
 from hashlib import sha1
 import csv
 import getpass
-
-#remove
-import getopt
 from optparse import OptionParser, OptionValueError
-
+import os
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc.util.process
 
@@ -36,40 +33,116 @@ isc.util.process.rename()
 VERSION_STRING = 'b10-cmdctl-usermgr @PACKAGE_VERSION@'
 DEFAULT_FILE = 'cmdctl-accounts.csv'
 
-def gen_password_hash(password):
-    salt = "".join(chr(random.randint(33, 127)) for x in range(64))
-    saltedpwd = sha1((password + salt).encode()).hexdigest()
-    return salt, saltedpwd
+class UserManager:
+    def __init__(self, options):
+        self.options = options
 
-def username_exist(name, filename):
-    # The file may doesn't exist.
-    exist = False
-    csvfile = None
-    try:
-        csvfile = open(filename)
-        reader = csv.reader(csvfile)
-        for row in reader:
-            if name == row[0]:
-                exist = True
-                break
-    except Exception:
-        pass
+    def print(self, msg):
+        if not self.options.quiet:
+            print(msg)
 
-    if csvfile:
+    def gen_password_hash(self, password):
+        salt = "".join(chr(random.randint(33, 127)) for x in range(64))
+        saltedpwd = sha1((password + salt).encode()).hexdigest()
+        return salt, saltedpwd
+
+    def username_exists(self, name):
+        if not os.path.exists(self.options.output_file):
+            return False
+
+        exist = False
+        csvfile = None
+        with open(self.options.output_file) as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if name == row[0]:
+                    exist = True
+                    break
+        return exist
+
+    def save_userinfo(self, username, pw, salt, filename):
+        csvfile = open(filename, 'a')
+        writer = csv.writer(csvfile)
+        writer.writerow([username, pw, salt])
         csvfile.close()
-    return exist
+        self.print("User added\n")
 
-def save_userinfo(username, pw, salt, filename):
-    csvfile = open(filename, 'a')
-    writer = csv.writer(csvfile)
-    writer.writerow([username, pw, salt])
-    csvfile.close()
-    print("\n create new account successfully! \n")
+    def add_user(self, name, password):
+        """
+        Add the given username/password combination to the file.
+        First checks if the username exists, and returns False if so.
+        If not, it is added, and this method returns True.
+        """
+        if self.username_exists(name):
+            return False
+        salt, pw = self.gen_password_hash(password)
+        self.save_userinfo(name, pw, salt, self.options.output_file)
+        return True
+
+    def interactive_mode(self):
+        while True :
+            name = input("Username to add: ")
+            if name == '':
+                print("error, username can't be empty")
+                continue
+
+            if self.username_exists(name):
+                 print("user already exists!")
+                 continue
+
+            while True:
+                pwd1 = getpass.getpass("Choose a password: ")
+                pwd2 = getpass.getpass("Re-enter password: ")
+                if pwd1 != pwd2:
+                    print("passwords do not match, try again")
+                else:
+                    break;
+
+            if not self.add_user(name, pwd1):
+                self.print("Error: username exists")
+
+            inputdata = input('Add another user (y/n)? ')
+            if inputdata not in ['y', 'Y']:
+                break
+
+    def run(self):
+        self.print("Using accounts file: " + self.options.output_file)
+        filename = self.options.output_file
+
+        if self.options.username is not None or\
+           self.options.password is not None:
+            if self.options.username is None:
+                self.print("Error: password but no username given")
+                return 1
+            if self.options.password is None:
+                self.print("Error: username but no password given")
+                return 1
+            if not self.add_user(self.options.username,
+                                 self.options.password):
+                self.print("Error: username exists")
+        else:
+            try:
+                self.interactive_mode()
+            except KeyboardInterrupt:
+                pass
+        return 0
 
 def set_options(parser):
     parser.add_option("-f", "--file",
                       dest="output_file", default=DEFAULT_FILE,
                       help="Specify the file to append user name and password"
+                     )
+    parser.add_option("-u", "--username",
+                      dest="username", default=None,
+                      help="Specify username to add"
+                     )
+    parser.add_option("-p", "--password",
+                      dest="password", default=None,
+                      help="Specify password to add"
+                     )
+    parser.add_option("-q", "--quiet",
+                      dest="quiet", action="store_true", default=False,
+                      help="Quiet mode, don't print any output"
                      )
 
 def main():
@@ -77,37 +150,11 @@ def main():
     set_options(parser)
     (options, _) = parser.parse_args()
 
-    filename = options.output_file
-
-    try:
-        while True :
-            name = input("Desired Login Name:")
-            if name == '':
-                print("error, user name can't be empty")
-                continue
-
-            if username_exist(name, filename):
-                 print("user name already exists!")
-                 continue
-
-            while True:
-                pwd1 = getpass.getpass("Choose a password:")
-                pwd2 = getpass.getpass("Re-enter password:")
-                if pwd1 != pwd2:
-                    print("password is not same, please input again")
-                else:
-                    break;
-
-            salt, pw = gen_password_hash(pwd1)
-            save_userinfo(name, pw, salt, filename)
-            inputdata = input('continue to create new account by input \'y\' or \'Y\':')
-            if inputdata not in ['y', 'Y']:
-                break
-
-    except KeyboardInterrupt:
-        pass
+    usermgr = UserManager(options)
+    return usermgr.run()
 
 
 if __name__ == '__main__':
-    main()
+    result = main()
+    sys.exit(result)
 
