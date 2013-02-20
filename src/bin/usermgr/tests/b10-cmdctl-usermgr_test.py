@@ -19,6 +19,7 @@ import imp
 import os
 import subprocess
 import unittest
+from bind10_config import SYSCONFPATH
 
 def run(command):
     """
@@ -155,7 +156,8 @@ Options:
         """
         # Hardcoded path .. should be ok since this is run from make check
         usermgr = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
-        self.assertEqual('cmdctl-accounts.csv', usermgr.DEFAULT_FILE)
+        self.assertEqual(SYSCONFPATH + '/cmdctl-accounts.csv',
+                         usermgr.DEFAULT_FILE)
 
 if __name__== '__main__':
     unittest.main()
