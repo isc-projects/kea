@@ -418,6 +418,21 @@ public:
                                            params =
                                            isc::data::ConstElementPtr());
 
+    /// \brief Convenience version of rpcCall
+    ///
+    /// This is exactly the same as the previous version of rpcCall, except
+    /// that the instance and to parameters are at their default. This
+    /// allows to sending a command with parameters to a named module
+    /// without long typing of the parameters.
+    isc::data::ConstElementPtr rpcCall(const std::string& command,
+                                       const std::string& group,
+                                       const isc::data::ConstElementPtr&
+                                           params)
+    {
+        return rpcCall(command, group, isc::cc::CC_INSTANCE_WILDCARD,
+                       isc::cc::CC_TO_WILDCARD, params);
+    }
+
     /// \brief Forward declaration of internal data structure.
     ///
     /// This holds information about one asynchronous request to receive
