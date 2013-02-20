@@ -858,11 +858,23 @@ ModuleCCSession::cancelAsyncRecv(const AsyncRecvRequestID& id) {
 }
 
 ConstElementPtr
-ModuleCCSession::rpcCall(const std::string &, const std::string &,
-                         const std::string &, const std::string &,
-                         const ConstElementPtr &)
+ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
+                         const std::string &instance, const std::string &to,
+                         const ConstElementPtr &params)
 {
-    return (ConstElementPtr());
+    const ConstElementPtr &command_el(createCommand(command, params));
+    const int seq = session_.group_sendmsg(command_el, group, instance, to);
+    ConstElementPtr env, answer;
+    session_.group_recvmsg(env, answer, false, seq);
+    int rcode;
+    const ConstElementPtr &result(parseAnswer(rcode, answer));
+    if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
+        isc_throw(RPCRecipientMissing, result);
+    } else if (rcode != isc::cc::CC_REPLY_SUCCESS) {
+        isc_throw_1(RPCError, result, rcode);
+    } else {
+        return (result);
+    }
 }
 
 }
