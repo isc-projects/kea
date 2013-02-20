@@ -261,6 +261,7 @@ class Stats:
             # TODO: Is it OK to just pass? As part of refactoring, preserving
             # the original behaviour.
             value = None
+        modules = []
         if type(value) is list:
             # NOTE: For example, the "show_processes" command
             # of Init is assumed to return the response in this
