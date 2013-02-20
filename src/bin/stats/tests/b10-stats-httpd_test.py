@@ -609,8 +609,16 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_server.run()
         # checking IPv6 enabled on this platform
         self.ipv6_enabled = is_ipv6_enabled()
+        # instantiation of StatsHttpd indirectly calls gethostbyaddr(), which
+        # can block for an uncontrollable period, leading many undesirable
+        # results.  We should rather eliminate the reliance, but until we
+        # can make such fundamental cleanup we replace it with a faked method;
+        # in our test scenario the return value doesn't matter.
+        self.__gethostbyaddr_orig = socket.gethostbyaddr
+        socket.gethostbyaddr = lambda x: ('test.example.', [], None)
 
     def tearDown(self):
+        socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
         self.stats_server.shutdown()
