@@ -487,6 +487,9 @@ class SimpleStats(stats.Stats):
                     json.loads(MockAuth.spec_str)['module_spec']['statistics']
                 })
         self.__init_auth_stat()
+        self._init_sdata = {
+            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)
+            }
 
         # Since we replace _init_statistics_data, this doesn't cause
         # any network I/O

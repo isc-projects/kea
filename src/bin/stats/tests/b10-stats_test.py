@@ -802,8 +802,8 @@ class TestStats(unittest.TestCase):
     def test_config(self):
         orig_get_timestamp = stats.get_timestamp
         stats.get_timestamp = lambda : self.const_timestamp
-        stats_server = ThreadingServerManager(MyStats)
-        stat = stats_server.server
+        stat = SimpleStats()
+
         # test updating poll-interval
         self.assertEqual(stat.config['poll-interval'], 60)
         self.assertEqual(stat.get_interval(), 60)
@@ -827,14 +827,25 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stat.config_handler({'poll-interval': 0}),
                          isc.config.create_answer(0))
         self.assertEqual(stat.config['poll-interval'], 0)
-        stats_server.run()
+
+        # see the comment for test_update_statistics_data_withmid.  We abuse
+        # do_polling here, too.  With #2781 we should make it more direct.
+        create_answer = isc.config.ccsession.create_answer # shortcut
+        stat._answers = [\
+            # Answer for "show_processes"
+            (create_answer(0, []),  None),
+            # Answers for "getstats" for Init (the other one for Auth, but
+            # that doesn't matter for this test)
+            (create_answer(0, stat._init_sdata), {'from': 'init'}),
+            (create_answer(0, stat._init_sdata), {'from': 'init'})
+            ]
+        stat.update_modules = lambda: None
+
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                stat, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
-        stats_server.shutdown()
 
     def test_commands(self):
         self.stats = stats.Stats()
