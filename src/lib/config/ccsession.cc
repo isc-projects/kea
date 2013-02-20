@@ -857,5 +857,13 @@ ModuleCCSession::cancelAsyncRecv(const AsyncRecvRequestID& id) {
     async_recv_requests_.erase(id);
 }
 
+ConstElementPtr
+ModuleCCSession::rpcCall(const std::string &, const std::string &,
+                         const std::string &, const std::string &,
+                         const ConstElementPtr &)
+{
+    return (ConstElementPtr());
+}
+
 }
 }
