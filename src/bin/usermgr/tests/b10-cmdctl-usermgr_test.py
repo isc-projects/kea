@@ -13,8 +13,10 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import os
 import unittest
 import subprocess
+import imp
 
 def run(command):
     """
@@ -28,6 +30,23 @@ def run(command):
 
 class TestUserMgr(unittest.TestCase):
     TOOL = '../b10-cmdctl-usermgr'
+    OUTPUT_FILE = 'test_users.csv'
+
+    def setUp(self):
+        self.delete_output_file()
+
+    def tearDown(self):
+        self.delete_output_file()
+
+    def delete_output_file(self):
+        if os.path.exists(self.OUTPUT_FILE):
+            os.remove(self.OUTPUT_FILE)
+
+    def check_output_file(self, expected_content):
+        self.assertTrue(os.path.exists(self.OUTPUT_FILE))
+        with open(self.OUTPUT_FILE, 'r') as f:
+            content = f.readlines()
+        self.assertEqual(expected_content, content)
 
     def run_check(self, expected_returncode, expected_stdout, expected_stderr, command):
         """
@@ -46,16 +65,28 @@ class TestUserMgr(unittest.TestCase):
         if expected_stderr is not None:
             self.assertEqual(expected_stderr, stderr.decode())
 
-    def test_bad_options(self):
-        self.run_check(2,
-                       'option -a not recognized\n'
-                       'Usage: usermgr [options]\n'
-                       '           -h, --help 	 Show this help message and exit\n'
-                       '           -f, --file 	 Specify the file to append user name and password\n'
-                       '           -v, --version	 Get version number\n'
-                       '           \n',
-                       '', [self.TOOL, '-a'])
+    def test_help(self):
+        self.run_check(0,
+'''Usage: b10-cmdctl-usermgr [options]
 
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -f OUTPUT_FILE, --file=OUTPUT_FILE
+                        Specify the file to append user name and password
+''',
+                       '',
+                       [self.TOOL, '-h'])
+
+    def test_default_file(self):
+        """
+        Check the default file is the correct one.
+        Only checks the internal variable, as we don't want to overwrite
+        the actual file here
+        """
+        # Hardcoded path .. should be ok since this is run from make check
+        usermgr = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
+        self.assertEqual('cmdctl-accounts.csv', usermgr.DEFAULT_FILE)
 
 if __name__== '__main__':
     unittest.main()
