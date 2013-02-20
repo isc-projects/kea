@@ -3372,6 +3372,13 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
     </para>
 
+    <note>
+      <simpara>
+	In this release of BIND 10, the DHCPv4 and DHCPv6 servers
+	must be considered experimental.
+      </simpara>
+    </note>
+
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
