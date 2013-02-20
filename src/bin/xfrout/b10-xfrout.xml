@@ -309,9 +309,9 @@
     </variablelist>
 
     <para>
-      In per-zone counters the special zone name '_SERVER_' exists. It doesn't
-      mean a specific zone. It represents an entire server and its value means
-      a total count of all zones.
+      In per-zone counters the special zone name <quote>_SERVER_</quote> exists.
+      It doesn't mean a specific zone. It represents an entire server and its
+      value means a total count of all zones.
     </para>
 
   </refsect1>
