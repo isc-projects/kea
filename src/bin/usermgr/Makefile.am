@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 sbin_SCRIPTS = b10-cmdctl-usermgr
 
 b10_cmdctl_usermgrdir = $(pkgdatadir)
