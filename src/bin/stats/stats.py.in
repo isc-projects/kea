@@ -260,7 +260,7 @@ class Stats:
         except isc.config.RPCError:
             # TODO: Is it OK to just pass? As part of refactoring, preserving
             # the original behaviour.
-            pass
+            value = None
         if type(value) is list:
             # NOTE: For example, the "show_processes" command
             # of Init is assumed to return the response in this
