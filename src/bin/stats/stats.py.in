@@ -268,8 +268,7 @@ class Stats:
         # examining the third value from the array result of
         # 'show_processes' of Init
         seq = self.cc_session.group_sendmsg(
-            isc.config.ccsession.create_command("show_processes"),
-            'Init')
+            isc.config.ccsession.create_command("show_processes"), 'Init')
         (answer, env) = self.cc_session.group_recvmsg(False, seq)
         modules = []
         if answer:
@@ -550,8 +549,7 @@ class Stats:
                             # merge recursively old value and new
                             # value each other
                             _data[owner][mid] = \
-                                merge_oldnew(_data[owner][mid],
-                                             {_key: _val})
+                                merge_oldnew(_data[owner][mid], {_key: _val})
                         continue
                     # the key string might be a "xx/yy/zz[0]"
                     # type. try it.
@@ -561,9 +559,9 @@ class Stats:
                         if errors: errors.pop()
                         # try updata and check validation in adavance
                         __data = _data.copy()
-                        if owner not in _data:
+                        if owner not in __data:
                             __data[owner] = {}
-                        if mid not in _data[owner]:
+                        if mid not in __data[owner]:
                             __data[owner][mid] = {}
                         # use the isc.cc.data.set method
                         try:
@@ -572,10 +570,9 @@ class Stats:
                                 False, __data[owner][mid], errors):
                                 _data = __data
                         except Exception as e:
-                            errors.append(
-                                "%s: %s" % (e.__class__.__name__, e))
+                            errors.append("%s: %s" % (e.__class__.__name__, e))
             except KeyError:
-                errors.append("unknown module name: " + str(owner))
+                errors.append("unknown module name: " + owner)
             if not errors:
                 self.statistics_data_bymid = _data
 
@@ -598,8 +595,7 @@ class Stats:
                     # values are not replaced.
                     self.statistics_data[m] = merge_oldnew(
                         self.statistics_data[m],
-                        _accum_bymodule(
-                            self.statistics_data_bymid[m]))
+                        _accum_bymodule(self.statistics_data_bymid[m]))
 
         if errors: return errors
 
