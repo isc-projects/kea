@@ -16,20 +16,24 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-This file implements user management program. The user name and 
+This file implements user management program. The user name and
 its password is appended to csv file.
 '''
 import random
 from hashlib import sha1
 import csv
 import getpass
+
+#remove
 import getopt
+from optparse import OptionParser, OptionValueError
+
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc.util.process
 
 isc.util.process.rename()
 
-VERSION_NUMBER = 'bind10'
+VERSION_STRING = 'b10-cmdctl-usermgr @PACKAGE_VERSION@'
 DEFAULT_FILE = 'cmdctl-accounts.csv'
 
 def gen_password_hash(password):
@@ -42,16 +46,16 @@ def username_exist(name, filename):
     exist = False
     csvfile = None
     try:
-        csvfile = open(filename)        
+        csvfile = open(filename)
         reader = csv.reader(csvfile)
         for row in reader:
             if name == row[0]:
-                exist = True               
+                exist = True
                 break
     except Exception:
         pass
-            
-    if csvfile:    
+
+    if csvfile:
         csvfile.close()
     return exist
 
@@ -62,35 +66,19 @@ def save_userinfo(username, pw, salt, filename):
     csvfile.close()
     print("\n create new account successfully! \n")
 
-def usage():
-    print('''Usage: usermgr [options]
-           -h, --help \t Show this help message and exit
-           -f, --file \t Specify the file to append user name and password
-           -v, --version\t Get version number
-           ''')           
+def set_options(parser):
+    parser.add_option("-f", "--file",
+                      dest="output_file", default=DEFAULT_FILE,
+                      help="Specify the file to append user name and password"
+                     )
 
 def main():
-    filename = DEFAULT_FILE
-    try: 
-        opts, args = getopt.getopt(sys.argv[1:], 'f:hv', 
-                                   ['file=', 'help', 'version']) 
-    except getopt.GetoptError as err: 
-        print(err) 
-        usage() 
-        sys.exit(2)
-    for op, param in opts:        
-        if op in ('-h', '--help'): 
-            usage()
-            sys.exit()
-        elif op in ('-v', '--version'): 
-            print(VERSION_NUMBER)
-            sys.exit()                     
-        elif op in ('-f', "--file"):
-            filename = param
-        else: 
-            assert False, 'unknown option' 
-            usage()
-    
+    parser = OptionParser(version = VERSION_STRING)
+    set_options(parser)
+    (options, _) = parser.parse_args()
+
+    filename = options.output_file
+
     try:
         while True :
             name = input("Desired Login Name:")
@@ -109,15 +97,15 @@ def main():
                     print("password is not same, please input again")
                 else:
                     break;
-            
+
             salt, pw = gen_password_hash(pwd1)
             save_userinfo(name, pw, salt, filename)
             inputdata = input('continue to create new account by input \'y\' or \'Y\':')
             if inputdata not in ['y', 'Y']:
-                break                
-                
+                break
+
     except KeyboardInterrupt:
-        pass                
+        pass
 
 
 if __name__ == '__main__':
