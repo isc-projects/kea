@@ -18,16 +18,18 @@ from hashlib import sha1
 import imp
 import os
 import subprocess
+import stat
 import unittest
 from bind10_config import SYSCONFPATH
 
 def run(command):
     """
-    Small helper function that returns a tuple of (rcode, stdout, stderr) after
-    running the given command (an array of command and arguments, as passed on
-    to subprocess).
+    Small helper function that returns a tuple of (rcode, stdout, stderr)
+    after running the given command (an array of command and arguments, as
+    passed on to subprocess).
     """
-    subp = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subp = subprocess.Popen(command, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
     (stdout, stderr) = subp.communicate()
     return (subp.returncode, stdout, stderr)
 
@@ -89,23 +91,27 @@ class TestUserMgr(unittest.TestCase):
 
     def test_help(self):
         self.run_check(0,
-'''Usage: b10-cmdctl-usermgr [options]
+'''Usage: b10-cmdctl-usermgr [options] <action> [username] [password]
+
+Arguments:
+  action		either 'add' or 'delete'
+  username		the username to add or delete
+  password		the password to set for the added user
+
+If username or password are not specified, b10-cmdctl-usermgr will
+prompt for them.
 
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
   -f OUTPUT_FILE, --file=OUTPUT_FILE
-                        Specify the file to append user name and password
-  -u USERNAME, --username=USERNAME
-                        Specify username to add
-  -p PASSWORD, --password=PASSWORD
-                        Specify password to add
+                        Accounts file to modify
   -q, --quiet           Quiet mode, don't print any output
 ''',
                        '',
                        [self.TOOL, '-h'])
 
-    def test_create_users(self):
+    def test_add_delete_users_ok(self):
         """
         Test that a file is created, and users are added.
         Also tests quiet mode for adding a user to an existing file.
@@ -120,8 +126,8 @@ Options:
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
-                         '-u', 'user1',
-                         '-p', 'pass1' ])
+                         'add', 'user1', 'pass1'
+                       ])
         expected_content.append(('user1', 'pass1'))
         self.check_output_file(expected_content)
 
@@ -132,8 +138,8 @@ Options:
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
-                         '-u', 'user2',
-                         '-p', 'pass2' ])
+                         'add', 'user2', 'pass2'
+                       ])
         expected_content.append(('user2', 'pass2'))
         self.check_output_file(expected_content)
 
@@ -143,10 +149,79 @@ Options:
                        '',
                        [ self.TOOL, '-q',
                          '-f', self.OUTPUT_FILE,
-                         '-u', 'user3',
-                         '-p', 'pass3' ])
+                         'add', 'user3', 'pass3'
+                       ])
         expected_content.append(('user3', 'pass3'))
         self.check_output_file(expected_content)
+
+        # Delete a user (let's pick the middle one)
+        self.run_check(0,
+                       '',
+                       '',
+                       [ self.TOOL, '-q',
+                         '-f', self.OUTPUT_FILE,
+                         'delete', 'user2'
+                       ])
+        del expected_content[1]
+        self.check_output_file(expected_content)
+
+    def test_add_delete_users_bad(self):
+        """
+        More add/delete tests, this time for some error scenarios
+        """
+        # content is a list of (user, pass) tuples
+        expected_content = []
+        # First add one
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user', 'pass'
+                       ])
+        expected_content.append(('user', 'pass'))
+        self.check_output_file(expected_content)
+
+        # Adding it again should error
+        self.run_check(3,
+                       'Using accounts file: test_users.csv\n'
+                       'Error: username exists\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user', 'pass'
+                       ])
+        self.check_output_file(expected_content)
+
+        # Deleting a non-existent one should fail too
+        self.run_check(4,
+                       'Using accounts file: test_users.csv\n'
+                       'Error: username does not exist\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'delete', 'nosuchuser'
+                       ])
+        self.check_output_file(expected_content)
+
+    def test_bad_arguments(self):
+        """
+        Assorted tests with bad command-line arguments
+        """
+        self.run_check(1,
+                       'Error: must specify an action\n',
+                       '',
+                       [ self.TOOL ])
+        self.run_check(1,
+                       'Error: action must be either add or delete\n',
+                       '',
+                       [ self.TOOL, 'foo' ])
+        self.run_check(1,
+                       'Error: extraneous arguments\n',
+                       '',
+                       [ self.TOOL, 'add', 'user', 'pass', 'toomuch' ])
+        self.run_check(1,
+                       'Error: delete only needs username, not a password\n',
+                       '',
+                       [ self.TOOL, 'delete', 'user', 'pass' ])
 
     def test_default_file(self):
         """
@@ -158,6 +233,65 @@ Options:
         usermgr = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
         self.assertEqual(SYSCONFPATH + '/cmdctl-accounts.csv',
                          usermgr.DEFAULT_FILE)
+
+    def test_bad_file(self):
+        """
+        Check for graceful handling of bad file argument
+        """
+        self.run_check(2,
+                       'Using accounts file: /\n'
+                       'Error accessing /: Is a directory\n',
+                       '',
+                       [ self.TOOL, '-f', '/', 'add', 'user', 'pass' ])
+
+        # Make sure we can initially write to the test file
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user1', 'pass1'
+                       ])
+
+        # Make it non-writable (don't worry about cleanup, the
+        # file should be deleted after each test anyway
+        os.chmod(self.OUTPUT_FILE, stat.S_IRUSR)
+        self.run_check(2,
+                       'Using accounts file: test_users.csv\n'
+                       'Error accessing test_users.csv: Permission denied\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user2', 'pass1'
+                       ])
+
+        self.run_check(2,
+                       'Using accounts file: test_users.csv\n'
+                       'Error accessing test_users.csv: Permission denied\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'delete', 'user1'
+                       ])
+
+        # Making it write-only should have the same effect
+        os.chmod(self.OUTPUT_FILE, stat.S_IWUSR)
+        self.run_check(2,
+                       'Using accounts file: test_users.csv\n'
+                       'Error accessing test_users.csv: Permission denied\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user2', 'pass1'
+                       ])
+
+        self.run_check(2,
+                       'Using accounts file: test_users.csv\n'
+                       'Error accessing test_users.csv: Permission denied\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'delete', 'user1'
+                       ])
+
 
 if __name__== '__main__':
     unittest.main()
