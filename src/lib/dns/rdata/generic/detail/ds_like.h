@@ -58,10 +58,21 @@ template <class Type, uint16_t typeCode> class DSLikeImpl {
 public:
     /// \brief Constructor from string.
     ///
-    /// <b>Exceptions</b>
+    /// The given string must represent a valid DS-like RDATA.  There
+    /// can be extra space characters at the beginning or end of the
+    /// text (which are simply ignored), but other extra text, including
+    /// a new line, will make the construction fail with an exception.
     ///
-    /// \c InvalidRdataText is thrown if the method cannot process the
-    /// parameter data for any of the number of reasons.
+    /// The tag field must be a valid decimal representation of an
+    /// unsigned 16-bit integer. The protocol and algorithm fields must
+    /// be valid decimal representations of unsigned 8-bit integers
+    /// respectively. The digest field may contain whitespace.
+    ///
+    /// \throw MasterLexer::LexerError General parsing error such as
+    /// missing field.
+    /// \throw InvalidRdataText if any fields are out of their valid range.
+    ///
+    /// \param ds_str A string containing the RDATA to be created
     DSLikeImpl(const std::string& ds_str) {
         try {
             std::istringstream ss(ds_str);
@@ -82,6 +93,22 @@ public:
         }
     }
 
+    /// \brief Constructor with a context of MasterLexer.
+    ///
+    /// The \c lexer should point to the beginning of valid textual
+    /// representation of a DS-like RDATA.
+    ///
+    /// The tag field must be a valid decimal representation of an
+    /// unsigned 16-bit integer. The protocol and algorithm fields must
+    /// be valid decimal representations of unsigned 8-bit integers
+    /// respectively.
+    ///
+    /// \throw MasterLexer::LexerError General parsing error such as
+    /// missing field.
+    /// \throw InvalidRdataText if any fields are out of their valid range.
+    ///
+    /// \param lexer A \c MasterLexer object parsing a master file for the
+    /// RDATA to be created
     DSLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
                MasterLoaderCallbacks&)
     {
