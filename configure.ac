@@ -1359,6 +1359,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/tests/testdata/example.zone
            src/bin/auth/tests/testdata/example-base.zone
            src/bin/auth/tests/testdata/example-nsec3.zone
+           src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
