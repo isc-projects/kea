@@ -113,8 +113,21 @@ private:
                       << digest_type);
         }
 
-        const std::string digest =
-            lexer.getNextToken(MasterToken::STRING).getString();
+        std::string digest;
+        while (true) {
+            const MasterToken& token = lexer.getNextToken();
+            if (token.getType() != MasterToken::STRING) {
+                break;
+            }
+            digest.append(token.getString());
+        }
+
+        lexer.ungetToken();
+
+        if (digest.size() == 0) {
+            isc_throw(InvalidRdataText,
+                      "Missing " << RRType(typeCode) << " digest");
+        }
 
         tag_ = tag;
         algorithm_ = algorithm;
