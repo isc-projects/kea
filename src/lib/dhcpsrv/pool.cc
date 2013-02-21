@@ -102,8 +102,9 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    // check if the prefix length is sane
-    if (prefix_len == 0 || prefix_len > 128) {
+    // check if the prefix length is sane (we use the member variable only
+    // for silencing some compilers; see #2705 and #2789).
+    if (prefix_len_ == 0 || prefix_len_ > 128) {
         isc_throw(BadValue, "Invalid prefix length");
     }
 
