@@ -63,47 +63,33 @@ public:
     /// \c InvalidRdataText is thrown if the method cannot process the
     /// parameter data for any of the number of reasons.
     DSLikeImpl(const std::string& ds_str) {
-        std::istringstream iss(ds_str);
-        // peekc should be of iss's char_type for isspace to work
-        std::istringstream::char_type peekc;
-        std::stringbuf digestbuf;
-        uint32_t tag, algorithm, digest_type;
+        try {
+            std::istringstream ss(ds_str);
+            MasterLexer lexer;
+            lexer.pushSource(ss);
 
-        iss >> tag >> algorithm >> digest_type;
-        if (iss.bad() || iss.fail()) {
-            isc_throw(InvalidRdataText,
-                      "Invalid " << RRType(typeCode) << " text");
-        }
-        if (tag > 0xffff) {
-            isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " tag out of range");
-        }
-        if (algorithm > 0xff) {
-            isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " algorithm out of range");
-        }
-        if (digest_type > 0xff) {
-            isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " digest type out of range");
-        }
+            constructFromLexer(lexer);
 
-        iss.read(&peekc, 1);
-        if (!iss.good() || !isspace(peekc, iss.getloc())) {
+            if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText,
+                          "Extra input text for " << RRType(typeCode) << ": "
+                          << ds_str);
+            }
+        } catch (const MasterLexer::LexerError& ex) {
             isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " presentation format error");
+                      "Failed to construct " << RRType(typeCode) << " from '" <<
+                      ds_str << "': " << ex.what());
         }
-
-        iss >> &digestbuf;
-
-        tag_ = tag;
-        algorithm_ = algorithm;
-        digest_type_ = digest_type;
-        decodeHex(digestbuf.str(), digest_);
     }
 
     DSLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
                MasterLoaderCallbacks&)
     {
+        constructFromLexer(lexer);
+    }
+
+private:
+    void constructFromLexer(MasterLexer& lexer) {
         const uint32_t tag =
             lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (tag > 0xffff) {
@@ -136,6 +122,7 @@ public:
         decodeHex(digest, digest_);
     }
 
+public:
     /// \brief Constructor from wire-format data.
     ///
     /// \param buffer A buffer storing the wire format data.
