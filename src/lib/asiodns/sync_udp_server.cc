@@ -44,7 +44,7 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
     answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
+    checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
