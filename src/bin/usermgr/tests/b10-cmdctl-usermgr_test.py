@@ -121,8 +121,7 @@ Options:
 
         # Creating a file
         self.run_check(0,
-                       'Using accounts file: test_users.csv\n'
-                       'User added\n\n',
+                       'Using accounts file: test_users.csv\n',
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
@@ -133,8 +132,7 @@ Options:
 
         # Add to existing file
         self.run_check(0,
-                       'Using accounts file: test_users.csv\n'
-                       'User added\n\n',
+                       'Using accounts file: test_users.csv\n',
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
