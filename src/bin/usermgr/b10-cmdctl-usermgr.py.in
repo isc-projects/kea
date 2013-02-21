@@ -11,8 +11,8 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
 # INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
 # INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN COMMAND OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS COMMAND, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
@@ -36,8 +36,8 @@ DEFAULT_FILE = SYSCONFPATH + "/cmdctl-accounts.csv"
 
 # Actions that can be performed (used for argument parsing,
 # code paths, and output)
-ACTION_ADD = "add"
-ACTION_DELETE = "delete"
+COMMAND_ADD = "add"
+COMMAND_DELETE = "delete"
 
 # Non-zero return codes, used in tests
 BAD_ARGUMENTS = 1
@@ -124,18 +124,18 @@ class UserManager:
         self.user_info = new_user_info
         return True
 
-    def prompt_for_username(self, action):
+    def prompt_for_username(self, command):
         # Note, direct prints here are intentional
         while True :
-            name = input("Username to " + action + ": ")
+            name = input("Username to " + command + ": ")
             if name == "":
                 print("Error username can't be empty")
                 continue
 
-            if action == ACTION_ADD and self.username_exists(name):
+            if command == COMMAND_ADD and self.username_exists(name):
                  print("user already exists")
                  continue
-            elif action == ACTION_DELETE and not self.username_exists(name):
+            elif command == COMMAND_DELETE and not self.username_exists(name):
                  print("user does not exist")
                  continue
 
@@ -160,15 +160,15 @@ class UserManager:
         Returns False if there is a problem, True if everything seems OK.
         """
         if len(self.args) < 1:
-            self.print("Error: must specify an action")
+            self.print("Error: no command specified")
             return False
         if len(self.args) > 3:
             self.print("Error: extraneous arguments")
             return False
-        if self.args[0] not in [ ACTION_ADD, ACTION_DELETE ]:
-            self.print("Error: action must be either add or delete")
+        if self.args[0] not in [ COMMAND_ADD, COMMAND_DELETE ]:
+            self.print("Error: command must be either add or delete")
             return False
-        if self.args[0] == ACTION_DELETE and len(self.args) > 2:
+        if self.args[0] == COMMAND_DELETE and len(self.args) > 2:
             self.print("Error: delete only needs username, not a password")
             return False
         return True
@@ -181,14 +181,14 @@ class UserManager:
             self.print("Using accounts file: " + self.options.output_file)
             self.read_user_info()
 
-            action = self.args[0]
+            command = self.args[0]
 
             if len(self.args) > 1:
                 username = self.args[1]
             else:
-                username = self.prompt_for_username(action)
+                username = self.prompt_for_username(command)
 
-            if action == ACTION_ADD:
+            if command == COMMAND_ADD:
                 if len(self.args) > 2:
                     password = self.args[2]
                 else:
@@ -196,7 +196,7 @@ class UserManager:
                 if not self.add_user(username, password):
                     print("Error: username exists")
                     return USER_EXISTS
-            elif action == ACTION_DELETE:
+            elif command == COMMAND_DELETE:
                 if not self.delete_user(username):
                     print("Error: username does not exist")
                     return USER_DOES_NOT_EXIST
@@ -219,9 +219,9 @@ def set_options(parser):
                      )
 
 def main():
-    usage = "usage: %prog [options] <action> [username] [password]\n\n"\
+    usage = "usage: %prog [options] <command> [username] [password]\n\n"\
             "Arguments:\n"\
-            "  action\t\teither 'add' or 'delete'\n"\
+            "  command\t\teither 'add' or 'delete'\n"\
             "  username\t\tthe username to add or delete\n"\
             "  password\t\tthe password to set for the added user\n"\
             "\n"\
