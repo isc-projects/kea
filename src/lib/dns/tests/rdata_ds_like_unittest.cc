@@ -66,7 +66,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromText) {
     // spaces. See RFC4034 section 5.3.
     EXPECT_EQ(0, this->rdata_ds_like.compare(
         TypeParam("12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D5F0EB5"
-                  "C777 586DE18  \t DA6B5")));
+                  "C777 58 6DE18  \t DA6B5")));
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, toText_DS_LIKE) {
