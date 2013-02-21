@@ -982,7 +982,6 @@ class XfrinConnection(asyncore.dispatcher):
                          format_addrinfo(self._master_addrinfo))
             ret = XFRIN_FAIL
         except XfrinProtocolError as e:
-            # FIXME: Why is this .info? Even the messageID contains "ERROR".
             logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION, req_str,
                         self.zone_str(),
                         format_addrinfo(self._master_addrinfo), str(e))
@@ -1324,7 +1323,8 @@ def _do_auth_loadzone(server, zone_name, zone_class):
         param = msg['command'][1]
         logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE, param["origin"],
                      param["class"])
-        seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+        seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME,
+                                                    want_answer=True)
         answer, env = server._send_cc_session.group_recvmsg(False, seq)
 
 class Xfrin:
@@ -1630,18 +1630,29 @@ class Xfrin:
         param = {'zone_name': zone_name.to_text(),
                  'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
+            # FIXME: Due to the hack with two different CC sessions
+            # (see the _cc_setup comment) and the fact the rpc_call
+            # is a high-level call present only at ModuleCCSession,
+            # we are forced to use the primitive way of manually
+            # calling group_sendmsg and the group_recvmsg. Also, why
+            # do we do group_recvmsg when we don't need the answer?
+            # And why is this direct RPC call if a notification would
+            # be more appropriate?
             _do_auth_loadzone(self, zone_name, zone_class)
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
             # catch the exception, in case msgq has been killed.
             try:
                 seq = self._send_cc_session.group_sendmsg(msg,
-                                                          XFROUT_MODULE_NAME)
+                                                          XFROUT_MODULE_NAME,
+                                                          want_answer=True)
                 try:
                     answer, env = self._send_cc_session.group_recvmsg(False,
                                                                       seq)
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
-                seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                seq = self._send_cc_session.group_sendmsg(msg,
+                                                          ZONE_MANAGER_MODULE_NAME,
+                                                          want_answer=True)
                 try:
                     answer, env = self._send_cc_session.group_recvmsg(False,
                                                                       seq)
@@ -1654,7 +1665,8 @@ class Xfrin:
             msg = create_command(notify_out.ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
             try:
-                seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+                seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME,
+                                                          want_answer=True)
                 try:
                     answer, env = self._send_cc_session.group_recvmsg(False,
                                                                       seq)
