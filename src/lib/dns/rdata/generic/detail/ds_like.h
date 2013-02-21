@@ -101,6 +101,41 @@ public:
         decodeHex(digestbuf.str(), digest_);
     }
 
+    DSLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
+               MasterLoaderCallbacks&)
+    {
+        const uint32_t tag =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (tag > 0xffff) {
+            isc_throw(InvalidRdataText,
+                      "Invalid " << RRType(typeCode) << " tag: " << tag);
+        }
+
+        const uint32_t algorithm =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (algorithm > 0xff) {
+            isc_throw(InvalidRdataText,
+                      "Invalid " << RRType(typeCode) << " algorithm: "
+                      << algorithm);
+        }
+
+        const uint32_t digest_type =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (digest_type > 0xff) {
+            isc_throw(InvalidRdataText,
+                      "Invalid " << RRType(typeCode) << " digest type: "
+                      << digest_type);
+        }
+
+        const std::string digest =
+            lexer.getNextToken(MasterToken::STRING).getString();
+
+        tag_ = tag;
+        algorithm_ = algorithm;
+        digest_type_ = digest_type;
+        decodeHex(digest, digest_);
+    }
+
     /// \brief Constructor from wire-format data.
     ///
     /// \param buffer A buffer storing the wire format data.
