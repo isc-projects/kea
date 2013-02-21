@@ -161,8 +161,10 @@ if test $with_werror = 1; then
    CXXFLAGS_SAVED="$CXXFLAGS"
    CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
    AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-   AC_TRY_COMPILE([namespace { class Foo {}; }
-   namespace isc {class Bar {Foo foo_;};} ],,
+   # We use struct, not class, here, because some compilers complain about
+   # "unused private members", causing a false positive.
+   AC_TRY_COMPILE([namespace { struct Foo {}; }
+   namespace isc {struct Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
