@@ -289,7 +289,7 @@ public:
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
- 
+
         // Set the column names (for error messages)
         columns_[0] = "address";
         columns_[1] = "hwaddr";
@@ -353,9 +353,9 @@ public:
             // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
             // but let's set them to some sane values in case earlier versions
             // didn't have that assumption.
-            static my_bool no_clientid = MLM_TRUE;
+            client_id_null_ = MLM_TRUE;
             bind_[2].buffer = NULL;
-            bind_[2].is_null = &no_clientid;
+            bind_[2].is_null = &client_id_null_;
         }
 
         // valid lifetime: unsigned int
@@ -424,6 +424,7 @@ public:
         bind_[2].buffer = reinterpret_cast<char*>(client_id_buffer_);
         bind_[2].buffer_length = client_id_length_;
         bind_[2].length = &client_id_length_;
+        bind_[2].is_null = &client_id_null_;
 
         // lease_time: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
@@ -465,6 +466,11 @@ public:
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
+        if (client_id_null_==MLM_TRUE) {
+            // There's no client-id, so we pass client-id_length_ set to 0
+            client_id_length_ = 0;
+        }
+
         // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
@@ -502,6 +508,8 @@ private:
     uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
                                         ///< Client ID buffer
     unsigned long   client_id_length_;  ///< Client ID address length
+    my_bool         client_id_null_;    ///< Is Client ID null?
+
     MYSQL_TIME      expire_;            ///< Lease expiry time
     Lease4Ptr       lease_;             ///< Pointer to lease object
     uint32_t        subnet_id_;         ///< Subnet identification
@@ -536,7 +544,7 @@ public:
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
- 
+
         // Set the column names (for error messages)
         columns_[0] = "address";
         columns_[1] = "duid";
@@ -809,7 +817,7 @@ private:
     // schema.
     // Note: arrays are declared fixed length for speed of creation
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character 
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
@@ -873,7 +881,7 @@ private:
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
+MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
     : LeaseMgr(parameters), mysql_(NULL) {
 
     // Allocate context for MySQL - it is destroyed in the destructor.
@@ -970,7 +978,7 @@ MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
     expire_tm.tm_hour = expire.hour;
     expire_tm.tm_min = expire.minute;
     expire_tm.tm_sec = expire.second;
-    expire_tm.tm_isdst = -1;    // Let the system work out about DST 
+    expire_tm.tm_isdst = -1;    // Let the system work out about DST
 
     // Convert to local time
     cltt = mktime(&expire_tm) - valid_lifetime;
@@ -1022,7 +1030,7 @@ MySqlLeaseMgr::openDatabase() {
     }
 
     // Set options for the connection:
-    // 
+    //
     // Automatic reconnection: after a period of inactivity, the client will
     // disconnect from the database.  This option causes it to automatically
     // reconnect when another operation is about to be done.
@@ -1088,7 +1096,7 @@ MySqlLeaseMgr::prepareStatements() {
     // Allocate space for all statements
     statements_.clear();
     statements_.resize(NUM_STATEMENTS, NULL);
-    
+
     text_statements_.clear();
     text_statements_.resize(NUM_STATEMENTS, std::string(""));
 
