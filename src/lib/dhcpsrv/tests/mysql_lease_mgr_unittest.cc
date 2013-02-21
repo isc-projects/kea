@@ -751,14 +751,13 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
     // Check that we can't add a second lease with the same address
     EXPECT_FALSE(lmptr_->addLease(leases[1]));
 
-
     // Check that we can get the lease by HWAddr
-    Lease4Collection returned = lmptr_->getLease4(leases[2]->hwaddr_);
-
+    HWAddr tmp(leases[2]->hwaddr_, HTYPE_ETHER);
+    Lease4Collection returned = lmptr_->getLease4(tmp);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
-    l_returned = lmptr_->getLease4(leases[2]->hwaddr_, leases[2]->subnet_id_);
+    l_returned = lmptr_->getLease4(tmp, leases[2]->subnet_id_);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
