@@ -31,12 +31,22 @@ import isc.util.process
 
 isc.util.process.rename()
 
-VERSION_STRING = 'b10-cmdctl-usermgr @PACKAGE_VERSION@'
-DEFAULT_FILE = SYSCONFPATH + '/cmdctl-accounts.csv'
+VERSION_STRING = "b10-cmdctl-usermgr @PACKAGE_VERSION@"
+DEFAULT_FILE = SYSCONFPATH + "/cmdctl-accounts.csv"
+
+ACTION_ADD = "add"
+ACTION_DELETE = "delete"
+
+# Non-zero return codes, used in tests
+BAD_ARGUMENTS = 1
+FILE_ERROR = 2
+USER_EXISTS = 3
+USER_DOES_NOT_EXIST = 4
 
 class UserManager:
-    def __init__(self, options):
+    def __init__(self, options, args):
         self.options = options
+        self.args = args
 
     def print(self, msg):
         if not self.options.quiet:
@@ -73,6 +83,7 @@ class UserManager:
         Add the given username/password combination to the file.
         First checks if the username exists, and returns False if so.
         If not, it is added, and this method returns True.
+        (if it cannot write to the file it raises an exception)
         """
         if self.username_exists(name):
             return False
@@ -80,66 +91,105 @@ class UserManager:
         self.save_userinfo(name, pw, salt, self.options.output_file)
         return True
 
-    def interactive_mode(self):
+    def delete_user(self, name):
+        if not self.username_exists(name):
+            return False
+        rows = []
+        with open(self.options.output_file) as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if row[0] != name:
+                    rows.append(row)
+        with open(self.options.output_file, 'w') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(rows)
+        return True
+
+    def prompt_for_username(self, action):
         while True :
-            name = input("Username to add: ")
-            if name == '':
-                print("error, username can't be empty")
+            name = input("Username to " + action + ": ")
+            if name == "":
+                # Note, direct print here is intentional
+                print("Error username can't be empty")
                 continue
 
-            if self.username_exists(name):
-                 print("user already exists!")
+            if action == ACTION_ADD and self.username_exists(name):
+                 print("user already exists")
+                 continue
+            elif action == ACTION_DELETE and not self.username_exists(name):
+                 print("user does not exist")
                  continue
 
-            while True:
-                pwd1 = getpass.getpass("Choose a password: ")
-                pwd2 = getpass.getpass("Re-enter password: ")
-                if pwd1 != pwd2:
-                    print("passwords do not match, try again")
-                else:
-                    break;
+            return name
 
-            if not self.add_user(name, pwd1):
-                self.print("Error: username exists")
+    def prompt_for_password(self):
+        while True:
+            pwd1 = getpass.getpass("Choose a password: ")
+            if pwd1 == "":
+                # Note, direct print here is intentional
+                print("Error: password cannot be empty")
+                continue
+            pwd2 = getpass.getpass("Re-enter password: ")
+            if pwd1 != pwd2:
+                print("passwords do not match, try again")
+                continue
+            return pwd1
 
-            inputdata = input('Add another user (y/n)? ')
-            if inputdata not in ['y', 'Y']:
-                break
+    def verify_options_and_args(self):
+        """
+        Basic sanity checks on command line arguments
+        """
+        if len(self.args) < 1:
+            self.print("Error: must specify an action")
+            return False
+        if len(self.args) > 3:
+            self.print("Error: extraneous arguments")
+            return False
+        if self.args[0] not in [ ACTION_ADD, ACTION_DELETE ]:
+            self.print("Error: action must be either add or delete")
+            return False
+        if self.args[0] == ACTION_DELETE and len(self.args) > 2:
+            self.print("Error: delete only needs username, not a password")
+            return False
+        return True
 
     def run(self):
-        self.print("Using accounts file: " + self.options.output_file)
-        filename = self.options.output_file
+        if not self.verify_options_and_args():
+            return BAD_ARGUMENTS
 
-        if self.options.username is not None or\
-           self.options.password is not None:
-            if self.options.username is None:
-                self.print("Error: password but no username given")
-                return 1
-            if self.options.password is None:
-                self.print("Error: username but no password given")
-                return 1
-            if not self.add_user(self.options.username,
-                                 self.options.password):
-                self.print("Error: username exists")
-        else:
-            try:
-                self.interactive_mode()
-            except KeyboardInterrupt:
-                pass
-        return 0
+        try:
+            self.print("Using accounts file: " + self.options.output_file)
+
+            action = self.args[0]
+
+            if len(self.args) > 1:
+                username = self.args[1]
+            else:
+                username = self.prompt_for_username(action)
+
+            if action == ACTION_ADD:
+                if len(self.args) > 2:
+                    password = self.args[2]
+                else:
+                    password = self.prompt_for_password()
+                if not self.add_user(username, password):
+                    print("Error: username exists")
+                    return USER_EXISTS
+            elif action == ACTION_DELETE:
+                if not self.delete_user(username):
+                    print("Error: username does not exist")
+                    return USER_DOES_NOT_EXIST
+
+            return 0
+        except IOError as ioe:
+            self.print("Error accessing " + ioe.filename +\
+                       ": " + str(ioe.strerror))
+            return FILE_ERROR
 
 def set_options(parser):
     parser.add_option("-f", "--file",
                       dest="output_file", default=DEFAULT_FILE,
-                      help="Specify the file to append user name and password"
-                     )
-    parser.add_option("-u", "--username",
-                      dest="username", default=None,
-                      help="Specify username to add"
-                     )
-    parser.add_option("-p", "--password",
-                      dest="password", default=None,
-                      help="Specify password to add"
+                      help="Accounts file to modify"
                      )
     parser.add_option("-q", "--quiet",
                       dest="quiet", action="store_true", default=False,
@@ -147,13 +197,20 @@ def set_options(parser):
                      )
 
 def main():
-    parser = OptionParser(version = VERSION_STRING)
+    usage = "usage: %prog [options] <action> [username] [password]\n\n"\
+            "Arguments:\n"\
+            "  action\t\teither 'add' or 'delete'\n"\
+            "  username\t\tthe username to add or delete\n"\
+            "  password\t\tthe password to set for the added user\n"\
+            "\n"\
+            "If username or password are not specified, %prog will\n"\
+            "prompt for them."
+    parser = OptionParser(usage=usage, version=VERSION_STRING)
     set_options(parser)
-    (options, _) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-    usermgr = UserManager(options)
+    usermgr = UserManager(options, args)
     return usermgr.run()
-
 
 if __name__ == '__main__':
     result = main()
