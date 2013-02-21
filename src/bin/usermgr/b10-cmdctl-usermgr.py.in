@@ -16,8 +16,8 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-This file implements user management program. The user name and
-its password is appended to csv file.
+This tool implements user management for b10-cmdctl. It is used to
+add and remove users from the accounts file.
 '''
 from bind10_config import SYSCONFPATH
 import random
@@ -34,6 +34,8 @@ isc.util.process.rename()
 VERSION_STRING = "b10-cmdctl-usermgr @PACKAGE_VERSION@"
 DEFAULT_FILE = SYSCONFPATH + "/cmdctl-accounts.csv"
 
+# Actions that can be performed (used for argument parsing,
+# code paths, and output)
 ACTION_ADD = "add"
 ACTION_DELETE = "delete"
 
@@ -57,59 +59,76 @@ class UserManager:
         saltedpwd = sha1((password + salt).encode()).hexdigest()
         return salt, saltedpwd
 
+    def read_user_info(self):
+        """
+        Read the existing user info
+        Raises an IOError if the file can't be read
+        """
+        # Currently, this is done quite naively (there is no
+        # check that the file is modified between read and write)
+        # But taking multiple simultaneous users of this tool on the
+        # same file seems unnecessary at this point.
+        self.user_info = []
+        if os.path.exists(self.options.output_file):
+            # Just let any file read error bubble up; it will
+            # be caught in the run() method
+            with open(self.options.output_file) as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    self.user_info.append(row)
+
+    def save_userinfo(self):
+        """
+        Write out the (modified) user info
+        Raises an IOError if the file can't be written
+        """
+        # Just let any file write error bubble up; it will
+        # be caught in the run() method
+        with open(self.options.output_file, 'w') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(self.user_info)
+
     def username_exists(self, name):
-        if not os.path.exists(self.options.output_file):
-            return False
-
-        exist = False
-        csvfile = None
-        with open(self.options.output_file) as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                if name == row[0]:
-                    exist = True
-                    break
-        return exist
-
-    def save_userinfo(self, username, pw, salt, filename):
-        csvfile = open(filename, 'a')
-        writer = csv.writer(csvfile)
-        writer.writerow([username, pw, salt])
-        csvfile.close()
-        self.print("User added\n")
+        """
+        Returns True if the username exists
+        """
+        for row in self.user_info:
+            if name == row[0]:
+                return True
+        return False
 
     def add_user(self, name, password):
         """
-        Add the given username/password combination to the file.
+        Add the given username/password combination to the stored user_info.
         First checks if the username exists, and returns False if so.
         If not, it is added, and this method returns True.
-        (if it cannot write to the file it raises an exception)
         """
         if self.username_exists(name):
             return False
         salt, pw = self.gen_password_hash(password)
-        self.save_userinfo(name, pw, salt, self.options.output_file)
+        self.user_info.append([name, pw, salt])
         return True
 
     def delete_user(self, name):
+        """
+        Removes the row with the given name from the stored user_info
+        First checks if the username exists, and returns False if not.
+        Otherwise, it is removed, and this mehtod returns True
+        """
         if not self.username_exists(name):
             return False
-        rows = []
-        with open(self.options.output_file) as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                if row[0] != name:
-                    rows.append(row)
-        with open(self.options.output_file, 'w') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerows(rows)
+        new_user_info = []
+        for row in self.user_info:
+            if row[0] != name:
+                new_user_info.append(row)
+        self.user_info = new_user_info
         return True
 
     def prompt_for_username(self, action):
+        # Note, direct prints here are intentional
         while True :
             name = input("Username to " + action + ": ")
             if name == "":
-                # Note, direct print here is intentional
                 print("Error username can't be empty")
                 continue
 
@@ -123,10 +142,10 @@ class UserManager:
             return name
 
     def prompt_for_password(self):
+        # Note, direct prints here are intentional
         while True:
             pwd1 = getpass.getpass("Choose a password: ")
             if pwd1 == "":
-                # Note, direct print here is intentional
                 print("Error: password cannot be empty")
                 continue
             pwd2 = getpass.getpass("Re-enter password: ")
@@ -137,7 +156,8 @@ class UserManager:
 
     def verify_options_and_args(self):
         """
-        Basic sanity checks on command line arguments
+        Basic sanity checks on command line arguments.
+        Returns False if there is a problem, True if everything seems OK.
         """
         if len(self.args) < 1:
             self.print("Error: must specify an action")
@@ -159,6 +179,7 @@ class UserManager:
 
         try:
             self.print("Using accounts file: " + self.options.output_file)
+            self.read_user_info()
 
             action = self.args[0]
 
@@ -180,6 +201,7 @@ class UserManager:
                     print("Error: username does not exist")
                     return USER_DOES_NOT_EXIST
 
+            self.save_userinfo()
             return 0
         except IOError as ioe:
             self.print("Error accessing " + ioe.filename +\
