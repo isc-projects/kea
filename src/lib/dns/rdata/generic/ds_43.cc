@@ -39,6 +39,11 @@ DS::DS(InputBuffer& buffer, size_t rdata_len) :
     impl_(new DSImpl(buffer, rdata_len))
 {}
 
+DS::DS(MasterLexer& lexer, const Name* origin, MasterLoader::Options options,
+       MasterLoaderCallbacks& callbacks) :
+    impl_(new DSImpl(lexer, origin, options, callbacks))
+{}
+
 DS::DS(const DS& source) :
     Rdata(), impl_(new DSImpl(*source.impl_))
 {}

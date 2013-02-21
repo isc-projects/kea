@@ -91,8 +91,18 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromLexer_DS_LIKE) {
                                      ds_like_txt)));
 
     // Exceptions cause NULL to be returned.
+
+    // Bad tag
     EXPECT_FALSE(test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
-                                             "99999 5 2 BEEF"));
+                                             "65536 5 2 BEEF"));
+
+    // Bad algorithm
+    EXPECT_FALSE(test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                             "1024 256 2 BEEF"));
+
+    // Bad digest type
+    EXPECT_FALSE(test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                             "2048 2 256 BEEF"));
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
