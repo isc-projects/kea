@@ -459,20 +459,14 @@ class StatsHttpd:
         if name is not None:
             param['name'] = name
         try:
-            seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('show', param), 'Stats')
-            (answer, env) = self.cc_session.group_recvmsg(False, seq)
-            if answer:
-                (rcode, value) = isc.config.ccsession.parse_answer(answer)
+            return self.mccs.rpc_call('show', 'Stats', params=param)
         except (isc.cc.session.SessionTimeout,
-                isc.cc.session.SessionError) as err:
+                isc.cc.session.SessionError,
+                isc.config.RPCRecipientMissing) as err:
             raise StatsHttpdError("%s: %s" %
                                   (err.__class__.__name__, err))
-        else:
-            if rcode == 0:
-                return value
-            else:
-                raise StatsHttpdDataError("Stats module: %s" % str(value))
+        except isc.config.RPCError as e:
+            raise StatsHttpdDataError("Stats module: %s" % str(e))
 
     def get_stats_spec(self, owner=None, name=None):
         """Requests statistics data to the Stats daemon and returns
@@ -493,15 +487,9 @@ class StatsHttpd:
         if name is not None:
             param['name'] = name
         try:
-            seq = self.cc_session.group_sendmsg(
-                isc.config.ccsession.create_command('showschema', param), 'Stats')
-            (answer, env) = self.cc_session.group_recvmsg(False, seq)
-            if answer:
-                (rcode, value) = isc.config.ccsession.parse_answer(answer)
-                if rcode == 0:
-                    return value
-                else:
-                    raise StatsHttpdDataError("Stats module: %s" % str(value))
+            return self.mccs.rpc_call('showschema', 'Stats', params=param)
+        except isc.config.RPCError as e:
+            raise StatsHttpdDataError("Stats module: %s" % str(e))
         except (isc.cc.session.SessionTimeout,
                 isc.cc.session.SessionError) as err:
             raise StatsHttpdError("%s: %s" %
