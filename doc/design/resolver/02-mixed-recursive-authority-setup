@@ -6,7 +6,8 @@ Ideally we will run the authoritative server independently of the
 recursive resolver.
 
 We need a way to run both an authoritative and a recursive resolver on
-a single platform, listening on the same IP/port.
+a single platform, listening on the same IP/port. But we need a way to
+run only one of them as well.
 
 We have 3 basic components involved in this mix:
 
@@ -26,3 +27,8 @@ d. Have a simple "receptionist" module which knows which zones we are
 
 Stephen did some modeling work on this already. We need to understand
 the latency and throughput implications of any of these approaches.
+
+It would be nice to solve the forwarding of packets to DDNS and XfrIn
+with this too, if it worked. Currently, it is not possible to run more
+instances of these modules to divide the load and it is not possible
+to run them without Auth.
