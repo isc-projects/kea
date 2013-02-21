@@ -9,8 +9,8 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
 # INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
 # INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN COMMAND OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS COMMAND, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import csv
@@ -91,10 +91,10 @@ class TestUserMgr(unittest.TestCase):
 
     def test_help(self):
         self.run_check(0,
-'''Usage: b10-cmdctl-usermgr [options] <action> [username] [password]
+'''Usage: b10-cmdctl-usermgr [options] <command> [username] [password]
 
 Arguments:
-  action		either 'add' or 'delete'
+  command		either 'add' or 'delete'
   username		the username to add or delete
   password		the password to set for the added user
 
@@ -205,11 +205,11 @@ Options:
         Assorted tests with bad command-line arguments
         """
         self.run_check(1,
-                       'Error: must specify an action\n',
+                       'Error: no command specified\n',
                        '',
                        [ self.TOOL ])
         self.run_check(1,
-                       'Error: action must be either add or delete\n',
+                       'Error: command must be either add or delete\n',
                        '',
                        [ self.TOOL, 'foo' ])
         self.run_check(1,
