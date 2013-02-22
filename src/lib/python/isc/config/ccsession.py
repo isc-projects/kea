@@ -37,6 +37,7 @@
 """
 
 from isc.cc import Session
+from isc.cc.proto_defs import *
 from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DATA_VERSION
 import isc.config.module_spec
 import isc
@@ -49,6 +50,31 @@ from isc.log_messages.config_messages import *
 logger = isc.log.Logger("config")
 
 class ModuleCCSessionError(Exception): pass
+
+class RPCError(ModuleCCSessionError):
+    """
+    An exception raised by rpc_call in case the remote side reports
+    an error. It can be used to distinguish remote errors from protocol errors.
+    Also, it holds the code as well as the error message.
+    """
+    def __init__(self, code, message):
+        ModuleCCSessionError.__init__(self, message)
+        self.__code = code
+
+    def code(self):
+        """
+        The code as sent over the CC.
+        """
+        return self.__code
+
+class RPCRecipientMissing(RPCError):
+    """
+    Special version of the RPCError, for cases the recipient of the call
+    isn't connected to the bus. The code is always
+    isc.cc.proto_defs.CC_REPLY_NO_RECPT.
+    """
+    def __init__(self, message):
+        RPCError.__init__(self, CC_REPLY_NO_RECPT, message)
 
 def parse_answer(msg):
     """Returns a tuple (rcode, value), where value depends on the
@@ -66,7 +92,8 @@ def parse_answer(msg):
         raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
         if len(msg['result']) > 1:
-            if (msg['result'][0] != 0 and type(msg['result'][1]) != str):
+            if (msg['result'][0] != CC_REPLY_SUCCESS and
+                type(msg['result'][1]) != str):
                 raise ModuleCCSessionError("rcode in answer message is non-zero, value is not a string")
             return msg['result'][0], msg['result'][1]
         else:
@@ -79,7 +106,7 @@ def create_answer(rcode, arg = None):
        a string containing an error message"""
     if type(rcode) != int:
         raise ModuleCCSessionError("rcode in create_answer() must be an integer")
-    if rcode != 0 and type(arg) != str:
+    if rcode != CC_REPLY_SUCCESS and type(arg) != str:
         raise ModuleCCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
     if arg != None:
         return { 'result': [ rcode, arg ] }
@@ -299,7 +326,7 @@ class ModuleCCSession(ConfigData):
                         isc.cc.data.remove_identical(new_config, self.get_local_config())
                         answer = self._config_handler(new_config)
                         rcode, val = parse_answer(answer)
-                        if rcode == 0:
+                        if rcode == CC_REPLY_SUCCESS:
                             newc = self.get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self.set_local_config(newc)
@@ -474,6 +501,42 @@ class ModuleCCSession(ConfigData):
         except isc.cc.SessionTimeout:
             raise ModuleCCSessionError("CC Session timeout waiting for configuration manager")
 
+    def rpc_call(self, command, group, instance=CC_INSTANCE_WILDCARD,
+                 to=CC_TO_WILDCARD, params=None):
+        """
+        Create a command with the given name and parameters. Send it to a
+        recipient, wait for the answer and parse it.
+
+        This is a wrapper around the group_sendmsg and group_recvmsg on the CC
+        session. It exists mostly for convenience.
+
+        Params:
+        - command: Name of the command to call on the remote side.
+        - group, instance, to: Address specification of the recipient.
+        - params: Parameters to pass to the command (as keyword arguments).
+
+        Return: The return value of the remote call (just the value, no status
+          code or anything). May be None.
+
+        Raise:
+        - RPCRecipientMissing if the given recipient doesn't exist.
+        - RPCError if the other side sent an error response. The error string
+          is in the exception.
+        - ModuleCCSessionError in case of protocol errors, like malformed
+          answer.
+        """
+        cmd = create_command(command, params)
+        seq = self._session.group_sendmsg(cmd, group, instance=instance,
+                                          to=to, want_answer=True)
+        # For non-blocking, we'll have rpc_call_async (once the nonblock
+        # actualy works)
+        reply, rheaders = self._session.group_recvmsg(nonblock=False, seq=seq)
+        code, value = parse_answer(reply)
+        if code == CC_REPLY_NO_RECPT:
+            raise RPCRecipientMissing(value)
+        elif code != CC_REPLY_SUCCESS:
+            raise RPCError(code, value)
+        return value
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains

@@ -191,7 +191,7 @@ class FakeKeyringModule:
         '''Simply return the predefined TSIG keyring unconditionally.'''
         return TEST_TSIG_KEYRING
 
-class MyCCSession(isc.config.ConfigData):
+class MyCCSession(isc.config.ModuleCCSession):
     '''Fake session with minimal interface compliance.'''
 
     # faked CC sequence used in group_send/recvmsg
@@ -276,7 +276,8 @@ class MyCCSession(isc.config.ConfigData):
                     'secondary_zones')
                 return seczone_default, True
 
-    def group_sendmsg(self, msg, group):
+    def group_sendmsg(self, msg, group, instance='*', to='*',
+                      want_answer=False):
         # remember the passed parameter, and return dummy sequence
         self._sent_msg.append((msg, group))
         if self._sendmsg_exception is not None:

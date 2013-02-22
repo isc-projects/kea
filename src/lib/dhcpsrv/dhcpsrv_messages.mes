@@ -128,7 +128,7 @@ with the specified address to the memory file backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
-% DHCPSRV_MEMFILE_COMMIT commiting to memory file database
+% DHCPSRV_MEMFILE_COMMIT committing to memory file database
 The code has issued a commit call.  For the memory file database, this is
 a no-op.
 
@@ -212,7 +212,7 @@ with the specified address to the MySQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
 
-% DHCPSRV_MYSQL_COMMIT commiting to MySQl database
+% DHCPSRV_MYSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
 the commital may not include a write to disk.

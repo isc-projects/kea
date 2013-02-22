@@ -28,7 +28,7 @@ class WouldBlockForever(Exception):
 class FakeModuleCCSession:
     def __init__(self):
         self.subscriptions = {}
-        # each entry is of the form [ channel, instance, message ]
+        # each entry is of the form [ channel, instance, message, want_answer ]
         self.message_queue = []
         self._socket = "ok we just need something not-None here atm"
         # if self.timeout is set to anything other than 0, and
@@ -68,12 +68,14 @@ class FakeModuleCCSession:
         else:
             return False
 
-    def group_sendmsg(self, msg, channel, target = None):
-        self.message_queue.append([ channel, target, msg ])
+    def group_sendmsg(self, msg, group, instance=None, to=None,
+                      want_answer=False):
+        self.message_queue.append([ group, instance, msg, want_answer ])
+        return 42
 
     def group_reply(self, env, msg):
         if 'group' in env:
-            self.message_queue.append([ env['group'], None, msg])
+            self.message_queue.append([ env['group'], None, msg, False])
 
     def group_recvmsg(self, nonblock=True, seq = None):
         for qm in self.message_queue:
