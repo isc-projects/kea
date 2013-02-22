@@ -32,7 +32,7 @@
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
-#include <module_spec.h>
+#include <config/module_spec.h>
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
@@ -863,9 +863,11 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
                          const ConstElementPtr &params)
 {
     const ConstElementPtr &command_el(createCommand(command, params));
-    const int seq = session_.group_sendmsg(command_el, group, instance, to);
+    const int seq = groupSendMsg(command_el, group, instance, to, true);
     ConstElementPtr env, answer;
-    session_.group_recvmsg(env, answer, false, seq);
+    LOG_DEBUG(config_logger, DBGLVL_TRACE_DETAIL, CONFIG_RPC_SEQ).arg(command).
+        arg(group).arg(seq);
+    groupRecvMsg(env, answer, true, seq);
     int rcode;
     const ConstElementPtr &result(parseAnswer(rcode, answer));
     if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
