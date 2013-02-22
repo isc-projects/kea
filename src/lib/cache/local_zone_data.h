@@ -29,8 +29,12 @@ namespace cache {
 /// in the zone.
 class LocalZoneData {
 public:
-    LocalZoneData(uint16_t rrset_class) : class_(rrset_class)
-    {}
+    /// \brief Constructor.
+    ///
+    /// The passed parameter is expected to be an RR class value, but is not
+    /// currently unused.  And this library will be quite likely to
+    /// deprecated anyway, so we don't touch it heavily.
+    LocalZoneData(uint16_t) {}
 
     /// \brief Look up one rrset.
     ///
@@ -51,7 +55,6 @@ public:
 
 private:
     std::map<std::string, isc::dns::RRsetPtr> rrsets_map_; // RRsets of the zone
-    uint16_t class_; // The class of the zone
 };
 
 typedef boost::shared_ptr<LocalZoneData> LocalZoneDataPtr;
