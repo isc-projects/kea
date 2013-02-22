@@ -72,6 +72,12 @@ TEST_F(Rdata_NSEC_Test, createFromLexer_NSEC) {
         *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
                                      nsec_txt)));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::NSEC("www2.example.org. CNAME RRSIG NSEC").compare(
+        *test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
+                                     "www2 CNAME RRSIG NSEC")));
+
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC(), RRClass::IN(),
                                              "www.isc.org."));
