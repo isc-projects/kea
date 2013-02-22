@@ -114,9 +114,9 @@ TEST_F(Rdata_NSEC_Test, getNextName) {
 
 TEST_F(Rdata_NSEC_Test, compare) {
     // trivial case: self equivalence
-    EXPECT_EQ(0, generic::NSEC("example A").
+    EXPECT_EQ(0, generic::NSEC("example. A").
               compare(generic::NSEC("example. A")));
-    EXPECT_EQ(0, generic::NSEC("EXAMPLE A"). // should be case insensitive
+    EXPECT_EQ(0, generic::NSEC("EXAMPLE. A"). // should be case insensitive
               compare(generic::NSEC("example. A")));
 
     // comparison attempt between incompatible RR types should be rejected
