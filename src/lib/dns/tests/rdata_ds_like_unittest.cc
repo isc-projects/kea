@@ -98,6 +98,13 @@ TYPED_TEST(Rdata_DS_LIKE_Test, createFromLexer_DS_LIKE) {
         *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
                                      ds_like_txt)));
 
+    // Whitespace is okay
+    EXPECT_EQ(0, this->rdata_ds_like.compare(
+        *test::createRdataUsingLexer(RRTYPE<TypeParam>(), RRClass::IN(),
+                                     "12892 5 2 F1E184C0E1D615D20EB3C223ACED3B0"
+                                     "3C773DD952D5F0EB5C777 58 6DE18  \t DA6B5"
+             )));
+
     // Exceptions cause NULL to be returned.
 
     // Bad tag
