@@ -27,6 +27,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata/generic/detail/nsec_bitmap.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -35,6 +36,7 @@ using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata::generic::detail::nsec;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -85,6 +87,17 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
     checkRRTypeBitmaps("NSEC", typebits);
 
     impl_ = new NSECImpl(nextname, typebits);
+}
+
+NSEC::NSEC(MasterLexer& lexer, const Name* origin, MasterLoader::Options,
+           MasterLoaderCallbacks&)
+{
+    const Name origin_name(createNameFromLexer(lexer, origin));
+
+    vector<uint8_t> typebits;
+    buildBitmapsFromLexer("NSEC", lexer, typebits);
+
+    impl_ = new NSECImpl(origin_name, typebits);
 }
 
 NSEC::NSEC(const NSEC& source) :
