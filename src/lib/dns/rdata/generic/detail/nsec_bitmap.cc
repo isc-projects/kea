@@ -132,7 +132,7 @@ buildBitmapsFromLexer(const char* const rrtype_name,
     bool have_rrtypes = false;
     while (true) {
         const MasterToken& token = lexer.getNextToken();
-        if (token.getType() == MasterToken::END_OF_FILE) {
+        if (token.getType() != MasterToken::STRING) {
             break;
         }
 
@@ -147,6 +147,8 @@ buildBitmapsFromLexer(const char* const rrtype_name,
                       << rrtype_name << " bitmap: " << type_str);
         }
     }
+
+    lexer.ungetToken();
 
     if (!have_rrtypes) {
          isc_throw(InvalidRdataText,
