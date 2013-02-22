@@ -417,33 +417,24 @@ class TestStats(unittest.TestCase):
 
         """
 
-        def __check_group_sendmsg(command, destination):
-            self.assertEqual('ConfigManager', destination)
-            cmd, value = isc.config.ccsession.parse_command(command)
-            self.assertEqual(cmd,
+        def __check_rpc_call(command, group):
+            self.assertEqual('ConfigManager', group)
+            self.assertEqual(command,
                              isc.config.ccsession.COMMAND_GET_STATISTICS_SPEC)
-            self.assertEqual(None, value)
-            return 42           # faked seq number
-
-        def __check_group_recvmsg(nonblocking, seq):
-            self.assertFalse(nonblocking)
-            self.assertEqual(42, seq) # should be the one returned above
-            answer = isc.config.ccsession.create_answer(
-                0, {'Init': [{
-                            "item_name": "boot_time",
-                            "item_type": "string",
-                            "item_optional": False,
-                            # Use a different default so we can check it below
-                            "item_default": "2013-01-01T00:00:01Z",
-                            "item_title": "Boot time",
-                            "item_description": "dummy desc",
-                            "item_format": "date-time"
-                            }]})
-            return answer, None
+            answer_value = {'Init': [{
+                        "item_name": "boot_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        # Use a different default so we can check it below
+                        "item_default": "2013-01-01T00:00:01Z",
+                        "item_title": "Boot time",
+                        "item_description": "dummy desc",
+                        "item_format": "date-time"
+                        }]}
+            return answer_value
 
         self.stats = SimpleStats()
-        self.stats.cc_session.group_sendmsg = __check_group_sendmsg
-        self.stats.cc_session.group_recvmsg = __check_group_recvmsg
+        self.stats.cc_session.rpc_call = __check_rpc_call
 
         self.stats.update_modules()
 
@@ -475,10 +466,11 @@ class TestStats(unittest.TestCase):
                          "2013-01-01T00:00:01Z")
 
         # Error case
+        def __raise_on_rpc_call(x, y):
+            raise isc.config.RPCError(99, 'error')
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
-        stats.isc.config.ccsession.parse_answer = lambda x: (99, 'error')
+        self.stats.cc_session.rpc_call = __raise_on_rpc_call
         self.assertRaises(stats.StatsError, self.stats.update_modules)
-        stats.isc.config.ccsession.parse_answer = orig_parse_answer
 
     def test_get_statistics_data(self):
         """Confirm the behavior of Stats.get_statistics_data().
