@@ -23,7 +23,6 @@ EXTRA_DIST += simpleresponse_fromWire.spec
 EXTRA_DIST += spec.spec
 
 EXTRA_DIST += example.com
-EXTRA_DIST += example.zone
 EXTRA_DIST += example.sqlite3
 
 EXTRA_DIST += example-base-inc.zone example-nsec3-inc.zone
