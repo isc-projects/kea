@@ -54,21 +54,27 @@ struct NSECImpl {
 NSEC::NSEC(const std::string& nsec_str) :
     impl_(NULL)
 {
-    istringstream iss(nsec_str);
-    string nextname;
+    try {
+        std::istringstream ss(nsec_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    iss >> nextname;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC name");
+        const Name origin_name(createNameFromLexer(lexer, NULL));
+
+        vector<uint8_t> typebits;
+        buildBitmapsFromLexer("NSEC", lexer, typebits);
+
+        impl_ = new NSECImpl(origin_name, typebits);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for NSEC: " << nsec_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct NSEC from '" << nsec_str << "': "
+                  << ex.what());
     }
-    if (iss.eof()) {
-        isc_throw(InvalidRdataText, "NSEC bitmap is missing");
-    }
-
-    vector<uint8_t> typebits;
-    buildBitmapsFromText("NSEC", iss, typebits);
-
-    impl_ = new NSECImpl(Name(nextname), typebits);
 }
 
 NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
