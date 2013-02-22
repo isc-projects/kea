@@ -522,8 +522,8 @@ class SimpleStats(stats.Stats):
         # _init_statistics_data.  This will get the Stats module info from
         # the file directly and some amount information about the Init and
         # Auth modules (hardcoded below).
-        self.cc_session.group_sendmsg = self.__check_group_sendmsg
-        self.cc_session.group_recvmsg = self.__check_group_recvmsg
+        self.cc_session.group_sendmsg = self.__group_sendmsg
+        self.cc_session.group_recvmsg = self.__group_recvmsg
         self.cc_session.rpc_call = self.__rpc_call
         stats.Stats._init_statistics_data(self)
 
@@ -556,7 +556,7 @@ class SimpleStats(stats.Stats):
         # initialization until we are ready.
         pass
 
-    def __check_group_sendmsg(self, command, destination, want_answer=False):
+    def __group_sendmsg(self, command, destination, want_answer=False):
         """Faked ModuleCCSession.group_sendmsg for tests.
 
         Skipping actual network communication, and just returning an internally
@@ -566,7 +566,7 @@ class SimpleStats(stats.Stats):
         self.__seq += 1
         return self.__seq
 
-    def __check_group_recvmsg(self, nonblocking, seq):
+    def __group_recvmsg(self, nonblocking, seq):
         """Faked ModuleCCSession.group_recvmsg for tests.
 
         Skipping actual network communication, and returning an internally
@@ -580,7 +580,13 @@ class SimpleStats(stats.Stats):
         return self._answers.pop(0)
 
     def __rpc_call(self, command, group):
-        answer, _ = self.__check_group_recvmsg(None, None)
+        """Faked ModuleCCSession.rpc_call for tests.
+
+        At the moment we don't have to cover failure cases, so this is a
+        simple wrapper for the faked group_recvmsg().
+
+        """
+        answer, _ = self.__group_recvmsg(None, None)
         return isc.config.ccsession.parse_answer(answer)[1]
 
 class MyStats(stats.Stats):
