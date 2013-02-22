@@ -25,6 +25,7 @@ pythondir = $(pyexecdir)/isc/cc
 CLEANDIRS = __pycache__
 
 CLEANFILES = proto_defs.py __init__.py
+CLEANFILES += proto_defs.pyc __init__.pyc
 
 clean-local:
 	rm -rf $(CLEANDIRS)
