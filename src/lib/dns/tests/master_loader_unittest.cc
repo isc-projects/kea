@@ -419,16 +419,16 @@ struct ErrorCase {
 
     // Parameter ordering errors
     { "www      IN      A   3600 192.168.2.7",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: Bad IN/A RDATA text: '3600'",
       "Incorrect order of class, TTL and type" },
     { "www      A       IN  3600 192.168.2.8",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: Bad IN/A RDATA text: 'IN'",
       "Incorrect order of class, TTL and type" },
     { "www      3600    A   IN   192.168.2.7",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: Bad IN/A RDATA text: 'IN'",
       "Incorrect order of class, TTL and type" },
     { "www      A       3600 IN  192.168.2.8",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: Bad IN/A RDATA text: '3600'",
       "Incorrect order of class, TTL and type" },
 
     // Missing type and Rdata
@@ -440,19 +440,19 @@ struct ErrorCase {
 
     // Missing Rdata
     { "www A",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
     { "www 3600 A",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
     { "www IN A",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
     { "www 3600 IN A",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
     { "www IN 3600 A",
-      "createRdata from text failed: IN/A RDATA construction from text failed",
+      "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
 
     { "www      3600    IN", NULL, "Unexpected EOLN" },
