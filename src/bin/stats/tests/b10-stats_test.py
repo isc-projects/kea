@@ -248,7 +248,7 @@ class TestStats(unittest.TestCase):
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
-        # Record original module-defined functions in case we replay them
+        # Record original module-defined functions in case we replace them
         self.__orig_timestamp = stats.get_timestamp
         self.__orig_get_datetime = stats.get_datetime
 
@@ -313,7 +313,7 @@ class TestStats(unittest.TestCase):
         stats = SimpleStats()
         self.assertFalse(stats.running)
         stats._check_command = lambda: __check_start(stats)
-        # We are going to confirm start() will set running to True, avoidng
+        # We are going to confirm start() will set running to True, avoiding
         # to fall into a loop with the exception trick.
         self.assertRaises(CheckException, stats.start)
         self.assertEqual(self.__send_command(stats, "status"),
@@ -447,7 +447,7 @@ class TestStats(unittest.TestCase):
 
         self.stats.update_modules()
 
-        # Stats is always inconrporated.  For others, only the ones returned
+        # Stats is always incorporated.  For others, only the ones returned
         # by group_recvmsg() above is available.
         self.assertTrue('Stats' in self.stats.modules)
         self.assertTrue('Init' in self.stats.modules)
