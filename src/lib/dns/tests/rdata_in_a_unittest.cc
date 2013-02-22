@@ -12,11 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dns/rdataclass.h>
+
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
 #include <dns/rdata.h>
-#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -24,6 +27,8 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+
+#include <sstream>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -33,20 +38,74 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_IN_A_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+    Rdata_IN_A_Test() : rdata_in_a("192.0.2.1") {}
+
+    // Common check to see the result of in::A Rdata construction either from
+    // std::string or with MasterLexer object.  If it's expected to succeed
+    // the result should be identical to the commonly used test data
+    // (rdata_in_a); otherwise it should result in the exception specified as
+    // the template parameter.
+    template <typename ExForString, typename ExForLexer>
+    void checkFromText(const string& in_a_txt,
+                       bool throw_str_version = true,
+                       bool throw_lexer_version = true)
+    {
+        if (throw_str_version) {
+            EXPECT_THROW(in::A in_a(in_a_txt), ExForString);
+        } else {
+            EXPECT_EQ(0, in::A(in_a_txt).compare(rdata_in_a));
+        }
+
+        std::stringstream ss(in_a_txt);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+        if (throw_lexer_version) {
+            EXPECT_THROW(in::A soa(lexer, NULL, MasterLoader::DEFAULT,
+                                   loader_cb), ExForLexer);
+        } else {
+                EXPECT_EQ(0, in::A(lexer, NULL, MasterLoader::DEFAULT,
+                           loader_cb).compare(rdata_in_a));
+        }
+    }
+
+    const in::A rdata_in_a;
 };
 
-const in::A rdata_in_a("192.0.2.1");
 const uint8_t wiredata_in_a[] = { 192, 0, 2, 1 };
 
 TEST_F(Rdata_IN_A_Test, createFromText) {
-    EXPECT_EQ(0, rdata_in_a.compare(in::A("192.0.2.1")));
+    // Normal case: no exception for either case, so the exception type
+    // doesn't matter.
+    checkFromText<isc::Exception, isc::Exception>("192.0.2.1", false, false);
+
     // should reject an abbreviated form of IPv4 address
-    EXPECT_THROW(in::A("10.1"), InvalidRdataText);
+    checkFromText<InvalidRdataText, InvalidRdataText>("10.1");
     // or an IPv6 address
-    EXPECT_THROW(in::A("2001:db8::1234"), InvalidRdataText);
+    checkFromText<InvalidRdataText, InvalidRdataText>("2001:db8::1234");
     // or any meaningless text as an IP address
-    EXPECT_THROW(in::A("xxx"), InvalidRdataText);
+    checkFromText<InvalidRdataText, InvalidRdataText>("xxx");
+
+    // trailing white space: only string version throws
+    checkFromText<InvalidRdataText, InvalidRdataText>("192.0.2.1  ",
+                                                      true, false);
+    // same for beginning white space.
+    checkFromText<InvalidRdataText, InvalidRdataText>("  192.0.2.1",
+                                                      true, false);
+    // same for trailing non-space garbage (note that lexer version still
+    // ignore it; it's expected to be detected at a higher layer).
+    checkFromText<InvalidRdataText, InvalidRdataText>("192.0.2.1 xxx",
+                                                      true, false);
+
+    // nul character after a valid textual representation.
+    string nul_after_addr = "192.0.2.1";
+    nul_after_addr.push_back(0);
+    checkFromText<InvalidRdataText, InvalidRdataText>(nul_after_addr, true,
+                                                      true);
+
+    // a valid address surrounded by parentheses; only okay with lexer
+    checkFromText<InvalidRdataText, InvalidRdataText>("(192.0.2.1)", true,
+                                                      false);
 }
 
 TEST_F(Rdata_IN_A_Test, createFromWire) {
@@ -68,11 +127,6 @@ TEST_F(Rdata_IN_A_Test, createFromWire) {
                  DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_IN_A_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_in_a.compare(
-        *test::createRdataUsingLexer(RRType::A(), RRClass::IN(), "192.0.2.1")));
-}
-
 TEST_F(Rdata_IN_A_Test, toWireBuffer) {
     rdata_in_a.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -89,15 +143,17 @@ TEST_F(Rdata_IN_A_Test, toWireRenderer) {
 
 TEST_F(Rdata_IN_A_Test, toText) {
     EXPECT_EQ("192.0.2.1", rdata_in_a.toText());
-    string longaddr("255.255.255.255"); // this shouldn't make the code crash
+
+    // this shouldn't make the code crash
+    const string longaddr("255.255.255.255");
     EXPECT_EQ(longaddr, in::A(longaddr).toText());
 }
 
 TEST_F(Rdata_IN_A_Test, compare) {
-    in::A small1("1.1.1.1");
-    in::A small2("1.2.3.4");
-    in::A large1("255.255.255.255");
-    in::A large2("4.3.2.1");
+    const in::A small1("1.1.1.1");
+    const in::A small2("1.2.3.4");
+    const in::A large1("255.255.255.255");
+    const in::A large2("4.3.2.1");
 
     // trivial case: self equivalence
     // cppcheck-suppress uselessCallsCompare
