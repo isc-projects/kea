@@ -267,9 +267,16 @@ class Stats:
         # It counts the number of instances of same module by
         # examining the third value from the array result of
         # 'show_processes' of Init
-        seq = self.cc_session.group_sendmsg(
-            isc.config.ccsession.create_command("show_processes"), 'Init')
-        (answer, env) = self.cc_session.group_recvmsg(False, seq)
+        try:
+            value = self.mccs.rpc_call('show_processes', 'Init')
+        except isc.config.RPCRecipientMissing:
+            # This has been SessionTimeout before, so we keep the original
+            # behavior.
+            raise
+        except isc.config.RPCError:
+            # TODO: Is it OK to just pass? As part of refactoring, preserving
+            # the original behaviour.
+            value = None
         modules = []
         if type(value) is list:
             # NOTE: For example, the "show_processes" command
