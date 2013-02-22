@@ -71,7 +71,7 @@ protected:
                                           "  \"command\": [\"test\", {"
                                           "    \"param1\": \"Param 1\","
                                           "    \"param2\": \"Param 2\""
-                                          "}]}, -1]"));
+                                          "}]}, -1, true]"));
         // The 0th one is from the initialization, to ConfigManager.
         // our is the 1st.
         EXPECT_TRUE(request->equals(*session.getMsgQueue()->get(1))) <<

@@ -363,13 +363,15 @@ public:
      * \param group see isc::cc::Session::group_sendmsg()
      * \param instance see isc::cc::Session::group_sendmsg()
      * \param to see isc::cc::Session::group_sendmsg()
+     * \param want_answer see isc::cc::Session::group_sendmsg()
      * \return see isc::cc::Session::group_sendmsg()
      */
     int groupSendMsg(isc::data::ConstElementPtr msg,
                      std::string group,
                      std::string instance = "*",
-                     std::string to = "*") {
-        return (session_.group_sendmsg(msg, group, instance, to));
+                     std::string to = "*",
+                     bool want_answer = false) {
+        return (session_.group_sendmsg(msg, group, instance, to, want_answer));
     };
 
     /**
