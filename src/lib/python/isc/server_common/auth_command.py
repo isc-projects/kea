@@ -22,6 +22,13 @@ from isc.log_messages.server_common_messages import *
 from isc.server_common.logger import logger
 
 AUTH_MODULE_NAME = 'Auth'
+AUTH_LOADZONE_COMMAND = 'loadzone'
+
+def auth_loadzone_params(zone_name, zone_class):
+    return {
+        "origin": zone_name.to_text(),
+        "class": zone_class.to_text()
+    }
 
 def auth_loadzone_command(module_cc, zone_name, zone_class):
     '''Create a 'loadzone' command with a given zone for Auth server.
@@ -50,8 +57,5 @@ def auth_loadzone_command(module_cc, zone_name, zone_class):
     # to notification-driven approach, at which point the function would
     # be changed a lot.
 
-    param = {
-        "origin": zone_name.to_text(),
-        "class": zone_class.to_text()
-    }
-    return create_command("loadzone", param)
+    return create_command(AUTH_LOADZONE_COMMAND,
+                          auth_loadzone_params(zone_name, zone_class))

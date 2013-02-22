@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20130213, bind10-dev@isc.org)
+AC_INIT(bind10, 20130221, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 # serial-tests is not available in automake version before 1.13. In
 # automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
@@ -161,8 +161,10 @@ if test $with_werror = 1; then
    CXXFLAGS_SAVED="$CXXFLAGS"
    CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
    AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-   AC_TRY_COMPILE([namespace { class Foo {}; }
-   namespace isc {class Bar {Foo foo_;};} ],,
+   # We use struct, not class, here, because some compilers complain about
+   # "unused private members", causing a false positive.
+   AC_TRY_COMPILE([namespace { struct Foo {}; }
+   namespace isc {struct Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
@@ -1359,6 +1361,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/tests/testdata/example.zone
            src/bin/auth/tests/testdata/example-base.zone
            src/bin/auth/tests/testdata/example-nsec3.zone
+           src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py

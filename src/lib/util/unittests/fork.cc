@@ -77,6 +77,7 @@ provide_input(int *read_pipe, const void *input, const size_t length)
         return -1;
     }
     *read_pipe = pipes[0];
+
     pid_t pid(fork());
     if (pid) { // We are in the parent
         return pid;
@@ -90,6 +91,7 @@ provide_input(int *read_pipe, const void *input, const size_t length)
         }
     }
 }
+
 
 /*
  * This creates a pipe, forks and reads the pipe and compares it
