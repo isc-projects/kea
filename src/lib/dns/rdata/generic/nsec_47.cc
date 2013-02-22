@@ -51,6 +51,28 @@ struct NSECImpl {
     vector<uint8_t> typebits_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NSEC RDATA.  There
+/// can be extra space characters at the beginning or end of the
+/// text (which are simply ignored), but other extra text, including
+/// a new line, will make the construction fail with an exception.
+///
+/// The Next Domain Name field must be absolute since there's no
+/// parameter that specifies the origin name; if it is not absolute,
+/// \c MissingNameOrigin exception will be thrown.  This must not be
+/// represented as a quoted string.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw MissingNameOrigin Thrown when the Next Domain Name is not absolute.
+/// \throw InvalidRdataText if any fields are out of their valid range.
+///
+/// \param nsec_str A string containing the RDATA to be created
 NSEC::NSEC(const std::string& nsec_str) :
     impl_(NULL)
 {
@@ -95,6 +117,27 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
     impl_ = new NSECImpl(nextname, typebits);
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NSEC RDATA.
+///
+/// The Next Domain Name field can be non-absolute if \c origin is
+/// non-NULL, in which case \c origin is used to make it absolute.  It
+/// must not be represented as a quoted string.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw MissingNameOrigin Thrown when the Next Domain Name is not
+/// absolute and \c origin is NULL.
+/// \throw InvalidRdataText if any fields are out of their valid range.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
 NSEC::NSEC(MasterLexer& lexer, const Name* origin, MasterLoader::Options,
            MasterLoaderCallbacks&)
 {
