@@ -524,6 +524,7 @@ class SimpleStats(stats.Stats):
         # Auth modules (hardcoded below).
         self.cc_session.group_sendmsg = self.__check_group_sendmsg
         self.cc_session.group_recvmsg = self.__check_group_recvmsg
+        self.cc_session.rpc_call = self.__rpc_call
         stats.Stats._init_statistics_data(self)
 
     def __init_auth_stat(self):
@@ -555,7 +556,7 @@ class SimpleStats(stats.Stats):
         # initialization until we are ready.
         pass
 
-    def __check_group_sendmsg(self, command, destination):
+    def __check_group_sendmsg(self, command, destination, want_answer=False):
         """Faked ModuleCCSession.group_sendmsg for tests.
 
         Skipping actual network communication, and just returning an internally
@@ -577,6 +578,10 @@ class SimpleStats(stats.Stats):
         if len(self._answers) == 0:
             return self.__default_answer, {'from': 'no-matter'}
         return self._answers.pop(0)
+
+    def __rpc_call(self, command, group):
+        answer, _ = self.__check_group_recvmsg(None, None)
+        return isc.config.ccsession.parse_answer(answer)[1]
 
 class MyStats(stats.Stats):
 
