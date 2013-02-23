@@ -33,18 +33,75 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_IN_AAAA_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+    Rdata_IN_AAAA_Test() : rdata_in_aaaa("2001:db8::1234") {}
+
+    // Common check to see the result of in::A Rdata construction either from
+    // std::string or with MasterLexer object.  If it's expected to succeed
+    // the result should be identical to the commonly used test data
+    // (rdata_in_a); otherwise it should result in the exception specified as
+    // the template parameter.
+    template <typename ExForString, typename ExForLexer>
+    void checkFromText(const string& in_aaaa_txt,
+                       bool throw_str_version = true,
+                       bool throw_lexer_version = true)
+    {
+        if (throw_str_version) {
+            EXPECT_THROW(in::AAAA in_aaaa(in_aaaa_txt), ExForString);
+        } else {
+            EXPECT_EQ(0, in::AAAA(in_aaaa_txt).compare(rdata_in_aaaa));
+        }
+
+        std::stringstream ss(in_aaaa_txt);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+        if (throw_lexer_version) {
+            EXPECT_THROW(in::AAAA soa(lexer, NULL, MasterLoader::DEFAULT,
+                                   loader_cb), ExForLexer);
+        } else {
+                EXPECT_EQ(0, in::AAAA(lexer, NULL, MasterLoader::DEFAULT,
+                           loader_cb).compare(rdata_in_aaaa));
+        }
+    }
+
+    const in::AAAA rdata_in_aaaa;
 };
 
-const in::AAAA rdata_in_aaaa("2001:db8::1234");
 const uint8_t wiredata_in_aaaa[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x12, 0x34 };
 
 TEST_F(Rdata_IN_AAAA_Test, createFromText) {
-    rdata_in_aaaa.compare(in::AAAA(string("2001:db8::1234")));
-    EXPECT_THROW(in::AAAA("192.0.2.1"), InvalidRdataText);
-    EXPECT_THROW(in::AAAA("xxx"), InvalidRdataText);
+    // Normal case: no exception for either case, so the exception type
+    // doesn't matter.
+    checkFromText<isc::Exception, isc::Exception>("2001:db8::1234", false,
+                                                  false);
+
+    // should reject an IP4 address.
+    checkFromText<InvalidRdataText, InvalidRdataText>("192.0.2.1");
+    // or any meaningless text as an IPv6 address
+    checkFromText<InvalidRdataText, InvalidRdataText>("xxx");
+
+    // trailing white space: only string version throws
+    checkFromText<InvalidRdataText, InvalidRdataText>("2001:db8::1234  ",
+                                                      true, false);
+    // same for beginning white space.
+    checkFromText<InvalidRdataText, InvalidRdataText>("  2001:db8::1234",
+                                                      true, false);
+    // same for trailing non-space garbage (note that lexer version still
+    // ignore it; it's expected to be detected at a higher layer).
+    checkFromText<InvalidRdataText, InvalidRdataText>("2001:db8::1234 xxx",
+                                                      true, false);
+
+    // nul character after a valid textual representation.
+    string nul_after_addr = "2001:db8::1234";
+    nul_after_addr.push_back(0);
+    checkFromText<InvalidRdataText, InvalidRdataText>(nul_after_addr, true,
+                                                      true);
+
+    // a valid address surrounded by parentheses; only okay with lexer
+    checkFromText<InvalidRdataText, InvalidRdataText>("(2001:db8::1234)", true,
+                                                      false);
 }
 
 TEST_F(Rdata_IN_AAAA_Test, createFromWire) {
