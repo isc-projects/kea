@@ -435,6 +435,21 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* predecessor() const;
 
+    /// \brief returns the node distance from the root of its subtree
+    size_t getDistance() const {
+        size_t nodes = 1;
+        for (const DomainTreeNode<T>* node = this;
+             node != NULL;
+             node = node->getParent()) {
+            if (node->isSubTreeRoot()) {
+                break;
+            }
+            ++nodes;
+        }
+
+        return (nodes);
+    }
+
 private:
     /// \brief private shared implementation of successor and predecessor
     ///
