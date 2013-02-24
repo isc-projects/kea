@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/memory_segment_local.h>
+#include <util/random/random_number_generator.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -94,6 +95,10 @@ protected:
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
             "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
+        const int node_distances[] = {
+            3, 1, 2, 2, 2, 3, 1, 2, 1, 1, 2, 2
+        };
+
         int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             dtree.insert(mem_sgmt_, Name(domain_names[i]), &dtnode);
@@ -103,7 +108,8 @@ protected:
 
             dtree_expose_empty_node.insert(mem_sgmt_, Name(domain_names[i]),
                                             &dtnode);
-            EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
+            EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(
+                          new int(node_distances[i])));
         }
     }
 
@@ -124,6 +130,74 @@ TEST_F(DomainTreeTest, nodeCount) {
     // the behavior of deleteAllNodes().
     dtree.deleteAllNodes(mem_sgmt_, deleteData);
     EXPECT_EQ(0, dtree.getNodeCount());
+}
+
+TEST_F(DomainTreeTest, getDistance) {
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("a"),
+                                           &node,
+                                           node_path));
+    while (node != NULL) {
+        const int* distance = node->getData();
+        if (distance != NULL) {
+            EXPECT_EQ(*distance, node->getDistance());
+        }
+        node = dtree_expose_empty_node.nextNode(node_path);
+    }
+}
+
+TEST_F(DomainTreeTest, checkDistance) {
+    // This test checks an important performance-related property of the
+    // DomainTree (a red-black tree), which is important for us: the
+    // longest path from a sub-tree's root to a node is no more than
+    // 2log(n). This tests that the tree is balanced.
+
+    TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
+    TestDomainTree& mytree = *mytree_holder.get();
+    isc::util::random::UniformRandomIntegerGenerator gen('a', 'z');
+    const size_t log_num_nodes = 20;
+
+    // Make a large million+ node top-level domain tree, i.e., the
+    // following code inserts names such as:
+    //
+    //   savoucnsrkrqzpkqypbygwoiliawpbmz.
+    //   wkadamcbbpjtundbxcmuayuycposvngx.
+    //   wzbpznemtooxdpjecdxynsfztvnuyfao.
+    //   yueojmhyffslpvfmgyfwioxegfhepnqq.
+    //
+    for (int i = 0; i < (1 << log_num_nodes); i++) {
+        string namestr;
+        while (true) {
+            for (int j = 0; j < 32; j++) {
+                namestr += gen();
+            }
+            namestr += '.';
+
+            if (mytree.insert(mem_sgmt_, Name(namestr), &dtnode) ==
+                TestDomainTree::SUCCESS) {
+                break;
+            }
+
+            namestr.clear();
+        }
+
+        EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
+    }
+
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+
+    // Try to find a node left of the left-most node, and start from its
+    // next node (which is the left-most node in its subtree).
+    EXPECT_EQ(TestDomainTree::NOTFOUND,
+              mytree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
+    while ((node = mytree.nextNode(node_path)) != NULL) {
+        // The distance from each node to its sub-tree root must be less
+        // than 2 * log(n).
+        EXPECT_GE(2 * log_num_nodes, node->getDistance());
+    }
 }
 
 TEST_F(DomainTreeTest, setGetData) {
