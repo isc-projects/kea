@@ -2039,7 +2039,7 @@ DomainTree<T>::insertRebalance
             }
 
             // Also adjust the parent variable (node is already adjusted
-            // above).
+            // above). The grandparent variable need not be adjusted.
             parent = node->getParent();
 
             /* Here, we're in a canonical form where the uncle node is
