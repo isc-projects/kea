@@ -42,8 +42,12 @@ using namespace isc::util;
 namespace {
 void
 convertToIPv4Addr(const char* src, size_t src_len, uint32_t* dst) {
+    // This check specifically rejects invalid input that begins with valid
+    // address text followed by a nul character (and possibly followed by
+    // further garbage).  It cannot be detected by inet_pton().
     if (src_len != strlen(src)) {
-        isc_throw(InvalidRdataText, "Bad IN/A RDATA text: extra character: '"
+        isc_throw(InvalidRdataText,
+                  "Bad IN/A RDATA text: unexpected nul in string: '"
                   << src << "'");
     }
     const int result = inet_pton(AF_INET, src, dst);
