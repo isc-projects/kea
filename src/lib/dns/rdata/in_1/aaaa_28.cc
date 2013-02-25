@@ -40,9 +40,11 @@ using namespace isc::util;
 namespace {
 void
 convertToIPv6Addr(const char* src, size_t src_len, void* dst) {
+    // See a_1.cc for this check.
     if (src_len != strlen(src)) {
-        isc_throw(InvalidRdataText, "Bad IN/AAAA RDATA text: "
-                  "extra character: '" << src << "'");
+        isc_throw(InvalidRdataText,
+                  "Bad IN/AAAA RDATA text: unexpected nul in string: '"
+                  << src << "'");
     }
     const int result = inet_pton(AF_INET6, src, dst);
     if (result == 0) {
