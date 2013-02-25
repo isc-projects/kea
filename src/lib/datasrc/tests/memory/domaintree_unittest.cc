@@ -150,6 +150,22 @@ TEST_F(DomainTreeTest, getDistance) {
     }
 }
 
+void
+checkDistances(const TestDomainTree& tree, size_t distance) {
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+
+    // Try to find a node left of the left-most node, and start from its
+    // next node (which is the left-most node in its subtree).
+    EXPECT_EQ(TestDomainTree::NOTFOUND,
+              tree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
+    while ((node = tree.nextNode(node_path)) != NULL) {
+        // The distance from each node to its sub-tree root must be less
+        // than 2 * log(n).
+        EXPECT_GE(2 * distance, node->getDistance());
+    }
+}
+
 TEST_F(DomainTreeTest, checkDistanceRandom) {
     // This test checks an important performance-related property of the
     // DomainTree (a red-black tree), which is important for us: the
@@ -190,18 +206,7 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
 
-    TestDomainTreeNodeChain node_path;
-    const TestDomainTreeNode* node = NULL;
-
-    // Try to find a node left of the left-most node, and start from its
-    // next node (which is the left-most node in its subtree).
-    EXPECT_EQ(TestDomainTree::NOTFOUND,
-              mytree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
-    while ((node = mytree.nextNode(node_path)) != NULL) {
-        // The distance from each node to its sub-tree root must be less
-        // than 2 * log(n).
-        EXPECT_GE(2 * log_num_nodes, node->getDistance());
-    }
+    checkDistances(mytree, log_num_nodes);
 }
 
 TEST_F(DomainTreeTest, checkDistanceSorted) {
@@ -230,18 +235,7 @@ TEST_F(DomainTreeTest, checkDistanceSorted) {
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
 
-    TestDomainTreeNodeChain node_path;
-    const TestDomainTreeNode* node = NULL;
-
-    // Try to find a node left of the left-most node, and start from its
-    // next node (which is the left-most node in its subtree).
-    EXPECT_EQ(TestDomainTree::NOTFOUND,
-              mytree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
-    while ((node = mytree.nextNode(node_path)) != NULL) {
-        // The distance from each node to its sub-tree root must be less
-        // than 2 * log(n).
-        EXPECT_GE(2 * log_num_nodes, node->getDistance());
-    }
+    checkDistances(mytree, log_num_nodes);
 }
 
 TEST_F(DomainTreeTest, setGetData) {
