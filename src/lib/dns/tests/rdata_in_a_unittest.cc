@@ -41,32 +41,11 @@ class Rdata_IN_A_Test : public RdataTest {
 protected:
     Rdata_IN_A_Test() : rdata_in_a("192.0.2.1") {}
 
-    // Common check to see the result of in::A Rdata construction either from
-    // std::string or with MasterLexer object.  If it's expected to succeed
-    // the result should be identical to the commonly used test data
-    // (rdata_in_a); otherwise it should result in the exception specified as
-    // the template parameter.
-    template <typename ExForString, typename ExForLexer>
-    void checkFromText(const string& in_a_txt,
+    void checkFromTextIN_A(const std::string& rdata_txt,
                        bool throw_str_version = true,
-                       bool throw_lexer_version = true)
-    {
-        if (throw_str_version) {
-            EXPECT_THROW(in::A in_a(in_a_txt), ExForString);
-        } else {
-            EXPECT_EQ(0, in::A(in_a_txt).compare(rdata_in_a));
-        }
-
-        std::stringstream ss(in_a_txt);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-        if (throw_lexer_version) {
-            EXPECT_THROW(in::A soa(lexer, NULL, MasterLoader::DEFAULT,
-                                   loader_cb), ExForLexer);
-        } else {
-                EXPECT_EQ(0, in::A(lexer, NULL, MasterLoader::DEFAULT,
-                           loader_cb).compare(rdata_in_a));
-        }
+                       bool throw_lexer_version = true) {
+        checkFromText<in::A, InvalidRdataText, InvalidRdataText>(
+            rdata_txt, rdata_in_a, throw_str_version, throw_lexer_version);
     }
 
     const in::A rdata_in_a;
@@ -77,35 +56,32 @@ const uint8_t wiredata_in_a[] = { 192, 0, 2, 1 };
 TEST_F(Rdata_IN_A_Test, createFromText) {
     // Normal case: no exception for either case, so the exception type
     // doesn't matter.
-    checkFromText<isc::Exception, isc::Exception>("192.0.2.1", false, false);
+    checkFromText<in::A, isc::Exception, isc::Exception>("192.0.2.1",
+                                                         rdata_in_a, false,
+                                                         false);
 
     // should reject an abbreviated form of IPv4 address
-    checkFromText<InvalidRdataText, InvalidRdataText>("10.1");
+    checkFromTextIN_A("10.1");
     // or an IPv6 address
-    checkFromText<InvalidRdataText, InvalidRdataText>("2001:db8::1234");
+    checkFromTextIN_A("2001:db8::1234");
     // or any meaningless text as an IP address
-    checkFromText<InvalidRdataText, InvalidRdataText>("xxx");
+    checkFromTextIN_A("xxx");
 
     // trailing white space: only string version throws
-    checkFromText<InvalidRdataText, InvalidRdataText>("192.0.2.1  ",
-                                                      true, false);
+    checkFromTextIN_A("192.0.2.1  ", true, false);
     // same for beginning white space.
-    checkFromText<InvalidRdataText, InvalidRdataText>("  192.0.2.1",
-                                                      true, false);
+    checkFromTextIN_A("  192.0.2.1", true, false);
     // same for trailing non-space garbage (note that lexer version still
     // ignore it; it's expected to be detected at a higher layer).
-    checkFromText<InvalidRdataText, InvalidRdataText>("192.0.2.1 xxx",
-                                                      true, false);
+    checkFromTextIN_A("192.0.2.1 xxx", true, false);
 
     // nul character after a valid textual representation.
     string nul_after_addr = "192.0.2.1";
     nul_after_addr.push_back(0);
-    checkFromText<InvalidRdataText, InvalidRdataText>(nul_after_addr, true,
-                                                      true);
+    checkFromTextIN_A(nul_after_addr, true, true);
 
     // a valid address surrounded by parentheses; only okay with lexer
-    checkFromText<InvalidRdataText, InvalidRdataText>("(192.0.2.1)", true,
-                                                      false);
+    checkFromTextIN_A("(192.0.2.1)", true, false);
 }
 
 TEST_F(Rdata_IN_A_Test, createFromWire) {
