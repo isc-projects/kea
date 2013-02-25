@@ -48,7 +48,7 @@ import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats,\
                        MyStatsHttpd, SignalHandler,\
-                       send_command, send_shutdown, CONST_BASETIME
+                       send_command, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 # This test suite uses xml.etree.ElementTree.XMLParser via
@@ -461,7 +461,8 @@ class TestHttpHandler(unittest.TestCase):
                          (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         # failure case(Stats is down)
         self.assertTrue(self.stats.running)
-        self.assertEqual(send_shutdown("Stats"), (0, None)) # Stats is down
+        self.assertEqual(send_command("shutdown", "Stats"),
+                         (0, None)) # Stats is down
         self.assertFalse(self.stats.running)
         self.stats_httpd.cc_session.set_timeout(milliseconds=100)
 
@@ -608,8 +609,16 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_server.run()
         # checking IPv6 enabled on this platform
         self.ipv6_enabled = is_ipv6_enabled()
+        # instantiation of StatsHttpd indirectly calls gethostbyaddr(), which
+        # can block for an uncontrollable period, leading many undesirable
+        # results.  We should rather eliminate the reliance, but until we
+        # can make such fundamental cleanup we replace it with a faked method;
+        # in our test scenario the return value doesn't matter.
+        self.__gethostbyaddr_orig = socket.gethostbyaddr
+        socket.gethostbyaddr = lambda x: ('test.example.', [], None)
 
     def tearDown(self):
+        socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
         self.stats_server.shutdown()
@@ -751,7 +760,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, server_addresses)
         self.stats_httpd_server.run()
         self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, server_addresses)
-        send_shutdown("StatsHttpd")
+        send_command("shutdown", "StatsHttpd")
 
     def test_running(self):
         self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
@@ -761,7 +770,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(send_command("status", "StatsHttpd"),
                          (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
         self.assertTrue(self.stats_httpd.running)
-        self.assertEqual(send_shutdown("StatsHttpd"), (0, None))
+        self.assertEqual(send_command("shutdown", "StatsHttpd"), (0, None))
         self.assertFalse(self.stats_httpd.running)
         self.stats_httpd_server.shutdown()
 
