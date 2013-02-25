@@ -53,6 +53,10 @@ protected:
 };
 
 TEST_F(Rdata_SOA_Test, createFromText) {
+    // Below we specify isc::Exception as a dummy value for the exception type
+    // in case it's not expected to throw an exception; the type isn't used
+    // in the check code.
+
     // A simple case.
     checkFromTextSOA<isc::Exception, isc::Exception>(
         "ns.example.com. root.example.com. 2010012601 3600 300 3600000 1200",
