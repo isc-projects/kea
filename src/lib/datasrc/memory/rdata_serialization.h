@@ -169,7 +169,11 @@ public:
     ///
     /// The caller must also ensure that previously encoded data (pointed
     /// to by \c old_data) will be valid and intact throughout the encoding
-    /// session started by this method.
+    /// session started by this method.  The resulting encoded data (by
+    /// \c encode()) won't refer to the previous data, so once encoding the
+    /// merged data is completed (and unless this encoding session continues
+    /// for another attempt of encoding, which is unlikely), the caller can
+    /// modify or destroy the old data.
     ///
     /// \param rrclass The RR class of RDATA to be encoded in the session.
     /// \param rrtype The RR type of RDATA to be encoded in the session.
