@@ -68,8 +68,6 @@ public:
     /// be valid decimal representations of unsigned 8-bit integers
     /// respectively. The digest field may contain whitespace.
     ///
-    /// \throw MasterLexer::LexerError General parsing error such as
-    /// missing field.
     /// \throw InvalidRdataText if any fields are out of their valid range.
     ///
     /// \param ds_str A string containing the RDATA to be created
