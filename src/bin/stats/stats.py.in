@@ -190,12 +190,19 @@ class Stats:
     """
     Main class of stats module
     """
-    def __init__(self):
+    def __init__(self, module_ccsession_class=isc.config.ModuleCCSession):
+        '''Constructor
+
+        module_ccsession_class is parameterized so that test can specify
+        a mocked class to test the behavior without involing network I/O.
+        In other cases this parameter shouldn't be specified.
+
+        '''
         self.running = False
         # create ModuleCCSession object
-        self.mccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
-                                               self.config_handler,
-                                               self.command_handler)
+        self.mccs = module_ccsession_class(SPECFILE_LOCATION,
+                                           self.config_handler,
+                                           self.command_handler)
         self.cc_session = self.mccs._session
         # get module spec
         self.module_name = self.mccs.get_module_spec().get_module_name()
@@ -225,7 +232,16 @@ class Stats:
                 ])
         # set a absolute timestamp polling at next time
         self.next_polltime = get_timestamp() + self.get_interval()
-        # initialized Statistics data
+
+        self._init_statistics_data()
+
+    def _init_statistics_data(self):
+        """initialized Statistics data.
+
+        This method is a dedicated subroutine of __int__(), but extracted
+        so tests can override it to avoid blocking network operation.
+
+        """
         self.update_modules()
         if self.update_statistics_data(
             self.module_name,
@@ -316,11 +332,9 @@ class Stats:
         while len(sequences) > 0:
             try:
                 (module_name, seq) = sequences.pop(0)
-                answer, env = self.cc_session.group_recvmsg(
-                    False, seq)
+                answer, env = self.cc_session.group_recvmsg(False, seq)
                 if answer:
-                    rcode, args = isc.config.ccsession.parse_answer(
-                        answer)
+                    rcode, args = isc.config.ccsession.parse_answer(answer)
                     if rcode == 0:
                         _statistics_data.append(
                             (module_name, env['from'], args))
@@ -347,31 +361,35 @@ class Stats:
         # if successfully done, set the last time of polling
         self._lasttime_poll = get_timestamp()
 
+    def _check_command(self, nonblock=False):
+        """check invoked command by waiting for 'poll-interval' seconds
+
+        This is a dedicated subroutine of start(), but extracted and defined
+        as a 'protected' method so that tests can replace it.
+
+        """
+        # backup original timeout
+        orig_timeout = self.cc_session.get_timeout()
+        # set cc-session timeout to half of a second(500ms)
+        self.cc_session.set_timeout(500)
+        try:
+            answer, env = self.cc_session.group_recvmsg(nonblock)
+            self.mccs.check_command_without_recvmsg(answer, env)
+        except isc.cc.session.SessionTimeout:
+            pass # waited for poll-interval seconds
+        # restore timeout
+        self.cc_session.set_timeout(orig_timeout)
+
     def start(self):
         """
         Start stats module
         """
         logger.info(STATS_STARTING)
 
-        def _check_command(nonblock=False):
-            """check invoked command by waiting for 'poll-interval'
-            seconds"""
-            # backup original timeout
-            orig_timeout = self.cc_session.get_timeout()
-            # set cc-session timeout to half of a second(500ms)
-            self.cc_session.set_timeout(500)
-            try:
-                answer, env = self.cc_session.group_recvmsg(nonblock)
-                self.mccs.check_command_without_recvmsg(answer, env)
-            except isc.cc.session.SessionTimeout:
-                pass # waited for poll-interval seconds
-            # restore timeout
-            self.cc_session.set_timeout(orig_timeout)
-
         try:
             self.running = True
             while self.running:
-                _check_command()
+                self._check_command()
                 now = get_timestamp()
                 intval = self.get_interval()
                 if intval > 0 and now >= self.next_polltime:
@@ -476,16 +494,16 @@ class Stats:
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
         messages. If there is no error or if neither owner nor data is
-        specified in args, it returns None. The 'mid' argument is an identifier of
-        the sender module in order for stats to identify which
+        specified in args, it returns None. The 'mid' argument is an
+        identifier of the sender module in order for stats to identify which
         instance sends statistics data in the situation that multiple
         instances are working.
         """
         # Note:
         # The fix of #1751 is for multiple instances working. It is
         # assumed here that they send different statistics data with
-        # each sender module id (mid). Stats should save their statistics data by
-        # mid. The statistics data, which is the existing variable, is
+        # each sender module id (mid). Stats should save their statistics data
+        # by mid. The statistics data, which is the existing variable, is
         # preserved by accumlating from statistics data by the mid. This
         # is an ad-hoc fix because administrators can not see
         # statistics by each instance via bindctl or HTTP/XML. These
@@ -535,8 +553,7 @@ class Stats:
                             # merge recursively old value and new
                             # value each other
                             _data[owner][mid] = \
-                                merge_oldnew(_data[owner][mid],
-                                             {_key: _val})
+                                merge_oldnew(_data[owner][mid], {_key: _val})
                         continue
                     # the key string might be a "xx/yy/zz[0]"
                     # type. try it.
@@ -546,22 +563,20 @@ class Stats:
                         if errors: errors.pop()
                         # try updata and check validation in adavance
                         __data = _data.copy()
-                        if owner not in _data:
+                        if owner not in __data:
                             __data[owner] = {}
-                        if mid not in _data[owner]:
+                        if mid not in __data[owner]:
                             __data[owner][mid] = {}
                         # use the isc.cc.data.set method
                         try:
-                            isc.cc.data.set(__data[owner][mid],
-                                            _key, _val)
+                            isc.cc.data.set(__data[owner][mid], _key, _val)
                             if self.modules[owner].validate_statistics(
                                 False, __data[owner][mid], errors):
                                 _data = __data
                         except Exception as e:
-                            errors.append(
-                                "%s: %s" % (e.__class__.__name__, e))
+                            errors.append("%s: %s" % (e.__class__.__name__, e))
             except KeyError:
-                errors.append("unknown module name: " + str(owner))
+                errors.append("unknown module name: " + owner)
             if not errors:
                 self.statistics_data_bymid = _data
 
@@ -584,8 +599,7 @@ class Stats:
                     # values are not replaced.
                     self.statistics_data[m] = merge_oldnew(
                         self.statistics_data[m],
-                        _accum_bymodule(
-                            self.statistics_data_bymid[m]))
+                        _accum_bymodule(self.statistics_data_bymid[m]))
 
         if errors: return errors
 

@@ -51,30 +51,18 @@ class SignalHandler():
         """envokes unittest.TestCase.fail as a signal handler"""
         self.fail_handler("A deadlock might be detected")
 
-def send_command(command_name, module_name, params=None, session=None, nonblock=False, timeout=None):
-    if session is not None:
-        cc_session = session
-    else:
-        cc_session = isc.cc.Session()
-    if timeout is not None:
-        orig_timeout = cc_session.get_timeout()
-        cc_session.set_timeout(timeout * 1000)
+def send_command(command_name, module_name, params=None):
+    cc_session = isc.cc.Session()
     command = isc.config.ccsession.create_command(command_name, params)
     seq = cc_session.group_sendmsg(command, module_name)
     try:
-        (answer, env) = cc_session.group_recvmsg(nonblock, seq)
+        (answer, env) = cc_session.group_recvmsg(False, seq)
         if answer:
             return isc.config.ccsession.parse_answer(answer)
     except isc.cc.SessionTimeout:
         pass
     finally:
-        if timeout is not None:
-            cc_session.set_timeout(orig_timeout)
-        if session is None:
-            cc_session.close()
-
-def send_shutdown(module_name, **kwargs):
-    return send_command("shutdown", module_name, **kwargs)
+        cc_session.close()
 
 class ThreadingServerManager:
     def __init__(self, server, *args, **kwargs):
@@ -466,6 +454,140 @@ class MockAuth:
         if command == 'getstats':
             return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
+
+class MyModuleCCSession(isc.config.ConfigData):
+    """Mocked ModuleCCSession class.
+
+    This class incorporates the module spec directly from the file,
+    and works as if the ModuleCCSession class as much as possible
+    without involving network I/O.
+
+    """
+    def __init__(self, spec_file, config_handler, command_handler):
+        module_spec = isc.config.module_spec_from_file(spec_file)
+        isc.config.ConfigData.__init__(self, module_spec)
+        self._session = self
+        self.stopped = False
+        self.lname = 'mock_mod_ccs'
+
+    def start(self):
+        pass
+
+    def send_stopping(self):
+        self.stopped = True     # just record it's called to inspect it later
+
+class SimpleStats(stats.Stats):
+    """A faked Stats class for unit tests.
+
+    This class inherits most of the real Stats class, but replace the
+    ModuleCCSession with a fake one so we can avoid network I/O in tests,
+    and can also inspect or tweak messages via the session more easily.
+    This class also maintains some faked module information and statistics
+    data that can be retrieved from the implementation of the Stats class.
+
+    """
+    def __init__(self):
+        # First, setup some internal attributes.  All of them are essentially
+        # private (so prefixed with double '_'), but some are defined as if
+        # "protected" (with a single '_') for the convenient of tests that
+        # may want to inspect or tweak them.
+
+        # initial seq num for faked group_sendmsg, arbitrary choice.
+        self.__seq = 4200
+        # if set, use them as faked response to group_recvmsg (see below).
+        # it's a list of tuples, each of which is of (answer, envelope).
+        self._answers = []
+        # the default answer from faked recvmsg if _answers is empty
+        self.__default_answer = isc.config.ccsession.create_answer(
+            0, {'Init':
+                    json.loads(MockInit.spec_str)['module_spec']['statistics'],
+                'Auth':
+                    json.loads(MockAuth.spec_str)['module_spec']['statistics']
+                })
+        # setup faked auth statistics
+        self.__init_auth_stat()
+        # statistics data for faked Init module
+        self._init_sdata = {
+            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)
+            }
+
+        # Incorporate other setups of the real Stats module.  We use the faked
+        # ModuleCCSession to avoid blocking network operation.  Note also that
+        # we replace _init_statistics_data() (see below), so we don't
+        # initialize statistics data yet.
+        stats.Stats.__init__(self, MyModuleCCSession)
+
+        # replace some (faked) ModuleCCSession methods so we can inspect/fake
+        # the data exchanged via the CC session, then call
+        # _init_statistics_data.  This will get the Stats module info from
+        # the file directly and some amount information about the Init and
+        # Auth modules (hardcoded below).
+        self.cc_session.group_sendmsg = self.__group_sendmsg
+        self.cc_session.group_recvmsg = self.__group_recvmsg
+        self.cc_session.rpc_call = self.__rpc_call
+        stats.Stats._init_statistics_data(self)
+
+    def __init_auth_stat(self):
+        self._queries_tcp = 3
+        self._queries_udp = 2
+        self.__queries_per_zone = [{
+                'zonename': 'test1.example', 'queries.tcp': 5, 'queries.udp': 4
+                }]
+        self.__nds_queries_per_zone = \
+            { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
+        self._auth_sdata = \
+            { 'queries.tcp': self._queries_tcp,
+              'queries.udp': self._queries_udp,
+              'queries.perzone' : self.__queries_per_zone,
+              'nds_queries.perzone' : {
+                'test10.example': {
+                    'queries.tcp': isc.cc.data.find(
+                        self.__nds_queries_per_zone,
+                        'test10.example/queries.tcp')
+                    }
+                },
+              'nds_queries.perzone/test10.example/queries.udp' :
+                  isc.cc.data.find(self.__nds_queries_per_zone,
+                                   'test10.example/queries.udp')
+              }
+
+    def _init_statistics_data(self):
+        # Inherited from real Stats class, just for deferring the
+        # initialization until we are ready.
+        pass
+
+    def __group_sendmsg(self, command, destination, want_answer=False):
+        """Faked ModuleCCSession.group_sendmsg for tests.
+
+        Skipping actual network communication, and just returning an internally
+        generated sequence number.
+
+        """
+        self.__seq += 1
+        return self.__seq
+
+    def __group_recvmsg(self, nonblocking, seq):
+        """Faked ModuleCCSession.group_recvmsg for tests.
+
+        Skipping actual network communication, and returning an internally
+        prepared answer. sequence number.  If faked anser is given in
+        _answers, use it; otherwise use the default.  we don't actually check
+        the sequence.
+
+        """
+        if len(self._answers) == 0:
+            return self.__default_answer, {'from': 'no-matter'}
+        return self._answers.pop(0)
+
+    def __rpc_call(self, command, group):
+        """Faked ModuleCCSession.rpc_call for tests.
+
+        At the moment we don't have to cover failure cases, so this is a
+        simple wrapper for the faked group_recvmsg().
+
+        """
+        answer, _ = self.__group_recvmsg(None, None)
+        return isc.config.ccsession.parse_answer(answer)[1]
 
 class MyStats(stats.Stats):
 
