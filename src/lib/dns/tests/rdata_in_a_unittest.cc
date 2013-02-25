@@ -82,6 +82,11 @@ TEST_F(Rdata_IN_A_Test, createFromText) {
 
     // a valid address surrounded by parentheses; only okay with lexer
     checkFromTextIN_A("(192.0.2.1)", true, false);
+
+    // input that would cause lexer-specific error; it's bad text as an
+    // address so should result in the string version, too.
+    checkFromText<in::A, InvalidRdataText, MasterLexer::LexerError>(
+        ")192.0.2.1", rdata_in_a);
 }
 
 TEST_F(Rdata_IN_A_Test, createFromWire) {

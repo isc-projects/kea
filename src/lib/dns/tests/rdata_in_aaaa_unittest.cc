@@ -83,6 +83,11 @@ TEST_F(Rdata_IN_AAAA_Test, createFromText) {
 
     // a valid address surrounded by parentheses; only okay with lexer
     checkFromTextIN_AAAA("(2001:db8::1234)", true, false);
+
+    // input that would cause lexer-specific error; it's bad text as an
+    // address so should result in the string version, too.
+    checkFromText<in::AAAA, InvalidRdataText, MasterLexer::LexerError>(
+        ")2001:db8::1234", rdata_in_aaaa);
 }
 
 TEST_F(Rdata_IN_AAAA_Test, createFromWire) {
