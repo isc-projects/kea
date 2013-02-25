@@ -67,8 +67,6 @@ struct NSECImpl {
 /// any invalid mnemonics are found, InvalidRdataText exception is
 /// thrown.
 ///
-/// \throw MasterLexer::LexerError General parsing error such as
-/// missing field.
 /// \throw MissingNameOrigin Thrown when the Next Domain Name is not absolute.
 /// \throw InvalidRdataText if any fields are out of their valid range.
 ///
