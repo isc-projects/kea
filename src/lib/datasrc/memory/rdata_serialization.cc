@@ -388,8 +388,7 @@ struct RdataEncoder::RdataEncoderImpl {
                          old_data_len_(0), old_sig_len_(0),
                          old_length_fields_(NULL), old_data_(NULL),
                          old_sig_data_(NULL), olddata_buffer_(0),
-                         rdatas_(boost::bind(RdataLess, _1, _2)),
-                         rrsigs_(boost::bind(RdataLess, _1, _2))
+                         rdatas_(RdataLess), rrsigs_(RdataLess)
     {}
 
     // Common initialization for RdataEncoder::start().
