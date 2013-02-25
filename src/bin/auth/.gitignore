@@ -6,3 +6,8 @@
 /spec_config.h
 /spec_config.h.pre
 /b10-auth.8
+/b10-auth.xml
+/gen-statisticsitems.py
+/gen-statisticsitems.py.pre
+/statistics.cc
+/statistics_items.h
