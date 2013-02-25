@@ -29,6 +29,8 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <boost/format.hpp>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
@@ -148,11 +150,13 @@ TEST_F(DomainTreeTest, getDistance) {
     }
 }
 
-TEST_F(DomainTreeTest, checkDistance) {
+TEST_F(DomainTreeTest, checkDistanceRandom) {
     // This test checks an important performance-related property of the
     // DomainTree (a red-black tree), which is important for us: the
     // longest path from a sub-tree's root to a node is no more than
     // 2log(n). This tests that the tree is balanced.
+
+    // Names are inserted in random order.
 
     TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& mytree = *mytree_holder.get();
@@ -183,6 +187,46 @@ TEST_F(DomainTreeTest, checkDistance) {
             namestr.clear();
         }
 
+        EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
+    }
+
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* node = NULL;
+
+    // Try to find a node left of the left-most node, and start from its
+    // next node (which is the left-most node in its subtree).
+    EXPECT_EQ(TestDomainTree::NOTFOUND,
+              mytree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
+    while ((node = mytree.nextNode(node_path)) != NULL) {
+        // The distance from each node to its sub-tree root must be less
+        // than 2 * log(n).
+        EXPECT_GE(2 * log_num_nodes, node->getDistance());
+    }
+}
+
+TEST_F(DomainTreeTest, checkDistanceSorted) {
+    // This test checks an important performance-related property of the
+    // DomainTree (a red-black tree), which is important for us: the
+    // longest path from a sub-tree's root to a node is no more than
+    // 2log(n). This tests that the tree is balanced.
+
+    // Names are inserted in sorted order.
+
+    TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
+    TestDomainTree& mytree = *mytree_holder.get();
+    const size_t log_num_nodes = 20;
+
+    // Make a large million+ node top-level domain tree, i.e., the
+    // following code inserts names such as:
+    //
+    //   name000000.
+    //   name000001.
+    //   name000002.
+    //   name000003.
+    //
+    for (int i = 0; i < (1 << log_num_nodes); i++) {
+        const string namestr(boost::str(boost::format("name%06x.") % i));
+        mytree.insert(mem_sgmt_, Name(namestr), &dtnode);
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
 
