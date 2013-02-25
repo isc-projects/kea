@@ -32,7 +32,8 @@ import sys
 import stats
 import isc.log
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, \
+    SimpleStats, SignalHandler, MyModuleCCSession, send_command
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -247,11 +248,17 @@ class TestStats(unittest.TestCase):
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
+        # Record original module-defined functions in case we replace them
+        self.__orig_timestamp = stats.get_timestamp
+        self.__orig_get_datetime = stats.get_datetime
 
     def tearDown(self):
         self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
+        # restore the stored original function in case we replaced them
+        stats.get_timestamp = self.__orig_timestamp
+        stats.get_datetime = self.__orig_get_datetime
 
     def test_init(self):
         self.stats = stats.Stats()
@@ -287,133 +294,212 @@ class TestStats(unittest.TestCase):
         self.assertRaises(stats.StatsError, stats.Stats)
         stats.SPECFILE_LOCATION = orig_spec_location
 
+    def __send_command(self, stats, command_name, params=None):
+        '''Emulate a command arriving to stats by directly calling callback'''
+        return isc.config.ccsession.parse_answer(
+            stats.command_handler(command_name, params))
+
     def test_start(self):
+        # Define a separate exception class so we can be sure that's actually
+        # the one raised in __check_start() below
+        class CheckException(Exception):
+            pass
+
+        def __check_start(tested_stats):
+            self.assertTrue(tested_stats.running)
+            raise CheckException # terminate the loop
+
         # start without err
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats = self.stats_server.server
-        self.assertFalse(self.stats.running)
-        self.stats_server.run()
-        self.assertEqual(send_command("status", "Stats"),
-                (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
-        self.assertTrue(self.stats.running)
-        # Due to a race-condition related to the threads used in these
-        # tests, use of the mock session and the stopped check (see
-        # below), are temporarily disabled
-        # See ticket #1668
-        # Override moduleCCSession so we can check if send_stopping is called
-        #self.stats.mccs = MockModuleCCSession()
-        self.assertEqual(send_shutdown("Stats"), (0, None))
-        self.assertFalse(self.stats.running)
-        # Call server.shutdown with argument True so the thread.join() call
-        # blocks and we are sure the main loop has finished (and set
-        # mccs.stopped)
-        self.stats_server.shutdown(True)
-        # Also temporarily disabled for #1668, see above
-        #self.assertTrue(self.stats.mccs.stopped)
+        stats = SimpleStats()
+        self.assertFalse(stats.running)
+        stats._check_command = lambda: __check_start(stats)
+        # We are going to confirm start() will set running to True, avoiding
+        # to fall into a loop with the exception trick.
+        self.assertRaises(CheckException, stats.start)
+        self.assertEqual(self.__send_command(stats, "status"),
+                         (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+
+    def test_shutdown(self):
+        def __check_shutdown(tested_stats):
+            self.assertTrue(tested_stats.running)
+            self.assertEqual(self.__send_command(tested_stats, "shutdown"),
+                             (0, None))
+            self.assertFalse(tested_stats.running)
+            # override get_interval() so it won't go poll statistics
+            tested_stats.get_interval = lambda : 0
+
+        stats = SimpleStats()
+        stats._check_command = lambda: __check_shutdown(stats)
+        stats.start()
+        self.assertTrue(stats.mccs.stopped)
 
     def test_handlers(self):
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats = self.stats_server.server
-        self.stats_server.run()
+        """Test command_handler"""
 
-        # command_handler
+        __stats = SimpleStats()
+
+        # 'show' command.  We're going to check the expected methods are
+        # called in the expected order, and check the resulting response.
+        # Details of each method are tested separately.
+        call_log = []
+        def __steal_method(fn_name, *arg):
+            call_log.append((fn_name, arg))
+            if fn_name == 'update_stat':
+                return False        # "no error"
+            if fn_name == 'showschema':
+                return isc.config.create_answer(0, 'no error')
+
+        # Fake some methods and attributes for inspection
+        __stats.do_polling = lambda: __steal_method('polling')
+        __stats.update_statistics_data = \
+            lambda x, y, z: __steal_method('update_stat', x, y, z)
+        __stats.update_modules = lambda: __steal_method('update_module')
+        __stats.mccs.lname = 'test lname'
+        __stats.statistics_data = {'Init': {'boot_time': self.const_datetime}}
+
+        # skip initial polling
+        stats.get_timestamp = lambda: 0
+        __stats._lasttime_poll = 0
+
+        stats.get_datetime = lambda: 42 # make the result predictable
+
+        # now send the command
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                __stats, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
+        # Check if expected methods are called
+        self.assertEqual([('update_stat',
+                           ('Stats', 'test lname',
+                            {'timestamp': 0,
+                             'report_time': 42})),
+                          ('update_module', ())], call_log)
+
+        # Then update faked timestamp so the intial polling will happen, and
+        # confirm that.
+        call_log = []
+        stats.get_timestamp = lambda: 10
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                __stats, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
+        self.assertEqual([('polling', ()),
+                          ('update_stat',
+                           ('Stats', 'test lname',
+                            {'timestamp': 10,
+                             'report_time': 42})),
+                          ('update_module', ())], call_log)
+
+        # 'status' command.  We can confirm the behavior without any fake
         self.assertEqual(
-            send_command('status', 'Stats'),
+            self.__send_command(__stats, 'status'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
 
-        (rcode, value) = send_command('show', 'Stats')
-        self.assertEqual(rcode, 0)
-        self.assertEqual(len(value), 3)
-        self.assertTrue('Init' in value)
-        self.assertTrue('Stats' in value)
-        self.assertTrue('Auth' in value)
-        self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Init']), 1)
-        self.assertTrue('boot_time' in value['Init'])
-        self.assertEqual(value['Init']['boot_time'], self.const_datetime)
-        self.assertTrue('report_time' in value['Stats'])
-        self.assertTrue('boot_time' in value['Stats'])
-        self.assertTrue('last_update_time' in value['Stats'])
-        self.assertTrue('timestamp' in value['Stats'])
-        self.assertTrue('lname' in value['Stats'])
-        (rcode, value) = send_command('showschema', 'Stats')
-        self.assertEqual(rcode, 0)
-        self.assertEqual(len(value), 3)
-        self.assertTrue('Init' in value)
-        self.assertTrue('Stats' in value)
-        self.assertTrue('Auth' in value)
-        self.assertEqual(len(value['Stats']), 5)
-        self.assertEqual(len(value['Init']), 1)
-        for item in value['Init']:
-            self.assertTrue(len(item) == 7)
-            self.assertTrue('item_name' in item)
-            self.assertTrue('item_type' in item)
-            self.assertTrue('item_optional' in item)
-            self.assertTrue('item_default' in item)
-            self.assertTrue('item_title' in item)
-            self.assertTrue('item_description' in item)
-            self.assertTrue('item_format' in item)
-        for item in value['Stats']:
-            self.assertTrue(len(item) == 6 or len(item) == 7)
-            self.assertTrue('item_name' in item)
-            self.assertTrue('item_type' in item)
-            self.assertTrue('item_optional' in item)
-            self.assertTrue('item_default' in item)
-            self.assertTrue('item_title' in item)
-            self.assertTrue('item_description' in item)
-            if len(item) == 7:
-                self.assertTrue('item_format' in item)
+        # 'showschema' command.  update_modules() will be called, which
+        # (implicitly) cofirms the correct method is called; further details
+        # are tested seprately.
+        call_log = []
+        (rcode, value) = self.__send_command(__stats, 'showschema')
+        self.assertEqual([('update_module', ())], call_log)
 
+        # Unknown command.  Error should be returned
         self.assertEqual(
-            send_command('__UNKNOWN__', 'Stats'),
+            self.__send_command(__stats, '__UNKNOWN__'),
             (1, "Unknown command: '__UNKNOWN__'"))
 
-        self.stats_server.shutdown()
-
     def test_update_modules(self):
-        self.stats = stats.Stats()
-        self.assertEqual(len(self.stats.modules), 3) # Auth, Init, Stats
+        """Confirm the behavior of Stats.update_modules().
+
+        It checks whether the expected command is sent to ConfigManager,
+        and whether the answer from ConfigManager is handled as expected.
+
+        """
+
+        def __check_rpc_call(command, group):
+            self.assertEqual('ConfigManager', group)
+            self.assertEqual(command,
+                             isc.config.ccsession.COMMAND_GET_STATISTICS_SPEC)
+            answer_value = {'Init': [{
+                        "item_name": "boot_time",
+                        "item_type": "string",
+                        "item_optional": False,
+                        # Use a different default so we can check it below
+                        "item_default": "2013-01-01T00:00:01Z",
+                        "item_title": "Boot time",
+                        "item_description": "dummy desc",
+                        "item_format": "date-time"
+                        }]}
+            return answer_value
+
+        self.stats = SimpleStats()
+        self.stats.cc_session.rpc_call = __check_rpc_call
+
         self.stats.update_modules()
+
+        # Stats is always incorporated.  For others, only the ones returned
+        # by group_recvmsg() above is available.
         self.assertTrue('Stats' in self.stats.modules)
         self.assertTrue('Init' in self.stats.modules)
         self.assertFalse('Dummy' in self.stats.modules)
-        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Stats'].get_statistics_spec())
+
+        my_statistics_data = stats.get_spec_defaults(
+            self.stats.modules['Stats'].get_statistics_spec())
         self.assertTrue('report_time' in my_statistics_data)
         self.assertTrue('boot_time' in my_statistics_data)
         self.assertTrue('last_update_time' in my_statistics_data)
         self.assertTrue('timestamp' in my_statistics_data)
         self.assertTrue('lname' in my_statistics_data)
-        self.assertEqual(my_statistics_data['report_time'], self.const_default_datetime)
-        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
-        self.assertEqual(my_statistics_data['last_update_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['report_time'],
+                         self.const_default_datetime)
+        self.assertEqual(my_statistics_data['boot_time'],
+                         self.const_default_datetime)
+        self.assertEqual(my_statistics_data['last_update_time'],
+                         self.const_default_datetime)
         self.assertEqual(my_statistics_data['timestamp'], 0.0)
         self.assertEqual(my_statistics_data['lname'], "")
-        my_statistics_data = stats.get_spec_defaults(self.stats.modules['Init'].get_statistics_spec())
+        my_statistics_data = stats.get_spec_defaults(
+            self.stats.modules['Init'].get_statistics_spec())
         self.assertTrue('boot_time' in my_statistics_data)
-        self.assertEqual(my_statistics_data['boot_time'], self.const_default_datetime)
+        self.assertEqual(my_statistics_data['boot_time'],
+                         "2013-01-01T00:00:01Z")
+
+        # Error case
+        def __raise_on_rpc_call(x, y):
+            raise isc.config.RPCError(99, 'error')
         orig_parse_answer = stats.isc.config.ccsession.parse_answer
-        stats.isc.config.ccsession.parse_answer = lambda x: (99, 'error')
+        self.stats.cc_session.rpc_call = __raise_on_rpc_call
         self.assertRaises(stats.StatsError, self.stats.update_modules)
-        stats.isc.config.ccsession.parse_answer = orig_parse_answer
 
     def test_get_statistics_data(self):
-        self.stats = stats.Stats()
+        """Confirm the behavior of Stats.get_statistics_data().
+
+        It should first call update_modules(), and then retrieve the requested
+        data from statistics_data.  We confirm this by fake update_modules()
+        where we set the expected data in statistics_data.
+
+        """
+        self.stats = SimpleStats()
+        def __faked_update_modules():
+            self.stats.statistics_data = { \
+                'Stats': {
+                    'report_time': self.const_default_datetime,
+                    'boot_time': None,
+                    'last_update_time': None,
+                    'timestamp': 0.0,
+                    'lname': 'dummy name'
+                    },
+                'Init': { 'boot_time': None }
+                }
+
+        self.stats.update_modules = __faked_update_modules
+
         my_statistics_data = self.stats.get_statistics_data()
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('Init' in my_statistics_data)
         self.assertTrue('boot_time' in my_statistics_data['Init'])
+
         my_statistics_data = self.stats.get_statistics_data(owner='Stats')
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('report_time' in my_statistics_data['Stats'])
@@ -421,16 +507,28 @@ class TestStats(unittest.TestCase):
         self.assertTrue('last_update_time' in my_statistics_data['Stats'])
         self.assertTrue('timestamp' in my_statistics_data['Stats'])
         self.assertTrue('lname' in my_statistics_data['Stats'])
-        self.assertRaises(stats.StatsError, self.stats.get_statistics_data, owner='Foo')
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
-        self.assertEqual(my_statistics_data['Stats']['report_time'], self.const_default_datetime)
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='boot_time')
+        self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
+                          owner='Foo')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='report_time')
+        self.assertEqual(my_statistics_data['Stats']['report_time'],
+                         self.const_default_datetime)
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='boot_time')
         self.assertTrue('boot_time' in my_statistics_data['Stats'])
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='last_update_time')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='last_update_time')
         self.assertTrue('last_update_time' in my_statistics_data['Stats'])
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='timestamp')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='timestamp')
         self.assertEqual(my_statistics_data['Stats']['timestamp'], 0.0)
-        my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
+
+        my_statistics_data = self.stats.get_statistics_data(
+            owner='Stats', name='lname')
         self.assertTrue(len(my_statistics_data['Stats']['lname']) >0)
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
                           owner='Stats', name='Bar')
@@ -441,7 +539,7 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data(self):
         """test for list-type statistics"""
-        self.stats = stats.Stats()
+        self.stats = SimpleStats()
         _test_exp1 = {
               'zonename': 'test1.example',
               'queries.tcp': 5,
@@ -518,42 +616,20 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data_pt2(self):
         """test for named_set-type statistics"""
-        self.stats = stats.Stats()
-        self.stats.do_polling()
-        _test_exp1 = {
-              'test10.example': {
-                  'queries.tcp': 5,
-                  'queries.udp': 4
-              }
-            }
-        _test_exp2 = {
-              'test20.example': {
-                  'queries.tcp': 3,
-                  'queries.udp': 2
-              }
-            }
+        self.stats = SimpleStats()
+        _test_exp1 = \
+            { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
+        _test_exp2 = \
+            { 'test20.example': { 'queries.tcp': 3, 'queries.udp': 2 } }
         _test_exp3 = {}
-        _test_exp4 = {
-              'test20.example': {
-                  'queries.udp': 4
-              }
-            }
-        _test_exp5_1 = {
-              'test10.example': {
-                 'queries.udp': 5432
-              }
-            }
+        _test_exp4 = { 'test20.example': { 'queries.udp': 4 } }
+        _test_exp5_1 = { 'test10.example': { 'queries.udp': 5432 } }
         _test_exp5_2 ={
               'nds_queries.perzone/test10.example/queries.udp':
-                  isc.cc.data.find(_test_exp5_1,
-                                   'test10.example/queries.udp')
+                  isc.cc.data.find(_test_exp5_1, 'test10.example/queries.udp')
             }
-        _test_exp6 = {
-              'foo/bar':  'brabra'
-            }
-        _test_exp7 = {
-              'foo[100]': 'bar'
-            }
+        _test_exp6 = { 'foo/bar':  'brabra' }
+        _test_exp7 = { 'foo[100]': 'bar' }
         # Success cases
         self.assertIsNone(self.stats.update_statistics_data(
             'Auth', 'foo1', {'nds_queries.perzone': _test_exp1}))
@@ -566,13 +642,15 @@ class TestStats(unittest.TestCase):
                              ['foo1']['nds_queries.perzone'],\
                          dict(_test_exp1,**_test_exp2))
         self.assertIsNone(self.stats.update_statistics_data(
-            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp1,**_test_exp2)}))
+            'Auth', 'foo1', {'nds_queries.perzone':
+                                 dict(_test_exp1, **_test_exp2)}))
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['nds_queries.perzone'],
-                         dict(_test_exp1,**_test_exp2))
+                         dict(_test_exp1, **_test_exp2))
         # differential update
         self.assertIsNone(self.stats.update_statistics_data(
-            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp3,**_test_exp4)}))
+            'Auth', 'foo1', {'nds_queries.perzone':
+                                 dict(_test_exp3, **_test_exp4)}))
         _new_val = dict(_test_exp1,
                         **stats.merge_oldnew(_test_exp2,_test_exp4))
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
@@ -592,7 +670,8 @@ class TestStats(unittest.TestCase):
                              _test_exp5_1)
         # Error cases
         self.assertEqual(self.stats.update_statistics_data(
-                'Auth', 'foo1', {'nds_queries.perzone': None}), ['None should be a map'])
+                'Auth', 'foo1', {'nds_queries.perzone': None}),
+                         ['None should be a map'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['nds_queries.perzone'],\
                              _new_val)
@@ -606,33 +685,57 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(
                 'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
-    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     def test_update_statistics_data_withmid(self):
-        self.stats = stats.Stats()
+        self.stats = SimpleStats()
+
+        # This test relies on existing statistics data at the Stats object.
+        # This version of test prepares the data using the do_polling() method;
+        # that's a bad practice because a unittest for a method
+        # (update_statistics_data) would heavily depend on details of another
+        # method (do_polling).  However, there's currently no direct test
+        # for do_polling (which is also bad), so we still keep that approach,
+        # partly for testing do_polling indirectly.  #2781 should provide
+        # direct test for do_polling, with which this test scenario should
+        # also be changed to be more stand-alone.
+
+        # We use the knowledge of what kind of messages are sent via
+        # do_polling, and return the following faked answer directly.
+        create_answer = isc.config.ccsession.create_answer # shortcut
+        self.stats._answers = [\
+            # Answer for "show_processes"
+            (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
+                               [1035, 'b10-auth-2', 'Auth']]),  None),
+            # Answers for "getstats".  2 for Auth instances and 1 for Init.
+            # we return some bogus values for Init, but the rest of the test
+            # doesn't need it, so it's okay.
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth1'}),
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth2'}),
+            (create_answer(0, self.stats._auth_sdata), {'from': 'auth3'})
+            ]
+        # do_polling calls update_modules internally; in our scenario there's
+        # no change in modules, so we make it no-op.
+        self.stats.update_modules = lambda: None
+        # Now call do_polling.
         self.stats.do_polling()
+
         # samples of query number
         bar1_tcp = 1001
         bar2_tcp = 2001
         bar3_tcp = 1002
         bar3_udp = 1003
-        # two auth instances invoked
-        list_auth = [ self.base.auth.server,
-                      self.base.auth2.server ]
-        sum_qtcp = 0
-        for a in list_auth:
-            sum_qtcp += a.queries_tcp
-        sum_qudp = 0
-        for a in list_auth:
-            sum_qudp += a.queries_udp
+        # two auth instances invoked, so we double the pre-set stat values
+        sum_qtcp = self.stats._queries_tcp * 2
+        sum_qudp = self.stats._queries_udp * 2
         self.stats.update_statistics_data('Auth', "bar1@foo",
-                                          {'queries.tcp':bar1_tcp})
+                                          {'queries.tcp': bar1_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
                          bar1_tcp + sum_qtcp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid
+                        ['Auth']['bar1@foo'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
                          {'queries.tcp': bar1_tcp})
         # check consolidation of statistics data even if there is
@@ -658,7 +761,8 @@ class TestStats(unittest.TestCase):
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
                          bar1_tcp + bar2_tcp + sum_qtcp)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], sum_qudp)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'],
+                         sum_qudp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
         # self.base.b10_init.server.pid_list = [ killed ] + self.base.b10_init.server.pid_list[:]
@@ -690,8 +794,8 @@ class TestStats(unittest.TestCase):
     def test_config(self):
         orig_get_timestamp = stats.get_timestamp
         stats.get_timestamp = lambda : self.const_timestamp
-        stats_server = ThreadingServerManager(MyStats)
-        stat = stats_server.server
+        stat = SimpleStats()
+
         # test updating poll-interval
         self.assertEqual(stat.config['poll-interval'], 60)
         self.assertEqual(stat.get_interval(), 60)
@@ -715,14 +819,25 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stat.config_handler({'poll-interval': 0}),
                          isc.config.create_answer(0))
         self.assertEqual(stat.config['poll-interval'], 0)
-        stats_server.run()
+
+        # see the comment for test_update_statistics_data_withmid.  We abuse
+        # do_polling here, too.  With #2781 we should make it more direct.
+        create_answer = isc.config.ccsession.create_answer # shortcut
+        stat._answers = [\
+            # Answer for "show_processes"
+            (create_answer(0, []),  None),
+            # Answers for "getstats" for Init (the other one for Auth, but
+            # that doesn't matter for this test)
+            (create_answer(0, stat._init_sdata), {'from': 'init'}),
+            (create_answer(0, stat._init_sdata), {'from': 'init'})
+            ]
+        stat.update_modules = lambda: None
+
         self.assertEqual(
-            send_command(
-                'show', 'Stats',
-                params={ 'owner' : 'Init',
-                  'name'  : 'boot_time' }),
+            self.__send_command(
+                stat, 'show',
+                params={ 'owner' : 'Init', 'name'  : 'boot_time' }),
             (0, {'Init': {'boot_time': self.const_datetime}}))
-        stats_server.shutdown()
 
     def test_commands(self):
         self.stats = stats.Stats()
