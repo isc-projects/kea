@@ -168,14 +168,6 @@ TYPED_TEST(NSECLikeBitmapTest, createFromWire) {
                  DNSMessageFORMERR);
 }
 
-// Disabled by #2386. Unsure whether trailing spaces are disallowed. The
-// RFC itself doesn't say anything about it (RFC4034 section 4.2).
-TYPED_TEST(NSECLikeBitmapTest, DISABLED_badText) {
-    // redundant space after the sequence
-    EXPECT_THROW(this->fromText(this->getCommonText() + "A "),
-                 InvalidRdataText);
-}
-
 // This tests the result of toText() with various kinds of NSEC/NSEC3 bitmaps.
 // It also tests the "from text" constructor as a result.
 TYPED_TEST(NSECLikeBitmapTest, toText) {
