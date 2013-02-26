@@ -15,6 +15,8 @@
 #ifndef NSECBITMAP_H
 #define NSECBITMAP_H 1
 
+#include <dns/master_lexer.h>
+
 #include <stdint.h>
 
 #include <sstream>
@@ -74,6 +76,26 @@ void checkRRTypeBitmaps(const char* const rrtype_name,
 void buildBitmapsFromText(const char* const rrtype_name,
                           std::istringstream& iss,
                           std::vector<uint8_t>& typebits);
+
+/// \brief Convert textual sequence of RR types read from a lexer into
+/// type bitmaps.
+///
+/// See the other variant above for description.
+///
+/// \exception InvalidRdataText Data read from the given lexer does not
+/// meet the assumption (e.g. including invalid form of RR type, not
+/// ending with an RR type string).
+///
+/// \param rrtype_name Either "NSEC" or "NSEC3"; used as part of exception
+/// messages.
+/// \param lexer MasterLexer that provides consists of a complete
+/// sequence of textual lexemes of RR types for which the corresponding
+/// bits are set.
+/// \param typebits A placeholder for the resulting bitmaps.  Expected to be
+/// empty, but it's not checked.
+void buildBitmapsFromLexer(const char* const rrtype_name,
+                           isc::dns::MasterLexer& lexer,
+                           std::vector<uint8_t>& typebits);
 
 /// \brief Convert type bitmaps to textual sequence of RR types.
 ///
