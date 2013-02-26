@@ -18,6 +18,9 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
+PYTHONPATH=@abs_top_builddir@/src/lib/python
+export PYTHONPATH
+
 MYPATH_PATH=@abs_top_builddir@/src/bin/usermgr
 
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
