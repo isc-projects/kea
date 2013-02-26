@@ -1003,6 +1003,33 @@ TYPED_TEST(RdataEncodeDecodeTest, mergeRdata) {
     this->mergeRdataCommon(old_rrsigs, rrsigs);
 }
 
+TEST_F(RdataSerializationTest, mergeRdataFromDuplicate) {
+    // create encoded data containing duplicate Rdata and try to start a
+    // new encoding session in the merge mode with that data.  It breaks the
+    // assumption and should result in an exception.
+    const uint8_t data[] = { 192, 0, 2, 1, 192, 0, 2, 1 };
+    EXPECT_THROW(encoder_.start(RRClass::IN(), RRType::A(), data, 2, 0),
+                 isc::Unexpected);
+
+    // Same for duplicate RRSIG
+    isc::util::OutputBuffer buffer(0);
+    vector<uint8_t> sigdata;
+    rrsig_rdata_->toWire(buffer);
+    const uint16_t sig_len = buffer.getLength();
+    // Encode lengths of RRSIGs, 2 bytes each, in host byte order
+    const uint8_t* const lp = static_cast<const uint8_t*>(
+        static_cast<const void*>(&sig_len));
+    sigdata.insert(sigdata.end(), lp, lp + sizeof(sig_len));
+    sigdata.insert(sigdata.end(), lp, lp + sizeof(sig_len));
+    // then the RRSIG data
+    const uint8_t* const dp = static_cast<const uint8_t*>(buffer.getData());
+    sigdata.insert(sigdata.end(), dp, dp + sig_len);
+    sigdata.insert(sigdata.end(), dp, dp + sig_len);
+
+    EXPECT_THROW(encoder_.start(RRClass::IN(), RRType::A(), &sigdata[0], 0, 2),
+                 isc::Unexpected);
+}
+
 void
 checkSigData(const ConstRdataPtr& decoded, bool* called, const void* encoded,
              size_t length)
