@@ -27,6 +27,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata/generic/detail/nsec_bitmap.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -35,6 +36,7 @@ using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata::generic::detail::nsec;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -49,24 +51,50 @@ struct NSECImpl {
     vector<uint8_t> typebits_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NSEC RDATA.  There
+/// can be extra space characters at the beginning or end of the
+/// text (which are simply ignored), but other extra text, including
+/// a new line, will make the construction fail with an exception.
+///
+/// The Next Domain Name field must be absolute since there's no
+/// parameter that specifies the origin name; if it is not absolute,
+/// \c MissingNameOrigin exception will be thrown.  This must not be
+/// represented as a quoted string.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw MissingNameOrigin Thrown when the Next Domain Name is not absolute.
+/// \throw InvalidRdataText if any fields are out of their valid range.
+///
+/// \param nsec_str A string containing the RDATA to be created
 NSEC::NSEC(const std::string& nsec_str) :
     impl_(NULL)
 {
-    istringstream iss(nsec_str);
-    string nextname;
+    try {
+        std::istringstream ss(nsec_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    iss >> nextname;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC name");
+        const Name origin_name(createNameFromLexer(lexer, NULL));
+
+        vector<uint8_t> typebits;
+        buildBitmapsFromLexer("NSEC", lexer, typebits);
+
+        impl_ = new NSECImpl(origin_name, typebits);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for NSEC: " << nsec_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct NSEC from '" << nsec_str << "': "
+                  << ex.what());
     }
-    if (iss.eof()) {
-        isc_throw(InvalidRdataText, "NSEC bitmap is missing");
-    }
-
-    vector<uint8_t> typebits;
-    buildBitmapsFromText("NSEC", iss, typebits);
-
-    impl_ = new NSECImpl(Name(nextname), typebits);
 }
 
 NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
@@ -85,6 +113,38 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
     checkRRTypeBitmaps("NSEC", typebits);
 
     impl_ = new NSECImpl(nextname, typebits);
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NSEC RDATA.
+///
+/// The Next Domain Name field can be non-absolute if \c origin is
+/// non-NULL, in which case \c origin is used to make it absolute.  It
+/// must not be represented as a quoted string.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw MissingNameOrigin Thrown when the Next Domain Name is not
+/// absolute and \c origin is NULL.
+/// \throw InvalidRdataText if any fields are out of their valid range.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+NSEC::NSEC(MasterLexer& lexer, const Name* origin, MasterLoader::Options,
+           MasterLoaderCallbacks&)
+{
+    const Name origin_name(createNameFromLexer(lexer, origin));
+
+    vector<uint8_t> typebits;
+    buildBitmapsFromLexer("NSEC", lexer, typebits);
+
+    impl_ = new NSECImpl(origin_name, typebits);
 }
 
 NSEC::NSEC(const NSEC& source) :

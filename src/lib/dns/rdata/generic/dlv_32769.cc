@@ -45,6 +45,11 @@ DLV::DLV(InputBuffer& buffer, size_t rdata_len) :
     impl_(new DLVImpl(buffer, rdata_len))
 {}
 
+DLV::DLV(MasterLexer& lexer, const Name* origin, MasterLoader::Options options,
+         MasterLoaderCallbacks& callbacks) :
+    impl_(new DLVImpl(lexer, origin, options, callbacks))
+{}
+
 /// \brief Copy constructor
 ///
 /// A copy of the implementation object is allocated and constructed.
