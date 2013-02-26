@@ -72,14 +72,15 @@ class TestUserMgr(unittest.TestCase):
                 sha1((expected_pass + entry_salt).encode()).hexdigest()
             self.assertEqual(expected_hash, entry_hash)
 
-    def run_check(self, expected_returncode, expected_stdout, expected_stderr, command):
+    def run_check(self, expected_returncode, expected_stdout, expected_stderr,
+                  command):
         """
         Runs the given command, and checks return code, and outputs (if provided).
         Arguments:
         expected_returncode, return code of the command
-        expected_stdout, (multiline) string that is checked agains stdout.
+        expected_stdout, (multiline) string that is checked against stdout.
                          May be None, in which case the check is skipped.
-        expected_stderr, (multiline) string that is checked agains stderr.
+        expected_stderr, (multiline) string that is checked against stderr.
                          May be None, in which case the check is skipped.
         """
         (returncode, stdout, stderr) = run(command)
