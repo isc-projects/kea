@@ -18,6 +18,9 @@ We have 3 basic components involved in this mix:
 There are a number of possible approaches to this:
 
 a. Make a module that includes all logic. (The BIND 9 module?)
+a'. extract major processing logic of auth into a separate library
+   (maybe loadable module) and allow the resolver to use it, probably
+   as a kind of hook.
 b. Look at authoritative server first, and pass queries to the
    recursive component.
 c. Make a module that combines authoritative and cache. Queries not
