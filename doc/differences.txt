@@ -1,7 +1,7 @@
 Differences of Bind 10 to other software
 ========================================
 
-Bind 9
+BIND 9
 ------
 
 TODO: There are definitely more differences than just this.
@@ -10,3 +10,11 @@ TODO: There are definitely more differences than just this.
   received zone doesn't contain a NS record, bind 9 stops serving the
   zone and returns SERVFAIL to queries for that zone. Bind 10 still
   uses the previous version of zone.
+
+RDATA implementations:
+* IN/A: BIND 10 does not accept abbreviated forms of textual IPv4
+  addresses for class-IN, type-A RDATA.  BIND 9 warns about it but
+  still accepts it as the standard inet_aton() function.  Such forms
+  should actually be NOT accepted per RFC 1035, but BIND 9 accepts them
+  probably because of compatibility reasons.  Until our strict
+  (and more correct) behavior causes operations issues, we'll keep it.
