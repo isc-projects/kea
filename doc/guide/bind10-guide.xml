@@ -7,7 +7,7 @@
 ]>
 
 <!--
- - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@
     <subtitle>Administrator Reference for BIND 10</subtitle>
 
     <copyright>
-      <year>2010-2012</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2013</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
@@ -59,11 +59,35 @@
     <section id="acknowledgements">
       <title>Acknowledgements</title>
 
-<!-- TODO: acknowledge all sponsors and CNNIC and CZNIC too -->
+      <para>BIND 10 is a sponsored development project, and would not
+      be possible without the generous support of the sponsors.</para>
 
-      <para>ISC would like to acknowledge generous support for
-      BIND 10 development of DHCPv4 and DHCPv6 components provided
-      by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
+      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level
+      sponsors.</para>
+
+      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
+      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
+      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
+      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
+      <ulink url="https://www.google.com/">Google</ulink>,
+      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
+      <ulink url="https://registro.br/">Registro.br</ulink>,
+      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
+      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
+      are current sponsors.</para>
+
+      <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
+      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
+      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
+      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
+      sponsors of the project.</para>
+
+<!-- DHCP sponsorship by Comcast -->
+
+      <para>Support for BIND 10 development of the DHCPv4 and DHCPv6
+      components is provided by
+      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
 
     </section>
 
@@ -164,12 +188,12 @@
 
       <para>
         At first, running many different processes may seem confusing.
-        However, these processes are started, stopped, and maintained
-        by a single command, <command>bind10</command>.
-        This command starts a master process which will start other
-        required processes and other processes when configured.
-        The processes that may be started by the <command>bind10</command>
-        command have names starting with "b10-", including:
+        However, these processes are started by running a single
+	command, <command>bind10</command>.  This command starts
+	a master process, <command>b10-init</command>, which will
+	start other required processes and other processes when
+	configured.  The processes that may be started have names
+	starting with "b10-", including:
       </para>
 
       <para>
@@ -225,6 +249,7 @@
               Recursive name server.
               This process handles incoming DNS queries and provides
               answers from its cache or by recursively doing remote lookups.
+              (This is an experimental proof of concept.)
             </simpara>
           </listitem>
 
@@ -347,7 +372,7 @@ share/
   share/bind10/
     auth.spec
     b10-cmdctl.pem
-    bob.spec
+    init.spec
     passwd.csv
   man/
 var/
@@ -419,6 +444,13 @@ var/
         </listitem>
 
         <listitem>
+          <para>Create a user for yourself:
+            <screen>$ <userinput>cd /usr/local/etc/bind10/</userinput></screen>
+            <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
           <para>Start the server (as root):
             <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
           </para>
@@ -430,11 +462,11 @@ var/
 	    DNS service (by using the <command>bindctl</command> utility
 	    to configure the <command>b10-auth</command> component to
 	    run): <screen>$ <userinput>bindctl</userinput></screen>
-	    (Login with the provided default username and password.)
+	    (Login with the username and password you used above to create a user.)
             <screen>
-&gt; <userinput>config add Boss/components b10-auth</userinput>
-&gt; <userinput>config set Boss/components/b10-auth/special auth</userinput>
-&gt; <userinput>config set Boss/components/b10-auth/kind needed</userinput>
+&gt; <userinput>config add Init/components b10-auth</userinput>
+&gt; <userinput>config set Init/components/b10-auth/special auth</userinput>
+&gt; <userinput>config set Init/components/b10-auth/kind needed</userinput>
 &gt; <userinput>config commit</userinput>
 &gt; <userinput>quit</userinput>
             </screen>
@@ -519,7 +551,7 @@ var/
               executables that a user wouldn't normally run directly and
               are not run independently.
               These are the BIND 10 modules which are daemons started by
-              the <command>bind10</command> tool.
+              the <command>b10-init</command> master process.
             </simpara>
           </listitem>
           <listitem>
@@ -741,7 +773,12 @@ as a dependency earlier -->
           </varlistentry>
 
           </variablelist>
-
+          <note>
+            <para>
+              For additional instructions concerning the building and installation of
+              BIND 10 DHCP, see <xref linkend="dhcp-install-configure"/>.
+            </para>
+          </note>
         </para>
   <!-- TODO: lcov -->
 
@@ -761,9 +798,7 @@ as a dependency earlier -->
           dependencies.
         </para>
 
-        <note>
-          <para>For notes on configuring and building DHCPv6 with MySQL see <xref linkend="dhcp6-install">.</xref></para>
-        </note>
+
       </section>
 
       <section>
@@ -823,16 +858,17 @@ as a dependency earlier -->
   <chapter id="bind10">
     <title>Starting BIND 10 with <command>bind10</command></title>
     <para>
-      BIND 10 provides the <command>bind10</command> command which
-      starts up the required processes.
-      <command>bind10</command>
+      BIND 10 is started with the <command>bind10</command> command.
+      It runs the <command>b10-init</command> daemon which
+      starts up the required processes, and
       will also restart some processes that exit unexpectedly.
-      This is the only command needed to start the BIND 10 system.
+      <command>bind10</command> is the only command needed to start
+      the BIND 10 system.
     </para>
 
     <para>
       After starting the <command>b10-msgq</command> communications channel,
-      <command>bind10</command> connects to it,
+      <command>b10-init</command> connects to it,
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
@@ -851,7 +887,7 @@ as a dependency earlier -->
     </para>
 
     <para>
-      In its default configuration, the <command>bind10</command>
+      In its default configuration, the <command>b10-init</command>
       master process will also start up
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
@@ -1000,7 +1036,7 @@ through bindctl and friends
     <para>
       The configuration manager does not have any command line arguments.
       Normally it is not started manually, but is automatically
-      started using the <command>bind10</command> master process
+      started using the <command>b10-init</command> master process
       (as covered in <xref linkend="bind10"/>).
     </para>
 
@@ -1110,10 +1146,6 @@ but that is a single file, maybe this should go back to that format?
       <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
       This comma-delimited file lists the accounts with a user name,
       hashed password, and salt.
-      (A sample file is at
-      <filename>/usr/local/share/bind10/cmdctl-accounts.csv</filename>.
-      It contains the user named <quote>root</quote> with the password
-      <quote>bind10</quote>.)
     </para>
 
     <para>
@@ -1267,10 +1299,10 @@ TODO
 
         <screen><userinput>&lt;module&gt; &lt;command&gt; <replaceable>[argument(s)]</replaceable></userinput></screen>
 
-        For example, the Boss module has a 'shutdown' command to shut down
+        For example, the Init module has a 'shutdown' command to shut down
         BIND 10, with an optional argument 'help':
 
-        <screen>&gt; <userinput>Boss shutdown help</userinput>
+        <screen>&gt; <userinput>Init shutdown help</userinput>
 Command  shutdown 	(Shut down BIND 10)
 		help (Get help for command)
 This command has no parameters
@@ -1293,12 +1325,12 @@ Available module names:
         </screen>
 
         When 'help' is used as a command to a module, it shows the supported commands for the module; for example:
-        <screen>&gt; <userinput>Boss help</userinput>
-Module  Boss 	Master process
+        <screen>&gt; <userinput>Init help</userinput>
+Module  Init 	Master process
 Available commands:
     help        Get help for module.
     shutdown    Shut down BIND 10
-    ping        Ping the boss process
+    ping        Ping the Init process
     show_processes
             List the running BIND 10 processes
         </screen>
@@ -1639,7 +1671,7 @@ Parameters:
                         to maps.
                     </simpara>
                     <simpara>
-                        For example, the <command>Boss/components</command>
+                        For example, the <command>Init/components</command>
                         elements is a named set;
                         adding, showing, and then removing an element
                         can be done with the following three commands (note
@@ -1647,13 +1679,13 @@ Parameters:
                         'example_module'):
                     </simpara>
                     <simpara>
-                        <command>config add Boss/components example_module</command>
+                        <command>config add Init/components example_module</command>
                     </simpara>
                     <simpara>
-                        <command>config show Boss/components/example_module</command>
+                        <command>config show Init/components/example_module</command>
                     </simpara>
                     <simpara>
-                        <command>config remove Boss/components example_module</command>
+                        <command>config remove Init/components example_module</command>
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1701,21 +1733,21 @@ Parameters:
 
         <screen>&gt; <userinput>execute init_authoritative_server show</userinput>
 !echo adding Authoritative server component
-config add /Boss/components b10-auth
-config set /Boss/components/b10-auth/kind needed
-config set /Boss/components/b10-auth/special auth
+config add /Init/components b10-auth
+config set /Init/components/b10-auth/kind needed
+config set /Init/components/b10-auth/special auth
 !echo adding Xfrin component
-config add /Boss/components b10-xfrin
-config set /Boss/components/b10-xfrin/address Xfrin
-config set /Boss/components/b10-xfrin/kind dispensable
+config add /Init/components b10-xfrin
+config set /Init/components/b10-xfrin/address Xfrin
+config set /Init/components/b10-xfrin/kind dispensable
 !echo adding Xfrout component
-config add /Boss/components b10-xfrout
-config set /Boss/components/b10-xfrout/address Xfrout
-config set /Boss/components/b10-xfrout/kind dispensable
+config add /Init/components b10-xfrout
+config set /Init/components/b10-xfrout/address Xfrout
+config set /Init/components/b10-xfrout/kind dispensable
 !echo adding Zone Manager component
-config add /Boss/components b10-zonemgr
-config set /Boss/components/b10-zonemgr/address Zonemgr
-config set /Boss/components/b10-zonemgr/kind dispensable
+config add /Init/components b10-zonemgr
+config set /Init/components/b10-zonemgr/address Zonemgr
+config set /Init/components/b10-zonemgr/kind dispensable
 !echo Components added. Please enter "config commit" to
 !echo finalize initial setup and run the components.
         </screen>
@@ -1763,7 +1795,7 @@ config set /Boss/components/b10-zonemgr/kind dispensable
         <section id="bindctl_execute_notes">
             <title>Notes on execute scripts</title>
             Within scripts, you can add or remove modules with the normal
-            configuration commands for <command>Boss/components</command>.
+            configuration commands for <command>Init/components</command>.
             However, as module
             configuration and commands do not show up until the module is
             running, it is currently not possible to add a module and set
@@ -2074,7 +2106,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 
     <para>
       This chapter explains how to control and configure the
-      <command>bind10</command> parent.
+      <command>b10-init</command> parent.
       The startup of this resident process that runs the BIND 10
       daemons is covered in <xref linkend="bind10"/>.
     </para>
@@ -2083,8 +2115,8 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       <title>Stopping bind10</title>
       <para>
         The BIND 10 suite may be shut down by stopping the
-        parent <command>bind10</command> process. This may be done
-        by running the <userinput>Boss shutdown</userinput> command
+        parent <command>b10-init</command> process. This may be done
+        by running the <userinput>Init shutdown</userinput> command
         at the <command>bindctl</command> prompt.
       </para>
     </section>
@@ -2094,11 +2126,11 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 
       <para>
 	The processes to be used can be configured for
-	<command>bind10</command> to start, with the exception
+	<command>b10-init</command> to start, with the exception
 	of the required <command>b10-sockcreator</command>,
 	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
 	components.
-	The configuration is in the <varname>Boss/components</varname>
+	The configuration is in the <varname>Init/components</varname>
 	section. Each element represents one component, which is
 	an abstraction of a process.
       </para>
@@ -2106,10 +2138,10 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       <para>
 	To add a process to the set, let's say the resolver (which
 	is not started by default), you would do this:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+        <screen>&gt; <userinput>config add Init/components b10-resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
@@ -2139,7 +2171,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
             <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
             <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
             <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
+            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in b10-init before the release -->
           </tbody>
           </tgroup>
         </table>
@@ -2151,7 +2183,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
 	<quote>dispensable</quote> (the default unless you set
 	something else), it will get started again if it fails. If
 	it is set to <quote>needed</quote> and it fails at startup,
-	the whole <command>bind10</command> shuts down and exits
+	the whole <command>b10-init</command> shuts down and exits
 	with an error exit code. But if it fails some time later, it
 	is just started again. If you set it to <quote>core</quote>,
 	you indicate that the system is not usable without the
@@ -2223,9 +2255,9 @@ address, but the usual ones don't." mean? -->
         You might want to do that to gain more performance (each one uses only
         single core). Just put multiple entries under different names, like
         this, with the same config:
-        <screen>&gt; <userinput>config add Boss/components b10-resolver-2</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver-2/kind needed</userinput>
+        <screen>&gt; <userinput>config add Init/components b10-resolver-2</userinput>
+&gt; <userinput>config set Init/components/b10-resolver-2/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver-2/kind needed</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
       <para>
@@ -2240,8 +2272,8 @@ address, but the usual ones don't." mean? -->
       </para>
 
       <para>
-        The running processes started by <command>bind10</command>
-        may be listed by running <userinput>Boss show_processes</userinput>
+        The running processes started by <command>b10-init</command>
+        may be listed by running <userinput>Init show_processes</userinput>
         using <command>bindctl</command>.
       </para>
 
@@ -2255,7 +2287,7 @@ address, but the usual ones don't." mean? -->
       The <command>b10-auth</command> is the authoritative DNS server.
       It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
       data backends.
-      Normally it is started by the <command>bind10</command> master
+      Normally it is started by the <command>b10-init</command> master
       process.
     </para>
 
@@ -2413,7 +2445,7 @@ can use various data source backends.
               <simpara>Stop the authoritative DNS server.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the BIND 10 init process may restart this service
       if configured.)
               </simpara>
             </listitem>
@@ -2672,7 +2704,7 @@ TODO
 
     <para>
       Incoming zones are transferred using the <command>b10-xfrin</command>
-      process which is started by <command>bind10</command>.
+      process which is started by <command>b10-init</command>.
       When received, the zone is stored in the corresponding BIND 10
       data source, and its records can be served by
       <command>b10-auth</command>.
@@ -2767,7 +2799,7 @@ what if a NOTIFY is sent?
 
       <para>
         The <command>b10-zonemgr</command> process is started by
-        <command>bind10</command>.
+        <command>b10-init</command>.
         It keeps track of SOA refresh, retry, and expire timers
         and other details for BIND 10 to perform as a slave.
         When the <command>b10-auth</command> authoritative DNS server
@@ -2846,7 +2878,7 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
     <title>Outbound Zone Transfers</title>
     <para>
       The <command>b10-xfrout</command> process is started by
-      <command>bind10</command>.
+      <command>b10-init</command>.
       When the <command>b10-auth</command> authoritative DNS server
       receives an AXFR or IXFR request, <command>b10-auth</command>
       internally forwards the request to <command>b10-xfrout</command>,
@@ -2912,7 +2944,7 @@ what is XfroutClient xfr_client??
       BIND 10 supports the server side of the Dynamic DNS Update
       (DDNS) protocol as defined in RFC 2136.
       This service is provided by the <command>b10-ddns</command>
-      component, which is started by the <command>bind10</command>
+      component, which is started by the <command>b10-init</command>
       process if configured so.
     </para>
 
@@ -3017,9 +3049,9 @@ what is XfroutClient xfr_client??
         It can be done by using the <command>bindctl</command>
         utility.  For example:
       <screen>
-&gt; <userinput>config add Boss/components b10-ddns</userinput>
-&gt; <userinput>config set Boss/components/b10-ddns/address DDNS</userinput>
-&gt; <userinput>config set Boss/components/b10-ddns/kind dispensable</userinput>
+&gt; <userinput>config add Init/components b10-ddns</userinput>
+&gt; <userinput>config set Init/components/b10-ddns/address DDNS</userinput>
+&gt; <userinput>config set Init/components/b10-ddns/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       <note><simpara>
@@ -3194,9 +3226,15 @@ what is XfroutClient xfr_client??
   <chapter id="resolverserver">
     <title>Recursive Name Server</title>
 
+    <note><simpara>
+      The <command>b10-resolver</command> is an experimental proof
+      of concept.
+    </simpara></note>
+
     <para>
-      The <command>b10-resolver</command> process is started by
-      <command>bind10</command>.
+      The <command>b10-resolver</command> daemon provides an
+      iterative caching and forwarding DNS server.
+      The process is started by <command>b10-init</command>.
 <!-- TODO
       It provides a resolver so DNS clients can ask it to do recursion
       and it will return answers.
@@ -3204,23 +3242,23 @@ what is XfroutClient xfr_client??
     </para>
 
     <para>
-      The main <command>bind10</command> process can be configured
+      The main <command>b10-init</command> process can be configured
       to select to run either the authoritative or resolver or both.
       By default, it doesn't start either one. You may change this using
       <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config add Boss/components b10-resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Boss/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config add Init/components b10-resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
+&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
 
     </para>
 
     <para>
-       The master <command>bind10</command> will stop and start
+       The master <command>b10-init</command> process will stop and start
        the desired services.
     </para>
 
@@ -3317,9 +3355,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
   </chapter>
 
-  <chapter id="dhcp4">
-    <title>DHCPv4 Server</title>
-    <para>Dynamic Host Configuration Protocol for IPv4 (DHCP or
+  <chapter id="dhcp">
+  <title>DHCP</title>
+     <para>The Dynamic Host Configuration Protocol for IPv4 (DHCP or
     DHCPv4) and Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
     are protocols that allow one node (server) to provision
     configuration parameters to many hosts and devices (clients). To
@@ -3327,57 +3365,120 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     be deployed that facilitate communication between servers and
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
-    protocols. BIND 10 offers server implementations for both DHCPv4
-    and DHCPv6. This chapter is about DHCP for IPv4. For a description
-    of the DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
-
-    <para>The DHCPv4 server component is currently under intense
-    development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
-    and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
-    developers mailing list</ulink>.</para>
-
-    <para>The DHCPv4 and DHCPv6 components in BIND 10 architecture are
-    internally code named <quote>Kea</quote>.</para>
+    protocols. BIND 10 offers two server implementations, one for DHCPv4
+    and one for DHCPv6.</para>
+    <para>This chapter covers those parts of BIND 10 that are common to
+    both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
+    while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
+    </para>
 
     <note>
-      <para>
-        As of January 2013, the DHCPv4 component is a work in progress.
-        That means that while it is capable of performing DHCP configuration,
-        it is not fully functional.  The server is able to offer,
-        assign, renew, release and reuse expired leases, but some of the
-        options are not configurable yet. In particular Router option is hardcoded.
-        This means that the server is not really usable in actual deployments
-        yet. See <xref linkend="dhcp4-limit"/> for a detailed description.
-      </para>
+      <simpara>
+	In this release of BIND 10, the DHCPv4 and DHCPv6 servers
+	must be considered experimental.
+      </simpara>
     </note>
 
-    <section id="dhcp4-usage">
-      <title>DHCPv4 Server Usage</title>
-      <para>BIND 10 has provided the DHCPv4 server component since December
-      2011. It is current experimental implementation and is not fully functional
-      yet. It is mature enough to conduct tests in lab environment, but it has
-      significant limitations. See <xref linkend="dhcp4-limit"/> for
-      details.
+    <section id="dhcp-install-configure">
+      <title>DHCP Database Installation and Configuration</title>
+      <para>
+      BIND 10 DHCP stores its leases in a lease database.  The software has been written in
+      a way that makes it possible to choose which database product should be used to
+      store the lease information.  At present, only support for MySQL is provided, and that support must
+      be explicitly included when BIND 10 is built.  This section covers the building of
+      BIND 10 with MySQL and the creation of the lease database.
+      </para>
+      <section>
+        <title>Install MySQL</title>
+        <para>
+          Install MySQL according to the instructions for your system.  The client development
+          libraries must be installed.
+        </para>
+      </section>
+      <section>
+        <title>Build and Install BIND 10</title>
+        <para>
+          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          the following modification: to enable the MySQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          MySQL configuration program "mysql_config" with the "--with-dhcp-mysql" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          ...if MySQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-database-create">
+        <title>Create MySQL Database and BIND 10 User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into MySQL as "root":
+          <screen>$ <userinput>mysql -u root -p</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+mysql></screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+         <para>
+          3. Create the database tables:
+          <screen>mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
+mysql> <userinput>SOURCE <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which BIND 10 will access the database (and give it a password), then grant it access to the database tables:
+          <screen>mysql> <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
+mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput></screen>
+        </para>
+        <para>
+          5. Exit MySQL:
+          <screen>mysql> <userinput>quit</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+     </section>
+   </section>
+
+  </chapter>
+
+  <chapter id="dhcp4">
+    <title>The DHCPv4 Server</title>
+
+    <section id="dhcp4-start-stop">
+      <title>Starting and Stopping the DHCPv4 Server</title>
+
+      <para>
+        <command>b10-dhcp4</command> is the BIND 10 DHCPv4 server and, like other
+        parts of BIND 10, is configured through the <command>bindctl</command>
+        program.
+      </para>
+      <para>
+        After starting BIND 10 and entering bindctl, the first step
+        in configuring the server is to add it to the list of running BIND 10 services.
+<screen>
+&gt; <userinput>config add Init/components b10-dhcp4</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp4/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+         To remove <command>b10-dhcp4</command> from the set of running services,
+         the <command>b10-dhcp4</command> is removed from list of Init components:
+<screen>
+&gt; <userinput>config remove Init/components b10-dhcp4</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
       </para>
 
       <para>
-        <command>b10-dhcp4</command> is a BIND 10 component and is being
-        run under BIND 10 framework. To add a DHCPv4 process to the set of running
-        BIND 10 services, you can use following commands in <command>bindctl</command>:
-        <screen>&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
-&gt; <userinput>config set Boss/components/b10-dhcp4/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
-
-       <para>
-         To stop running <command>b10-dhcp4</command>, please use the
-         following command:
-         <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
-&gt; <userinput>config commit</userinput></screen></para>
-
-      <para>
-        During start-up the server will detect available network interfaces
+        On start-up, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
         assigned.
@@ -3392,23 +3493,29 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     </section>
 
-    <section id="dhcp4-config">
-      <title>DHCPv4 Server Configuration</title>
+    <section id="dhcp4-configuration">
+      <title>Configuring the DHCPv4 Server</title>
       <para>
         Once the server is started, it can be configured. To view the
         current configuration, use the following command in <command>bindctl</command>:
         <screen>
 &gt; <userinput>config show Dhcp4</userinput></screen>
-        When starting Dhcp4 daemon for the first time, the default configuration
+        When starting the DHCPv4 daemon for the first time, the default configuration
         will be available. It will look similar to this:
-        <screen>
+<screen>
 &gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/interface/                list    (default)
-Dhcp4/renew-timer        1000   integer	(default)
-Dhcp4/rebind-timer       2000   integer	(default)
-Dhcp4/preferred-lifetime 3000   integer	(default)
-Dhcp4/valid-lifetime	 4000   integer	(default)
-Dhcp4/subnet4	         []     list    (default)</screen>
+Dhcp4/interface/	list	(default)
+Dhcp4/renew-timer	1000	integer	(default)
+Dhcp4/rebind-timer	2000	integer	(default)
+Dhcp4/valid-lifetime	4000	integer	(default)
+Dhcp4/option-data	[]	list	(default)
+Dhcp4/lease-database/type	"memfile"	string	(default)
+Dhcp4/lease-database/name	""	string	(default)
+Dhcp4/lease-database/user	""	string	(default)
+Dhcp4/lease-database/host	""	string	(default)
+Dhcp4/lease-database/password	""	string	(default)
+Dhcp4/subnet4	[]	list	(default)
+</screen>
       </para>
 
       <para>
@@ -3423,6 +3530,69 @@ Dhcp4/subnet4	         []     list    (default)</screen>
         per-subnet basis.
       </para>
 
+      <section>
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database.  Currently,
+      the only supported database is MySQL
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted.
+      </para>
+      </footnote>, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+        <note>
+            <para>
+            Database access information must be configured for the DHCPv4 server, even if
+            it has already been configured for the DHCPv6 server.  The servers store their
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
+            </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp4/lease-database parameters.
+      The type of the database must be set to MySQL (although the string entered is "mysql"):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv4 server, the
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv4 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
+      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      </note>
+      </section>
+
+      <section id="dhcp4-address-config">
+      <title>Configuration of Address Pools</title>
       <para>
         The essential role of DHCPv4 server is address assignment. The server
         has to be configured with at least one subnet and one pool of dynamic
@@ -3462,7 +3632,7 @@ Dhcp4/subnet4	         []     list    (default)</screen>
 &gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.3.0/24" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Arrays are counted from 0. subnet[0] refers to the subnet defined in the
-        previous example.  The <command>config add Dhcp4/subnet4</command> adds
+        previous example.  The <command>config add Dhcp4/subnet4</command> command adds
         another (second) subnet. It can be referred to as
         <command>Dhcp4/subnet4[1]</command>. In this example, we allow server to
         dynamically assign all addresses available in the whole subnet.
@@ -3474,47 +3644,515 @@ Dhcp4/subnet4	         []     list    (default)</screen>
         address) and the last (typically broadcast address) address from that pool.
         In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
         192.0.3.255 addresses may be assigned as well. This may be invalid in some
-        network configurations. If you want to avoid this, please use min-max notation.
+        network configurations. If you want to avoid this, please use the "min-max" notation.
+      </para>
+      </section>
+
+    <section id="dhcp4-std-options">
+      <title>Standard DHCPv4 options</title>
+      <para>
+        One of the major features of DHCPv4 server is to provide configuration
+        options to clients. Although there are several options that require
+        special behavior, most options are sent by the server only if the client
+        explicitly requested them.  The following example shows how to
+        configure DNS servers, which is one of the most frequently used
+        options. Options specified in this way are considered global and apply
+        to all configured subnets.
+
+        <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.3.1, 192.0.3.2"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+    <para>
+      The first line creates new entry in option-data table. It
+      contains information on all global options that the server is
+      supposed to configure in all subnets. The second line specifies
+      option name. For a complete list of currently supported names,
+      see <xref linkend="dhcp4-std-options-list"/> below.
+      The third line specifies option code, which must match one of the
+      values from that list. Line 4 specifies option space, which must always
+      be set to "dhcp4" as these are standard DHCPv4 options. For
+      other option spaces, including custom option spaces, see <xref
+      linkend="dhcp4-option-spaces"/>. The fifth line specifies the format in
+      which the data will be entered: use of CSV (comma
+      separated values) is recommended. The sixth line gives the actual value to
+      be sent to clients. Data is specified as a normal text, with
+      values separated by commas if more than one value is
+      allowed.
+    </para>
+
+    <para>
+      Options can also be configured as hexadecimal values. If csv-format is
+      set to false, option data must be specified as a hex string. The
+      following commands configure the domain-name-servers option for all
+      subnets with the following addresses: 192.0.3.1 and 192.0.3.2.
+      Note that csv-format is set to false.
+      <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "C0 00 03 01 C0 00 03 02"</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
       </para>
 
       <para>
-        Note: Although configuration is now accepted, some parts of it is not internally used
-        by they server yet. Address pools are used, but option definitons are not.
-        The only way to alter some options (e.g. Router Option or DNS servers and Domain name)
-        is to modify source code. To do so, please edit
-        src/bin/dhcp6/dhcp4_srv.cc file, modify the following parameters and
-        recompile:
+        It is possible to override options on a per-subnet basis.  If
+        clients connected to most of your subnets are expected to get the
+        same values of a given option, you should use global options: you
+        can then override specific values for a small number of subnets.
+        On the other hand, if you use different values in each subnet,
+        it does not make sense to specify global option values
+        (Dhcp4/option-data), rather you should set only subnet-specific values
+        (Dhcp4/subnet[X]/option-data[Y]).
+      </para>
+      <para>
+        The following commands override the global
+        DNS servers option for a particular subnet, setting a single DNS
+        server with address 2001:db8:1::3.
         <screen>
-const std::string HARDCODED_LEASE = "192.0.2.222"; // assigned lease
-const std::string HARDCODED_NETMASK = "255.255.255.0";
-const uint32_t    HARDCODED_LEASE_TIME = 60; // in seconds
-const std::string HARDCODED_GATEWAY = "192.0.2.1";
-const std::string HARDCODED_DNS_SERVER = "192.0.2.2";
-const std::string HARDCODED_DOMAIN_NAME = "isc.example.com";
-const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
+&gt; <userinput>config add Dhcp4/subnet4[0]/option-data</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/name "domain-name-servers"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/code 6</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/data "192.0.2.3"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
 
-        Lease database and configuration support is planned for end of 2012.
+      <note>
+        <para>In a future version of Kea, it will not be necessary to specify
+        the option code, space and csv-format fields as they will be set
+        automatically.</para>
+      </note>
+
+      <para>
+        Below is a list of currently supported standard DHCPv4 options. The "Name" and "Code"
+        are the values that should be used as a name in the option-data
+        structures. "Type" designates the format of the data: the meanings of
+        the various types is given in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+        Some options are designated as arrays, which means that more than one
+        value is allowed in such an option. For example the option time-servers
+        allows the specification of more than one IPv4 address, so allowing
+        clients to obtain the the addresses of multiple NTP servers.
+      </para>
+      <!-- @todo: describe record types -->
+
+      <para>
+        <table border="1" cellpadding="5%" id="dhcp4-std-options-list">
+          <caption>List of standard DHCPv4 options</caption>
+          <thead>
+            <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
+          </thead>
+          <tbody>
+<tr><td>subnet-mask</td><td>1</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>time-offset</td><td>2</td><td>uint32</td><td>false</td></tr>
+<tr><td>routers</td><td>3</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>time-servers</td><td>4</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>name-servers</td><td>5</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>domain-name-servers</td><td>6</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>log-servers</td><td>7</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>cookie-servers</td><td>8</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>lpr-servers</td><td>9</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>impress-servers</td><td>10</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>resource-location-servers</td><td>11</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>host-name</td><td>12</td><td>string</td><td>false</td></tr>
+<tr><td>boot-size</td><td>13</td><td>uint16</td><td>false</td></tr>
+<tr><td>merit-dump</td><td>14</td><td>string</td><td>false</td></tr>
+<tr><td>domain-name</td><td>15</td><td>fqdn</td><td>false</td></tr>
+<tr><td>swap-server</td><td>16</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>root-path</td><td>17</td><td>string</td><td>false</td></tr>
+<tr><td>extensions-path</td><td>18</td><td>string</td><td>false</td></tr>
+<tr><td>ip-forwarding</td><td>19</td><td>boolean</td><td>false</td></tr>
+<tr><td>non-local-source-routing</td><td>20</td><td>boolean</td><td>false</td></tr>
+<tr><td>policy-filter</td><td>21</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>max-dgram-reassembly</td><td>22</td><td>uint16</td><td>false</td></tr>
+<tr><td>default-ip-ttl</td><td>23</td><td>uint8</td><td>false</td></tr>
+<tr><td>path-mtu-aging-timeout</td><td>24</td><td>uint32</td><td>false</td></tr>
+<tr><td>path-mtu-plateau-table</td><td>25</td><td>uint16</td><td>true</td></tr>
+<tr><td>interface-mtu</td><td>26</td><td>uint16</td><td>false</td></tr>
+<tr><td>all-subnets-local</td><td>27</td><td>boolean</td><td>false</td></tr>
+<tr><td>broadcast-address</td><td>28</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>perform-mask-discovery</td><td>29</td><td>boolean</td><td>false</td></tr>
+<tr><td>mask-supplier</td><td>30</td><td>boolean</td><td>false</td></tr>
+<tr><td>router-discovery</td><td>31</td><td>boolean</td><td>false</td></tr>
+<tr><td>router-solicitation-address</td><td>32</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>static-routes</td><td>33</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>trailer-encapsulation</td><td>34</td><td>boolean</td><td>false</td></tr>
+<tr><td>arp-cache-timeout</td><td>35</td><td>uint32</td><td>false</td></tr>
+<tr><td>ieee802-3-encapsulation</td><td>36</td><td>boolean</td><td>false</td></tr>
+<tr><td>default-tcp-ttl</td><td>37</td><td>uint8</td><td>false</td></tr>
+<tr><td>tcp-keepalive-internal</td><td>38</td><td>uint32</td><td>false</td></tr>
+<tr><td>tcp-keepalive-garbage</td><td>39</td><td>boolean</td><td>false</td></tr>
+<tr><td>nis-domain</td><td>40</td><td>string</td><td>false</td></tr>
+<tr><td>nis-servers</td><td>41</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>ntp-servers</td><td>42</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>vendor-encapsulated-options</td><td>43</td><td>empty</td><td>false</td></tr>
+<tr><td>netbios-name-servers</td><td>44</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>netbios-dd-server</td><td>45</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>netbios-node-type</td><td>46</td><td>uint8</td><td>false</td></tr>
+<tr><td>netbios-scope</td><td>47</td><td>string</td><td>false</td></tr>
+<tr><td>font-servers</td><td>48</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>x-display-manager</td><td>49</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>dhcp-requested-address</td><td>50</td><td>ipv4-address</td><td>false</td></tr>
+<!-- Lease time should not be configured by a user.
+<tr><td>dhcp-lease-time</td><td>51</td><td>uint32</td><td>false</td></tr>
+-->
+<tr><td>dhcp-option-overload</td><td>52</td><td>uint8</td><td>false</td></tr>
+<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
+<tr><td>dhcp-message-type</td><td>53</td><td>uint8</td><td>false</td></tr>
+<tr><td>dhcp-server-identifier</td><td>54</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>dhcp-parameter-request-list</td><td>55</td><td>uint8</td><td>true</td></tr>
+-->
+<tr><td>dhcp-message</td><td>56</td><td>string</td><td>false</td></tr>
+<tr><td>dhcp-max-message-size</td><td>57</td><td>uint16</td><td>false</td></tr>
+<!-- Renewal and rebinding time should not be configured by a user.
+<tr><td>dhcp-renewal-time</td><td>58</td><td>uint32</td><td>false</td></tr>
+<tr><td>dhcp-rebinding-time</td><td>59</td><td>uint32</td><td>false</td></tr>
+-->
+<tr><td>vendor-class-identifier</td><td>60</td><td>binary</td><td>false</td></tr>
+<!-- Client identifier should not be configured by a user.
+<tr><td>dhcp-client-identifier</td><td>61</td><td>binary</td><td>false</td></tr>
+-->
+<tr><td>nwip-domain-name</td><td>62</td><td>string</td><td>false</td></tr>
+<tr><td>nwip-suboptions</td><td>63</td><td>binary</td><td>false</td></tr>
+<tr><td>user-class</td><td>77</td><td>binary</td><td>false</td></tr>
+<tr><td>fqdn</td><td>81</td><td>record</td><td>false</td></tr>
+<tr><td>dhcp-agent-options</td><td>82</td><td>empty</td><td>false</td></tr>
+<tr><td>authenticate</td><td>90</td><td>binary</td><td>false</td></tr>
+<tr><td>client-last-transaction-time</td><td>91</td><td>uint32</td><td>false</td></tr>
+<tr><td>associated-ip</td><td>92</td><td>ipv4-address</td><td>true</td></tr>
+<tr><td>subnet-selection</td><td>118</td><td>ipv4-address</td><td>false</td></tr>
+<tr><td>domain-search</td><td>119</td><td>binary</td><td>false</td></tr>
+<tr><td>vivco-suboptions</td><td>124</td><td>binary</td><td>false</td></tr>
+<tr><td>vivso-suboptions</td><td>125</td><td>binary</td><td>false</td></tr>
+          </tbody>
+        </table>
+      </para>
+      <para>
+        <table border="1" cellpadding="5%" id="dhcp-types">
+          <caption>List of standard DHCP option types</caption>
+          <thead>
+            <tr><th>Name</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>binary</td><td>An arbitrary string of bytes, specified as a set of hexadecimal digits.</td></tr>
+            <tr><td>boolean</td><td>Boolean value with allowed values true or false</td></tr>
+            <tr><td>empty</td><td>No value, data is carried in suboptions</td></tr>
+            <tr><td>fqdn</td><td>Fully qualified domain name (e.g. www.example.com)</td></tr>
+            <tr><td>ipv4-address</td><td>IPv4 address in the usual dotted-decimal notation (e.g. 192.0.2.1)</td></tr>
+            <tr><td>ipv6-address</td><td>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</td></tr>
+            <tr><td>record</td><td>Structured data that may comprise any types (except "record" and "empty")</td></tr>
+            <tr><td>string</td><td>Any text</td></tr>
+            <tr><td>uint8</td><td>8 bit unsigned integer with allowed values 0 to 255</td></tr>
+            <tr><td>uint16</td><td>16 bit unsinged integer with allowed values 0 to 65535</td></tr>
+            <tr><td>uint32</td><td>32 bit unsigned integer with allowed values 0 to 4294967295</td></tr>
+          </tbody>
+       </table>
+      </para>
+    </section>
+
+    <section id="dhcp4-custom-options">
+      <title>Custom DHCPv4 options</title>
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv4 option called "foo" which will have
+      code 222 and will convey a single unsigned 32 bit integer value. We can define
+      such an option by using the following commands:
+      <screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "uint32"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
+      </para>
+      <note>
+        <para>
+          In the current release the default values are not propagated to the
+          parser when the new configuration is being set. Therefore, all
+          parameters must be specified at all times, even if their values are
+          left blank.
+        </para>
+      </note>
+
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
+        <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>New options can take more complex forms than simple use of
+      primitives (uint8, string, ipv4-address etc): it is possible to
+      define an option comprising a number of existing primitives.
+      </para>
+      <para>Assume we
+      want to define a new option that will consist of an IPv4
+      address, followed by unsigned 16 bit integer, followed by a text
+      string. Such an option could be defined in the following way:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 223</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+</screen>
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
+<screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 223</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
+    </section>
+
+    <section id="dhcp4-vendor-opts">
+      <title>DHCPv4 vendor specific options</title>
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to
+      be used in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there
+      is also vendor-encapsulated-options-space, which is empty by default, but options
+      can be defined in it. Those options are called vendor-specific
+      information options. The following examples show how to define
+      an option "foo" with code 1 that consists of an IPv4 address, an
+      unsigned 16 bit integer and a string. The "foo" option is conveyed
+      in a vendor specific information option.
+      </para>
+      <para>
+      The first step is to define the format of the option:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "vendor-encapsulated-options-space"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulates ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+     (Note that the option space is set to "vendor-encapsulated-options-space".)
+     Once the option format is defined, the next step is to define actual values
+     for that option:
+     <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "vendor-encapsulated-options-space"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    We also set up a dummy value for vendor-opts, the option that conveys our sub-option "foo".
+    This is required else the option will not be included in messages sent to the client.
+     <screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/name "vendor-encapsulated-options"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/code 43</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format false</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <note>
+        <para>
+          With this version of BIND 10, the "vendor-encapsulated-options" option
+          must be specified in the configuration although it has no configurable
+          parameters. If it is not specified, the server will assume that it is
+          not configured and will not send it to a client. In the future there
+          will be no need to include this option in the configuration.
+        </para>
+      </note>
+
+    </section>
+
+    <section id="dhcp4-option-spaces">
+
+      <title>Nested DHCPv4 options (custom option spaces)</title>
+      <para>It is sometimes useful to define completely new option
+      space. This is the case when user creates new option in the
+      standard option space ("dhcp4 or "dhcp6") and wants this option
+      to convey sub-options. Thanks to being in the separate space,
+      sub-option codes will have a separate numbering scheme and may
+      overlap with codes of standard options.
+      </para>
+      <para>Note that creation of a new option space when defining
+      sub-options for a standard option is not required, because it is
+      created by default if the standard option is meant to convey any
+      sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
+      </para>
+      <para>
+      Assume that we want to have a DHCPv4 option called "container" with
+      code 222 that conveys two sub-options with codes 1 and 2.
+      First we need to define the new sub-options:
+<screen>
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/type "ipv4-address"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+
+&gt; <userinput>config add Dhcp4/option-def</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/type "string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/array false</userinput>
+&gt; <userinput>config set Dhcp4/option-def[1]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+    The next step is to define a regular DHCPv4 option with our desired
+    code and specify that it should include options from the new option space:
+<screen>
+&gt; <userinput>add Dhcp4/option-def</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/name "container"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/code 222</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/space "dhcp4"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/type "empty"</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/array false</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/record-types ""</userinput>
+&gt; <userinput>set Dhcp4/option-def[2]/encapsulate "isc"</userinput>
+&gt; <userinput>commit</userinput>
+</screen>
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    to indicate that this option does not carry any data other than
+    sub-options.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
+<screen>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.3"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[1]/data "Hello world"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/option-data</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/space "dhcp4"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/code 222</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp4/option-data[2]/data ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Even though the "container" option does not carry any data except
+    sub-options, the "data" field must be explictly set to an empty value.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
+    </para>
+    </section>
+        </section>
+    <section id="dhcp4-serverid">
+      <title>Server Identifier in DHCPv4</title>
+      <para>
+        The DHCPv4 protocol uses a "server identifier" for clients to be able
+        to discriminate between several servers present on the same link: this
+        value is an IPv4 address of the server. When started for the first time,
+        the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
+        and store the chosen value to a file. That file will be read by the server
+        and the contained value used whenever the server is subsequently started.
+      </para>
+      <para>
+        It is unlikely that this parameter should ever need to be changed.
+        However, if such a need arises, stop the server, edit the file and restart
+        the server. (The file is named b10-dhcp4-serverid and by default is
+        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
+        This can be changed when BIND 10 is built by using "--localstatedir"
+        on the "configure" command line.)  The file is a text file that should
+        contain an IPv4 address. Spaces are ignored, and no extra characters are allowed
+        in this file.
       </para>
     </section>
 
     <section id="dhcp4-std">
-      <title>Supported standards</title>
+      <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC2131: Supported messages are DISCOVER, OFFER,
-            REQUEST, ACK, NAK, RELEASE.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>: Supported messages are DISCOVER, OFFER,
+            REQUEST, RELEASE, ACK, and NAK.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC2132: Supported options are: PAD (0),
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>: Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
-          </listitem>
-          <listitem>
-            <simpara>RFC6842: Server responses include client-id option
-            if client sent it in its message.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3522,12 +4160,24 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp4-limit">
       <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
-      software. Most of them are reflections of the early stage of
+      software. Most of them are reflections of the current stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
           <listitem>
-            <simpara>During initial IPv4 node configuration, the
+          <para>
+            On startup, the DHCPv4 server does not get the full configuration from
+            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
+            and commit the changes, e.g.
+            <screen>
+&gt; <userinput>config show Dhcp4/renew-timer</userinput>
+Dhcp4/renew-timer	1000	integer	(default)
+&gt; <userinput>config set Dhcp4/renew-timer 1001</userinput>
+&gt; <userinput>config commit</userinput></screen>
+          </para>
+        </listitem>
+          <listitem>
+            <simpara>During the initial IPv4 node configuration, the
             server is expected to send packets to a node that does not
             have IPv4 address assigned yet. The server requires
             certain tricks (or hacks) to transmit such packets. This
@@ -3535,44 +4185,36 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
             relayed traffic only (that is, normal point to point
             communication).</simpara>
           </listitem>
+
           <listitem>
             <simpara>Upon start, the server will open sockets on all
             interfaces that are not loopback, are up and running and
             have IPv4 address.</simpara>
           </listitem>
+
           <listitem>
-            <simpara>PRL (Parameter Request List, a list of options
-            requested by a client) is currently ignored and server
-            assigns DNS SERVER and DOMAIN NAME options.</simpara>
-          </listitem>
-          <listitem>
-            <simpara><command>b10-dhcp4</command> does not support
-            BOOTP. That is a design choice. This limitation is
+            <simpara>The DHCPv4 server does not support
+            BOOTP. That is a design choice and the limitation is
             permanent. If you have legacy nodes that can't use DHCP and
-            require BOOTP support, please use the latest version of ISC DHCP
-            via <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+            require BOOTP support, please use the latest version of ISC DHCP,
+            available from <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
             <simpara>Interface detection is currently working on Linux
             only. See <xref linkend="iface-detect"/> for details.</simpara>
           </listitem>
           <listitem>
-            <simpara><command>b10-dhcp4</command> does not verify that
-            assigned address is unused. According to RFC2131, the
-            allocating server should verify that address is no used by
+            <simpara>The DHCPv4 server does not  verify that
+            assigned address is unused. According to <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>, the
+            allocating server should verify that address is not used by
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address rebinding (REQUEST/Rebinding), confirmation
-            (CONFIRM) and duplication report (DECLINE) are not supported
-            yet.</simpara>
+            <simpara>Address rebinding (REBIND) and duplication report (DECLINE)
+            are not supported yet.</simpara>
           </listitem>
           <listitem>
-            <simpara>DNS Update is not supported yet.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>-v (verbose) command line option is currently
-            the default, and cannot be disabled.</simpara>
+          <simpara>DNS Update is not yet supported.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3580,139 +4222,46 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
   </chapter>
 
   <chapter id="dhcp6">
-    <title>DHCPv6 Server</title>
-    <para>The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
-    specified in RFC3315. BIND 10 provides a DHCPv6 server implementation
-    that is described in this chapter. For a description of the DHCPv4
-    server implementation, see <xref linkend="dhcp4"/>.
-    </para>
+    <title>The DHCPv6 Server</title>
 
-    <para>The DHCPv6 server component is currently under intense
-    development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
-    and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
-    developers mailing list</ulink>.</para>
-
-    <note>
-      <para>
-        As of November 2012, the DHCPv6 component is partially functioning,
-        having the following capabilities:
-      </para>
-      <itemizedlist>
-          <listitem>
-            <simpara>DHCPv6 server able to allocate leases (but not renew them).</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Some configuration available through the BIND 10 configuration mechanism.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Lease storage in a MySQL database.</simpara>
-          </listitem>
-      </itemizedlist>
-    </note>
-
-    <section id="dhcp6-install">
-      <title>DHCPv6 Server Build and Installation</title>
-      <para>
-      DHCPv6 is part of the BIND 10 suite of programs and is built as part of
-      the build of BIND 10.  With the use of MySQL, some additional
-      installation steps are needed:
-      </para>
-      <section>
-        <title>Install MySQL</title>
-        <para>
-          Install MySQL according to the instructions for your system.  The client development
-          libraries must be installed.
-        </para>
-      </section>
-      <section>
-        <title>Build and Install BIND 10</title>
-        <para>
-          Build and install BIND 10 as described in <xref linkend="installation"/>, with
-          the following modification: to enable the MySQL database code, the
-          "configure" step (see <xref linkend="configure"/>), specify the location of the
-          MySQL configuration program "mysql_config" with the "--with-mysql-config" switch,
-          i.e.
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
-          ...if MySQL was installed in the default location, or:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>&lt;path-to-mysql_config&gt;</replaceable></userinput></screen>
-          ...if not.
-        </para>
-      </section>
-      <section>
-        <title>Create MySQL Database and BIND 10 User</title>
-        <para>
-          The next task is to create both the DHCPv6 lease database and the user under which the DHCPv6 server will
-          access it.  Although the intention is to have the name of the database and the user configurable,
-          at the moment they are hard-coded as "kea", as is the associated password.  ("kea" is an internal
-          code name for BIND 10 DHCP.) There are a number of steps required:
-        </para>
-        <para>
-          1. Log into MySQL as "root":
-          <screen>$ <userinput>mysql -u root -p</userinput>
-Enter password:<userinput/>
-   :<userinput/>
-mysql></screen>
-        </para>
-        <para>
-          2. Create the database:
-          <screen>mysql> <userinput>CREATE DATABASE kea;</userinput></screen>
-        </para>
-         <para>
-          3. Create the database tables:
-          <screen>mysql> <userinput>CONNECT kea;</userinput>
-mysql> <userinput>SOURCE <replaceable>&lt;path-to-bind10&gt;</replaceable>/share/bind10/dhcpdb_create.mysql</userinput></screen>
-        </para>
-         <para>
-          4. Create the user under which BIND 10 will access the database and grant it access to the database tables:
-          <screen>mysql> <userinput>CREATE USER 'kea'@'localhost' IDENTIFIED BY 'kea';</userinput>
-mysql> <userinput>GRANT ALL ON kea.* TO 'kea'@'localhost';</userinput></screen>
-        </para>
-        <para>
-          5. Exit MySQL:
-          <screen>mysql> <userinput>quit</userinput>
-Bye<userinput/>
-$</screen>
-       </para>
-     </section>
-   </section>
-
-    <section id="dhcp6-usage">
-      <title>DHCPv6 Server Usage</title>
+    <section id="dhcp6-start-stop">
+      <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-        <command>b10-dhcp6</command> is a BIND 10 component and is being
-        run under BIND 10 framework. To add a DHCPv6 process to the set of running
-        BIND 10 services, you can use following commands in <command>bindctl</command>:
-        <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
-&gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput></screen>
+        <command>b10-dhcp6</command> is the BIND 10 DHCPv6 server and, like other
+        parts of BIND 10, is configured through the <command>bindctl</command>
+        program.
+      </para>
+      <para>
+        After starting BIND 10 and starting <command>bindctl</command>, the first step
+        in configuring the server is to add <command>b10-dhcp6</command> to the list of running BIND 10 services.
+<screen>
+&gt; <userinput>config add Init/components b10-dhcp6</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+         To remove <command>b10-dhcp6</command> from the set of running services,
+         the <command>b10-dhcp4</command> is removed from list of Init components:
+<screen>
+&gt; <userinput>config remove Init/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
       </para>
 
-       <para>
-         To stop running <command>b10-dhcp6</command>, use the
-         following command:
-         <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
-&gt; <userinput>config commit</userinput></screen>
-       </para>
 
       <para>
         During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
-        have IPv6 address assigned. It will then listen to incoming traffic. The
-        currently supported client messages are SOLICIT and REQUEST. The server
-        will respond to them with ADVERTISE and REPLY, respectively.
+        have IPv6 address assigned. It will then listen to incoming traffic.
       </para>
-      <para>
-        Since the DHCPv6 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.
-      </para>
+
 
     </section>
 
-    <section id="dhcp6-config">
+    <section id="dhcp6-configuration">
       <title>DHCPv6 Server Configuration</title>
       <para>
         Once the server has been started, it can be configured. To view the
@@ -3720,16 +4269,22 @@ $</screen>
         <screen>&gt; <userinput>config show Dhcp6</userinput></screen>
         When starting the Dhcp6 daemon for the first time, the default configuration
         will be available. It will look similar to this:
-        <screen>
+<screen>
 &gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/interface	         "eth0" string	(default)
-Dhcp6/renew-timer        1000   integer	(default)
-Dhcp6/rebind-timer       2000   integer	(default)
-Dhcp6/preferred-lifetime 3000   integer	(default)
-Dhcp6/valid-lifetime	 4000   integer	(default)
-Dhcp6/subnet6	         []     list    (default)</screen>
+Dhcp6/interface/	list	(default)
+Dhcp6/renew-timer	1000	integer	(default)
+Dhcp6/rebind-timer	2000	integer	(default)
+Dhcp6/preferred-lifetime	3000	integer	(default)
+Dhcp6/valid-lifetime	4000	integer	(default)
+Dhcp6/option-data	[]	list	(default)
+Dhcp6/lease-database/type	"memfile"	string	(default)
+Dhcp6/lease-database/name	""	string	(default)
+Dhcp6/lease-database/user	""	string	(default)
+Dhcp6/lease-database/host	""	string	(default)
+Dhcp6/lease-database/password	""	string	(default)
+Dhcp6/subnet6/	list
+</screen>
       </para>
-
       <para>
         To change one of the parameters, simply follow
         the usual <command>bindctl</command> procedure. For example, to make the
@@ -3741,7 +4296,77 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         and apply to all defined subnets, unless they are overridden on a
         per-subnet basis.
       </para>
+      <note>
+        <para>
+          With this version of BIND 10, there are a number of known limitations
+          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
+        </para>
+      </note>
 
+      <section>
+      <title>Database Configuration</title>
+      <para>
+      All leases issued by the server are stored in the lease database.  Currently,
+      the only supported database is MySQL
+      <footnote>
+      <para>
+      The server comes with an in-memory database ("memfile") configured as the default
+      database. This is used for internal testing and is not supported.  In addition,
+      it does not store lease information on disk: lease information will be lost if the
+      server is restarted.
+      </para>
+      </footnote>, and so the server must be configured to
+      access the correct database with the appropriate credentials.
+      </para>
+      <note>
+        <para>
+            Database access information must be configured for the DHCPv6 server, even if
+            it has already been configured for the DHCPv4 server.  The servers store their
+            information independently, so each server can use a separate
+            database or both servers can use the same database.
+          </para>
+        </note>
+      <para>
+      Database configuration is controlled through the Dhcp6/lease-database parameters.
+      The type of the database must be set to MySQL (although the string entered is "mysql"):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
+</screen>
+      Next, the name of the database is to hold the leases must be set: this is the
+      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
+</screen>
+      If the database is located on a different system to the DHCPv6 server, the
+      database host name must also be specified (although note that this configuration
+      may have a severe impact on server performance):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host "<replaceable>remote-host-name</replaceable>"</userinput>
+</screen>
+      The usual state of affairs will be to have the database on the same machine as the
+      DHCPv6 server.  In this case, set the value to the empty string (this is the default):
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/host ""</userinput>
+</screen>
+      </para>
+      <para>
+      Finally, the credentials of the account under which the server will access the database
+      should be set:
+<screen>
+&gt; <userinput>config set Dhcp6/lease-database/user "<replaceable>user-name</replaceable>"</userinput>
+&gt; <userinput>config set Dhcp6/lease-database/password "<replaceable>password</replaceable>"</userinput>
+</screen>
+      If there is no password to the account, set the password to the empty string "". (This is also the default.)
+      </para>
+      <note>
+      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
+      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      </note>
+      </section>
+
+
+    <section>
+      <title>Subnet and Address Pool</title>
       <para>
         The essential role of a DHCPv6 server is address assignment. For this,
         the server has to be configured with at least one subnet and one pool of dynamic
@@ -3781,7 +4406,7 @@ Dhcp6/subnet6	         []     list    (default)</screen>
 &gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
 &gt; <userinput>config commit</userinput></screen>
         Arrays are counted from 0. subnet[0] refers to the subnet defined in the
-        previous example.  The <command>config add Dhcp6/subnet6</command> adds
+        previous example.  The <command>config add Dhcp6/subnet6</command> command adds
         another (second) subnet. It can be referred to as
         <command>Dhcp6/subnet6[1]</command>. In this example, we allow server to
         dynamically assign all addresses available in the whole subnet. Although
@@ -3794,65 +4419,492 @@ Dhcp6/subnet6	         []     list    (default)</screen>
         a given pool, it will be able to allocate also first (typically network
         address) address from that pool. For example for pool 2001:db8::/64 the
         2001:db8:: address may be assigned as well. If you want to avoid this,
-        please use min-max notation.
+        please use the "min-max" notation.
       </para>
+    </section>
+
+    <section id="dhcp6-std-options">
+      <title>Standard DHCPv6 options</title>
       <para>
-        Options can also be configured: the following commands configure
-        the DNS-SERVERS option for all subnets with the following addresses:
-        2001:db8:1::1 and 2001:db8:1::2
+        One of the major features of DHCPv6 server is to provide configuration
+        options to clients. Although there are several options that require
+        special behavior, most options are sent by the server only if the client
+        explicitly requested them.  The following example shows how to
+        configure DNS servers, which is one of the most frequently used
+        options. Numbers in the first column are added for easier reference and
+        will not appear on screen. Options specified in this way are considered
+        global and apply to all configured subnets.
+
         <screen>
+1. &gt; <userinput>config add Dhcp6/option-data</userinput>
+2. &gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
+3. &gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+4. &gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+5. &gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+6. &gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8::cafe, 2001:db8::babe"</userinput>
+7. &gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+    <para>
+      The first line creates new entry in option-data table. It
+      contains information on all global options that the server is
+      supposed to configure in all subnets. The second line specifies
+      option name. For a complete list of currently supported names,
+      see <xref linkend="dhcp6-std-options-list"/> below.
+      The third line specifies option code, which must match one of the
+      values from that
+      list. Line 4 specifies option space, which must always
+      be set to "dhcp6" as these are standard DHCPv6 options. For
+      other name spaces, including custom option spaces, see <xref
+      linkend="dhcp6-option-spaces"/>. The fifth line specifies the format in
+      which the data will be entered: use of CSV (comma
+      separated values) is recommended. The sixth line gives the actual value to
+      be sent to clients. Data is specified as a normal text, with
+      values separated by commas if more than one value is
+      allowed.
+    </para>
+
+    <para>
+      Options can also be configured as hexadecimal values. If csv-format is
+      set to false, the option data must be specified as a string of hexadecimal
+      numbers. The
+      following commands configure the DNS-SERVERS option for all
+      subnets with the following addresses: 2001:db8:1::cafe and
+      2001:db8:1::babe.
+      <screen>
 &gt; <userinput>config add Dhcp6/option-data</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/name "dns-servers"</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/code 23</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format false</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/data "2001 0DB8 0001 0000 0000 0000</userinput>
-        <userinput>0000 0001 2001 0DB8 0001 0000 0000 0000 0000 0002"</userinput>
+        <userinput>0000 CAFE 2001 0DB8 0001 0000 0000 0000 0000 BABE"</userinput>
 &gt; <userinput>config commit</userinput>
         </screen>
        (The value for the setting of the "data" element is split across two
-        lines in this document for clarity: when entering the command, all the
-        string should be entered on the same line.)
+        lines in this document for clarity: when entering the command, the
+        whole string should be entered on the same line.)
       </para>
-      <para>
-        Currently the only way to set option data is to specify the
-        data as a string of hexadecimal digits.  It is planned to allow
-        alternative ways of specifying the data as a comma-separated list,
-        e.g. "2001:db8:1::1,2001:db8:1::2".
-      </para>
-      <para>
-        As with global settings, it is also possible to override options on a
-        per-subnet basis, e.g.  the following commands override the global DNS
-        servers option for a particular subnet, setting a single DNS server with
-        address 2001:db8:1::3.
-        <screen>
+
+    <para>
+      It is possible to override options on a per-subnet basis.  If
+      clients connected to most of your subnets are expected to get the
+      same values of a given option, you should use global options: you
+      can then override specific values for a small number of subnets.
+      On the other hand, if you use different values in each subnet,
+      it does not make sense to specify global option values
+      (Dhcp6/option-data), rather you should set only subnet-specific values
+      (Dhcp6/subnet[X]/option-data[Y]).
+     </para>
+     <para>
+      The following commands override the global
+      DNS servers option for a particular subnet, setting a single DNS
+      server with address 2001:db8:1::3.
+      <screen>
 &gt; <userinput>config add Dhcp6/subnet6[0]/option-data</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/name "dns-servers"</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/code 23</userinput>
-&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001 0DB8 0001 0000</userinput>
-        <userinput>0000 0000 0000 0003"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/option-data[0]/data "2001:db8:1::3"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-        (As before, the setting of the "data" element has been split across two
-        lines for clarity.)
+    </para>
+
+    <note>
+      <para>
+        In future versions of BIND 10 DHCP, it will not be necessary to specify
+        option code, space and csv-format fields, as those fields will be set
+        automatically.
       </para>
-      <note>
-        <para>
-          With this version of BIND 10, there are a number of known limitations
-          and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
+    </note>
+
+
+    <para>
+      Below is a list of currently supported standard DHCPv6 options. The "Name" and "Code"
+      are the values that should be used as a name in the option-data
+      structures. "Type" designates the format of the data: the meanings of
+      the various types is given in <xref linkend="dhcp-types"/>.
+    </para>
+    <para>
+      Some options are designated as arrays, which means that more than one
+      value is allowed in such an option. For example the option dns-servers
+      allows the specification of more than one IPv6 address, so allowing
+      clients to obtain the the addresses of multiple DNS servers.
+    </para>
+
+<!-- @todo: describe record types -->
+
+    <para>
+      <table border="1" cellpadding="5%" id="dhcp6-std-options-list">
+        <caption>List of standard DHCPv6 options</caption>
+        <thead>
+          <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
+          <tr></tr>
+        </thead>
+        <tbody>
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<tr><td>clientid</td><td>1</td><td>binary</td><td>false</td></tr>
+<tr><td>serverid</td><td>2</td><td>binary</td><td>false</td></tr>
+<tr><td>ia-na</td><td>3</td><td>record</td><td>false</td></tr>
+<tr><td>ia-ta</td><td>4</td><td>uint32</td><td>false</td></tr>
+<tr><td>iaaddr</td><td>5</td><td>record</td><td>false</td></tr>
+<tr><td>oro</td><td>6</td><td>uint16</td><td>true</td></tr> -->
+<tr><td>preference</td><td>7</td><td>uint8</td><td>false</td></tr>
+
+<!-- Our engine uses those options on its own, admin must not configure them on his own
+<tr><td>elapsed-time</td><td>8</td><td>uint16</td><td>false</td></tr>
+<tr><td>relay-msg</td><td>9</td><td>binary</td><td>false</td></tr>
+<tr><td>auth</td><td>11</td><td>binary</td><td>false</td></tr>
+<tr><td>unicast</td><td>12</td><td>ipv6-address</td><td>false</td></tr>
+<tr><td>status-code</td><td>13</td><td>record</td><td>false</td></tr>
+<tr><td>rapid-commit</td><td>14</td><td>empty</td><td>false</td></tr>
+<tr><td>user-class</td><td>15</td><td>binary</td><td>false</td></tr>
+<tr><td>vendor-class</td><td>16</td><td>record</td><td>false</td></tr>
+<tr><td>vendor-opts</td><td>17</td><td>uint32</td><td>false</td></tr>
+<tr><td>interface-id</td><td>18</td><td>binary</td><td>false</td></tr>
+<tr><td>reconf-msg</td><td>19</td><td>uint8</td><td>false</td></tr>
+<tr><td>reconf-accept</td><td>20</td><td>empty</td><td>false</td></tr> -->
+<tr><td>sip-server-dns</td><td>21</td><td>fqdn</td><td>true</td></tr>
+<tr><td>sip-server-addr</td><td>22</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>dns-servers</td><td>23</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>domain-search</td><td>24</td><td>fqdn</td><td>true</td></tr>
+<!-- <tr><td>ia-pd</td><td>25</td><td>record</td><td>false</td></tr> -->
+<!-- <tr><td>iaprefix</td><td>26</td><td>record</td><td>false</td></tr> -->
+<tr><td>nis-servers</td><td>27</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>nisp-servers</td><td>28</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>nis-domain-name</td><td>29</td><td>fqdn</td><td>true</td></tr>
+<tr><td>nisp-domain-name</td><td>30</td><td>fqdn</td><td>true</td></tr>
+<tr><td>sntp-servers</td><td>31</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>information-refresh-time</td><td>32</td><td>uint32</td><td>false</td></tr>
+<tr><td>bcmcs-server-dns</td><td>33</td><td>fqdn</td><td>true</td></tr>
+<tr><td>bcmcs-server-addr</td><td>34</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>geoconf-civic</td><td>36</td><td>record</td><td>false</td></tr>
+<tr><td>remote-id</td><td>37</td><td>record</td><td>false</td></tr>
+<tr><td>subscriber-id</td><td>38</td><td>binary</td><td>false</td></tr>
+<tr><td>client-fqdn</td><td>39</td><td>record</td><td>false</td></tr>
+<tr><td>pana-agent</td><td>40</td><td>ipv6-address</td><td>true</td></tr>
+<tr><td>new-posix-timezone</td><td>41</td><td>string</td><td>false</td></tr>
+<tr><td>new-tzdb-timezone</td><td>42</td><td>string</td><td>false</td></tr>
+<tr><td>ero</td><td>43</td><td>uint16</td><td>true</td></tr>
+<tr><td>lq-query</td><td>44</td><td>record</td><td>false</td></tr>
+<tr><td>client-data</td><td>45</td><td>empty</td><td>false</td></tr>
+<tr><td>clt-time</td><td>46</td><td>uint32</td><td>false</td></tr>
+<tr><td>lq-relay-data</td><td>47</td><td>record</td><td>false</td></tr>
+<tr><td>lq-client-link</td><td>48</td><td>ipv6-address</td><td>true</td></tr>
+        </tbody>
+      </table>
+    </para>
+    </section>
+
+    <section id="dhcp6-custom-options">
+      <title>Custom DHCPv6 options</title>
+      <para>It is also possible to define options other than the standard ones.
+      Assume that we want to define a new DHCPv6 option called "foo" which will have
+      code 100 and will convey a single unsigned 32 bit integer value. We can define
+      such an option by using the following commands:
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 100</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "uint32"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      The "false" value of the "array" parameter determines that the option
+      does NOT comprise an array of "uint32" values but rather a single value.
+      Two other parameters have been left blank: "record-types" and "encapsulate".
+      The former specifies the comma separated list of option data fields if the
+      option comprises a record of data fields. The "record-fields" value should
+      be non-empty if the "type" is set to "record". Otherwise it must be left
+      blank. The latter parameter specifies the name of the option space being
+      encapsulated by the particular option. If the particular option does not
+      encapsulate any option space it should be left blank.
+      Note that the above set of comments define the format of the new option and do not
+      set its values.
+      </para>
+      <para>Once the new option format is defined, its value is set
+      in the same way as for a standard option. For example the following
+      commands set a global value that applies to all subnets.
+        <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 100</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>New options can take more complex forms than simple use of
+      primitives (uint8, string, ipv6-address etc): it is possible to
+      define an option comprising a number of existing primitives.
+      </para>
+      <para>
+      Assume we
+      want to define a new option that will consist of an IPv6
+      address, followed by unsigned 16 bit integer, followed by a text
+      string. Such an option could be defined in the following way:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+</screen>
+      The "type" is set to "record" to indicate that the option contains
+      multiple values of different types.  These types are given as a comma-separated
+      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      </para>
+      <para>
+      The values of the option are set as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "bar"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 101</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
+      list of values.  The values in the "data" must correspond to the types set in
+      the "record-types" field of the option definition.
+    </section>
+
+    <section id="dhcp6-vendor-opts">
+      <title>DHCPv6 vendor specific options</title>
+      <para>
+      Currently there are three option spaces defined: dhcp4 (to be used
+      in DHCPv4 daemon) and dhcp6 (for the DHCPv6 daemon); there is also
+      vendor-opts-space, which is empty by default, but options can be
+      defined in it. Those options are called vendor-specific information
+      options. The following examples show how to define an option "foo"
+      with code 1 that consists of an IPv6 address, an unsigned 16 bit integer
+      and a string. The "foo" option is conveyed in a vendor specific
+      information option. This option comprises a single uint32 value
+      that is set to "12345". The sub-option "foo" follows the data
+      field holding this value.
+      <screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulates ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+     (Note that the option space is set to "vendor-opts-space".)
+     Once the option format is defined, the next step is to define actual values
+     for that option:
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "foo"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "vendor-opts-space"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+    We should also define values for the vendor-opts, that will convey our option foo.
+     <screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/name "vendor-opts"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/code 17</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/data "12345"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="dhcp6-option-spaces">
+      <title>Nested DHCPv6 options (custom option spaces)</title>
+      <para>It is sometimes useful to define completely new option
+      spaces.  This is useful if the user wants his new option to
+      convey sub-options that use separate numbering scheme, for
+      example sub-options with codes 1 and 2. Those option codes
+      conflict with standard DHCPv6 options, so a separate option
+      space must be defined.
+      </para>
+      <para>Note that it is not required to create new option space when
+      defining sub-options for a standard option because it is by
+      default created if the standard option is meant to convey
+      any sub-options (see <xref linkend="dhcp6-vendor-opts"/>).
+      </para>
+      <para>
+      Assume that we want to have a DHCPv6 option called "container"
+      with code 102 that conveys two sub-options with codes 1 and 2.
+      First we need to define the new sub-options:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/type "ipv6-address"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/type "string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[1]/encapsulate ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Note that we have defined the options to belong to a new option space
+    (in this case, "isc").
+    </para>
+    <para>
+The next step is to define a regular DHCPv6 option and specify that it
+should include options from the isc option space:
+<screen>
+&gt; <userinput>config add Dhcp6/option-def</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/code 102</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/type "empty"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/array false</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/record-types ""</userinput>
+&gt; <userinput>config set Dhcp6/option-def[2]/encapsulate "isc"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    The name of the option space in which the sub-options are defined
+    is set in the "encapsulate" field. The "type" field is set to "empty"
+    which imposes that this option does not carry any data other than
+    sub-options.
+    </para>
+    <para>
+    Finally, we can set values for the new options:
+<screen>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/name "subopt1"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/code 1</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8::abcd"</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/name "subopt2"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/space "isc"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/code 2</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[1]/data "Hello world"</userinput>
+&gt; <userinput>config commit</userinput>
+&gt; <userinput></userinput>
+&gt; <userinput>config add Dhcp6/option-data</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/name "container"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/space "dhcp6"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/code 102</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/csv-format true</userinput>
+&gt; <userinput>config set Dhcp6/option-data[2]/data ""</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+    Even though the "container" option does not carry any data except
+    sub-options, the "data" field must be explictly set to an empty value.
+    This is required because in the current version of BIND 10 DHCP, the
+    default configuration values are not propagated to the configuration parsers:
+    if the "data" is not set the parser will assume that this
+    parameter is not specified and an error will be reported.
+    </para>
+    <para>Note that it is possible to create an option which carries some data
+    in addition to the sub-options defined in the encapsulated option space.  For example,
+    if the "container" option from the previous example was required to carry an uint16
+    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    the option definition. (Such an option would then have the following
+    data structure: DHCP header, uint16 value, sub-options.) The value specified
+    with the "data" parameter - which should be a valid integer enclosed in quotes,
+    e.g. "123" - would then be assigned to the uint16 field in the "container" option.
+    </para>
+    </section>
+
+      <section id="dhcp6-config-subnets">
+        <title>Subnet Selection</title>
+          <para>
+          The DHCPv6 server may receive requests from local (connected
+          to the same subnet as the server) and remote (connecting via
+          relays) clients.
+          <note>
+          <para>
+          Currently relayed DHCPv6 traffic is not supported.  The server will
+          only respond to local DHCPv6 requests - see <xref linkend="dhcp6-limit"/>
+          </para>
+          </note>
+          As it may have many subnet configurations defined, it
+          must select appropriate subnet for a given request. To do this, the server first
+          checks if there is only one subnet defined and source of the packet is
+          link-local. If this is the case, the server assumes that the only subnet
+          defined is local and client is indeed connected to it. This check
+          simplifies small deployments.
+          </para>
+          <para>
+          If there are two or more subnets defined, the server can not assume
+          which of those (if any) subnets are local. Therefore an optional
+          "interface" parameter is available within a subnet definition to designate that a given subnet
+          is local, i.e. reachable directly over specified interface. For example
+          the server that is intended to serve a local subnet over eth0 may be configured
+          as follows:
+<screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/interface "eth0"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
         </para>
-      </note>
+      </section>
+
+   </section>
+
+    <section id="dhcp6-serverid">
+      <title>Server Identifier in DHCPv6</title>
+      <para>The DHCPv6 protocol uses a "server identifier" (also known
+      as a DUID) for clients to be able to discriminate between several
+      servers present on the same link.  There are several types of
+      DUIDs defined, but <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> instructs servers to use DUID-LLT if
+      possible. This format consists of a link-layer (MAC) address and a
+      timestamp. When started for the first time, the DHCPv6 server will
+      automatically generate such a DUID and store the chosen value to
+      a file.  That file is read by the server
+      and the contained value used whenever the server is subsequently started.
+      </para>
+      <para>
+        It is unlikely that this parameter should ever need to be changed.
+        However, if such a need arises, stop the server, edit the file and restart
+        the server. (The file is named b10-dhcp6-serverid and by default is
+        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
+        This can be changed when BIND 10 is built by using "--localstatedir"
+        on the "configure" command line.)  The file is a text file that contains
+        double digit hexadecimal values
+        separated by colons. This format is similar to typical MAC address
+        format. Spaces are ignored. No extra characters are allowed in this
+        file.
+      </para>
+
     </section>
 
     <section id="dhcp6-std">
-      <title>Supported DHCPv6 Standards</title>
+      <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
       supported:</para>
       <itemizedlist>
           <listitem>
-            <simpara>RFC3315: Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, and REPLY. Supported options are
-            SERVER_ID, CLIENT_ID, IA_NA, and IAADDRESS.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
+            ADVERTISE, REQUEST, RELEASE, RENEW, and REPLY.</simpara>
           </listitem>
           <listitem>
-            <simpara>RFC3646: Supported option is DNS_SERVERS.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -3864,20 +4916,8 @@ Dhcp6/subnet6	         []     list    (default)</screen>
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
-      <para>
       <itemizedlist>
-        <listitem>
-          <para>The DHCPv6 server has only been tested on Debian
-          operating systems.  There are known problems with the
-          handling of packets in CentOS and RHEL.</para>
-        </listitem>
-        <listitem>
-          <para>Relayed traffic is not supported.</para>
-        </listitem>
-       <listitem>
-          <para><command>b10-dhcp6</command> only supports
-          a limited number of configuration options.</para>
-        </listitem>
+
         <listitem>
           <para>
             On startup, the DHCPv6 server does not get the full configuration from
@@ -3891,40 +4931,26 @@ Dhcp6/renew-timer	1000	integer	(default)
           </para>
         </listitem>
         <listitem>
-          <para>Upon start, the server will open sockets on all
-          interfaces that are not loopback, are up, running and are
-          multicast capable and have IPv6 address.  Support for
-          multiple interfaces is not coded in reception routines yet,
-          so if you are running this code on a machine that has many
-          interfaces and <command>b10-dhcp6</command> happens to
-          listen on wrong interface, the easiest way to work around
-          this problem is to turn down other interfaces. This
-          limitation will be fixed shortly.</para>
+          <simpara>Relayed traffic is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>ORO (Option Request Option, a list of options
-          requested by a client) is currently unsupported.</para>
+          <simpara>Temporary addresses are not supported.</simpara>
         </listitem>
         <listitem>
-          <para>Temporary addresses are not supported.</para>
+          <simpara>Prefix delegation is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>Prefix delegation is not supported.</para>
+          <simpara>Rebinding (REBIND), confirmation (CONFIRM),
+          and duplication report (DECLINE) are not yet supported.</simpara>
         </listitem>
         <listitem>
-          <para>Address renewal (RENEW), rebinding (REBIND),
-          confirmation (CONFIRM), duplication report (DECLINE) and
-          release (RELEASE) are not supported.</para>
+          <simpara>DNS Update is not supported.</simpara>
         </listitem>
         <listitem>
-          <para>DNS Update is not supported.</para>
-        </listitem>
-        <listitem>
-          <para>Interface detection is currently working on Linux
-          only. See <xref linkend="iface-detect"/> for details.</para>
+          <simpara>Interface detection is currently working on Linux
+          only. See <xref linkend="iface-detect"/> for details.</simpara>
         </listitem>
       </itemizedlist>
-      </para>
     </section>
 
   </chapter>
@@ -3933,7 +4959,7 @@ Dhcp6/renew-timer	1000	integer	(default)
     <title>libdhcp++ library</title>
     <para>
       libdhcp++ is a common library written in C++ that handles
-      many DHCP-related tasks, including
+      many DHCP-related tasks, including:
       <itemizedlist>
         <listitem>
           <simpara>DHCPv4 and DHCPv6 packets parsing, manipulation and assembly</simpara>
@@ -3951,10 +4977,8 @@ Dhcp6/renew-timer	1000	integer	(default)
     </para>
 
     <para>
-    While this library is currently used by
-    <command>b10-dhcp4</command> and <command>b10-dhcp6</command>
-    only, it is designed to be a portable, universal library, useful for
-    any kind of DHCP-related software.
+    While this library is currently used by BIND 10 DHCP, it is designed to
+    be a portable, universal library, useful for any kind of DHCP-related software.
     </para>
 
 <!-- TODO: point to doxygen docs -->
@@ -3986,7 +5010,7 @@ Dhcp6/renew-timer	1000	integer	(default)
 
     <para>
       The <command>b10-stats</command> process is started by
-      <command>bind10</command>.
+      <command>b10-init</command>.
       It periodically collects statistics data from various modules
       and aggregates it.
 <!-- TODO -->
@@ -4011,7 +5035,7 @@ Dhcp6/renew-timer	1000	integer	(default)
         "queries.tcp": 1749,
         "queries.udp": 867868
     },
-    "Boss": {
+    "Init": {
         "boot_time": "2011-01-20T16:59:03Z"
     },
     "Stats": {

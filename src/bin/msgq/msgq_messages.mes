@@ -23,6 +23,31 @@
 This is a debug message. The message queue has little bit of special handling
 for the configuration manager. This special handling is happening now.
 
+% MSGQ_CLOSE_ON_RECV Reading from socket canceled as it's closed: FD=%1
+A debug message.  The msgq daemon was notified of a read event on a
+socket, but its initial read operation failed because the remote
+client has closed its socket.  This is possible in a normal operation
+when a module shuts down.
+
+% MSGQ_CLOSE_ON_SEND Sending to socket failed as already closed (okay to ignore on shutdown): FD=%1
+The msgq daemon tries to send some data to a client module, but it
+failed because the socket has been closed.  This normally means the
+client terminates (for some reason - either gracefully or as a crash)
+while other modules try to send a message to the terminated module.
+Since msgq doesn't keep track of the status of client modules, this
+can happen and is not really an error for msgq; however, it can still
+be an unexpected event for the BIND 10 system as a whole in that this
+particular message is lost, so it's logged as a warning.  If this
+message is logged for a running BIND 10 system, it's suggested to
+check other log messages; there may be an error from other modules
+reporting a missing response message.  One common, less critical case
+where this message is logged is during shutdown.  The ordering of
+process shutdown is basically arbitrary at this moment, so it's
+possible that some module tries to send a "quitting" message to some
+other module but the latter has already shut down.  Such cases are
+generally non critical, but you may want to check other possible error
+messages.
+
 % MSGQ_COMMAND Running command %1 with arguments %2
 Debug message. The message queue received a command and it is running it.
 
@@ -34,12 +59,20 @@ the message queue version and version of the module.
 % MSGQ_CONFIG_DATA Received configuration update for the msgq: %1
 Debug message. The message queue received a configuration update, handling it.
 
-% MSGQ_HDR_DECODE_ERR Error decoding header received from socket %1: %2
+% MSGQ_EXITING exiting
+The msgq daemon is exiting.
+
+% MSGQ_HDR_DECODE_ERROR Error decoding header received from socket %1: %2
 The socket with mentioned file descriptor sent a packet. However, it was not
 possible to decode the routing header of the packet. The packet is ignored.
 This may be caused by a programmer error (one of the components sending invalid
 data) or possibly by incompatible version of msgq and the component (but that's
 unlikely, as the protocol is not changed often).
+
+% MSGQ_INVALID_CMD Received invalid command: %1
+An unknown command listed in the log has been received. It is ignored. This
+indicates either a programmer error (eg. a typo in the command name) or
+incompatible version of a module and message queue daemon.
 
 % MSGQ_LISTENER_FAILED Failed to initialize listener on socket file '%1': %2
 The message queue daemon tried to listen on a file socket (the path is in the
@@ -52,7 +85,7 @@ Debug message. The listener is trying to open a listening socket.
 Debug message. The message queue successfully opened a listening socket and
 waits for incoming connections.
 
-% MSGQ_POLL_ERR Error while polling for events: %1
+% MSGQ_POLL_ERROR Error while polling for events: %1
 A low-level error happened when waiting for events, the error is logged. The
 reason for this varies, but it usually means the system is short on some
 resources.
@@ -63,29 +96,40 @@ happen and it is either a programmer error or OS bug. The event is ignored. The
 number noted as the event is the raw encoded value, which might be useful to
 the authors when figuring the problem out.
 
-% MSGQ_READ_UNKNOWN_FD Got read on strange socket %1
-The OS reported a file descriptor is ready to read. But the daemon doesn't know
-the mentioned file descriptor, which is either a programmer error or OS bug.
-The read event is ignored.
-
-% MSGQ_RECV_ERR Error reading from socket %1: %2
+% MSGQ_RECV_ERROR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
-the corresponding socket is dropped.
+the corresponding socket is dropped.  The errors include receiving
+broken or (non empty but) incomplete data.  In either case it usually suggests
+something unexpected happens within the BIND 10 system; it's probably
+better to restart the system, and if it continues it should be
+reported as a bug.  One known, probably non critical case is
+the "connection reset by peer" (or its variants) socket error appearing
+on shutdown.  It's known this happens when the remote client closes the
+connection as part of shutdown process.  Such cases are normally expected
+to be reported as receiving empty data (which we log it at the debug level
+as the MSGQ_CLOSE_ON_RECV message), but for some (yet) unknown reason
+it can also be reported as the system error.  At shutdown time it's expected
+that connections are closed, so it's probably safe to ignore these messages
+in such a case.  We still log them as an error as we've not figured out
+how exactly that can happen.  In future, we may make the shutdown process
+more robust so the msgq daemon can explicitly know when a client shuts down
+more reliably.  If and when it's implemented this error message won't appear
+on shutdown unless there's really something unexpected.
 
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
 
-% MSGQ_INVALID_CMD Received invalid command: %1
-An unknown command listed in the log has been received. It is ignored. This
-indicates either a programmer error (eg. a typo in the command name) or
-incompatible version of a module and message queue daemon.
-
-% MSGQ_SEND_ERR Error while sending to socket %1: %2
+% MSGQ_SEND_ERROR Error while sending to socket %1: %2
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
 
 % MSGQ_SHUTDOWN Stopping Msgq
 Debug message. The message queue is shutting down.
+
+% MSGQ_SOCKET_REGISTERED Registered a socket descriptor %1 with lname %2
+Debug message. The msgq daemon accepted a session request on the
+shown descriptor of socket and assigned a unique identifier (lname)
+for the client on that socket.
 
 % MSGQ_SOCK_CLOSE Closing socket fd %1
 Debug message. Closing the mentioned socket.

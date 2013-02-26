@@ -54,6 +54,7 @@ public:
 
 } // end unnamed namespace
 
+// cppcheck-suppress noConstructor
 class MasterLoader::MasterLoaderImpl {
 public:
     MasterLoaderImpl(const char* master_file,

@@ -14,6 +14,7 @@
 
 #include <datasrc/zone_loader.h>
 #include <datasrc/data_source.h>
+#include <datasrc/rrset_collection_base.h>
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/memory_client.h>
@@ -21,6 +22,7 @@
 #include <dns/rrclass.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
+#include <dns/rdataclass.h>
 #include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
 
@@ -32,15 +34,11 @@
 #include <string>
 #include <vector>
 
-using isc::dns::RRClass;
-using isc::dns::Name;
-using isc::dns::RRType;
-using isc::dns::ConstRRsetPtr;
-using isc::dns::RRsetPtr;
+using namespace isc::dns;
+using namespace isc::datasrc;
+using boost::shared_ptr;
 using std::string;
 using std::vector;
-using boost::shared_ptr;
-using namespace isc::datasrc;
 
 namespace {
 
@@ -51,8 +49,97 @@ public:
         missing_zone_(false),
         rrclass_(RRClass::IN())
     {}
-    virtual FindResult findZone(const Name&) const {
-        isc_throw(isc::NotImplemented, "Method not used in tests");
+    class Finder : public ZoneFinder {
+    public:
+        Finder(const Name& origin) :
+            origin_(origin)
+        {}
+        Name getOrigin() const {
+            return (origin_);
+        }
+        RRClass getClass() const {
+            return (RRClass::IN());
+        }
+        // The rest is not to be called, so they throw.
+        shared_ptr<Context> find(const Name&, const RRType&,
+                                 const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        shared_ptr<Context> findAll(const Name&,
+                                    vector<ConstRRsetPtr>&,
+                                    const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        FindNSEC3Result findNSEC3(const Name&, bool) {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+    private:
+        Name origin_;
+    };
+    class Iterator : public ZoneIterator {
+    public:
+        Iterator(const Name& origin) :
+            origin_(origin),
+            soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(),
+                           RRTTL(3600)))
+        {
+            // The RData here is bogus, but it is not used to anything. There
+            // just needs to be some.
+            soa_->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
+                                               Name::ROOT_NAME(),
+                                               0, 0, 0, 0, 0));
+            rrsets_.push_back(soa_);
+
+            // There is no NS record on purpose here.
+
+            // Dummy A rrset. This is used for checking zone data after
+            // reload.
+            RRsetPtr rrset(new RRset(Name("tstzonedata").concatenate(origin_),
+                                     RRClass::IN(), RRType::A(),
+                                     RRTTL(3600)));
+            rrset->addRdata(rdata::in::A("192.0.2.1"));
+            rrsets_.push_back(rrset);
+
+            rrsets_.push_back(ConstRRsetPtr());
+
+            it_ = rrsets_.begin();
+        }
+        virtual isc::dns::ConstRRsetPtr getNextRRset() {
+            ConstRRsetPtr result = *it_;
+            ++it_;
+            return (result);
+        }
+        virtual isc::dns::ConstRRsetPtr getSOA() const {
+            return (soa_);
+        }
+    private:
+        const Name origin_;
+        const RRsetPtr soa_;
+        std::vector<ConstRRsetPtr> rrsets_;
+        std::vector<ConstRRsetPtr>::const_iterator it_;
+    };
+    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
+                                        bool) const
+    {
+        if (name != Name("example.org")) {
+            isc_throw(DataSourceError, "No such zone");
+        }
+        return (ZoneIteratorPtr(new Iterator(Name("example.org"))));
+    }
+    virtual FindResult findZone(const Name& name) const {
+        const Name origin("example.org");
+        const ZoneFinderPtr finder(new Finder(origin));
+        NameComparisonResult compar(origin.compare(name));
+        switch (compar.getRelation()) {
+            case NameComparisonResult::EQUAL:
+                return (FindResult(result::SUCCESS, finder));
+            case NameComparisonResult::SUPERDOMAIN:
+                return (FindResult(result::PARTIALMATCH, finder));
+            default:
+                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
     };
     virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
         getJournalReader(const Name&, uint32_t, uint32_t) const
@@ -77,24 +164,16 @@ public:
     RRClass rrclass_;
 };
 
-// Test implementation of RRsetCollectionBase.
+// Test implementation of RRsetCollectionBase. This is currently just a
+// wrapper around \c isc::datasrc::RRsetCollectionBase;
+// \c isc::datasrc::RRsetCollectionBase may become an abstract class in
+// the future.
 class TestRRsetCollection : public isc::datasrc::RRsetCollectionBase {
 public:
     TestRRsetCollection(ZoneUpdater& updater,
                         const isc::dns::RRClass& rrclass) :
         isc::datasrc::RRsetCollectionBase(updater, rrclass)
     {}
-
-    virtual ~TestRRsetCollection() {}
-
-protected:
-    virtual RRsetCollectionBase::IterPtr getBeginning() {
-        isc_throw(isc::NotImplemented, "This method is not implemented.");
-    }
-
-    virtual RRsetCollectionBase::IterPtr getEnd() {
-        isc_throw(isc::NotImplemented, "This method is not implemented.");
-    }
 };
 
 // The updater isn't really correct according to the API. For example,
@@ -111,7 +190,7 @@ public:
     virtual ZoneFinder& getFinder() {
         return (finder_);
     }
-    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         if (!rrset_collection_) {
             rrset_collection_.reset(new TestRRsetCollection(*this,
                                                             client_->rrclass_));
@@ -214,13 +293,6 @@ protected:
         source_client_(ztable_segment_, rrclass_)
     {}
     void prepareSource(const Name& zone, const char* filename) {
-        // TODO:
-        // Currently, source_client_ is of InMemoryClient and its load()
-        // uses a different code than the ZoneLoader (so we can cross-check
-        // the implementations). Currently, the load() doesn't perform any
-        // post-load checks. It will change in #2499, at which point the
-        // loading may start failing depending on details of the test data. We
-        // should prepare the data by some different method then.
         source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
     }
 private:
@@ -507,17 +579,6 @@ TEST_F(ZoneLoaderTest, loadCheck) {
     EXPECT_FALSE(destination_client_.commit_called_);
 }
 
-// The same test, but for copying from other data source
-TEST_F(ZoneLoaderTest, copyCheck) {
-    prepareSource(Name("example.org"), "novalidate.zone");
-    ZoneLoader loader(destination_client_, Name("example.org"),
-                      source_client_);
-
-    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
-    // The messages go to the log. We don't have an easy way to examine them.
-    EXPECT_FALSE(destination_client_.commit_called_);
-}
-
 // Check a warning doesn't disrupt the loading of the zone
 TEST_F(ZoneLoaderTest, loadCheckWarn) {
     ZoneLoader loader(destination_client_, Name("example.org"),
@@ -539,6 +600,20 @@ TEST_F(ZoneLoaderTest, copyCheckWarn) {
     EXPECT_TRUE(destination_client_.commit_called_);
     EXPECT_EQ(3, destination_client_.rrsets_.size());
 
+}
+
+// Test there's validation of the data in the zone loader when copying
+// from another data source.
+TEST_F(ZoneLoaderTest, copyCheck) {
+    // In this test, my_source_client provides a zone that does not
+    // validate (no NS).
+    MockClient my_source_client;
+    ZoneLoader loader(destination_client_, Name("example.org"),
+                      my_source_client);
+
+    EXPECT_THROW(loader.loadIncremental(10), ZoneContentError);
+    // The messages go to the log. We don't have an easy way to examine them.
+    EXPECT_FALSE(destination_client_.commit_called_);
 }
 
 }

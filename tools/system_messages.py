@@ -71,15 +71,10 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
     <title>BIND 10 Messages Manual</title>
 
     <copyright>
-      <year>2011-2012</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2011-2013</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
-      <para>BIND 10 is a Domain Name System (DNS) suite managed by
-	  Internet Systems Consortium (ISC). It includes DNS libraries
-	  and modular components for controlling authoritative and
-	  recursive DNS servers.
-      </para>
       <para>
         This is the messages manual for BIND 10 version &__VERSION__;.
 	    The most up-to-date version of this document, along with

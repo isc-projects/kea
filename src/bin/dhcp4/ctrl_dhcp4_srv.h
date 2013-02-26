@@ -49,7 +49,7 @@ public:
     /// @brief Establishes msgq session.
     ///
     /// Creates session that will be used to receive commands and updated
-    /// configuration from boss (or indirectly from user via bindctl).
+    /// configuration from cfgmgr (or indirectly from user via bindctl).
     void establishSession();
 
     /// @brief Terminates existing msgq session.
@@ -93,6 +93,27 @@ protected:
     /// @return status of the config update
     static isc::data::ConstElementPtr
     dhcp4ConfigHandler(isc::data::ConstElementPtr new_config);
+
+    /// @brief A dummy configuration handler that always returns success.
+    ///
+    /// This configuration handler does not perform configuration
+    /// parsing and always returns success. A dummy hanlder should
+    /// be installed using \ref isc::config::ModuleCCSession ctor
+    /// to get the initial configuration. This initial configuration
+    /// comprises values for only those elements that were modified
+    /// the previous session. The \ref dhcp4ConfigHandler can't be
+    /// used to parse the initial configuration because it needs the
+    /// full configuration to satisfy dependencies between the
+    /// various configuration values. Installing the dummy handler
+    /// that guarantees to return success causes initial configuration
+    /// to be stored for the session being created and that it can
+    /// be later accessed with \ref isc::ConfigData::getFullConfig.
+    ///
+    /// @param new_config new configuration.
+    ///
+    /// @return success configuration status.
+    static isc::data::ConstElementPtr
+    dhcp4StubConfigHandler(isc::data::ConstElementPtr new_config);
 
     /// @brief A callback for handling incoming commands.
     ///

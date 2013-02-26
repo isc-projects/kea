@@ -22,10 +22,6 @@
 
 #include <vector>
 
-namespace {
-const unsigned int InitialValue = 0;
-} // anonymous namespace
-
 namespace isc {
 namespace statistics {
 
@@ -40,24 +36,19 @@ private:
 public:
     /// The constructor.
     ///
-    /// This constructor is mostly exception free. But it may still throw
-    /// a standard exception if memory allocation fails inside the method.
+    /// This constructor prepares a set of counters which has \a items
+    /// elements. The counters will be initialized with 0.
     ///
     /// \param items A number of counter items to hold (greater than 0)
     ///
     /// \throw isc::InvalidParameter \a items is 0
     explicit Counter(const size_t items) :
-        counters_(items, InitialValue)
+        counters_(items, 0)
     {
         if (items == 0) {
             isc_throw(isc::InvalidParameter, "Items must not be 0");
         }
-    };
-
-    /// The destructor.
-    ///
-    /// This method never throws an exception.
-    ~Counter() {};
+    }
 
     /// \brief Increment a counter item specified with \a type.
     ///
@@ -70,7 +61,7 @@ public:
         }
         ++counters_.at(type);
         return;
-    };
+    }
 
     /// \brief Get the value of a counter item specified with \a type.
     ///
@@ -82,7 +73,7 @@ public:
             isc_throw(isc::OutOfRange, "Counter type is out of range");
         }
         return (counters_.at(type));
-    };
+    }
 };
 
 }   // namespace statistics

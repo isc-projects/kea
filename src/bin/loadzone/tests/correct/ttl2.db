@@ -6,9 +6,7 @@ $ORIGIN ttl2.
 				1814400
 				3
 				)
-; this needs #2390
-;			NS	ns
-			NS	ns.ttl2.
+			NS	ns
 ns			A	10.53.0.1
 a			TXT	"inherited ttl 1"
 b		2	TXT	"explicit ttl 2"

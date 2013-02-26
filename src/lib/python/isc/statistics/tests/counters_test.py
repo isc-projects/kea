@@ -120,7 +120,7 @@ class TestBasicMethods(unittest.TestCase):
                   'item_type': 'real',
                   'item_default': 0.0 }]
         counters._stop_timer(t2, elem, spec, 'time')
-        self.assertGreater(counters._get_counter(elem,'time'), 1)
+        self.assertGreaterEqual(counters._get_counter(elem,'time'), 1.0)
 
     def test_rasing_incrementers(self):
         """ use Thread"""
@@ -139,9 +139,9 @@ class TestBasicMethods(unittest.TestCase):
             counters._get_counter(self.counters._statistics._data,
                                  counter_name),
             concurrency * number)
-        self.assertGreater(
+        self.assertGreaterEqual(
             counters._get_counter(self.counters._statistics._data,
-                                 timer_name), 0)
+                                 timer_name), 0.0)
 
     def test_concat(self):
         # only strings
@@ -200,7 +200,7 @@ class BaseTestCounters():
             if name.find('time_to_') == 0:
                 self.counters.start_timer(*args)
                 self.counters.stop_timer(*args)
-                self.assertGreater(self.counters.get(*args), 0)
+                self.assertGreaterEqual(self.counters.get(*args), 0.0)
                 sec = self.counters.get(*args)
                 for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                     isc.cc.data.set(self._statistics_data,
@@ -272,6 +272,21 @@ class BaseTestCounters():
             self.assertEqual(self.counters.get(*args), 2)
             isc.cc.data.set(
                 self._statistics_data, '/'.join(args), 2)
+        self.check_get_statistics()
+
+    def test_perzone_zero_counters(self):
+        # setting all counters to zero
+        for name in self.counters._zones_item_list:
+            args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
+            if name.find('time_to_') == 0:
+                zero = 0.0
+            else:
+                zero = 0
+            # set zero
+            self.counters._incdec(*args, step=zero)
+            for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
+                isc.cc.data.set(self._statistics_data,
+                                '%s/%s/%s' % (args[0], zone_str, name), zero)
         self.check_get_statistics()
 
     def test_undefined_item(self):

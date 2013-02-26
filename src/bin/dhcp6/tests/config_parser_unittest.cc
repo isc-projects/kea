@@ -18,6 +18,8 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -275,9 +277,9 @@ public:
                             expected_data_len));
     }
 
+    int rcode_;
     Dhcpv6Srv srv_;
 
-    int rcode_;
     ConstElementPtr comment_;
 
     string valid_iface_;
@@ -349,7 +351,6 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
         "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -388,7 +389,6 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
         "    \"valid-lifetime\": 4,"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -514,7 +514,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
         "    \"pool\": [ \"4001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
+
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -542,7 +542,6 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
-    cout << config << endl;
 
     ElementPtr json = Element::fromJSON(config);
 
@@ -573,7 +572,8 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
         "      \"type\": \"ipv6-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -611,7 +611,8 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
         "      \"type\": \"record\","
         "      \"array\": False,"
         "      \"record-types\": \"uint16, ipv4-address, ipv6-address, string\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -658,7 +659,8 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
         "      \"type\": \"uint32\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
@@ -666,7 +668,8 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -716,7 +719,8 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
         "      \"type\": \"uint32\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  },"
         "  {"
         "      \"name\": \"foo-2\","
@@ -724,7 +728,8 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
         "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -752,7 +757,8 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
         "      \"type\": \"uint32\","
         "      \"array\": True,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -778,6 +784,47 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
     EXPECT_TRUE(def->getArrayType());
 }
 
+// The purpose of this test to verify that encapsulated option
+// space name may be specified.
+TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
+
+    // Configuration string. Included the encapsulated
+    // option space name.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"sub-opts-space\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Make sure that the particular option definition does not exist.
+    OptionDefinitionPtr def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_FALSE(def);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // The option definition should now be available in the CfgMgr.
+    def = CfgMgr::instance().getOptionDef("isc", 100);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("foo", def->getName());
+    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ("sub-opts-space", def->getEncapsulatedSpace());
+}
+
 /// The purpose of this test is to verify that the option definition
 /// with invalid name is not accepted.
 TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
@@ -790,7 +837,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -815,7 +863,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
         "      \"type\": \"sting\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -840,7 +889,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
         "      \"type\": \"record\","
         "      \"array\": False,"
         "      \"record-types\": \"uint32,uint8,sting\","
-        "      \"space\": \"isc\""
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -853,6 +903,85 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
     checkResult(status, 1);
 }
 
+/// The goal of this test is to verify that the invalid encapsulated
+/// option space name is not accepted.
+TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
+    // Configuration string. The encapsulated option space
+    // name is invalid (% character is not allowed).
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"invalid%space%name\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The goal of this test is to verify that the encapsulated
+/// option space name can't be specified for the option that
+/// comprises an array of data fields.
+TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
+    // Configuration string. The encapsulated option space
+    // name is set to non-empty value and the array flag
+    // is set.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": True,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"valid-space-name\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
+
+/// The goal of this test is to verify that the option may not
+/// encapsulate option space it belongs to.
+TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
+    // Configuration string. Option is set to encapsulate
+    // option space it belongs to.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"uint32\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"isc\","
+        "      \"encapsulate\": \"isc\""
+        "  } ]"
+        "}";
+    ElementPtr json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 1);
+}
 
 /// The purpose of this test is to verify that it is not allowed
 /// to override the standard option (that belongs to dhcp6 option
@@ -871,7 +1000,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"dhcp6\""
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     ElementPtr json = Element::fromJSON(config);
@@ -906,7 +1036,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"type\": \"string\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
-        "      \"space\": \"dhcp6\""
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
         "  } ]"
         "}";
     json = Element::fromJSON(config);
@@ -1028,7 +1159,8 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
         "    \"type\": \"uint32\","
         "    \"array\": False,"
         "    \"record-types\": \"\","
-        "    \"space\": \"isc\""
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
         " } ],"
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/80\" ],"
@@ -1061,81 +1193,164 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     ASSERT_FALSE(desc3.option);
 }
 
-// The goal of this test is to verify options configuration
-// for a single subnet. In particular this test checks
-// that local options configuration overrides global
-// option setting.
-TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
-    ConstElementPtr x;
+// The goal of this test is to verify that it is possible to
+// encapsulate option space containing some options with
+// another option. In this test we create base option that
+// encapsulates option space 'isc' that comprises two other
+// options. Also, for all options their definitions are
+// created.
+TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
+
+    // @todo DHCP configurations has many dependencies between
+    // parameters. First of all, configuration for subnet is
+    // inherited from the global values. Thus subnet has to be
+    // configured when all global values have been configured.
+    // Also, an option can encapsulate another option only
+    // if the latter has been configured. For this reason in this
+    // test we created two-stage configuration where first we
+    // created options that belong to encapsulated option space.
+    // In the second stage we add the base option. Also, the Subnet
+    // object is configured in the second stage so it is created
+    // at the very end (when all other parameters are configured).
+
+    // Starting stage 1. Configure sub-options and their definitions.
     string config = "{ \"interface\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
-        "      \"name\": \"subscriber-id\","
-        "      \"space\": \"dhcp6\","
-        "      \"code\": 38,"
-        "      \"data\": \"AB\","
-        "      \"csv-format\": False"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
         " } ],"
-        "\"subnet6\": [ { "
-        "    \"pool\": [ \"2001:db8:1::/80\" ],"
-        "    \"subnet\": \"2001:db8:1::/64\", "
-        "    \"option-data\": [ {"
-        "          \"name\": \"subscriber-id\","
-        "          \"space\": \"dhcp6\","
-        "          \"code\": 38,"
-        "          \"data\": \"AB CDEF0105\","
-        "          \"csv-format\": False"
-        "        },"
-        "        {"
-        "          \"name\": \"preference\","
-        "          \"space\": \"dhcp6\","
-        "          \"code\": 7,"
-        "          \"data\": \"01\","
-        "          \"csv-format\": False"
-        "        } ]"
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
 
+    // Stage 2. Configure base option and a subnet. Please note that
+    // the configuration from the stage 2 is repeated because BIND
+    // configuration manager sends whole configuration for the lists
+    // where at least one element is being modified or added.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 100,"
+        "    \"data\": \"11\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"isc\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"base-option\","
+        "    \"code\": 100,"
+        "    \"type\": \"uint8\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"dhcp6\","
+        "    \"encapsulate\": \"isc\""
+        "},"
+        "{"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
+
+    // We should have one option available.
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
-    ASSERT_EQ(2, options->size());
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
 
-    // Get the search index. Index #1 is to search using option code.
-    const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+    // Get the option.
+    Subnet::OptionDescriptor desc = subnet->getOptionDescriptor("dhcp6", 100);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(100, desc.option->getType());
 
-    // Get the options for specified index. Expecting one option to be
-    // returned but in theory we may have multiple options with the same
-    // code so we get the range.
-    std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
-              Subnet::OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(D6O_SUBSCRIBER_ID);
-    // Expect single option with the code equal to 38.
-    ASSERT_EQ(1, std::distance(range.first, range.second));
-    const uint8_t subid_expected[] = {
-        0xAB, 0xCD, 0xEF, 0x01, 0x05
-    };
-    // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, D6O_SUBSCRIBER_ID, subid_expected,
-               sizeof(subid_expected));
+    // This opton should comprise two sub-options.
+    // Onf of them is 'foo' with code 110.
+    OptionPtr option_foo = desc.option->getOption(110);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(110, option_foo->getType());
 
-    range = idx.equal_range(D6O_PREFERENCE);
-    ASSERT_EQ(1, std::distance(range.first, range.second));
-    // Do another round of testing with second option.
-    const uint8_t pref_expected[] = {
-        0x01
-    };
-    testOption(*range.first, D6O_PREFERENCE, pref_expected,
-               sizeof(pref_expected));
+    // ...another one 'foo2' with code 111.
+    OptionPtr option_foo2 = desc.option->getOption(111);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(111, option_foo2->getType());
 }
 
 // Goal of this test is to verify options configuration
@@ -1375,6 +1590,166 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(12345, optionIA->getIAID());
     EXPECT_EQ(6789, optionIA->getT1());
     EXPECT_EQ(1516, optionIA->getT2());
+}
+
+// The goal of this test is to verify that the standard option can
+// be configured to encapsulate multiple other options.
+TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
+
+    // The configuration is two stage process in this test.
+    // In the first stahe we create definitions of suboptions
+    // that we will add to the base option.
+    // Let's create some dummy options: foo and foo2.
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Once the definitions have been added we can configure the
+    // standard option #17. This option comprises an enterprise
+    // number and sub options. By convention (introduced in
+    // std_option_defs.h) option named 'vendor-opts'
+    // encapsulates the option space named 'vendor-opts-space'.
+    // We add our dummy options to this option space and thus
+    // they should be included as sub-options in the 'vendor-opts'
+    // option.
+    config = "{ \"interface\": [ \"all\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"vendor-opts\","
+        "    \"space\": \"dhcp6\","
+        "    \"code\": 17,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+
+    json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Get the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // We should have one option available.
+    Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1, options->size());
+
+    // Get the option.
+    Subnet::OptionDescriptor desc =
+        subnet->getOptionDescriptor("dhcp6", D6O_VENDOR_OPTS);
+    EXPECT_TRUE(desc.option);
+    EXPECT_EQ(D6O_VENDOR_OPTS, desc.option->getType());
+
+    // Option with the code 110 should be added as a sub-option.
+    OptionPtr option_foo = desc.option->getOption(110);
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(110, option_foo->getType());
+    // This option comprises a single uint32_t value thus it is
+    // represented by OptionInt<uint32_t> class. Let's get the
+    // object of this type.
+    boost::shared_ptr<OptionInt<uint32_t> > option_foo_uint32 =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
+    ASSERT_TRUE(option_foo_uint32);
+    // Validate the value according to the configuration.
+    EXPECT_EQ(1234, option_foo_uint32->getValue());
+
+    // Option with the code 111 should be added as a sub-option.
+    OptionPtr option_foo2 = desc.option->getOption(111);
+    ASSERT_TRUE(option_foo2);
+    EXPECT_EQ(111, option_foo2->getType());
+    // This option comprises the IPV4 address. Such option is
+    // represented by OptionCustom object.
+    OptionCustomPtr option_foo2_v4 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_foo2);
+    ASSERT_TRUE(option_foo2_v4);
+    // Get the IP address carried by this option and validate it.
+    EXPECT_EQ("192.168.2.1", option_foo2_v4->readAddress().toText());
+
+    // Option with the code 112 should not be added.
+    EXPECT_FALSE(desc.option->getOption(112));
 }
 
 };

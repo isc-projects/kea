@@ -202,28 +202,28 @@ def parse_bindctl_output_as_data_structure():
                       "parseable data structure: '" + output + "': " + str(ve)
 
 def find_process_pid(step, process_name):
-    """Helper function to request the running processes from Boss, and
+    """Helper function to request the running processes from Init, and
        return the pid of the process with the given process_name.
-       Fails with an assert if the response from boss is not valid JSON,
+       Fails with an assert if the response from b10-init is not valid JSON,
        or if the process with the given name is not found.
     """
     # show_processes output is a list of lists, where the inner lists
     # are of the form [ pid, "name" ]
     # Not checking data form; errors will show anyway (if these turn
     # out to be too vague, we can change this)
-    step.given('send bind10 the command Boss show_processes')
+    step.given('send bind10 the command Init show_processes')
     running_processes = parse_bindctl_output_as_data_structure()
 
     for process in running_processes:
         if process[1] == process_name:
             return process[0]
     assert False, "Process named " + process_name +\
-                  " not found in output of Boss show_processes";
+                  " not found in output of Init show_processes";
 
 @step("remember the pid of process ([\S]+)")
 def remember_pid(step, process_name):
     """Stores the PID of the process with the given name as returned by
-       Boss show_processes command.
+       Init show_processes command.
        Fails if the process with the given name does not appear to exist.
        Stores the component_name->pid value in the dict world.process_pids.
        This should only be used by the related step
@@ -239,7 +239,7 @@ def remember_pid(step, process_name):
 @step('pid of process ([\S]+) should not have changed')
 def check_pid(step, process_name):
     """Checks the PID of the process with the given name as returned by
-       Boss show_processes command.
+       Init show_processes command.
        Fails if the process with the given name does not appear to exist.
        Fails if the process with the given name exists, but has a different
        pid than it had when the step 'remember the pid of process' was
@@ -343,9 +343,9 @@ def configure_ddns_on(step):
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
-        config add Boss/components b10-ddns
-        config set Boss/components/b10-ddns/kind dispensable
-        config set Boss/components/b10-ddns/address DDNS
+        config add Init/components b10-ddns
+        config set Init/components/b10-ddns/kind dispensable
+        config set Init/components/b10-ddns/address DDNS
         config commit
         \"\"\"
     """)
@@ -358,7 +358,7 @@ def configure_ddns_off(step):
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
-        config remove Boss/components b10-ddns
+        config remove Init/components b10-ddns
         config commit
         \"\"\"
     """)
@@ -391,14 +391,16 @@ def find_value(dictionary, key):
         for v in dictionary.values():
             return find_value(v, key)
 
-@step('the statistics counter (\S+)(?: for the zone (\S+))? should be' + \
+@step('the statistics counter (\S+)(?: in the category (\S+))?'+ \
+          '(?: for the zone (\S+))? should be' + \
           '(?:( greater than| less than| between))? (\-?\d+)(?: and (\-?\d+))?')
-def check_statistics(step, counter, zone, gtltbt, number, upper):
+def check_statistics(step, counter, category, zone, gtltbt, number, upper):
     """
     check the output of bindctl for statistics of specified counter
     and zone.
     Parameters:
     counter ('counter <counter>'): The counter name of statistics.
+    category ('category <category>', optional): The category of counter.
     zone ('zone <zone>', optional): The zone name.
     gtltbt (' greater than'|' less than'|' between', optional): greater than
           <number> or less than <number> or between <number> and <upper>.
@@ -409,14 +411,21 @@ def check_statistics(step, counter, zone, gtltbt, number, upper):
     """
     output = parse_bindctl_output_as_data_structure()
     found = None
+    category_str = ""
     zone_str = ""
+    depth = []
+    if category:
+        depth.insert(0, category)
+        category_str = " for category %s" % category
     if zone:
-        found = find_value(find_value(output, zone), counter)
+        depth.insert(0, zone)
         zone_str = " for zone %s" % zone
-    else:
-        found = find_value(output, counter)
+    for level in depth:
+        output = find_value(output, level)
+    found = find_value(output, counter)
     assert found is not None, \
-        'Not found statistics counter %s%s' % (counter, zone_str)
+        'Not found statistics counter %s%s%s' % \
+            (counter, category_str, zone_str)
     msg = "Got %s, expected%s %s as counter %s%s" % \
         (found, gtltbt, number, counter, zone_str)
     if gtltbt and 'between' in gtltbt and upper:
@@ -430,3 +439,46 @@ def check_statistics(step, counter, zone, gtltbt, number, upper):
         assert int(found) < int(number), msg
     else:
         assert int(found) == int(number), msg
+
+@step('statistics counters are 0 in category (\S+)( except for the' + \
+          ' following items)?')
+def check_statistics_items(step, category, has_except_for):
+    """
+    check the output of bindctl for statistics of specified counter.
+    Parameters:
+    category ('category <category>'): The category of counter.
+    has_except_for ('except for the following items'): checks values of items
+        with the multiline part.
+
+    Expected values of items are taken from the multiline part of the step in
+    the scenario. The multiline part has two columns: item_name and item_value.
+    item_name is a relative name to category. item_value is an expected value
+    for item_name.
+    """
+
+    def flatten(dictionary, prefix=''):
+        h = {}
+        for k, v in dictionary.items():
+            if type(v) is dict:
+                h.update(flatten(v, prefix+'.'+k))
+            else:
+                h[prefix+'.'+k] = v
+        return h
+
+    stats = flatten(parse_bindctl_output_as_data_structure())
+    if has_except_for:
+        # fetch step tables in the scnario as hashes
+        for item in step.hashes:
+            name = category+'.'+item['item_name']
+            value = item['item_value']
+            assert stats.has_key(name), \
+                'Statistics item %s was not found' % (name)
+            found = stats[name]
+            assert int(found) == int(value), \
+                'Statistics item %s has unexpected value %s (expect %s)' % \
+                    (name, found, value)
+            del(stats[name])
+    for name, found in stats.items():
+        assert int(found) == 0, \
+            'Statistics item %s has unexpected value %s (expect %s)' % \
+                (name, found, 0)

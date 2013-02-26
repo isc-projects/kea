@@ -43,8 +43,8 @@ def reload():
     #  the system.
     # PLUGIN_PATHS: configuration modules that are not associated to specific
     #  process
-    # LIBEXECPATH: Paths to programs invoked by the boss process
-    #  The boss process (directly or via a helper module) uses this as
+    # LIBEXECPATH: Paths to programs invoked by the b10-init process
+    #  The b10-init process (directly or via a helper module) uses this as
     #  the prefererred PATH before starting a child process.
     #  When "FROM_SOURCE", it lists the directories where the programs are
     #  built so that when BIND 10 is experimentally started on the source
@@ -53,7 +53,7 @@ def reload():
     # B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
     # tests where we want to use various types of configuration within the test
     # environment.  (We may want to make it even more generic so that the path
-    # is passed from the boss process)
+    # is passed from the b10-init process)
     if "B10_FROM_SOURCE" in os.environ:
         if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
             DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]

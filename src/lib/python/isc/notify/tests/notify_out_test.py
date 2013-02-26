@@ -364,7 +364,7 @@ class TestNotifyOut(unittest.TestCase):
 
     def test_get_notify_slaves_from_ns(self):
         records = self._notify._get_notify_slaves_from_ns(Name('example.net.'),
-                                                          RRClass.IN())
+                                                          RRClass.IN)
         self.assertEqual(6, len(records))
         self.assertEqual('8:8::8:8', records[5])
         self.assertEqual('7.7.7.7', records[4])
@@ -374,7 +374,7 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual('3.3.3.3', records[0])
 
         records = self._notify._get_notify_slaves_from_ns(Name('example.com.'),
-                                                          RRClass.IN())
+                                                          RRClass.IN)
         self.assertEqual(3, len(records))
         self.assertEqual('5:5::5:5', records[2])
         self.assertEqual('4:4::4:4', records[1])
@@ -383,19 +383,19 @@ class TestNotifyOut(unittest.TestCase):
     def test_get_notify_slaves_from_ns_unusual(self):
         self._notify._db_file = TESTDATA_SRCDIR + '/brokentest.sqlite3'
         self.assertEqual([], self._notify._get_notify_slaves_from_ns(
-                Name('nons.example'), RRClass.IN()))
+                Name('nons.example'), RRClass.IN))
         self.assertEqual([], self._notify._get_notify_slaves_from_ns(
-                Name('nosoa.example'), RRClass.IN()))
+                Name('nosoa.example'), RRClass.IN))
         self.assertEqual([], self._notify._get_notify_slaves_from_ns(
-                Name('multisoa.example'), RRClass.IN()))
+                Name('multisoa.example'), RRClass.IN))
 
         self.assertEqual([], self._notify._get_notify_slaves_from_ns(
-                Name('nosuchzone.example'), RRClass.IN()))
+                Name('nosuchzone.example'), RRClass.IN))
 
         # This will cause failure in getting access to the data source.
         self._notify._db_file = TESTDATA_SRCDIR + '/nodir/error.sqlite3'
         self.assertEqual([], self._notify._get_notify_slaves_from_ns(
-                Name('example.com'), RRClass.IN()))
+                Name('example.com'), RRClass.IN))
 
     def test_init_notify_out(self):
         self._notify._init_notify_out(self._db_file)
@@ -423,7 +423,9 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 5
         timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
         self.assertEqual(timeout, 0)
-        self.assertListEqual([2, 1], valid_fds)
+        self.assertEqual(len(valid_fds), 2)
+        self.assertIn(1, valid_fds)
+        self.assertIn(2, valid_fds)
 
     def test_shutdown(self):
         thread = self._notify.dispatcher()

@@ -79,7 +79,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(DATASRC_CONFIG, self.__runner._datasrc_config)
         self.assertEqual('sqlite3', self.__runner._datasrc_type) # default
         self.assertEqual(10000, self.__runner._report_interval) # default
-        self.assertEqual(RRClass.IN(), self.__runner._zone_class) # default
+        self.assertEqual(RRClass.IN, self.__runner._zone_class) # default
         self.assertEqual('INFO', self.__runner._log_severity) # default
         self.assertEqual(0, self.__runner._log_debuglevel)
 
@@ -135,14 +135,14 @@ class TestLoadZoneRunner(unittest.TestCase):
                           'memory')
 
     def __common_load_setup(self):
-        self.__runner._zone_class = RRClass.IN()
+        self.__runner._zone_class = RRClass.IN
         self.__runner._zone_name = TEST_ZONE_NAME
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
         self.__runner._datasrc_config = DATASRC_CONFIG
         self.__runner._report_interval = 1
         self.__reports = []
-        self.__runner._report_progress = lambda x: self.__reports.append(x)
+        self.__runner._report_progress = lambda x, _: self.__reports.append(x)
 
     def __check_zone_soa(self, soa_txt, zone_name=TEST_ZONE_NAME):
         """Check that the given SOA RR exists and matches the expected string
@@ -159,7 +159,7 @@ class TestLoadZoneRunner(unittest.TestCase):
             self.assertEqual(client.NOTFOUND, result)
             return
         self.assertEqual(client.SUCCESS, result)
-        result, rrset, _ = finder.find(zone_name, RRType.SOA())
+        result, rrset, _ = finder.find(zone_name, RRType.SOA)
         if soa_txt:
             self.assertEqual(finder.SUCCESS, result)
             self.assertEqual(soa_txt, rrset.to_text())
@@ -175,6 +175,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         # be 3 RRs
         self.assertEqual([1, 2, 3], self.__reports)
         self.__check_zone_soa(NEW_SOA_TXT)
+        self.assertEqual(3, self.__runner._loaded_rrs)
 
     def test_load_update_skipped_report(self):
         '''successful loading, with reports for every 2 RRs'''
@@ -182,6 +183,8 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._report_interval = 2
         self.__runner._do_load()
         self.assertEqual([2], self.__reports)
+        # total RRs should still be set the actual value
+        self.assertEqual(3, self.__runner._loaded_rrs)
 
     def test_load_update_no_report(self):
         '''successful loading, without progress reports'''
@@ -190,6 +193,36 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.__runner._do_load()
         self.assertEqual([], self.__reports) # no report
         self.__check_zone_soa(NEW_SOA_TXT)   # but load is completed
+        self.assertEqual(3, self.__runner._loaded_rrs)
+
+    def test_report_progress(self):
+        '''Check the output format of report_progress.
+
+        For some simple scenario and minor corner cases.  We tweak the
+        start and current times so the test results will be predicatble.
+
+        '''
+        # 10 RRs in 10 sec, which is 25% of the entire zone.  it'll take
+        # 30 sec more
+        self.__runner._start_time = 10
+        self.__runner._get_time = lambda: 20
+        self.assertEqual('\r10 RRs (25.0%) in 0:00:10, 1 RRs/sec, ' +
+                         '0:00:30 ETC',
+                         self.__runner._report_progress(10, 0.25, False))
+
+        # start time == current time.  unlikely to happen in practice, but
+        # it shouldn't cause disruption.
+        self.__runner._get_time = lambda: 10
+        self.assertEqual('\r10 RRs (25.0%) in 0:00:00, 0 RRs/sec, ' +
+                         '0:00:00 ETC',
+                         self.__runner._report_progress(10, 0.25, False))
+
+        # progress is unknown
+        self.__runner._get_time = lambda: 20
+        unknown_progress = isc.datasrc.ZoneLoader.PROGRESS_UNKNOWN
+        self.assertEqual('\r10 RRs in 0:00:10, 1 RRs/sec',
+                         self.__runner._report_progress(10, unknown_progress,
+                                                        False))
 
     def test_create_and_load(self):
         '''successful case to loading contents to a new zone (created).'''
@@ -275,7 +308,8 @@ class TestLoadZoneRunner(unittest.TestCase):
     def test_load_interrupted(self):
         '''Load attempt fails due to signal interruption'''
         self.__common_load_setup()
-        self.__runner._report_progress = lambda x: self.__interrupt_progress(x)
+        self.__runner._report_progress = \
+            lambda x, _: self.__interrupt_progress(x)
         # The interrupting _report_progress() will terminate the loading
         # in the middle.  the number of reports is smaller, and the zone
         # won't be changed.
@@ -290,7 +324,8 @@ class TestLoadZoneRunner(unittest.TestCase):
 
         '''
         self.__common_load_setup()
-        self.__runner._report_progress = lambda x: self.__interrupt_progress(x)
+        self.__runner._report_progress = \
+            lambda x, _: self.__interrupt_progress(x)
         self.__runner._zone_name = Name('example.com')
         self.__runner._zone_file = ALT_NEW_ZONE_TXT_FILE
         self.__check_zone_soa(None, zone_name=Name('example.com'))

@@ -27,7 +27,7 @@ namespace dns {
 
 /// \brief Error during RRsetCollectionBase find() operation
 ///
-/// This exception is thrown when an calling implementation of
+/// This exception is thrown when calling an implementation of
 /// \c RRsetCollectionBase::find() results in an error which is not due
 /// to unmatched data, but because of some other underlying error
 /// condition.
@@ -58,13 +58,37 @@ public:
     /// is found, \c NULL is returned.
     ///
     /// This method's implementations currently are not specified to
-    /// handle \c RRTypes such as RRSIG and NSEC3. RRSIGs are attached
-    /// to their corresponding \c RRset and it is not straightforward to
-    /// search for them. Searching for RRSIGs will return \c false
-    /// always. Support for RRSIGs may be added in the future.
+    /// handle \c RRTypes such as RRSIG and NSEC3.  This interface may be
+    /// refined to clarify this point in the future, and perhaps, provide
+    /// additional API for these RRType.
     ///
-    /// Non-concrete types such as ANY and AXFR are unsupported and will
-    /// return \c false always.
+    /// As for RRSIG, there are some fundamental open questions.  For
+    /// example, it's not clear whether we want to return all RRSIGs of
+    /// the given name covering any RR types (in which case, we need to
+    /// figure out how), or we need to extend the interface so we can
+    /// specify the covered type.  A specific derived implementation may
+    /// return something if type RRSIG is specified, but this is not
+    /// specified here at the base class level. So, for RRSIGs the
+    /// behavior should be assumed as undefined.
+    ///
+    /// As for NSEC3, it's not clear whether owner names (which included
+    /// hashed labels) are the best choice of search key, because in many
+    /// cases, what the application wants to find is an NSEC3 that has the
+    /// hash of some particular "normal" domain names.  Also, if the underlying
+    /// implementation encapsulates a single zone, NSEC3 records conceptually
+    /// belong to a separate name space, which may cause implementation
+    /// difficulty.
+    ///
+    /// Behavior with meta types such as ANY and AXFR are also
+    /// undefined. A specific implementation may return something for
+    /// these.  But, unlike the case of RRSIGs, these types of RRsets
+    /// are not expected to be added to any implementation of
+    /// collection in the first place (by the definition of "meta
+    /// types"), so querying for such types is basically an invalid
+    /// operation. The API doesn't require implementations to check
+    /// this condition and reject it, so the behavior is
+    /// undefined. This interface will not be refined in future
+    /// versions for these meta types.
     ///
     /// \throw RRsetCollectionError if find() results in some
     /// implementation-specific error.
@@ -184,6 +208,8 @@ public:
       return Iterator(getEnd());
     }
 };
+
+typedef boost::shared_ptr<RRsetCollectionBase> RRsetCollectionPtr;
 
 } // end of namespace dns
 } // end of namespace isc

@@ -26,9 +26,12 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -40,21 +43,80 @@ MX::MX(InputBuffer& buffer, size_t) :
     // check consistency.
 }
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid MX RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
+///
+/// The EXCHANGE name must be absolute since there's no parameter that
+/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
+/// exception will be thrown. It must not be represented as a quoted
+/// string.
+///
+/// See the construction that takes \c MasterLexer for other fields.
+///
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
 MX::MX(const std::string& mx_str) :
+    // Fill in dummy name and replace them soon below.
+    preference_(0), mxname_(Name::ROOT_NAME())
+{
+    try {
+        std::istringstream ss(mx_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        const uint32_t num =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
+        if (num > 65535) {
+            isc_throw(InvalidRdataText, "Invalid MX preference in: "
+                      << mx_str);
+        }
+        preference_ = static_cast<uint16_t>(num);
+
+        mxname_ = createNameFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for MX: "
+                      << mx_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct MX from '" <<
+                  mx_str << "': " << ex.what());
+    }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an MX RDATA.  The EXCHANGE field can be non-absolute if \c origin
+/// is non-NULL, in which case \c origin is used to make it absolute.
+/// It must not be represented as a quoted string.
+///
+/// The PREFERENCE field must be a valid decimal representation of an
+/// unsigned 16-bit integer.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of EXCHANGE when it
+/// is non-absolute.
+MX::MX(MasterLexer& lexer, const Name* origin,
+       MasterLoader::Options, MasterLoaderCallbacks&) :
     preference_(0), mxname_(".")
 {
-    istringstream iss(mx_str);
-    uint16_t pref;
-    string mxname;
-
-    iss >> pref >> mxname;
-
-    if (iss.bad() || iss.fail() || !iss.eof()) {
-        isc_throw(InvalidRdataText, "Invalid MX text format");
+    const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid MX preference: " << num);
     }
+    preference_ = static_cast<uint16_t>(num);
 
-    preference_ = pref;
-    mxname_ = Name(mxname);
+    mxname_ = createNameFromLexer(lexer, origin);
 }
 
 MX::MX(uint16_t preference, const Name& mxname) :

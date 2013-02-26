@@ -34,6 +34,7 @@ import http.client
 import xml.etree.ElementTree
 import random
 import urllib.parse
+import sys
 # load this module for xml validation with xsd. For this test, an
 # installation of lxml is required in advance. See http://lxml.de/.
 try:
@@ -42,11 +43,12 @@ except ImportError:
     lxml_etree = None
 
 import isc
+import isc.log
 import stats_httpd
 import stats
 from test_utils import BaseModules, ThreadingServerManager, MyStats,\
                        MyStatsHttpd, SignalHandler,\
-                       send_command, send_shutdown, CONST_BASETIME
+                       send_command, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 # This test suite uses xml.etree.ElementTree.XMLParser via
@@ -67,7 +69,7 @@ XMLNS_XSD = "http://www.w3.org/2001/XMLSchema"
 XMLNS_XSI = stats_httpd.XMLNS_XSI
 
 DUMMY_DATA = {
-    'Boss' : {
+    'Init' : {
         "boot_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)
         },
     'Auth' : {
@@ -249,6 +251,7 @@ class TestHttpHandler(unittest.TestCase):
         # reset the signal handler
         self.sig_handler.reset()
 
+    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
@@ -277,7 +280,7 @@ class TestHttpHandler(unittest.TestCase):
                              + stats_httpd.XSD_URL_PATH)
             # check the path of XSL
             self.assertTrue(xsl_doctype.startswith(
-                    '<?xml-stylesheet type="text/xsl" href="' + 
+                    '<?xml-stylesheet type="text/xsl" href="' +
                     stats_httpd.XSL_URL_PATH
                     + '"?>'))
             # check whether the list of 'identifier' attributes in
@@ -396,7 +399,7 @@ class TestHttpHandler(unittest.TestCase):
 
         # 404 NotFound (too long path)
         self.client._http_vsn_str = 'HTTP/1.0'
-        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Boss/boot_time/a')
+        self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/Init/boot_time/a')
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 404)
@@ -458,7 +461,8 @@ class TestHttpHandler(unittest.TestCase):
                          (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         # failure case(Stats is down)
         self.assertTrue(self.stats.running)
-        self.assertEqual(send_shutdown("Stats"), (0, None)) # Stats is down
+        self.assertEqual(send_command("shutdown", "Stats"),
+                         (0, None)) # Stats is down
         self.assertFalse(self.stats.running)
         self.stats_httpd.cc_session.set_timeout(milliseconds=100)
 
@@ -605,8 +609,16 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_server.run()
         # checking IPv6 enabled on this platform
         self.ipv6_enabled = is_ipv6_enabled()
+        # instantiation of StatsHttpd indirectly calls gethostbyaddr(), which
+        # can block for an uncontrollable period, leading many undesirable
+        # results.  We should rather eliminate the reliance, but until we
+        # can make such fundamental cleanup we replace it with a faked method;
+        # in our test scenario the return value doesn't matter.
+        self.__gethostbyaddr_orig = socket.gethostbyaddr
+        socket.gethostbyaddr = lambda x: ('test.example.', [], None)
 
     def tearDown(self):
+        socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
         self.stats_server.shutdown()
@@ -748,7 +760,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, server_addresses)
         self.stats_httpd_server.run()
         self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, server_addresses)
-        send_shutdown("StatsHttpd")
+        send_command("shutdown", "StatsHttpd")
 
     def test_running(self):
         self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
@@ -758,7 +770,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(send_command("status", "StatsHttpd"),
                          (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
         self.assertTrue(self.stats_httpd.running)
-        self.assertEqual(send_shutdown("StatsHttpd"), (0, None))
+        self.assertEqual(send_command("shutdown", "StatsHttpd"), (0, None))
         self.assertFalse(self.stats_httpd.running)
         self.stats_httpd_server.shutdown()
 
@@ -1000,7 +1012,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertFalse('item_format' in spec)
             self.assertFalse('format' in stats_xml[i].attrib)
 
-    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsd_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsd_string = self.stats_httpd.xsd_handler()
@@ -1035,7 +1047,7 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(attribs[i][1], stats_xsd[i].attrib['type'])
             self.assertEqual(attribs[i][2], stats_xsd[i].attrib['use'])
 
-    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser") 
+    @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsl_handler(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsl_string = self.stats_httpd.xsl_handler()
@@ -1066,4 +1078,5 @@ class TestStatsHttpd(unittest.TestCase):
             imp.reload(stats_httpd)
 
 if __name__ == "__main__":
+    isc.log.resetUnitTestRootLogger()
     unittest.main()

@@ -118,8 +118,6 @@ private:
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
-    // The event loop we use
-    asio::io_service& io_;
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
     // Callbacks

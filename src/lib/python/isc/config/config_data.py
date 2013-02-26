@@ -27,7 +27,7 @@ import copy
 
 class ConfigDataError(Exception): pass
 
-BIND10_CONFIG_DATA_VERSION = 2
+BIND10_CONFIG_DATA_VERSION = 3
 
 # Helper functions
 def spec_part_is_list(spec_part):

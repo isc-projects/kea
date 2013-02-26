@@ -50,25 +50,6 @@ PyObject* RRType_toWire(s_RRType* self, PyObject* args);
 PyObject* RRType_getCode(s_RRType* self);
 PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
 Py_hash_t RRType_hash(PyObject* pyself);
-PyObject* RRType_NSEC3PARAM(s_RRType *self);
-PyObject* RRType_DNAME(s_RRType *self);
-PyObject* RRType_PTR(s_RRType *self);
-PyObject* RRType_MX(s_RRType *self);
-PyObject* RRType_DNSKEY(s_RRType *self);
-PyObject* RRType_TXT(s_RRType *self);
-PyObject* RRType_RRSIG(s_RRType *self);
-PyObject* RRType_NSEC(s_RRType *self);
-PyObject* RRType_AAAA(s_RRType *self);
-PyObject* RRType_DS(s_RRType *self);
-PyObject* RRType_OPT(s_RRType *self);
-PyObject* RRType_A(s_RRType *self);
-PyObject* RRType_NS(s_RRType *self);
-PyObject* RRType_CNAME(s_RRType *self);
-PyObject* RRType_SOA(s_RRType *self);
-PyObject* RRType_NSEC3(s_RRType *self);
-PyObject* RRType_IXFR(s_RRType *self);
-PyObject* RRType_AXFR(s_RRType *self);
-PyObject* RRType_ANY(s_RRType *self);
 
 typedef CPPPyObjectContainer<s_RRType, RRType> RRTypeContainer;
 
@@ -90,25 +71,6 @@ PyMethodDef RRType_methods[] = {
       "returned" },
     { "get_code", reinterpret_cast<PyCFunction>(RRType_getCode), METH_NOARGS,
       "Returns the type code as an integer" },
-    { "NSEC3PARAM", reinterpret_cast<PyCFunction>(RRType_NSEC3PARAM), METH_NOARGS | METH_STATIC, "Creates an NSEC3PARAM RRType" },
-    { "DNAME", reinterpret_cast<PyCFunction>(RRType_DNAME), METH_NOARGS | METH_STATIC, "Creates a DNAME RRType" },
-    { "PTR", reinterpret_cast<PyCFunction>(RRType_PTR), METH_NOARGS | METH_STATIC, "Creates a PTR RRType" },
-    { "MX", reinterpret_cast<PyCFunction>(RRType_MX), METH_NOARGS | METH_STATIC, "Creates an MX RRType" },
-    { "DNSKEY", reinterpret_cast<PyCFunction>(RRType_DNSKEY), METH_NOARGS | METH_STATIC, "Creates a DNSKEY RRType" },
-    { "TXT", reinterpret_cast<PyCFunction>(RRType_TXT), METH_NOARGS | METH_STATIC, "Creates a TXT RRType" },
-    { "RRSIG", reinterpret_cast<PyCFunction>(RRType_RRSIG), METH_NOARGS | METH_STATIC, "Creates a RRSIG RRType" },
-    { "NSEC", reinterpret_cast<PyCFunction>(RRType_NSEC), METH_NOARGS | METH_STATIC, "Creates a NSEC RRType" },
-    { "AAAA", reinterpret_cast<PyCFunction>(RRType_AAAA), METH_NOARGS | METH_STATIC, "Creates an AAAA RRType" },
-    { "DS", reinterpret_cast<PyCFunction>(RRType_DS), METH_NOARGS | METH_STATIC, "Creates a DS RRType" },
-    { "OPT", reinterpret_cast<PyCFunction>(RRType_OPT), METH_NOARGS | METH_STATIC, "Creates an OPT RRType" },
-    { "A", reinterpret_cast<PyCFunction>(RRType_A), METH_NOARGS | METH_STATIC, "Creates an A RRType" },
-    { "NS", reinterpret_cast<PyCFunction>(RRType_NS), METH_NOARGS | METH_STATIC, "Creates an NS RRType" },
-    { "CNAME", reinterpret_cast<PyCFunction>(RRType_CNAME), METH_NOARGS | METH_STATIC, "Creates a CNAME RRType" },
-    { "SOA", reinterpret_cast<PyCFunction>(RRType_SOA), METH_NOARGS | METH_STATIC, "Creates a SOA RRType" },
-    { "NSEC3", reinterpret_cast<PyCFunction>(RRType_NSEC3), METH_NOARGS | METH_STATIC, "Creates an NSEC3 RRType" },
-    { "IXFR", reinterpret_cast<PyCFunction>(RRType_IXFR), METH_NOARGS | METH_STATIC, "Creates an IXFR RRType" },
-    { "AXFR", reinterpret_cast<PyCFunction>(RRType_AXFR), METH_NOARGS | METH_STATIC, "Creates an AXFR RRType" },
-    { "ANY", reinterpret_cast<PyCFunction>(RRType_ANY), METH_NOARGS | METH_STATIC, "Creates an ANY RRType" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -261,112 +223,6 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
         Py_RETURN_TRUE;
     else
         Py_RETURN_FALSE;
-}
-
-//
-// Common function for RRType_A/NS/etc.
-//
-PyObject* RRType_createStatic(RRType stc) {
-    s_RRType* ret = PyObject_New(s_RRType, &rrtype_type);
-    if (ret != NULL) {
-        ret->cppobj = new RRType(stc);
-    }
-    return (ret);
-}
-
-PyObject*
-RRType_NSEC3PARAM(s_RRType*) {
-    return (RRType_createStatic(RRType::NSEC3PARAM()));
-}
-
-PyObject*
-RRType_DNAME(s_RRType*) {
-    return (RRType_createStatic(RRType::DNAME()));
-}
-
-PyObject*
-RRType_PTR(s_RRType*) {
-    return (RRType_createStatic(RRType::PTR()));
-}
-
-PyObject*
-RRType_MX(s_RRType*) {
-    return (RRType_createStatic(RRType::MX()));
-}
-
-PyObject*
-RRType_DNSKEY(s_RRType*) {
-    return (RRType_createStatic(RRType::DNSKEY()));
-}
-
-PyObject*
-RRType_TXT(s_RRType*) {
-    return (RRType_createStatic(RRType::TXT()));
-}
-
-PyObject*
-RRType_RRSIG(s_RRType*) {
-    return (RRType_createStatic(RRType::RRSIG()));
-}
-
-PyObject*
-RRType_NSEC(s_RRType*) {
-    return (RRType_createStatic(RRType::NSEC()));
-}
-
-PyObject*
-RRType_AAAA(s_RRType*) {
-    return (RRType_createStatic(RRType::AAAA()));
-}
-
-PyObject*
-RRType_DS(s_RRType*) {
-    return (RRType_createStatic(RRType::DS()));
-}
-
-PyObject*
-RRType_OPT(s_RRType*) {
-    return (RRType_createStatic(RRType::OPT()));
-}
-
-PyObject*
-RRType_A(s_RRType*) {
-    return (RRType_createStatic(RRType::A()));
-}
-
-PyObject*
-RRType_NS(s_RRType*) {
-    return (RRType_createStatic(RRType::NS()));
-}
-
-PyObject*
-RRType_CNAME(s_RRType*) {
-    return (RRType_createStatic(RRType::CNAME()));
-}
-
-PyObject*
-RRType_SOA(s_RRType*) {
-    return (RRType_createStatic(RRType::SOA()));
-}
-
-PyObject*
-RRType_NSEC3(s_RRType*) {
-    return (RRType_createStatic(RRType::NSEC3()));
-}
-
-PyObject*
-RRType_IXFR(s_RRType*) {
-    return (RRType_createStatic(RRType::IXFR()));
-}
-
-PyObject*
-RRType_AXFR(s_RRType*) {
-    return (RRType_createStatic(RRType::AXFR()));
-}
-
-PyObject*
-RRType_ANY(s_RRType*) {
-    return (RRType_createStatic(RRType::ANY()));
 }
 
 Py_hash_t

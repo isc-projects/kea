@@ -6,7 +6,7 @@ distclean-local:
 
 # Most of the files under this directory (including test subdirectories)
 # must be listed in EXTRA_DIST.
-EXTRA_DIST = README cleanall.sh ifconfig.sh start.pl stop.pl run.sh runall.sh
+EXTRA_DIST = README cleanall.sh ifconfig.sh start.pl stop.pl runall.sh
 EXTRA_DIST += common/default_user.csv
 EXTRA_DIST += glue/auth.good glue/example.good glue/noglue.good glue/test.good
 EXTRA_DIST += glue/tests.sh glue/clean.sh

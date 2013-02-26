@@ -29,6 +29,11 @@
 namespace isc {
 namespace dhcp {
 
+/// Forward declaration to Option4AddrLst class.
+class Option4AddrLst;
+
+/// A pointer to the Option4AddrLst object.
+typedef boost::shared_ptr<Option4AddrLst> Option4AddrLstPtr;
 
 /// @brief DHCPv4 Option class for handling list of IPv4 addresses.
 ///
@@ -87,11 +92,8 @@ public:
     ///
     /// Method will throw if option storing fails for some reason.
     ///
-    /// TODO Once old (DHCPv6) implementation is rewritten,
-    /// unify pack4() and pack6() and rename them to just pack().
-    ///
     /// @param buf output buffer (option will be stored there)
-    virtual void pack4(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf);
 
     /// Returns string representation of the option.
     ///

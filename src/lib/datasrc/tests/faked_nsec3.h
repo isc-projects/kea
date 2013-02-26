@@ -15,7 +15,7 @@
 #ifndef FAKED_NSEC3_H
 #define FAKED_NSEC3_H
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 
 #include <dns/nsec3hash.h>
 

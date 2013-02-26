@@ -41,9 +41,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <map>
-#include <string>
-
 namespace isc {
 namespace util {
 namespace io {
@@ -222,7 +219,7 @@ public:
     /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
-    /// Counters::getStatistics().
+    /// Counters::get().
     ///
     /// \return JSON format statistics data.
     isc::data::ConstElementPtr getStatistics() const;

@@ -11,17 +11,12 @@ pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
 b10_cmdctldir = $(pkgdatadir)
 
-# NOTE: this will overwrite on install
-# So these generic copies are placed in share/bind10 instead of to etc
-# Admin or packageer will need to put into place manually.
+USERSFILES = cmdctl-accounts.csv
+CERTFILES = cmdctl-keyfile.pem cmdctl-certfile.pem
 
-CMDCTL_CONFIGURATIONS = cmdctl-accounts.csv
-CMDCTL_CONFIGURATIONS += cmdctl-keyfile.pem cmdctl-certfile.pem
+b10_cmdctl_DATA = cmdctl.spec
 
-b10_cmdctl_DATA = $(CMDCTL_CONFIGURATIONS)
-b10_cmdctl_DATA += cmdctl.spec
-
-EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
+EXTRA_DIST = $(USERSFILES)
 
 CLEANFILES= b10-cmdctl cmdctl.pyc cmdctl.spec
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
@@ -55,7 +50,7 @@ $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py : cmdctl_messages.mes
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/cmdctl_messages.mes
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-cmdctl: cmdctl.py $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
+b10-cmdctl: cmdctl.py $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py $(CERTFILES)
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
@@ -76,7 +71,7 @@ if INSTALL_CONFIGURATIONS
 # because these file will contain sensitive information.
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
-	for f in $(CMDCTL_CONFIGURATIONS) ; do	\
+	for f in $(CERTFILES) ; do	\
 	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
 	    ${INSTALL} -m 640 $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
 	  fi ;	\

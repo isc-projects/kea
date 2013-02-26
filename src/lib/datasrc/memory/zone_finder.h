@@ -18,7 +18,7 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/treenode_rrset.h>
 
-#include <datasrc/zone.h>
+#include <datasrc/zone_finder.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
@@ -59,6 +59,16 @@ public:
         const isc::dns::Name& name,
         const isc::dns::RRType& type,
         const FindOptions options = FIND_DEFAULT);
+
+    /// \brief Search for an RRset of given RR type at the zone origin
+    /// specialized for in-memory data source.
+    ///
+    /// This specialized version exploits internal data structure to find
+    /// RRsets at the zone origin and (if \c use_minttl is true) extract
+    /// the SOA Minimum TTL much more efficiently.
+    virtual boost::shared_ptr<ZoneFinder::Context> findAtOrigin(
+        const isc::dns::RRType& type, bool use_minttl,
+        FindOptions options);
 
     /// \brief Version of find that returns all types at once
     ///
@@ -108,3 +118,7 @@ private:
 } // namespace isc
 
 #endif // DATASRC_MEMORY_ZONE_FINDER_H
+
+// Local Variables:
+// mode: c++
+// End:

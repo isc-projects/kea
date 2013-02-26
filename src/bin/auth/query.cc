@@ -101,8 +101,11 @@ Query::ResponseCreator::create(Message& response,
 
 void
 Query::addSOA(ZoneFinder& finder) {
-    ZoneFinderContextPtr soa_ctx = finder.find(finder.getOrigin(),
-                                               RRType::SOA(), dnssec_opt_);
+    // This method is always called in finding SOA for a negative response,
+    // so we specify the use of min(RRTTL, SOA MINTTL) as specified in
+    // Section 3 of RFC2308.
+    ZoneFinderContextPtr soa_ctx = finder.findAtOrigin(RRType::SOA(), true,
+                                                       dnssec_opt_);
     if (soa_ctx->code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             finder.getOrigin().toText());
@@ -295,14 +298,18 @@ Query::addNXRRsetProof(ZoneFinder& finder,
             addWildcardNXRRSETProof(finder, db_context.rrset);
         }
     } else if (db_context.isNSEC3Signed() && !db_context.isWildcard()) {
-        if (*qtype_ == RRType::DS()) {
-            // RFC 5155, Section 7.2.4.  Add either NSEC3 for the qname or
-            // closest (provable) encloser proof in case of optout.
-            addClosestEncloserProof(finder, *qname_, true);
-        } else {
-            // RFC 5155, Section 7.2.3.  Just add NSEC3 for the qname.
-            addNSEC3ForName(finder, *qname_, true);
-        }
+        // Section 7.2.3 and 7.2.4 of RFC 5155 with clarification by errata
+        // http://www.rfc-editor.org/errata_search.php?rfc=5155&eid=3441
+        // In the end, these two cases are basically the same: if the qname is
+        // equal to or derived from insecure delegation covered by an Opt-Out
+        // NSEC3 RR, include the closest provable encloser proof; otherwise we
+        // have a matching NSEC3, so we include it.
+        //
+        // Note: This implementation does not check in the former case whether
+        // the NSEC3 for the next closer has Opt-Out bit on; this must be the
+        // case as long as the zone is correctly signed, and if it's broken
+        // we'd just return what we are given and have the validator detect it.
+        addClosestEncloserProof(finder, *qname_, true);
     } else if (db_context.isNSEC3Signed() && db_context.isWildcard()) {
         // Case for RFC 5155 Section 7.2.5: add closest encloser proof for the
         // qname, construct the matched wildcard name and add NSEC3 for it.
@@ -318,11 +325,9 @@ void
 Query::addAuthAdditional(ZoneFinder& finder,
                          vector<ConstRRsetPtr>& additionals)
 {
-    const Name& origin = finder.getOrigin();
-
     // Fill in authority and addtional sections.
-    ConstZoneFinderContextPtr ns_context = finder.find(origin, RRType::NS(),
-                                                       dnssec_opt_);
+    ConstZoneFinderContextPtr ns_context =
+        finder.findAtOrigin(RRType::NS(), false, dnssec_opt_);
 
     // zone origin name should have NS records
     if (ns_context->code != ZoneFinder::SUCCESS) {

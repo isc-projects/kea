@@ -218,7 +218,7 @@
        <command>config</command> for Configuration commands.
 <!-- TODO: or is config from the cfgmgr module? -->
        Additional modules may be available, such as
-       <command>Boss</command>, <command>Xfrin</command>, and
+       <command>Init</command>, <command>Xfrin</command>, and
        <command>Auth</command>.
      </para>
 
@@ -305,16 +305,13 @@ configuration location.
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>

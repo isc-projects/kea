@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#include <unistd.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -82,7 +84,7 @@ const size_t INITIAL_BUFSIZE = 512;
 const int SOCKSESSION_BUFSIZE = (DEFAULT_HEADER_BUFLEN + MAX_DATASIZE) * 2;
 
 struct SocketSessionForwarder::ForwarderImpl {
-    ForwarderImpl() : buf_(DEFAULT_HEADER_BUFLEN) {}
+    ForwarderImpl() : fd_(-1), buf_(DEFAULT_HEADER_BUFLEN) {}
     struct sockaddr_un sock_un_;
     socklen_t sock_un_len_;
     int fd_;

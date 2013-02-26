@@ -32,6 +32,7 @@ libb10_dhcp___la_SOURCES += option.cc option.h
 libb10_dhcp___la_SOURCES += option_custom.cc option_custom.h
 libb10_dhcp___la_SOURCES += option_data_types.cc option_data_types.h
 libb10_dhcp___la_SOURCES += option_definition.cc option_definition.h
+libb10_dhcp___la_SOURCES += option_space.cc option_space.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libb10_dhcp___la_SOURCES += std_option_defs.h

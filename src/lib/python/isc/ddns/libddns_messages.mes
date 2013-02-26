@@ -121,7 +121,7 @@ a bad class. The class of the update RRset must be either the same
 as the class in the Zone Section, ANY, or NONE.
 A FORMERR response is sent back to the client.
 
-% LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
+% LIBDDNS_UPDATE_DATASRC_COMMIT_FAILED error in datasource during DDNS update: %1
 An error occurred while committing the DDNS update changes to the
 datasource. The specific error is printed. A SERVFAIL response is sent
 back to the client.
@@ -167,14 +167,6 @@ rejected by the zone's update ACL.  When this library is used by
 b10-ddns, the server will then completely ignore the request; no
 response will be sent.
 
-% LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
-Debug message.  An error is found in processing a dynamic update
-request.  This log message is used for general errors that are not
-normally expected to happen.  So, in general, it would mean some
-problem in the client implementation or an interoperability issue
-with this implementation.  The client's address, the zone name and
-class, and description of the error are logged.
-
 % LIBDDNS_UPDATE_FORWARD_FAIL update client %1 for zone %2: update forwarding not supported
 Debug message.  An update request is sent to a secondary server.  This
 is not necessarily invalid, but this implementation does not yet
@@ -204,6 +196,14 @@ that one of the prerequisites was not satisfied. The result code
 should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
+
+% LIBDDNS_UPDATE_PROCESSING_FAILED update client %1 for zone %2: %3
+Debug message.  An error is found in processing a dynamic update
+request.  This log message is used for general errors that are not
+normally expected to happen.  So, in general, it would mean some
+problem in the client implementation or an interoperability issue
+with this implementation.  The client's address, the zone name and
+class, and description of the error are logged.
 
 % LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION update client %1 for zone %2: uncaught exception while processing update section: %3
 An uncaught exception was encountered while processing the Update

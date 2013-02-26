@@ -18,11 +18,13 @@
 #include <datasrc/memory/logger.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/util_internal.h>
+#include <datasrc/memory/rrset_collection.h>
 
 #include <dns/master_loader.h>
 #include <dns/rrcollator.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
+#include <dns/zone_checker.h>
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -148,6 +150,22 @@ ZoneDataLoader::getCurrentName() const {
     return (node_rrsigsets_.begin()->second->getName());
 }
 
+void
+logWarning(const dns::Name* zone_name, const dns::RRClass* rrclass,
+           const std::string& reason)
+{
+    LOG_WARN(logger, DATASRC_MEMORY_CHECK_WARNING).arg(*zone_name).
+        arg(*rrclass).arg(reason);
+}
+
+void
+logError(const dns::Name* zone_name, const dns::RRClass* rrclass,
+         const std::string& reason)
+{
+    LOG_ERROR(logger, DATASRC_MEMORY_CHECK_ERROR).arg(*zone_name).arg(*rrclass).
+        arg(reason);
+}
+
 ZoneData*
 loadZoneDataInternal(util::MemorySegment& mem_sgmt,
                      const isc::dns::RRClass& rrclass,
@@ -172,12 +190,14 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
         }
     }
 
-    // When an empty zone file is loaded, the origin doesn't even have
-    // an SOA RR. This condition should be avoided, and hence load()
-    // should throw when an empty zone is loaded.
-    if (RdataSet::find(rdataset, RRType::SOA()) == NULL) {
-        isc_throw(EmptyZone,
-                  "Won't create an empty zone for: " << zone_name);
+    RRsetCollection collection(*(holder.get()), rrclass);
+    const dns::ZoneCheckerCallbacks
+        callbacks(boost::bind(&logError, &zone_name, &rrclass, _1),
+                  boost::bind(&logWarning, &zone_name, &rrclass, _1));
+    if (!dns::checkZone(zone_name, rrclass, collection, callbacks)) {
+        isc_throw(ZoneValidationError,
+                  "Errors found when validating zone: "
+                  << zone_name << "/" << rrclass);
     }
 
     return (holder.release());

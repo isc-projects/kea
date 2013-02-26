@@ -41,6 +41,16 @@ system. The most likely cause is that msgq is not running.
 The configuration manager is starting, reading and saving the configuration
 settings to the shown file.
 
+% CFGMGR_CONFIG_UPDATE_BOSS_AND_INIT_FOUND Configuration found for both 'Boss' and 'Init', ignoring 'Boss'
+In the process of updating the configuration from version 2 to version 3,
+the configuration manager has found that there are existing configurations
+for both the old value 'Boss' and the new value 'Init'. This should in
+theory not happen, as in older versions 'Init' does not exist, and in newer
+versions 'Boss' does not exist. The configuration manager will continue
+with the update process, leaving the values for both as they are, so as not
+to overwrite any settings. However, the values for 'Boss' are ignored by
+BIND 10, and it is probably wise to check the configuration file manually.
+
 % CFGMGR_DATA_READ_ERROR error reading configuration database from disk: %1
 There was a problem reading the persistent configuration data as stored
 on disk. The file may be corrupted, or it is of a version from where
@@ -60,6 +70,9 @@ was trying to write the configuration database to disk. The specific
 error is given. The most likely cause is that the system does not have
 write access to the configuration database file. The updated
 configuration is not stored.
+
+% CFGMGR_STOPPED_BY_COMMAND received shutdown command, shutting down
+The configuration manager received a shutdown command, and is exiting.
 
 % CFGMGR_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the cfgmgr daemon. The

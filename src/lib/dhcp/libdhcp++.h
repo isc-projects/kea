@@ -88,16 +88,6 @@ public:
                                               uint16_t type,
                                               const OptionBuffer& buf);
 
-    /// Builds collection of options.
-    ///
-    /// Builds raw (on-wire) data for provided collection of options.
-    ///
-    /// @param buf output buffer (assembled options will be stored here)
-    /// @param options collection of options to store to
-    static void packOptions6(isc::util::OutputBuffer& buf,
-                             const isc::dhcp::Option::OptionCollection& options);
-
-
     /// @brief Stores options in a buffer.
     ///
     /// Stores all options defined in options containers in a on-wire
