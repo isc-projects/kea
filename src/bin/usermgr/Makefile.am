@@ -1,6 +1,7 @@
 SUBDIRS = tests
 
 sbin_SCRIPTS = b10-cmdctl-usermgr
+noinst_SCRIPTS = run_b10-cmdctl-usermgr.sh
 
 b10_cmdctl_usermgrdir = $(pkgdatadir)
 
