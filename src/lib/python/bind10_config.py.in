@@ -51,6 +51,9 @@ def reload():
     #  When "FROM_SOURCE", it lists the directories where the programs are
     #  built so that when BIND 10 is experimentally started on the source
     #  tree the programs in the tree (not installed ones) will be used.
+    # SYSCONFPATH: Path where the system-wide configuration files are
+    # stored (e.g. <prefix>/var/<package name>). This value is *not*
+    # overwritten if B10_FROM_SOURCE is specified.
     #
     # B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
     # tests where we want to use various types of configuration within the test

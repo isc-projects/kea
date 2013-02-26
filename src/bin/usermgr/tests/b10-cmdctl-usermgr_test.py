@@ -15,21 +15,77 @@
 
 import csv
 from hashlib import sha1
+import getpass
 import imp
 import os
 import subprocess
 import stat
+import sys
 import unittest
 from bind10_config import SYSCONFPATH
 
-def run(command):
+class PrintCatcher:
+    def __init__(self):
+        self.stdout_lines = []
+
+    def __enter__(self):
+        self.orig_stdout_write = sys.stdout.write
+        def new_write(line):
+            self.stdout_lines.append(line)
+
+        sys.stdout.write = new_write
+        return self
+
+    def __exit__(self, type, value, traceback):
+        sys.stdout.write = self.orig_stdout_write
+        return
+
+class OverrideGetpass:
+    def __init__(self, new_getpass):
+        self.new_getpass = new_getpass
+        self.orig_getpass = getpass.getpass
+
+    def __enter__(self):
+        getpass.getpass = self.new_getpass
+        return self
+
+    def __exit__(self, type, value, traceback):
+        getpass.getpass = self.orig_getpass
+
+# input() is a built-in function and not easily overridable
+# so this one uses usermgr for that
+class OverrideInput:
+    def __init__(self, usermgr, new_getpass):
+        self.usermgr = usermgr
+        self.new_input = new_getpass
+        self.orig_input = usermgr._input
+
+    def __enter__(self):
+        self.usermgr._input = self.new_input
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.usermgr._input = self.orig_input
+
+def run(command, input=None):
     """
     Small helper function that returns a tuple of (rcode, stdout, stderr)
     after running the given command (an array of command and arguments, as
     passed on to subprocess).
+    Parameters:
+    command: an array of command and argument strings, which will be
+             passed to subprocess.Popen()
+    input: if not None, a string that is written to the process stdin
+           stream
     """
+    if input is not None:
+        stdin = subprocess.PIPE
+    else:
+        stdin = None
     subp = subprocess.Popen(command, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE, stdin=stdin)
+    if input is not None:
+        subp.stdin.write(bytes(input, 'UTF-8'))
     (stdout, stderr) = subp.communicate()
     return (subp.returncode, stdout, stderr)
 
@@ -39,6 +95,11 @@ class TestUserMgr(unittest.TestCase):
 
     def setUp(self):
         self.delete_output_file()
+        # For access to the actual module, we load it directly
+        self.usermgr_module = imp.load_source('usermgr',
+                                              '../b10-cmdctl-usermgr.py')
+        # And instantiate 1 instance (with fake options/args)
+        self.usermgr = self.usermgr_module.UserManager(object(), object())
 
     def tearDown(self):
         self.delete_output_file()
@@ -51,10 +112,9 @@ class TestUserMgr(unittest.TestCase):
         self.assertTrue(os.path.exists(self.OUTPUT_FILE))
 
         csv_entries = []
-        with open(self.OUTPUT_FILE) as csvfile:
+        with open(self.OUTPUT_FILE, newline='') as csvfile:
             reader = csv.reader(csvfile)
-            for row in reader:
-                csv_entries.append(row)
+            csv_entries = [row for row in reader]
 
         self.assertEqual(len(expected_content), len(csv_entries))
         csv_entries.reverse()
@@ -73,7 +133,7 @@ class TestUserMgr(unittest.TestCase):
             self.assertEqual(expected_hash, entry_hash)
 
     def run_check(self, expected_returncode, expected_stdout, expected_stderr,
-                  command):
+                  command, stdin=None):
         """
         Runs the given command, and checks return code, and outputs (if provided).
         Arguments:
@@ -83,7 +143,7 @@ class TestUserMgr(unittest.TestCase):
         expected_stderr, (multiline) string that is checked against stderr.
                          May be None, in which case the check is skipped.
         """
-        (returncode, stdout, stderr) = run(command)
+        (returncode, stdout, stderr) = run(command, stdin)
         if expected_stderr is not None:
             self.assertEqual(expected_stderr, stderr.decode())
         if expected_stdout is not None:
@@ -100,7 +160,10 @@ Arguments:
   password		the password to set for the added user
 
 If username or password are not specified, b10-cmdctl-usermgr will
-prompt for them.
+prompt for them. It is recommended practice to let the
+tool prompt for the password, as command-line
+arguments can be visible through history or process
+viewers.
 
 Options:
   --version             show program's version number and exit
@@ -224,14 +287,102 @@ Options:
 
     def test_default_file(self):
         """
+        A few checks that couldn't be done though external calls
+        of the tool.
         Check the default file is the correct one.
-        Only checks the internal variable, as we don't want to overwrite
-        the actual file here
+        Check that the prompting methods do verification
         """
         # Hardcoded path .. should be ok since this is run from make check
-        usermgr = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
         self.assertEqual(SYSCONFPATH + '/cmdctl-accounts.csv',
-                         usermgr.DEFAULT_FILE)
+                         self.usermgr_module.DEFAULT_FILE)
+
+    def test_prompt_for_password_different(self):
+        # returns a different string (the representation of the number
+        # of times it has been called), until it has been called
+        # over 10 times, in which case it will always return "11"
+        getpass_different_called = 0
+        def getpass_different(question):
+            nonlocal getpass_different_called
+            getpass_different_called = getpass_different_called + 1
+            if getpass_different_called > 10:
+                return "11"
+            else:
+                return str(getpass_different_called)
+
+        with PrintCatcher() as pc:
+            with OverrideGetpass(getpass_different):
+                pwd = self.usermgr._prompt_for_password()
+                self.assertEqual(12, getpass_different_called)
+                self.assertEqual("11", pwd)
+                # stdout should be 5 times the no match string;
+                expected_output = "passwords do not match, try again\n"*5
+                self.assertEqual(expected_output, ''.join(pc.stdout_lines))
+
+    def test_prompt_for_password_empty(self):
+        # returns an empty string until it has been called over 10
+        # times
+        getpass_empty_called = 0
+        def getpass_empty(prompt):
+            nonlocal getpass_empty_called
+            getpass_empty_called = getpass_empty_called + 1
+            if getpass_empty_called > 10:
+                return "nonempty"
+            else:
+                return ""
+
+        usermgr_module = imp.load_source('usermgr',
+                                         '../b10-cmdctl-usermgr.py')
+        options = object()
+        args = object()
+        usermgr = usermgr_module.UserManager(options, args)
+
+        with PrintCatcher() as pc:
+            with OverrideGetpass(getpass_empty):
+                pwd = usermgr._prompt_for_password()
+                self.assertEqual("nonempty", pwd)
+                self.assertEqual(12, getpass_empty_called)
+                # stdout should be 10 times the 'cannot be empty' string
+                expected_output = "Error: password cannot be empty\n"*10
+                self.assertEqual(expected_output, ''.join(pc.stdout_lines))
+
+    def test_prompt_for_user(self):
+        new_input_called = 0
+        input_results = [ '', '', 'existinguser', 'nonexistinguser',
+                          '', '', 'nonexistinguser', 'existinguser' ]
+        def new_input(prompt):
+            nonlocal new_input_called
+
+            if new_input_called < len(input_results):
+                result = input_results[new_input_called]
+            else:
+                result = 'empty'
+            new_input_called += 1
+            return result
+
+        # add fake user (value doesn't matter, method only checks for key)
+        self.usermgr.user_info = { 'existinguser': None }
+
+        expected_output = ''
+
+        with PrintCatcher() as pc:
+            with OverrideInput(self.usermgr, new_input):
+                # should skip the first three since empty or existing
+                # are not allowed, then return 'nonexistinguser'
+                username = self.usermgr._prompt_for_username(
+                                self.usermgr_module.COMMAND_ADD)
+                self.assertEqual('nonexistinguser', username)
+                expected_output += "Error username can't be empty\n"*2
+                expected_output += "user already exists\n"
+                self.assertEqual(expected_output, ''.join(pc.stdout_lines))
+
+                # For delete, should again not accept empty (in a while true
+                # loop), and this time should not accept nonexisting users
+                username = self.usermgr._prompt_for_username(
+                                self.usermgr_module.COMMAND_DELETE)
+                self.assertEqual('existinguser', username)
+                expected_output += "Error username can't be empty\n"*2
+                expected_output += "user does not exist\n"
+                self.assertEqual(expected_output, ''.join(pc.stdout_lines))
 
     def test_bad_file(self):
         """
@@ -289,6 +440,46 @@ Options:
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
                          'delete', 'user1'
+                       ])
+
+    def test_missing_fields(self):
+        """
+        Test that an invalid csv file is handled gracefully
+        """
+        # Valid but incomplete csv; should be handled
+        # correctly
+        with open(self.OUTPUT_FILE, 'w', newline='') as f:
+            f.write('onlyuserfield\n')
+            f.write('userfield,saltfield\n')
+            f.write(',emptyuserfield,passwordfield\n')
+
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user1', 'pass1'
+                       ])
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'delete', 'onlyuserfield'
+                       ])
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'delete', ''
+                       ])
+
+    def test_bad_data(self):
+        # I can only think of one invalid format, an unclosed string
+        with open(self.OUTPUT_FILE, 'w', newline='') as f:
+            f.write('a,"\n')
+        self.run_check(2,
+                       'Using accounts file: test_users.csv\n'
+                       'Error parsing csv file: newline inside string\n',
+                       '',
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user1', 'pass1'
                        ])
 
 
