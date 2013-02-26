@@ -24,6 +24,9 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <sstream>
+
 using namespace isc::util;
 
 namespace isc {
@@ -36,6 +39,44 @@ protected:
                                          const RRClass& rrclass,
                                          const char* datafile,
                                          size_t position = 0);
+
+    // Common check to see the result of Rdata construction of given type
+    // (template parameter RdataType) either from std::string or with
+    // MasterLexer object.  If it's expected to succeed the result should be
+    // identical to the commonly used test data (rdata_expected); otherwise it
+    // should result in the exception specified as the template parameter:
+    // ExForString for the string version, and ExForLexer for the lexer
+    // version.  throw_str_version and throw_lexer_version are set to true
+    // iff the string/lexer version is expected to throw, respectively.
+    // Parameter origin can be set to non NULL for the origin parameter of
+    // the lexer version of Rdata constructor.
+    template <typename RdataType, typename ExForString, typename ExForLexer>
+    void checkFromText(const std::string& rdata_txt,
+                       const RdataType& rdata_expected,
+                       bool throw_str_version = true,
+                       bool throw_lexer_version = true,
+                       const Name* origin = NULL)
+    {
+        SCOPED_TRACE(rdata_txt);
+
+        if (throw_str_version) {
+            EXPECT_THROW(RdataType rdata(rdata_txt), ExForString);
+        } else {
+            EXPECT_EQ(0, RdataType(rdata_txt).compare(rdata_expected));
+        }
+
+        std::stringstream ss(rdata_txt);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+        if (throw_lexer_version) {
+            EXPECT_THROW(RdataType rdata(lexer, origin, MasterLoader::DEFAULT,
+                                         loader_cb), ExForLexer);
+        } else {
+            EXPECT_EQ(0, RdataType(lexer, origin, MasterLoader::DEFAULT,
+                                   loader_cb).compare(rdata_expected));
+        }
+    }
+
     OutputBuffer obuffer;
     MessageRenderer renderer;
     /// This is an RDATA object of some "unknown" RR type so that it can be

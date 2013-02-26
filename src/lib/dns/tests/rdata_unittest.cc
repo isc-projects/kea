@@ -197,8 +197,8 @@ TEST_F(RdataTest, createRdataWithLexer) {
     EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
-                   "createRdata from text failed: Failed to convert "
-                   "'192.0.2.1' to IN/AAAA RDATA");
+                   "createRdata from text failed: Bad IN/AAAA RDATA text: "
+                   "'192.0.2.1'");
 
     // Input is valid and parse will succeed, but with a warning that the
     // file is not ended with a newline.
