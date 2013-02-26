@@ -30,6 +30,9 @@
 
 #include <sstream>
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
@@ -67,13 +70,21 @@ TEST_F(Rdata_IN_A_Test, createFromText) {
     // or any meaningless text as an IP address
     checkFromTextIN_A("xxx");
 
+    // NetBSD's inet_pton accepts trailing space after an IPv4 address, which
+    // would confuse some of the tests below.  We check the case differently
+    // in these cases depending on the strictness of inet_pton (most
+    // implementations seem to be stricter).
+    uint8_t v4addr_buf[4];
+    const bool reject_extra_space =
+        inet_pton(AF_INET, "192.0.2.1 ", v4addr_buf) == 0;
+
     // trailing white space: only string version throws
-    checkFromTextIN_A("192.0.2.1  ", true, false);
+    checkFromTextIN_A("192.0.2.1  ", reject_extra_space, false);
     // same for beginning white space.
     checkFromTextIN_A("  192.0.2.1", true, false);
     // same for trailing non-space garbage (note that lexer version still
     // ignore it; it's expected to be detected at a higher layer).
-    checkFromTextIN_A("192.0.2.1 xxx", true, false);
+    checkFromTextIN_A("192.0.2.1 xxx", reject_extra_space, false);
 
     // nul character after a valid textual representation.
     string nul_after_addr = "192.0.2.1";
