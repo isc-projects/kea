@@ -118,6 +118,61 @@ buildBitmapsFromText(const char* const rrtype_name,
     }
 }
 
+// Note: this function shares common code with buildBitmapsFromText()
+// above, but it is expected that buildBitmapsFromText() will be deleted
+// entirely once the transition to MasterLexer is done for all dependent
+// RR types. So a common method is not made from the two.
+void
+buildBitmapsFromLexer(const char* const rrtype_name,
+                      MasterLexer& lexer, vector<uint8_t>& typebits)
+{
+    uint8_t bitmap[8 * 1024];       // 64k bits
+    memset(bitmap, 0, sizeof(bitmap));
+
+    bool have_rrtypes = false;
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if (token.getType() != MasterToken::STRING) {
+            break;
+        }
+
+        have_rrtypes = true;
+        std::string type_str;
+        try {
+            type_str = token.getString();
+            const int code = RRType(type_str).getCode();
+            bitmap[code / 8] |= (0x80 >> (code % 8));
+        } catch (const InvalidRRType&) {
+            isc_throw(InvalidRdataText, "Invalid RRtype in "
+                      << rrtype_name << " bitmap: " << type_str);
+        }
+    }
+
+    lexer.ungetToken();
+
+    if (!have_rrtypes) {
+         isc_throw(InvalidRdataText,
+                   rrtype_name << " record does not end with RR type mnemonic");
+    }
+
+    for (int window = 0; window < 256; ++window) {
+        int octet;
+        for (octet = 31; octet >= 0; octet--) {
+            if (bitmap[window * 32 + octet] != 0) {
+                break;
+            }
+        }
+        if (octet < 0) {
+            continue;
+        }
+        typebits.push_back(window);
+        typebits.push_back(octet + 1);
+        for (int i = 0; i <= octet; ++i) {
+            typebits.push_back(bitmap[window * 32 + i]);
+        }
+    }
+}
+
 void
 bitmapsToText(const vector<uint8_t>& typebits, ostringstream& oss) {
     // In the following loop we use string::at() rather than operator[].

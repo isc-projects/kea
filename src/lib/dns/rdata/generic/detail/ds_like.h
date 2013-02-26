@@ -58,49 +58,109 @@ template <class Type, uint16_t typeCode> class DSLikeImpl {
 public:
     /// \brief Constructor from string.
     ///
-    /// <b>Exceptions</b>
+    /// The given string must represent a valid DS-like RDATA.  There
+    /// can be extra space characters at the beginning or end of the
+    /// text (which are simply ignored), but other extra text, including
+    /// a new line, will make the construction fail with an exception.
     ///
-    /// \c InvalidRdataText is thrown if the method cannot process the
-    /// parameter data for any of the number of reasons.
+    /// The tag field must be a valid decimal representation of an
+    /// unsigned 16-bit integer. The protocol and algorithm fields must
+    /// be valid decimal representations of unsigned 8-bit integers
+    /// respectively. The digest field may contain whitespace.
+    ///
+    /// \throw InvalidRdataText if any fields are out of their valid range.
+    ///
+    /// \param ds_str A string containing the RDATA to be created
     DSLikeImpl(const std::string& ds_str) {
-        std::istringstream iss(ds_str);
-        // peekc should be of iss's char_type for isspace to work
-        std::istringstream::char_type peekc;
-        std::stringbuf digestbuf;
-        uint32_t tag, algorithm, digest_type;
+        try {
+            std::istringstream ss(ds_str);
+            MasterLexer lexer;
+            lexer.pushSource(ss);
 
-        iss >> tag >> algorithm >> digest_type;
-        if (iss.bad() || iss.fail()) {
+            constructFromLexer(lexer);
+
+            if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+                isc_throw(InvalidRdataText,
+                          "Extra input text for " << RRType(typeCode) << ": "
+                          << ds_str);
+            }
+        } catch (const MasterLexer::LexerError& ex) {
             isc_throw(InvalidRdataText,
-                      "Invalid " << RRType(typeCode) << " text");
+                      "Failed to construct " << RRType(typeCode) << " from '" <<
+                      ds_str << "': " << ex.what());
         }
+    }
+
+    /// \brief Constructor with a context of MasterLexer.
+    ///
+    /// The \c lexer should point to the beginning of valid textual
+    /// representation of a DS-like RDATA.
+    ///
+    /// The tag field must be a valid decimal representation of an
+    /// unsigned 16-bit integer. The protocol and algorithm fields must
+    /// be valid decimal representations of unsigned 8-bit integers
+    /// respectively.
+    ///
+    /// \throw MasterLexer::LexerError General parsing error such as
+    /// missing field.
+    /// \throw InvalidRdataText if any fields are out of their valid range.
+    ///
+    /// \param lexer A \c MasterLexer object parsing a master file for the
+    /// RDATA to be created
+    DSLikeImpl(MasterLexer& lexer, const Name*, MasterLoader::Options,
+               MasterLoaderCallbacks&)
+    {
+        constructFromLexer(lexer);
+    }
+
+private:
+    void constructFromLexer(MasterLexer& lexer) {
+        const uint32_t tag =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (tag > 0xffff) {
             isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " tag out of range");
+                      "Invalid " << RRType(typeCode) << " tag: " << tag);
         }
+
+        const uint32_t algorithm =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (algorithm > 0xff) {
             isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " algorithm out of range");
+                      "Invalid " << RRType(typeCode) << " algorithm: "
+                      << algorithm);
         }
+
+        const uint32_t digest_type =
+            lexer.getNextToken(MasterToken::NUMBER).getNumber();
         if (digest_type > 0xff) {
             isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " digest type out of range");
+                      "Invalid " << RRType(typeCode) << " digest type: "
+                      << digest_type);
         }
 
-        iss.read(&peekc, 1);
-        if (!iss.good() || !isspace(peekc, iss.getloc())) {
+        std::string digest;
+        while (true) {
+            const MasterToken& token = lexer.getNextToken();
+            if (token.getType() != MasterToken::STRING) {
+                break;
+            }
+            digest.append(token.getString());
+        }
+
+        lexer.ungetToken();
+
+        if (digest.size() == 0) {
             isc_throw(InvalidRdataText,
-                      RRType(typeCode) << " presentation format error");
+                      "Missing " << RRType(typeCode) << " digest");
         }
-
-        iss >> &digestbuf;
 
         tag_ = tag;
         algorithm_ = algorithm;
         digest_type_ = digest_type;
-        decodeHex(digestbuf.str(), digest_);
+        decodeHex(digest, digest_);
     }
 
+public:
     /// \brief Constructor from wire-format data.
     ///
     /// \param buffer A buffer storing the wire format data.
