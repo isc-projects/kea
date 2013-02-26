@@ -151,7 +151,7 @@ TEST_F(DomainTreeTest, getDistance) {
 }
 
 void
-checkDistances(const TestDomainTree& tree, size_t distance) {
+checkDistances(const TestDomainTree& tree, int distance) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
 
@@ -177,7 +177,7 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
     TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& mytree = *mytree_holder.get();
     isc::util::random::UniformRandomIntegerGenerator gen('a', 'z');
-    const size_t log_num_nodes = 20;
+    const int log_num_nodes = 20;
 
     // Make a large million+ node top-level domain tree, i.e., the
     // following code inserts names such as:
@@ -219,7 +219,7 @@ TEST_F(DomainTreeTest, checkDistanceSorted) {
 
     TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& mytree = *mytree_holder.get();
-    const size_t log_num_nodes = 20;
+    const int log_num_nodes = 20;
 
     // Make a large million+ node top-level domain tree, i.e., the
     // following code inserts names such as:
