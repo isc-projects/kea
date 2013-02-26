@@ -290,39 +290,6 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
-    def test_handle_users_exist(self):
-        orig_get_num_users = self.handler.server.get_num_users
-        try:
-            def create_get_num_users(n):
-                '''Create a replacement get_num_users() method.'''
-                def my_get_num_users():
-                    return n
-                return my_get_num_users
-
-            # Check case where get_num_users() returns 0
-            self.handler.server.get_num_users = create_get_num_users(0)
-            self.handler.headers['cookie'] = 12345
-            self.handler.path = '/users-exist'
-            self.handler.do_POST()
-            self.assertEqual(self.handler.rcode, http.client.OK)
-            self.handler.wfile.seek(0, 0)
-            d = self.handler.wfile.read()
-            self.assertFalse(json.loads(d.decode()))
-
-            # Clear the output
-            self.handler.wfile.seek(0, 0)
-            self.handler.wfile.truncate()
-
-            # Check case where get_num_users() returns > 0
-            self.handler.server.get_num_users = create_get_num_users(4)
-            self.handler.do_POST()
-            self.assertEqual(self.handler.rcode, http.client.OK)
-            self.handler.wfile.seek(0, 0)
-            d = self.handler.wfile.read()
-            self.assertTrue(json.loads(d.decode()))
-        finally:
-            self.handler.server.get_num_users = orig_get_num_users
-
     def test_handle_login(self):
         orig_is_user_logged_in = self.handler._is_user_logged_in
         orig_check_user_name_and_pwd = self.handler._check_user_name_and_pwd
@@ -565,13 +532,6 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
         self.assertIn('6f0c73bd33101a5ec0294b3ca39fec90ef4717fe',
                       self.server.get_user_info('root'))
-
-    def test_get_num_users(self):
-        self.server._create_user_info('/local/not-exist')
-        self.assertEqual(0, self.server.get_num_users())
-
-        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
-        self.assertEqual(1, self.server.get_num_users())
 
     def test_check_file(self):
         # Just some file that we know exists
