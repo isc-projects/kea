@@ -17,7 +17,6 @@
 #include "data_source.h"
 #include "database.h"
 #include "sqlite3_accessor.h"
-#include "memory_datasrc.h"
 
 #include "datasrc_config.h"
 

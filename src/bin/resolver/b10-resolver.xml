@@ -52,9 +52,14 @@
     <title>DESCRIPTION</title>
     <para>The <command>b10-resolver</command> daemon provides the BIND 10
       recursive DNS server.  Normally it is started by the
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      boss process.
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      process.
     </para>
+
+    <note><simpara>
+      The <command>b10-resolver</command> is an experimental proof
+      of concept.
+    </simpara></note>
 
     <para>
       This daemon communicates with other BIND 10 components over a
@@ -205,7 +210,7 @@ once that is merged you can for instance do 'config add Resolver/forward_address
       <command>shutdown</command> exits <command>b10-resolver</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the b10-init process may restart this service
       if configured.)
     </para>
 
@@ -227,7 +232,7 @@ once that is merged you can for instance do 'config add Resolver/forward_address
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>

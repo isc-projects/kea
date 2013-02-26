@@ -27,7 +27,7 @@ class MyConfigManager:
     def __init__(self, path, filename, session=None, rename_config_file=False):
         self._path = path
         self.read_config_called = False
-        self.notify_boss_called = False
+        self.notify_b10_init_called = False
         self.run_called = False
         self.write_config_called = False
         self.rename_config_called = False
@@ -37,8 +37,8 @@ class MyConfigManager:
     def read_config(self):
         self.read_config_called = True
 
-    def notify_boss(self):
-        self.notify_boss_called = True
+    def notify_b10_init(self):
+        self.notify_b10_init_called = True
 
     def run(self):
         self.run_called = True
@@ -89,7 +89,7 @@ class TestConfigManagerStartup(unittest.TestCase):
         b.load_plugins = orig_load
 
         self.assertTrue(b.cm.read_config_called)
-        self.assertTrue(b.cm.notify_boss_called)
+        self.assertTrue(b.cm.notify_b10_init_called)
         self.assertTrue(b.cm.run_called)
         self.assertTrue(self.loaded_plugins)
         # if there are no changes, config is not written

@@ -197,6 +197,16 @@ modify the database). This is what the client would do when such RRs
 were given in a DNS response according to RFC2181. The data in
 database should be checked and fixed.
 
+% DATASRC_DATABASE_JOURNALREADER_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
+
 % DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
 This is a debug message indicating that the program (successfully)
 reaches the end of sequences of a zone's differences.  The zone's name
@@ -214,16 +224,6 @@ This is a debug message indicating that the program starts reading
 a zone's difference sequences from a database-based data source.  The
 zone's name and class, database name, and the start and end serials
 are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
-This is an error message indicating that a zone's diff is broken and
-the data source library failed to convert it to a valid RRset.  The
-most likely cause of this is that someone has manually modified the
-zone's diff in the database and inserted invalid data as a result.
-The zone's name and class, database name, and the start and end
-serials, and an additional detail of the error are shown in the
-message.  The administrator should examine the diff in the database
-to find any invalid data and fix it.
 
 % DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
 No match (not even a wildcard) was found in the named data source for the given
@@ -349,173 +349,6 @@ afterwards.
 There's something suspicious in the master file. This is a warning only.
 It may be a problem or it may be harmless, but it should be checked.
 This problem does not stop the zone from being loaded.
-
-% DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
-Debug information. An RRset is being added to the in-memory data source.
-
-% DATASRC_MEM_ADD_WILDCARD adding wildcards for '%1'
-This is a debug message issued during the processing of a wildcard
-name. The internal domain name tree is scanned and some nodes are
-specially marked to allow the wildcard lookup to succeed.
-
-% DATASRC_MEM_ADD_ZONE adding zone '%1/%2'
-Debug information. A zone is being added into the in-memory data source.
-
-% DATASRC_MEM_ANY_SUCCESS ANY query for '%1' successful
-Debug information. The domain was found and an ANY type query is being answered
-by providing everything found inside the domain.
-
-% DATASRC_MEM_CNAME CNAME at the domain '%1'
-Debug information. The requested domain is an alias to a different domain,
-returning the CNAME instead.
-
-% DATASRC_MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'
-This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
-other way around -- adding some other data to CNAME.
-
-% DATASRC_MEM_CNAME_TO_NONEMPTY can't add CNAME to domain with other data in '%1'
-Someone or something tried to add a CNAME into a domain that already contains
-some other data. But the protocol forbids coexistence of CNAME with anything
-(RFC 1034, section 3.6.2). This indicates a problem with provided data.
-
-% DATASRC_MEM_CREATE creating zone '%1' in '%2' class
-Debug information. A representation of a zone for the in-memory data source is
-being created.
-
-% DATASRC_MEM_DELEG_FOUND delegation found at '%1'
-Debug information. A delegation point was found above the requested record.
-
-% DATASRC_MEM_DESTROY destroying zone '%1' in '%2' class
-Debug information. A zone from in-memory data source is being destroyed.
-
-% DATASRC_MEM_DNAME_ENCOUNTERED encountered a DNAME
-Debug information. While searching for the requested domain, a DNAME was
-encountered on the way.  This may lead to redirection to a different domain and
-stop the search.
-
-% DATASRC_MEM_DNAME_FOUND DNAME found at '%1'
-Debug information. A DNAME was found instead of the requested information.
-
-% DATASRC_MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
-A request was made for DNAME and NS records to be put into the same
-domain which is not the apex (the top of the zone). This is forbidden
-by RFC 2672 (section 3) and indicates a problem with provided data.
-
-% DATASRC_MEM_DOMAIN_EMPTY requested domain '%1' is empty
-Debug information. The requested domain exists in the tree of domains, but
-it is empty. Therefore it doesn't contain the requested resource type.
-
-% DATASRC_MEM_DUP_RRSET duplicate RRset '%1/%2'
-An RRset is being inserted into in-memory data source for a second time.  The
-original version must be removed first. Note that loading master files where an
-RRset is split into multiple locations is not supported yet.
-
-% DATASRC_MEM_EXACT_DELEGATION delegation at the exact domain '%1'
-Debug information. There's a NS record at the requested domain. This means
-this zone is not authoritative for the requested domain, but a delegation
-should be followed. The requested domain is an apex of some zone.
-
-% DATASRC_MEM_FIND find '%1/%2'
-Debug information. A search for the requested RRset is being started.
-
-% DATASRC_MEM_FINDNSEC3 finding NSEC3 for %1, mode %2
-Debug information. A search in an in-memory data source for NSEC3 that
-matches or covers the given name is being started.
-
-% DATASRC_MEM_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
-Debug information. An NSEC3 that covers the given name is found and
-being returned.  The found NSEC3 RRset is also displayed.
-
-% DATASRC_MEM_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
-Debug information. An NSEC3 that matches (a possibly superdomain of)
-the given name is found and being returned.  When the shown label
-count is smaller than that of the given name, the matching NSEC3 is
-for a superdomain of the given name (see DATASRC_MEM_FINDNSEC3_TRYHASH).
-The found NSEC3 RRset is also displayed.
-
-% DATASRC_MEM_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)
-Debug information. In an attempt of finding an NSEC3 for the give name,
-(a possibly superdomain of) the name is hashed and searched for in the
-NSEC3 name space.  When the shown label count is smaller than that of the
-shown name, the search tries the superdomain name that share the shown
-(higher) label count of the shown name (e.g., for
-www.example.com. with shown label count of 3, example.com. is being
-tried).
-
-% DATASRC_MEM_FIND_ZONE looking for zone '%1'
-Debug information. A zone object for this zone is being searched for in the
-in-memory data source.
-
-% DATASRC_MEM_LOAD loading zone '%1' from file '%2'
-Debug information. The content of master file is being loaded into the memory.
-
-% DATASRC_MEM_NOT_FOUND requested domain '%1' not found
-Debug information. The requested domain does not exist.
-
-% DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
-The in-memory data source has loaded a zone signed with NSEC3 RRs,
-but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
-the zone is somehow broken, but this RR is not necessarily needed for
-handling lookups with NSEC3 in this data source, so it accepts the given
-content of the zone.  Nevertheless the administrator should look into
-the integrity of the zone data.
-
-% DATASRC_MEM_NS_ENCOUNTERED encountered a NS
-Debug information. While searching for the requested domain, a NS was
-encountered on the way (a delegation). This may lead to stop of the search.
-
-% DATASRC_MEM_NXRRSET no such type '%1' at '%2'
-Debug information. The domain exists, but it doesn't hold any record of the
-requested type.
-
-% DATASRC_MEM_OUT_OF_ZONE domain '%1' doesn't belong to zone '%2'
-It was attempted to add the domain into a zone that shouldn't have it
-(eg. the domain is not subdomain of the zone origin). This indicates a
-problem with provided data.
-
-% DATASRC_MEM_RENAME renaming RRset from '%1' to '%2'
-Debug information. A RRset is being generated from a different RRset (most
-probably a wildcard). So it must be renamed to whatever the user asked for. In
-fact, it's impossible to rename RRsets with our libraries, so a new one is
-created and all resource records are copied over.
-
-% DATASRC_MEM_SINGLETON trying to add multiple RRs for domain '%1' and type '%2'
-Some resource types are singletons -- only one is allowed in a domain
-(for example CNAME or SOA). This indicates a problem with provided data.
-
-% DATASRC_MEM_SUCCESS query for '%1/%2' successful
-Debug information. The requested record was found.
-
-% DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty
-Debug information. The search stopped because the requested domain was
-detected to be a superdomain of some existing node of zone (while there
-was no exact match).  This means that the domain is an empty nonterminal,
-therefore it is treated  as NXRRSET case (eg. the domain exists, but it
-doesn't have the requested record type).
-
-% DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')
-Debug information. The contents of two in-memory zones are being exchanged.
-This is usual practice to do some manipulation in exception-safe manner -- the
-new data are prepared in a different zone object and when it works, they are
-swapped. The old one contains the new data and the other one can be safely
-destroyed.
-
-% DATASRC_MEM_WILDCARD_CANCEL wildcard match canceled for '%1'
-Debug information. A domain above wildcard was reached, but there's something
-below the requested domain. Therefore the wildcard doesn't apply here.  This
-behaviour is specified by RFC 1034, section 4.3.3.
-
-% DATASRC_MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
-The software refuses to load DNAME records into a wildcard domain.  It isn't
-explicitly forbidden, but the protocol is ambiguous about how this should
-behave and BIND 9 refuses that as well. Please describe your intention using
-different tools.
-
-% DATASRC_MEM_WILDCARD_NS NS record in wildcard domain '%1'
-The software refuses to load NS records into a wildcard domain.  It isn't
-explicitly forbidden, but the protocol is ambiguous about how this should
-behave and BIND 9 refuses that as well. Please describe your intention using
-different tools.
 
 % DATASRC_META_ADD adding a data source into meta data source
 This is a debug message issued during startup or reconfiguration.

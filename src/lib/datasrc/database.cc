@@ -18,7 +18,7 @@
 
 #include <datasrc/database.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/rrset_collection_base.h>
 
 #include <exceptions/exceptions.h>
@@ -1385,7 +1385,7 @@ DatabaseClient::getIterator(const isc::dns::Name& name,
     return (iterator);
 }
 
-/// \brief datasrc implementation of RRsetCollectionBase.
+/// \brief Database implementation of RRsetCollectionBase.
 class RRsetCollection : public isc::datasrc::RRsetCollectionBase {
 public:
     /// \brief Constructor.
@@ -1393,25 +1393,10 @@ public:
         isc::datasrc::RRsetCollectionBase(updater, rrclass)
     {}
 
-    /// \brief Destructor
-    virtual ~RRsetCollection() {}
-
     /// \brief A wrapper around \c disable() so that it can be used as a
     /// public method. \c disable() is protected.
     void disableWrapper() {
         disable();
-    }
-
-protected:
-    // TODO: RRsetCollectionBase::Iter is not implemented and the
-    // following two methods just throw.
-
-    virtual RRsetCollectionBase::IterPtr getBeginning() {
-        isc_throw(NotImplemented, "This method is not implemented.");
-    }
-
-    virtual RRsetCollectionBase::IterPtr getEnd() {
-        isc_throw(NotImplemented, "This method is not implemented.");
     }
 };
 
@@ -1454,7 +1439,7 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual isc::datasrc::RRsetCollectionBase& getRRsetCollection() {
+    virtual isc::dns::RRsetCollectionBase& getRRsetCollection() {
         if (!rrset_collection_) {
             // This is only assigned the first time and remains for the
             // lifetime of the DatabaseUpdater.

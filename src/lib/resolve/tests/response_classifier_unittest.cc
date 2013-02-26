@@ -131,9 +131,9 @@ public:
 
         // ... the CNAME records
         rrs_in_cname_www1->addRdata(ConstRdataPtr(
-            new CNAME("www.example.com")));
+            new CNAME("www.example.com.")));
         rrs_in_cname_www2->addRdata(ConstRdataPtr(
-            new CNAME("www1.example.com")));
+            new CNAME("www1.example.com.")));
     }
 
     Message     msg_a;              // Pointer to message in RENDER state

@@ -30,6 +30,9 @@
 #include <asio/deadline_timer.hpp>
 #include <asio/system_error.hpp>
 
+#include <cc/data.h>
+#include <cc/session.h>
+
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -43,9 +46,6 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <exceptions/exceptions.h>
-
-#include <cc/data.h>
-#include <cc/session.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -333,6 +333,7 @@ Session::establish(const char* socket_file) {
     recvmsg(routing, msg, false);
 
     impl_->lname_ = msg->get("lname")->stringValue();
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_LNAME_RECEIVED).arg(impl_->lname_);
 
     // At this point there's no risk of resource leak.
     session_holder.clear();
@@ -343,8 +344,8 @@ Session::establish(const char* socket_file) {
 // prefix.
 //
 void
-Session::sendmsg(ConstElementPtr msg) {
-    std::string header_wire = msg->toWire();
+Session::sendmsg(ConstElementPtr header) {
+    std::string header_wire = header->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
@@ -356,9 +357,9 @@ Session::sendmsg(ConstElementPtr msg) {
 }
 
 void
-Session::sendmsg(ConstElementPtr env, ConstElementPtr msg) {
-    std::string header_wire = env->toWire();
-    std::string body_wire = msg->toWire();
+Session::sendmsg(ConstElementPtr header, ConstElementPtr payload) {
+    std::string header_wire = header->toWire();
+    std::string body_wire = payload->toWire();
     unsigned int length = 2 + header_wire.length() + body_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
@@ -473,20 +474,21 @@ Session::unsubscribe(std::string group, std::string instance) {
 
 int
 Session::group_sendmsg(ConstElementPtr msg, std::string group,
-                       std::string instance, std::string to)
+                       std::string instance, std::string to, bool want_answer)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_SEND).arg(msg->str()).
         arg(group);
     ElementPtr env = Element::createMap();
-    long int nseq = ++impl_->sequence_;
-    
-    env->set("type", Element::create("send"));
-    env->set("from", Element::create(impl_->lname_));
-    env->set("to", Element::create(to));
-    env->set("group", Element::create(group));
-    env->set("instance", Element::create(instance));
-    env->set("seq", Element::create(nseq));
-    //env->set("msg", Element::create(msg->toWire()));
+    const long int nseq = ++impl_->sequence_;
+
+    env->set(CC_HEADER_TYPE,
+             Element::create(CC_COMMAND_SEND));
+    env->set(CC_HEADER_FROM, Element::create(impl_->lname_));
+    env->set(CC_HEADER_TO, Element::create(to));
+    env->set(CC_HEADER_GROUP, Element::create(group));
+    env->set(CC_HEADER_INSTANCE, Element::create(instance));
+    env->set(CC_HEADER_SEQ, Element::create(nseq));
+    env->set(CC_HEADER_WANT_ANSWER, Element::create(want_answer));
 
     sendmsg(env, msg);
     return (nseq);
@@ -513,7 +515,7 @@ Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
         arg(newmsg->str());
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
-    
+
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(envelope->get("from")->stringValue()));

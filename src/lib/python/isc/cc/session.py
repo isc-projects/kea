@@ -22,6 +22,10 @@ import threading
 import bind10_config
 
 import isc.cc.message
+import isc.log
+from isc.cc.logger import logger
+from isc.log_messages.pycc_messages import *
+from isc.cc.proto_defs import *
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
@@ -30,7 +34,7 @@ class SessionTimeout(Exception): pass
 
 class Session:
     MSGQ_DEFAULT_TIMEOUT = 4000
-    
+
     def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
@@ -60,6 +64,8 @@ class Session:
             self._lname = msg["lname"]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
+            logger.debug(logger.DBGLVL_TRACE_BASIC, PYCC_LNAME_RECEIVED,
+                         self._lname)
         except socket.error as se:
                 raise SessionError(se)
 
@@ -159,7 +165,7 @@ class Session:
         if len(data) == 0: # server closed connection
             raise ProtocolError("Read of 0 bytes: connection closed")
         return data
-        
+
     def _receive_len_data(self):
         """Reads self._recv_len_size bytes of data from the socket into
            self._recv_len_data
@@ -203,7 +209,7 @@ class Session:
             # they may never both be non-zero (we are either starting
             # a full read, or continuing one of the reads
             assert self._recv_size == 0 or self._recv_len_size == 0
-            
+
             if self._recv_size == 0:
                 if self._recv_len_size == 0:
                     # both zero, start a new full read
@@ -256,15 +262,35 @@ class Session:
             "instance": instance,
         })
 
-    def group_sendmsg(self, msg, group, instance = "*", to = "*"):
+    def group_sendmsg(self, msg, group, instance=CC_INSTANCE_WILDCARD,
+                      to=CC_TO_WILDCARD, want_answer=False):
+        '''
+        Send a message over the CC session.
+
+        Parameters:
+        - msg The message to send, encoded as python structures (dicts,
+          lists, etc).
+        - group The recipient group to send to.
+        - instance Instance in the group.
+        - to Direct recipient (overrides the above, should contain the
+          lname of the recipient).
+        - want_answer If an answer is requested. If there's no recipient
+          and this is true, the message queue would send an error message
+          instead of the answer.
+
+        Return:
+          A sequence number that can be used to wait for an answer
+          (see group_recvmsg).
+        '''
         seq = self._next_sequence()
         self.sendmsg({
-            "type": "send",
-            "from": self._lname,
-            "to": to,
-            "group": group,
-            "instance": instance,
-            "seq": seq,
+            CC_HEADER_TYPE: CC_COMMAND_SEND,
+            CC_HEADER_FROM: self._lname,
+            CC_HEADER_TO: to,
+            CC_HEADER_GROUP: group,
+            CC_HEADER_INSTANCE: instance,
+            CC_HEADER_SEQ: seq,
+            CC_HEADER_WANT_ANSWER: want_answer
         }, isc.cc.message.to_wire(msg))
         return seq
 

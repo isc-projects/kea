@@ -1,3 +1,4 @@
+
 # Copyright (C) 2011  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -63,6 +64,8 @@ copylist = [
      "configurations/ddns/noddns.config"],
     ["configurations/xfrin/retransfer_master.conf.orig",
      "configurations/xfrin/retransfer_master.conf"],
+    ["configurations/xfrin/retransfer_master_nons.conf.orig",
+     "configurations/xfrin/retransfer_master_nons.conf"],
     ["configurations/xfrin/retransfer_slave.conf.orig",
      "configurations/xfrin/retransfer_slave.conf"],
     ["data/inmem-xfrin.sqlite3.orig",
@@ -83,7 +86,7 @@ removelist = [
 # If we have waited OUTPUT_WAIT_MAX_INTERVALS times, we will abort with an
 # error (so as not to hang indefinitely)
 OUTPUT_WAIT_INTERVAL = 0.5
-OUTPUT_WAIT_MAX_INTERVALS = 20
+OUTPUT_WAIT_MAX_INTERVALS = 120
 
 # class that keeps track of one running process and the files
 # we created for it.
@@ -379,6 +382,9 @@ def initialize(scenario):
 
     # Convenience variable to access the last query result from querying.py
     world.last_query_result = None
+
+    # Convenience variable to access the last HTTP response from http.py
+    world.last_http_response = None
 
     # For slightly better errors, initialize a process_pids for the relevant
     # steps

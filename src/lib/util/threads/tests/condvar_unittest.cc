@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <util/threads/sync.h>
 #include <util/threads/thread.h>
@@ -84,12 +85,14 @@ ringSignal(CondVar* condvar, Mutex* mutex, int* arg) {
 
 // A simple wait-signal operation on a condition variable.
 TEST_F(CondVarTest, waitAndSignal) {
-    Mutex::Locker locker(mutex_);
-    int shared_var = 0; // let the other thread increment this
-    Thread t(boost::bind(&ringSignal, &condvar_, &mutex_, &shared_var));
-    condvar_.wait(mutex_);
-    t.wait();
-    EXPECT_EQ(1, shared_var);
+    if (!isc::util::unittests::runningOnValgrind()) {
+        Mutex::Locker locker(mutex_);
+        int shared_var = 0; // let the other thread increment this
+        Thread t(boost::bind(&ringSignal, &condvar_, &mutex_, &shared_var));
+        condvar_.wait(mutex_);
+        t.wait();
+        EXPECT_EQ(1, shared_var);
+    }
 }
 
 // Thread's main code for the next test
@@ -143,12 +146,14 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
 TEST_F(CondVarTest, destroyWhileWait) {
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.
-    EXPECT_DEATH_IF_SUPPORTED({
-            CondVar cond;
-            Mutex::Locker locker(mutex_);
-            Thread t(boost::bind(&signalAndWait, &cond, &mutex_));
-            cond.wait(mutex_);
-        }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED({
+                CondVar cond;
+                Mutex::Locker locker(mutex_);
+                Thread t(boost::bind(&signalAndWait, &cond, &mutex_));
+                cond.wait(mutex_);
+            }, "");
+    }
 }
 #endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 

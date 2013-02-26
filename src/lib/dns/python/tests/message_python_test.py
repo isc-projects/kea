@@ -59,8 +59,8 @@ LONG_TXT4 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012
 def create_message():
     message_render = Message(Message.RENDER)
     message_render.set_qid(0x1035)
-    message_render.set_opcode(Opcode.QUERY())
-    message_render.set_rcode(Rcode.NOERROR())
+    message_render.set_opcode(Opcode.QUERY)
+    message_render.set_rcode(Rcode.NOERROR)
     message_render.set_header_flag(Message.HEADERFLAG_QR)
     message_render.set_header_flag(Message.HEADERFLAG_RD)
     message_render.set_header_flag(Message.HEADERFLAG_AA)
@@ -161,7 +161,7 @@ class MessageTest(unittest.TestCase):
     def test_set_rcode(self):
         self.assertRaises(TypeError, self.r.set_rcode, "wrong")
 
-        rcode = Rcode.BADVERS()
+        rcode = Rcode.BADVERS
         self.r.set_rcode(rcode)
         self.assertEqual(rcode, self.r.get_rcode())
 
@@ -173,7 +173,7 @@ class MessageTest(unittest.TestCase):
     def test_set_opcode(self):
         self.assertRaises(TypeError, self.r.set_opcode, "wrong")
 
-        opcode = Opcode.IQUERY()
+        opcode = Opcode.IQUERY
         self.r.set_opcode(opcode)
         self.assertEqual(opcode, self.r.get_opcode())
 
@@ -304,8 +304,8 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(TypeError, self.r.clear, 3)
 
     def test_clear_question_section(self):
-        self.r.add_question(Question(Name("www.example.com"), RRClass.IN(),
-                                     RRType.A()))
+        self.r.add_question(Question(Name("www.example.com"), RRClass.IN,
+                                     RRType.A))
         self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
         self.r.clear_section(Message.SECTION_QUESTION)
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_QUESTION))
@@ -336,19 +336,19 @@ class MessageTest(unittest.TestCase):
                          renderer.get_data())
 
     def test_to_wire_without_opcode(self):
-        self.r.set_rcode(Rcode.NOERROR())
+        self.r.set_rcode(Rcode.NOERROR)
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
 
     def test_to_wire_without_rcode(self):
-        self.r.set_opcode(Opcode.QUERY())
+        self.r.set_opcode(Opcode.QUERY)
         self.assertRaises(InvalidMessageOperation, self.r.to_wire,
                           MessageRenderer())
 
     def __common_tsigmessage_setup(self, flags=[Message.HEADERFLAG_RD],
                                    rrtype=RRType("A"), answer_data=None):
-        self.r.set_opcode(Opcode.QUERY())
-        self.r.set_rcode(Rcode.NOERROR())
+        self.r.set_opcode(Opcode.QUERY)
+        self.r.set_rcode(Rcode.NOERROR)
         for flag in flags:
             self.r.set_header_flag(flag)
         if answer_data is not None:
@@ -407,8 +407,8 @@ class MessageTest(unittest.TestCase):
         self.__common_tsig_checks("message_toWire4.wire")
 
     def test_to_wire_tsig_truncation3(self):
-        self.r.set_opcode(Opcode.QUERY())
-        self.r.set_rcode(Rcode.NOERROR())
+        self.r.set_opcode(Opcode.QUERY)
+        self.r.set_rcode(Rcode.NOERROR)
         for i in range(1, 68):
             self.r.add_question(Question(Name("www.example.com"),
                                          RRClass("IN"), RRType(i)))
@@ -469,11 +469,11 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual(msg_str, str(message_render))
 
     def test_to_text_without_opcode(self):
-        self.r.set_rcode(Rcode.NOERROR())
+        self.r.set_rcode(Rcode.NOERROR)
         self.assertRaises(InvalidMessageOperation, self.r.to_text)
 
     def test_to_text_without_rcode(self):
-        self.r.set_opcode(Opcode.QUERY())
+        self.r.set_opcode(Opcode.QUERY)
         self.assertRaises(InvalidMessageOperation, self.r.to_text)
 
     def test_from_wire(self):
@@ -488,8 +488,8 @@ test.example.com. 3600 IN A 192.0.2.2
         message_parse = Message(0)
         factoryFromFile(message_parse, "message_fromWire1")
         self.assertEqual(0x1035, message_parse.get_qid())
-        self.assertEqual(Opcode.QUERY(), message_parse.get_opcode())
-        self.assertEqual(Rcode.NOERROR(), message_parse.get_rcode())
+        self.assertEqual(Opcode.QUERY, message_parse.get_opcode())
+        self.assertEqual(Rcode.NOERROR, message_parse.get_rcode())
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_QR))
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_RD))
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_AA))
@@ -568,7 +568,7 @@ test.example.com. 3600 IN A 192.0.2.2
         # Extended Rcode = BADVERS
         message_parse = Message(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire10.wire")
-        self.assertEqual(Rcode.BADVERS(), message_parse.get_rcode())
+        self.assertEqual(Rcode.BADVERS, message_parse.get_rcode())
 
         # Maximum extended Rcode
         message_parse.clear(Message.PARSE)

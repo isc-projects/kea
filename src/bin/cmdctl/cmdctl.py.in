@@ -82,6 +82,18 @@ SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
 class CmdctlException(Exception):
     pass
 
+def check_file(file_name):
+    # TODO: Check contents of certificate file
+    if not os.path.exists(file_name):
+        raise CmdctlException("'%s' does not exist" % file_name)
+
+    if not os.path.isfile(file_name):
+        raise CmdctlException("'%s' is not a file" % file_name)
+
+    if not os.access(file_name, os.R_OK):
+        raise CmdctlException("'%s' is not readable" % file_name)
+
+
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
@@ -152,7 +164,6 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(rcode)
         self.end_headers()
         self.wfile.write(json.dumps(reply).encode())
-
 
     def _handle_login(self):
         if self._is_user_logged_in():
@@ -278,12 +289,14 @@ class CommandControl():
             if key == 'version':
                 continue
             elif key in ['key_file', 'cert_file']:
-                #TODO, only check whether the file exist,
-                # further check need to be done: eg. whether
-                # the private/certificate is valid.
+                # TODO: we only check whether the file exist, is a
+                # file, and is readable; but further check need to be done:
+                # eg. whether the private/certificate is valid.
                 path = new_config[key]
-                if not os.path.exists(path):
-                    errstr = "the file doesn't exist: " + path
+                try:
+                    check_file(path)
+                except CmdctlException as cce:
+                    errstr = str(cce)
             elif key == 'accounts_file':
                 errstr = self._accounts_file_check(new_config[key])
             else:
@@ -326,7 +339,7 @@ class CommandControl():
                     self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
-            #When cmdctl get 'shutdown' command from boss,
+            #When cmdctl get 'shutdown' command from b10-init,
             #shutdown the outer httpserver.
             self._module_cc.send_stopping()
             self._httpserver.shutdown()
@@ -416,8 +429,13 @@ class CommandControl():
             # Process the command sent to cmdctl directly.
             answer = self.command_handler(command_name, params)
         else:
+            # FIXME: Due to the fact that we use a separate session
+            # from the module one (due to threads and blocking), and
+            # because the plain cc session does not have the high-level
+            # rpc-call method, we use the low-level way and create the
+            # command ourselves.
             msg = ccsession.create_command(command_name, params)
-            seq = self._cc.group_sendmsg(msg, module_name)
+            seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
             logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
                          command_name, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
@@ -524,27 +542,27 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self.user_sessions[session_id] = time.time()
 
     def _check_key_and_cert(self, key, cert):
-        # TODO, check the content of key/certificate file
-        if not os.path.exists(key):
-            raise CmdctlException("key file '%s' doesn't exist " % key)
-
-        if not os.path.exists(cert):
-            raise CmdctlException("certificate file '%s' doesn't exist " % cert)
+        check_file(key)
+        check_file(cert);
 
     def _wrap_socket_in_ssl_context(self, sock, key, cert):
         try:
             self._check_key_and_cert(key, cert)
             ssl_sock = ssl.wrap_socket(sock,
-                                      server_side = True,
-                                      certfile = cert,
-                                      keyfile = key,
-                                      ssl_version = ssl.PROTOCOL_SSLv23)
+                                       server_side=True,
+                                       certfile=cert,
+                                       keyfile=key,
+                                       ssl_version=ssl.PROTOCOL_SSLv23)
+            # Return here (if control leaves this blocks it will raise an
+            # error)
             return ssl_sock
-        except (ssl.SSLError, CmdctlException) as err :
+        except ssl.SSLError as err:
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
-            self.close_request(sock)
-            # raise socket error to finish the request
-            raise socket.error
+        except (CmdctlException, IOError) as cce:
+            logger.error(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
+        self.close_request(sock)
+        # raise socket error to finish the request
+        raise socket.error
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''
@@ -636,5 +654,7 @@ if __name__ == '__main__':
 
     if httpd:
         httpd.shutdown()
+
+    logger.info(CMDCTL_EXITING)
 
     sys.exit(result)

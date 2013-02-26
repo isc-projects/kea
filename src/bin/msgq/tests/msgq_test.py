@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2013  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import msgq
 from msgq import SubscriptionManager, MsgQ
 
 import unittest
@@ -11,6 +27,8 @@ import threading
 import isc.cc
 import collections
 import isc.log
+import struct
+import json
 
 #
 # Currently only the subscription part and some sending is implemented...
@@ -140,6 +158,150 @@ class TestSubscriptionManager(unittest.TestCase):
         self.sm.subscribe('ConfigManager', '*', 's3')
         self.assertEqual(1, self.__cfgmgr_ready_called)
 
+class MsgQTest(unittest.TestCase):
+    """
+    Tests for the behaviour of MsgQ. This is for the core of MsgQ, other
+    subsystems are in separate test fixtures.
+    """
+    def setUp(self):
+        self.__msgq = MsgQ()
+
+    def parse_msg(self, msg):
+        """
+        Parse a binary representation of message to the routing header and the
+        data payload. It assumes the message is correctly encoded and the
+        payload is not omitted. It'd probably throw in other cases, but we
+        don't use it in such situations in this test.
+        """
+        (length, header_len) = struct.unpack('>IH', msg[:6])
+        header = json.loads(msg[6:6 + header_len].decode('utf-8'))
+        data = json.loads(msg[6 + header_len:].decode('utf-8'))
+        return (header, data)
+
+    def test_undeliverable_errors(self):
+        """
+        Send several packets through the MsgQ and check it generates
+        undeliverable notifications under the correct circumstances.
+
+        The test is not exhaustive as it doesn't test all combination
+        of existence of the recipient, addressing schemes, want_answer
+        header and the reply header. It is not needed, these should
+        be mostly independant. That means, for example, if the message
+        is a reply and there's no recipient to send it to, the error
+        would not be generated no matter if we addressed the recipient
+        by lname or group. If we included everything, the test would
+        have too many scenarios with little benefit.
+        """
+        self.__sent_messages = []
+        def fake_send_prepared_msg(socket, msg):
+            self.__sent_messages.append((socket, msg))
+            return True
+        self.__msgq.send_prepared_msg = fake_send_prepared_msg
+        # These would be real sockets in the MsgQ, but we pass them as
+        # parameters only, so we don't need them to be. We use simple
+        # integers to tell one from another.
+        sender = 1
+        recipient = 2
+        another_recipiet = 3
+        # The routing headers and data to test with.
+        routing = {
+            'to': '*',
+            'from': 'sender',
+            'group': 'group',
+            'instance': '*',
+            'seq': 42
+        }
+        data = {
+            "data": "Just some data"
+        }
+
+        # Some common checking patterns
+        def check_error():
+            self.assertEqual(1, len(self.__sent_messages))
+            self.assertEqual(1, self.__sent_messages[0][0])
+            self.assertEqual(({
+                                  'group': 'group',
+                                  'instance': '*',
+                                  'reply': 42,
+                                  'seq': 42,
+                                  'from': 'msgq',
+                                  'to': 'sender',
+                                  'want_answer': True
+                              }, {'result': [-1, "No such recipient"]}),
+                              self.parse_msg(self.__sent_messages[0][1]))
+            self.__sent_messages = []
+
+        def check_no_message():
+            self.assertEqual([], self.__sent_messages)
+
+        def check_delivered(rcpt_socket=recipient):
+            self.assertEqual(1, len(self.__sent_messages))
+            self.assertEqual(rcpt_socket, self.__sent_messages[0][0])
+            self.assertEqual((routing, data),
+                             self.parse_msg(self.__sent_messages[0][1]))
+            self.__sent_messages = []
+
+        # Send the message. No recipient, but errors are not requested,
+        # so none is generated.
+        self.__msgq.process_command_send(sender, routing, data)
+        check_no_message()
+
+        # It should act the same if we explicitly say we do not want replies.
+        routing["want_answer"] = False
+        self.__msgq.process_command_send(sender, routing, data)
+        check_no_message()
+
+        # Ask for errors if it can't be delivered.
+        routing["want_answer"] = True
+        self.__msgq.process_command_send(sender, routing, data)
+        check_error()
+
+        # If the message is a reply itself, we never generate the errors
+        routing["reply"] = 3
+        self.__msgq.process_command_send(sender, routing, data)
+        check_no_message()
+
+        # If there are recipients (but no "reply" header), the error should not
+        # be sent and the message should get delivered.
+        del routing["reply"]
+        self.__msgq.subs.find = lambda group, instance: [recipient]
+        self.__msgq.process_command_send(sender, routing, data)
+        check_delivered()
+
+        # When we send a direct message and the recipient is not there, we get
+        # the error too
+        routing["to"] = "lname"
+        self.__msgq.process_command_send(sender, routing, data)
+        check_error()
+
+        # But when the recipient is there, it is delivered and no error is
+        # generated.
+        self.__msgq.lnames["lname"] = recipient
+        self.__msgq.process_command_send(sender, routing, data)
+        check_delivered()
+
+        # If an attempt to send fails, consider it no recipient.
+        def fail_send_prepared_msg(socket, msg):
+            '''
+            Pretend sending a message failed. After one call, return to the
+            usual mock, so the errors or other messages can be sent.
+            '''
+            self.__msgq.send_prepared_msg = fake_send_prepared_msg
+            return False
+
+        self.__msgq.send_prepared_msg = fail_send_prepared_msg
+        self.__msgq.process_command_send(sender, routing, data)
+        check_error()
+
+        # But if there are more recipients and only one fails, it should
+        # be delivered to the other and not considered an error
+        self.__msgq.send_prepared_msg = fail_send_prepared_msg
+        routing["to"] = '*'
+        self.__msgq.subs.find = lambda group, instance: [recipient,
+                                                         another_recipiet]
+        self.__msgq.process_command_send(sender, routing, data)
+        check_delivered(rcpt_socket=another_recipiet)
+
 class DummySocket:
     """
     Dummy socket class.
@@ -244,17 +406,27 @@ class SendNonblock(unittest.TestCase):
             self.assertEqual(0, status,
                 "The task did not complete successfully in time")
 
+    def get_msgq_with_sockets(self):
+        '''
+        Create a message queue and prepare it for use with a socket pair.
+        The write end is put into the message queue, so we can check it.
+        It returns (msgq, read_end, write_end). It is expected the sockets
+        are closed by the caller afterwards.
+        '''
+        msgq = MsgQ()
+        # We do only partial setup, so we don't create the listening socket
+        msgq.setup_poller()
+        (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        msgq.register_socket(write)
+        return (msgq, read, write)
+
     def infinite_sender(self, sender):
         """
         Sends data until an exception happens. socket.error is caught,
         as it means the socket got closed. Sender is called to actually
         send the data.
         """
-        msgq = MsgQ()
-        # We do only partial setup, so we don't create the listening socket
-        msgq.setup_poller()
-        (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        msgq.register_socket(write)
+        (msgq, read, write) = self.get_msgq_with_sockets()
         # Keep sending while it is not closed by the msgq
         try:
             while True:
@@ -289,6 +461,34 @@ class SendNonblock(unittest.TestCase):
             data += data
         self.terminate_check(lambda: self.infinite_sender(
             lambda msgq, socket: msgq.send_prepared_msg(socket, data)))
+
+    def test_sendprepared_success(self):
+        '''
+        Test the send_prepared_msg returns success when queueing messages.
+        It does so on the first attempt (when it actually tries to send
+        something to the socket) and on any attempt that follows and the
+        buffer is already full.
+        '''
+        (msgq, read, write) = self.get_msgq_with_sockets()
+        # Now keep sending until we fill in something into the internal
+        # buffer.
+        while not write.fileno() in msgq.sendbuffs:
+            self.assertTrue(msgq.send_prepared_msg(write, b'data'))
+        read.close()
+        write.close()
+
+    def test_sendprepared_epipe(self):
+        '''
+        Test the send_prepared_msg returns false when we try to queue a
+        message and the other side is not there any more. It should be done
+        with EPIPE, so not a fatal error.
+        '''
+        (msgq, read, write) = self.get_msgq_with_sockets()
+        # Close one end. It should make a EPIPE on the other.
+        read.close()
+        # Now it should soft-fail
+        self.assertFalse(msgq.send_prepared_msg(write, b'data'))
+        write.close()
 
     def send_many(self, data):
         """
@@ -454,9 +654,8 @@ class SendNonblock(unittest.TestCase):
         Two tests are done: one where the error is raised on the 3rd octet,
                             and one on the 23rd.
         """
-        sockerr = socket.error
         for err in [ errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR ]:
-            sockerr.errno = err
+            sockerr = socket.error(err, 'Socket error')
             self.do_send_with_send_error(3, sockerr)
             self.do_send_with_send_error(23, sockerr)
 
@@ -467,9 +666,8 @@ class SendNonblock(unittest.TestCase):
         Two tests are done: one where the error is raised on the 3rd octet,
                             and one on the 23rd.
         """
-        sockerr = socket.error
         for err in [ errno.EPIPE, errno.ENOBUFS, errno.ECONNRESET ]:
-            sockerr.errno = err
+            sockerr = socket.error(err, 'Socket error')
             self.do_send_with_send_error(3, sockerr, False)
             self.do_send_with_send_error(23, sockerr, False)
 
@@ -560,6 +758,178 @@ class ThreadTests(unittest.TestCase):
         test_thread.start()
         test_thread.join(60)
         self.assertTrue(self.__result)
+
+class SocketTests(unittest.TestCase):
+    '''Test cases for micro behaviors related to socket operations.
+
+    Some cases are covered as part of other tests, but in this fixture
+    we check more details of specific method related to socket operation,
+    with the help of mock classes to avoid expensive overhead.
+
+    '''
+    class MockSocket():
+        '''A mock socket used instead of standard socket objects.'''
+        def __init__(self):
+            self.ex_on_send = None # raised from send() if not None
+            self.recv_result = b'test' # dummy data or exception
+            self.blockings = [] # history of setblocking() params
+        def setblocking(self, on):
+            self.blockings.append(on)
+        def send(self, data):
+            if self.ex_on_send is not None:
+                raise self.ex_on_send
+            return 10           # arbitrary choice
+        def recv(self, len):
+            if isinstance(self.recv_result, Exception):
+                raise self.recv_result
+            ret = self.recv_result
+            self.recv_result = b'' # if called again, return empty data
+            return ret
+        def fileno(self):
+            return 42           # arbitrary choice
+
+    class LoggerWrapper():
+        '''A simple wrapper of logger to inspect log messages.'''
+        def __init__(self, logger):
+            self.error_called = 0
+            self.warn_called = 0
+            self.debug_called = 0
+            self.orig_logger = logger
+        def error(self, *args):
+            self.error_called += 1
+            self.orig_logger.error(*args)
+        def warn(self, *args):
+            self.warn_called += 1
+            self.orig_logger.warn(*args)
+        def debug(self, *args):
+            self.debug_called += 1
+            self.orig_logger.debug(*args)
+
+    def mock_kill_socket(self, fileno, sock):
+        '''A replacement of MsgQ.kill_socket method for inspection.'''
+        self.__killed_socket = (fileno, sock)
+        if fileno in self.__msgq.sockets:
+            del self.__msgq.sockets[fileno]
+
+    def setUp(self):
+        self.__msgq = MsgQ()
+        self.__msgq.kill_socket = self.mock_kill_socket
+        self.__sock = self.MockSocket()
+        self.__data = b'dummy'
+        self.__msgq.sockets[42] = self.__sock
+        self.__msgq.sendbuffs[42] = (None, b'testdata')
+        self.__sock_error = socket.error()
+        self.__killed_socket = None
+        self.__logger = self.LoggerWrapper(msgq.logger)
+        msgq.logger = self.__logger
+
+    def tearDown(self):
+        msgq.logger = self.__logger.orig_logger
+
+    def test_send_data(self):
+        # Successful case: _send_data() returns the hardcoded value, and
+        # setblocking() is called twice with the expected parameters
+        self.assertEqual(10, self.__msgq._send_data(self.__sock, self.__data))
+        self.assertEqual([0, 1], self.__sock.blockings)
+        self.assertIsNone(self.__killed_socket)
+
+    def test_send_data_interrupt(self):
+        '''send() is interruptted. send_data() returns 0, sock isn't killed.'''
+        expected_blockings = []
+        for eno in [errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR]:
+            self.__sock_error.errno = eno
+            self.__sock.ex_on_send = self.__sock_error
+            self.assertEqual(0, self.__msgq._send_data(self.__sock,
+                                                       self.__data))
+            expected_blockings.extend([0, 1])
+            self.assertEqual(expected_blockings, self.__sock.blockings)
+            self.assertIsNone(self.__killed_socket)
+
+    def test_send_data_error(self):
+        '''Unexpected error happens on send().  The socket is killed.
+
+        If the error is EPIPE, it's logged at the warn level; otherwise
+        an error message is logged.
+
+        '''
+        expected_blockings = []
+        expected_errors = 0
+        expected_warns = 0
+        for eno in [errno.EPIPE, errno.ECONNRESET, errno.ENOBUFS]:
+            self.__sock_error.errno = eno
+            self.__sock.ex_on_send = self.__sock_error
+            self.__killed_socket = None # clear any previuos value
+            self.assertEqual(None, self.__msgq._send_data(self.__sock,
+                                                          self.__data))
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            expected_blockings.extend([0, 1])
+            self.assertEqual(expected_blockings, self.__sock.blockings)
+
+            if eno == errno.EPIPE:
+                expected_warns += 1
+            else:
+                expected_errors += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_warns, self.__logger.warn_called)
+
+    def test_process_fd_read_after_bad_write(self):
+        '''Check the specific case of write fail followed by read attempt.
+
+        The write failure results in kill_socket, then read shouldn't tried.
+
+        '''
+        self.__sock_error.errno = errno.EPIPE
+        self.__sock.ex_on_send = self.__sock_error
+        self.__msgq.process_socket = None # if called, trigger an exception
+        self.__msgq._process_fd(42, True, True, False) # shouldn't crash
+
+        # check the socket is deleted from the fileno=>sock dictionary
+        self.assertEqual({}, self.__msgq.sockets)
+
+    def test_process_fd_close_after_bad_write(self):
+        '''Similar to the previous, but for checking dup'ed kill attempt'''
+        self.__sock_error.errno = errno.EPIPE
+        self.__sock.ex_on_send = self.__sock_error
+        self.__msgq._process_fd(42, True, False, True) # shouldn't crash
+        self.assertEqual({}, self.__msgq.sockets)
+
+    def test_process_fd_writer_after_close(self):
+        '''Emulate a "writable" socket has been already closed and killed.'''
+        # This just shouldn't crash
+        self.__msgq._process_fd(4200, True, False, False)
+
+    def test_process_packet(self):
+        '''Check some failure cases in handling an incoming message.'''
+        expected_errors = 0
+        expected_debugs = 0
+
+        # if socket.recv() fails due to socket.error, it will be logged
+        # as error and the socket will be killed regardless of errno.
+        for eno in [errno.ENOBUFS, errno.ECONNRESET]:
+            self.__sock_error.errno = eno
+            self.__sock.recv_result = self.__sock_error
+            self.__killed_socket = None # clear any previuos value
+            self.__msgq.process_packet(42, self.__sock)
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            expected_errors += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_debugs, self.__logger.debug_called)
+
+        # if socket.recv() returns empty data, the result depends on whether
+        # there's any preceding data; in the second case below, at least
+        # 6 bytes of data will be expected, and the second call to our faked
+        # recv() returns empty data.  In that case it will be logged as error.
+        for recv_data in [b'', b'short']:
+            self.__sock.recv_result = recv_data
+            self.__killed_socket = None
+            self.__msgq.process_packet(42, self.__sock)
+            self.assertEqual((42, self.__sock), self.__killed_socket)
+            if len(recv_data) == 0:
+                expected_debugs += 1
+            else:
+                expected_errors += 1
+            self.assertEqual(expected_errors, self.__logger.error_called)
+            self.assertEqual(expected_debugs, self.__logger.debug_called)
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()

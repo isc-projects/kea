@@ -35,6 +35,7 @@
 
 #include <util/io/fd.h>
 #include <util/io/fd_share.h>
+#include <util/unittests/check_valgrind.h>
 
 using namespace isc::data;
 using namespace isc::config;
@@ -76,7 +77,7 @@ TEST(SocketRequestorAccess, initialized) {
     initTestSocketRequestor(NULL);
 }
 
-// This class contains a fake (module)ccsession to emulate answers from Boss
+// This class contains a fake (module)ccsession to emulate answers from Init
 class SocketRequestorTest : public ::testing::Test {
 public:
     SocketRequestorTest() : session(ElementPtr(new ListElement),
@@ -100,7 +101,7 @@ public:
     }
 
     // Creates a valid socket request answer, as it would be sent by
-    // Boss. 'valid' in terms of format, not values
+    // Init. 'valid' in terms of format, not values
     void
     addAnswer(const std::string& token, const std::string& path) {
         ElementPtr answer_part = Element::createMap();
@@ -141,7 +142,7 @@ createExpectedRequest(const std::string& address,
 
     // create the envelope
     const ElementPtr packet = Element::createList();
-    packet->add(Element::create("Boss"));
+    packet->add(Element::create("Init"));
     packet->add(Element::create("*"));
     packet->add(createCommand("get_socket", command_args));
     packet->add(Element::create(-1));
@@ -282,7 +283,7 @@ createExpectedRelease(const std::string& token) {
 
     // create the envelope
     const ElementPtr packet = Element::createList();
-    packet->add(Element::create("Boss"));
+    packet->add(Element::create("Init"));
     packet->add(Element::create("*"));
     packet->add(createCommand("drop_socket", command_args));
     packet->add(Element::create(-1));
@@ -509,81 +510,83 @@ private:
 };
 
 TEST_F(SocketRequestorTest, testSocketPassing) {
-    TestSocket ts;
-    std::vector<std::pair<std::string, int> > data;
-    data.push_back(std::pair<std::string, int>("foo\n", 1));
-    data.push_back(std::pair<std::string, int>("bar\n", 2));
-    data.push_back(std::pair<std::string, int>("foo\n", 3));
-    data.push_back(std::pair<std::string, int>("foo\n", 1));
-    data.push_back(std::pair<std::string, int>("foo\n", -1));
-    data.push_back(std::pair<std::string, int>("foo\n", -2));
+    if (!isc::util::unittests::runningOnValgrind()) {
+        TestSocket ts;
+        std::vector<std::pair<std::string, int> > data;
+        data.push_back(std::pair<std::string, int>("foo\n", 1));
+        data.push_back(std::pair<std::string, int>("bar\n", 2));
+        data.push_back(std::pair<std::string, int>("foo\n", 3));
+        data.push_back(std::pair<std::string, int>("foo\n", 1));
+        data.push_back(std::pair<std::string, int>("foo\n", -1));
+        data.push_back(std::pair<std::string, int>("foo\n", -2));
 
-    // run() returns true iff we can specify read timeout so we avoid a
-    // deadlock.  Unless there's a bug the test should succeed even without the
-    // timeout, but we don't want to make the test hang up in case with an
-    // unexpected bug, so we'd rather skip most of the tests in that case.
-    const bool timo_ok = ts.run(data);
-    SocketRequestor::SocketID socket_id;
-    if (timo_ok) {
-        // 1 should be ok
+        // run() returns true iff we can specify read timeout so we avoid a
+        // deadlock.  Unless there's a bug the test should succeed even without the
+        // timeout, but we don't want to make the test hang up in case with an
+        // unexpected bug, so we'd rather skip most of the tests in that case.
+        const bool timo_ok = ts.run(data);
+        SocketRequestor::SocketID socket_id;
+        if (timo_ok) {
+            // 1 should be ok
+            addAnswer("foo", ts.getPath());
+            socket_id = doRequest();
+            EXPECT_EQ("foo", socket_id.second);
+            EXPECT_EQ(0, close(socket_id.first));
+
+            // 2 should be ok too
+            addAnswer("bar", ts.getPath());
+            socket_id = doRequest();
+            EXPECT_EQ("bar", socket_id.second);
+            EXPECT_EQ(0, close(socket_id.first));
+
+            // 3 should be ok too (reuse earlier token)
+            addAnswer("foo", ts.getPath());
+            socket_id = doRequest();
+            EXPECT_EQ("foo", socket_id.second);
+            EXPECT_EQ(0, close(socket_id.first));
+        }
+        // Create a second socket server, to test that multiple different
+        // domains sockets would work as well (even though we don't actually
+        // use that feature)
+        TestSocket ts2;
+        std::vector<std::pair<std::string, int> > data2;
+        data2.push_back(std::pair<std::string, int>("foo\n", 1));
+        const bool timo_ok2 = ts2.run(data2);
+
+        if (timo_ok2) {
+            // 1 should be ok
+            addAnswer("foo", ts2.getPath());
+            socket_id = doRequest();
+            EXPECT_EQ("foo", socket_id.second);
+            EXPECT_EQ(0, close(socket_id.first));
+        }
+
+        if (timo_ok) {
+            // Now use first socket again
+            addAnswer("foo", ts.getPath());
+            socket_id = doRequest();
+            EXPECT_EQ("foo", socket_id.second);
+            EXPECT_EQ(0, close(socket_id.first));
+
+            // -1 is a "normal" error
+            addAnswer("foo", ts.getPath());
+            EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
+
+            // -2 is an unexpected error.  After this point it's not guaranteed the
+            // connection works as intended.
+            addAnswer("foo", ts.getPath());
+            EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
+        }
+
+        // Vector is of first socket is now empty, so the socket should be gone
         addAnswer("foo", ts.getPath());
-        socket_id = doRequest();
-        EXPECT_EQ("foo", socket_id.second);
-        EXPECT_EQ(0, close(socket_id.first));
+        EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 
-        // 2 should be ok too
-        addAnswer("bar", ts.getPath());
-        socket_id = doRequest();
-        EXPECT_EQ("bar", socket_id.second);
-        EXPECT_EQ(0, close(socket_id.first));
-
-        // 3 should be ok too (reuse earlier token)
-        addAnswer("foo", ts.getPath());
-        socket_id = doRequest();
-        EXPECT_EQ("foo", socket_id.second);
-        EXPECT_EQ(0, close(socket_id.first));
-    }
-    // Create a second socket server, to test that multiple different
-    // domains sockets would work as well (even though we don't actually
-    // use that feature)
-    TestSocket ts2;
-    std::vector<std::pair<std::string, int> > data2;
-    data2.push_back(std::pair<std::string, int>("foo\n", 1));
-    const bool timo_ok2 = ts2.run(data2);
-
-    if (timo_ok2) {
-        // 1 should be ok
+        // Vector is of second socket is now empty too, so the socket should be
+        // gone
         addAnswer("foo", ts2.getPath());
-        socket_id = doRequest();
-        EXPECT_EQ("foo", socket_id.second);
-        EXPECT_EQ(0, close(socket_id.first));
-    }
-
-    if (timo_ok) {
-        // Now use first socket again
-        addAnswer("foo", ts.getPath());
-        socket_id = doRequest();
-        EXPECT_EQ("foo", socket_id.second);
-        EXPECT_EQ(0, close(socket_id.first));
-
-        // -1 is a "normal" error
-        addAnswer("foo", ts.getPath());
-        EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
-
-        // -2 is an unexpected error.  After this point it's not guaranteed the
-        // connection works as intended.
-        addAnswer("foo", ts.getPath());
         EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
     }
-
-    // Vector is of first socket is now empty, so the socket should be gone
-    addAnswer("foo", ts.getPath());
-    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
-
-    // Vector is of second socket is now empty too, so the socket should be
-    // gone
-    addAnswer("foo", ts2.getPath());
-    EXPECT_THROW(doRequest(), SocketRequestor::SocketError);
 }
 
 }

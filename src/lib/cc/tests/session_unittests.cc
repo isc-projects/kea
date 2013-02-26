@@ -19,16 +19,28 @@
 // XXX: the ASIO header must be included before others.  See session.cc.
 #include <asio.hpp>
 
+#include <cc/session.h>
+#include <cc/data.h>
+#include <cc/tests/session_unittests_config.h>
+
 #include <gtest/gtest.h>
 #include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
-#include <cc/session.h>
-#include <cc/data.h>
-#include <session_unittests_config.h>
+#include <utility>
+#include <list>
+#include <string>
+#include <iostream>
 
 using namespace isc::cc;
+using std::pair;
+using std::list;
+using std::string;
+using isc::data::ConstElementPtr;
+using isc::data::Element;
+
+namespace {
 
 TEST(AsioSession, establish) {
     asio::io_service io_service_;
@@ -50,7 +62,6 @@ TEST(AsioSession, establish) {
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
                   ), isc::cc::SessionError
     );
-                  
 }
 
 // This class sets up a domain socket for the session to connect to
@@ -70,18 +81,16 @@ public:
                                boost::bind(&TestDomainSocket::acceptHandler,
                                            this, _1));
     }
-    
+
     ~TestDomainSocket() {
         socket_.close();
         unlink(BIND10_TEST_SOCKET_FILE);
     }
 
-    void
-    acceptHandler(const asio::error_code&) const {
+    void acceptHandler(const asio::error_code&) const {
     }
 
-    void
-    sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
+    void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
         const std::string header_wire = env->toWire();
         const std::string body_wire = msg->toWire();
         const unsigned int length = 2 + header_wire.length() +
@@ -89,7 +98,7 @@ public:
         const unsigned int length_net = htonl(length);
         const unsigned short header_length = header_wire.length();
         const unsigned short header_length_net = htons(header_length);
-    
+
         socket_.send(asio::buffer(&length_net, sizeof(length_net)));
         socket_.send(asio::buffer(&header_length_net,
                                   sizeof(header_length_net)));
@@ -97,8 +106,7 @@ public:
         socket_.send(asio::buffer(body_wire.data(), body_wire.length()));
     }
 
-    void
-    sendLname() {
+    void sendLname() {
         isc::data::ElementPtr lname_answer1 =
             isc::data::Element::fromJSON("{ \"type\": \"lname\" }");
         isc::data::ElementPtr lname_answer2 =
@@ -106,19 +114,50 @@ public:
         sendmsg(lname_answer1, lname_answer2);
     }
 
-    void
-    setSendLname() {
+    void setSendLname() {
         // ignore whatever data we get, send back an lname
         asio::async_read(socket_,  asio::buffer(data_buf, 0),
                          boost::bind(&TestDomainSocket::sendLname, this));
     }
-    
+
 private:
     asio::io_service& io_service_;
     asio::local::stream_protocol::endpoint ep_;
     asio::local::stream_protocol::acceptor acceptor_;
     asio::local::stream_protocol::socket socket_;
     char data_buf[1024];
+};
+
+/// \brief Pair holding header and data of a message sent over the connection.
+typedef pair<ConstElementPtr, ConstElementPtr> SentMessage;
+
+// We specialize the tested class a little. We replace some low-level
+// methods so we can examine the rest without relying on real network IO
+class TestSession : public Session {
+public:
+    TestSession(asio::io_service& ioservice) :
+        Session(ioservice)
+    {}
+    // Get first message previously sent by sendmsg and remove it from the
+    // buffer. Expects there's at leas one message in the buffer.
+    SentMessage getSentMessage() {
+        assert(!sent_messages_.empty());
+        const SentMessage result(sent_messages_.front());
+        sent_messages_.pop_front();
+        return (result);
+    }
+private:
+    // Override the sendmsg. They are not sent over the real connection, but
+    // stored locally and can be extracted by getSentMessage()
+    virtual void sendmsg(ConstElementPtr header) {
+        sendmsg(header, ConstElementPtr(new isc::data::NullElement));
+    }
+    virtual void sendmsg(ConstElementPtr header, ConstElementPtr payload) {
+        sent_messages_.push_back(SentMessage(header, payload));
+    }
+
+    // The sendmsg stores data here.
+    list<SentMessage> sent_messages_;
 };
 
 class SessionTest : public ::testing::Test {
@@ -132,6 +171,26 @@ protected:
 
     ~SessionTest() {
         delete tds;
+    }
+
+    // Check the session sent a message with the given header. The
+    // message is hardcoded.
+    void checkSentMessage(const string& expected_hdr, const char* description)
+    {
+        SCOPED_TRACE(description);
+        const SentMessage& msg(sess.getSentMessage());
+        elementsEqual(expected_hdr, msg.first);
+        elementsEqual("{\"test\": 42}", msg.second);
+    }
+
+private:
+    // Check two elements are equal
+    void elementsEqual(const string& expected,
+                       const ConstElementPtr& actual) const
+    {
+        EXPECT_TRUE(Element::fromJSON(expected)->equals(*actual)) <<
+            "Elements differ, expected: " << expected <<
+            ", got: " << actual->toWire();
     }
 
 public:
@@ -156,7 +215,7 @@ public:
 protected:
     asio::io_service my_io_service;
     TestDomainSocket* tds;
-    Session sess;
+    TestSession sess;
     // Keep run() from stopping right away by informing it it has work to do
     asio::io_service::work work;
 };
@@ -248,4 +307,58 @@ TEST_F(SessionTest, get_socket_descr) {
 
     // expect actual socket handle to be returned, not 0
     EXPECT_LT(0, socket);
+}
+
+// Test the group_sendmsg sends the correct data.
+TEST_F(SessionTest, group_sendmsg) {
+    // Connect (to set the lname, so we can see it sets the from)
+    tds->setSendLname();
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+    // Eat the "get_lname" message, so it doesn't confuse the
+    // test below.
+    sess.getSentMessage();
+
+    const ConstElementPtr msg(Element::fromJSON("{\"test\": 42}"));
+    sess.group_sendmsg(msg, "group");
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 0,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "No instance");
+    sess.group_sendmsg(msg, "group", "instance", "recipient");
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"instance\","
+                     "   \"seq\": 1,"
+                     "   \"to\": \"recipient\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "With instance");
+    sess.group_sendmsg(msg, "group", "*", "*", true);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 2,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": True"
+                     "}", "Want answer");
+    sess.group_sendmsg(msg, "group", "*", "*", false);
+    checkSentMessage("{"
+                     "   \"from\": \"foobar\","
+                     "   \"group\": \"group\","
+                     "   \"instance\": \"*\","
+                     "   \"seq\": 3,"
+                     "   \"to\": \"*\","
+                     "   \"type\": \"send\","
+                     "   \"want_answer\": False"
+                     "}", "Doesn't want answer");
+}
+
 }

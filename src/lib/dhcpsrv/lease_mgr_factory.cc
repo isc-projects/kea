@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -120,15 +120,13 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Yes, check what it is.
 #ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MYSQL_DB)
-            .arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
         return;
     }
 #endif
     if (parameters[type] == string("memfile")) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_MEMFILE_DB)
-            .arg(redacted);
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
         return;
     }
@@ -141,6 +139,12 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 
 void
 LeaseMgrFactory::destroy() {
+    // Destroy current lease manager.  This is a no-op if no lease manager
+    // is available.
+    if (getLeaseMgrPtr()) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CLOSE_DB)
+            .arg(getLeaseMgrPtr()->getType());
+    }
     getLeaseMgrPtr().reset();
 }
 

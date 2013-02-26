@@ -122,7 +122,6 @@ private:
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
-    size_t bytes_;
     bool done_;
 
     // Callback functions provided by the caller

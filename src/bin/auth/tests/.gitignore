@@ -1,3 +1,4 @@
 /run_unittests
 /example_base_inc.cc
 /example_nsec3_inc.cc
+/statistics_unittest.cc

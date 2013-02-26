@@ -2,9 +2,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20121219, bind10-dev@isc.org)
+AC_INIT(bind10, 20130221, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
-AM_INIT_AUTOMAKE([foreign])
+# serial-tests is not available in automake version before 1.13. In
+# automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
+# that and conditionally use serial-tests.
+AM_INIT_AUTOMAKE(
+	[foreign]
+	m4_ifndef([AM_PROG_INSTALL], [serial-tests])
+)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
@@ -155,8 +161,10 @@ if test $with_werror = 1; then
    CXXFLAGS_SAVED="$CXXFLAGS"
    CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
    AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-   AC_TRY_COMPILE([namespace { class Foo {}; }
-   namespace isc {class Bar {Foo foo_;};} ],,
+   # We use struct, not class, here, because some compilers complain about
+   # "unused private members", causing a false positive.
+   AC_TRY_COMPILE([namespace { struct Foo {}; }
+   namespace isc {struct Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
@@ -232,7 +240,22 @@ AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.2 python3.1 python3])
+# Our experiments have shown Solaris 10 has broken support for the
+# IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value
+# previously set via setsockopt().  We know it doesn't happen on one instance
+# on Solaris 11, but we don't know whether it happens for any Solaris 10
+# implementations or for earlier versions of Solaris.  In any case, at the
+# moment this matters for only one unittest case, so we'll simply disable
+# the affected test using the following definition with the specific hardcoding
+# of that version of Solaris.
+case "$host" in
+*-solaris2.10)
+	AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
+	[Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
+	;;
+esac
+
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.3 python3.2 python3.1 python3])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
@@ -282,15 +305,26 @@ AC_SUBST(PYTHON_LOGMSGPKG_DIR)
 
 # This is python package paths commonly used in python tests.  See
 # README of log_messages for why it's included.
-COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python"
+# lib/dns/python/.libs is necessary because __init__.py of isc package
+# automatically imports isc.datasrc, which then requires the DNS loadable
+# module.  #2145 should eliminate the need for it.
+COMMON_PYTHON_PATH="\$(abs_top_builddir)/src/lib/python/isc/log_messages:\$(abs_top_builddir)/src/lib/python/isc/cc:\$(abs_top_srcdir)/src/lib/python:\$(abs_top_builddir)/src/lib/python:\$(abs_top_builddir)/src/lib/dns/python/.libs"
 AC_SUBST(COMMON_PYTHON_PATH)
 
 # Check for python development environments
 if test -x ${PYTHON}-config; then
 	PYTHON_INCLUDES=`${PYTHON}-config --includes`
 
-	for flag in `${PYTHON}-config --ldflags`; do
-		# add any '-L..." flags to PYTHON_LDFLAGS
+	# Add any '-L..." flags to PYTHON_LDFLAGS.  We first make a copy of
+	# python-config --ldflags, removing any spaces and tabs
+	# between "-L" and its argument (some instances of python-config
+	# insert a space, which would confuse the code below).
+	# Notes: if -L isn't contained at all we can simply skip this process,
+	# so we only go through the flag if it's contained; also, protecting
+	# the output with [] seems necessary for environment to avoid getting
+	# an empty output accidentally.
+	python_config_ldflags=[`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`]
+	for flag in $python_config_ldflags; do
 		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
 		if test "X${flag}" != X; then
 			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
@@ -1124,6 +1158,7 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/bind10/bind10
                  src/bin/bind10/Makefile
                  src/bin/bind10/tests/Makefile
                  src/bin/cmdctl/Makefile
@@ -1192,6 +1227,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/dns/Makefile
                  src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/cc/cc_generated/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
@@ -1307,9 +1343,9 @@ AC_OUTPUT([doc/version.ent
            src/bin/sysinfo/run_sysinfo.sh
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
-           src/bin/bind10/bind10_src.py
+           src/bin/bind10/init.py
            src/bin/bind10/run_bind10.sh
-           src/bin/bind10/tests/bind10_test.py
+           src/bin/bind10/tests/init_test.py
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl_main.py
            src/bin/bindctl/tests/bindctl_test
@@ -1325,6 +1361,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/tests/testdata/example.zone
            src/bin/auth/tests/testdata/example-base.zone
            src/bin/auth/tests/testdata/example-nsec3.zone
+           src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
            src/bin/tests/process_rename_test.py
@@ -1373,6 +1410,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/bind10/bind10
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/dbutil/run_dbutil.sh

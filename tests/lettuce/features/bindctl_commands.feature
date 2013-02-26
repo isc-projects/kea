@@ -7,7 +7,7 @@ Feature: control with bindctl
         # a number of modules. It then removes all non-essential modules,
         # and checks whether they do disappear from the list of running
         # modules (note that it 'misuses' the help command for this,
-        # there is a Boss command 'show_processes' but it's output is
+        # there is a Init command 'show_processes' but it's output is
         # currently less standardized than 'help')
         Given I have bind10 running with configuration bindctl_commands.config
         And wait for bind10 stderr message BIND10_STARTED_CC
@@ -17,9 +17,9 @@ Feature: control with bindctl
         And wait for bind10 stderr message XFRIN_STARTED
         And wait for bind10 stderr message XFROUT_STARTED
         And wait for bind10 stderr message STATS_STARTING
-        And wait for bind10 stderr message STATHTTPD_STARTED
+        And wait for bind10 stderr message STATSHTTPD_STARTED
 
-        Then remove bind10 configuration Boss/components/NOSUCHMODULE
+        Then remove bind10 configuration Init/components/NOSUCHMODULE
         last bindctl output should contain Error
 
         bind10 module Xfrout should be running
@@ -30,29 +30,29 @@ Feature: control with bindctl
         bind10 module StatsHttpd should be running
         bind10 module Resolver should not be running
 
-        Then remove bind10 configuration Boss/components value b10-xfrout
+        Then remove bind10 configuration Init/components value b10-xfrout
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
         # assuming it won't error for further modules (if it does, the final
         # 'should not be running' tests would fail anyway)
-        Then remove bind10 configuration Boss/components value b10-stats-httpd
+        Then remove bind10 configuration Init/components value b10-stats-httpd
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
-        Then remove bind10 configuration Boss/components value b10-stats
+        Then remove bind10 configuration Init/components value b10-stats
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
-        Then remove bind10 configuration Boss/components value b10-zonemgr
+        Then remove bind10 configuration Init/components value b10-zonemgr
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
-        Then remove bind10 configuration Boss/components value b10-xfrin
+        Then remove bind10 configuration Init/components value b10-xfrin
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
-        Then remove bind10 configuration Boss/components value b10-auth
+        Then remove bind10 configuration Init/components value b10-auth
         And wait for new bind10 stderr message BIND10_PROCESS_ENDED
         last bindctl output should not contain Error
 
@@ -103,7 +103,7 @@ Feature: control with bindctl
         last bindctl output should not contain shouldnotshow
         # This would fail if the entire list was passed, or the configuration
         # was committed
-        send bind10 the command config show Boss/components
+        send bind10 the command config show Init/components
         last bindctl output should not contain b10-auth
 
         # nested_command contains another execute script
@@ -124,8 +124,8 @@ Feature: control with bindctl
 
         When I send bind10 the command execute init_authoritative_server show
         # just test some parts of the output
-        last bindctl output should contain /Boss/components/b10-auth/special
-        last bindctl output should contain /Boss/components/b10-zonemgr/kind
+        last bindctl output should contain /Init/components/b10-auth/special
+        last bindctl output should contain /Init/components/b10-zonemgr/kind
         last bindctl output should contain Please
 
         # nothing should have been changed

@@ -55,8 +55,8 @@
       outgoing DNS zone transfer service using AXFR or IXFR.
       It is also used to send outgoing NOTIFY messages.
       Normally it is started by the
-      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      boss process.
+      <citerefentry><refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      process.
       When the <command>b10-auth</command> DNS server receives
       a transfer request, <command>b10-xfrout</command> sends the
       zone as found in the BIND 10 zone data store.
@@ -147,7 +147,7 @@
       and exits <command>b10-xfrout</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the BIND 10 b10-init process may restart this service
       if configured.)
     </para>
 
@@ -350,6 +350,9 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>

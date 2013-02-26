@@ -294,6 +294,52 @@ public:
         EXPECT_TRUE(std::equal(buf_.begin(), buf_.begin() + opt_len, out_data.begin()));;
     }
 
+    /// @brief Test ability to set all values.
+    ///
+    /// @tparam T numeric type to perform the test for.
+    template<typename T>
+    void setValuesTest() {
+        const uint16_t opt_code = 100;
+        // Create option with empty vector of values.
+        boost::shared_ptr<OptionIntArray<T> >
+            opt(new OptionIntArray<T>(Option::V6, opt_code));
+        // Initialize vector with some data and pass to the option.
+        std::vector<T> values;
+        for (int i = 0; i < 10; ++i) {
+            values.push_back(numeric_limits<uint8_t>::max() - i);
+        }
+        opt->setValues(values);
+
+        // Check if universe, option type and data was set correctly.
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(opt_code, opt->getType());
+        std::vector<T> returned_values = opt->getValues();
+        EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    }
+
+    /// @brief Test ability to add values one by one.
+    ///
+    /// @tparam T numeric type to perform the test for.
+    template<typename T>
+    void addValuesTest() {
+        const uint16_t opt_code = 100;
+        // Create option with empty vector of values.
+        boost::shared_ptr<OptionIntArray<T> >
+            opt(new OptionIntArray<T>(Option::V6, opt_code));
+        // Initialize vector with some data and add the same data
+        // to the option.
+        std::vector<T> values;
+        for (int i = 0; i < 10; ++i) {
+            values.push_back(numeric_limits<T>::max() - i);
+            opt->addValue(numeric_limits<T>::max() - i);
+        }
+
+        // Check if universe, option type and data was set correctly.
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(opt_code, opt->getType());
+        std::vector<T> returned_values = opt->getValues();
+        EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    }
 
     OptionBuffer buf_;     ///< Option buffer
     OutputBuffer out_buf_; ///< Output buffer
@@ -371,118 +417,51 @@ TEST_F(OptionIntArrayTest, bufferToInt32V6) {
 }
 
 TEST_F(OptionIntArrayTest, setValuesUint8) {
-    const uint16_t opt_code = 100;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint8_t> >
-        opt(new OptionIntArray<uint8_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<uint8_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<uint8_t>::max() - i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<uint8_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<uint8_t>();
 }
 
 TEST_F(OptionIntArrayTest, setValuesInt8) {
-    const uint16_t opt_code = 100;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int8_t> >
-        opt(new OptionIntArray<int8_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<int8_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<int8_t>::min() + i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<int8_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<int8_t>();
 }
 
 TEST_F(OptionIntArrayTest, setValuesUint16) {
-    const uint16_t opt_code = 101;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint16_t> >
-        opt(new OptionIntArray<uint16_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<uint16_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<uint16_t>::max() - i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<uint16_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<uint16_t>();
 }
 
 TEST_F(OptionIntArrayTest, setValuesInt16) {
-    const uint16_t opt_code = 101;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int16_t> >
-        opt(new OptionIntArray<int16_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<int16_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<int16_t>::min() + i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<int16_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<int16_t>();
 }
 
 TEST_F(OptionIntArrayTest, setValuesUint32) {
-    const uint32_t opt_code = 101;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<uint32_t> >
-        opt(new OptionIntArray<uint32_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<uint32_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<uint32_t>::max() - i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<uint32_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<uint16_t>();
 }
 
 TEST_F(OptionIntArrayTest, setValuesInt32) {
-    const uint32_t opt_code = 101;
-    // Create option with empty vector of values.
-    boost::shared_ptr<OptionIntArray<int32_t> >
-        opt(new OptionIntArray<int32_t>(Option::V6, opt_code));
-    // Initialize vector with some data and pass to the option.
-    std::vector<int32_t> values;
-    for (int i = 0; i < 10; ++i) {
-        values.push_back(numeric_limits<int32_t>::min() + i);
-    }
-    opt->setValues(values);
-
-    // Check if universe, option type and data was set correctly.
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(opt_code, opt->getType());
-    std::vector<int32_t> returned_values = opt->getValues();
-    EXPECT_TRUE(std::equal(values.begin(), values.end(), returned_values.begin()));
+    setValuesTest<int16_t>();
 }
 
+TEST_F(OptionIntArrayTest, addValuesUint8) {
+    addValuesTest<uint8_t>();
+}
+
+TEST_F(OptionIntArrayTest, addValuesInt8) {
+    addValuesTest<int8_t>();
+}
+
+TEST_F(OptionIntArrayTest, addValuesUint16) {
+    addValuesTest<uint16_t>();
+}
+
+TEST_F(OptionIntArrayTest, addValuesInt16) {
+    addValuesTest<int16_t>();
+}
+
+TEST_F(OptionIntArrayTest, addValuesUint32) {
+    addValuesTest<uint16_t>();
+}
+
+TEST_F(OptionIntArrayTest, addValuesInt32) {
+    addValuesTest<int16_t>();
+}
 
 } // anonymous namespace

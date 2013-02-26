@@ -78,7 +78,7 @@
 
   <refsect1>
     <title>OPTIONS</title>
-    
+
     <para>The arguments are as follows:</para>
 
     <variablelist>
@@ -175,7 +175,7 @@
       <command>shutdown</command> exits <command>b10-cmdctl</command>.
       This has an optional <varname>pid</varname> argument to
       select the process ID to stop.
-      (Note that the BIND 10 boss process may restart this service
+      (Note that the b10-init process may restart this service
       if configured.)
     </para>
 
@@ -207,6 +207,9 @@
     <para>
       <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>

@@ -22,7 +22,6 @@
 #include <cc/data.h>
 
 #include <datasrc/data_source.h>
-#include <datasrc/memory_datasrc.h>
 
 #include <xfr/xfrout_client.h>
 
@@ -130,7 +129,7 @@ TEST_F(AuthConfigTest, invalidListenAddressConfig) {
     isc::testutils::portconfig::invalidListenAddressConfig(server);
 }
 
-// Try setting addresses trough config
+// Try setting addresses through config
 TEST_F(AuthConfigTest, listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
 

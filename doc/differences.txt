@@ -1,0 +1,12 @@
+Differences of Bind 10 to other software
+========================================
+
+Bind 9
+------
+
+TODO: There are definitely more differences than just this.
+
+* When an incoming zone transfer fails, for example because the
+  received zone doesn't contain a NS record, bind 9 stops serving the
+  zone and returns SERVFAIL to queries for that zone. Bind 10 still
+  uses the previous version of zone.

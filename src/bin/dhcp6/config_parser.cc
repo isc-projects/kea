@@ -20,6 +20,7 @@
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -58,9 +59,6 @@ class Uint32Parser;
 typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
 typedef boost::shared_ptr<StringParser> StringParserPtr;
 typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
-/// @brief Auxiliary type used for storing an element name and its parser.
-typedef pair<string, ConstElementPtr> ConfigPair;
 
 /// @brief Factory method that will create a parser for a given element name
 typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id);
@@ -103,7 +101,6 @@ OptionStorage option_defaults;
 
 /// @brief Global storage for option definitions.
 OptionDefStorage option_def_intermediate;
-
 
 /// @brief a dummy configuration parser
 ///
@@ -719,7 +716,7 @@ public:
     virtual void commit() {
         if (options_ == NULL) {
             isc_throw(isc::InvalidOperation, "parser logic error: storage must be set before "
-                      "commiting option data.");
+                      "committing option data.");
         } else  if (!option_descriptor_.option) {
             // Before we can commit the new option should be configured. If it is not
             // than somebody must have called commit() before build().
@@ -779,27 +776,31 @@ private:
         // does not exceed range of uint16_t and is not zero.
         uint32_t option_code = getParam<uint32_t>("code", uint32_values_);
         if (option_code == 0) {
-            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
-                      << " be equal to zero. Option code '0' is reserved in"
-                      << " DHCPv6.");
+            isc_throw(DhcpConfigError, "option code must not be zero."
+                      << " Option code '0' is reserved in DHCPv6.");
         } else if (option_code > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(DhcpConfigError, "Parser error: value of 'code' must not"
-                      << " exceed " << std::numeric_limits<uint16_t>::max());
+            isc_throw(DhcpConfigError, "invalid option code '" << option_code
+                      << "', it must not exceed '"
+                      << std::numeric_limits<uint16_t>::max() << "'");
         }
         // Check that the option name has been specified, is non-empty and does not
         // contain spaces.
-        // @todo possibly some more restrictions apply here?
         std::string option_name = getParam<std::string>("name", string_values_);
         if (option_name.empty()) {
-            isc_throw(DhcpConfigError, "Parser error: option name must not be"
-                      << " empty");
+            isc_throw(DhcpConfigError, "name of the option with code '"
+                      << option_code << "' is empty");
         } else if (option_name.find(" ") != std::string::npos) {
-            isc_throw(DhcpConfigError, "Parser error: option name must not contain"
-                      << " spaces");
+            isc_throw(DhcpConfigError, "invalid option name '" << option_name
+                      << "', space character is not allowed");
         }
 
         std::string option_space = getParam<std::string>("space", string_values_);
-        /// @todo Validate option space once #2313 is merged.
+        if (!OptionSpace::validateName(option_space)) {
+            isc_throw(DhcpConfigError, "invalid option space name '"
+                      << option_space << "' specified for option '"
+                      << option_name << "' (code '" << option_code
+                      << "')");
+        }
 
         OptionDefinitionPtr def;
         if (option_space == "dhcp6" &&
@@ -888,7 +889,7 @@ private:
             // definition of option value makes sense.
             if (def->getName() != option_name) {
                 isc_throw(DhcpConfigError, "specified option name '"
-                          << option_name << " does not match the "
+                          << option_name << "' does not match the "
                           << "option definition: '" << option_space
                           << "." << def->getName() << "'");
             }
@@ -995,13 +996,13 @@ public:
         return (new OptionDataListParser(param_name));
     }
 
+    /// Pointer to options instances storage.
+    OptionStorage* options_;
     /// Intermediate option storage. This storage is used by
     /// lower level parsers to add new options.  Values held
     /// in this storage are assigned to main storage (options_)
     /// if overall parsing was successful.
     OptionStorage local_options_;
-    /// Pointer to options instances storage.
-    OptionStorage* options_;
     /// Collection of parsers;
     ParserCollection parsers_;
 };
@@ -1035,8 +1036,8 @@ public:
         BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
             std::string entry(param.first);
             ParserPtr parser;
-            if (entry == "name" || entry == "type" ||
-                entry == "record-types" || entry == "space") {
+            if (entry == "name" || entry == "type" || entry == "record-types" ||
+                entry == "space" || entry == "encapsulate") {
                 StringParserPtr
                     str_parser(dynamic_cast<StringParser*>(StringParser::factory(entry)));
                 if (str_parser) {
@@ -1086,8 +1087,8 @@ public:
 
     /// @brief Stores the parsed option definition in the data store.
     void commit() {
-        // @todo validate option space name once 2313 is merged.
-        if (storage_ && option_definition_) {
+        if (storage_ && option_definition_ &&
+            OptionSpace::validateName(option_space_name_)) {
             storage_->addItem(option_definition_, option_space_name_);
         }
     }
@@ -1109,11 +1110,10 @@ private:
     void createOptionDef() {
         // Get the option space name and validate it.
         std::string space = getParam<std::string>("space", string_values_);
-        // @todo uncomment the code below when the #2313 is merged.
-        /*        if (!OptionSpace::validateName()) {
+        if (!OptionSpace::validateName(space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << space << "'");
-                      } */
+        }
 
         // Get other parameters that are needed to create the
         // option definition.
@@ -1121,9 +1121,36 @@ private:
         uint32_t code = getParam<uint32_t>("code", uint32_values_);
         std::string type = getParam<std::string>("type", string_values_);
         bool array_type = getParam<bool>("array", boolean_values_);
+        std::string encapsulates = getParam<std::string>("encapsulate",
+                                                         string_values_);
 
-        OptionDefinitionPtr def(new OptionDefinition(name, code,
-                                                     type, array_type));
+        // Create option definition.
+        OptionDefinitionPtr def;
+        // We need to check if user has set encapsulated option space
+        // name. If so, different constructor will be used.
+        if (!encapsulates.empty()) {
+            // Arrays can't be used together with sub-options.
+            if (array_type) {
+                isc_throw(DhcpConfigError, "option '" << space << "."
+                          << "name" << "', comprising an array of data"
+                          << " fields may not encapsulate any option space");
+
+            } else if (encapsulates == space) {
+                isc_throw(DhcpConfigError, "option must not encapsulate"
+                          << " an option space it belongs to: '"
+                          << space << "." << name << "' is set to"
+                          << " encapsulate '" << space << "'");
+
+            } else {
+                def.reset(new OptionDefinition(name, code, type,
+                                               encapsulates.c_str()));
+            }
+
+        } else {
+            def.reset(new OptionDefinition(name, code, type, array_type));
+
+        }
+
         // The record-types field may carry a list of comma separated names
         // of data types that form a record.
         std::string record_types = getParam<std::string>("record-types",
@@ -1141,7 +1168,7 @@ private:
                 }
             } catch (const Exception& ex) {
                 isc_throw(DhcpConfigError, "invalid record type values"
-                          << " specified for the option  definition: "
+                          << " specified for the option definition: "
                           << ex.what());
             }
         }
@@ -1360,6 +1387,63 @@ private:
         return (false);
     }
 
+    /// @brief Append sub-options to an option.
+    ///
+    /// @param option_space a name of the encapsulated option space.
+    /// @param option option instance to append sub-options to.
+    void appendSubOptions(const std::string& option_space, OptionPtr& option) {
+        // Only non-NULL options are stored in option container.
+        // If this option pointer is NULL this is a serious error.
+        assert(option);
+
+        OptionDefinitionPtr def;
+        if (option_space == "dhcp6" &&
+            LibDHCP::isStandardOption(Option::V6, option->getType())) {
+            def = LibDHCP::getOptionDef(Option::V6, option->getType());
+            // Definitions for some of the standard options hasn't been
+            // implemented so it is ok to leave here.
+            if (!def) {
+                return;
+            }
+        } else {
+            const OptionDefContainerPtr defs =
+                option_def_intermediate.getItems(option_space);
+            const OptionDefContainerTypeIndex& idx = defs->get<1>();
+            const OptionDefContainerTypeRange& range =
+                idx.equal_range(option->getType());
+            // There is no definition so we have to leave.
+            if (std::distance(range.first, range.second) == 0) {
+                return;
+            }
+
+            def = *range.first;
+
+            // If the definition exists, it must be non-NULL.
+            // Otherwise it is a programming error.
+            assert(def);
+        }
+
+        // We need to get option definition for the particular option space
+        // and code. This definition holds the information whether our
+        // option encapsulates any option space.
+        // Get the encapsulated option space name.
+        std::string encapsulated_space = def->getEncapsulatedSpace();
+        // If option space name is empty it means that our option does not
+        // encapsulate any option space (does not include sub-options).
+        if (!encapsulated_space.empty()) {
+            // Get the sub-options that belong to the encapsulated
+            // option space.
+            const Subnet::OptionContainerPtr sub_opts =
+                option_defaults.getItems(encapsulated_space);
+            // Append sub-options to the option.
+            BOOST_FOREACH(Subnet::OptionDescriptor desc, *sub_opts) {
+                if (desc.option) {
+                    option->addOption(desc.option);
+                }
+            }
+        }
+    }
+
     /// @brief Create a new subnet using a data from child parsers.
     ///
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing failed.
@@ -1460,6 +1544,8 @@ private:
                     LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
                         .arg(desc.option->getType()).arg(addr.toText());
                 }
+                // Add sub-options (if any).
+                appendSubOptions(option_space, desc.option);
                 // In any case, we add the option to the subnet.
                 subnet_->addOption(desc.option, false, option_space);
             }
@@ -1487,6 +1573,9 @@ private:
                 Subnet::OptionDescriptor existing_desc =
                     subnet_->getOptionDescriptor(option_space, desc.option->getType());
                 if (!existing_desc.option) {
+                    // Add sub-options (if any).
+                    appendSubOptions(option_space, desc.option);
+
                     subnet_->addOption(desc.option, false, option_space);
                 }
             }
@@ -1663,6 +1752,7 @@ DhcpConfigParser* createGlobalDhcpConfigParser(const std::string& config_id) {
     factories["option-data"] = OptionDataListParser::factory;
     factories["option-def"] = OptionDefListParser::factory;
     factories["version"] = StringParser::factory;
+    factories["lease-database"] = DbAccessParser::factory;
 
     FactoryMap::iterator f = factories.find(config_id);
     if (f == factories.end()) {
@@ -1717,13 +1807,19 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
     // rollback informs whether error occured and original data
     // have to be restored to global storages.
     bool rollback = false;
+    // config_pair holds ther details of the current parser when iterating over
+    // the parsers.  It is declared outside the loop so in case of error, the
+    // name of the failing parser can be retrieved within the "catch" clause.
+    ConfigPair config_pair;
     try {
 
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
             config_set->mapValue();
-        BOOST_FOREACH(ConfigPair config_pair, values_map) {
+        BOOST_FOREACH(config_pair, values_map) {
             ParserPtr parser(createGlobalDhcpConfigParser(config_pair.first));
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
+                      .arg(config_pair.first);
             if (config_pair.first == "subnet6") {
                 subnet_parser = parser;
 
@@ -1758,15 +1854,18 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
         }
 
     } catch (const isc::Exception& ex) {
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed: ") + ex.what());
+        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
+                  .arg(config_pair.first).arg(ex.what());
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed: ") + ex.what());
         // An error occured, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
         // for things like bad_cast in boost::lexical_cast
-        answer =
-            isc::config::createAnswer(1, string("Configuration parsing failed"));
+        LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
+        answer = isc::config::createAnswer(1,
+                     string("Configuration parsing failed"));
         // An error occured, so make sure that we restore original data.
         rollback = true;
     }
@@ -1782,15 +1881,16 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
             }
         }
         catch (const isc::Exception& ex) {
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed:") 
-                                          + ex.what());
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed:") + ex.what());
             // An error occured, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // for things like bad_cast in boost::lexical_cast
-            answer =
-                isc::config::createAnswer(2, string("Configuration commit failed"));
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(2,
+                         string("Configuration commit failed"));
             // An error occured, so make sure to restore the original data.
             rollback = true;
         }
@@ -1808,7 +1908,7 @@ configureDhcp6Server(Dhcpv6Srv&, ConstElementPtr config_set) {
     LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE).arg(config_details);
 
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(0, "Configuration commited.");
+    answer = isc::config::createAnswer(0, "Configuration committed.");
     return (answer);
 }
 

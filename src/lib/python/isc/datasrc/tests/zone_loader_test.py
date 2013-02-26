@@ -13,6 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import isc.log
 import isc.datasrc
 import isc.dns
 
@@ -33,6 +34,7 @@ ORIG_DB_FILE = TESTDATA_PATH + '/example.com.sqlite3'
 DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
 DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '" }'
 DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '" }'
+STATIC_ZONE_CONFIG = '"' + TESTDATA_PATH + "/static.zone" + '"'
 
 ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
@@ -96,7 +98,7 @@ class ZoneLoaderTests(unittest.TestCase):
         """
         result, finder = self.client.find_zone(self.test_name)
         self.assertEqual(self.client.SUCCESS, result)
-        result, rrset, _ = finder.find(self.test_name, isc.dns.RRType.SOA())
+        result, rrset, _ = finder.find(self.test_name, isc.dns.RRType.SOA)
         self.assertEqual(finder.SUCCESS, result)
         self.assertEqual(soa_txt, rrset.to_text())
 
@@ -214,10 +216,15 @@ class ZoneLoaderTests(unittest.TestCase):
                           self.client, zone_name, self.source_client)
 
     def test_no_ds_load_support(self):
-        # This may change in the future, but atm, the in-mem ds does
-        # not support the API the zone loader uses (it has direct load calls)
-        inmem_client = isc.datasrc.DataSourceClient('memory',
-                                                    '{ "type": "memory" }');
+        # As the memory datasource module no longer exists, we check the
+        # static datasource instead (as that uses the memory datasource
+        # anyway).
+        #
+        # This may change in the future, but ATM, the static ds does not
+        # support the API the zone loader uses (it has direct load
+        # calls).
+        inmem_client = isc.datasrc.DataSourceClient('static',
+                                                    STATIC_ZONE_CONFIG);
         self.assertRaises(isc.datasrc.NotImplemented,
                           isc.datasrc.ZoneLoader,
                           inmem_client, self.test_name, self.test_file)
@@ -231,7 +238,7 @@ class ZoneLoaderTests(unittest.TestCase):
     def test_wrong_class_from_client(self):
         # For ds->ds loading, wrong class is detected upon construction
         # Need a bit of the extended setup for CH source client
-        clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH())
+        clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
         clientlist.configure('[ { "type": "static", "params": "' +
                              STATIC_ZONE_FILE +'" } ]', False)
         self.source_client, _, _ = clientlist.find(isc.dns.Name("bind."),

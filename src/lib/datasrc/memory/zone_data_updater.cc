@@ -336,6 +336,17 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
             // "NSEC signed")
             zone_data_.setSigned(true);
         }
+
+        // If we are adding a new SOA at the origin, update zone's min TTL.
+        // Note: if the input is broken and contains multiple SOAs, the load
+        // or update will be rejected higher level.  We just always (though
+        // this should be only once in normal cases) update the TTL.
+        if (rrset && rrtype == RRType::SOA() && is_origin) {
+            // Our own validation ensures the RRset is not empty.
+            zone_data_.setMinTTL(
+                dynamic_cast<const generic::SOA&>(
+                    rrset->getRdataIterator()->getCurrent()).getMinimum());
+        }
     }
 }
 

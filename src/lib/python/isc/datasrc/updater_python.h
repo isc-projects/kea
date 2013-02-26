@@ -36,7 +36,7 @@ extern PyTypeObject zoneupdater_type;
 PyObject* createZoneUpdaterObject(isc::datasrc::ZoneUpdaterPtr source,
                                   PyObject* base_obj = NULL);
 
-
+bool initModulePart_ZoneUpdater(PyObject* mod);
 } // namespace python
 } // namespace datasrc
 } // namespace isc

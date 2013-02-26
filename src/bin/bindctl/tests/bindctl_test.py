@@ -18,11 +18,14 @@ import unittest
 import isc.cc.data
 import os
 import io
+import errno
 import sys
 import socket
+import ssl
 import http.client
 import pwd
 import getpass
+import re
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
@@ -335,6 +338,8 @@ class TestConfigCommands(unittest.TestCase):
         self.tool.add_module_info(mod_info)
         self.tool.config_data = FakeCCSession()
         self.stdout_backup = sys.stdout
+        self.printed_messages = []
+        self.tool._print = self.store_print
 
     def test_precmd(self):
         def update_all_modules_info():
@@ -346,6 +351,111 @@ class TestConfigCommands(unittest.TestCase):
         # shouldn't be called
         precmd('EOF')
         self.assertRaises(socket.error, precmd, 'continue')
+
+    def store_print(self, *args):
+        '''Method to override _print in BindCmdInterpreter.
+           Instead of printing the values, appends the argument tuple
+           to the list in self.printed_messages'''
+        self.printed_messages.append(" ".join(map(str, args)))
+
+    def __check_printed_message(self, expected_message, printed_message):
+        self.assertIsNotNone(re.match(expected_message, printed_message),
+                             "Printed message '" + printed_message +
+                             "' does not match '" + expected_message + "'")
+
+    def __check_printed_messages(self, expected_messages):
+        '''Helper test function to check the printed messages against a list
+           of regexps'''
+        self.assertEqual(len(expected_messages), len(self.printed_messages))
+        for _ in map(self.__check_printed_message,
+                     expected_messages,
+                     self.printed_messages):
+            pass
+
+    def test_try_login(self):
+        # Make sure __try_login raises the correct exception
+        # upon failure of either send_POST or the read() on the
+        # response
+
+        orig_send_POST = self.tool.send_POST
+        expected_printed_messages = []
+        try:
+            def send_POST_raiseImmediately(self, params):
+                raise socket.error("test error")
+
+            self.tool.send_POST = send_POST_raiseImmediately
+            self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
+            expected_printed_messages.append(
+                'Socket error while sending login information:  test error')
+            self.__check_printed_messages(expected_printed_messages)
+
+            def create_send_POST_raiseOnRead(exception):
+                '''Create a replacement send_POST() method that raises
+                   the given exception when read() is called on the value
+                   returned from send_POST()'''
+                def send_POST_raiseOnRead(self, params):
+                    class MyResponse:
+                        def read(self):
+                            raise exception
+                    return MyResponse()
+                return send_POST_raiseOnRead
+
+            # basic socket error
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(socket.error("read error"))
+            self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
+            expected_printed_messages.append(
+                'Socket error while sending login information:  read error')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # connection reset
+            exc = socket.error("connection reset")
+            exc.errno = errno.ECONNRESET
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
+            expected_printed_messages.append(
+                'Socket error while sending login information:  '
+                'connection reset')
+            expected_printed_messages.append(
+                'Please check the logs of b10-cmdctl, there may be a '
+                'problem accepting SSL connections, such as a permission '
+                'problem on the server certificate file.'
+            )
+            self.__check_printed_messages(expected_printed_messages)
+
+            # 'normal' SSL error
+            exc = ssl.SSLError()
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
+            expected_printed_messages.append(
+                'SSL error while sending login information:  .*')
+            self.__check_printed_messages(expected_printed_messages)
+
+            # 'EOF' SSL error
+            exc = ssl.SSLError()
+            exc.errno = ssl.SSL_ERROR_EOF
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(exc)
+            self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
+            expected_printed_messages.append(
+                'SSL error while sending login information: .*')
+            expected_printed_messages.append(
+                'Please check the logs of b10-cmdctl, there may be a '
+                'problem accepting SSL connections, such as a permission '
+                'problem on the server certificate file.'
+            )
+            self.__check_printed_messages(expected_printed_messages)
+
+            # any other exception should be passed through
+            self.tool.send_POST =\
+                create_send_POST_raiseOnRead(ImportError())
+            self.assertRaises(ImportError, self.tool._try_login, "foo", "bar")
+            self.__check_printed_messages(expected_printed_messages)
+
+        finally:
+            self.tool.send_POST = orig_send_POST
 
     def test_run(self):
         def login_to_cmdctl():
@@ -360,29 +470,22 @@ class TestConfigCommands(unittest.TestCase):
         self.tool.conn.sock = FakeSocket()
         self.tool.conn.sock.close()
 
-        # validate log message for socket.err
-        socket_err_output = io.StringIO()
-        sys.stdout = socket_err_output
         self.assertEqual(1, self.tool.run())
 
         # First few lines may be some kind of heading, or a warning that
         # Python readline is unavailable, so we do a sub-string check.
         self.assertIn("Failed to send request, the connection is closed",
-                      socket_err_output.getvalue())
-
-        socket_err_output.close()
+                      self.printed_messages)
+        self.assertEqual(1, len(self.printed_messages))
 
         # validate log message for http.client.CannotSendRequest
-        cannot_send_output = io.StringIO()
-        sys.stdout = cannot_send_output
         self.assertEqual(1, self.tool.run())
 
         # First few lines may be some kind of heading, or a warning that
         # Python readline is unavailable, so we do a sub-string check.
         self.assertIn("Can not send request, the connection is busy",
-                      cannot_send_output.getvalue())
-
-        cannot_send_output.close()
+                      self.printed_messages)
+        self.assertEqual(2, len(self.printed_messages))
 
     def test_apply_cfg_command_int(self):
         self.tool.location = '/'

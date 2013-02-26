@@ -43,6 +43,9 @@ specific error is printed in the message.
 This debug message indicates that the given command has been sent to
 the given module.
 
+% CMDCTL_EXITING exiting
+The b10-cmdctl daemon is exiting.
+
 % CMDCTL_NO_SUCH_USER username not found in user database: %1
 A login attempt was made to b10-cmdctl, but the username was not known.
 Users can be added with the tool b10-cmdctl-usermgr.
@@ -57,6 +60,13 @@ with the tool b10-cmdctl-usermgr.
 % CMDCTL_SEND_COMMAND sending command %1 to module %2
 This debug message indicates that the given command is being sent to
 the given module.
+
+% CMDCTL_SSL_SETUP_FAILURE_READING_CERT failed to read certificate or key: %1
+The b10-cmdctl daemon is unable to read either the certificate file or
+the private key file, and is therefore unable to accept any SSL connections.
+The specific error is printed in the message.
+The administrator should solve the issue with the files, or recreate them
+with the b10-certgen tool.
 
 % CMDCTL_SSL_SETUP_FAILURE_USER_DENIED failed to create an SSL connection (user denied): %1
 The user was denied because the SSL connection could not successfully
