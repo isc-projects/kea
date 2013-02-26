@@ -191,7 +191,7 @@ class UserManager:
                 if len(self.args) > 2:
                     password = self.args[2]
                 else:
-                    password = self.__prompt_for_password()
+                    password = self._prompt_for_password()
                 if not self.__add_user(username, password):
                     print("Error: username exists")
                     return USER_EXISTS
