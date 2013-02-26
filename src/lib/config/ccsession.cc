@@ -341,8 +341,8 @@ getRelatedLoggers(ConstElementPtr loggers) {
         const std::string cur_name = cur_logger->get("name")->stringValue();
         // If name is '*', or starts with '*.', replace * with root
         // logger name.
-        if (cur_name == "*" || cur_name.length() > 1 &&
-            cur_name[0] == '*' && cur_name[1] == '.') {
+        if (cur_name == "*" || (cur_name.length() > 1 &&
+            cur_name[0] == '*' && cur_name[1] == '.')) {
 
             // Substitute the "*" with the root name
             std::string mod_name = cur_name;

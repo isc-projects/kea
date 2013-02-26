@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -40,7 +41,8 @@ OptionDefinition::OptionDefinition(const std::string& name,
     : name_(name),
       code_(code),
       type_(OPT_UNKNOWN_TYPE),
-      array_type_(array_type) {
+      array_type_(array_type),
+      encapsulated_space_("") {
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
@@ -54,7 +56,33 @@ OptionDefinition::OptionDefinition(const std::string& name,
     : name_(name),
       code_(code),
       type_(type),
-      array_type_(array_type) {
+      array_type_(array_type),
+      encapsulated_space_("") {
+}
+
+OptionDefinition::OptionDefinition(const std::string& name,
+                                   const uint16_t code,
+                                   const std::string& type,
+                                   const char* encapsulated_space)
+    : name_(name),
+      code_(code),
+      // Data type is held as enum value by this class.
+      // Use the provided option type string to get the
+      // corresponding enum value.
+      type_(OptionDataTypeUtil::getDataType(type)),
+      array_type_(false),
+      encapsulated_space_(encapsulated_space) {
+}
+
+OptionDefinition::OptionDefinition(const std::string& name,
+                                   const uint16_t code,
+                                   const OptionDataType type,
+                                   const char* encapsulated_space)
+    : name_(name),
+      code_(code),
+      type_(type),
+      array_type_(false),
+      encapsulated_space_(encapsulated_space) {
 }
 
 void
@@ -188,8 +216,8 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         const RecordFieldsCollection& records = getRecordFields();
         if (records.size() > values.size()) {
             isc_throw(InvalidOptionValue, "number of data fields for the option"
-                      << " type " << type_ << " is greater than number of values"
-                      << " provided.");
+                      << " type '" <<  getCode() << "' is greater than number"
+                      << " of values provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
             writeToBuffer(util::str::trim(values[i]),
@@ -227,6 +255,11 @@ OptionDefinition::validate() const {
         all(find_head(name_, 1), boost::is_any_of(std::string("-_"))) ||
         all(find_tail(name_, 1), boost::is_any_of(std::string("-_")))) {
         err_str << "invalid option name '" << name_ << "'";
+
+    } else if (!encapsulated_space_.empty() &&
+               !OptionSpace::validateName(encapsulated_space_)) {
+        err_str << "invalid encapsulated option space name: '"
+                << encapsulated_space_ << "'";
 
     } else if (type_ >= OPT_UNKNOWN_TYPE) {
         // Option definition must be of a known type.
@@ -411,14 +444,8 @@ OptionDefinition::writeToBuffer(const std::string& value,
         OptionDataTypeUtil::writeString(value, buf);
         return;
     case OPT_FQDN_TYPE:
-        {
-            // FQDN implementation is not terribly complicated but will require
-            // creation of some additional logic (maybe object) that will parse
-            // the fqdn into labels.
-            isc_throw(isc::NotImplemented, "write of FQDN record into option buffer"
-                      " is not supported yet");
-            return;
-        }
+        OptionDataTypeUtil::writeFqdn(value, buf);
+        return;
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been

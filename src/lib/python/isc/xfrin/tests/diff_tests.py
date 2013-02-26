@@ -16,7 +16,8 @@
 import isc.log
 import unittest
 from isc.datasrc import ZoneFinder
-from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
+from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata, \
+    RRsetCollectionBase
 from isc.xfrin.diff import Diff, NoSuchZone
 
 class TestError(Exception):
@@ -56,8 +57,8 @@ class DiffTest(unittest.TestCase):
         self.__find_all_name = None
         self.__find_all_options = None
         # Some common values
-        self.__rrclass = RRClass.IN()
-        self.__type = RRType.A()
+        self.__rrclass = RRClass.IN
+        self.__type = RRType.A
         self.__ttl = RRTTL(3600)
         # And RRsets
         # Create two valid rrsets
@@ -80,27 +81,27 @@ class DiffTest(unittest.TestCase):
         # Also create a few other (valid) rrsets
         # A SOA record
         self.__rrset_soa = RRset(Name('example.org.'), self.__rrclass,
-                                 RRType.SOA(), RRTTL(3600))
-        self.__rrset_soa.add_rdata(Rdata(RRType.SOA(), self.__rrclass,
+                                 RRType.SOA, RRTTL(3600))
+        self.__rrset_soa.add_rdata(Rdata(RRType.SOA, self.__rrclass,
                                          "ns1.example.org. " +
                                          "admin.example.org. " +
                                          "1233 3600 1800 2419200 7200"))
         # A few single-rr rrsets that together would for a multi-rr rrset
         self.__rrset3 = RRset(Name('c.example.org.'), self.__rrclass,
-                              RRType.TXT(), self.__ttl)
-        self.__rrset3.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "one"))
+                              RRType.TXT, self.__ttl)
+        self.__rrset3.add_rdata(Rdata(RRType.TXT, self.__rrclass, "one"))
         self.__rrset4 = RRset(Name('c.example.org.'), self.__rrclass,
-                              RRType.TXT(), self.__ttl)
-        self.__rrset4.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "two"))
+                              RRType.TXT, self.__ttl)
+        self.__rrset4.add_rdata(Rdata(RRType.TXT, self.__rrclass, "two"))
         self.__rrset5 = RRset(Name('c.example.org.'), self.__rrclass,
-                              RRType.TXT(), self.__ttl)
-        self.__rrset5.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "three"))
+                              RRType.TXT, self.__ttl)
+        self.__rrset5.add_rdata(Rdata(RRType.TXT, self.__rrclass, "three"))
         self.__rrset6 = RRset(Name('d.example.org.'), self.__rrclass,
-                              RRType.A(), self.__ttl)
-        self.__rrset6.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.1"))
+                              RRType.A, self.__ttl)
+        self.__rrset6.add_rdata(Rdata(RRType.A, self.__rrclass, "192.0.2.1"))
         self.__rrset7 = RRset(Name('d.example.org.'), self.__rrclass,
-                              RRType.A(), self.__ttl)
-        self.__rrset7.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
+                              RRType.A, self.__ttl)
+        self.__rrset7.add_rdata(Rdata(RRType.A, self.__rrclass, "192.0.2.2"))
 
     def __mock_compact(self):
         """
@@ -315,7 +316,7 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(ValueError, diff.add_data, self.__rrset2)
         self.assertRaises(ValueError, diff.delete_data, self.__rrset1)
         self.assertRaises(ValueError, diff.find, Name('foo.example.org.'),
-                          RRType.A())
+                          RRType.A)
         self.assertRaises(ValueError, diff.find_all, Name('foo.example.org.'))
         diff.apply = orig_apply
         self.assertRaises(ValueError, diff.apply)
@@ -434,9 +435,9 @@ class DiffTest(unittest.TestCase):
         Test a wrong class of rrset is rejected.
         """
         diff = Diff(self, Name('example.org.'))
-        rrset = RRset(Name('a.example.org.'), RRClass.CH(), RRType.NS(),
+        rrset = RRset(Name('a.example.org.'), RRClass.CH, RRType.NS,
                       self.__ttl)
-        rrset.add_rdata(Rdata(RRType.NS(), RRClass.CH(), 'ns.example.org.'))
+        rrset.add_rdata(Rdata(RRType.NS, RRClass.CH, 'ns.example.org.'))
         self.assertRaises(ValueError, diff.add_data, rrset)
         self.assertRaises(ValueError, diff.delete_data, rrset)
 
@@ -516,14 +517,14 @@ class DiffTest(unittest.TestCase):
         '''
         diff = Diff(self, Name('example.org.'))
         rrsig1 = RRset(Name('example.org'), self.__rrclass,
-                       RRType.RRSIG(), RRTTL(3600))
-        rrsig1.add_rdata(Rdata(RRType.RRSIG(), self.__rrclass,
+                       RRType.RRSIG, RRTTL(3600))
+        rrsig1.add_rdata(Rdata(RRType.RRSIG, self.__rrclass,
                                'A 5 3 3600 20000101000000 20000201000000 ' +
                                '0 example.org. FAKEFAKEFAKE'))
         diff.add_data(rrsig1)
         rrsig2 = RRset(Name('example.org'), self.__rrclass,
-                       RRType.RRSIG(), RRTTL(1800))
-        rrsig2.add_rdata(Rdata(RRType.RRSIG(), self.__rrclass,
+                       RRType.RRSIG, RRTTL(1800))
+        rrsig2.add_rdata(Rdata(RRType.RRSIG, self.__rrclass,
                                'AAAA 5 3 3600 20000101000000 20000201000000 ' +
                                '1 example.org. FAKEFAKEFAKE'))
         diff.add_data(rrsig2)
@@ -557,7 +558,7 @@ class DiffTest(unittest.TestCase):
         '''
         diff_multi = Diff(self, Name('example.org.'), single_update_mode=False)
         self.assertRaises(ValueError, diff_multi.find_updated,
-                          Name('example.org.'), RRType.A())
+                          Name('example.org.'), RRType.A)
         self.assertRaises(ValueError, diff_multi.find_all_updated,
                           Name('example.org.'))
 
@@ -570,12 +571,12 @@ class DiffTest(unittest.TestCase):
         '''
 
         # full rrset for A (to check compact())
-        txt = RRset(Name('c.example.org.'), self.__rrclass, RRType.TXT(),
+        txt = RRset(Name('c.example.org.'), self.__rrclass, RRType.TXT,
                     RRTTL(3600))
         txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "one"))
         txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "two"))
         txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "three"))
-        a = RRset(Name('d.example.org.'), self.__rrclass, RRType.A(),
+        a = RRset(Name('d.example.org.'), self.__rrclass, RRType.A,
                   RRTTL(3600))
         a.add_rdata(Rdata(a.get_type(), a.get_class(), "192.0.2.1"))
         a.add_rdata(Rdata(a.get_type(), a.get_class(), "192.0.2.2"))
@@ -679,7 +680,7 @@ class DiffTest(unittest.TestCase):
     def test_find(self):
         diff = Diff(self, Name('example.org.'))
         name = Name('www.example.org.')
-        rrtype = RRType.A()
+        rrtype = RRType.A
 
         self.assertFalse(self.__find_called)
         self.assertEqual(None, self.__find_name)
@@ -697,7 +698,7 @@ class DiffTest(unittest.TestCase):
     def test_find_options(self):
         diff = Diff(self, Name('example.org.'))
         name = Name('foo.example.org.')
-        rrtype = RRType.TXT()
+        rrtype = RRType.TXT
         options = ZoneFinder.NO_WILDCARD
 
         self.assertEqual("find_return", diff.find(name, rrtype, options))
@@ -997,8 +998,8 @@ class DiffTest(unittest.TestCase):
 
         # Add a second rr with different type at same name
         add_rrset = RRset(self.__rrset3.get_name(), self.__rrclass,
-                          RRType.A(), self.__ttl)
-        add_rrset.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
+                          RRType.A, self.__ttl)
+        add_rrset.add_rdata(Rdata(RRType.A, self.__rrclass, "192.0.2.2"))
         diff.add_data(add_rrset)
 
         self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
@@ -1086,6 +1087,52 @@ class DiffTest(unittest.TestCase):
                                        rcode)
             self.__check_find_all_call(diff.find_all, self.__rrset3,
                                        rcode)
+
+    class Collection(isc.dns.RRsetCollectionBase):
+        '''
+        Our own mock RRsetCollection. We only pass it through, but we
+        still define an (mostly empty) find method to satisfy the
+        expectations.
+        '''
+        def __init__(self):
+            '''
+            Empty init. The base class's __init__ can't be called,
+            so we need to provide our own to shadow it -- and make sure
+            not to call the super().__init__().
+            '''
+            pass
+
+        def find(self, name, rrclass, rrtype):
+            '''
+            Empty find method. Returns None to each query (pretends
+            the collection is empty. Present mostly for completeness.
+            '''
+            return None
+
+    def get_rrset_collection(self):
+        '''
+        Part of pretending to be the zone updater. This returns the rrset
+        collection (a mock one, unuseable) for the updater.
+        '''
+        return self.Collection()
+
+    def test_get_rrset_collection(self):
+        '''
+        Test the diff can return corresponding rrset collection. Test
+        it applies the data first.
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        collection = diff.get_rrset_collection()
+        # Check it is applied
+        self.assertEqual(1, len(self.__data_operations))
+        self.assertEqual('add', self.__data_operations[0][0])
+        # Check the returned one is actually RRsetCollection
+        self.assertTrue(isinstance(collection, self.Collection))
+        # The collection is just the mock from above, so this doesn't do much
+        # testing, but we check that the mock got through and didn't get hurt.
+        self.assertIsNone(collection.find(Name('example.org'), RRClass.IN,
+                                          RRType.SOA))
 
 if __name__ == "__main__":
     isc.log.init("bind10")

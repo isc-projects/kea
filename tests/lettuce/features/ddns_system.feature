@@ -48,7 +48,7 @@ Feature: DDNS System
         And wait for new bind10 stderr message DDNS_STOPPED
 
         # Test 7
-        # BoB should restart it
+        # Init should restart it
         And wait for new bind10 stderr message DDNS_STARTED
 
         # Test 8
@@ -65,7 +65,7 @@ Feature: DDNS System
         # Test 9
         When I send bind10 the command Auth shutdown
         And wait for new bind10 stderr message AUTH_SHUTDOWN
-        # BoB should restart it automatically
+        # Init should restart it automatically
         And wait for new bind10 stderr message AUTH_SERVER_STARTED
 
         # Test 10

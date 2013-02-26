@@ -22,14 +22,33 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief A forward declaration
-class ZoneUpdater;
-
 /// \brief datasrc derivation of \c isc::dns::RRsetCollectionBase.
 ///
-/// This is an abstract class that adds datasrc related detail to
-/// \c isc::dns::RRsetCollectionBase. Derived classes need to complete
-/// the implementation (add iterator support, etc.) before using it.
+/// This is a default datasrc implementation of
+/// \c isc::dns::RRsetCollectionBase that adds datasrc related detail.
+///
+/// While it is a concrete class to be used along with a \c ZoneUpdater,
+/// specific \c ZoneUpdater implementations may derive from it and add
+/// additional detail. Unless you are implementing a \c ZoneUpdater, you
+/// must not use the constructor directly. Instead use the
+/// \c ZoneUpdater::getRRsetCollection() method to get a reference to
+/// the \c RRsetCollectionBase object for that \c ZoneUpdater. This is
+/// usually a singleton object and the API is designed with this in
+/// mind, because multiple \c RRsetCollectionBase objects cannot be used
+/// at the same time in most kinds of database implementations
+/// (esp. where iterators are in use). Specific \c ZoneUpdaters that can
+/// allow multiple \c RRsetCollection objects may provide additional
+/// API, but that is unspecified here.
+///
+/// There are some restrictions on when an \c RRsetCollection may be
+/// used. Though code may have a reference to an \c RRsetCollection
+/// object, it is not always valid to use it. Implementations of
+/// \c ZoneUpdater may disable an \c RRsetCollection previously returned
+/// by \c ZoneUpdater::getRRsetCollection() after \c commit() is called
+/// on the \c ZoneUpdater. An \c isc::dns::RRsetCollectionError
+/// exception will be thrown if an \c RRsetCollection is used when
+/// disabled. Please see the \c ZoneUpdater methods' documentation for
+/// more detail.
 class RRsetCollectionBase : public isc::dns::RRsetCollectionBase {
 public:
     /// \brief Constructor.
@@ -90,31 +109,24 @@ protected:
     /// \brief See \c isc::dns::RRsetCollectionBase::getBeginning() for
     /// documentation.
     ///
-    /// \throw isc::dns::RRsetCollectionError if using the iterator
-    /// results in some underlying datasrc error, or if \c disable() was
-    /// called.
-    virtual IterPtr getBeginning() = 0;
+    /// \throw isc::NotImplemented as it's not implemented currently.
+    virtual IterPtr getBeginning() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
 
     /// \brief See \c isc::dns::RRsetCollectionBase::getEnd() for
     /// documentation.
     ///
-    /// \throw isc::dns::RRsetCollectionError if using the iterator
-    /// results in some underlying datasrc error, or if \c disable() was
-    /// called.
-    virtual IterPtr getEnd() = 0;
+    /// \throw isc::NotImplemented as it's not implemented currently.
+    virtual IterPtr getEnd() {
+        isc_throw(NotImplemented, "This method is not implemented.");
+    }
 
 private:
     ZoneUpdater& updater_;
     isc::dns::RRClass rrclass_;
     bool disabled_;
 };
-
-/// \brief A pointer-like type pointing to an
-/// \c isc::datasrc::RRsetCollectionBase object.
-///
-/// This type is used to handle RRsetCollections in a polymorphic manner
-/// in libdatasrc.
-typedef boost::shared_ptr<isc::datasrc::RRsetCollectionBase> RRsetCollectionPtr;
 
 } // end of namespace datasrc
 } // end of namespace isc

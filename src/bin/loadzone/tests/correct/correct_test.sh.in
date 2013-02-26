@@ -18,9 +18,6 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python:$PYTHONPATH
-export PYTHONPATH
-
 LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
 TEST_FILE_PATH=@abs_top_srcdir@/src/bin/loadzone/tests/correct
 TEST_OUTPUT_PATH=@abs_top_builddir@/src/bin/loadzone//tests/correct

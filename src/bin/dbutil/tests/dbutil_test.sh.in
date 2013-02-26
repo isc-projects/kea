@@ -165,7 +165,7 @@ upgrade_ok_test() {
     if [ $? -eq 0 ]
     then
         # Compare schema with the reference
-        get_schema $testdata/v2_1.sqlite3
+        get_schema $testdata/v2_2.sqlite3
         expected_schema=$db_schema
         get_schema $tempfile
         actual_schema=$db_schema
@@ -177,7 +177,7 @@ upgrade_ok_test() {
         fi
 
         # Check the version is set correctly
-        check_version $tempfile "V2.1"
+        check_version $tempfile "V2.2"
 
         # Check that a backup was made
         check_backup $1 $2
@@ -303,26 +303,32 @@ check_version_fail() {
 
 rm -f $tempfile $backupfile
 
-# Test 1 - check that the utility fails if the database does not exist
-echo "1.1. Non-existent database - check"
+# This is the section number that is echoed during tests. It is
+# incremented when each section is run.
+sec=0
+
+# Test: check that the utility fails if the database does not exist
+sec=`expr $sec + 1`
+echo $sec".1. Non-existent database - check"
 ${SHELL} ../run_dbutil.sh --check $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 
-echo "1.2. Non-existent database - upgrade"
+echo $sec".2. Non-existent database - upgrade"
 ${SHELL} ../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
 
-# Test 2 - should fail to check an empty file and fail to upgrade it
-echo "2.1. Database is an empty file - check"
+# Test: should fail to check an empty file and fail to upgrade it
+sec=`expr $sec + 1`
+echo $sec".1. Database is an empty file - check"
 touch $tempfile
 check_version_fail $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-echo "2.2. Database is an empty file - upgrade"
+echo $sec".2. Database is an empty file - upgrade"
 touch $tempfile
 ${SHELL} ../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
@@ -330,13 +336,13 @@ failzero $?
 check_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-
-echo "3.1. Database is not an SQLite file - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is not an SQLite file - check"
 echo "This is not an sqlite3 database" > $tempfile
 check_version_fail $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-echo "3.2. Database is not an SQLite file - upgrade"
+echo $sec".2. Database is not an SQLite file - upgrade"
 echo "This is not an sqlite3 database" > $tempfile
 ${SHELL} ../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
@@ -345,81 +351,113 @@ check_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "4.1. Database is an SQLite3 file without the schema table - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is an SQLite3 file without the schema table - check"
 check_version_fail $testdata/no_schema.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
-echo "4.1. Database is an SQLite3 file without the schema table - upgrade"
+echo $sec".1. Database is an SQLite3 file without the schema table - upgrade"
 upgrade_fail_test $testdata/no_schema.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "5.1. Database is an old V1 database - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is an old V1 database - check"
 check_version $testdata/old_v1.sqlite3 "V1.0"
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-echo "5.2. Database is an old V1 database - upgrade"
+echo $sec".2. Database is an old V1 database - upgrade"
 upgrade_ok_test $testdata/old_v1.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "6.1. Database is new V1 database - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is new V1 database - check"
 check_version $testdata/new_v1.sqlite3 "V1.0"
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-echo "6.2. Database is a new V1 database - upgrade"
+echo $sec".2. Database is a new V1 database - upgrade"
 upgrade_ok_test $testdata/new_v1.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "7.1. Database is V2.0 database - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.0 database - check"
 check_version $testdata/v2_0.sqlite3 "V2.0"
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-echo "7.2. Database is a V2.0 database - upgrade"
+echo $sec".2. Database is a V2.0 database - upgrade"
 upgrade_ok_test $testdata/v2_0.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "8.1. Database is V2.0 database with empty schema table - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.1 database - check"
+check_version $testdata/v2_1.sqlite3 "V2.1"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo $sec".2. Database is a V2.1 database - upgrade"
+upgrade_ok_test $testdata/v2_1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.2 database - check"
+check_version $testdata/v2_2.sqlite3 "V2.2"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo $sec".2. Database is a V2.2 database - upgrade"
+upgrade_ok_test $testdata/v2_2.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.0 database with empty schema table - check"
 check_version_fail $testdata/empty_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
-echo "8.2. Database is V2.0 database with empty schema table - upgrade"
+echo $sec".2. Database is V2.0 database with empty schema table - upgrade"
 upgrade_fail_test $testdata/empty_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "9.1. Database is V2.0 database with over-full schema table - check"
+sec=`expr $sec + 1`
+echo $sec".1. Database is V2.0 database with over-full schema table - check"
 check_version_fail $testdata/too_many_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
-echo "9.2. Database is V2.0 database with over-full schema table - upgrade"
+echo $sec".2. Database is V2.0 database with over-full schema table - upgrade"
 upgrade_fail_test $testdata/too_many_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "10.0. Upgrade corrupt database"
+sec=`expr $sec + 1`
+echo $sec". Upgrade corrupt database"
 upgrade_fail_test $testdata/corrupt.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-echo "11. Record count test"
+sec=`expr $sec + 1`
+echo $sec". Record count test"
 record_count_test $testdata/new_v1.sqlite3
 rm -f $tempfile $backupfile
 
 
-echo "12. Backup file already exists"
+sec=`expr $sec + 1`
+echo $sec". Backup file already exists"
 touch $backupfile
 touch ${backupfile}-1
 upgrade_ok_test $testdata/v2_0.sqlite3 ${backupfile}-2
 rm -f $tempfile $backupfile ${backupfile}-1 ${backupfile}-2
 
 
-echo "13.1 Command-line errors"
+sec=`expr $sec + 1`
+echo $sec".1 Command-line errors"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ${SHELL} ../run_dbutil.sh $tempfile
 failzero $?
@@ -437,22 +475,22 @@ ${SHELL} ../run_dbutil.sh --upgrade --noconfirm $tempfile $backupfile
 failzero $?
 rm -f $tempfile $backupfile
 
-echo "13.2 verbose flag"
+echo $sec".2 verbose flag"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ${SHELL} ../run_dbutil.sh --upgrade --noconfirm --verbose $tempfile
 passzero $?
 rm -f $tempfile $backupfile
 
-echo "13.3 Interactive prompt - yes"
+echo $sec".3 Interactive prompt - yes"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ${SHELL} ../run_dbutil.sh --upgrade $tempfile << .
 Yes
 .
 passzero $?
-check_version $tempfile "V2.1"
+check_version $tempfile "V2.2"
 rm -f $tempfile $backupfile
 
-echo "13.4 Interactive prompt - no"
+echo $sec".4 Interactive prompt - no"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ${SHELL} ../run_dbutil.sh --upgrade $tempfile << .
 no
@@ -462,7 +500,7 @@ diff $testdata/old_v1.sqlite3 $tempfile > /dev/null
 passzero $?
 rm -f $tempfile $backupfile
 
-echo "13.5 quiet flag"
+echo $sec".5 quiet flag"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ${SHELL} ../run_dbutil.sh --check --quiet $tempfile 2>&1 | grep .
 failzero $?

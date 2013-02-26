@@ -264,8 +264,8 @@ protected:
         rrch_->addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
 
         // NS records take a single name
-        rrns_->addRdata(rdata::generic::NS("example.fr"));
-        rrns_->addRdata(rdata::generic::NS("example.de"));
+        rrns_->addRdata(rdata::generic::NS("example.fr."));
+        rrns_->addRdata(rdata::generic::NS("example.de."));
 
         // Single NS record with 0 TTL
         rr_single_->addRdata(rdata::generic::NS(ns_name_));

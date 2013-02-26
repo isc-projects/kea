@@ -6,9 +6,7 @@ $ORIGIN ttlext.
 				1814400
 				3
 				)
-; this needs #2390
-;			NS	ns
-			NS	ns.ttlext.
+			NS	ns
 ns			A	10.53.0.1
 a			TXT	"soa minttl 3"
 b		2S	TXT	"explicit ttl 2"

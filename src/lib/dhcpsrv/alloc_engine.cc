@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
 #include <cstring>
@@ -169,95 +170,104 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const IOAddress& hint,
                               bool fake_allocation /* = false */ ) {
 
-    // That check is not necessary. We create allocator in AllocEngine
-    // constructor
-    if (!allocator_) {
-        isc_throw(InvalidOperation, "No allocator selected");
-    }
+    try {
+        // That check is not necessary. We create allocator in AllocEngine
+        // constructor
+        if (!allocator_) {
+            isc_throw(InvalidOperation, "No allocator selected");
+        }
 
-    // check if there's existing lease for that subnet/duid/iaid combination.
-    Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(*duid, iaid, subnet->getID());
-    if (existing) {
-        // we have a lease already. This is a returning client, probably after
-        // his reboot.
-        return (existing);
-    }
+        // check if there's existing lease for that subnet/duid/iaid combination.
+        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(*duid, iaid, subnet->getID());
+        if (existing) {
+            // we have a lease already. This is a returning client, probably after
+            // his reboot.
+            return (existing);
+        }
 
-    // check if the hint is in pool and is available
-    if (subnet->inPool(hint)) {
-        existing = LeaseMgrFactory::instance().getLease6(hint);
-        if (!existing) {
-            /// @todo: check if the hint is reserved once we have host support
+        // check if the hint is in pool and is available
+        if (subnet->inPool(hint)) {
+            existing = LeaseMgrFactory::instance().getLease6(hint);
+            if (!existing) {
+                /// @todo: check if the hint is reserved once we have host support
+                /// implemented
+
+                // the hint is valid and not currently used, let's create a lease for it
+                Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, fake_allocation);
+
+                // It can happen that the lease allocation failed (we could have lost
+                // the race condition. That means that the hint is lo longer usable and
+                // we need to continue the regular allocation path.
+                if (lease) {
+                    return (lease);
+                }
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, duid, iaid,
+                                              fake_allocation));
+                }
+
+            }
+        }
+
+        // Hint is in the pool but is not available. Search the pool until first of
+        // the following occurs:
+        // - we find a free address
+        // - we find an address for which the lease has expired
+        // - we exhaust number of tries
+        //
+        // @todo: Current code does not handle pool exhaustion well. It will be
+        // improved. Current problems:
+        // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+        // 10 addresses), we will iterate over it 100 times before giving up
+        // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+        // 3. the whole concept of infinite attempts is just asking for infinite loop
+        // We may consider some form or reference counting (this pool has X addresses
+        // left), but this has one major problem. We exactly control allocation
+        // moment, but we currently do not control expiration time at all
+
+        unsigned int i = attempts_;
+        do {
+            IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
+
+            /// @todo: check if the address is reserved once we have host support
             /// implemented
 
-            // the hint is valid and not currently used, let's create a lease for it
-            Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, fake_allocation);
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
+            if (!existing) {
+                // there's no existing lease for selected candidate, so it is
+                // free. Let's allocate it.
+                Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
+                                              fake_allocation);
+                if (lease) {
+                    return (lease);
+                }
 
-            // It can happen that the lease allocation failed (we could have lost
-            // the race condition. That means that the hint is lo longer usable and
-            // we need to continue the regular allocation path.
-            if (lease) {
-                return (lease);
-            }
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                          fake_allocation));
+                // Although the address was free just microseconds ago, it may have
+                // been taken just now. If the lease insertion fails, we continue
+                // allocation attempts.
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, duid, iaid,
+                                              fake_allocation));
+                }
             }
 
-        }
+            // Continue trying allocation until we run out of attempts
+            // (or attempts are set to 0, which means infinite)
+            --i;
+        } while ((i > 0) || !attempts_);
+
+        // Unable to allocate an address, return an empty lease.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_FAIL).arg(attempts_);
+
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
     }
 
-    // Hint is in the pool but is not available. Search the pool until first of
-    // the following occurs:
-    // - we find a free address
-    // - we find an address for which the lease has expired
-    // - we exhaust number of tries
-    //
-    // @todo: Current code does not handle pool exhaustion well. It will be
-    // improved. Current problems:
-    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-    // 10 addresses), we will iterate over it 100 times before giving up
-    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-    // 3. the whole concept of infinite attempts is just asking for infinite loop
-    // We may consider some form or reference counting (this pool has X addresses
-    // left), but this has one major problem. We exactly control allocation
-    // moment, but we currently do not control expiration time at all
-
-    unsigned int i = attempts_;
-    do {
-        IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
-
-        /// @todo: check if the address is reserved once we have host support
-        /// implemented
-
-        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(candidate);
-        if (!existing) {
-            // there's no existing lease for selected candidate, so it is
-            // free. Let's allocate it.
-            Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                          fake_allocation);
-            if (lease) {
-                return (lease);
-            }
-
-            // Although the address was free just microseconds ago, it may have
-            // been taken just now. If the lease insertion fails, we continue
-            // allocation attempts.
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                          fake_allocation));
-            }
-        }
-
-        // continue trying allocation until we run out of attempts
-        // (or attempts are set to 0, which means infinite)
-        --i;
-    } while ( i || !attempts_);
-
-    isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
-              << " tries");
+    return (Lease6Ptr());
 }
 
 Lease4Ptr
@@ -267,115 +277,123 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                               const IOAddress& hint,
                               bool fake_allocation /* = false */ ) {
 
-    // Allocator is always created in AllocEngine constructor and there is
-    // currently no other way to set it, so that check is not really necessary.
-    if (!allocator_) {
-        isc_throw(InvalidOperation, "No allocator selected");
-    }
-
-    // Check if there's existing lease for that subnet/clientid/hwaddr combination.
-    Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(hwaddr->hwaddr_, subnet->getID());
-    if (existing) {
-        // We have a lease already. This is a returning client, probably after
-        // its reboot.
-        existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
-        if (existing) {
-            return (existing);
+    try {
+        // Allocator is always created in AllocEngine constructor and there is
+        // currently no other way to set it, so that check is not really necessary.
+        if (!allocator_) {
+            isc_throw(InvalidOperation, "No allocator selected");
         }
 
-        // If renewal failed (e.g. the lease no longer matches current configuration)
-        // let's continue the allocation process
-    }
-
-    if (clientid) {
-        existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
+        // Check if there's existing lease for that subnet/clientid/hwaddr combination.
+        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(hwaddr->hwaddr_, subnet->getID());
         if (existing) {
-            // we have a lease already. This is a returning client, probably after
+            // We have a lease already. This is a returning client, probably after
             // its reboot.
             existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
-            // @todo: produce a warning. We haven't found him using MAC address, but
-            // we found him using client-id
             if (existing) {
                 return (existing);
             }
-        }
-    }
 
-    // check if the hint is in pool and is available
-    if (subnet->inPool(hint)) {
-        existing = LeaseMgrFactory::instance().getLease4(hint);
-        if (!existing) {
-            /// @todo: Check if the hint is reserved once we have host support
+            // If renewal failed (e.g. the lease no longer matches current configuration)
+            // let's continue the allocation process
+        }
+
+        if (clientid) {
+            existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
+            if (existing) {
+                // we have a lease already. This is a returning client, probably after
+                // its reboot.
+                existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+                // @todo: produce a warning. We haven't found him using MAC address, but
+                // we found him using client-id
+                if (existing) {
+                    return (existing);
+                }
+            }
+        }
+
+        // check if the hint is in pool and is available
+        if (subnet->inPool(hint)) {
+            existing = LeaseMgrFactory::instance().getLease4(hint);
+            if (!existing) {
+                /// @todo: Check if the hint is reserved once we have host support
+                /// implemented
+
+                // The hint is valid and not currently used, let's create a lease for it
+                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, hint, fake_allocation);
+
+                // It can happen that the lease allocation failed (we could have lost
+                // the race condition. That means that the hint is lo longer usable and
+                // we need to continue the regular allocation path.
+                if (lease) {
+                    return (lease);
+                }
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
+                                              fake_allocation));
+                }
+
+            }
+        }
+
+        // Hint is in the pool but is not available. Search the pool until first of
+        // the following occurs:
+        // - we find a free address
+        // - we find an address for which the lease has expired
+        // - we exhaust the number of tries
+        //
+        // @todo: Current code does not handle pool exhaustion well. It will be
+        // improved. Current problems:
+        // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
+        // 10 addresses), we will iterate over it 100 times before giving up
+        // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
+        // 3. the whole concept of infinite attempts is just asking for infinite loop
+        // We may consider some form or reference counting (this pool has X addresses
+        // left), but this has one major problem. We exactly control allocation
+        // moment, but we currently do not control expiration time at all
+
+        unsigned int i = attempts_;
+        do {
+            IOAddress candidate = allocator_->pickAddress(subnet, clientid, hint);
+
+            /// @todo: check if the address is reserved once we have host support
             /// implemented
 
-            // The hint is valid and not currently used, let's create a lease for it
-            Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, hint, fake_allocation);
+            Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(candidate);
+            if (!existing) {
+                // there's no existing lease for selected candidate, so it is
+                // free. Let's allocate it.
+                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, candidate,
+                                              fake_allocation);
+                if (lease) {
+                    return (lease);
+                }
 
-            // It can happen that the lease allocation failed (we could have lost
-            // the race condition. That means that the hint is lo longer usable and
-            // we need to continue the regular allocation path.
-            if (lease) {
-                return (lease);
-            }
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
-                                          fake_allocation));
+                // Although the address was free just microseconds ago, it may have
+                // been taken just now. If the lease insertion fails, we continue
+                // allocation attempts.
+            } else {
+                if (existing->expired()) {
+                    return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
+                                              fake_allocation));
+                }
             }
 
-        }
+            // Continue trying allocation until we run out of attempts
+            // (or attempts are set to 0, which means infinite)
+            --i;
+        } while ((i > 0) || !attempts_);
+
+        // Unable to allocate an address, return an empty lease.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_FAIL).arg(attempts_);
+
+    } catch (const isc::Exception& e) {
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS4_ALLOC_ERROR).arg(e.what());
     }
-
-    // Hint is in the pool but is not available. Search the pool until first of
-    // the following occurs:
-    // - we find a free address
-    // - we find an address for which the lease has expired
-    // - we exhaust the number of tries
-    //
-    // @todo: Current code does not handle pool exhaustion well. It will be
-    // improved. Current problems:
-    // 1. with attempts set to too large value (e.g. 1000) and a small pool (e.g.
-    // 10 addresses), we will iterate over it 100 times before giving up
-    // 2. attempts 0 mean unlimited (this is really UINT_MAX, not infinite)
-    // 3. the whole concept of infinite attempts is just asking for infinite loop
-    // We may consider some form or reference counting (this pool has X addresses
-    // left), but this has one major problem. We exactly control allocation
-    // moment, but we currently do not control expiration time at all
-
-    unsigned int i = attempts_;
-    do {
-        IOAddress candidate = allocator_->pickAddress(subnet, clientid, hint);
-
-        /// @todo: check if the address is reserved once we have host support
-        /// implemented
-
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(candidate);
-        if (!existing) {
-            // there's no existing lease for selected candidate, so it is
-            // free. Let's allocate it.
-            Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, candidate,
-                                          fake_allocation);
-            if (lease) {
-                return (lease);
-            }
-
-            // Although the address was free just microseconds ago, it may have
-            // been taken just now. If the lease insertion fails, we continue
-            // allocation attempts.
-        } else {
-            if (existing->expired()) {
-                return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
-                                          fake_allocation));
-            }
-        }
-
-        // Continue trying allocation until we run out of attempts
-        // (or attempts are set to 0, which means infinite)
-        --i;
-    } while ( i || !attempts_);
-
-    isc_throw(AllocFailed, "Failed to allocate address after " << attempts_
-              << " tries");
+    return (Lease4Ptr());
 }
 
 Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,

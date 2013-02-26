@@ -69,7 +69,7 @@
 
       <listitem><para>
         <command>getlname</command>
-        &mdash; receive local name. 
+        &mdash; receive local name.
       </para></listitem>
 
       <listitem><para>
@@ -133,6 +133,9 @@
   <refsect1>
     <title>SEE ALSO</title>
     <para>
+      <citerefentry>
+        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,

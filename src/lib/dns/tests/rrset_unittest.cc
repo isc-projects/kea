@@ -168,7 +168,7 @@ TEST_F(RRsetTest, addRdataPtr) {
     // Pointer version of addRdata() doesn't type check and does allow to
     //add a different type of Rdata as a result.
     rrset_a_empty.addRdata(createRdata(RRType::NS(), RRClass::IN(),
-                                       "ns.example.com"));
+                                       "ns.example.com."));
     EXPECT_EQ(3, rrset_a_empty.getRdataCount());
 }
 
@@ -205,7 +205,7 @@ TEST_F(RRsetTest, toText) {
     // Unless it is type ANY or NONE
     EXPECT_EQ("test.example.com. 3600 ANY A\n",
               rrset_any_a_empty.toText());
-    EXPECT_EQ("test.example.com. 3600 CLASS254 A\n",
+    EXPECT_EQ("test.example.com. 3600 NONE A\n",
               rrset_none_a_empty.toText());
 }
 

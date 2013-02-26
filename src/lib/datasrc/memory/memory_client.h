@@ -17,7 +17,7 @@
 
 #include <util/memory_segment.h>
 
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>

@@ -30,7 +30,7 @@
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 
-#include <datasrc/memory_datasrc.h>
+#include <datasrc/client.h>
 #include <datasrc/client_list.h>
 
 #include <auth/query.h>
@@ -89,6 +89,10 @@ private:
 // below.
 #include <auth/tests/example_base_inc.cc>
 #include <auth/tests/example_nsec3_inc.cc>
+
+// This SOA is used in negative responses; its RRTTL is set to SOA's MINTTL
+const char* const soa_minttl_txt =
+    "example.com. 0 IN SOA . . 1 0 0 0 0\n";
 
 // This is used only in one pathological test case.
 const char* const zone_ds_txt =
@@ -213,6 +217,13 @@ public:
             "t644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("www1.uwild.example.com")] =
             "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+
+        // For empty-non-terminal derived from insecure delegation (we don't
+        // need a hash for the delegation point itself for that test).  the
+        // hash for empty name is the same as that for unsigned-delegation
+        // above, as the case is similar to that.
+        hash_map_[Name("empty.example.com")] =
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
     }
     virtual string calculate(const Name& name) const {
         const NSEC3HashMap::const_iterator found = hash_map_.find(name);
@@ -258,8 +269,6 @@ public:
 // to child zones are identified by the existence of non origin NS records.
 // Another special name is "dname.example.com".  Query names under this name
 // will result in DNAME.
-// This mock zone doesn't handle empty non terminal nodes (if we need to test
-// such cases find() should have specialized code for it).
 class MockZoneFinder : public ZoneFinder {
 public:
     MockZoneFinder() :
@@ -822,6 +831,68 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
     }
 }
 
+class MockClient : public DataSourceClient {
+public:
+    virtual FindResult findZone(const isc::dns::Name& origin) const {
+        const Name r_origin(origin.reverse());
+        std::map<Name, ZoneFinderPtr>::const_iterator it =
+            zone_finders_.lower_bound(r_origin);
+
+        if (it != zone_finders_.end()) {
+            const NameComparisonResult result =
+                origin.compare((it->first).reverse());
+            if (result.getRelation() == NameComparisonResult::EQUAL) {
+                return (FindResult(result::SUCCESS, it->second));
+            } else if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
+                return (FindResult(result::PARTIALMATCH, it->second));
+            }
+        }
+
+        // If it is at the beginning of the map, then the name was not
+        // found (we have already handled the element the iterator
+        // points to).
+        if (it == zone_finders_.begin()) {
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
+
+        // Check if the previous element is a partial match.
+        --it;
+        const NameComparisonResult result =
+            origin.compare((it->first).reverse());
+        if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
+            return (FindResult(result::PARTIALMATCH, it->second));
+        }
+
+        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+    }
+
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool, bool) const {
+        isc_throw(isc::NotImplemented,
+                  "Updater isn't supported in the MockClient");
+    }
+
+    virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
+        isc_throw(isc::NotImplemented,
+                  "Journaling isn't supported in the MockClient");
+    }
+
+    result::Result addZone(ZoneFinderPtr finder) {
+        // Use the reverse of the name as the key, so we can quickly
+        // find partial matches in the map.
+        zone_finders_[finder->getOrigin().reverse()] = finder;
+        return (result::SUCCESS);
+    }
+
+private:
+    // Note that because we no longer have the old RBTree, and the new
+    // in-memory DomainTree is not useful as it returns const nodes, we
+    // use a std::map instead. In this map, the key is a name stored in
+    // reverse order of labels to aid in finding partial matches
+    // quickly.
+    std::map<Name, ZoneFinderPtr> zone_finders_;
+};
+
 class QueryTest : public ::testing::TestWithParam<DataSrcType> {
 protected:
     QueryTest() :
@@ -847,7 +918,7 @@ protected:
         response.setOpcode(Opcode::QUERY());
         // create and add a matching zone.
         mock_finder = new MockZoneFinder();
-        memory_client.addZone(ZoneFinderPtr(mock_finder));
+        mock_client.addZone(ZoneFinderPtr(mock_finder));
     }
 
     virtual void SetUp() {
@@ -861,7 +932,7 @@ protected:
         // doesn't happen for derived test class.  This also ensures the
         // data source clients are configured after setting NSEC3 hash in case
         // there's dependency.
-        list_ = createDataSrcClientList(GetParam(), memory_client);
+        list_ = createDataSrcClientList(GetParam(), mock_client);
     }
 
     virtual void TearDown() {
@@ -987,11 +1058,7 @@ private:
 
 protected:
     MockZoneFinder* mock_finder;
-    // We use InMemoryClient here. We could have some kind of mock client
-    // here, but historically, the Query supported only InMemoryClient
-    // (originally named MemoryDataSrc) and was tested with it, so we keep
-    // it like this for now.
-    InMemoryClient memory_client;
+    MockClient mock_client;
 
     boost::shared_ptr<ClientList> list_;
     const Name qname;
@@ -1031,7 +1098,7 @@ class QueryTestForMockOnly : public QueryTest {
 protected:
     // Override SetUp() to avoid parameterized setup
     virtual void SetUp() {
-        list_ = createDataSrcClientList(MOCK, memory_client);
+        list_ = createDataSrcClientList(MOCK, mock_client);
     }
 };
 
@@ -1075,8 +1142,8 @@ responseCheck(Message& response, const isc::dns::Rcode& rcode,
 TEST_P(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
     // REFUSED.
-    InMemoryClient empty_memory_client;
-    SingletonList empty_list(empty_memory_client);
+    MockClient empty_mock_client;
+    SingletonList empty_list(empty_mock_client);
     EXPECT_NO_THROW(query.process(empty_list, qname, qtype,
                                   response));
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
@@ -1158,12 +1225,6 @@ TEST_P(QueryTest, apexNSMatch) {
 
 // test type any query logic
 TEST_P(QueryTest, exactAnyMatch) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // find match rrset, omit additional data which has already been provided
     // in the answer section from the additional.
     EXPECT_NO_THROW(query.process(*list_, Name("noglue.example.com"),
@@ -1207,7 +1268,7 @@ TEST_P(QueryTest, nodomainANY) {
     EXPECT_NO_THROW(query.process(*list_, Name("nxdomain.example.com"),
                                   RRType::ANY(), response));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 // This tests that when we need to look up Zone's apex NS records for
@@ -1345,7 +1406,7 @@ TEST_P(QueryTest, nxdomain) {
                                   Name("nxdomain.example.com"), qtype,
                                   response));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC) {
@@ -1356,8 +1417,8 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
                                   Name("nxdomain.example.com"), qtype,
                                   response, true));
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
@@ -1369,49 +1430,36 @@ TEST_P(QueryTest, nxdomainWithNSEC) {
 }
 
 TEST_P(QueryTest, nxdomainWithNSEC2) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about no_txt.  In this case the best possible wildcard
     // is derived from the next domain of the NSEC that proves NXDOMAIN, and
     // the NSEC to provide the non existence of wildcard is different from
     // the first NSEC.
-    query.process(*list_, Name("(.no.example.com"), qtype, response,
+    query.process(*list_, Name("!.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_mx_txt) + "\n" +
                          string("mx.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxdomainWithNSECDuplicate) {
-    // there seems to be a bug in the SQLite3 (or database in general) data
-    // source and this doesn't work.  This is probably the same type of bug
-    // as nxdomainWithNSEC2 (Trac #2586).
-    if (GetParam() == SQLITE3) {
-        return;
-    }
-
     // See comments about nz_txt.  In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence of wildcard.
     query.process(*list_, Name("nx.no.example.com"), qtype, response,
                   true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 4, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_no_txt) + "\n" +
-                         string(").no.example.com. 3600 IN RRSIG ") +
+                         string("&.no.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
@@ -1474,8 +1522,8 @@ TEST_F(QueryTestForMockOnly, nxdomainBadNSEC5) {
     query.process(*list_, Name("nxdomain.example.com"), qtype,
                   response, true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
-                  NULL, (string(soa_txt) +
-                         string("example.com. 3600 IN RRSIG ") +
+                  NULL, (string(soa_minttl_txt) +
+                         string("example.com. 0 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
@@ -1503,7 +1551,7 @@ TEST_P(QueryTest, nxrrset) {
                                   RRType::TXT(), response));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-                  NULL, soa_txt, NULL, mock_finder->getOrigin());
+                  NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC) {
@@ -1513,7 +1561,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_www_txt) + "\n" +
                    string("www.example.com. 3600 IN RRSIG ") +
@@ -1524,7 +1573,7 @@ TEST_P(QueryTest, nxrrsetWithNSEC) {
 TEST_P(QueryTest, emptyNameWithNSEC) {
     // Empty non terminal with DNSSEC proof.  This is one of the cases of
     // Section 3.1.3.2 of RFC4035.
-    // mx.example.com. NSEC ).no.example.com. proves no.example.com. is a
+    // mx.example.com. NSEC &.no.example.com. proves no.example.com. is a
     // non empty terminal node.  Note that it also implicitly proves there
     // should be no closer wildcard match (because the empty name is an
     // exact match), so we only need one NSEC.
@@ -1534,7 +1583,8 @@ TEST_P(QueryTest, emptyNameWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_mx_txt) + "\n" +
                    string("mx.example.com. 3600 IN RRSIG ") +
@@ -1550,7 +1600,8 @@ TEST_P(QueryTest, nxrrsetWithoutNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n").c_str(),
                   NULL, mock_finder->getOrigin());
 }
@@ -1693,12 +1744,6 @@ TEST_F(QueryTestForMockOnly, badWildcardProof3) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
@@ -1706,7 +1751,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_wild_txt) +
                    string("*.wild.example.com. 3600 IN RRSIG ") +
@@ -1715,12 +1761,6 @@ TEST_P(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
-    // This is an in-memory specific bug (#2585), until it's fixed we
-    // tentatively skip the test for in-memory
-    if (GetParam() == INMEMORY) {
-        return;
-    }
-
     // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
     // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence RRSETs of
@@ -1729,7 +1769,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC) {
                   RRType::TXT(), response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_wild_txt_nxrrset) +
                    string("*.uwild.example.com. 3600 IN RRSIG ") +
@@ -1753,7 +1794,8 @@ TEST_P(QueryTest, wildcardNxrrsetWithNSEC3) {
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 8, 0, NULL,
                   // SOA + its RRSIG
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_uwild_txt) +
@@ -1816,7 +1858,8 @@ TEST_P(QueryTest, wildcardEmptyWithNSEC) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_empty_prev_txt) +
                    string("t.example.com. 3600 IN RRSIG ") +
@@ -2043,7 +2086,7 @@ TEST_P(QueryTest, DNAME_NX_RRSET) {
                     RRType::TXT(), response));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 1, 0,
-        NULL, soa_txt, NULL, mock_finder->getOrigin());
+        NULL, soa_minttl_txt, NULL, mock_finder->getOrigin());
 }
 
 /*
@@ -2273,8 +2316,8 @@ TEST_F(QueryTestForMockOnly, dsAboveDelegation) {
     // simple addition.  For now we test it for mock only.
 
     // Pretending to have authority for the child zone, too.
-    memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
-                                            Name("delegation.example.com"))));
+    mock_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
+                                           Name("delegation.example.com"))));
 
     // The following will succeed only if the search goes to the parent
     // zone, not the child one we added above.
@@ -2296,8 +2339,8 @@ TEST_P(QueryTest, dsAboveDelegationNoData) {
     // Similar to the previous case, but the query is for an unsigned zone
     // (which doesn't have a DS at the parent).  The response should be a
     // "no data" error.  The query should still be handled at the parent.
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(
                                   Name("unsigned-delegation.example.com"))));
 
     // The following will succeed only if the search goes to the parent
@@ -2307,8 +2350,8 @@ TEST_P(QueryTest, dsAboveDelegationNoData) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) +
-                   string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec_txt) +
                    "unsigned-delegation.example.com. 3600 IN RRSIG " +
@@ -2324,7 +2367,8 @@ TEST_P(QueryTest, dsBelowDelegation) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec_apex_txt) + "\n" +
                    string("example.com. 3600 IN RRSIG ") +
@@ -2342,7 +2386,8 @@ TEST_P(QueryTest, dsBelowDelegationWithDS) {
                                   RRType::DS(), response, true));
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA")).c_str(), NULL,
                   mock_finder->getOrigin());
 }
@@ -2379,12 +2424,13 @@ TEST_F(QueryTestForMockOnly, dsAtGrandParentAndChild) {
 
     // Pretending to have authority for the child zone, too.
     const Name childname("grand.delegation.example.com");
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(childname)));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(childname)));
     query.process(*list_, childname, RRType::DS(), response, true);
+    // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (childname.toText() + " 3600 IN SOA . . 0 0 0 0 0\n" +
-                   childname.toText() + " 3600 IN RRSIG " +
+                  (childname.toText() + " 0 IN SOA . . 0 0 0 0 0\n" +
+                   childname.toText() + " 0 IN RRSIG " +
                    getCommonRRSIGText("SOA") + "\n" +
                    childname.toText() + " 3600 IN NSEC " +
                    childname.toText() + " SOA NSEC RRSIG\n" +
@@ -2400,13 +2446,14 @@ TEST_F(QueryTestForMockOnly, dsAtRoot) {
     // won't be simple addition.  For now we test it for mock only.
 
     // Pretend to be a root server.
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(Name::ROOT_NAME())));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(Name::ROOT_NAME())));
     query.process(*list_, Name::ROOT_NAME(), RRType::DS(), response,
                   true);
+    // Note that RR TTL of SOA and its RRSIG are set to SOA MINTTL, 0
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(". 3600 IN SOA . . 0 0 0 0 0\n") +
-                   ". 3600 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
+                  (string(". 0 IN SOA . . 0 0 0 0 0\n") +
+                   ". 0 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
                    ". 3600 IN NSEC " + ". SOA NSEC RRSIG\n" +
                    ". 3600 IN RRSIG " +
                    getCommonRRSIGText("NSEC")).c_str(), NULL);
@@ -2419,9 +2466,8 @@ TEST_F(QueryTestForMockOnly, dsAtRootWithDS) {
     // We could setup the additional zone for other data sources, but it
     // won't be simple addition.  For now we test it for mock only.
 
-    memory_client.addZone(ZoneFinderPtr(
-                              new AlternateZoneFinder(Name::ROOT_NAME(),
-                                                      true)));
+    mock_client.addZone(ZoneFinderPtr(
+                             new AlternateZoneFinder(Name::ROOT_NAME(), true)));
     query.process(*list_, Name::ROOT_NAME(), RRType::DS(), response,
                   true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
@@ -2443,7 +2489,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_www_txt) + "\n" +
                    nsec3_hash_.calculate(Name("www.example.com.")) +
@@ -2452,21 +2499,32 @@ TEST_P(QueryTest, nxrrsetWithNSEC3) {
                   NULL, mock_finder->getOrigin());
 }
 
-// Check the exception is correctly raised when the NSEC3 thing isn't in the
-// zone
-TEST_F(QueryTestForMockOnly, nxrrsetMissingNSEC3) {
-    // This is a broken data source scenario; works only with mock.
+TEST_P(QueryTest, nxrrsetDerivedFromOptOutNSEC3) {
+    // In this test we emulate the situation where an empty non-terminal name
+    // is derived from insecure delegation and covered by an opt-out NSEC3.
+    // In the actual test data the covering NSEC3 really has the opt-out
+    // bit set, although the implementation doesn't check it anyway.
+    enableNSEC3(rrsets_to_add_);
+    query.process(*list_, Name("empty.example.com"), RRType::TXT(), response,
+                  true);
 
-    mock_finder->setNSEC3Flag(true);
-    // We just need it to return false for "matched". This indicates
-    // there's no exact match for NSEC3 on www.example.com.
-    ZoneFinder::FindNSEC3Result nsec3(false, 0, ConstRRsetPtr(),
-                                      ConstRRsetPtr());
-    mock_finder->setNSEC3Result(&nsec3);
-
-    EXPECT_THROW(query.process(*list_, Name("www.example.com"),
-                               RRType::TXT(), response, true),
-                 Query::BadNSEC3);
+    // The closest provable encloser is the origin name (example.com.), and
+    // the next closer is the empty name itself, which is expected to be
+    // covered by an opt-out NSEC3 RR.  The response should contain these 2
+    // NSEC3s.
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   nsec3_hash_.calculate(Name("www.example.com.")) +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
 }
 
 TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
@@ -2478,7 +2536,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_exact) {
     query.process(*list_, Name("unsigned-delegation.example.com."),
                   RRType::DS(), response, true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(unsigned_delegation_nsec3_txt) + "\n" +
                    nsec3_hash_.calculate(
@@ -2500,7 +2559,8 @@ TEST_P(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
     query.process(*list_, Name("unsigned-delegation-optout.example.com."),
                   RRType::DS(), response, true);
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
-                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    string(nsec3_apex_txt) + "\n" +
                    nsec3_hash_.calculate(Name("example.com.")) +
@@ -2528,8 +2588,8 @@ TEST_P(QueryTest, nxdomainWithNSEC3Proof) {
                   response, true);
     responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
                   // SOA + its RRSIG
-                  (string(soa_txt) +
-                   string("example.com. 3600 IN RRSIG ") +
+                  (string(soa_minttl_txt) +
+                   string("example.com. 0 IN RRSIG ") +
                    getCommonRRSIGText("SOA") + "\n" +
                    // NSEC3 for the closest encloser + its RRSIG
                    string(nsec3_apex_txt) + "\n" +

@@ -338,12 +338,25 @@ public:
         bind_[1].length = &hwaddr_length_;
 
         // client_id: varbinary(128)
-        client_id_ = lease_->client_id_->getClientId();
-        client_id_length_ = client_id_.size();
-        bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-        bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
-        bind_[2].buffer_length = client_id_length_;
-        bind_[2].length = &client_id_length_;
+        if (lease_->client_id_) {
+            client_id_ = lease_->client_id_->getClientId();
+            client_id_length_ = client_id_.size();
+            bind_[2].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
+            bind_[2].buffer_length = client_id_length_;
+            bind_[2].length = &client_id_length_;
+        } else {
+            bind_[2].buffer_type = MYSQL_TYPE_NULL;
+
+            // According to http://dev.mysql.com/doc/refman/5.5/en/
+            // c-api-prepared-statement-data-structures.html, the other
+            // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
+            // but let's set them to some sane values in case earlier versions
+            // didn't have that assumption.
+            static my_bool no_clientid = MLM_TRUE;
+            bind_[2].buffer = NULL;
+            bind_[2].is_null = &no_clientid;
+        }
 
         // valid lifetime: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;

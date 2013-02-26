@@ -26,7 +26,7 @@ import socket
 # Some common test parameters
 TEST_ZONE_NAME = Name('example.org')
 TEST_SECONDARY_ZONE_NAME = Name('example.com')
-TEST_RRCLASS = RRClass.IN()
+TEST_RRCLASS = RRClass.IN
 TEST_TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 TEST_ACL_CONTEXT = isc.acl.dns.RequestContext(
     socket.getaddrinfo("192.0.2.1", 1234, 0, socket.SOCK_DGRAM,
@@ -88,12 +88,12 @@ class ZoneConfigTest(unittest.TestCase):
         # zone class doesn't match (but zone name matches)
         self.__datasrc_client.set_find_result(DataSourceClient.SUCCESS)
         zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)},
-                             RRClass.CH(), self.__datasrc_client)
+                             RRClass.CH, self.__datasrc_client)
         self.assertEqual((ZONE_NOTFOUND, None),
                          (zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS)))
         # similar to the previous case, but also in the secondary list
         zconfig = ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
-                             RRClass.CH(), self.__datasrc_client)
+                             RRClass.CH, self.__datasrc_client)
         self.assertEqual((ZONE_NOTFOUND, None),
                          (zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS)))
 
@@ -107,7 +107,7 @@ class ZoneConfigTest(unittest.TestCase):
         zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS),
                               (Name('example'), TEST_RRCLASS),
                               (Name('sub.example.org'), TEST_RRCLASS),
-                              (TEST_ZONE_NAME, RRClass.CH())},
+                              (TEST_ZONE_NAME, RRClass.CH)},
                              TEST_RRCLASS, self.__datasrc_client)
         self.assertEqual((ZONE_PRIMARY, self.__datasrc_client),
                          self.zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS))
@@ -134,7 +134,7 @@ class ACLConfigTest(unittest.TestCase):
         # 'All reject' ACL will still apply for any other zones
         acl = self.__zconfig.get_update_acl(Name('example.com'), TEST_RRCLASS)
         self.assertEqual(REJECT, acl.execute(TEST_ACL_CONTEXT))
-        acl = self.__zconfig.get_update_acl(TEST_ZONE_NAME, RRClass.CH())
+        acl = self.__zconfig.get_update_acl(TEST_ZONE_NAME, RRClass.CH)
         self.assertEqual(REJECT, acl.execute(TEST_ACL_CONTEXT))
 
         # Test with a map with a few more ACL entries.  Should be nothing
@@ -143,14 +143,14 @@ class ACLConfigTest(unittest.TestCase):
                        REQUEST_LOADER.load([{"action": "REJECT"}]),
                    (TEST_ZONE_NAME, TEST_RRCLASS):
                        REQUEST_LOADER.load([{"action": "ACCEPT"}]),
-                   (TEST_ZONE_NAME, RRClass.CH()):
+                   (TEST_ZONE_NAME, RRClass.CH):
                        REQUEST_LOADER.load([{"action": "DROP"}])}
         self.__zconfig.set_update_acl_map(acl_map)
         acl = self.__zconfig.get_update_acl(TEST_ZONE_NAME, TEST_RRCLASS)
         self.assertEqual(ACCEPT, acl.execute(TEST_ACL_CONTEXT))
         acl = self.__zconfig.get_update_acl(Name('example.com'), TEST_RRCLASS)
         self.assertEqual(REJECT, acl.execute(TEST_ACL_CONTEXT))
-        acl = self.__zconfig.get_update_acl(TEST_ZONE_NAME, RRClass.CH())
+        acl = self.__zconfig.get_update_acl(TEST_ZONE_NAME, RRClass.CH)
         self.assertEqual(DROP, acl.execute(TEST_ACL_CONTEXT))
 
 if __name__ == "__main__":

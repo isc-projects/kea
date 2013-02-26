@@ -77,6 +77,7 @@ provide_input(int *read_pipe, const void *input, const size_t length)
         return -1;
     }
     *read_pipe = pipes[0];
+
     pid_t pid(fork());
     if (pid) { // We are in the parent
         return pid;
@@ -91,12 +92,13 @@ provide_input(int *read_pipe, const void *input, const size_t length)
     }
 }
 
+
 /*
  * This creates a pipe, forks and reads the pipe and compares it
- * with given data. Used to check output of run in asynchronous way.
+ * with given data. Used to check output of run in an asynchronous way.
  */
 pid_t
-check_output(int *write_pipe, const void *output, const size_t length)
+check_output(int *write_pipe, const void* const output, const size_t length)
 {
     int pipes[2];
     if (pipe(pipes)) {
@@ -109,9 +111,7 @@ check_output(int *write_pipe, const void *output, const size_t length)
         return pid;
     } else {
         close(pipes[1]);
-        // We don't return the memory, but we're in tests and end this process
-        // right away.
-        unsigned char *buffer = new unsigned char[length + 1];
+        unsigned char* buffer = new unsigned char[length + 1];
         // Try to read one byte more to see if the output ends here
         size_t got_length(read_data(pipes[0], buffer, length + 1));
         bool ok(true);
@@ -133,8 +133,10 @@ check_output(int *write_pipe, const void *output, const size_t length)
                 fprintf(stderr, "%02hhx", output_c[i]);
             }
             fprintf(stderr, "\n");
+            delete [] buffer;
             exit(1);
         } else {
+            delete [] buffer;
             exit(0);
         }
     }

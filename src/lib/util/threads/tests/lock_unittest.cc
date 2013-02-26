@@ -94,33 +94,35 @@ void
 noHandler(int) {}
 
 TEST(MutexTest, swarm) {
-    // Create a timeout in case something got stuck here
-    struct sigaction ignored, original;
-    memset(&ignored, 0, sizeof(ignored));
-    ignored.sa_handler = noHandler;
-    if (sigaction(SIGALRM, &ignored, &original)) {
-        FAIL() << "Couldn't set alarm";
-    }
-    alarm(10);
-    // This type has a low chance of being atomic itself, further raising
-    // the chance of problems appearing.
-    double canary = 0;
-    Mutex mutex;
-    // Run two parallel threads
-    bool ready1 = false;
-    bool ready2 = false;
-    Thread t1(boost::bind(&performIncrement, &canary, &ready1, &ready2,
-                          &mutex));
-    Thread t2(boost::bind(&performIncrement, &canary, &ready2, &ready1,
-                          &mutex));
-    t1.wait();
-    t2.wait();
-    // Check it the sum is the expected value.
-    EXPECT_EQ(iterations * 2, canary) << "Threads are badly synchronized";
-    // Cancel the alarm and return the original handler
-    alarm(0);
-    if (sigaction(SIGALRM, &original, NULL)) {
-        FAIL() << "Couldn't restore alarm";
+    if (!isc::util::unittests::runningOnValgrind()) {
+        // Create a timeout in case something got stuck here
+        struct sigaction ignored, original;
+        memset(&ignored, 0, sizeof(ignored));
+        ignored.sa_handler = noHandler;
+        if (sigaction(SIGALRM, &ignored, &original)) {
+            FAIL() << "Couldn't set alarm";
+        }
+        alarm(10);
+        // This type has a low chance of being atomic itself, further raising
+        // the chance of problems appearing.
+        double canary = 0;
+        Mutex mutex;
+        // Run two parallel threads
+        bool ready1 = false;
+        bool ready2 = false;
+        Thread t1(boost::bind(&performIncrement, &canary, &ready1, &ready2,
+                              &mutex));
+        Thread t2(boost::bind(&performIncrement, &canary, &ready2, &ready1,
+                              &mutex));
+        t1.wait();
+        t2.wait();
+        // Check it the sum is the expected value.
+        EXPECT_EQ(iterations * 2, canary) << "Threads are badly synchronized";
+        // Cancel the alarm and return the original handler
+        alarm(0);
+        if (sigaction(SIGALRM, &original, NULL)) {
+            FAIL() << "Couldn't restore alarm";
+        }
     }
 }
 

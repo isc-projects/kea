@@ -103,8 +103,8 @@ class ZonemgrRefresh:
     can be stopped by calling shutdown() in another thread.
     """
 
-    def __init__(self, cc, db_file, slave_socket, module_cc_session):
-        self._cc = cc
+    def __init__(self, db_file, slave_socket, module_cc_session):
+        self._mccs = module_cc_session
         self._check_sock = slave_socket
         self._db_file = db_file
         self._zonemgr_refresh_info = {}
@@ -277,15 +277,15 @@ class ZonemgrRefresh:
 
     def _send_command(self, module_name, command_name, params):
         """Send command between modules."""
-        msg = create_command(command_name, params)
         try:
-            seq = self._cc.group_sendmsg(msg, module_name)
-            try:
-                answer, env = self._cc.group_recvmsg(False, seq)
-            except isc.cc.session.SessionTimeout:
-                pass        # for now we just ignore the failure
+            self._mccs.rpc_call(command_name, module_name, params=params)
         except socket.error:
+            # FIXME: WTF? Where does socket.error come from? And how do we ever
+            # dare ignore such serious error? It can only be broken link to
+            # msgq, we need to terminate then.
             logger.error(ZONEMGR_SEND_FAIL, module_name)
+        except (isc.cc.session.SessionTimeout, isc.config.RPCError):
+            pass        # for now we just ignore the failure
 
     def _find_need_do_refresh_zone(self):
         """Find the first zone need do refresh, if no zone need
@@ -525,7 +525,7 @@ class Zonemgr:
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket, self._module_cc)
+        self._zone_refresh = ZonemgrRefresh(self._db_file, self._slave_socket, self._module_cc)
         self._zone_refresh.run_timer()
 
         self._lock = threading.Lock()
@@ -536,7 +536,6 @@ class Zonemgr:
         """Setup two sessions for zonemgr, one(self._module_cc) is used for receiving
         commands and config data sent from other modules, another one (self._cc)
         is used to send commands to proper modules."""
-        self._cc = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                                   self.config_handler,
                                                   self.command_handler)
@@ -625,7 +624,7 @@ class Zonemgr:
         ZONE_NOTIFY_COMMAND is issued by Auth process;
         ZONE_NEW_DATA_READY_CMD and ZONE_XFRIN_FAILED are issued by
         Xfrin process;
-        shutdown is issued by a user or Boss process. """
+        shutdown is issued by a user or Init process. """
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""
@@ -714,4 +713,4 @@ if '__main__' == __name__:
     if zonemgrd and zonemgrd.running:
         zonemgrd.shutdown()
 
-    logger.debug(DBG_START_SHUT, ZONEMGR_SHUTDOWN)
+    logger.info(ZONEMGR_SHUTDOWN)

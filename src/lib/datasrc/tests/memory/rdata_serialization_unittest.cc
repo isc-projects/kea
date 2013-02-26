@@ -632,9 +632,9 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, rrsigs);
 
     ConstRdataPtr mx_rdata1 = createRdata(RRType::MX(), RRClass::IN(),
-                                          "5 mx1.example.com");
+                                          "5 mx1.example.com.");
     ConstRdataPtr mx_rdata2 = createRdata(RRType::MX(), RRClass::IN(),
-                                          "10 mx2.example.com");
+                                          "10 mx2.example.com.");
     rdata_list_.clear();
     rdata_list_.push_back(mx_rdata1);
     rdata_list_.push_back(mx_rdata2);
@@ -767,13 +767,13 @@ TEST_F(RdataSerializationTest, badAddRdata) {
 
     // Likewise.  Inconsistent name compression policy.
     const ConstRdataPtr ns_rdata =
-        createRdata(RRType::NS(), RRClass::IN(), "ns.example");
+        createRdata(RRType::NS(), RRClass::IN(), "ns.example.");
     encoder_.start(RRClass::IN(), RRType::DNAME());
     EXPECT_THROW(encoder_.addRdata(*ns_rdata), isc::BadValue);
 
     // Same as the previous one, opposite inconsistency.
     const ConstRdataPtr dname_rdata =
-        createRdata(RRType::DNAME(), RRClass::IN(), "dname.example");
+        createRdata(RRType::DNAME(), RRClass::IN(), "dname.example.");
     encoder_.start(RRClass::IN(), RRType::NS());
     EXPECT_THROW(encoder_.addRdata(*dname_rdata), isc::BadValue);
 

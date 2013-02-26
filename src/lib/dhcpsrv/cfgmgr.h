@@ -18,7 +18,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/option_space.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -230,6 +230,14 @@ public:
     /// completely new?
     void deleteSubnets4();
 
+
+    /// @brief returns path do the data directory
+    ///
+    /// This method returns a path to writeable directory that DHCP servers
+    /// can store data in.
+    /// @return data directory
+    std::string getDataDir();
+
 protected:
 
     /// @brief Protected constructor.
@@ -274,6 +282,8 @@ private:
     /// @brief Container for defined DHCPv4 option spaces.
     OptionSpaceCollection spaces4_;
 
+    /// @brief directory where data files (e.g. server-id) are stored
+    std::string datadir_;
 };
 
 } // namespace isc::dhcp

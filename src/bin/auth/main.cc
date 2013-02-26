@@ -44,6 +44,7 @@
 #include <server_common/socket_request.h>
 
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -152,10 +153,11 @@ main(int argc, char* argv[]) {
     int ret = 0;
 
     // XXX: we should eventually pass io_service here.
-    Session* cc_session = NULL;
-    Session* xfrin_session = NULL;
+    boost::scoped_ptr<AuthSrv> auth_server_; // placeholder
+    boost::scoped_ptr<Session> cc_session;
+    boost::scoped_ptr<Session> xfrin_session;
     bool xfrin_session_established = false; // XXX (see Trac #287)
-    ModuleCCSession* config_session = NULL;
+    boost::scoped_ptr<ModuleCCSession> config_session;
     XfroutClient xfrout_client(getXfroutSocketPath());
     SocketSessionForwarder ddns_forwarder(getDDNSSocketPath());
     try {
@@ -167,7 +169,8 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(xfrout_client, ddns_forwarder);
+        auth_server_.reset(new AuthSrv(xfrout_client, ddns_forwarder));
+        auth_server = auth_server_.get();
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
@@ -179,7 +182,7 @@ main(int argc, char* argv[]) {
         auth_server->setDNSService(dns_service);
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNS_SERVICES_CREATED);
 
-        cc_session = new Session(io_service.get_io_service());
+        cc_session.reset(new Session(io_service.get_io_service()));
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
         // Initialize the Socket Requestor
         isc::server_common::initSocketRequestor(*cc_session, AUTH_NAME);
@@ -187,22 +190,22 @@ main(int argc, char* argv[]) {
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of
         // synchronous and asynchronous operations (this would happen in
-        // initial communication with the boss that takes place in
+        // initial communication with b10-init that takes place in
         // updateConfig() for listen_on and in initializing TSIG keys below).
         // Until then all operations on the CC session will take place
         // synchronously.
-        config_session = new ModuleCCSession(specfile, *cc_session,
-                                             my_config_handler,
-                                             my_command_handler, false);
+        config_session.reset(new ModuleCCSession(specfile, *cc_session,
+                                                 my_config_handler,
+                                                 my_command_handler, false));
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_ESTABLISHED);
 
-        xfrin_session = new Session(io_service.get_io_service());
+        xfrin_session.reset(new Session(io_service.get_io_service()));
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_CREATED);
         xfrin_session->establish(NULL);
         xfrin_session_established = true;
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_ESTABLISHED);
 
-        auth_server->setXfrinSession(xfrin_session);
+        auth_server->setXfrinSession(xfrin_session.get());
 
         // Configure the server.  configureAuthServer() is expected to install
         // all initial configurations, but as a short term workaround we
@@ -210,7 +213,7 @@ main(int argc, char* argv[]) {
         // updateConfig().
         // if server load configure failed, we won't exit, give user second
         // chance to correct the configure.
-        auth_server->setConfigSession(config_session);
+        auth_server->setConfigSession(config_session.get());
         try {
             configureAuthServer(*auth_server, config_session->getFullConfig());
             auth_server->updateConfig(ElementPtr());
@@ -228,7 +231,7 @@ main(int argc, char* argv[]) {
         config_session->addRemoteConfig("data_sources",
                                         boost::bind(datasrcConfigHandler,
                                                     auth_server, &first_time,
-                                                    config_session,
+                                                    config_session.get(),
                                                     _1, _2, _3),
                                         false);
 
@@ -260,10 +263,7 @@ main(int argc, char* argv[]) {
         config_session->removeRemoteConfig("data_sources");
     }
 
-    delete xfrin_session;
-    delete config_session;
-    delete cc_session;
-    delete auth_server;
+    LOG_INFO(auth_logger, AUTH_SERVER_EXITING);
 
     return (ret);
 }

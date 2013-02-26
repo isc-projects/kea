@@ -17,8 +17,6 @@
 
 #include <cc/data.h>
 
-#include <datasrc/memory_datasrc.h>
-#include <datasrc/zonetable.h>
 #include <datasrc/factory.h>
 
 #include <auth/auth_srv.h>
@@ -106,7 +104,7 @@ public:
         rollbackAddresses_ = old;
     }
     virtual void commit() {
-        rollbackAddresses_.release();
+        rollbackAddresses_.reset();
     }
 private:
     AuthSrv& server_;

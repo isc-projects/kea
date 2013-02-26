@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -173,8 +173,9 @@ protected:
     /// This method assigns options that were requested by client
     /// (sent in PRL) or are enforced by server.
     ///
+    /// @param question DISCOVER or REQUEST message from a client.
     /// @param msg outgoing message (options will be added here)
-    void appendRequestedOptions(Pkt4Ptr& msg);
+    void appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -185,6 +186,19 @@ protected:
     /// @param question DISCOVER or REQUEST message from client
     /// @param answer OFFER or ACK/NAK message (lease options will be added here)
     void assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer);
+
+    /// @brief Append basic options if they are not present.
+    ///
+    /// This function adds the following basic options if they
+    /// are not yet added to the message:
+    /// - Subnet Mask,
+    /// - Router,
+    /// - Name Server,
+    /// - Domain Name.
+    ///
+    /// @param question DISCOVER or REQUEST message from a client.
+    /// @param msg the message to add options to.
+    void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
     /// @brief Attempts to renew received addresses
     ///
@@ -216,7 +230,32 @@ protected:
     ///
     /// @throws isc::Unexpected Failed to obtain server identifier (i.e. no
     //          previously stored configuration and no network interfaces available)
-    void setServerID();
+    void generateServerID();
+
+    /// @brief attempts to load server-id from a file
+    ///
+    /// Tries to load duid from a text file. If the load is successful,
+    /// it creates server-id option and stores it in serverid_ (to be used
+    /// later by getServerID()).
+    ///
+    /// @param file_name name of the server-id file to load
+    /// @return true if load was successful, false otherwise
+    bool loadServerID(const std::string& file_name);
+
+    /// @brief attempts to write server-id to a file
+    /// Tries to write server-id content (stored in serverid_) to a text file.
+    ///
+    /// @param file_name name of the server-id file to write
+    /// @return true if write was successful, false otherwise
+    bool writeServerID(const std::string& file_name);
+
+    /// @brief converts server-id to text
+    /// Converts content of server-id option to a text representation, e.g.
+    /// "192.0.2.1"
+    ///
+    /// @param opt option that contains server-id
+    /// @return string representation
+    static std::string srvidToString(const OptionPtr& opt);
 
     /// @brief Selects a subnet for a given client's packet.
     ///

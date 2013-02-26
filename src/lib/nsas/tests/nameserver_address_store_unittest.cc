@@ -386,7 +386,7 @@ TEST_F(NameserverAddressStoreTest, CombinedTest) {
 
     // But we do not answer it right away. We create a new zone and
     // let this nameserver entry get out.
-    rrns_->addRdata(rdata::generic::NS("example.cz"));
+    rrns_->addRdata(rdata::generic::NS("example.cz."));
     nsas.lookupAndAnswer(EXAMPLE_CO_UK, RRClass::IN(), rrns_, getCallback());
 
     // It really should ask something, one of the nameservers

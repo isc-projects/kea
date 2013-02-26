@@ -19,6 +19,7 @@
 
 import unittest
 import os
+import json
 from isc.cc.session import *
 
 # our fake socket, where we can read and insert messages
@@ -73,7 +74,22 @@ class MySocket():
 
         result.extend(self.readsent(header_length))
         result.extend(self.readsent(data_length))
+
         return result
+
+    def readsentmsg_parsed(self):
+        length_buf = self.readsent(4)
+        length = struct.unpack('>I', length_buf)[0]
+        header_length_buf = self.readsent(2)
+        header_length = struct.unpack('>H', header_length_buf)[0]
+        data_length = length - 2 - header_length
+
+        env = json.loads(self.readsent(header_length).decode('utf-8'), strict=False)
+        if (data_length > 0):
+            msg = json.loads(self.readsent(data_length).decode('utf-8'), strict=False)
+        else:
+            msg = {}
+        return (env, msg)
 
     def recv(self, length):
         if len(self.recvqueue) == 0:
@@ -208,25 +224,25 @@ class testSession(unittest.TestCase):
 
         # 'malformed' messages
         # shouldn't some of these raise exceptions?
-        #self.recv_and_compare(sess, 
+        #self.recv_and_compare(sess,
         #                      b'\x00',
         #                      None, None)
-        #self.recv_and_compare(sess, 
+        #self.recv_and_compare(sess,
         #                      b'\x00\x00\x00\x10',
         #                      None, None)
-        #self.recv_and_compare(sess, 
+        #self.recv_and_compare(sess,
         #                      b'\x00\x00\x00\x02\x00\x00',
         #                      None, None)
-        #self.recv_and_compare(sess, 
+        #self.recv_and_compare(sess,
         #                      b'\x00\x00\x00\x02\x00\x02',
         #                      None, None)
-        #self.recv_and_compare(sess, 
+        #self.recv_and_compare(sess,
         #                      b'',
         #                      None, None)
 
         # need to clear
         sess._socket.recvqueue = bytearray()
-        
+
         # 'queueing' system
         # sending message {'to': 'someone', 'reply': 1}, {"hello": "a"}
         #print("sending message {'to': 'someone', 'reply': 1}, {'hello': 'a'}")
@@ -240,7 +256,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
-        
+
         # ask for a differe sequence number reply (that doesn't exist)
         # then ask for the one that is there
         self.assertFalse(sess.has_queued_msgs())
@@ -253,7 +269,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
-        
+
         # ask for a differe sequence number reply (that doesn't exist)
         # then ask for any message
         self.assertFalse(sess.has_queued_msgs())
@@ -266,7 +282,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
-        
+
         #print("sending message {'to': 'someone', 'reply': 1}, {'hello': 'a'}")
 
         # ask for a differe sequence number reply (that doesn't exist)
@@ -287,7 +303,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({'to': 'someone'}, env)
         self.assertEqual({"hello": "b"}, msg)
         self.assertFalse(sess.has_queued_msgs())
-        
+
         # send a message, then one with specific reply value
         # ask for that specific message (get the second)
         # then ask for any message (get the first)
@@ -326,49 +342,73 @@ class testSession(unittest.TestCase):
     def test_group_subscribe(self):
         sess = MySession()
         sess.group_subscribe("mygroup")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00<\x00:{"group": "mygroup", "type": "subscribe", "instance": "*"}')
-        
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "subscribe",
+                                 "instance": "*"}, {}))
+
         sess.group_subscribe("mygroup")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00<\x00:{"group": "mygroup", "type": "subscribe", "instance": "*"}')
-        
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "subscribe",
+                                 "instance": "*"}, {}))
+
         sess.group_subscribe("mygroup", "my_instance")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00F\x00D{"group": "mygroup", "type": "subscribe", "instance": "my_instance"}')
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "subscribe",
+                                 "instance": "my_instance"}, {}))
 
     def test_group_unsubscribe(self):
         sess = MySession()
         sess.group_unsubscribe("mygroup")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00>\x00<{"group": "mygroup", "type": "unsubscribe", "instance": "*"}')
-        
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "unsubscribe",
+                                 "instance": "*"}, {}))
+
         sess.group_unsubscribe("mygroup")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00>\x00<{"group": "mygroup", "type": "unsubscribe", "instance": "*"}')
-        
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "unsubscribe",
+                                 "instance": "*"}, {}))
+
         sess.group_unsubscribe("mygroup", "my_instance")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00H\x00F{"group": "mygroup", "type": "unsubscribe", "instance": "my_instance"}')
+        sent = sess._socket.readsentmsg_parsed()
+        self.assertEqual(sent, ({"group": "mygroup", "type": "unsubscribe",
+                                 "instance": "my_instance"}, {}))
 
     def test_group_sendmsg(self):
         sess = MySession()
         self.assertEqual(sess._sequence, 1)
 
-        sess.group_sendmsg({ 'hello': 'a' }, "my_group")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00p\x00`{"from": "test_name", "seq": 2, "to": "*", "instance": "*", "group": "my_group", "type": "send"}{"hello": "a"}')
-        self.assertEqual(sess._sequence, 2)
+        msg = { "hello": "a" }
 
-        sess.group_sendmsg({ 'hello': 'a' }, "my_group", "my_instance")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00z\x00j{"from": "test_name", "seq": 3, "to": "*", "instance": "my_instance", "group": "my_group", "type": "send"}{"hello": "a"}')
-        self.assertEqual(sess._sequence, 3)
-        
-        sess.group_sendmsg({ 'hello': 'a' }, "your_group", "your_instance")
-        sent = sess._socket.readsentmsg()
-        self.assertEqual(sent, b'\x00\x00\x00~\x00n{"from": "test_name", "seq": 4, "to": "*", "instance": "your_instance", "group": "your_group", "type": "send"}{"hello": "a"}')
-        self.assertEqual(sess._sequence, 4)
+        def check_sent(additional_headers, sequence):
+            sent = sess._socket.readsentmsg_parsed()
+            headers = dict({"from": "test_name",
+                            "seq": sequence,
+                            "to": "*",
+                            "type": "send"},
+                           **additional_headers)
+            self.assertEqual(sent, (headers, msg))
+            self.assertEqual(sess._sequence, sequence)
+
+        sess.group_sendmsg(msg, "my_group")
+        check_sent({"instance": "*", "group": "my_group",
+                    "want_answer": False}, 2)
+
+        sess.group_sendmsg(msg, "my_group", "my_instance")
+        check_sent({"instance": "my_instance", "group": "my_group",
+                    "want_answer": False}, 3)
+
+        sess.group_sendmsg(msg, "your_group", "your_instance")
+        check_sent({"instance": "your_instance", "group": "your_group",
+                    "want_answer": False}, 4)
+
+        # Test the optional want_answer parameter
+        sess.group_sendmsg(msg, "group", want_answer=True)
+        check_sent({"instance": "*", "group": "group", "want_answer": True}, 5)
+
+
+        sess.group_sendmsg(msg, "group", want_answer=False)
+        check_sent({"instance": "*", "group": "group", "want_answer": False},
+                   6)
 
     def test_group_recvmsg(self):
         # must this one do anything except not return messages with
@@ -377,13 +417,25 @@ class testSession(unittest.TestCase):
 
     def test_group_reply(self):
         sess = MySession()
-        sess.group_reply({ 'from': 'me', 'group': 'our_group', 'instance': 'other_instance', 'seq': 4}, {"hello": "a"})
-        sent = sess._socket.readsentmsg();
-        self.assertEqual(sent, b'\x00\x00\x00\x8b\x00{{"from": "test_name", "seq": 2, "to": "me", "instance": "other_instance", "reply": 4, "group": "our_group", "type": "send"}{"hello": "a"}')
-        
-        sess.group_reply({ 'from': 'me', 'group': 'our_group', 'instance': 'other_instance', 'seq': 9}, {"hello": "a"})
-        sent = sess._socket.readsentmsg();
-        self.assertEqual(sent, b'\x00\x00\x00\x8b\x00{{"from": "test_name", "seq": 3, "to": "me", "instance": "other_instance", "reply": 9, "group": "our_group", "type": "send"}{"hello": "a"}')
+        sess.group_reply({ 'from': 'me', 'group': 'our_group',
+                           'instance': 'other_instance', 'seq': 4},
+                         {"hello": "a"})
+        sent = sess._socket.readsentmsg_parsed();
+        self.assertEqual(sent, ({"from": "test_name", "seq": 2,
+                                 "to": "me", "instance": "other_instance",
+                                 "reply": 4, "group": "our_group",
+                                 "type": "send"},
+                                {"hello": "a"}))
+
+        sess.group_reply({ 'from': 'me', 'group': 'our_group',
+                           'instance': 'other_instance', 'seq': 9},
+                         {"hello": "a"})
+        sent = sess._socket.readsentmsg_parsed();
+        self.assertEqual(sent, ({"from": "test_name", "seq": 3,
+                                 "to": "me", "instance": "other_instance",
+                                 "reply": 9, "group": "our_group",
+                                 "type": "send"},
+                                {"hello": "a"}))
 
     def test_timeout(self):
         if "BIND10_TEST_SOCKET_FILE" not in os.environ:

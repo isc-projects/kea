@@ -61,13 +61,13 @@
           { "item_name": "code",
             "item_type": "integer",
             "item_optional": false,
-            "item_default": 0,
+            "item_default": 0
           },
 
           { "item_name": "type",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "",
+            "item_default": ""
           },
 
           { "item_name": "array",
@@ -76,13 +76,19 @@
             "item_default": False
           },
 
-          { "item_name": "record_types",
+          { "item_name": "record-types",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "",
+            "item_default": ""
           },
 
           { "item_name": "space",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+
+          { "item_name": "encapsulate",
             "item_type": "string",
             "item_optional": false,
             "item_default": ""
@@ -129,6 +135,44 @@
             "item_default": "dhcp6"
           } ]
         }
+      },
+
+      { "item_name": "lease-database",
+        "item_type": "map",
+        "item_optional": false,
+        "item_default": {"type": "memfile"},
+        "map_item_spec": [
+            {
+                "item_name": "type",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+            },
+            {
+                "item_name": "name",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": ""
+            },
+            {
+                "item_name": "user",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": ""
+            },
+            {
+                "item_name": "host",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": ""
+            },
+            {
+                "item_name": "password",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": ""
+            }
+        ]
       },
 
       { "item_name": "subnet6",

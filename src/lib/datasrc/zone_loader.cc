@@ -17,15 +17,15 @@
 
 #include <datasrc/client.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
+#include <datasrc/zone_iterator.h>
 #include <datasrc/zone.h>
 #include <datasrc/logger.h>
-#include <datasrc/rrset_collection_base.h>
 
 #include <dns/rrset.h>
 #include <dns/zone_checker.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrset_collection_base.h>
 
 #include <boost/bind.hpp>
 
@@ -33,6 +33,7 @@
 
 using isc::dns::Name;
 using isc::dns::ConstRRsetPtr;
+using isc::dns::RRsetCollectionBase;
 using isc::dns::MasterLoader;
 using isc::dns::MasterLexer;
 
