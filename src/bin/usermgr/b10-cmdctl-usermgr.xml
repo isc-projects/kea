@@ -90,7 +90,9 @@
     <para>
       If a username and password are given (or just a username in case of
       deletion), these are used. Otherwise, the tool shall prompt for a
-      username and/or password.
+      username and/or password. It is recommended practice to let the
+      tool prompt for the password, as command-line arguments can be
+      visible through history or process viewers.
     </para>
 
     <variablelist>
@@ -107,7 +109,7 @@
         <term><option>-f <replaceable>filename</replaceable></option></term>
         <term><option>--file <replaceable>filename</replaceable></option></term>
         <listitem><para>
-          Define the filename to append the account to. The default is
+          Specify the accounts file to update. The default is
           <filename>cmdctl-accounts.csv</filename> in the system config
           directory.
         </para></listitem>
