@@ -128,7 +128,8 @@ LibDHCP::optionFactory(Option::Universe u,
 
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
-                               isc::dhcp::Option::OptionCollection& options) {
+                               isc::dhcp::Option::OptionCollection& options,
+                               size_t* relay_msg_offset /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -143,12 +144,18 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     while (offset + 4 <= length) {
         uint16_t opt_type = isc::util::readUint16(&buf[offset]);
         offset += 2;
+
         uint16_t opt_len = isc::util::readUint16(&buf[offset]);
         offset += 2;
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
             return (offset);
+        }
+
+        if (opt_type == D6O_RELAY_MSG && relay_msg_offset) {
+            // remember offset of the beginning of the relay-msg option
+            *relay_msg_offset = offset;
         }
 
         // Get all definitions with the particular option code. Note that option
@@ -193,7 +200,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 }
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options) {
+                               isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
     // Get the list of stdandard option definitions.
