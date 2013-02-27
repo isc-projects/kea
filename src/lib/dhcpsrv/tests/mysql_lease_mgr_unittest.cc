@@ -317,8 +317,7 @@ public:
 
         } else if (address == straddress4_[7]) {
             lease->hwaddr_ = vector<uint8_t>();             // Empty
-            lease->client_id_ = ClientIdPtr(
-                new ClientId(vector<uint8_t>()));           // Empty
+            lease->client_id_ = ClientIdPtr();              // Empty
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
             lease->subnet_id_ = 19;
@@ -1048,9 +1047,10 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[3], *returned.begin());
 
-    // Check that an empty vector is valid
-    EXPECT_TRUE(leases[7]->client_id_->getClientId().empty());
-    returned = lmptr_->getLease4(leases[7]->hwaddr_);
+    // Check that client-id is NULL
+    EXPECT_FALSE(leases[7]->client_id_);
+    HWAddr tmp(leases[7]->hwaddr_, HTYPE_ETHER);
+    returned = lmptr_->getLease4(tmp);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[7], *returned.begin());
 
@@ -1075,7 +1075,11 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
     // ClientId::MAX_CLIENT_ID_LEN is used in an EXPECT_EQ.
     int client_id_max = ClientId::MAX_CLIENT_ID_LEN;
     EXPECT_EQ(128, client_id_max);
-    for (uint8_t i = 0; i <= client_id_max; i += 16) {
+
+    int client_id_min = ClientId::MIN_CLIENT_ID_LEN;
+    EXPECT_EQ(2, client_id_min); // See RFC2132, section 9.14
+
+    for (uint8_t i = client_id_min; i <= client_id_max; i += 16) {
         vector<uint8_t> clientid_vec(i, i);
         leases[1]->client_id_.reset(new ClientId(clientid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
@@ -1184,7 +1188,11 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
     // For speed, go from 0 to 128 is steps of 16.
     int duid_max = DUID::MAX_DUID_LEN;
     EXPECT_EQ(128, duid_max);
-    for (uint8_t i = 0; i <= duid_max; i += 16) {
+
+    int duid_min = DUID::MIN_DUID_LEN;
+    EXPECT_EQ(1, duid_min);
+
+    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
         vector<uint8_t> duid_vec(i, i);
         leases[1]->duid_.reset(new DUID(duid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
@@ -1249,7 +1257,11 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     // For speed, go from 0 to 128 is steps of 16.
     int duid_max = DUID::MAX_DUID_LEN;
     EXPECT_EQ(128, duid_max);
-    for (uint8_t i = 0; i <= duid_max; i += 16) {
+
+    int duid_min = DUID::MIN_DUID_LEN;
+    EXPECT_EQ(1, duid_min);
+
+    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
         vector<uint8_t> duid_vec(i, i);
         leases[1]->duid_.reset(new DUID(duid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
