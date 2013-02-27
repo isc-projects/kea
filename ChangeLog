@@ -1,3 +1,8 @@
+5XX.	[bug]		tomek
+	All DHCP components now gracefully refuse to handle too short
+	DUIDs and client-id.
+	(Trac #2723, git TBD)
+
 581.	[func]*		y-aharen
 	Added statistics items in b10-auth based on
 	http://bind10.isc.org/wiki/StatisticsItems. Qtype counters are
