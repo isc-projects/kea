@@ -164,53 +164,154 @@
     <variablelist>
 
       <varlistentry>
-        <term>notifyoutv4</term>
+        <term>zones</term>
         <listitem><simpara>
-         Number of IPv4 notifies per zone name sent out from Xfrout
-        </simpara></listitem>
-      </varlistentry>
+          A directory name of per-zone statistics
+          </simpara>
+          <variablelist>
 
-      <varlistentry>
-        <term>notifyoutv6</term>
-        <listitem><simpara>
-         Number of IPv6 notifies per zone name sent out from Xfrout
-        </simpara></listitem>
-      </varlistentry>
+            <varlistentry>
+              <term><replaceable>zonename</replaceable></term>
+              <listitem><simpara>
+                A actual zone name or special zone name <quote>_SERVER_</quote>
+                representing an entire server
+                </simpara>
+                <variablelist>
 
-      <varlistentry>
-        <term>xfrrej</term>
-        <listitem><simpara>
-         Number of XFR requests per zone name rejected by Xfrout
-        </simpara></listitem>
-      </varlistentry>
+                  <varlistentry>
+                    <term>notifyoutv4</term>
+                    <listitem><simpara>
+                      Number of IPv4 notifies per zone name sent out from Xfrout
+                    </simpara></listitem>
+                  </varlistentry>
 
-      <varlistentry>
-        <term>xfrreqdone</term>
-        <listitem><simpara>
-         Number of requested zone transfers per zone name completed
-        </simpara></listitem>
-      </varlistentry>
+                  <varlistentry>
+                    <term>notifyoutv6</term>
+                    <listitem><simpara>
+                      Number of IPv6 notifies per zone name sent out from Xfrout
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>xfrrej</term>
+                    <listitem><simpara>
+                      Number of XFR requests per zone name rejected by Xfrout
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>xfrreqdone</term>
+                    <listitem><simpara>
+                      Number of requested zone transfers per zone name completed
+                    </simpara></listitem>
+                  </varlistentry>
+
+                </variablelist>
+              </listitem>
+            </varlistentry><!-- end of zonename -->
+
+          </variablelist>
+        </listitem>
+      </varlistentry><!-- end of zones -->
 
       <varlistentry>
         <term>ixfr_running</term>
         <listitem><simpara>
-         Number of IXFRs in progress
+          Number of IXFRs in progress
         </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
         <term>axfr_running</term>
         <listitem><simpara>
-         Number of AXFRs in progress
+          Number of AXFRs in progress
         </simpara></listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>socket</term>
+        <listitem><simpara>
+          A directory name of socket statistics
+          </simpara>
+          <variablelist>
+
+            <varlistentry>
+              <term>unixdomain</term>
+              <listitem><simpara>
+                A directory name of UNIX domain statistics
+                </simpara>
+                <variablelist>
+
+                  <varlistentry>
+                    <term>open</term>
+                    <listitem><simpara>
+                      UNIX domain sockets opened successfully
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>openfail</term>
+                    <listitem><simpara>
+                      UNIX domain sockets open failures
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>close</term>
+                    <listitem><simpara>
+                      UNIX domain sockets closed
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>bindfail</term>
+                    <listitem><simpara>
+                      UNIX domain sockets bind failures
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>acceptfail</term>
+                    <listitem><simpara>
+                      UNIX domain sockets incoming accept failures
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>accept</term>
+                    <listitem><simpara>
+                      UNIX domain sockets incoming connections successfully accepted
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>senderr</term>
+                    <listitem><simpara>
+                      UNIX domain sockets send errors
+                    </simpara></listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term>recverr</term>
+                    <listitem><simpara>
+                      UNIX domain sockets receive errors
+                    </simpara></listitem>
+                  </varlistentry>
+
+                </variablelist>
+              </listitem>
+            </varlistentry><!-- end of unixdomain -->
+
+          </variablelist>
+        </listitem>
+      </varlistentry><!-- end of socket -->
 
     </variablelist>
 
     <para>
-      In per-zone counters the special zone name '_SERVER_' exists. It doesn't
-      mean a specific zone. It represents an entire server and its value means
-      a total count of all zones.
+      In per-zone counters the special zone name <quote>_SERVER_</quote> exists.
+      It doesn't mean a specific zone. It represents an entire server and its
+      value means a total count of all zones.
     </para>
 
   </refsect1>
