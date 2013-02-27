@@ -29,7 +29,7 @@ class PrintCatcher:
         self.stdout_lines = []
 
     def __enter__(self):
-        self.orig_stdout_write = sys.stdout.write
+        self.__orig_stdout_write = sys.stdout.write
         def new_write(line):
             self.stdout_lines.append(line)
 
@@ -37,37 +37,36 @@ class PrintCatcher:
         return self
 
     def __exit__(self, type, value, traceback):
-        sys.stdout.write = self.orig_stdout_write
-        return
+        sys.stdout.write = self.__orig_stdout_write
 
 class OverrideGetpass:
     def __init__(self, new_getpass):
-        self.new_getpass = new_getpass
-        self.orig_getpass = getpass.getpass
+        self.__new_getpass = new_getpass
+        self.__orig_getpass = getpass.getpass
 
     def __enter__(self):
-        getpass.getpass = self.new_getpass
+        getpass.getpass = self.__new_getpass
         return self
 
     def __exit__(self, type, value, traceback):
-        getpass.getpass = self.orig_getpass
+        getpass.getpass = self.__orig_getpass
 
 # input() is a built-in function and not easily overridable
 # so this one uses usermgr for that
 class OverrideInput:
     def __init__(self, usermgr, new_getpass):
-        self.usermgr = usermgr
-        self.new_input = new_getpass
-        self.orig_input = usermgr._input
+        self.__usermgr = usermgr
+        self.__new_input = new_getpass
+        self.__orig_input = usermgr._input
 
     def __enter__(self):
-        self.usermgr._input = self.new_input
+        self.__usermgr._input = self.__new_input
         return self
 
     def __exit__(self, type, value, traceback):
-        self.usermgr._input = self.orig_input
+        self.__usermgr._input = self.__orig_input
 
-def run(command, input=None):
+def run(command):
     """
     Small helper function that returns a tuple of (rcode, stdout, stderr)
     after running the given command (an array of command and arguments, as
@@ -78,14 +77,8 @@ def run(command, input=None):
     input: if not None, a string that is written to the process stdin
            stream
     """
-    if input is not None:
-        stdin = subprocess.PIPE
-    else:
-        stdin = None
     subp = subprocess.Popen(command, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, stdin=stdin)
-    if input is not None:
-        subp.stdin.write(bytes(input, 'UTF-8'))
+                            stderr=subprocess.PIPE)
     (stdout, stderr) = subp.communicate()
     return (subp.returncode, stdout, stderr)
 
@@ -133,7 +126,7 @@ class TestUserMgr(unittest.TestCase):
             self.assertEqual(expected_hash, entry_hash)
 
     def run_check(self, expected_returncode, expected_stdout, expected_stderr,
-                  command, stdin=None):
+                  command):
         """
         Runs the given command, and checks return code, and outputs (if provided).
         Arguments:
@@ -143,7 +136,7 @@ class TestUserMgr(unittest.TestCase):
         expected_stderr, (multiline) string that is checked against stderr.
                          May be None, in which case the check is skipped.
         """
-        (returncode, stdout, stderr) = run(command, stdin)
+        (returncode, stdout, stderr) = run(command)
         if expected_stderr is not None:
             self.assertEqual(expected_stderr, stderr.decode())
         if expected_stdout is not None:
@@ -287,23 +280,24 @@ Options:
 
     def test_default_file(self):
         """
-        A few checks that couldn't be done though external calls
-        of the tool.
         Check the default file is the correct one.
-        Check that the prompting methods do verification
         """
         # Hardcoded path .. should be ok since this is run from make check
         self.assertEqual(SYSCONFPATH + '/cmdctl-accounts.csv',
                          self.usermgr_module.DEFAULT_FILE)
 
     def test_prompt_for_password_different(self):
+        """
+        Check that the method that prompts for a password verifies that
+        the same value is entered twice
+        """
         # returns a different string (the representation of the number
         # of times it has been called), until it has been called
         # over 10 times, in which case it will always return "11"
         getpass_different_called = 0
         def getpass_different(question):
             nonlocal getpass_different_called
-            getpass_different_called = getpass_different_called + 1
+            getpass_different_called += 1
             if getpass_different_called > 10:
                 return "11"
             else:
@@ -319,25 +313,24 @@ Options:
                 self.assertEqual(expected_output, ''.join(pc.stdout_lines))
 
     def test_prompt_for_password_empty(self):
+        """
+        Check that the method that prompts for a password verifies that
+        the same value is entered twice
+        """
         # returns an empty string until it has been called over 10
         # times
         getpass_empty_called = 0
         def getpass_empty(prompt):
             nonlocal getpass_empty_called
-            getpass_empty_called = getpass_empty_called + 1
+            getpass_empty_called += 1
             if getpass_empty_called > 10:
                 return "nonempty"
             else:
                 return ""
 
-        usermgr_module = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
-        options = object()
-        args = object()
-        usermgr = usermgr_module.UserManager(options, args)
-
         with PrintCatcher() as pc:
             with OverrideGetpass(getpass_empty):
-                pwd = usermgr._prompt_for_password()
+                pwd = self.usermgr._prompt_for_password()
                 self.assertEqual("nonempty", pwd)
                 self.assertEqual(12, getpass_empty_called)
                 # stdout should be 10 times the 'cannot be empty' string
