@@ -330,8 +330,7 @@ Options:
             else:
                 return ""
 
-        usermgr_module = imp.load_source('usermgr',
-                                         '../b10-cmdctl-usermgr.py')
+        usermgr_module = imp.load_source('usermgr', '../b10-cmdctl-usermgr.py')
         options = object()
         args = object()
         usermgr = usermgr_module.UserManager(options, args)
