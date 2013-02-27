@@ -25,13 +25,20 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
+#include <boost/static_assert.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <boost/optional.hpp>
+
 #include <cassert>
 #include <cstring>
+#include <set>
 #include <vector>
-#include <boost/static_assert.hpp>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using std::vector;
+using std::set;
 
 namespace isc {
 namespace datasrc {
@@ -222,7 +229,6 @@ getRdataEncodeSpec(const RRClass& rrclass, const RRType& rrtype) {
 }
 
 namespace {
-
 // This class is a helper for RdataEncoder to divide the content of RDATA
 // fields for encoding by "abusing" the  message rendering logic.
 // The idea is to identify domain name fields in the writeName() method,
@@ -368,16 +374,77 @@ private:
 
 } // end of unnamed namespace
 
+namespace {
+// A trivial comparison function used for std::set<ConstRdataPtr> below.
+bool
+RdataLess(const ConstRdataPtr& rdata1, const ConstRdataPtr& rdata2) {
+    return (rdata1->compare(*rdata2) < 0);
+}
+}
+
 struct RdataEncoder::RdataEncoderImpl {
     RdataEncoderImpl() : encode_spec_(NULL), rrsig_buffer_(0),
-                         rdata_count_(0)
+                         old_varlen_count_(0), old_sig_count_(0),
+                         old_data_len_(0), old_sig_len_(0),
+                         old_length_fields_(NULL), old_data_(NULL),
+                         old_sig_data_(NULL), olddata_buffer_(0),
+                         rdatas_(RdataLess), rrsigs_(RdataLess)
     {}
+
+    // Common initialization for RdataEncoder::start().
+    void start(RRClass rrclass, RRType rrtype) {
+        if (rrtype == RRType::RRSIG()) {
+            isc_throw(BadValue, "RRSIG cannot be encoded as main RDATA type");
+        }
+
+        encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
+        current_class_ = rrclass;
+        current_type_ = rrtype;
+        field_composer_.clearLocal(encode_spec_);
+        rrsig_buffer_.clear();
+        rrsig_lengths_.clear();
+        old_varlen_count_ = 0;
+        old_sig_count_ = 0;
+        old_data_len_ = 0;
+        old_sig_len_ = 0;
+        old_length_fields_ = NULL;
+        old_data_ = NULL;
+        old_sig_data_ = NULL;
+        olddata_buffer_.clear();
+
+        rdatas_.clear();
+        rrsigs_.clear();
+    }
 
     const RdataEncodeSpec* encode_spec_; // encode spec of current RDATA set
     RdataFieldComposer field_composer_;
     util::OutputBuffer rrsig_buffer_;
-    size_t rdata_count_;
     vector<uint16_t> rrsig_lengths_;
+
+    // Placeholder for the RR class and type of the current session;
+    // initially null, and will be (re)set at the beginning of each session.
+    boost::optional<RRClass> current_class_;
+    boost::optional<RRType> current_type_;
+
+    // Parameters corresponding to the previously encoded data in the
+    // merge mode.
+    size_t old_varlen_count_;
+    size_t old_sig_count_;
+    size_t old_data_len_;
+    size_t old_sig_len_;
+    const void* old_length_fields_;
+    const void* old_data_;
+    const void* old_sig_data_;
+    util::OutputBuffer olddata_buffer_;
+
+    // Temporary storage of Rdata and RRSIGs to be encoded.  They are used
+    // to detect and ignore duplicate data.
+    typedef boost::function<bool(const ConstRdataPtr&, const ConstRdataPtr&)>
+    RdataCmp;
+    // added unique Rdatas
+    set<ConstRdataPtr, RdataCmp> rdatas_;
+    // added unique RRSIG Rdatas
+    set<ConstRdataPtr, RdataCmp> rrsigs_;
 };
 
 RdataEncoder::RdataEncoder() :
@@ -390,36 +457,127 @@ RdataEncoder::~RdataEncoder() {
 
 void
 RdataEncoder::start(RRClass rrclass, RRType rrtype) {
-    if (rrtype == RRType::RRSIG()) {
-        isc_throw(BadValue, "RRSIG cannot be encoded as main RDATA type");
-    }
+    impl_->start(rrclass, rrtype);
+}
 
-    impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
-    impl_->field_composer_.clearLocal(impl_->encode_spec_);
-    impl_->rrsig_buffer_.clear();
-    impl_->rdata_count_ = 0;
-    impl_->rrsig_lengths_.clear();
+namespace {
+// Helper callbacks used in the merge mode of start().  These re-construct
+// each RDATA and RRSIG in the wire-format, counting the total length of the
+// encoded data fields.
+void
+decodeName(const LabelSequence& name_labels, RdataNameAttributes,
+           util::OutputBuffer* buffer, size_t* total_len)
+{
+    size_t name_dlen;
+    const uint8_t* name_data = name_labels.getData(&name_dlen);
+    buffer->writeData(name_data, name_dlen);
+    *total_len += name_labels.getSerializedLength();
 }
 
 void
-RdataEncoder::addRdata(const rdata::Rdata& rdata) {
+decodeData(const void* data, size_t data_len, util::OutputBuffer* buffer,
+           size_t* total_len)
+{
+    buffer->writeData(data, data_len);
+    *total_len += data_len;
+}
+}
+
+void
+RdataEncoder::start(RRClass rrclass, RRType rrtype, const void* old_data,
+                    size_t old_rdata_count, size_t old_sig_count)
+{
+    impl_->start(rrclass, rrtype);
+
+    // Identify start points of various fields of the encoded data and
+    // remember it in class variables.
+    const uint8_t* cp = static_cast<const uint8_t*>(old_data);
+    impl_->old_varlen_count_ =
+        impl_->encode_spec_->varlen_count * old_rdata_count;
+    if (impl_->old_varlen_count_ > 0 || old_sig_count > 0) {
+        impl_->old_length_fields_ = cp;
+        cp += (impl_->old_varlen_count_ + old_sig_count) * sizeof(uint16_t);
+    }
+    impl_->old_data_ = cp;
+    impl_->old_sig_count_ = old_sig_count;
+
+    // Re-construct RDATAs and RRSIGs in the form of Rdata objects, and
+    // keep them in rdatas_ and rrsigs_ so we can detect and ignore duplicate
+    // data with the existing one later.  We'll also figure out the lengths
+    // of the RDATA and RRSIG part of the data by iterating over the data
+    // fields.  Note that the given old_data shouldn't contain duplicate
+    // Rdata or RRSIG as they should have been generated by this own class,
+    // which ensures that condition; if this assumption doesn't hold, we throw.
+    size_t total_len = 0;
+    RdataReader reader(rrclass, rrtype, old_data, old_rdata_count,
+                       old_sig_count,
+                       boost::bind(decodeName, _1, _2, &impl_->olddata_buffer_,
+                                   &total_len),
+                       boost::bind(decodeData, _1, _2, &impl_->olddata_buffer_,
+                                   &total_len));
+    while (reader.iterateRdata()) {
+        util::InputBuffer ibuffer(impl_->olddata_buffer_.getData(),
+                                  impl_->olddata_buffer_.getLength());
+        if (!impl_->rdatas_.insert(
+                createRdata(rrtype, rrclass, ibuffer,
+                            impl_->olddata_buffer_.getLength())).second) {
+            isc_throw(Unexpected, "duplicate RDATA found in merging RdataSet");
+        }
+        impl_->olddata_buffer_.clear();
+    }
+    impl_->old_data_len_ = total_len;
+
+    total_len = 0;
+    while (reader.iterateSingleSig()) {
+        util::InputBuffer ibuffer(impl_->olddata_buffer_.getData(),
+                                  impl_->olddata_buffer_.getLength());
+        if (!impl_->rrsigs_.insert(
+                createRdata(RRType::RRSIG(), rrclass, ibuffer,
+                            impl_->olddata_buffer_.getLength())).second) {
+            isc_throw(Unexpected, "duplicate RRSIG found in merging RdataSet");
+        }
+        impl_->olddata_buffer_.clear();
+    }
+    impl_->old_sig_len_ = total_len;
+}
+
+bool
+RdataEncoder::addRdata(const Rdata& rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
                   "RdataEncoder::addRdata performed before start");
     }
 
+    // Simply ignore duplicate RDATA.  Creating RdataPtr also checks the
+    // given Rdata is of the correct RR type.
+    ConstRdataPtr rdatap = createRdata(*impl_->current_type_,
+                                       *impl_->current_class_, rdata);
+    if (impl_->rdatas_.find(rdatap) != impl_->rdatas_.end()) {
+        return (false);
+    }
+
     impl_->field_composer_.startRdata();
     rdata.toWire(impl_->field_composer_);
     impl_->field_composer_.endRdata();
-    ++impl_->rdata_count_;
+    impl_->rdatas_.insert(rdatap);
+
+    return (true);
 }
 
-void
-RdataEncoder::addSIGRdata(const rdata::Rdata& sig_rdata) {
+bool
+RdataEncoder::addSIGRdata(const Rdata& sig_rdata) {
     if (impl_->encode_spec_ == NULL) {
         isc_throw(InvalidOperation,
                   "RdataEncoder::addSIGRdata performed before start");
     }
+
+    // Ignore duplicate RRSIGs
+    ConstRdataPtr rdatap = createRdata(RRType::RRSIG(), *impl_->current_class_,
+                                       sig_rdata);
+    if (impl_->rrsigs_.find(rdatap) != impl_->rrsigs_.end()) {
+        return (false);
+    }
+
     const size_t cur_pos = impl_->rrsig_buffer_.getLength();
     sig_rdata.toWire(impl_->rrsig_buffer_);
     const size_t rrsig_datalen = impl_->rrsig_buffer_.getLength() - cur_pos;
@@ -427,7 +585,10 @@ RdataEncoder::addSIGRdata(const rdata::Rdata& sig_rdata) {
         isc_throw(RdataEncodingError, "RRSIG is too large: "
                   << rrsig_datalen << " bytes");
     }
+    impl_->rrsigs_.insert(rdatap);
     impl_->rrsig_lengths_.push_back(rrsig_datalen);
+
+    return (true);
 }
 
 size_t
@@ -437,8 +598,11 @@ RdataEncoder::getStorageLength() const {
                   "RdataEncoder::getStorageLength performed before start");
     }
 
-    return (sizeof(uint16_t) * impl_->field_composer_.data_lengths_.size() +
-            sizeof(uint16_t) * impl_->rrsig_lengths_.size() +
+    return (sizeof(uint16_t) * (impl_->old_varlen_count_ +
+                                impl_->old_sig_count_ +
+                                impl_->field_composer_.data_lengths_.size() +
+                                impl_->rrsig_lengths_.size()) +
+            impl_->old_data_len_ + impl_->old_sig_len_ +
             impl_->rrsig_buffer_.getLength() +
             impl_->field_composer_.getLength());
 }
@@ -461,6 +625,12 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
     uint8_t* dp = dp_beg;
     uint16_t* lenp = reinterpret_cast<uint16_t*>(buf);
 
+    // Encode list of lengths for variable length fields for old data (if any)
+    const size_t old_varlen_fields_len =
+        impl_->old_varlen_count_ * sizeof(uint16_t);
+    std::memcpy(lenp, impl_->old_length_fields_, old_varlen_fields_len);
+    lenp += impl_->old_varlen_count_;
+    dp += old_varlen_fields_len;
     // Encode list of lengths for variable length fields (if any)
     if (!impl_->field_composer_.data_lengths_.empty()) {
         const size_t varlen_fields_len =
@@ -470,6 +640,12 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
         lenp += impl_->field_composer_.data_lengths_.size();
         dp += varlen_fields_len;
     }
+    // Encode list of lengths for old RRSIGs (if any)
+    const size_t old_rrsigs_len = impl_->old_sig_count_ * sizeof(uint16_t);
+    std::memcpy(lenp, static_cast<const uint8_t*>(impl_->old_length_fields_) +
+                old_varlen_fields_len, old_rrsigs_len);
+    lenp += impl_->old_sig_count_;
+    dp += old_rrsigs_len;
     // Encode list of lengths for RRSIGs (if any)
     if (!impl_->rrsig_lengths_.empty()) {
         const size_t rrsigs_len =
@@ -477,10 +653,17 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
         std::memcpy(lenp, &impl_->rrsig_lengths_[0], rrsigs_len);
         dp += rrsigs_len;
     }
+    // Encode main old RDATA, if any
+    std::memcpy(dp, impl_->old_data_, impl_->old_data_len_);
+    dp += impl_->old_data_len_;
     // Encode main RDATA
     std::memcpy(dp, impl_->field_composer_.getData(),
                 impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
+    // Encode old RRSIGs, if any
+    std::memcpy(dp, static_cast<const uint8_t*>(impl_->old_data_) +
+                impl_->old_data_len_, impl_->old_sig_len_);
+    dp += impl_->old_sig_len_;
     // Encode RRSIGs, if any
     std::memcpy(dp, impl_->rrsig_buffer_.getData(),
                 impl_->rrsig_buffer_.getLength());
@@ -501,7 +684,7 @@ RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
     var_count_total_(spec_.varlen_count * rdata_count),
     sig_count_(sig_count),
     spec_count_(spec_.field_count * rdata_count),
-    // The lenghts are stored first
+    // The lengths are stored first
     lengths_(reinterpret_cast<const uint16_t*>(data)),
     // And the data just after all the lengths
     data_(reinterpret_cast<const uint8_t*>(data) +
