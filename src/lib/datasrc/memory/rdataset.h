@@ -120,6 +120,27 @@ public:
     /// RRSIG from the given memory segment, constructs the object, and
     /// returns a pointer to it.
     ///
+    /// If the optional \c old_rdataset parameter is set to non NULL,
+    /// The given \c RdataSet, RRset, RRSIG will be merged in the new
+    /// \c Rdataset object: the new object contain the union set of all
+    /// RDATA and RRSIGs contained in these.  Obviously \c old_rdataset
+    /// was previously generated for the same RRClass and RRType as those
+    /// for the given RRsets; it's the caller's responsibility to ensure
+    /// this condition.  If it's not met the result will be undefined.
+    ///
+    /// In both cases, this method ensures the stored RDATA and RRSIG are
+    /// unique.  Any duplicate data (in the sense of the comparison in the
+    /// form of canonical form of RRs as described in RFC4034) within RRset or
+    /// RRSIG, or between data in \c old_rdataset and RRset/RRSIG will be
+    /// unified.
+    ///
+    /// In general, the TTLs of the given data are expected to be the same.
+    /// This is especially the case if the zone is signed (and RRSIG is given).
+    /// However, if different TTLs are found among the given data, this
+    /// method chooses the lowest one for the TTL of the resulting
+    /// \c RdataSet.  This is an implementation choice, but should be most
+    /// compliant to the sense of Section 5.2 of RFC2181.
+    ///
     /// Normally the (non RRSIG) RRset is given (\c rrset is not NULL) while
     /// its RRSIG (\c sig_rrset) may or may not be provided.  But it's also
     /// expected that in some rare (mostly broken) cases there can be an RRSIG
@@ -148,9 +169,9 @@ public:
     /// happens.
     ///
     /// Due to implementation limitations, this class cannot contain more than
-    /// 8191 RDATAs for the non RRISG RRset; also, it cannot contain more than
-    /// 65535 RRSIGs.  If the given RRset(s) fail to meet this condition,
-    /// an \c RdataSetError exception will be thrown.
+    /// 8191 RDATAs (after unifying duplicates) for the non RRISG RRset; also,
+    /// it cannot contain more than 65535 RRSIGs.  If the given RRset(s) fail
+    /// to meet this condition, an \c RdataSetError exception will be thrown.
     ///
     /// \throw isc::BadValue Given RRset(s) are invalid (see the description)
     /// \throw RdataSetError Number of RDATAs exceed the limits
@@ -164,12 +185,15 @@ public:
     /// created.  Can be NULL if sig_rrset is not.
     /// \param sig_rrset An RRSIG RRset from which the \c RdataSet is to be
     /// created.  Can be NULL if rrset is not.
+    /// \param old_rdataset If non NULL, create RdataSet merging old_rdataset
+    /// into given rrset and sig_rrset.
     ///
     /// \return A pointer to the created \c RdataSet.
     static RdataSet* create(util::MemorySegment& mem_sgmt,
                             RdataEncoder& encoder,
                             dns::ConstRRsetPtr rrset,
-                            dns::ConstRRsetPtr sig_rrset);
+                            dns::ConstRRsetPtr sig_rrset,
+                            const RdataSet* old_rdataset = NULL);
 
     /// \brief Destruct and deallocate \c RdataSet
     ///
