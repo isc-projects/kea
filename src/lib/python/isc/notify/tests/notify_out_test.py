@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -96,13 +96,7 @@ class TestZoneNotifyInfo(unittest.TestCase):
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
         self._db_file = TESTDATA_SRCDIR + '/test.sqlite3'
-        self._notifiedv4_zone_name = None
-        def _dummy_counter_notifyoutv4(z): self._notifiedv4_zone_name = z
-        self._notifiedv6_zone_name = None
-        def _dummy_counter_notifyoutv6(z): self._notifiedv6_zone_name = z
-        self._notify = notify_out.NotifyOut(self._db_file,
-                                            counter_notifyoutv4=_dummy_counter_notifyoutv4,
-                                            counter_notifyoutv6=_dummy_counter_notifyoutv6)
+        self._notify = notify_out.NotifyOut(self._db_file)
         self._notify._notify_infos[('example.com.', 'IN')] = MockZoneNotifyInfo('example.com.', 'IN')
         self._notify._notify_infos[('example.com.', 'CH')] = MockZoneNotifyInfo('example.com.', 'CH')
         self._notify._notify_infos[('example.net.', 'IN')] = MockZoneNotifyInfo('example.net.', 'IN')
@@ -116,6 +110,9 @@ class TestNotifyOut(unittest.TestCase):
         com_info.notify_slaves.append(('1.1.1.1', 5353))
         com_ch_info = self._notify._notify_infos[('example.com.', 'CH')]
         com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
+
+    def tearDown(self):
+        self._notify._counters.clear_all()
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -268,77 +265,67 @@ class TestNotifyOut(unittest.TestCase):
 
     def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv4')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv6')
+
         example_com_info.prepare_notify_out()
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('192.0.2.1', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
-        self.assertEqual(self._notifiedv4_zone_name, 'example.net.')
-        self.assertIsNone(self._notifiedv6_zone_name)
+        self.assertEqual(self._notify._counters.get(
+                'zones', 'example.net.', 'notifyoutv4'), 1)
+        self.assertEqual(self._notify._counters.get(
+                'zones', 'example.net.', 'notifyoutv6'), 0)
 
     def test_send_notify_message_udp_ipv6(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv4')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv6')
+
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('2001:db8::53', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertEqual(self._notifiedv6_zone_name, 'example.net.')
-
-    def test_send_notify_message_udp_ipv4_with_nonetype_notifyoutv4(self):
-        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
-        example_com_info.prepare_notify_out()
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
-        self._notify._counter_notifyoutv4 = None
-        self._notify._send_notify_message_udp(example_com_info,
-                                              ('192.0.2.1', 53))
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
-
-    def test_send_notify_message_udp_ipv4_with_notcallable_notifyoutv4(self):
-        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
-        example_com_info.prepare_notify_out()
-        self._notify._counter_notifyoutv4 = 'NOT CALLABLE'
-        self.assertRaises(TypeError,
-                          self._notify._send_notify_message_udp,
-                          example_com_info, ('192.0.2.1', 53))
-
-    def test_send_notify_message_udp_ipv6_with_nonetype_notifyoutv6(self):
-        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
-        self._notify._counter_notifyoutv6 = None
-        self._notify._send_notify_message_udp(example_com_info,
-                                              ('2001:db8::53', 53))
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
-
-    def test_send_notify_message_udp_ipv6_with_notcallable_notifyoutv6(self):
-        example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
-        self._notify._counter_notifyoutv6 = 'NOT CALLABLE'
-        self.assertRaises(TypeError,
-                          self._notify._send_notify_message_udp,
-                          example_com_info, ('2001:db8::53', 53))
+        self.assertEqual(self._notify._counters.get(
+                'zones', 'example.net.', 'notifyoutv4'), 0)
+        self.assertEqual(self._notify._counters.get(
+                'zones', 'example.net.', 'notifyoutv6'), 1)
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv4')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv6')
 
         # As long as the underlying data source validates RDATA this shouldn't
         # happen, but right now it's not actually the case.  Even if the
         # data source does its job, it's prudent to confirm the behavior for
         # an unexpected case.
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('invalid', 53))
         self.assertFalse(ret)
-        self.assertIsNone(self._notifiedv4_zone_name)
-        self.assertIsNone(self._notifiedv6_zone_name)
+
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv4')
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self._notify._counters.get,
+                          'zones', 'example.net.', 'notifyoutv4')
 
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp
