@@ -21,9 +21,16 @@
 #include <sstream>
 
 using namespace std;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
+
+Pkt6::RelayInfo::RelayInfo()
+    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_(""), relay_msg_len_(0) {
+    // interface_id_, subscriber_id_, remote_id_ initialized to NULL
+    // echo_options_ initialized to empty collection
+}
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) :
     proto_(proto),
@@ -54,6 +61,52 @@ Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
 }
 
 uint16_t Pkt6::len() {
+    if (relay_info_.empty()) {
+        return (directLen());
+    } else {
+        calculateRelaySizes();
+        return (relay_info_[0].relay_msg_len_ + getRelayOverhead(relay_info_[0]));
+    }
+}
+
+uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) {
+    uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
+        + Option::OPTION6_HDR_LEN; // header of the relay-msg option
+
+    if (relay.interface_id_) {
+        len += relay.interface_id_->len();
+    }
+    if (relay.subscriber_id_) {
+        len += relay.subscriber_id_->len();
+    }
+    if (relay.remote_id_) {
+        len += relay.remote_id_->len();
+    }
+
+    for (Option::OptionCollection::const_iterator opt = relay.echo_options_.begin();
+         opt != relay.echo_options_.end(); ++opt) {
+        len += (opt->second)->len();
+    }
+
+    return (len);
+}
+
+uint16_t Pkt6::calculateRelaySizes() {
+
+    uint16_t len = directLen(); // start with length of all options
+
+    int relay_index = relay_info_.size();
+
+    while (relay_index) {
+        relay_info_[relay_index - 1].relay_msg_len_ = len;
+        len += getRelayOverhead(relay_info_[relay_index - 1]);
+        --relay_index;
+    }
+
+    return (len);
+}
+
+uint16_t Pkt6::directLen() {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
     for (Option::OptionCollection::iterator it = options_.begin();
@@ -82,6 +135,41 @@ Pkt6::pack() {
 bool
 Pkt6::packUDP() {
     try {
+
+        if (!relay_info_.empty()) {
+            calculateRelaySizes();
+
+            for (vector<RelayInfo>::iterator relay = relay_info_.begin();
+                 relay != relay_info_.end(); ++relay) {
+                bufferOut_.writeUint8(relay->msg_type_);
+                bufferOut_.writeUint8(relay->hop_count_);
+                bufferOut_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                                     isc::asiolink::V6ADDRESS_LEN);
+                bufferOut_.writeData(&relay->peeraddr_.toBytes()[0],
+                                     isc::asiolink::V6ADDRESS_LEN);
+
+                if (relay->interface_id_) {
+                    relay->interface_id_->pack(bufferOut_);
+                }
+                if (relay->subscriber_id_) {
+                    relay->subscriber_id_->pack(bufferOut_);
+                }
+                if (relay->remote_id_) {
+                    relay->remote_id_->pack(bufferOut_);
+                }
+
+                for (Option::OptionCollection::const_iterator opt =
+                         relay->echo_options_.begin();
+                     opt != relay->echo_options_.end(); ++opt) {
+                    (opt->second)->pack(bufferOut_);
+                }
+
+                bufferOut_.writeUint16(D6O_RELAY_MSG);
+                bufferOut_.writeUint16(relay->relay_msg_len_);
+            }
+
+        }
+
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
         bufferOut_.writeUint8(msg_type_);
         // store 3-octet transaction-id
@@ -127,12 +215,43 @@ Pkt6::unpackUDP() {
         return (false);
     }
     msg_type_ = data_[0];
-    transid_ = ( (data_[1]) << 16 ) +
-        ((data_[2]) << 8) + (data_[3]);
+    switch (msg_type_) {
+    case DHCPV6_SOLICIT:
+    case DHCPV6_ADVERTISE:
+    case DHCPV6_REQUEST:
+    case DHCPV6_CONFIRM:
+    case DHCPV6_RENEW:
+    case DHCPV6_REBIND:
+    case DHCPV6_REPLY:
+    case DHCPV6_DECLINE:
+    case DHCPV6_RECONFIGURE:
+    case DHCPV6_INFORMATION_REQUEST:
+    default: // assume that uknown messages are not using relay format
+        {
+            return (unpackMsg(data_.begin(), data_.end()));
+        }
+    case DHCPV6_RELAY_FORW:
+    case DHCPV6_RELAY_REPL:
+        return (unpackRelayMsg());
+    }
+}
+
+bool
+Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
+                OptionBuffer::const_iterator end) {
+    if (std::distance(begin, end) < 4) {
+        // truncated message (less than 4 bytes)
+        return (false);
+    }
+
+    msg_type_ = *begin++;
+
+    transid_ = ( (*begin++) << 16 ) +
+        ((*begin++) << 8) + (*begin++);
     transid_ = transid_ & 0xffffff;
 
     try {
-        OptionBuffer opt_buffer(data_.begin() + 4, data_.end());
+        OptionBuffer opt_buffer(begin, end);
 
         LibDHCP::unpackOptions6(opt_buffer, options_);
     } catch (const Exception& e) {
@@ -140,6 +259,97 @@ Pkt6::unpackUDP() {
         return (false);
     }
     return (true);
+}
+
+bool
+Pkt6::unpackRelayMsg() {
+
+    // we use offset + bufsize, because we want to avoid creating unnecessary
+    // copies. There may be up to 32 relays. While using InputBuffer would
+    // be probably a bit cleaner, copying data up to 32 times is unacceptable
+    // price here. Hence a single buffer with offets and lengths.
+    size_t bufsize = data_.size();
+    size_t offset = 0;
+
+    size_t relay_msg_offset = 0;
+
+    while (bufsize >= DHCPV6_RELAY_HDR_LEN) {
+
+        RelayInfo relay;
+
+        // parse fixed header first (first 34 bytes)
+        relay.msg_type_ = data_[offset++];
+        relay.hop_count_ = data_[offset++];
+        relay.linkaddr_ = IOAddress::fromBytes(AF_INET6, &data_[offset]);
+        offset += isc::asiolink::V6ADDRESS_LEN;
+        relay.peeraddr_ = IOAddress::fromBytes(AF_INET6, &data_[offset]);
+        offset += isc::asiolink::V6ADDRESS_LEN;
+        bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
+
+        try {
+            Option::OptionCollection options;
+
+            // parse the rest as options
+            OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
+            LibDHCP::unpackOptions6(opt_buffer, options, &relay_msg_offset);
+
+            /// @todo: check that each option appears at most once
+            //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
+            //relay.subscriber_id_ = options->getOption(D6O_SUBSCRIBER_ID);
+            //relay.remote_id_ = options->getOption(D6O_REMOTE_ID);
+
+            Option::OptionCollection::const_iterator relay_iter = options.find(D6O_RELAY_MSG);
+            if (relay_iter == options.end()) {
+                // there's nothing to decapsulate. We give up.
+                isc_throw(InvalidOperation, "Mandatory relay_msg missing");
+            }
+            OptionPtr relay_msg = relay_iter->second;
+
+            // store relay information parsed so far
+            addRelayInfo(relay);
+
+            /// @todo: implement ERO here
+
+            size_t inner_len = relay_msg->len() - relay_msg->getHeaderLen();
+            if (inner_len >= bufsize) {
+                // length of the relay_msg option extends beyond end of the message
+                isc_throw(Unexpected, "Relay-msg option is truncated.");
+                return false;
+            }
+            uint8_t inner_type = relay_msg->getUint8();
+            offset += relay_msg_offset;
+            bufsize = inner_len;
+
+            if ( (inner_type != DHCPV6_RELAY_FORW) && (inner_type != DHCPV6_RELAY_REPL)) {
+                // Ok, the inner message is not encapsulated, let's decode it directly
+                return (unpackMsg(data_.begin() + offset, data_.begin() + offset + inner_len));
+            }
+
+            // Oh well, there's inner relay-forw or relay-repl inside. Let's unpack it as well
+
+        } catch (const Exception& e) {
+            /// @todo: throw exception here once we turn this function to void.
+            return (false);
+        }
+    }
+
+    if ( (offset == data_.size()) && (bufsize == 0) ) {
+        // message has been parsed completely
+        return (true);
+    }
+
+    /// @todo: log here that there are additional unparsed bytes
+    return (true);
+}
+
+void
+Pkt6::addRelayInfo(const RelayInfo& relay) {
+    if (relay_info_.size() > 32) {
+        isc_throw(BadValue, "Massage cannot be encapsulated more than 32 times");
+    }
+
+    /// @todo: Implement type checks here (e.g. we could receive relay-forw in relay-repl)
+    relay_info_.push_back(relay);
 }
 
 bool
