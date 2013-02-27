@@ -20,3 +20,90 @@ which algorithm is best for that. If it is very critical, then a
 custom algorithm designed for DNS caching makes sense. If it is not,
 then we can consider using an STL-based data structure.
 
+Effectiveness of Cache
+----------------------
+
+First, I'll try to answer the introductory questions.
+
+In some simplified model, we can express the amount of running time
+for answering queries directly from the cache in the total running
+time including that used for recursive resolution due to cache miss as
+follows:
+
+A = r*Q2*/(r*Q2+ Q1*(1-r))
+where
+A: amount of time for answering queries from the cache per unit time
+   (such as sec, 0<=A<=1)
+r: cache hit rate (0<=r<=1)
+Q1: max qps of the server with 100% cache hit
+Q2: max qps of the server with 0% cache hit
+
+Q1 can be measured easily for given data set; measuring Q2 is tricky
+in general (it requires many external queries with unreliable
+results), but we can still have some not-so-unrealistic numbers
+through controlled simulation.
+
+As a data point for these values, see a previous experimental results
+of mine:
+https://lists.isc.org/pipermail/bind10-dev/2012-July/003628.html
+
+Looking at the "ideal" server implementation (no protocol overhead)
+with the set up 90% and 85% cache hit rate with 1 recursion on cache
+miss, and with the possible maximum total throughput, we can deduce
+Q1 and Q2, which are: 170591qps and 60138qps respectively.
+
+This means, with 90% cache hit rate (r = 0.9), the server would spend
+76% of its run time for receiving queries and answering responses
+directly from the cache: 0.9*60138/(0.9*60138 + 0.1*170591) = 0.76.
+
+I also ran more realistic experiments: using BIND 9.9.2 and unbound
+1.4.19 in the "forward only" mode with crafted query data and the
+forwarded server to emulate the situation of 100% and 0% cache hit
+rates.  I then measured the max response throughput using a
+queryperf-like tool.  In both cases Q2 is about 28% of Q1 (I'm not
+showing specific numbers to avoid unnecessary discussion about
+specific performance of existing servers; it's out of scope of this
+memo).  Using Q2 = 0.28*Q1, above equation with 90% cache hit rate
+will be: A = 0.9 * 0.28 / (0.9*0.28 + 0.1) = 0.716. So the server will
+spend about 72% of its running time to answer queries directly from
+the cache.
+
+Of course, these experimental results are too simplified.  First, in
+these experiments we assumed only one external query is needed on
+cache miss.  In general it can be more; however, it may not actually
+too optimistic either: in my another research result:
+http://bind10.isc.org/wiki/ResolverPerformanceResearch
+In the more detailed analysis using real query sample and tracing what
+an actual resolver would do, it looked we'd need about 1.44 to 1.63
+external queries per cache miss in average.
+
+Still, of course, the real world cases are not that simple: in reality
+we'd need to deal with timeouts, slower remote servers, unexpected
+intermediate results, etc.  DNSSEC validating resolvers will clearly
+need to do more work.
+
+So, in the real world deployment Q2 should be much smaller than Q1.
+Here are some specific cases of the relationship between Q1 and Q2 for
+given A (assuming r = 0.9):
+
+70%: Q2 = 0.26 * Q1
+60%: Q2 = 0.17 * Q1
+50%: Q2 = 0.11 * Q1
+
+So, even if "recursive resolution is 10 times heavier" than the cache
+only case, we can assume the server spends a half of its run time for
+answering queries directly from the cache at the cache hit rate of
+90%.  I think this is a reasonably safe assumption.
+
+Now, assuming the number of 50% or more, does this suggest we should
+highly optimize the cache?  Opinions may vary on this point, but I
+personally think the answer is yes.  I've written an experimental
+cache only implementation that employs the idea of fully-rendered
+cached data.  On one test machine (2.20GHz AMD64, using a single
+core), queryperf-like benchmark shows it can handle over 180Kqps,
+while BIND 9.9.2 can just handle 41K qps.  The experimental
+implementation skips some necessary features for a production server,
+and cache management itself is always inevitable bottleneck, so the
+production version wouldn't be that fast, but it still suggests it may
+not be very difficult to reach over 100Kqps in production environment
+including recursive resolution overhead.
