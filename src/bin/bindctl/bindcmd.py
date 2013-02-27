@@ -33,6 +33,7 @@ import inspect
 import pprint
 import ssl, socket
 import os, time, random, re
+import os.path
 import getpass
 from hashlib import sha1
 import csv
@@ -268,9 +269,21 @@ WARNING: Python readline module isn't available, so the command line editor
 
         # No valid logins were found, prompt the user for a username/password
         count = 0
-        self._print('No stored password file found, please see sections '
-              '"Configuration specification for b10-cmdctl" and "bindctl '
-              'command-line options" of the BIND 10 guide.')
+        if not os.path.exists(self.csv_file_dir + CSV_FILE_NAME):
+            self._print('\nNo stored password file found.\n\n'
+                        'When the system is first set up you need to create '
+                        'at least one user account.\n'
+                        'For information on how to set up a BIND 10 system, '
+                        'please check see the\n'
+                        'BIND 10 Guide: \n\n'
+                        'http://bind10.isc.org/docs/bind10-guide.html#quick-start-auth-dns\n\n'
+
+                        'If a user account has been set up, please check the '
+                        'b10-cmdctl log for other\n'
+                        'information.\n')
+        else:
+            self._print('Login failed: either the user name or password is '
+                        'invalid.\n')
         while True:
             count = count + 1
             if count > 3:
