@@ -32,13 +32,33 @@ namespace dhcp {
 
 class Pkt6 {
 public:
-    /// specifes DHCPv6 packet header length
+    /// specifies non-relayed DHCPv6 packet header length (over UDP)
     const static size_t DHCPV6_PKT_HDR_LEN = 4;
+
+    /// specifies relay DHCPv6 packet header length (over UDP)
+    const static size_t DHCPV6_RELAY_HDR_LEN = 34;
 
     /// DHCPv6 transport protocol
     enum DHCPv6Proto {
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
+    };
+
+    struct RelayInfo {
+
+        RelayInfo();
+
+        uint8_t   msg_type_;      ///< message type (RELAY-FORW oro RELAY-REPL)
+        uint8_t   hop_count_;     ///< number of traversed relays (up to 32)
+        isc::asiolink::IOAddress linkaddr_;      ///< fixed field in relay-forw/relay-reply
+        isc::asiolink::IOAddress peeraddr_;      ///< fixed field in relay-forw/relay-reply
+        OptionPtr interface_id_;  ///< interface-id option (optional)
+        OptionPtr subscriber_id_; ///< subscriber-id (RFC4580)
+        OptionPtr remote_id_;     ///< remote-id (RFC4649)
+        uint16_t  relay_msg_len_; ///< length of the relay_msg_len
+
+        /// used for ERO (Echo Request Option, RFC 4994)
+        isc::dhcp::Option::OptionCollection echo_options_;
     };
 
     /// Constructor, used in replying to a message
@@ -246,7 +266,7 @@ public:
     /// @brief Returns packet timestamp.
     ///
     /// Returns packet timestamp value updated when
-    /// packet is received or send.
+    /// packet is received or sent.
     ///
     /// @return packet timestamp.
     const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
@@ -259,7 +279,17 @@ public:
     /// @return interface name
     void setIface(const std::string& iface ) { iface_ = iface; };
 
+    /// @brief add information about one traversed relay
+    ///
+    /// This adds information about one traversed relay, i.e.
+    /// one relay-forw or relay-repl level of encapsulation.
+    ///
+    /// @param relay structure with necessary relay information
+    void addRelayInfo(const RelayInfo& relay);
+
     /// collection of options present in this message
+    ///
+    /// @todo: Text mentions protected, but this is really public
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -340,6 +370,17 @@ protected:
     /// @return true, if build was successful
     bool unpackUDP();
 
+    bool unpackMsg(OptionBuffer::const_iterator begin,
+                   OptionBuffer::const_iterator end);
+
+    bool unpackRelayMsg();
+
+    uint16_t getRelayOverhead(const RelayInfo& relay);
+
+    uint16_t calculateRelaySizes();
+
+    uint16_t directLen();
+
     /// UDP (usually) or TCP (bulk leasequery or failover)
     DHCPv6Proto proto_;
 
@@ -394,6 +435,9 @@ protected:
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
+    /// relay information
+    std::vector<RelayInfo> relay_info_;
 }; // Pkt6 class
 
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;

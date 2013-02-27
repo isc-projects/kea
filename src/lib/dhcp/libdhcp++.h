@@ -121,8 +121,12 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @param relay_msg_offset reference to a size_t structure. If specified,
+    ///        offset to beginning of relay_msg option will be store here.
+    /// @return offset to the first byte after last parsed option
     static size_t unpackOptions6(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options);
+                                 isc::dhcp::Option::OptionCollection& options,
+                                 size_t* relay_msg_offset = 0);
 
     /// Registers factory method that produces options of specific option types.
     ///
