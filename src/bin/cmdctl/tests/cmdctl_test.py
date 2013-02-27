@@ -308,7 +308,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
             self.assertEqual(self.handler.rcode, http.client.OK)
             self.handler.wfile.seek(0, 0)
             d = self.handler.wfile.read()
-            self.assertEqual(json.loads(d.decode()), ['user has already login'])
+            self.assertEqual(json.loads(d.decode()),
+                             ['user has already login'])
 
             # Clear the output
             self.handler.wfile.seek(0, 0)
