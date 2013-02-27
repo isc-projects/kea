@@ -74,8 +74,6 @@ def run(command):
     Parameters:
     command: an array of command and argument strings, which will be
              passed to subprocess.Popen()
-    input: if not None, a string that is written to the process stdin
-           stream
     """
     subp = subprocess.Popen(command, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
