@@ -21,7 +21,8 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.pyc
 
 man_MANS = b10-cmdctl.8 b10-certgen.1
 DISTCLEANFILES = $(man_MANS) cmdctl-certfile.pem cmdctl-keyfile.pem
-EXTRA_DIST = $(man_MANS) b10-certgen.xml b10-cmdctl.xml cmdctl_messages.mes
+EXTRA_DIST  = $(man_MANS) b10-certgen.xml b10-cmdctl.xml cmdctl_messages.mes
+EXTRA_DIST += cmdctl-accounts.csv
 
 if GENERATE_DOCS
 
