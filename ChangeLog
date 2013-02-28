@@ -1,3 +1,14 @@
+583.	[func]*		jelte
+	b10-cmdctl-usermgr has been updated and its options and arguments
+	have changed; it now defaults to the same accounts file as
+	b10-cmdctl defaults to. It can now be used to remove users from the
+	accounts file as well, and it now accepts command-line arguments to
+	specify the username and password to add or remove, in which case
+	it will not prompt for them.
+	Note that using a password on the command line is not recommended,
+	as this can be viewed by other users.
+	(Trac #2713, git 9925af3b3f4daa47ba8c2eb66f556b01ed6f0502)
+
 582.	[func]		naokikambe
 	New statistics items related unixdomain sockets added into Xfrout :
 	open, openfail, close, bindfail, acceptfail, accept, senderr, and
