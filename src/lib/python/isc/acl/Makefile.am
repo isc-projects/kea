@@ -28,10 +28,12 @@ _dns_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 # suffix for dynamic objects.  -module is necessary to work this around.
 acl_la_LDFLAGS += -module -avoid-version
 acl_la_LIBADD = $(top_builddir)/src/lib/acl/libb10-acl.la
+acl_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 acl_la_LIBADD += $(PYTHON_LIB)
 
 _dns_la_LDFLAGS += -module -avoid-version
 _dns_la_LIBADD = $(top_builddir)/src/lib/acl/libb10-dnsacl.la
+_dns_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 _dns_la_LIBADD += $(PYTHON_LIB)
 
 EXTRA_DIST = acl.py _dns.py
