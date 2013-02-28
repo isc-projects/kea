@@ -466,7 +466,7 @@ class CommandControl():
         and user accounts file in source code. '''
         if "B10_FROM_SOURCE" in os.environ:
             sysconf_path = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl/"
-            accountsfile  = sysconf_path + "tests/testdata/cmdctl-accounts.csv"
+            accountsfile  = sysconf_path + "cmdctl-accounts.csv"
             keyfile = sysconf_path + "cmdctl-keyfile.pem"
             certfile = sysconf_path + "cmdctl-certfile.pem"
             return (keyfile, certfile, accountsfile)
