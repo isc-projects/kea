@@ -313,7 +313,7 @@ Options:
     def test_prompt_for_password_empty(self):
         """
         Check that the method that prompts for a password verifies that
-        the same value is entered twice
+        the value entered is not empty
         """
         # returns an empty string until it has been called over 10
         # times
@@ -336,6 +336,11 @@ Options:
                 self.assertEqual(expected_output, ''.join(pc.stdout_lines))
 
     def test_prompt_for_user(self):
+        """
+        Test that the method that prompts for a username verifies that
+        is not empty, and that it exists (or does not, depending on the
+        action that is specified)
+        """
         new_input_called = 0
         input_results = [ '', '', 'existinguser', 'nonexistinguser',
                           '', '', 'nonexistinguser', 'existinguser' ]
