@@ -912,7 +912,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._send_query(RRType.SOA)
         # count soaoutv4 or soaoutv6 requests
-        self._counters.inc('zones', self._zone_name,
+        self._counters.inc('zones', self._zone_name.to_text(),
                            'soaout' + self.get_ipver_str())
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
@@ -954,12 +954,12 @@ class XfrinConnection(asyncore.dispatcher):
                     raise XfrinException('Unable to reconnect to master')
 
             # start statistics timer
-            self._counters.start_timer('zones', self._zone_name,
-                                 'time_to_' + req_str.lower())
+            self._counters.start_timer('zones', self._zone_name.to_text(),
+                                       'time_to_' + req_str.lower())
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
             # count (A|X)IXFR requests for statistics
-            self._counters.inc('zones', self._zone_name,
+            self._counters.inc('zones', self._zone_name.to_text(),
                                req_str.lower() + 'req' +
                                self.get_ipver_str())
             self.__state = XfrinInitialSOA()
@@ -988,8 +988,8 @@ class XfrinConnection(asyncore.dispatcher):
                             "%.f" % self._transfer_stats.get_bytes_per_second()
                            )
             # stop statistics timer
-            self._counters.stop_timer('zones', self._zone_name,
-                                'time_to_' + req_str.lower())
+            self._counters.stop_timer('zones', self._zone_name.to_text(),
+                                      'time_to_' + req_str.lower())
 
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger
@@ -1032,10 +1032,10 @@ class XfrinConnection(asyncore.dispatcher):
             self._diff = None
             if ret == XFRIN_OK:
                 # count successful xfer requests
-                self._counters.inc('zones', self._zone_name, 'xfrsuccess')
+                self._counters.inc('zones', self._zone_name.to_text(), 'xfrsuccess')
             elif ret == XFRIN_FAIL:
                 # count failed xfer requests
-                self._counters.inc('zones', self._zone_name, 'xfrfail')
+                self._counters.inc('zones', self._zone_name.to_text(), 'xfrfail')
 
         return ret
 
