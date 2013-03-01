@@ -93,7 +93,7 @@ public:
     /// Loops through the internal array of pointers to message arrays
     /// and adds the messages to the internal dictionary.  This is called
     /// during run-time initialization.
-    static void loadDictionary();
+    static void loadDictionary(bool ignore_duplicates = false);
 
     /// \brief Return Duplicates
     ///
@@ -103,6 +103,11 @@ public:
     /// \return List of duplicate message IDs when the global dictionary was
     /// loaded.  Note that the duplicates list itself may contain duplicates.
     static std::vector<std::string>& getDuplicates();
+
+    /// \brief Clear the static duplicates vector
+    ///
+    /// Empties the vector returned by getDuplicates
+    static void clearDuplicates();
 };
 
 } // namespace log

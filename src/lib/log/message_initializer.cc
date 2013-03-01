@@ -67,7 +67,7 @@ MessageInitializer::getPendingCount() {
 // into the global dictionary.
 
 void
-MessageInitializer::loadDictionary() {
+MessageInitializer::loadDictionary(bool ignore_duplicates) {
     MessageDictionary& global = MessageDictionary::globalDictionary();
 
     for (size_t i = 0; i < getIndex(); ++i) {
@@ -75,7 +75,7 @@ MessageInitializer::loadDictionary() {
 
         // Append the IDs in the list just loaded (the "repeats") to the
         // global list of duplicate IDs.
-        if (!repeats.empty()) {
+        if (!ignore_duplicates && !repeats.empty()) {
             std::vector<std::string>& duplicates = getDuplicates();
             duplicates.insert(duplicates.end(), repeats.begin(),
                               repeats.end());
@@ -89,10 +89,14 @@ MessageInitializer::loadDictionary() {
 }
 
 // Return reference to duplicate array
-
 std::vector<std::string>& MessageInitializer::getDuplicates() {
     static std::vector<std::string> duplicates;
     return (duplicates);
+}
+
+// Clear the duplicate array
+void MessageInitializer::clearDuplicates() {
+    getDuplicates().clear();
 }
 
 } // namespace log
