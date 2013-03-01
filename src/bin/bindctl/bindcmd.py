@@ -226,6 +226,8 @@ WARNING: Python readline module isn't available, so the command line editor
         Attempts to log into cmdctl by sending a POST with the given
         username and password. On success of the POST (not the login,
         but the network operation), it returns a tuple (response, data).
+        We check for some failures such as SSL errors and socket errors
+        which could happen due to the environment in which BIND 10 runs.
         On failure, it raises a FailToLogin exception and prints some
         information on the failure.  This call is essentially 'private',
         but made 'protected' for easier testing.
