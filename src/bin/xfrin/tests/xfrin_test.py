@@ -1489,8 +1489,8 @@ class TestAXFR(TestXfrinConnection):
                          self.conn._counters.get('zones', TEST_ZONE_NAME_STR, 'ixfrreqv6'))
         self.assertEqual(1,
                          self.conn._counters.get('zones', TEST_ZONE_NAME_STR, 'xfrsuccess'))
-        self.assertGreater(self.conn._counters.get('zones', TEST_ZONE_NAME_STR, 'time_to_axfr'),
-                           0.0)
+        self.assertGreaterEqual(self.conn._counters.get('zones', TEST_ZONE_NAME_STR, 'time_to_axfr'),
+                                0.0)
 
     def test_do_xfrin_with_tsig(self):
         # use TSIG with a mock context.  we fake all verify results to
