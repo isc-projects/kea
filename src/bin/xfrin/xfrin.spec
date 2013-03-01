@@ -115,14 +115,14 @@
           }
         },
         "item_title": "Zone names",
-        "item_description": "Zone names for Xfrout statistics",
+        "item_description": "A directory name of per-zone statistics",
         "named_set_item_spec": {
           "item_name": "zonename",
           "item_type": "map",
           "item_optional": false,
           "item_default": {},
           "item_title": "Zone name",
-          "item_description": "Zone name for Xfrout statistics",
+          "item_description": "A actual zone name or special zone name _SERVER_ representing an entire server",
           "map_item_spec": [
             {
               "item_name": "soaoutv4",
