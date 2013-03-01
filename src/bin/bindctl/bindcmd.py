@@ -217,9 +217,7 @@ WARNING: Python readline module isn't available, so the command line editor
 
     def __print_check_ssl_msg(self):
         self._print("Please check the logs of b10-cmdctl, there may "
-                    "be a problem accepting SSL connections, such "
-                    "as a permission problem on the server "
-                    "certificate file.")
+                    "have been a problem accepting SSL connections.")
 
     def _try_login(self, username, password):
         '''
