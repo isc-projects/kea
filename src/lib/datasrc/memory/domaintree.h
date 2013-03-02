@@ -1864,11 +1864,13 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
     } else if (order < 0) {
         node->setSubTreeRoot(false);
         parent->left_ = node;
+        insertRebalance(current_root, node);
     } else {
         node->setSubTreeRoot(false);
         parent->right_ = node;
+        insertRebalance(current_root, node);
     }
-    insertRebalance(current_root, node);
+
     if (new_node != NULL) {
         *new_node = node;
     }
