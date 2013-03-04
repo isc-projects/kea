@@ -451,6 +451,29 @@ TEST_F(MemoryClientTest, loadDuplicateType) {
                   TEST_DATA_DIR
                   "/example.org-duplicate-type-bad.zone");
 
+    const ZoneData* zone_data =
+        client_->findZoneData(Name("example.org"));
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), zone_data);
+
+    /* Check ns1.example.org */
+    const ZoneTree& tree = zone_data->getZoneTree();
+    const ZoneNode* node;
+    ZoneTree::Result zresult(tree.find(Name("ns1.example.org"), &node));
+    EXPECT_EQ(ZoneTree::EXACTMATCH, zresult);
+
+    const RdataSet* set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::AAAA(), set->type);
+
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::A(), set->type);
+    // 192.168.0.1 and 192.168.0.2
+    EXPECT_EQ(2, set->getRdataCount());
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
+
     // Teardown checks for memory segment leaks
 }
 
