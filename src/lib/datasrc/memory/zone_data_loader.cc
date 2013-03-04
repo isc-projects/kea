@@ -77,8 +77,7 @@ public:
     void flushNodeRRsets();
 
 private:
-    typedef std::map<isc::dns::RRType, isc::dns::ConstRRsetPtr> NodeRRsets;
-    typedef NodeRRsets::value_type NodeRRsetsVal;
+    typedef std::vector<isc::dns::ConstRRsetPtr> NodeRRsets;
 
     // A helper to identify the covered type of an RRSIG.
     const isc::dns::Name& getCurrentName() const;
@@ -103,13 +102,9 @@ ZoneDataLoader::addFromLoad(const ConstRRsetPtr& rrset) {
     // once, so we check the "duplicate" here.
     const bool is_rrsig = rrset->getType() == RRType::RRSIG();
     NodeRRsets& node_rrsets = is_rrsig ? node_rrsigsets_ : node_rrsets_;
-    const RRType& rrtype = is_rrsig ? getCoveredType(rrset) : rrset->getType();
-    if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
-        isc_throw(ZoneDataUpdater::AddError,
-                  "Duplicate add of the same type of"
-                  << (is_rrsig ? " RRSIG" : "") << " RRset: "
-                  << rrset->getName() << "/" << rrtype);
-    }
+
+    // Store this RRset until it can be added to the zone.
+    node_rrsets.insert(node_rrsets.begin(), rrset);
 
     if (rrset->getRRsig()) {
         addFromLoad(rrset->getRRsig());
@@ -118,23 +113,12 @@ ZoneDataLoader::addFromLoad(const ConstRRsetPtr& rrset) {
 
 void
 ZoneDataLoader::flushNodeRRsets() {
-    BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
-        // Identify the corresponding RRSIG for the RRset, if any.  If
-        // found add both the RRset and its RRSIG at once.
-        ConstRRsetPtr sig_rrset;
-        NodeRRsets::iterator sig_it = node_rrsigsets_.find(val.first);
-        if (sig_it != node_rrsigsets_.end()) {
-            sig_rrset = sig_it->second;
-            node_rrsigsets_.erase(sig_it);
-        }
-        updater_.add(val.second, sig_rrset);
+    BOOST_FOREACH(ConstRRsetPtr rrset, node_rrsets_) {
+        updater_.add(rrset, ConstRRsetPtr());
     }
 
-    // Normally rrsigsets map should be empty at this point, but it's still
-    // possible that an RRSIG that don't has covered RRset is added; they
-    // still remain in the map.  We add them to the zone separately.
-    BOOST_FOREACH(NodeRRsetsVal val, node_rrsigsets_) {
-        updater_.add(ConstRRsetPtr(), val.second);
+    BOOST_FOREACH(ConstRRsetPtr rrset, node_rrsigsets_) {
+        updater_.add(ConstRRsetPtr(), rrset);
     }
 
     node_rrsets_.clear();
@@ -144,10 +128,10 @@ ZoneDataLoader::flushNodeRRsets() {
 const Name&
 ZoneDataLoader::getCurrentName() const {
     if (!node_rrsets_.empty()) {
-        return (node_rrsets_.begin()->second->getName());
+        return (node_rrsets_.front()->getName());
     }
     assert(!node_rrsigsets_.empty());
-    return (node_rrsigsets_.begin()->second->getName());
+    return (node_rrsigsets_.front()->getName());
 }
 
 void

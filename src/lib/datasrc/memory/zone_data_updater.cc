@@ -270,8 +270,12 @@ ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
     ZoneNode* node;
     nsec3_data->insertName(mem_sgmt_, name, &node);
 
-    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig);
-    RdataSet* old_rdataset = node->setData(rdataset);
+    // Create a new RdataSet, merging any existing existing NSEC3 data
+    // for this name.
+    RdataSet* old_rdataset = node->getData();
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig,
+                                          old_rdataset);
+    old_rdataset = node->setData(rdataset);
     if (old_rdataset != NULL) {
         RdataSet::destroy(mem_sgmt_, old_rdataset, rrclass_);
     }
@@ -298,16 +302,34 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
             contextCheck(*rrset, rdataset_head);
         }
 
-        if (RdataSet::find(rdataset_head, rrtype, true) != NULL) {
-            isc_throw(AddError,
-                      "RRset of the type already exists: "
-                      << name << " (type: " << rrtype << ")");
-        }
-
+        // Create a new RdataSet, merging any existing data for this
+        // type.
+        RdataSet* old_rdataset = RdataSet::find(rdataset_head, rrtype, true);
         RdataSet* rdataset_new = RdataSet::create(mem_sgmt_, encoder_,
-                                                  rrset, rrsig);
-        rdataset_new->next = rdataset_head;
-        node->setData(rdataset_new);
+                                                  rrset, rrsig, old_rdataset);
+        if (old_rdataset == NULL) {
+            // There is no existing RdataSet. Prepend the new RdataSet
+            // to the list.
+            rdataset_new->next = rdataset_head;
+            node->setData(rdataset_new);
+        } else {
+            // Replace the old RdataSet in the list with the newly
+            // created one, and destroy the old one.
+            for (RdataSet* cur = rdataset_head, *prev = NULL;
+                 cur != NULL;
+                 prev = cur, cur = cur->getNext()) {
+                if (cur == old_rdataset) {
+                    rdataset_new->next = cur->getNext();
+                    if (prev == NULL) {
+                        node->setData(rdataset_new);
+                    } else {
+                        prev->next = rdataset_new;
+                    }
+                    break;
+                }
+            }
+            RdataSet::destroy(mem_sgmt_, old_rdataset, rrclass_);
+        }
 
         // Ok, we just put it in.
 
