@@ -42,7 +42,13 @@ size_t& getIndex() {
     return (index);
 }
 
+// Return the duplicates singleton version (non-const for local use)
+std::vector<std::string>&
+getNonConstDuplicates() {
+    static std::vector<std::string> duplicates;
+    return (duplicates);
 }
+} // end unnamed namespace
 
 
 namespace isc {
@@ -76,7 +82,7 @@ MessageInitializer::loadDictionary(bool ignore_duplicates) {
         // Append the IDs in the list just loaded (the "repeats") to the
         // global list of duplicate IDs.
         if (!ignore_duplicates && !repeats.empty()) {
-            std::vector<std::string>& duplicates = getDuplicates();
+            std::vector<std::string>& duplicates = getNonConstDuplicates();
             duplicates.insert(duplicates.end(), repeats.begin(),
                               repeats.end());
         }
@@ -88,15 +94,16 @@ MessageInitializer::loadDictionary(bool ignore_duplicates) {
     getIndex() = 0;
 }
 
-// Return reference to duplicate array
-std::vector<std::string>& MessageInitializer::getDuplicates() {
-    static std::vector<std::string> duplicates;
-    return (duplicates);
+// Return reference to duplicates vector
+const std::vector<std::string>&
+MessageInitializer::getDuplicates() {
+    return (getNonConstDuplicates());
 }
 
-// Clear the duplicate array
-void MessageInitializer::clearDuplicates() {
-    getDuplicates().clear();
+// Clear the duplicates vector
+void
+MessageInitializer::clearDuplicates() {
+    getNonConstDuplicates().clear();
 }
 
 } // namespace log

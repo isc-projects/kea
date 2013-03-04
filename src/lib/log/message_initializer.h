@@ -102,11 +102,11 @@ public:
     ///
     /// \return List of duplicate message IDs when the global dictionary was
     /// loaded.  Note that the duplicates list itself may contain duplicates.
-    static std::vector<std::string>& getDuplicates();
+    static const std::vector<std::string>& getDuplicates();
 
     /// \brief Clear the static duplicates vector
     ///
-    /// Empties the vector returned by getDuplicates
+    /// Empties the vector returned by getDuplicates()
     static void clearDuplicates();
 };
 
