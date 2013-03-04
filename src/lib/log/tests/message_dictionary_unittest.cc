@@ -190,8 +190,7 @@ TEST_F(MessageDictionaryTest, GlobalTest) {
 
 TEST_F(MessageDictionaryTest, GlobalLoadTest) {
     // There were duplicates but the vector should be cleared in init() now
-    vector<string>& duplicates = MessageInitializer::getDuplicates();
-    ASSERT_EQ(0, duplicates.size());
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 
     string text = MessageDictionary::globalDictionary().getText("NEWSYM");
     EXPECT_EQ(string("new symbol added"), text);
