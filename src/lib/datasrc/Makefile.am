@@ -19,6 +19,7 @@ static.zone: static.zone.pre $(top_builddir)/config.h $(top_srcdir)/AUTHORS
 	$(SED) -e 's/\(.*\)/AUTHORS.BIND.	0	CH	TXT	"\1"/' $(top_srcdir)/AUTHORS >>$@
 
 CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
+CLEANFILES += sqlite3_datasrc_messages.h sqlite3_datasrc_messages.cc
 CLEANFILES += datasrc_config.h
 CLEANFILES += static.zone
 
@@ -45,6 +46,7 @@ pkglib_LTLIBRARIES = sqlite3_ds.la static_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
+nodist_sqlite3_ds_la_SOURCES = sqlite3_datasrc_messages.h sqlite3_datasrc_messages.cc
 sqlite3_ds_la_LDFLAGS = -module -avoid-version
 sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
 sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
@@ -65,10 +67,13 @@ libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/datasrc/memory/libdatasrc_me
 libb10_datasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc
+BUILT_SOURCES += sqlite3_datasrc_messages.h sqlite3_datasrc_messages.cc
 datasrc_messages.h datasrc_messages.cc: Makefile datasrc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/datasrc_messages.mes
+sqlite3_datasrc_messages.h sqlite3_datasrc_messages.cc: Makefile sqlite3_datasrc_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/sqlite3_datasrc_messages.mes
 
-EXTRA_DIST = datasrc_messages.mes static.zone.pre
+EXTRA_DIST = datasrc_messages.mes sqlite3_datasrc_messages.mes static.zone.pre
 
 zonedir = $(pkgdatadir)
 zone_DATA = static.zone

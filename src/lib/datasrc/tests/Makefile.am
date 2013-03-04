@@ -62,6 +62,8 @@ run_unittests_SOURCES += zone_loader_unittest.cc
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
+# Also, as of #2746, sqlite3-specific log messages are in a separate file
+run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_datasrc_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -71,7 +73,7 @@ run_unittests_LDADD = $(common_ldadd)
 noinst_PROGRAMS+= $(TESTS)
 
 # For the factory unit tests, we need to specify that we want
-# the loadable backend libraries from the build tree, and not from 
+# the loadable backend libraries from the build tree, and not from
 # the installation directory. Therefore we build it into a separate
 # binary, and call that from check-local with B10_FROM_BUILD set.
 # Also, we only want to do this when static building is not used,
