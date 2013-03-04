@@ -133,7 +133,7 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
              i != duplicates.end(); ++i) {
             LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
         }
-
+        MessageInitializer::clearDuplicates();
     }
 
     // Replace any messages with local ones (if given)
