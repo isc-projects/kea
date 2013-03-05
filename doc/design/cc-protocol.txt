@@ -13,9 +13,10 @@ sender.
 
 A client may subscribe to a group of communication. A message can be
 broadcasted to a whole group instead of a single client. There's also
-an instance parameter to addressing, but its only obvious purpose is
-to clutter the code, since the original intention is not remembered by
-anyone and it is left at the default `*` in all cases.
+an instance parameter to addressing, but we didn't find any actual use
+for it and it is not used for anything. It is left in the default `*`
+for most of our code and should be done so in any new code. It wasn't
+priority to remove it yet.
 
 Wire format
 -----------
