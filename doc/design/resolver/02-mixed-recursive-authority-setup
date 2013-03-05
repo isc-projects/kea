@@ -115,7 +115,9 @@ Disadvantages
 
  * Need to set up another module (not a problem if we have inter-module
    dependencies in b10-init)
- * Possible performance impact
+ * Possible performance impact. However, experiments show this is not an issue,
+   and the receptionist can actually increase the throughput with some tuning
+   and the increase in RTT is not big.
 
 Implementation ideas
 ~~~~~~~~~~~~~~~~~~~~
@@ -127,10 +129,22 @@ Implementation ideas
    kernel (like a length of block of messages, it is read at once, then they
    are all parsed one by one, the whole block of answers is sent back).
  * A module creates a listening socket (UNIX by default) on startup and
-   contacts all the receptionists. It sends ACL match for the packets to send
+   contacts all the receptionists. It sends what kind of packets to send
    to the module and the address of the UNIX socket. All the receptionists
    connect to the module. This allows for auto-configuring the receptionist.
  * The queries are sent from the receptionist in batches, the answers are sent
    back to the receptionist in batches too.
  * It is possible to fine-tune and use OS-specific tricks (like epoll or
    sending multiple UDP messages by single call to sendmmsg).
+
+Proposal
+--------
+
+Implement the receptionist in a way we can still work without it (not throwing
+the current UDPServer and TCPServer in asiodns away).
+
+The way we handle xfrout and DDNS needs some changes, since we can't forward
+sockets for the query. We would implement the receptionist protocol on them,
+which would allow the receptionist to forward messages to them. We would then
+modify auth to be able to forward the queries over the receptionist protocol,
+so ordinary users don't need to start the receptionist.
