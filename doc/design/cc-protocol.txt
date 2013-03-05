@@ -53,18 +53,18 @@ The headers
 
 The header object can contain following information:
 
-|============================================================================
-|Name       |Description
-|============================================================================
-|from       |Sender's l-name
-|type       |Type of the message. The routed message is "send".
-|group      |The group to deliver to.
-|instance   |Instance in the group. Purpose lost in history. Defaults to "*".
-|to         |Override recipient (group/instance ignored).
-|seq        |Tracking number of the message.
-|reply      |If present, contains a seq number of message this is a reply to.
-|want_answer|If present and true, the daemon generates error if there's no matching recipient.
-|============================================================================
+|====================================================================================================
+|Name       |type  |Description
+|====================================================================================================
+|from       |string|Sender's l-name
+|type       |string|Type of the message. The routed message is "send".
+|group      |string|The group to deliver to.
+|instance   |string|Instance in the group. Purpose lost in history. Defaults to "*".
+|to         |string|Override recipient (group/instance ignored).
+|seq        |int   |Tracking number of the message.
+|reply      |int   |If present, contains a seq number of message this is a reply to.
+|want_answer|bool  |If present and true, the daemon generates error if there's no matching recipient.
+|====================================================================================================
 
 Types of messages
 -----------------
