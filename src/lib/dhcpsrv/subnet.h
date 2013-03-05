@@ -121,10 +121,10 @@ public:
             boost::multi_index::sequenced<>,
             // Start definition of index #1.
             boost::multi_index::hashed_non_unique<
-                // KeyFromKey is the index key extractor that allows accessing
-                // option type being held by the OptionPtr through
+                // KeyFromKeyExtractor is the index key extractor that allows
+                // accessing option type being held by the OptionPtr through
                 // OptionDescriptor structure.
-                KeyFromKey<
+                KeyFromKeyExtractor<
                     // Use option type as the index key. The type is held
                     // in OptionPtr object so we have to call Option::getType
                     // to retrieve this key for each element.

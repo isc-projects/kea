@@ -20,36 +20,45 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Extractor class to extract key with another key.
+/// @brief Utility class which cascades two key extractors.
 ///
-/// This class solves the problem whereby the multi_index_container
-/// must access the values stored in object nested in other object.
-/// Assume that there is a multi_index_container that holds objects
-/// of the type A. Each object A contains the member object B.
-/// Each object B holds the member of the type C that is to be used
-/// for indexing objects A. Objects C can't be accessed directly
-/// from the object A as they are nested in the object B. In such case
-/// there is no easy way to point in the definition of the container
-/// that C should be used for indexing objects. The KeyFromKey class
-/// represents the cascaded key which can be used to extract the nested
-/// key value C from the object B.
-/// For some more examples of complex keys see:
-/// http://www.cs.brown.edu/~jwicks/boost/libs/multi_index/doc/index.html
+/// The key extractor (a.k.a. key extraction class) is used by the
+/// key-based indices to obtain the indexing keys from the elements of
+/// a multi_index_container. The standard key extractors can be used
+/// to retrieve indexing key values by accessing members or methods
+/// exposed by the elements (objects or structures) stored in a
+/// multi_index_container. For example, if a container holds objects
+/// of type A, then the public members of object A or its accessors can
+/// be used by the standard extractor classes such as "member" or
+/// "const_mem_fun" respectively. Assume more complex scenario, where
+/// multi_index_container holds objects of a type A, object A exposes
+/// its public member B, which in turn exposes the accessor function
+/// returning object C. One may want to use the value C (e.g. integer)
+/// to index objects A in the container. This can't be solved by using
+/// standard key extractors because object C is nested in B and thus
+/// it is not directly accessible from A. However, it is possible
+/// to specify two distinct key extractors, one used to extract value
+/// C from B, another one to extract value B from A. These two extractors
+/// can be then wrapped by another key extractor which can be used
+/// to obtain index key C from object A. This key extractor is implemented
+/// as a functor class. The functor calls functors specified as
+/// template parameters to retrieve the index value from the cascaded
+/// structure.
 ///
-/// @tparam KeyExtractor1 extractor used to access the object used as
-/// a key from the other object that holds it.
-/// @tparam KeyExtractor2 extractor used to access data in the object
-/// holding nested object used as a key.
+/// @tparam KeyExtractor1 extractor used to extract the key value from
+/// the object containing it.
+/// @tparam KeyExtractor2 extractor used to extract the nested object
+/// containing a key.
 template<typename KeyExtractor1, typename KeyExtractor2>
-class KeyFromKey {
+class KeyFromKeyExtractor {
 public:
     typedef typename KeyExtractor1::result_type result_type;
 
     /// @brief Constructor.
-    KeyFromKey()
+    KeyFromKeyExtractor()
         : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
 
-    /// @brief Extract key with another key.
+    /// @brief Extract key value from the object hierarchy.
     ///
     /// @param arg the key value.
     ///
@@ -59,8 +68,12 @@ public:
         return (key1_(key2_(arg)));
     }
 private:
-    KeyExtractor1 key1_; ///< key 1.
-    KeyExtractor2 key2_; ///< key 2.
+    /// Key Extractor used to extract the key value from the
+    /// object containing it.
+    KeyExtractor1 key1_;
+    /// Key Extractor used to extract the nested object
+    /// containing a key.
+    KeyExtractor2 key2_;
 };
 
 } // end of isc::dhcp namespace
