@@ -243,9 +243,10 @@ protected:
                     Lease6,
                     // The DUID value can't be directly accessed from the Lease6
                     // object because it is wrapped with the DUID object (actually
-                    // pointer to this object). Therefore we need to use KeyFromKey
-                    // class to extract the DUID value from this cascaded structure.
-                    KeyFromKey<
+                    // pointer to this object). Therefore we need to use
+                    // KeyFromKeyExtractor class to extract the DUID value from
+                    // this cascaded structure.
+                    KeyFromKeyExtractor<
                         // The value of the DUID is accessed by the getDuid() method
                         // from the DUID object.
                         boost::multi_index::const_mem_fun<DUID, std::vector<uint8_t>,
@@ -305,9 +306,10 @@ protected:
                     Lease4,
                     // The client id value is not directly accessible through the
                     // Lease4 object as it is wrapped with the ClientIdPtr object.
-                    // Therefore we use the KeyFromKey class to specify the key
-                    // that gets the client id value through this cascade.
-                    KeyFromKey<
+                    // Therefore we use the KeyFromKeyExtractor class to access
+                    // client id through this cascaded structure. The client id
+                    // is used as an index value.
+                    KeyFromKeyExtractor<
                         // Specify that the vector holding client id value can be obtained
                         // from the ClientId object.
                         boost::multi_index::const_mem_fun<ClientId, std::vector<uint8_t>,
