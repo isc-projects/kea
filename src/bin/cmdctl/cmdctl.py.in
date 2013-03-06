@@ -503,11 +503,21 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self._lock = threading.Lock()
         self._user_infos = {}
         self._accounts_file = None
+        self.__accounts_file_mtime = 0
 
     def _create_user_info(self, accounts_file):
         '''Read all user's name and its' salt, hashed password
         from accounts file.'''
-        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0):
+
+        # If the file does not exist, do nothing
+        if not os.path.exists(accounts_file):
+            return
+
+        # If the filename hasn't changed, and the file itself
+        # has neither, do nothing
+        accounts_file_mtime = os.stat(accounts_file).st_mtime
+        if self._accounts_file == accounts_file and\
+           accounts_file_mtime <= self.__accounts_file_mtime:
             return
 
         with self._lock:
@@ -526,6 +536,7 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                     csvfile.close()
 
         self._accounts_file = accounts_file
+        self.__accounts_file_mtime = accounts_file_mtime
         if len(self._user_infos) == 0:
             logger.error(CMDCTL_NO_USER_ENTRIES_READ)
 
