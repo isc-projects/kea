@@ -157,12 +157,13 @@ public:
         CCSessionError(file, line, what),
         rcode_(rcode)
     {}
+
     /// \brief The error code for the error.
     int rcode() const {
         return (rcode_);
     }
 private:
-    int rcode_;
+    const int rcode_;
 };
 
 /// \brief Specific version of RPCError for the case the recipient of command
