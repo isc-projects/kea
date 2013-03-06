@@ -84,6 +84,27 @@ class UnreadableFile:
     def __exit__(self, type, value, traceback):
         os.chmod(self.file_name, self.orig_mode)
 
+class TmpTextFile:
+    """
+    Context class for temporarily creating a text file with some
+    lines of content.
+
+    The file is automatically deleted if the context is left, so
+    make sure to not use the path of an existing file!
+    """
+    def __init__(self, path, contents):
+        self.__path = path
+        self.__contents = contents
+
+    def __enter__(self):
+        with open(self.__path, 'w') as f:
+            for line in self.__contents:
+                f.write(line)
+
+    def __exit__(self, type, value, traceback):
+        os.unlink(self.__path)
+
+
 class TestSecureHTTPRequestHandler(unittest.TestCase):
     def setUp(self):
         self.old_stdout = sys.stdout
@@ -469,6 +490,38 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
+
+        # When the file is not changed calling _create_user_info() again
+        # should have no effect. In order to test this, we overwrite the
+        # user-infos that were just set and make sure it isn't touched by
+        # the call (so make sure it isn't set to some empty value)
+        fake_users_val = { 'notinfile': [] }
+        self.server._user_infos = fake_users_val
+        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
+        self.assertEqual(fake_users_val, self.server._user_infos)
+
+    def test_create_user_info_changing_file(self):
+        self.assertEqual(0, len(self.server._user_infos))
+        self.assertFalse('root' in self.server._user_infos)
+
+        # Create a file
+        accounts_file = BUILD_FILE_PATH + 'new_file.csv'
+        with TmpTextFile(accounts_file, ['root,foo,bar']):
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('root' in self.server._user_infos)
+
+            # Make sure re-reading is a noop if file was not modified
+            fake_users_val = { 'notinfile': [] }
+            self.server._user_infos = fake_users_val
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(fake_users_val, self.server._user_infos)
+
+        # create the file again, this time read should not be a noop
+        with TmpTextFile(accounts_file, ['otherroot,foo,bar']):
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('otherroot' in self.server._user_infos)
 
     def test_check_file(self):
         # Just some file that we know exists
