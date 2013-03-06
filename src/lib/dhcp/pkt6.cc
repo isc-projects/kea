@@ -27,7 +27,7 @@ namespace isc {
 namespace dhcp {
 
 Pkt6::RelayInfo::RelayInfo()
-    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_(""), relay_msg_len_(0) {
+    :msg_type_(0), hop_count_(0), linkaddr_("::"), peeraddr_("::"), relay_msg_len_(0) {
     // interface_id_, subscriber_id_, remote_id_ initialized to NULL
     // echo_options_ initialized to empty collection
 }
@@ -69,22 +69,28 @@ uint16_t Pkt6::len() {
     }
 }
 
+OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
+                  << " There is no info about " << relay_level + 1 << " relay.");
+    }
+
+    for (Option::OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
+         it != relay_info_[relay_level].options_.end(); ++it) {
+        if ((*it).second->getType() == opt_type) {
+            return (it->second);
+        }
+    }
+
+    return (OptionPtr());
+}
+
 uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    if (relay.interface_id_) {
-        len += relay.interface_id_->len();
-    }
-    if (relay.subscriber_id_) {
-        len += relay.subscriber_id_->len();
-    }
-    if (relay.remote_id_) {
-        len += relay.remote_id_->len();
-    }
-
-    for (Option::OptionCollection::const_iterator opt = relay.echo_options_.begin();
-         opt != relay.echo_options_.end(); ++opt) {
+    for (Option::OptionCollection::const_iterator opt = relay.options_.begin();
+         opt != relay.options_.end(); ++opt) {
         len += (opt->second)->len();
     }
 
@@ -148,19 +154,9 @@ Pkt6::packUDP() {
                 bufferOut_.writeData(&relay->peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
-                if (relay->interface_id_) {
-                    relay->interface_id_->pack(bufferOut_);
-                }
-                if (relay->subscriber_id_) {
-                    relay->subscriber_id_->pack(bufferOut_);
-                }
-                if (relay->remote_id_) {
-                    relay->remote_id_->pack(bufferOut_);
-                }
-
                 for (Option::OptionCollection::const_iterator opt =
-                         relay->echo_options_.begin();
-                     opt != relay->echo_options_.end(); ++opt) {
+                         relay->options_.begin();
+                     opt != relay->options_.end(); ++opt) {
                     (opt->second)->pack(bufferOut_);
                 }
 
@@ -271,11 +267,12 @@ Pkt6::unpackRelayMsg() {
     size_t bufsize = data_.size();
     size_t offset = 0;
 
-    size_t relay_msg_offset = 0;
-
     while (bufsize >= DHCPV6_RELAY_HDR_LEN) {
 
         RelayInfo relay;
+
+        size_t relay_msg_offset = 0;
+        size_t relay_msg_len = 0;
 
         // parse fixed header first (first 34 bytes)
         relay.msg_type_ = data_[offset++];
@@ -287,46 +284,45 @@ Pkt6::unpackRelayMsg() {
         bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
 
         try {
-            Option::OptionCollection options;
-
             // parse the rest as options
             OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
-            LibDHCP::unpackOptions6(opt_buffer, options, &relay_msg_offset);
+            LibDHCP::unpackOptions6(opt_buffer, relay.options_, &relay_msg_offset,
+                                    &relay_msg_len);
 
             /// @todo: check that each option appears at most once
             //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
             //relay.subscriber_id_ = options->getOption(D6O_SUBSCRIBER_ID);
             //relay.remote_id_ = options->getOption(D6O_REMOTE_ID);
 
-            Option::OptionCollection::const_iterator relay_iter = options.find(D6O_RELAY_MSG);
-            if (relay_iter == options.end()) {
-                // there's nothing to decapsulate. We give up.
-                isc_throw(InvalidOperation, "Mandatory relay_msg missing");
+            if (relay_msg_offset == 0 || relay_msg_len == 0) {
+                isc_throw(BadValue, "Mandatory relay-msg option missing");
             }
-            OptionPtr relay_msg = relay_iter->second;
 
             // store relay information parsed so far
             addRelayInfo(relay);
 
             /// @todo: implement ERO here
 
-            size_t inner_len = relay_msg->len() - relay_msg->getHeaderLen();
-            if (inner_len >= bufsize) {
+            if (relay_msg_len >= bufsize) {
                 // length of the relay_msg option extends beyond end of the message
                 isc_throw(Unexpected, "Relay-msg option is truncated.");
                 return false;
             }
-            uint8_t inner_type = relay_msg->getUint8();
-            offset += relay_msg_offset;
-            bufsize = inner_len;
+            uint8_t inner_type = data_[offset + relay_msg_offset];
+            offset += relay_msg_offset; // offset is relative
+            bufsize = relay_msg_len;    // length is absolute
 
-            if ( (inner_type != DHCPV6_RELAY_FORW) && (inner_type != DHCPV6_RELAY_REPL)) {
-                // Ok, the inner message is not encapsulated, let's decode it directly
-                return (unpackMsg(data_.begin() + offset, data_.begin() + offset + inner_len));
+            if ( (inner_type != DHCPV6_RELAY_FORW) &&
+                 (inner_type != DHCPV6_RELAY_REPL)) {
+                // Ok, the inner message is not encapsulated, let's decode it
+                // directly
+                return (unpackMsg(data_.begin() + offset, data_.begin() + offset
+                                  + relay_msg_len));
             }
 
-            // Oh well, there's inner relay-forw or relay-repl inside. Let's unpack it as well
-
+            // Oh well, there's inner relay-forw or relay-repl inside. Let's
+            // unpack it as well. The next loop iteration will take care
+            // of that.
         } catch (const Exception& e) {
             /// @todo: throw exception here once we turn this function to void.
             return (false);

@@ -129,7 +129,8 @@ LibDHCP::optionFactory(Option::Universe u,
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                isc::dhcp::Option::OptionCollection& options,
-                               size_t* relay_msg_offset /* = 0 */) {
+                               size_t* relay_msg_offset /* = 0 */,
+                               size_t* relay_msg_len /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -153,9 +154,14 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
             return (offset);
         }
 
-        if (opt_type == D6O_RELAY_MSG && relay_msg_offset) {
+        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
             // remember offset of the beginning of the relay-msg option
             *relay_msg_offset = offset;
+            *relay_msg_len = opt_len;
+
+            // do not create that relay-msg option
+            offset += opt_len;
+            continue;
         }
 
         // Get all definitions with the particular option code. Note that option

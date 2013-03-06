@@ -766,9 +766,15 @@ TEST_F(OptionCustomTest, recordDataTruncated) {
     // 2 bytes of uint16_t value and IPv6 address. Option definitions specifies
     // 3 data fields for this option but the length of the data is insufficient
     // to initialize 3 data field.
-    EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 18)),
-        isc::OutOfRange
+
+    // @todo:
+    // Currently the code was modified to allow empty string or empty binary data
+    // Potentially change this back to EXPECT_THROW(..., OutOfRange) once we
+    // decide how to treat zero length strings and binary data (they are typically
+    // valid or invalid on a per option basis, so there likely won't be a single
+    // one answer to all)
+    EXPECT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.begin() + 18))
     );
 
     // Try to further reduce the length of the buffer to make it insufficient

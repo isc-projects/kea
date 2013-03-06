@@ -44,21 +44,26 @@ public:
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
 
+
+    /// @brief structure that describes a single relay information
+    ///
+    /// Client sends messages. Each relay along its way will encapsulate the message.
+    /// This structure represents all information added by a single relay.
     struct RelayInfo {
 
+        /// @brief default constructor
         RelayInfo();
+        uint8_t   msg_type_;               ///< message type (RELAY-FORW oro RELAY-REPL)
+        uint8_t   hop_count_;              ///< number of traversed relays (up to 32)
+        isc::asiolink::IOAddress linkaddr_;///< fixed field in relay-forw/relay-reply
+        isc::asiolink::IOAddress peeraddr_;///< fixed field in relay-forw/relay-reply
 
-        uint8_t   msg_type_;      ///< message type (RELAY-FORW oro RELAY-REPL)
-        uint8_t   hop_count_;     ///< number of traversed relays (up to 32)
-        isc::asiolink::IOAddress linkaddr_;      ///< fixed field in relay-forw/relay-reply
-        isc::asiolink::IOAddress peeraddr_;      ///< fixed field in relay-forw/relay-reply
-        OptionPtr interface_id_;  ///< interface-id option (optional)
-        OptionPtr subscriber_id_; ///< subscriber-id (RFC4580)
-        OptionPtr remote_id_;     ///< remote-id (RFC4649)
-        uint16_t  relay_msg_len_; ///< length of the relay_msg_len
+        /// @brief length of the relay_msg_len
+        /// Used when calculating length during pack/unpack
+        uint16_t  relay_msg_len_;
 
-        /// used for ERO (Echo Request Option, RFC 4994)
-        isc::dhcp::Option::OptionCollection echo_options_;
+        /// options received from a specified relay, except relay-msg option
+        isc::dhcp::Option::OptionCollection options_;
     };
 
     /// Constructor, used in replying to a message
@@ -108,7 +113,6 @@ public:
     ///
     /// @return reference to output buffer
     const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
-
 
     /// @brief Returns reference to input buffer.
     ///
@@ -179,6 +183,8 @@ public:
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
+
+    OptionPtr getRelayOption(uint16_t type, uint8_t nesting_level);
 
     /// @brief Returns all instances of specified type.
     ///
@@ -335,6 +341,15 @@ public:
     ///         be freed by the caller.
     const char* getName() const;
 
+    /// relay information
+    ///
+    /// this is a public field. Otherwise we hit one of the two problems:
+    /// we return reference to an internal field (and that reference could
+    /// be potentially used past Pkt6 object lifetime causing badness) or
+    /// we return a copy (which is inefficient and also causes any updates
+    /// to be impossible). Therefore public field is considered the best
+    /// (or least bad) solution.
+    std::vector<RelayInfo> relay_info_;
 protected:
     /// Builds on wire packet for TCP transmission.
     ///
@@ -370,15 +385,41 @@ protected:
     /// @return true, if build was successful
     bool unpackUDP();
 
+    /// @brief unpacks direct (non-relayed) message
+    ///
+    /// This method unpacks specified buffer range as a direct
+    /// (e.g. solicit or request) message. This method is called from
+    /// unpackUDP() when received message is detected to be direct.
+    ///
+    /// @param begin start of the buffer
+    /// @param end end of the buffer
+    /// @return true if parsing was successful and there are no leftover bytes
     bool unpackMsg(OptionBuffer::const_iterator begin,
                    OptionBuffer::const_iterator end);
 
+    /// @brief unpacks relayed message (RELAY-FORW or RELAY-REPL)
+    ///
+    /// This method is called from unpackUDP() when received message
+    /// is detected to be relay-message. It goes iteratively over
+    /// all relays (if there are multiple encapsulation levels).
+    ///
+    /// @return true if parsing was successful
     bool unpackRelayMsg();
 
+    /// @brief calculates overhead introduced in specified relay
+    ///
+    /// It is used when calculating message size and packing message
+    /// @return number of bytes needed to store relay information
     uint16_t getRelayOverhead(const RelayInfo& relay);
 
+    /// @brief calculates overhead for all relays defined for this message
+    /// @return number of bytes needed to store all relay information
     uint16_t calculateRelaySizes();
 
+    /// @brief calculates size of the message as if were sent directly
+    ///
+    /// This is equal to len() if the message is direct.
+    /// @return number of bytes required to store the message
     uint16_t directLen();
 
     /// UDP (usually) or TCP (bulk leasequery or failover)
@@ -435,9 +476,6 @@ protected:
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
-
-    /// relay information
-    std::vector<RelayInfo> relay_info_;
 }; // Pkt6 class
 
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
