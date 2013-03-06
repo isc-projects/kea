@@ -203,8 +203,16 @@ public:
             // we can catch and reject this type of invalid input.
             isc_throw(BadValue, "Unexpected end of input in BASE decoder");
         }
-        if (in_pad_) {
-            return (base_zero_code_);
+        if (*base_ == BASE_PADDING_CHAR) {
+            // Padding can only happen at the end of the input string.  We can
+            // detect any violation of this by checking in_pad_, which is
+            // true iff we are on or after the first valid sequence of padding
+            // characters.
+            if (in_pad_) {
+                return (base_zero_code_);
+            } else {
+                isc_throw(BadValue, "Intermediate padding found");
+            }
         } else {
             return (*base_);
         }
