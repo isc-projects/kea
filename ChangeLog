@@ -1,3 +1,12 @@
+584.	[bug]		jinmei
+	Fixed build failure with Boost 1.53 (and probably higher) in the
+	internal utility library.  Note that with -Werror it may still
+	fail, but it's due to a Boost bug that is reportedly fixed in their
+	development trunk.  See https://svn.boost.org/trac/boost/ticket/8080
+	Until the fix is available in a released Boost version you may need
+	to specify the --without-werror configure option to build BIND 10.
+	(Trac #2764, git ca1da8aa5de24358d7d4e7e9a4625347457118cf)
+
 583.	[func]*		jelte
 	b10-cmdctl-usermgr has been updated and its options and arguments
 	have changed; it now defaults to the same accounts file as
