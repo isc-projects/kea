@@ -110,14 +110,14 @@ public:
                      const vector<uint8_t>::const_iterator& base_end) :
         base_(base), base_end_(base_end), in_pad_(false)
     {}
-    EncodeNormalizer& operator++() {
-        if (!in_pad_) {
-            ++base_;
-        }
-        if (base_ == base_end_) {
-            in_pad_ = true;
-        }
+    EncodeNormalizer& operator++() { // prefix version
+        increment();
         return (*this);
+    }
+    EncodeNormalizer operator++(int) { // postfix version
+        const EncodeNormalizer copy = *this;
+        increment();
+        return (copy);
     }
     const uint8_t& operator*() const {
         if (in_pad_) {
@@ -130,6 +130,14 @@ public:
         return (base_ == other.base_);
     }
 private:
+    void increment() {
+        if (!in_pad_) {
+            ++base_;
+        }
+        if (base_ == base_end_) {
+            in_pad_ = true;
+        }
+    }
     vector<uint8_t>::const_iterator base_;
     const vector<uint8_t>::const_iterator base_end_;
     bool in_pad_;
