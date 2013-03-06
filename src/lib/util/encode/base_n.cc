@@ -378,7 +378,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
         // Number of bits of the conversion result including padding must be
         // a multiple of 8; otherwise the decoder reaches the end of input
         // with some incomplete bits of data, which is invalid.
-        if (((char_count * BitsPerChunk) & 7) != 0) {
+        if (((char_count * BitsPerChunk) % 8) != 0) {
             throw IncompleteBaseInput(); // catch this immediately below
         }
     } catch (const IncompleteBaseInput&) {
