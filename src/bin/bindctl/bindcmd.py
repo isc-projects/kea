@@ -215,10 +215,6 @@ WARNING: Python readline module isn't available, so the command line editor
 
         return True
 
-    def __print_check_ssl_msg(self):
-        self._print("Please check the logs of b10-cmdctl, there may "
-                    "have been a problem accepting SSL connections.")
-
     def _try_login(self, username, password):
         '''
         Attempts to log into cmdctl by sending a POST with the given
@@ -236,16 +232,10 @@ WARNING: Python readline module isn't available, so the command line editor
             data = response.read().decode()
             # return here (will raise error after try block)
             return (response, data)
-        except ssl.SSLError as err:
-            self._print("SSL error while sending login information: ", err)
-            if err.errno == ssl.SSL_ERROR_EOF:
-                self.__print_check_ssl_msg()
-        except socket.error as err:
-            self._print("Socket error while sending login information: ", err)
-            # An SSL setup error can also bubble up as a plain CONNRESET...
-            # (on some systems it usually does)
-            if err.errno == errno.ECONNRESET:
-                self.__print_check_ssl_msg()
+        except (ssl.SSLError, socket.error) as err:
+            self._print("Error while sending login information: ", err)
+            self._print("Please check the logs of b10-cmdctl, there may "
+                        "have been a problem accepting SSL connections.")
             pass
         raise FailToLogin()
 
