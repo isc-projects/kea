@@ -43,6 +43,9 @@ namespace log {
 /// All that needed is for the module containing the definitions to be
 /// included in the execution unit.
 ///
+/// Dynamically loaded modules should call the initializer as well on the
+/// moment they are instantiated.
+///
 /// To avoid static initialization fiasco problems, the initialization is
 /// carried out in two stages:
 /// - The constructor adds a pointer to the values array to a pre-defined array
@@ -93,6 +96,10 @@ public:
     /// Loops through the internal array of pointers to message arrays
     /// and adds the messages to the internal dictionary.  This is called
     /// during run-time initialization.
+    ///
+    /// \param ignore_duplicates If true, duplicate IDs, and IDs already
+    ///        loaded, are ignored instead of stored in the global duplicates
+    ///        vector.
     static void loadDictionary(bool ignore_duplicates = false);
 
     /// \brief Return Duplicates
