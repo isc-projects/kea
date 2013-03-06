@@ -607,7 +607,7 @@ class TestXfrinIXFRAdd(TestXfrinState):
         # signed, rejecting it.
         self.assertRaises(xfrin.XfrinProtocolError, self.state.handle_rr,
                           self.conn, end_soa_rrset)
-        # No diffs were commited
+        # No diffs were committed
         self.assertEqual([], self.conn._datasrc_client.committed_diffs)
 
     def test_handle_out_of_sync(self):

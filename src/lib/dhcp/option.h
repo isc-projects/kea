@@ -128,7 +128,7 @@ public:
 
     /// @brief Constructor, used for received options.
     ///
-    /// This contructor is similar to the previous one, but it does not take
+    /// This constructor is similar to the previous one, but it does not take
     /// the whole vector<uint8_t>, but rather subset of it.
     ///
     /// @todo This can be templated to use different containers, not just
@@ -280,7 +280,7 @@ public:
     ///
     /// Option will be resized to length of buffer.
     ///
-    /// @param first iterator pointing begining of buffer to copy.
+    /// @param first iterator pointing to beginning of buffer to copy.
     /// @param last iterator pointing to end of buffer to copy.
     void setData(const OptionBufferConstIter first,
                  const OptionBufferConstIter last);

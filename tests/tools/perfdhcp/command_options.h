@@ -443,7 +443,7 @@ private:
     std::vector<int> xid_offset_;
     /// Random value offset in templates. Random value offset
     /// points to last octet of DUID. Up to 4 last octets of
-    /// DUID are randomized to simulate differnt clients.
+    /// DUID are randomized to simulate different clients.
     std::vector<int> rnd_offset_;
     /// Offset of elapsed time option in template packet.
     int elp_offset_;

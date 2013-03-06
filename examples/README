@@ -31,7 +31,7 @@ sinclude(m4/ax_boost_include.m4)
 sinclude(m4/ax_isc_bind10.m4)
 (and same for other m4 files as they are added under m4/)
 
-On some systems, espeically if you have installed the BIND 10
+On some systems, especially if you have installed the BIND 10
 libraries in an uncommon path, programs linked with the BIND 10
 library may not work at run time due to the "missing" shared library.
 Normally, you should be able to avoid this problem by making sure

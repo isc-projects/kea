@@ -310,7 +310,7 @@ TEST_F(OptionCustomTest, int32Data) {
 }
 
 // The purpose of this test is to verify that the option definition comprising
-// single IPv4 addres can be used to create an instance of custom option.
+// single IPv4 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv4AddressData) {
     OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address");
 
@@ -343,7 +343,7 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
 }
 
 // The purpose of this test is to verify that the option definition comprising
-// single IPv6 addres can be used to create an instance of custom option.
+// single IPv6 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv6AddressData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
 
@@ -999,7 +999,7 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
     EXPECT_TRUE(value2);
 }
 
-// The purpose of this test is to verify that am option carying
+// The purpose of this test is to verify that am option carrying
 // an array of 16-bit signed integer values can be created with
 // no values initially and that the values can be later added to it.
 TEST_F(OptionCustomTest, setUint16DataArray) {

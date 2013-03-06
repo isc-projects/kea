@@ -102,7 +102,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// This constructor creates option from a buffer. This construtor
+    /// This constructor creates option from a buffer. This constructor
     /// may throw exception if \ref unpack function throws during buffer
     /// parsing.
     ///

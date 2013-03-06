@@ -18,7 +18,7 @@
 # RDATA: 192.0.2.1
 c0 00 02 01
 #
-# 2nd RR: the owner name is compresed
+# 2nd RR: the owner name is compressed
 c0 00
 00 01 00 01
 00 00 0e 10

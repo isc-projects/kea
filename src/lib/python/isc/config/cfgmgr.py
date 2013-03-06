@@ -221,7 +221,7 @@ class ConfigManagerData:
 
 class ConfigManager:
     """Creates a configuration manager. The data_path is the path
-       to the directory containing the configuraton file,
+       to the directory containing the configuration file,
        database_filename points to the configuration file.
        If session is set, this will be used as the communication
        channel session. If not, a new session will be created.
@@ -443,7 +443,7 @@ class ConfigManager:
         # (which is possible solution to the offline configuration problem)
         # or when we solve the incorect behaviour here when a config is
         # rejected (spying modules don't know it was rejected and some modules
-        # might have been commited already).
+        # might have been committed already).
         if module_name in self.virtual_modules:
             # The module is virtual, so call it to get the answer
             try:

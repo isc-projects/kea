@@ -261,7 +261,7 @@ class DataSrcClient(unittest.TestCase):
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        # There are 40 non-RRSIG RRsets and 32 dinstinct RRSIGs.
+        # There are 40 non-RRSIG RRsets and 32 distinct RRSIGs.
         self.assertEqual(72, len(list(rrets)))
 
         # same test, but now with explicit False argument for separate_rrs

@@ -504,7 +504,7 @@ public:
 
     // find the Element at 'id', and store the element pointer in t
     // returns true if found, or false if not found (either because
-    // it doesnt exist or one of the elements in the path is not
+    // it doesn't exist or one of the elements in the path is not
     // a MapElement)
     bool find(const std::string& id, ConstElementPtr& t) const;
 

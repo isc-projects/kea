@@ -186,7 +186,7 @@ class XfroutSession():
 
         '''
         # Check the xfrout quota.  We do both increase/decrease in this
-        # method so it's clear we always release it once acuired.
+        # method so it's clear we always release it once acquired.
         quota_ok = self._server.increase_transfers_counter()
         ex = None
         try:

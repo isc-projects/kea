@@ -405,7 +405,7 @@ private:
     ///
     /// This function is used by some of the public static functions
     /// to create an instance of OptionDataTypeUtil class.
-    /// When instance is called it calls the class'es constructor
+    /// When this instance is called it calls the classes constructor
     /// and initializes some of the private data members.
     ///
     /// @return instance of OptionDataTypeUtil singleton.

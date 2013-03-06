@@ -262,7 +262,7 @@ TEST_F(StatsMgrTest, SendReceiveSimple) {
     boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
                                                       common_transid));
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
-    // The following attempt is expected to pass becase the right
+    // The following attempt is expected to pass because the right
     // exchange type is used.
     ASSERT_NO_THROW(
         stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)

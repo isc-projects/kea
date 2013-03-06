@@ -72,7 +72,7 @@ class SocketTest(Test):
         """
         Check it closes the socket when removed.
         """
-        # This should make the refcount 0 and call the descructor
+        # This should make the refcount 0 and call the destructor
         # right away
         self.__socket = None
         self.assertEqual([42], self._closes)

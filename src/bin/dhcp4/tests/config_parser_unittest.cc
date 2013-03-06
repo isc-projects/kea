@@ -487,7 +487,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
 }
 
-// The goal of this test is to check whether an option definiiton
+// The goal of this test is to check whether an option definition
 // that defines an option carrying a record of data fields can
 // be created.
 TEST_F(Dhcp4ParserTest, optionDefRecord) {
@@ -1060,7 +1060,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-    // Options should be now availabe for the subnet.
+    // Options should be now available for the subnet.
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp4.
@@ -1430,7 +1430,7 @@ TEST_F(Dhcp4ParserTest, optionDataInvalidChar) {
     testInvalidOptionParam("01020R", "data");
 }
 
-// Verify that option data containins '0x' prefix is rejected
+// Verify that option data containing '0x' prefix is rejected
 // by the configuration.
 TEST_F(Dhcp4ParserTest, optionDataUnexpectedPrefix) {
     // Option code 0 is reserved and should not be accepted
@@ -1530,7 +1530,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     boost::shared_ptr<Option4AddrLst> option_addrs =
         boost::dynamic_pointer_cast<Option4AddrLst>(option);
     // If cast is unsuccessful than option returned was of a
-    // differnt type than Option6IA. This is wrong.
+    // different type than Option6IA. This is wrong.
     ASSERT_TRUE(option_addrs);
 
     // Get addresses from the option.

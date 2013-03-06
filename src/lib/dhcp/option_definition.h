@@ -515,7 +515,7 @@ private:
 /// using two indexes:
 /// - sequenced: used to access elements in the order they have
 /// been added to the container
-/// - option code: used to search defintions of options
+/// - option code: used to search definitions of options
 /// with a specified option code (aka option type).
 /// Note that this container can hold multiple options with the
 /// same code. For this reason, the latter index can be used to
@@ -555,7 +555,7 @@ typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
 typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;
 /// Pair of iterators to represent the range of options definitions
 ///  having the same option type value. The first element in this pair
-///  represents the begining of the range, the second element
+///  represents the beginning of the range, the second element
 ///  represents the end.
 typedef std::pair<OptionDefContainerTypeIndex::const_iterator,
                   OptionDefContainerTypeIndex::const_iterator> OptionDefContainerTypeRange;

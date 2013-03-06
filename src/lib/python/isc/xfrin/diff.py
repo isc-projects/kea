@@ -52,10 +52,10 @@ class Diff:
     """
     The class represents a diff against current state of datasource on
     one zone. The usual way of working with it is creating it, then putting
-    bunch of changes in and commiting at the end.
+    bunch of changes in and committing at the end.
 
     If you change your mind, you can just stop using the object without
-    really commiting it. In that case no changes will happen in the data
+    really committing it. In that case no changes will happen in the data
     sounce.
 
     The class works as a kind of a buffer as well, it does not direct
@@ -123,12 +123,12 @@ class Diff:
 
     def __check_committed(self):
         """
-        This checks if the diff is already commited or broken. If it is, it
+        This checks if the diff is already committed or broken. If it is, it
         raises ValueError. This check is for methods that need to work only on
-        yet uncommited diffs.
+        yet uncommitted diffs.
         """
         if self.__updater is None:
-            raise ValueError("The diff is already commited or it has raised " +
+            raise ValueError("The diff is already committed or it has raised " +
                              "an exception, you come late")
 
     def __append_with_soa_check(self, buf, operation, rr):
@@ -200,7 +200,7 @@ class Diff:
         Schedules addition of an RR into the zone in this diff.
 
         The rr is of isc.dns.RRset type and it must contain only one RR.
-        If this is not the case or if the diff was already commited, this
+        If this is not the case or if the diff was already committed, this
         raises the ValueError exception.
 
         The rr class must match the one of the datasource client. If
@@ -213,7 +213,7 @@ class Diff:
         Schedules deleting an RR from the zone in this diff.
 
         The rr is of isc.dns.RRset type and it must contain only one RR.
-        If this is not the case or if the diff was already commited, this
+        If this is not the case or if the diff was already committed, this
         raises the ValueError exception.
 
         The rr class must match the one of the datasource client. If
@@ -287,7 +287,7 @@ class Diff:
         This is called from time to time automatically, but you can call it
         manually if you really want to.
 
-        This raises ValueError if the diff was already commited.
+        This raises ValueError if the diff was already committed.
 
         It also can raise isc.datasrc.Error. If that happens, you should stop
         using this object and abort the modification.
@@ -344,7 +344,7 @@ class Diff:
             self.__updater.commit()
         finally:
             # Remove the updater. That will free some resources for one, but
-            # mark this object as already commited, so we can check
+            # mark this object as already committed, so we can check
 
             # We delete it even in case the commit failed, as that makes us
             # unusable.
@@ -594,6 +594,6 @@ class Diff:
 
         This must not be called after a commit, or it'd throw ValueError.
         '''
-        # Apply itself will check it is not yet commited.
+        # Apply itself will check it is not yet committed.
         self.apply()
         return self.__updater.get_rrset_collection()

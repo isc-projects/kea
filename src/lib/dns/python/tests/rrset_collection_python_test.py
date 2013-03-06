@@ -17,7 +17,7 @@ import os
 import unittest
 from pydnspp import *
 
-# This should refer to the testdata diretory for the C++ tests.
+# This should refer to the testdata directory for the C++ tests.
 TESTDATA_DIR = os.environ["TESTDATA_PATH"].split(':')[0]
 
 class RRsetCollectionBaseTest(unittest.TestCase):

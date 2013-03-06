@@ -432,7 +432,7 @@ class XfrinIXFRAdd(XfrinState):
             if soa_serial == conn._end_serial:
                 # The final part is there. Finish the transfer by
                 # checking the last TSIG (if required), the zone data and
-                # commiting.
+                # committing.
                 conn.finish_transfer()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -820,7 +820,7 @@ class XfrinConnection(asyncore.dispatcher):
     def finish_transfer(self):
         """
         Perform any necessary checks after a transfer. Then complete the
-        transfer by commiting the transaction into the data source.
+        transfer by committing the transaction into the data source.
         """
         self._check_response_tsig_last()
         if not check_zone(self._zone_name, self._rrclass,
