@@ -25,8 +25,8 @@ endif
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/cmdctl \
+	CMDCTL_SRC_PATH=$(abs_top_srcdir)/src/bin/cmdctl \
 	CMDCTL_BUILD_PATH=$(abs_top_builddir)/src/bin/cmdctl \
-	CMDCTL_TESTDATA_PATH=$(abs_top_srcdir)/src/bin/cmdctl \
 	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
