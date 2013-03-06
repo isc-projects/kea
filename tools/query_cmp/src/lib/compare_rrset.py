@@ -242,7 +242,7 @@ def resp_casecmp(msg1, msg2, num):
 				msg1.get_section(Message.SECTION_ADDITIONAL), \
 				msg2.get_section(Message.SECTION_ADDITIONAL))
 	
-	# If there are any differnt comparisons in the sections above, print the details
+	# If there are any different comparisons in the sections above, print the details
 	# contained in buf formattedly.
 	if not res_hdr or not res_ques or not res_ans or not res_auth or not res_addi:
 		print('=' * 30, '  BEGIN QUERY %s  ' % num, '=' * 30, sep='')

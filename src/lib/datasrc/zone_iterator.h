@@ -27,7 +27,7 @@ namespace datasrc {
 /**
  * \brief Read-only iterator to a zone.
  *
- * You can get an instance of (descendand of) ZoneIterator from
+ * You can get an instance of (descendant of) ZoneIterator from
  * DataSourceClient::getIterator() method. The actual concrete implementation
  * will be different depending on the actual data source used. This is the
  * abstract interface.

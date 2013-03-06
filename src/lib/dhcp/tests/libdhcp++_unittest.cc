@@ -62,9 +62,9 @@ public:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param begin iterator pointing a begining of a buffer to
+    /// @param begin iterator pointing at beginning of a buffer to
     /// be used to create option instance.
-    /// @param end iterator pointing an end of a buffer to be
+    /// @param end iterator pointing at end of a buffer to be
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
@@ -86,9 +86,9 @@ public:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param begin iterator pointing a begining of a buffer to
+    /// @param begin iterator pointing at beginning of a buffer to
     /// be used to create option instance.
-    /// @param end iterator pointing an end of a buffer to be
+    /// @param end iterator pointing at end of a buffer to be
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.
@@ -111,9 +111,9 @@ private:
     /// option has been initialized correctly.
     ///
     /// @param code option code.
-    /// @param begin iterator pointing a begining of a buffer to
+    /// @param begin iterator pointing at beginning of a buffer to
     /// be used to create option instance.
-    /// @param end iterator pointing an end of a buffer to be
+    /// @param end iterator pointing at end of a buffer to be
     /// used to create option instance.
     /// @param expected_type type of the option created by the
     /// factory function returned by the option definition.

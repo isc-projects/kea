@@ -278,7 +278,7 @@ public:
     ///
     /// Option will be resized to length of buffer.
     ///
-    /// @param first iterator pointing begining of buffer to copy.
+    /// @param first iterator pointing to beginning of buffer to copy.
     /// @param last iterator pointing to end of buffer to copy.
     void setData(const OptionBufferConstIter first,
                  const OptionBufferConstIter last);

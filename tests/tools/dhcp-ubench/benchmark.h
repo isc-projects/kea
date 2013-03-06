@@ -178,7 +178,7 @@ protected:
     /// Number of operations (e.g. insert lease num times)
     uint32_t num_;
 
-    /// Synchronous or asynchonous mode?
+    /// Synchronous or asynchronous mode?
     bool sync_;
 
     /// Should the test print out extra information?

@@ -474,7 +474,7 @@ TEST(Lease6, Lease6Constructor) {
 /// is followed by the reverse check on operator!=().
 TEST(Lease6, OperatorEquals) {
 
-    // check a variety of addressemas with different bits set.
+    // check a variety of addresses with different bits set.
     const IOAddress addr("2001:db8:1::456");
     uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));

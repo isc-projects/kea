@@ -61,7 +61,7 @@ public:
     /// @param code option code.
     ///
     /// @return true if the specified option is a standard option.
-    /// @todo We arleady create option definitions for the subset if
+    /// @todo We already create option definitions for the subset if
     /// standard options. We are aiming that this function checks
     /// the presence of the standard option definition and if it finds
     /// it, then the true value is returned. However, at this point

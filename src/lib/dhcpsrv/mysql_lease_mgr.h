@@ -192,7 +192,7 @@ public:
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
-    /// The assumtion here is that there will not be site or link-local
+    /// The assumption here is that there will not be site or link-local
     /// addresses used, so there is no way of having address duplication.
     ///
     /// @param addr address of the searched lease

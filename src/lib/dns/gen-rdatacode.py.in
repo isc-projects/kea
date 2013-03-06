@@ -186,7 +186,7 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
     # list is processed in the same order on all systems.  The resulting
     # files should compile regardless of the order in which the components
     # are included but...  Having a fixed order for the directories should
-    # eliminate system-dependent problems.  (Note that the drectory names
+    # eliminate system-dependent problems.  (Note that the directory names
     # in BIND 10 are ASCII, so the order should be locale-independent.)
     dirlist = os.listdir('@srcdir@/rdata')
     dirlist.sort()

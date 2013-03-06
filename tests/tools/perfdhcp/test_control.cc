@@ -1804,7 +1804,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
     pkt->setRemotePort(DHCP4_SERVER_PORT);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
-    // Set local addresss.
+    // Set local address.
     pkt->setLocalAddr(IOAddress(socket.addr_));
     // Set relay (GIADDR) address to local address.
     pkt->setGiaddr(IOAddress(socket.addr_));

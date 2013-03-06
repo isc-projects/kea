@@ -46,7 +46,7 @@ TEST(AsioSession, establish) {
     asio::io_service io_service_;
     Session sess(io_service_);
 
-    // can't return socket desciptor before session is established
+    // can't return socket descriptor before session is established
     EXPECT_THROW(sess.getSocketDesc(), isc::InvalidOperation);
 
     EXPECT_THROW(

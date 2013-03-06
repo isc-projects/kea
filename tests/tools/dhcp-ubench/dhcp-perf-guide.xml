@@ -172,7 +172,7 @@
 
     <para>
       The framework attempts to do the same amount of work for every
-      backend thus allowing fair complarison between them.
+      backend thus allowing fair comparison between them.
     </para>
     </section>
 
@@ -1160,7 +1160,7 @@ The exit status is:
       <para>
         Currently, perfdhcp is seen from the server perspective as relay agent.
         This simplifies its implementation: specifically there is no need to
-        receive traffic sent to braodcast addresses. However, it does impose
+        receive traffic sent to broadcast addresses. However, it does impose
         a requirement that the IPv4
         address has to be set manually on the interface that will be used to
         communicate with the server. For example, if the DHCPv4 server is listening

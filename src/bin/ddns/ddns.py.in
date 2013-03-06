@@ -236,7 +236,7 @@ class DDNSServer:
         '''Exception for internal errors in an update session.
 
         This exception is expected to be caught within the server class,
-        only used for controling the code flow.
+        only used for controlling the code flow.
 
         '''
         pass
@@ -511,7 +511,7 @@ class DDNSServer:
 
         Right now, this is a straightforward subroutine of handle_request(),
         but is intended to be extended evetually so that it can handle more
-        comlicated operations for TCP (which requires asynchronous write).
+        complicated operations for TCP (which requires asynchronous write).
         Further, when we support multiple requests over a single TCP
         connection, this method may even be shared by multiple methods.
 

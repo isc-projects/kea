@@ -34,7 +34,7 @@ The named component is about to be started by the b10-init process.
 
 % BIND10_COMPONENT_START_EXCEPTION component %1 failed to start: %2
 An exception (mentioned in the message) happened during the startup of the
-named component. The componet is not considered started and further actions
+named component. The component is not considered started and further actions
 will be taken about it.
 
 % BIND10_COMPONENT_STOP component %1 is being stopped

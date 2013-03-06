@@ -26,7 +26,7 @@ from libutil_io_python import recv_fd
 logger = isc.log.Logger("init")
 
 """
-Module that comunicates with the privileged socket creator (b10-sockcreator).
+Module that communicates with the privileged socket creator (b10-sockcreator).
 """
 
 class CreatorError(Exception):

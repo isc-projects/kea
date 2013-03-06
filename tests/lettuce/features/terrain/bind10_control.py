@@ -188,7 +188,7 @@ def parse_bindctl_output_as_data_structure():
        If it is valid, it is parsed and returned as whatever data
        structure it represented.
     """
-    # strip any extra output after a charater that commonly terminates a valid
+    # strip any extra output after a character that commonly terminates a valid
     # JSON expression, i.e., ']', '}' and '"'.  (The extra output would
     # contain 'Exit from bindctl' message, and depending on environment some
     # other control-like characters...but why is this message even there?)

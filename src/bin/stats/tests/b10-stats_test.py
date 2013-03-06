@@ -398,8 +398,8 @@ class TestStats(unittest.TestCase):
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
 
         # 'showschema' command.  update_modules() will be called, which
-        # (implicitly) cofirms the correct method is called; further details
-        # are tested seprately.
+        # (implicitly) confirms the correct method is called; further details
+        # are tested separately.
         call_log = []
         (rcode, value) = self.__send_command(__stats, 'showschema')
         self.assertEqual([('update_module', ())], call_log)

@@ -129,7 +129,7 @@ public:
     ///
     /// \return The offset of the field corresponding to this option in the DNS
     ///         message flags field.  The returned value is only valid for
-    ///         options that correpond to fields in the flags word.
+    ///         options that correspond to fields in the flags word.
     static int offset(int index);
 
     /// \brief Return minimum allowed value of an option

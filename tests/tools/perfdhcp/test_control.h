@@ -245,7 +245,7 @@ public:
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
-    /// \throw isc::Unexpected if internal Test Controler error occured.
+    /// \throw isc::Unexpected if internal Test Controller error occured.
     /// \return error_code, 3 if number of received packets is not equal
     /// to number of sent packets, 0 if everything is ok.
     int run();
@@ -483,7 +483,7 @@ protected:
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
     /// \throw isc::InvalidOperation if broadcast option can't be
-    /// set for the v4 socket or if multicast option cat't be set
+    /// set for the v4 socket or if multicast option can't be set
     /// for the v6 socket.
     /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
