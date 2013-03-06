@@ -49,6 +49,23 @@ typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
 
 // A helper internal class for \c loadZoneData().  make it non-copyable
 // to avoid accidental copy.
+//
+// The current internal implementation no longer expects that both a
+// normal (non RRSIG) RRset and (when signed) its RRSIG are added at
+// once, but we do that here anyway to avoid merging RdataSets every
+// single time which can be inefficient.
+//
+// We hold all RRsets of the same owner name in node_rrsets_ and
+// node_rrsigsets_, and add the matching pairs of RRsets to the zone
+// when we see a new owner name. We do this to limit the size of
+// NodeRRsets below. However, RRsets can occur in any order.
+//
+// The caller is responsible for adding the RRsets of the last group
+// in the input sequence by explicitly calling flushNodeRRsets() at the
+// end.  It's cleaner and more robust if we let the destructor of this class
+// do it, but since we cannot guarantee the adding operation is exception free,
+// we don't choose that option to maintain the common expectation for
+// destructors.
 class ZoneDataLoader : boost::noncopyable {
 public:
     ZoneDataLoader(util::MemorySegment& mem_sgmt,
@@ -58,22 +75,89 @@ public:
     {}
 
     void addFromLoad(const isc::dns::ConstRRsetPtr& rrset);
+    void flushNodeRRsets();
 
 private:
+    typedef std::map<isc::dns::RRType, isc::dns::ConstRRsetPtr> NodeRRsets;
+    typedef NodeRRsets::value_type NodeRRsetsVal;
+
+    // A helper to identify the covered type of an RRSIG.
+    const isc::dns::Name& getCurrentName() const;
+
+private:
+    NodeRRsets node_rrsets_;
+    NodeRRsets node_rrsigsets_;
+    std::vector<isc::dns::ConstRRsetPtr> non_consecutive_rrsets_;
     ZoneDataUpdater updater_;
 };
 
 void
 ZoneDataLoader::addFromLoad(const ConstRRsetPtr& rrset) {
-    if (rrset->getType() == RRType::RRSIG()) {
-        updater_.add(ConstRRsetPtr(), rrset);
-    } else {
-        updater_.add(rrset, ConstRRsetPtr());
+    // If we see a new name, flush the temporary holders, adding the
+    // pairs of RRsets and RRSIGs of the previous name to the zone.
+    if ((!node_rrsets_.empty() || !node_rrsigsets_.empty() ||
+         !non_consecutive_rrsets_.empty()) &&
+        (getCurrentName() != rrset->getName())) {
+        flushNodeRRsets();
+    }
+
+    // Store this RRset until it can be added to the zone. If an rrtype
+    // that's already been seen is found, queue it in a different vector
+    // to be merged later.
+    const bool is_rrsig = rrset->getType() == RRType::RRSIG();
+    NodeRRsets& node_rrsets = is_rrsig ? node_rrsigsets_ : node_rrsets_;
+    const RRType& rrtype = is_rrsig ? getCoveredType(rrset) : rrset->getType();
+    if (!node_rrsets.insert(NodeRRsetsVal(rrtype, rrset)).second) {
+        non_consecutive_rrsets_.insert(non_consecutive_rrsets_.begin(), rrset);
     }
 
     if (rrset->getRRsig()) {
         addFromLoad(rrset->getRRsig());
     }
+}
+
+void
+ZoneDataLoader::flushNodeRRsets() {
+    BOOST_FOREACH(NodeRRsetsVal val, node_rrsets_) {
+        // Identify the corresponding RRSIG for the RRset, if any.  If
+        // found add both the RRset and its RRSIG at once.
+        ConstRRsetPtr sig_rrset;
+        NodeRRsets::iterator sig_it = node_rrsigsets_.find(val.first);
+        if (sig_it != node_rrsigsets_.end()) {
+            sig_rrset = sig_it->second;
+            node_rrsigsets_.erase(sig_it);
+        }
+        updater_.add(val.second, sig_rrset);
+    }
+
+    // Normally rrsigsets map should be empty at this point, but it's still
+    // possible that an RRSIG that don't has covered RRset is added; they
+    // still remain in the map.  We add them to the zone separately.
+    BOOST_FOREACH(NodeRRsetsVal val, node_rrsigsets_) {
+        updater_.add(ConstRRsetPtr(), val.second);
+    }
+
+    // Add any non-consecutive rrsets too.
+    BOOST_FOREACH(ConstRRsetPtr rrset, non_consecutive_rrsets_) {
+        if (rrset->getType() == RRType::RRSIG()) {
+            updater_.add(ConstRRsetPtr(), rrset);
+        } else {
+            updater_.add(rrset, ConstRRsetPtr());
+        }
+    }
+
+    node_rrsets_.clear();
+    node_rrsigsets_.clear();
+    non_consecutive_rrsets_.clear();
+}
+
+const Name&
+ZoneDataLoader::getCurrentName() const {
+    if (!node_rrsets_.empty()) {
+        return (node_rrsets_.begin()->second->getName());
+    }
+    assert(!node_rrsigsets_.empty());
+    return (node_rrsigsets_.begin()->second->getName());
 }
 
 void
@@ -103,6 +187,8 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
 
     ZoneDataLoader loader(mem_sgmt, rrclass, zone_name, *holder.get());
     rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader, _1));
+    // Add any last RRsets that were left
+    loader.flushNodeRRsets();
 
     const ZoneNode* origin_node = holder.get()->getOriginNode();
     const RdataSet* rdataset = origin_node->getData();

@@ -256,12 +256,12 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // First we have the SOA
     ConstRRsetPtr rrset(iterator->getNextRRset());
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
 
     // RRType::NS() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // RRType::A() RRset
     rrset = iterator->getNextRRset();
@@ -296,7 +296,7 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // Emulating bogus iterator implementation that passes empty RRSIGs.
     EXPECT_THROW(client_->load(Name("example.org"),
                                *MockIterator::makeIterator(rrset_data, true)),
-                 ZoneDataUpdater::AddError);
+                 isc::Unexpected);
 }
 
 TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
@@ -380,11 +380,11 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 
     const RdataSet* set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::NS(), set->type);
+    EXPECT_EQ(RRType::SOA(), set->type);
 
     set = set->getNext();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::SOA(), set->type);
+    EXPECT_EQ(RRType::NS(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
@@ -409,11 +409,11 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 
     set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::NS(), set->type);
+    EXPECT_EQ(RRType::SOA(), set->type);
 
     set = set->getNext();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::SOA(), set->type);
+    EXPECT_EQ(RRType::NS(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
@@ -675,15 +675,15 @@ TEST_F(MemoryClientTest, getIterator) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
-    // First we have the NS
+    // First we have the SOA
     ConstRRsetPtr rrset(iterator->getNextRRset());
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
 
-    // Then the SOA
+    // Then the NS
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
@@ -699,15 +699,15 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     // separate_rrs = false
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
-    // First we have the NS
+    // First we have the SOA
     ConstRRsetPtr rrset(iterator->getNextRRset());
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
 
-    // Then, the SOA
+    // Then, the NS
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::SOA(), rrset->getType());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // Only one RRType::A() RRset
     rrset = iterator->getNextRRset();
@@ -720,15 +720,15 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     // separate_rrs = true
     ZoneIteratorPtr iterator2(client_->getIterator(Name("example.org"), true));
 
-    // First we have the NS
-    rrset = iterator2->getNextRRset();
-    EXPECT_TRUE(rrset);
-    EXPECT_EQ(RRType::NS(), rrset->getType());
-
-    // Then, the SOA
+    // First we have the SOA
     rrset = iterator2->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // Then, the NS
+    rrset = iterator2->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::NS(), rrset->getType());
 
     // First RRType::A() RRset
     rrset = iterator2->getNextRRset();
@@ -803,12 +803,12 @@ TEST_F(MemoryClientTest, findZoneData) {
 
     const RdataSet* set = node->getData();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::NS(), set->type);
+    EXPECT_EQ(RRType::SOA(), set->type);
 
     /* Check NS */
     set = set->getNext();
     EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
-    EXPECT_EQ(RRType::SOA(), set->type);
+    EXPECT_EQ(RRType::NS(), set->type);
 
     set = set->getNext();
     EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
