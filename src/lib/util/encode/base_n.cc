@@ -236,7 +236,6 @@ public:
     bool operator==(const DecodeNormalizer& other) const {
         return (base_ == other.base_);
     }
-    bool allDecoded() const { return (base_ == base_end_); }
 private:
     const char base_zero_code_;
     string::const_iterator base_;
