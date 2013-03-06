@@ -657,7 +657,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
-    // assume the one or the other will always be choosen for sending data. Therefore
+    // assume the one or the other will always be chosen for sending data. Therefore
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
@@ -749,7 +749,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
-    // assume the one or the other will always be choosen for sending data. We should
+    // assume the one or the other will always be chosen for sending data. We should
     // skip checking source port of sent address.
 
     // try to receive data over the closed socket. Closed socket's descriptor is
@@ -967,7 +967,7 @@ size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
     tmp.flags(ios::hex);
     int i = 0;
     uint8_t octet = 0; // output octet
-    uint8_t byte;  // parsed charater from text representation
+    uint8_t byte;  // parsed character from text representation
     while (!tmp.eof()) {
 
         tmp >> byte; // hex value

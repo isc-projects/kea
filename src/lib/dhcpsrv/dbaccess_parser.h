@@ -41,7 +41,7 @@ public:
 /// strings.
 ///
 /// Only the "type" sub-element is mandatory: the remaining sub-elements 
-/// depend on the datbase chosen.
+/// depend on the database chosen.
 class DbAccessParser: public DhcpConfigParser {
 public:
     /// @brief Keyword and associated value
@@ -115,7 +115,7 @@ protected:
         return (values_);
     }
 
-    /// @brief Construct dbtabase access string
+    /// @brief Construct database access string
     ///
     /// Constructs the database access string from the stored parameters.
     ///

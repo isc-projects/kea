@@ -513,7 +513,7 @@ class ComponentTests(InitUtils, unittest.TestCase):
 
     def test_pid_not_running(self):
         """
-        Test that a componet that is not yet started doesn't have a PID.
+        Test that a component that is not yet started doesn't have a PID.
         But it won't fail if asked for and return None.
         """
         for component_type in [Component,

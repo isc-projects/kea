@@ -914,9 +914,9 @@ class NSECBASE(RR):
     nbitmap = 1                 # number of bitmaps
     block = 0
     maplen = None              # default bitmap length, auto-calculate
-    bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
+    bitmap = '040000000003'     # an arbitrarily chosen bitmap sample
     def dump(self, f):
-        # first, construct the bitmpa data
+        # first, construct the bitmap data
         block_list = []
         maplen_list = []
         bitmap_list = []

@@ -158,7 +158,7 @@ public:
     /// (The reason there is a need to know is because the call to open() passes
     /// in the state of the coroutine at the time the call is made.  On an
     /// asynchronous I/O, we need to set the state to point to the statement
-    /// after the call to open() _before_ we pass the corouine to the open()
+    /// after the call to open() _before_ we pass the coroutine to the open()
     /// call.  Unfortunately, the macros that set the state of the coroutine
     /// also yield control - which we don't want to do if the open is
     /// synchronous.  Hence we need to know before we make the call to open()

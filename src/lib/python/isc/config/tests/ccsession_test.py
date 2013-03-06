@@ -734,7 +734,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
 
-    def test_ignore_commant_remote_module(self):
+    def test_ignore_command_remote_module(self):
         """
         Test that commands for remote modules aren't handled.
         Remote module specified by the spec file name.
@@ -742,7 +742,7 @@ class TestModuleCCSession(unittest.TestCase):
         self._common_remote_module_test(
             self._internal_ignore_command_remote_module)
 
-    def test_ignore_commant_remote_module_by_name(self):
+    def test_ignore_command_remote_module_by_name(self):
         """
         Test that commands for remote modules aren't handled.
         Remote module specified by its name.

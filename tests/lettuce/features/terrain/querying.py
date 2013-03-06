@@ -68,7 +68,7 @@ class QueryResult(object):
         name: The domain name to query
         qtype: The RR type to query. Defaults to A if it is None.
         qclass: The RR class to query. Defaults to IN if it is None.
-        address: The IP adress to send the query to.
+        address: The IP address to send the query to.
         port: The port number to send the query to.
         additional_args: List of additional arguments (e.g. '+dnssec').
         All parameters must be either strings or have the correct string

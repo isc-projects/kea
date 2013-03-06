@@ -6,7 +6,7 @@
   - Stop a component
   - Force-stop a component
 - Mechanism to wait for child to start before continuing
-- Use .spec file to define comands
+- Use .spec file to define commands
 - Rename "c-channel" stuff to msgq for clarity
 - Reply to shutdown message?
 - Some sort of group creation so termination signals can be sent to

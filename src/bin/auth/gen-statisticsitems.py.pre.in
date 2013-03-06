@@ -289,7 +289,7 @@ def generate_cxx(itemsfile, ccfile, utfile, def_mtime):
         This method recursively builds two lists:
         - msg_counter_types consists of strings for all leaf items, each
           defines one enum element with a comment, e.g.
-          COUNTER_ITEM, ///< item's descriptin
+          COUNTER_ITEM, ///< item's description
         - item_names consists of tuples of three elements, depending on
           whether it's a leaf element (no child from it) or not:
           (leaf)   ( "item_name", NULL, COUNTER_ITEM )

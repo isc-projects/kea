@@ -44,7 +44,7 @@
 /// There are no intermediate plans to implement DHCPv4 failover
 /// (draft-ietf-dhc-failover-12.txt). Currently (Oct. 2012) the DHCPv6 failover
 /// is being defined in DHC WG in IETF (draft-ietf-dhcpv6-failover-requirements,
-/// draft-ietf-dhcpv6-dailover-design), but the work is not advanced enough
+/// draft-ietf-dhcpv6-failover-design), but the work is not advanced enough
 /// for implementation plans yet. v4 failover requires additional parameters
 /// to be kept with a lease. It is likely that v6 failover will require similar
 /// fields. Such implementation will require database schema extension.
@@ -477,7 +477,7 @@ public:
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
-    /// The assumtion here is that there will not be site or link-local
+    /// The assumption here is that there will not be site or link-local
     /// addresses used, so there is no way of having address duplication.
     ///
     /// @param addr address of the searched lease

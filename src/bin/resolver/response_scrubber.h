@@ -25,7 +25,7 @@
 /// unsigned data in a response is more of a problem. (Note that even data from
 /// signed zones may be not be signed, e.g. delegations are not signed.) In
 /// particular, how do we know that the server from which the response was
-/// received was authoritive for the data it returned?
+/// received was authoritative for the data it returned?
 ///
 /// The part of the code that checks for this is the "Data Scrubbing" module.
 /// Although it includes the checking of IP addresses and ports, it is called
@@ -219,7 +219,7 @@
 /// referral been to the com nameservers, it would be a valid response; the com
 /// zone could well be serving all the data for example.com.  Having said that,
 /// the A record for ns1.example.net would still be regarded as being out of
-/// bailiwick becase the nameserver is not authoritative for the .net zone.
+/// bailiwick because the nameserver is not authoritative for the .net zone.
 ///
 /// \subsection DataScrubbingEx4 Example 4: Inconsistent Answer Section
 /// Qu: www.example.com\n

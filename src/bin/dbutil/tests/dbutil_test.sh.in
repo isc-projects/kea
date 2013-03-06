@@ -132,7 +132,7 @@ check_no_backup() {
 # .schema command, with spaces removed and upper converted to lowercase.
 #
 # The database is copied before the schema is taken (and removed after)
-# as SQLite3 assummes a writeable database, which may not be the case if
+# as SQLite3 assumes a writeable database, which may not be the case if
 # getting the schema from a reference copy.
 #
 # @param $1 Database for which the schema is required

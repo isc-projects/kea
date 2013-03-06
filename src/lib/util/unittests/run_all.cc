@@ -31,7 +31,7 @@ run_all() {
 
     // The catching of exceptions generated in tests is controlled by the
     // B10TEST_CATCH_EXCEPTION environment variable.  Setting this to
-    // 1 enables the cacthing of exceptions; setting it to 0 disables it.
+    // 1 enables the catching of exceptions; setting it to 0 disables it.
     // Anything else causes a message to be printed to stderr and the default
     // taken.  (The default is to catch exceptions if compiling with clang
     // and false if not.)

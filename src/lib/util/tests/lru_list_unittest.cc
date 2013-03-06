@@ -311,7 +311,7 @@ TEST_F(LruListTest, Touch) {
     EXPECT_EQ(1, entry7_.use_count());
     EXPECT_EQ(3, lru.size());
 
-    // Now touch the entry agin to move it to the back of the list.
+    // Now touch the entry again to move it to the back of the list.
     // This checks that the iterator stored in the entry as a result of the
     // last touch operation is valid.
     lru.touch(entry1_);

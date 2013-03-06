@@ -406,7 +406,7 @@ class MsgQ:
             routing, data = self.read_packet(fd, sock)
         except (MsgQReceiveError, MsgQCloseOnReceive) as err:
             # If it's MsgQCloseOnReceive and that happens without reading
-            # any data, it basically means the remote clinet has closed the
+            # any data, it basically means the remote client has closed the
             # socket, so we log it as debug information.  Otherwise, it's
             # a somewhat unexpected event, so we consider it an "error".
             if isinstance(err, MsgQCloseOnReceive) and not err.partial_read:

@@ -104,7 +104,7 @@ public:
     private:
         /// \brief Default constructor.
         ///
-        /// Default constrcutor is private because we don't want client
+        /// Default constructor is private because we don't want client
         /// class to call it because we want client class to specify
         /// counter's name.
         CustomCounter() { };
@@ -494,7 +494,7 @@ public:
         /// \return maximum delay between packets.
         double getMaxDelay() const { return(max_delay_); }
 
-        /// \brief Return avarage packet delay.
+        /// \brief Return average packet delay.
         ///
         /// Method returns average packet delay. If no packets have been
         /// received for this exchange avg delay can't be calculated and
@@ -988,7 +988,7 @@ public:
         return(xchg_stats->getMaxDelay());
     }
 
-    /// \brief Return avarage packet delay.
+    /// \brief Return average packet delay.
     ///
     /// Method returns average packet delay for specified
     /// exchange type.

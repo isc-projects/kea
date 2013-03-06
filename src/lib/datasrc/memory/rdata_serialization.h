@@ -533,7 +533,7 @@ public:
         }
     }
 
-    /// \brief Rewind the iterator to the beginnig of data.
+    /// \brief Rewind the iterator to the beginning of data.
     ///
     /// The following next() and nextSig() will start iterating from the
     /// beginning again.

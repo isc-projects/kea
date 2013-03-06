@@ -97,7 +97,7 @@ bool
 FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock, int) {
     if (started_ && !nonblock) {
         // This would schedule another read for length, leading to
-        // corputed data
+        // corrupted data
         isc_throw(DoubleRead, "Second read scheduled from recvmsg");
     }
 
@@ -119,7 +119,7 @@ FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool nonblock,
 {
     if (started_ && !nonblock) {
         // This would schedule another read for length, leading to
-        // corputed data
+        // corrupted data
         isc_throw(DoubleRead, "Second read scheduled from recvmsg");
     }
 

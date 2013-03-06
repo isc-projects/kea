@@ -18,7 +18,7 @@ In order for this to work, it is important that all modules have a way of dynami
 Overview
 --------
 
-Central to the configuration part is the Configuraion Manager b10-cfgmgr. The configuration manager loads any existing configuration, receives configuration updates from user interfaces, and notifies modules about configuration updates.
+Central to the configuration part is the Configuration Manager b10-cfgmgr. The configuration manager loads any existing configuration, receives configuration updates from user interfaces, and notifies modules about configuration updates.
 
 UI  <---UIAPI---> Configuration Manager <---ModuleAPI---> Module
                                         <---ModuleAPI---> Module

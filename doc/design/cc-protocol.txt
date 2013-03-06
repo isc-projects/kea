@@ -261,8 +261,8 @@ Group Subscriptions (type "subscribe")
 --------------------------------------
 
 A subscription requires the "group", "instance", and a flag to
-indicate the subscription type ("sybtype").  If instance is "*" the
-instance name will be ignored when decising to forward a message to
+indicate the subscription type ("subtype").  If instance is "*" the
+instance name will be ignored when deciding to forward a message to
 this client or not.
 
 "subtype" is a DATA element, and contains "normal" for normal channel

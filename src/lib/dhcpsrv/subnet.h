@@ -208,7 +208,7 @@ public:
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
     /// Pair of iterators to represent the range of options having the
     /// same option type value. The first element in this pair represents
-    /// the begining of the range, the second element represents the end.
+    /// the beginning of the range, the second element represents the end.
     typedef std::pair<OptionContainerTypeIndex::const_iterator,
                       OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
     /// Type of the index #2 - option persistency flag.

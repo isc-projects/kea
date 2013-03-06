@@ -51,8 +51,8 @@
 ///   Before the server start to run
 ///   After we get the query and check whether it's valid
 ///   After we lookup the query
-///   After we compoisite the answer
-///   After user get the final result.
+///   After we compose the answer
+///   After user gets the final result.
 
 /// The standard about whether we stop the server successfully or not
 /// is based on the fact that if the server is still running, the io
@@ -83,7 +83,7 @@ const char* const server_port_str = "5553";
 const char* const query_message = "BIND10 is awesome";
 
 // \brief provide capacity to derived class the ability
-// to stop DNSServer at certern point
+// to stop DNSServer at certain point
 class ServerStopper {
     public:
         ServerStopper() : server_to_stop_(NULL) {}
@@ -148,7 +148,7 @@ class SimpleAnswer : public DNSAnswer, public ServerStopper {
 };
 
 // \brief simple client, send one string to server and wait for response
-//  in case, server stopped and client cann't get response, there is a timer wait
+//  in case, server stopped and client can't get response, there is a timer wait
 //  for specified seconds (the value is just a estimate since server process logic is quite
 //  simple, and all the intercommunication is local) then cancel the waiting.
 class SimpleClient : public ServerStopper {
