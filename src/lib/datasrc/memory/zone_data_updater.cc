@@ -270,8 +270,8 @@ ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
     ZoneNode* node;
     nsec3_data->insertName(mem_sgmt_, name, &node);
 
-    // Create a new RdataSet, merging any existing existing NSEC3 data
-    // for this name.
+    // Create a new RdataSet, merging any existing NSEC3 data for this
+    // name.
     RdataSet* old_rdataset = node->getData();
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, rrset, rrsig,
                                           old_rdataset);
