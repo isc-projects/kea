@@ -12,17 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdint.h>
-#include <cassert>
-#include <iterator>
-#include <string>
-#include <vector>
-
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/math/common_factor.hpp>
-
 #include <util/encode/base32hex_from_binary.h>
 #include <util/encode/binary_from_base32hex.h>
 #include <util/encode/base16_from_binary.h>
@@ -31,6 +20,18 @@
 #include <util/encode/base64.h>
 
 #include <exceptions/exceptions.h>
+
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/binary_from_base64.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+#include <boost/math/common_factor.hpp>
+
+#include <stdint.h>
+#include <stdexcept>
+#include <cassert>
+#include <iterator>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace boost::archive::iterators;
@@ -143,6 +144,11 @@ private:
     bool in_pad_;
 };
 
+// An internally caught exception to unify a few possible cases of the same
+// error.
+class IncompleteBaseInput : public std::exception {
+};
+
 // DecodeNormalizer is an input iterator intended to be used as a filter
 // between the encoded baseX stream and binary_from_baseXX.
 // A DecodeNormalizer object is configured with three string iterators
@@ -164,16 +170,20 @@ public:
     DecodeNormalizer(const char base_zero_code,
                      const string::const_iterator& base,
                      const string::const_iterator& base_beginpad,
-                     const string::const_iterator& base_end) :
+                     const string::const_iterator& base_end,
+                     size_t* char_count) :
         base_zero_code_(base_zero_code),
         base_(base), base_beginpad_(base_beginpad), base_end_(base_end),
-        in_pad_(false)
+        in_pad_(false), char_count_(char_count)
     {
         // Skip beginning spaces, if any.  We need do it here because
         // otherwise the first call to operator*() would be confused.
         skipSpaces();
     }
     DecodeNormalizer& operator++() {
+        if (base_ < base_end_) {
+            ++*char_count_;
+        }
         ++base_;
         skipSpaces();
         if (base_ == base_beginpad_) {
@@ -196,12 +206,18 @@ public:
     }
     const char& operator*() const {
         if (base_ == base_end_) {
-            // binary_from_baseX calls this operator when it needs more bits
+            // binary_from_baseX can call this operator when it needs more bits
             // even if the internal iterator (base_) has reached its end
             // (if that happens it means the input is an incomplete baseX
             // string and should be rejected).  So this is the only point
             // we can catch and reject this type of invalid input.
-            isc_throw(BadValue, "Unexpected end of input in BASE decoder");
+            //
+            // More recent versions of Boost fixed the behavior and the
+            // out-of-range call to this operator doesn't happen.  It's good,
+            // but in that case we need to catch incomplete baseX input in
+            // a different way.  It's done via char_count_ and after the
+            // completion of decoding.
+            throw IncompleteBaseInput(); // throw this now and convert it
         }
         if (*base_ == BASE_PADDING_CHAR) {
             // Padding can only happen at the end of the input string.  We can
@@ -220,12 +236,16 @@ public:
     bool operator==(const DecodeNormalizer& other) const {
         return (base_ == other.base_);
     }
+    bool allDecoded() const { return (base_ == base_end_); }
 private:
     const char base_zero_code_;
     string::const_iterator base_;
     const string::const_iterator base_beginpad_;
     const string::const_iterator base_end_;
     bool in_pad_;
+    // Store number of non-space decoded characters (incl. pad) here.  Define
+    // it as a pointer so we can carry it over to any copied objects.
+    size_t* char_count_;
 };
 
 // BitsPerChunk: number of bits to be converted using the baseN mapping table.
@@ -347,10 +367,24 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     const size_t padbytes = padbits / 8;
 
     try {
+        size_t char_count = 0;
         result.assign(Decoder(DecodeNormalizer(BaseZeroCode, input.begin(),
-                                               srit.base(), input.end())),
+                                               srit.base(), input.end(),
+                                               &char_count)),
                       Decoder(DecodeNormalizer(BaseZeroCode, input.end(),
-                                               input.end(), input.end())));
+                                               input.end(), input.end(),
+                                               NULL)));
+
+        // Number of bits of the conversion result including padding must be
+        // a multiple of 8; otherwise the decoder reaches the end of input
+        // with some incomplete bits of data, which is invalid.
+        if (((char_count * BitsPerChunk) & 7) != 0) {
+            throw IncompleteBaseInput(); // catch this immediately below
+        }
+    } catch (const IncompleteBaseInput&) {
+        // we unify error handling for incomplete input here.
+        isc_throw(BadValue, "Incomplete input for " << algorithm
+                  << ": " << input);
     } catch (const dataflow_exception& ex) {
         // convert any boost exceptions into our local one.
         isc_throw(BadValue, ex.what());
