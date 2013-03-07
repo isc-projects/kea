@@ -908,6 +908,9 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
             statements_[i] = NULL;
         }
     }
+
+    // There is no need to close the database in this destructor: it is
+    // closed in the destructor of the mysql_ member variable.
 }
 
 
