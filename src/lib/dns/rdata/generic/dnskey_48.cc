@@ -26,7 +26,6 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/master_lexer.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -55,32 +54,22 @@ struct DNSKEYImpl {
 DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
-    istringstream iss(dnskey_str);
-    unsigned int flags, protocol, algorithm;
-    stringbuf keydatabuf;
+    try {
+        std::istringstream ss(dnskey_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    iss >> flags >> protocol >> algorithm >> &keydatabuf;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid DNSKEY text");
-    }
-    if (flags > 0xffff) {
-        isc_throw(InvalidRdataText, "DNSKEY flags out of range");
-    }
-    if (protocol > 0xff) {
-        isc_throw(InvalidRdataText, "DNSKEY protocol out of range");
-    }
-    if (algorithm > 0xff) {
-        isc_throw(InvalidRdataText, "DNSKEY algorithm out of range");
-    }
+        constructFromLexer(lexer);
 
-    vector<uint8_t> keydata;
-    decodeBase64(keydatabuf.str(), keydata);
-
-    if (algorithm == 1 && keydata.size() < 3) {
-        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+             isc_throw(InvalidRdataText,
+                       "Extra input text for DNSKEY: " << dnskey_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct DNSKEY from '" << dnskey_str << "': "
+                  << ex.what());
     }
-
-    impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
 DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
@@ -100,8 +89,14 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
 }
 
 DNSKEY::DNSKEY(MasterLexer& lexer, const Name*,
-               MasterLoader::Options, MasterLoaderCallbacks&)
+               MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(NULL)
 {
+    constructFromLexer(lexer);
+}
+
+void
+DNSKEY::constructFromLexer(MasterLexer& lexer) {
     const uint32_t flags = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (flags > 0xffff) {
         isc_throw(InvalidRdataText,
