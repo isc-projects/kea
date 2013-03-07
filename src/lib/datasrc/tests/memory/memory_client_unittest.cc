@@ -74,6 +74,7 @@ const char* rrset_data[] = {
 const char* rrset_data_separated[] = {
     "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
     "68 3600 300 3600000 3600",
+    "example.org. 3600 IN NS ns1.example.org.",
     "a.example.org. 3600 IN A 192.168.0.1", // these two belong to the same
     "a.example.org. 3600 IN A 192.168.0.2", // RRset, but are separated.
     NULL
@@ -83,6 +84,7 @@ const char* rrset_data_separated[] = {
 const char* rrset_data_sigseparated[] = {
     "example.org. 3600 IN SOA ns1.example.org. bugs.x.w.example.org. "
     "68 3600 300 3600000 3600",
+    "example.org. 3600 IN NS ns1.example.org.",
     "a.example.org. 3600 IN A 192.168.0.1",
     "a.example.org. 3600 IN RRSIG A 5 3 3600 20150420235959 20051021000000 "
     "40430 example.org. FAKEFAKE",
@@ -261,13 +263,13 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::NS(), rrset->getType());
 
-    // RRType::MX() RRset
+    // RRType::A() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::MX(), rrset->getType());
     EXPECT_EQ(1, rrset->getRRsigDataCount()); // this RRset is signed
 
-    // RRType::A() RRset
+    // RRType::MX() RRset
     rrset = iterator->getNextRRset();
     EXPECT_TRUE(rrset);
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -279,19 +281,17 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // Iterating past the end should result in an exception
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 
-    // Loading the zone with an iterator separating RRs of the same RRset
-    // will fail because the resulting sequence doesn't meet assumptions of
-    // the (current) in-memory implementation.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               *MockIterator::makeIterator(
-                                   rrset_data_separated)),
-                 ZoneDataUpdater::AddError);
+    // Loading the zone with an iterator separating RRs of the same
+    // RRset should not fail. It is acceptable to load RRs of the same
+    // type again.
+    client_->load(Name("example.org"),
+                  *MockIterator::makeIterator(
+                      rrset_data_separated));
 
     // Similar to the previous case, but with separated RRSIGs.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               *MockIterator::makeIterator(
-                                   rrset_data_sigseparated)),
-                 ZoneDataUpdater::AddError);
+    client_->load(Name("example.org"),
+                  *MockIterator::makeIterator(
+                      rrset_data_sigseparated));
 
     // Emulating bogus iterator implementation that passes empty RRSIGs.
     EXPECT_THROW(client_->load(Name("example.org"),
@@ -439,15 +439,41 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 }
 
 TEST_F(MemoryClientTest, loadDuplicateType) {
-    // This should not result in any exceptions:
+    // This should not result in any exceptions (multiple records of the
+    // same name, type are present, one after another in sequence).
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-duplicate-type.zone");
 
-    // This should throw:
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-duplicate-type-bad.zone"),
-                 ZoneDataUpdater::AddError);
+    // This should not result in any exceptions (multiple records of the
+    // same name, type are present, but not one after another in
+    // sequence).
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR
+                  "/example.org-duplicate-type-bad.zone");
+
+    const ZoneData* zone_data =
+        client_->findZoneData(Name("example.org"));
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), zone_data);
+
+    /* Check ns1.example.org */
+    const ZoneTree& tree = zone_data->getZoneTree();
+    const ZoneNode* node;
+    ZoneTree::Result zresult(tree.find(Name("ns1.example.org"), &node));
+    EXPECT_EQ(ZoneTree::EXACTMATCH, zresult);
+
+    const RdataSet* set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::AAAA(), set->type);
+
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::A(), set->type);
+    // 192.168.0.1 and 192.168.0.2
+    EXPECT_EQ(2, set->getRdataCount());
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
+
     // Teardown checks for memory segment leaks
 }
 
