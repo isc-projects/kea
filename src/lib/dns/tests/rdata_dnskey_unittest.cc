@@ -74,14 +74,15 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
     // Key data too short for algorithm=1
     EXPECT_THROW(generic::DNSKEY("1 1 1 YQ=="),
                  InvalidRdataLength);
-}
 
-TEST_F(Rdata_DNSKEY_Test, DISABLED_badText) {
-    // Should this be allowed?  Probably not.  But the test currently fails.
+    // Missing algorithm
     EXPECT_THROW(generic::DNSKEY("257 3 5BEAAEFTd"),
                  InvalidRdataText);
+
     // How about this?  It's even more confusing for the parser because
-    // it could be ambiguous '51 EAAA' vs '5 1EAA..'
+    // it could be ambiguous '51 EAAA' vs '5 1EAA..'. But we first parse
+    // the other fields before we parse the public key, so we reject
+    // this.
     EXPECT_THROW(generic::DNSKEY("257 3 51EAAEFTd"),
                  InvalidRdataText);
 }
