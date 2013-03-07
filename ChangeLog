@@ -1,3 +1,13 @@
+585.	[func]		jinmei, muks
+	The zone data loader now accepts RRs in any order during load.
+	Before it used to reject adding non-consecutive RRsets. It
+	expected records for a single owner name and its type to be
+	grouped together. These restrictions are now removed.  It now also
+	suppresses any duplicate RRs in the zone file when loading them
+	into memory.
+	(Trac #2440, git 232307060189c47285121f696d4efb206f632432)
+	(Trac #2441, git 0860ae366d73314446d4886a093f4e86e94863d4)
+
 584.	[bug]		jinmei
 	Fixed build failure with Boost 1.53 (and probably higher) in the
 	internal utility library.  Note that with -Werror it may still
