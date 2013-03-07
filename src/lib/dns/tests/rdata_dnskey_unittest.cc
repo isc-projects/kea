@@ -70,6 +70,10 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
     EXPECT_THROW(generic::DNSKEY("257 3 500 BAAAAAAAAAAAD"),
                  InvalidRdataText);
     EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"), BadValue);
+
+    // Key data too short for algorithm=1
+    EXPECT_THROW(generic::DNSKEY("1 1 1 YQ=="),
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_DNSKEY_Test, DISABLED_badText) {
@@ -89,8 +93,22 @@ TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
                                      dnskey_txt)));
 
     // Exceptions cause NULL to be returned.
+
+    // Key data missing
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
                                              "257 3 5"));
+    // Bad flags
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                             "65536 3 5 ABCDABCD"));
+    // Bad protocol
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                             "1 256 1 ABCDABCD"));
+    // Bad algorithm
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                             "1 1 256 ABCDABCD"));
+    // Key data too short for algorithm=1
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
+                                             "1 1 1 YQ=="));
 }
 
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
