@@ -19,6 +19,7 @@
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/utility.hpp>
 #include <mysql/mysql.h>
 
 #include <time.h>
@@ -26,28 +27,50 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief MySQL Handle Holder
+///
 /// Small RAII object for safer initialization, will close the database
-/// connection upon destruction
-class MySqlHolder {
+/// connection upon destruction.  This means that if an exception is thrown
+/// during database initialization, resources allocated to the database are
+/// guaranteed to be freed.
+///
+/// It makes no sense to copy an object of this class.  After the copy, both
+/// objects would contain pointers to the same MySql context object.  The
+/// destruction of one would invalid the context in the remaining object.
+/// For this reason, the class is declared noncopyable.
+class MySqlHolder : public boost::noncopyable {
 public:
+
+    /// @brief Constructor
+    ///
+    /// Initialize MySql and store the associated context object.
+    ///
+    /// @throw DbOpenError Unable to initialize MySql handle.
     MySqlHolder() : mysql_(mysql_init(NULL)) {
         if (mysql_ == NULL) {
             isc_throw(DbOpenError, "unable to initialize MySQL");
         }
     }
 
+    /// @brief Destructor
+    ///
+    /// Frees up resources allocated by the initialization of MySql.
     ~MySqlHolder() {
-        if (mysql_) {
+        if (mysql_ != NULL) {
             mysql_close(mysql_);
         }
     }
 
+    /// @brief Conversion Operator
+    ///
+    /// Allows the MySqlHolder object to be passed as the context argument to
+    /// mysql_xxx functions.
     operator MYSQL*() const {
         return (mysql_);
     }
 
 private:
-    MYSQL* mysql_;
+    MYSQL* mysql_;      ///< Initialization context
 };
 
 // Define the current database schema values
