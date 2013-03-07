@@ -554,6 +554,22 @@ class TestSecureHTTPServer(unittest.TestCase):
                 self.assertEqual(1, len(self.server._user_infos))
                 self.assertTrue('otherroot' in self.server._user_infos)
 
+    def test_create_user_info_nonexistent_file(self):
+        # Even if there was data initially, if set to a nonexistent
+        # file it should result in no users
+        accounts_file = BUILD_FILE_PATH + 'new_file.csv'
+        self.assertFalse(os.path.exists(accounts_file))
+        fake_users_val = { 'notinfile': [] }
+        self.server._user_infos = fake_users_val
+        self.server._create_user_info(accounts_file)
+        self.assertEqual({}, self.server._user_infos)
+
+        # Should it now be created it should be read
+        with TmpTextFile(accounts_file, ['root,foo,bar']):
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('root' in self.server._user_infos)
+
     def test_check_file(self):
         # Just some file that we know exists
         file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
