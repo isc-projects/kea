@@ -109,8 +109,6 @@ OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end) const {
-    validate();
-
     try {
         switch(type_) {
         case OPT_EMPTY_TYPE:
@@ -200,8 +198,6 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 const std::vector<std::string>& values) const {
-    validate();
-
     OptionBuffer buf;
     if (!array_type_ && type_ != OPT_RECORD_TYPE) {
         if (values.empty()) {
