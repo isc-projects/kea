@@ -58,7 +58,7 @@ class DUID {
     /// returned it. In any case, this method should be used only sporadically.
     /// If there are frequent uses, we must implement some other method
     /// (e.g. storeSelf()) that will avoid data copying.
-    const std::vector<uint8_t> getDuid() const;
+    std::vector<uint8_t> getDuid() const;
 
     /// @brief Returns the DUID type
     DUIDType getType() const;
@@ -105,7 +105,7 @@ public:
     ClientId(const uint8_t* clientid, size_t len);
 
     /// @brief Returns reference to the client-id data
-    const std::vector<uint8_t> getClientId() const;
+    std::vector<uint8_t> getClientId() const;
 
     /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
     std::string toText() const;
