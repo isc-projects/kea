@@ -20,6 +20,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
+#include <dns/master_lexer.h>
 
 // BEGIN_HEADER_GUARD
 
@@ -47,6 +48,8 @@ public:
     uint8_t getAlgorithm() const;
 
 private:
+    void constructFromLexer(MasterLexer& lexer);
+
     DNSKEYImpl* impl_;
 };
 
