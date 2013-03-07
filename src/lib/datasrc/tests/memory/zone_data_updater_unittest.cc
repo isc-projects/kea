@@ -111,12 +111,10 @@ TEST_F(ZoneDataUpdaterTest, rrsigOnly) {
     EXPECT_EQ(0, rdset->getRdataCount());
     EXPECT_EQ(1, rdset->getSigRdataCount());
 
-    // The RRSIG covering A prohibits an actual A RRset from being added.
-    // This should be loosened in future version, but we check the current
-    // behavior.
-    EXPECT_THROW(updater_->add(
-                     textToRRset("www.example.org. 3600 IN A 192.0.2.1"),
-                     ConstRRsetPtr()), ZoneDataUpdater::AddError);
+    // The RRSIG covering A must not prohibit an actual A RRset from
+    // being added later.
+    updater_->add(textToRRset("www.example.org. 3600 IN A 192.0.2.1"),
+                  ConstRRsetPtr());
 
     // The special "wildcarding" node mark should be added for the RRSIG-only
     // case, too.
