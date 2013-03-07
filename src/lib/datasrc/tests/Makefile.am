@@ -63,7 +63,7 @@ run_unittests_SOURCES += zone_loader_unittest.cc
 # of libdatasrc)
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
 # Also, as of #2746, sqlite3-specific log messages are in a separate file
-run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_datasrc_messages.cc
+nodist_run_unittests_SOURCES = $(abs_top_builddir)/src/lib/datasrc/sqlite3_datasrc_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
