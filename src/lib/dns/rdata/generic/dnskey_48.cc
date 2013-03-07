@@ -179,7 +179,7 @@ DNSKEY::getTag() const {
     uint32_t ac = impl_->flags_;
     ac += (impl_->protocol_ << 8);
     ac += impl_->algorithm_;
-    
+
     size_t size = impl_->keydata_.size();
     for (size_t i = 0; i < size; i ++) {
         ac += (i & 1) ? impl_->keydata_[i] : (impl_->keydata_[i] << 8);
