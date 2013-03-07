@@ -234,8 +234,6 @@ WARNING: Python readline module isn't available, so the command line editor
             return (response, data)
         except (ssl.SSLError, socket.error) as err:
             self._print("Error while sending login information: ", err)
-            self._print("Please check the logs of b10-cmdctl, there may "
-                        "have been a problem accepting SSL connections.")
             pass
         raise FailToLogin()
 
