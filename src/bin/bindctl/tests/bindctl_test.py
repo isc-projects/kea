@@ -388,10 +388,6 @@ class TestConfigCommands(unittest.TestCase):
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
                 'Error while sending login information:  test error')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may have been a '
-                'problem accepting SSL connections.'
-            )
             self.__check_printed_messages(expected_printed_messages)
 
             def create_send_POST_raiseOnRead(exception):
@@ -411,10 +407,6 @@ class TestConfigCommands(unittest.TestCase):
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
                 'Error while sending login information:  read error')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may have been a '
-                'problem accepting SSL connections.'
-            )
             self.__check_printed_messages(expected_printed_messages)
 
             # connection reset
@@ -425,10 +417,6 @@ class TestConfigCommands(unittest.TestCase):
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
                 'Error while sending login information:  connection reset')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may have been a '
-                'problem accepting SSL connections.'
-            )
             self.__check_printed_messages(expected_printed_messages)
 
             # 'normal' SSL error
@@ -438,10 +426,6 @@ class TestConfigCommands(unittest.TestCase):
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
                 'Error while sending login information:  .*')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may have been a '
-                'problem accepting SSL connections.'
-            )
             self.__check_printed_messages(expected_printed_messages)
 
             # 'EOF' SSL error
@@ -452,10 +436,6 @@ class TestConfigCommands(unittest.TestCase):
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
                 'Error while sending login information: .*')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may have been a '
-                'problem accepting SSL connections.'
-            )
             self.__check_printed_messages(expected_printed_messages)
 
             # any other exception should be passed through
