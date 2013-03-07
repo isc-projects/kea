@@ -520,7 +520,8 @@ class TestSecureHTTPServer(unittest.TestCase):
 
         # Yes sleep sucks, but in this case we need it to check for
         # a changed mtime, not for some thread to do its work
-        time.sleep(1.1)
+        # (do we run these tests on systems with 1+ secs mtimes?)
+        time.sleep(0.1)
         # create the file again, this time read should not be a noop
         with TmpTextFile(accounts_file, ['otherroot,foo,bar']):
             self.server._create_user_info(accounts_file)
