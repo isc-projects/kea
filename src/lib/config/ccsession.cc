@@ -862,7 +862,7 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
                          const std::string &instance, const std::string &to,
                          const ConstElementPtr &params)
 {
-    const ConstElementPtr &command_el(createCommand(command, params));
+    ConstElementPtr command_el(createCommand(command, params));
     const int seq = groupSendMsg(command_el, group, instance, to, true);
     ConstElementPtr env, answer;
     LOG_DEBUG(config_logger, DBGLVL_TRACE_DETAIL, CONFIG_RPC_SEQ).arg(command).
