@@ -26,6 +26,7 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/master_lexer.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -94,6 +95,42 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     rdata_len -= 4;
     vector<uint8_t> keydata(rdata_len);
     buffer.readData(&keydata[0], rdata_len);
+
+    impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
+}
+
+DNSKEY::DNSKEY(MasterLexer& lexer, const Name*,
+               MasterLoader::Options, MasterLoaderCallbacks&)
+{
+    const uint32_t flags = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (flags > 0xffff) {
+        isc_throw(InvalidRdataText,
+                  "DNSKEY flags out of range: " << flags);
+    }
+
+    const uint32_t protocol =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (protocol > 0xff) {
+        isc_throw(InvalidRdataText,
+                  "DNSKEY protocol out of range: " << protocol);
+    }
+
+    const uint32_t algorithm =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (algorithm > 0xff) {
+        isc_throw(InvalidRdataText,
+                  "DNSKEY algorithm out of range: " << algorithm);
+    }
+
+    const std::string keydatastr =
+        lexer.getNextToken(MasterToken::STRING).getString();
+
+    vector<uint8_t> keydata;
+    decodeBase64(keydatastr, keydata);
+
+    if (algorithm == 1 && keydata.size() < 3) {
+        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
+    }
 
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
