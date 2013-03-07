@@ -12,9 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <log/logger_support.h>
 
 #include <gtest/gtest.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/mysql.h>
+#endif
 
 int
 main(int argc, char* argv[]) {
@@ -22,6 +27,10 @@ main(int argc, char* argv[]) {
     isc::log::initLogger();
 
     int result = RUN_ALL_TESTS();
+
+#ifdef HAVE_MYSQL
+    mysql_library_end();
+#endif
 
     return (result);
 }
