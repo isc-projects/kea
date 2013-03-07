@@ -162,10 +162,10 @@ public:
         EXPECT_TRUE(false == lease->fqdn_rev_);
         if (lease->client_id_ && !clientid_) {
             ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
-        }
+        } else
         if (!lease->client_id_ && clientid_) {
             ADD_FAILURE() << "Lease4 has no client-id, but it was expected to have one.";
-        }
+        } else
         if (lease->client_id_ && clientid_) {
             EXPECT_TRUE(*lease->client_id_ == *clientid_);
         }
