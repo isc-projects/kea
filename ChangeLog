@@ -1,3 +1,14 @@
+586.	[func]		marcin
+	libdhcp++: Removed unnecesary calls to the function which
+	validates option definitions used to create instances of options
+	being decoded in the received packets. Eliminating these calls
+	lowered the CPU utilization by the server by approximately 10%.
+	Also, added the composite search indexes on the container used to
+	store DHCP leases by Memfile backend. This resulted in the
+	significant performance rise when using this backend to store
+	leases.
+	(Trac #2701, git b96a30b26a045cfaa8ad579b0a8bf84f5ed4e73f)
+
 585.	[func]		jinmei, muks
 	The zone data loader now accepts RRs in any order during load.
 	Before it used to reject adding non-consecutive RRsets. It
