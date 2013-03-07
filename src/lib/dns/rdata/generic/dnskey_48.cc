@@ -61,9 +61,18 @@ DNSKEY::DNSKEY(const std::string& dnskey_str) :
 
         constructFromLexer(lexer);
 
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-             isc_throw(InvalidRdataText,
-                       "Extra input text for DNSKEY: " << dnskey_str);
+        // This elaborate check is done to allow trailing comments in
+        // the string.
+        for (MasterToken::Type token_type = lexer.getNextToken().getType();
+             token_type != MasterToken::END_OF_FILE;
+             token_type = lexer.getNextToken().getType())
+        {
+            if (token_type == MasterToken::END_OF_LINE) {
+                continue;
+            }
+
+            isc_throw(InvalidRdataText,
+                      "Extra input text for DNSKEY: " << dnskey_str);
         }
     } catch (const MasterLexer::LexerError& ex) {
         isc_throw(InvalidRdataText,
@@ -117,8 +126,20 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
                   "DNSKEY algorithm out of range: " << algorithm);
     }
 
-    const std::string keydatastr =
-        lexer.getNextToken(MasterToken::STRING).getString();
+    std::string keydatastr;
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if (token.getType() != MasterToken::STRING) {
+            break;
+        }
+        keydatastr.append(token.getString());
+    }
+
+    lexer.ungetToken();
+
+    if (keydatastr.size() == 0) {
+        isc_throw(InvalidRdataText, "Missing DNSKEY digest");
+    }
 
     vector<uint8_t> keydata;
     decodeBase64(keydatastr, keydata);
