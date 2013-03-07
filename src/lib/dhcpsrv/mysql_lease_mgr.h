@@ -26,6 +26,30 @@
 namespace isc {
 namespace dhcp {
 
+/// Small RAII object for safer initialization, will close the database
+/// connection upon destruction
+class MySqlHolder {
+public:
+    MySqlHolder() : mysql_(mysql_init(NULL)) {
+        if (mysql_ == NULL) {
+            isc_throw(DbOpenError, "unable to initialize MySQL");
+        }
+    }
+
+    ~MySqlHolder() {
+        if (mysql_) {
+            mysql_close(mysql_);
+        }
+    }
+
+    operator MYSQL*() const {
+        return (mysql_);
+    }
+
+private:
+    MYSQL* mysql_;
+};
+
 // Define the current database schema values
 
 const uint32_t CURRENT_VERSION_VERSION = 1;
@@ -379,7 +403,7 @@ public:
     /// @param cltt Reference to location where client last transmit time
     ///        is put.
     static
-    void convertFromDatabaseTime(const MYSQL_TIME& expire, 
+    void convertFromDatabaseTime(const MYSQL_TIME& expire,
                                  uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
@@ -616,7 +640,7 @@ private:
     /// declare them as "mutable".)
     boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
-    MYSQL*              mysql_;                 ///< MySQL context object
+    MySqlHolder mysql_;
     std::vector<MYSQL_STMT*> statements_;       ///< Prepared statements
     std::vector<std::string> text_statements_;  ///< Raw text of statements
 };

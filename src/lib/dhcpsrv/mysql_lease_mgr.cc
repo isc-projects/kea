@@ -193,32 +193,6 @@ TaggedStatement tagged_statements[] = {
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
 };
 
-// Small RAII object for safer initialization, will close the database
-// connection upon destruction, unless release() has been called.
-class MySQLHolder {
-public:
-    MySQLHolder(MYSQL* mysql) : mysql_(mysql) {}
-
-    ~MySQLHolder() {
-        if (mysql_) {
-            mysql_close(mysql_);
-        }
-    }
-
-    MYSQL* get_ptr() {
-        return (mysql_);
-    }
-
-    MYSQL* release() {
-        MYSQL* ptr = mysql_;
-        mysql_ = NULL;
-        return (ptr);
-    }
-
-private:
-    MYSQL* mysql_;
-};
-
 };  // Anonymous namespace
 
 
@@ -899,15 +873,7 @@ private:
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : LeaseMgr(parameters), mysql_(NULL) {
-
-    // Allocate context for MySQL
-    MySQLHolder mysql_holder(mysql_init(NULL));
-
-    mysql_ = mysql_holder.get_ptr();
-    if (mysql_ == NULL) {
-        isc_throw(DbOpenError, "unable to initialize MySQL");
-    }
+    : LeaseMgr(parameters) {
 
     // Open the database.
     openDatabase();
@@ -929,9 +895,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
     // program and the database.
     exchange4_.reset(new MySqlLease4Exchange());
     exchange6_.reset(new MySqlLease6Exchange());
-
-    // Let the real destructor take care of cleaning up now
-    mysql_holder.release();
 }
 
 
@@ -945,10 +908,6 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
             statements_[i] = NULL;
         }
     }
-
-    // Close the database
-    mysql_close(mysql_);
-    mysql_ = NULL;
 }
 
 
