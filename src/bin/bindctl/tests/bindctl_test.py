@@ -387,7 +387,7 @@ class TestConfigCommands(unittest.TestCase):
             self.tool.send_POST = send_POST_raiseImmediately
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Error while sending login information:  test error')
+                'Error while sending login information: test error')
             self.__check_printed_messages(expected_printed_messages)
 
             def create_send_POST_raiseOnRead(exception):
@@ -406,7 +406,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(socket.error("read error"))
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Error while sending login information:  read error')
+                'Error while sending login information: read error')
             self.__check_printed_messages(expected_printed_messages)
 
             # connection reset
@@ -416,7 +416,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(exc)
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Error while sending login information:  connection reset')
+                'Error while sending login information: connection reset')
             self.__check_printed_messages(expected_printed_messages)
 
             # 'normal' SSL error
@@ -425,7 +425,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(exc)
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Error while sending login information:  .*')
+                'Error while sending login information: .*')
             self.__check_printed_messages(expected_printed_messages)
 
             # 'EOF' SSL error

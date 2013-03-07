@@ -233,7 +233,7 @@ WARNING: Python readline module isn't available, so the command line editor
             # return here (will raise error after try block)
             return (response, data)
         except (ssl.SSLError, socket.error) as err:
-            self._print("Error while sending login information: ", err)
+            self._print('Error while sending login information:', err)
             pass
         raise FailToLogin()
 
