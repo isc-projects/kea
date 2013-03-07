@@ -19,3 +19,44 @@ d. Thread variations of the above
 
 All of these may be complicated by NUMA architectures (with
 faster/slower access to specific RAM).
+
+How does resolution look like:
+
+                               Receive the query. @# <------------------------\
+                                       |                                      |
+                                       |                                      |
+                                       v                                      |
+                                 Parse it, etc. $                             |
+                                       |                                      |
+                                       |                                      |
+                                       v                                      |
+                              Look into the cache. $#                         |
+       Cry  <---- No <---------- Is it there? -----------> Yes ---------\     |
+        |                            ^                                  |     |
+ Prepare upstream query $            |                                  |     |
+        |                            |                                  |     |
+        v                            |                                  |     |
+  Send an upstream query (#)         |                                  |     |
+        |                            |                                  |     |
+        |                            |                                  |     |
+        v                            |                                  |     |
+    Wait for answer @(#)             |                                  |     |
+        |                            |                                  |     |
+        v                            |                                  |     |
+       Parse $                       |                                  |     |
+        |                            |                                  |     |
+        v                            |                                  |     |
+   Is it enough? $ ----> No ---------/                                  |     |
+        |                                                               |     |
+       Yes                                                              |     |
+        |                                                               |     |
+        \-----------------------> Build answer $ <----------------------/     |
+                                        |                                     |
+                                        |                                     |
+                                        v                                     |
+                                   Send answer # -----------------------------/
+
+Legend:
+ * $ - CPU intensive
+ * @ - Waiting for external event
+ * # - Possible interaction with other tasks
