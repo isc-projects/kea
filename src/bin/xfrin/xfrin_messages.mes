@@ -278,4 +278,3 @@ message. The problem does not stop the zone from being used.
 % XFRIN_RECEIVED_GETSTATS_COMMAND received command to send statistics data: %1
 The xfrin daemon received a command on the command channel that
 statistics data should be sent to the stats daemon.
-
