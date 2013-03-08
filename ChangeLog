@@ -1,3 +1,12 @@
+587.	[bug]		jelte
+	When used from python, the dynamic datasource factory now
+	explicitely loads the logging messages dictionary, so that correct
+	logging messages does not depend on incidental earlier import
+	statements. Also, the sqlite3-specific log messages have been moved
+	from the general datasource library to the sqlite3 datasource
+	(which also explicitely loads its messages).
+	(Trac 2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
+
 586.	[func]		marcin
 	libdhcp++: Removed unnecesary calls to the function which
 	validates option definitions used to create instances of options
