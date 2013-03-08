@@ -18,6 +18,7 @@ libb10_util_la_SOURCES += interprocess_sync_file.h interprocess_sync_file.cc
 libb10_util_la_SOURCES += interprocess_sync_null.h interprocess_sync_null.cc
 libb10_util_la_SOURCES += memory_segment.h
 libb10_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
+libb10_util_la_SOURCES += memory_segment_mapped.h memory_segment_mapped.cc
 libb10_util_la_SOURCES += range_utilities.h
 libb10_util_la_SOURCES += hash/sha1.h hash/sha1.cc
 libb10_util_la_SOURCES += encode/base16_from_binary.h

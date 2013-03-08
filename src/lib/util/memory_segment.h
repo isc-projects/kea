@@ -15,10 +15,24 @@
 #ifndef MEMORY_SEGMENT_H
 #define MEMORY_SEGMENT_H
 
+#include <exceptions/exceptions.h>
+
 #include <stdlib.h>
 
 namespace isc {
 namespace util {
+
+class MemorySegmentOpenError : public Exception {
+public:
+    MemorySegmentOpenError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class MemorySegmentGrown : public Exception {
+public:
+    MemorySegmentGrown(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// \brief Memory Segment Class
 ///
