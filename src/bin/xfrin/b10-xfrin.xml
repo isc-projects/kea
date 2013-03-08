@@ -233,8 +233,8 @@ operation
             <varlistentry>
               <term><replaceable>zonename</replaceable></term>
               <listitem><simpara>
-                A actual zone name or special zone name <quote>_SERVER_</quote>
-                representing an entire server
+                An actual zone name or special zone name
+		<quote>_SERVER_</quote> representing the entire server
                 </simpara>
                 <variablelist>
 
@@ -319,9 +319,11 @@ operation
     </variablelist>
 
     <para>
-      In per-zone counters the special zone name <quote>_SERVER_</quote> exists.
-      It doesn't mean a specific zone. It represents an entire server and its
-      value means a total count of all zones.
+      In per-zone counters the special zone name <quote>_SERVER_</quote>
+      exists.
+      It doesn't mean a specific zone. It represents the entire server
+      and the counter value of this special zone is the total of the
+      same counter for all zones.
     </para>
 
   </refsect1>
