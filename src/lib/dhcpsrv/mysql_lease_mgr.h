@@ -59,6 +59,8 @@ public:
         if (mysql_ != NULL) {
             mysql_close(mysql_);
         }
+        // The library itself shouldn't be needed anymore
+        mysql_library_end();
     }
 
     /// @brief Conversion Operator

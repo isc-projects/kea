@@ -17,20 +17,12 @@
 
 #include <gtest/gtest.h>
 
-#ifdef HAVE_MYSQL
-#include <mysql/mysql.h>
-#endif
-
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::log::initLogger();
 
     int result = RUN_ALL_TESTS();
-
-#ifdef HAVE_MYSQL
-    mysql_library_end();
-#endif
 
     return (result);
 }
