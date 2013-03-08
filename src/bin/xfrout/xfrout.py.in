@@ -502,7 +502,7 @@ class XfroutSession():
             return self._reply_query_with_error_rcode(msg, sock_fd,
                                                       Rcode.FORMERR)
         elif not quota_ok:
-            logger.warn(XFROUT_QUERY_QUOTA_EXCCEEDED, self._request_typestr,
+            logger.warn(XFROUT_QUERY_QUOTA_EXCEEDED, self._request_typestr,
                         format_addrinfo(self._remote),
                         self._server._max_transfers_out)
             return self._reply_query_with_error_rcode(msg, sock_fd,
