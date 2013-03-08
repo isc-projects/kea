@@ -53,7 +53,7 @@ protected:
         // upon creation of a ModuleCCSession, the class
 
         // sends its specification to the config manager.
-        // it expects an ok answer back, so everytime we
+        // it expects an ok answer back, so every time we
         // create a ModuleCCSession, we must set an initial
         // ok answer.
         session.getMessages()->add(createAnswer());

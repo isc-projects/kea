@@ -2421,7 +2421,7 @@ class TestXfrin(unittest.TestCase):
         # there can be one more outstanding transfer.
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
-        # make sure the # xfrs would excceed the quota
+        # make sure the # xfrs would exceed the quota
         self.xfr.recorder.increment(Name(str(self.xfr._max_transfers_in) + TEST_ZONE_NAME_STR))
         # this one should fail
         self.assertEqual(self.xfr.command_handler("retransfer",

@@ -831,7 +831,7 @@ private:
 
 /// @brief Fetch and Release MySQL Results
 ///
-/// When a MySQL statement is exected, to fetch the results the function
+/// When a MySQL statement is expected, to fetch the results the function
 /// mysql_stmt_fetch() must be called.  As well as getting data, this
 /// allocates internal state.  Subsequent calls to mysql_stmt_fetch can be
 /// made, but when all the data is retrieved, mysql_stmt_free_result must be

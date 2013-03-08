@@ -101,7 +101,7 @@ protected:
     /**
      * \short Function returning a new zone.
      *
-     * Convenience funcion, just creating a new zone, to shorten the code.
+     * Convenience function, just creating a new zone, to shorten the code.
      */
     boost::shared_ptr<InheritedZoneEntry> getZone() {
         return (boost::shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(

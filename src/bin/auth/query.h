@@ -329,8 +329,8 @@ public:
 
     /// \short Bad zone data encountered.
     ///
-    /// This is thrown when process encounteres misconfigured zone in a way
-    /// it can't continue. This throws, not sets the Rcode, because such
+    /// This is thrown when a process encounters a misconfigured zone in a
+    /// way it can't continue. This throws, not sets the Rcode, because such
     /// misconfigured zone should not be present in the data source and
     /// should have been rejected sooner.
     struct BadZone : public isc::Exception {

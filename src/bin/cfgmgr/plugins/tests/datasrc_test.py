@@ -142,7 +142,7 @@ class DatasrcTest(unittest.TestCase):
 
     def test_no_such_file_mem(self):
         """
-        We also check the existance of master files. Not the actual content,
+        We also check the existence of master files. Not the actual content,
         though.
         """
         self.reject({"IN": [{

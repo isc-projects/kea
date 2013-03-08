@@ -48,7 +48,7 @@ class SignalHandler():
         signal.signal(signal.SIGALRM, self.orig_handler)
 
     def sig_handler(self, signal, frame):
-        """envokes unittest.TestCase.fail as a signal handler"""
+        """invokes unittest.TestCase.fail as a signal handler"""
         self.fail_handler("A deadlock might be detected")
 
 def send_command(command_name, module_name, params=None):

@@ -668,7 +668,7 @@ public:
             if (rcvd_packets_num_ == 0) {
                 std::cout << "Unavailable! No packets received." << std::endl;
             }
-            // We will be using boost::posix_time extensivelly here
+            // We will be using boost::posix_time extensively here
             using namespace boost::posix_time;
 
             // Iterate through all received packets.
