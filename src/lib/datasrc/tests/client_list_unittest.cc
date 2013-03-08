@@ -1003,7 +1003,7 @@ TYPED_TEST(ReloadTest, reloadNoSuchZone) {
 TYPED_TEST(ReloadTest, reloadZoneGone) {
     this->list_->configure(this->config_elem_, true);
     const Name name("example.org");
-    // We put in a cache for non-existant zone. This emulates being loaded
+    // We put in a cache for non-existent zone. This emulates being loaded
     // and then the zone disappearing. We prefill the cache, so we can check
     // it.
     this->prepareCache(0, name);

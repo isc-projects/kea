@@ -14,7 +14,7 @@
 
 /// \brief Test of asiolink utilties
 ///
-/// Tests the fuctionality of the asiolink utilities code by comparing them
+/// Tests the functionality of the asiolink utilities code by comparing them
 /// with the equivalent methods in isc::dns::[Input/Output]Buffer.
 
 #include <cstddef>

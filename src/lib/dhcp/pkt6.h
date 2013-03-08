@@ -365,7 +365,7 @@ protected:
     /// @brief interface index
     ///
     /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equvalent of name, but sometimes more useful, e.g.
+    /// it is functional equivalent of name, but sometimes more useful, e.g.
     /// when using crazy systems that allow spaces in interface names
     /// e.g. windows
     int ifindex_;
