@@ -1,7 +1,7 @@
 587.	[bug]*		jreed
 	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
 	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
-	(git ...)
+	(git be41be890f1349ae4c870a887f7acd99ba1eaac5)
 
 586.	[func]		marcin
 	libdhcp++: Removed unnecesary calls to the function which
