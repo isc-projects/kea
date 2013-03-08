@@ -1091,11 +1091,9 @@ class TestAXFR(TestXfrinConnection):
                           self.conn._counters.get, 'zones',
                           TEST_ZONE_NAME_STR,'soaoutv6')
         self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
-        self.assertEqual(1, self.conn._counters.get('zones',
-                                                    TEST_ZONE_NAME_STR,
+        self.assertEqual(1, self.conn._counters.get('zones', TEST_ZONE_NAME_STR,
                                                     'soaoutv4'))
-        self.assertEqual(0, self.conn._counters.get('zones',
-                                                    TEST_ZONE_NAME_STR,
+        self.assertEqual(0, self.conn._counters.get('zones', TEST_ZONE_NAME_STR,
                                                     'soaoutv6'))
 
     def test_soacheck_with_bad_response(self):
@@ -2596,8 +2594,7 @@ class TestXfrin(unittest.TestCase):
         ans = isc.config.parse_answer(
             self.xfr.command_handler("getstats", None))
         self.assertEqual(0, ans[0])
-        self.assertTrue(module_spec.validate_statistics(
-                False, ans[1]))
+        self.assertTrue(module_spec.validate_statistics(False, ans[1]))
 
     def _check_zones_config(self, config_given):
         if 'transfers_in' in config_given:
