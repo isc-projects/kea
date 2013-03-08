@@ -593,7 +593,7 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(finder.NXDOMAIN, result)
 
     def test_update_delete_abort(self):
-        # we don't do enything with this one, just making sure loading two
+        # we don't do anything with this one, just making sure loading two
         # datasources
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 

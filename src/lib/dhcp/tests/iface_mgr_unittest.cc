@@ -952,7 +952,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 /// @brief parses text representation of MAC address
 ///
 /// This function parses text representation of a MAC address and stores
-/// it in binary format. Text format is expecte to be separate with
+/// it in binary format. Text format is expected to be separate with
 /// semicolons, e.g. f4:6d:04:96:58:f2
 ///
 /// TODO: IfaceMgr::Iface::mac_ uses uint8_t* type, should be vector<uint8_t>

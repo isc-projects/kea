@@ -71,7 +71,7 @@ public:
     /// without losing access to derived class data.
     ///
     //@{
-    /// \brief The funtion operator
+    /// \brief The function operator
     virtual void operator()(asio::error_code ec = asio::error_code(),
                             size_t length = 0)
     {

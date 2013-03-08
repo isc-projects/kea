@@ -32,7 +32,7 @@ namespace asiodns {
 /// via its constructor.
 ///
 /// A DNS Answer provider function takes answer data that has been obtained
-/// from a DNS Lookup provider functon and readies it to be sent to the
+/// from a DNS Lookup provider function and readies it to be sent to the
 /// client.  After it has run, the OutputBuffer object passed to it should
 /// contain the answer to the query rendered into wire format.
 class DNSAnswer {

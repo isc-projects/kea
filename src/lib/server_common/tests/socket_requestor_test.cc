@@ -243,7 +243,7 @@ TEST_F(SocketRequestorTest, testBadRequestAnswers) {
     const std::string max_len(sizeof(sock_un.sun_path) - 1, 'x');
     addAnswer("foo", max_len);
     // The failure should NOT contain 'too long'
-    // (explicitly checking for existance of nonexistence of 'too long',
+    // (explicitly checking for existence of nonexistence of 'too long',
     // as opposed to the actual error, since 'too long' is a value we set).
     try {
         doRequest();

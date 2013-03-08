@@ -174,7 +174,7 @@ TEST_F(Option4AddrLstTest, assembly1) {
         BadValue
     );
     if (opt) {
-        // test failed. Execption was not thrown, but option was created instead.
+        // test failed. Exception was not thrown, but option was created instead.
         delete opt;
     }
 }
@@ -218,7 +218,7 @@ TEST_F(Option4AddrLstTest, assembly4) {
         BadValue
     );
     if (opt) {
-        // test failed. Execption was not thrown, but option was created instead.
+        // test failed. Exception was not thrown, but option was created instead.
         delete opt;
     }
 }

@@ -2566,7 +2566,7 @@ TEST_P(DatabaseClientTest, wildcard) {
     doFindTest(*finder, isc::dns::Name("a.*.wild.example.org"),
                qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
                expected_rdatas_, expected_sig_rdatas_);
-    // These should be canceled, since it is below a domain which exitsts
+    // These should be canceled, since it is below a domain which exists
     doFindTest(*finder, isc::dns::Name("nothing.here.wild.example.org"),
                qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
                expected_rdatas_, expected_sig_rdatas_);

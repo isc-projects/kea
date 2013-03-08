@@ -292,7 +292,7 @@ protected:
      * \param zone_finder Check different InMemoryZoneFinder object than
      *     zone_finder_ (if NULL, uses zone_finder_)
      * \param check_wild_answer Checks that the answer has the same RRs, type
-     *     class and TTL as the eqxpected answer and that the name corresponds
+     *     class and TTL as the expected answer and that the name corresponds
      *     to the one searched. It is meant for checking answers for wildcard
      *     queries.
      */

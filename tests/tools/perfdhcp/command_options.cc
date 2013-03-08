@@ -548,7 +548,7 @@ CommandOptions::decodeDuid(const std::string& base) {
         } catch (isc::InvalidParameter&) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided,"
-                      " exepected hex digits");
+                      " expected hex digits");
         }
         duid_template.push_back(static_cast<uint8_t>(ui));
     }
