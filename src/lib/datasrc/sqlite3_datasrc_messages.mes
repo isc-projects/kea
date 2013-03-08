@@ -1,0 +1,142 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::datasrc
+
+# \brief Messages for the SQLITE3 data source backend
+
+% DATASRC_SQLITE_CLOSE closing SQLite database
+Debug information. The SQLite data source is closing the database file.
+
+% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
+
+% DATASRC_SQLITE_CONNCLOSE Closing sqlite database
+The database file is no longer needed and is being closed.
+
+% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
+The database file is being opened so it can start providing data.
+
+% DATASRC_SQLITE_CREATE SQLite data source created
+Debug information. An instance of SQLite data source is being created.
+
+% DATASRC_SQLITE_DESTROY SQLite data source destroyed
+Debug information. An instance of SQLite data source is being destroyed.
+
+% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
+The object around a database connection is being destroyed.
+
+% DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
+Debug information. The SQLite data source is trying to identify which zone
+should hold this domain.
+
+% DATASRC_SQLITE_ENCLOSURE_NOT_FOUND no zone contains '%1'
+Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
+no such zone in our data.
+
+% DATASRC_SQLITE_FIND looking for RRset '%1/%2'
+Debug information. The SQLite data source is looking up a resource record
+set.
+
+% DATASRC_SQLITE_FINDADDRS looking for A/AAAA addresses for '%1'
+Debug information. The data source is looking up the addresses for given
+domain name.
+
+% DATASRC_SQLITE_FINDADDRS_BAD_CLASS class mismatch looking for addresses ('%1' and '%2')
+The SQLite data source was looking up A/AAAA addresses, but the data source
+contains different class than the query was for.
+
+% DATASRC_SQLITE_FINDEXACT looking for exact RRset '%1/%2'
+Debug information. The SQLite data source is looking up an exact resource
+record.
+
+% DATASRC_SQLITE_FINDEXACT_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
+The SQLite data source was looking up an exact RRset, but the data source
+contains different class than the query was for.
+
+% DATASRC_SQLITE_FINDREC looking for record '%1/%2'
+Debug information. The SQLite data source is looking up records of given name
+and type in the database.
+
+% DATASRC_SQLITE_FINDREF looking for referral at '%1'
+Debug information. The SQLite data source is identifying if this domain is
+a referral and where it goes.
+
+% DATASRC_SQLITE_FINDREF_BAD_CLASS class mismatch looking for referral ('%1' and '%2')
+The SQLite data source was trying to identify if there's a referral. But
+it contains different class than the query was for.
+
+% DATASRC_SQLITE_FIND_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
+The SQLite data source was looking up an RRset, but the data source contains
+different class than the query was for.
+
+% DATASRC_SQLITE_FIND_NSEC3 looking for NSEC3 in zone '%1' for hash '%2'
+Debug information. We're trying to look up a NSEC3 record in the SQLite data
+source.
+
+% DATASRC_SQLITE_FIND_NSEC3_NO_ZONE no such zone '%1'
+The SQLite data source was asked to provide a NSEC3 record for given zone.
+But it doesn't contain that zone.
+
+% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+
+The database should be updated using the means described in the BIND
+10 documentation.
+
+% DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
+A wrapper object to hold database connection is being initialized.
+
+% DATASRC_SQLITE_OPEN opening SQLite database '%1'
+Debug information. The SQLite data source is loading an SQLite database in
+the provided file.
+
+% DATASRC_SQLITE_PREVIOUS looking for name previous to '%1'
+This is a debug message.  The name given was not found, so the program
+is searching for the next name higher up the hierarchy (e.g. if
+www.example.com were queried for and not found, the software searches
+for the "previous" name, example.com).
+
+% DATASRC_SQLITE_PREVIOUS_NO_ZONE no zone containing '%1'
+The name given was not found, so the program is searching for the next
+name higher up the hierarchy (e.g. if www.example.com were queried
+for and not found, the software searches for the "previous" name,
+example.com). However, this name is not contained in any zone in the
+data source. This is an error since it indicates a problem in the earlier
+processing of the query.
+
+% DATASRC_SQLITE_SETUP setting up new SQLite3 database in '%1'
+The database for SQLite data source was found empty. It is assumed this is the
+first run and it is being initialized with current schema.  It'll still contain
+no data, but it will be ready for use. If this is indeed the first run of
+BIND 10, it is to be expected and completely harmless. If you just configured
+a data source to point to an existing file and you see this, you may have
+misspelled the file name.
+
+% DATASRC_SQLITE_SETUP_OLD_API setting up new SQLite database
+The database for SQLite data source was found empty. It is assumed this is the
+first run and it is being initialized with current schema.  It'll still contain
+no data, but it will be ready for use. This is similar to DATASRC_SQLITE_SETUP
+message, but it is logged from the old API. You should never see it, since the
+API is deprecated.

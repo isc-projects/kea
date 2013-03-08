@@ -23,6 +23,7 @@
 #include <dns/name.h>
 
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/sqlite3_datasrc_messages.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
