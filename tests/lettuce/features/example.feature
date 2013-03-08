@@ -161,11 +161,13 @@ Feature: Example feature
         A query for www.example.org should have rcode NOERROR
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/empty_db.sqlite3"}
-        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN
+        # The 'not missing placeholder' check is for #2743
+        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN not Missing placeholder
         A query for www.example.org should have rcode REFUSED
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/example.org.sqlite3"}
-        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN
+        # The 'not missing placeholder' check is for #2743
+        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN not Missing placeholder
         A query for www.example.org should have rcode NOERROR
 
     Scenario: two bind10 instances
