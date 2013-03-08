@@ -122,7 +122,7 @@
           "item_optional": false,
           "item_default": {},
           "item_title": "Zone name",
-          "item_description": "A actual zone name or special zone name _SERVER_ representing an entire server",
+          "item_description": "An actual zone name or special zone name _SERVER_ representing the entire server",
           "map_item_spec": [
             {
               "item_name": "soaoutv4",
