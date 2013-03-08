@@ -289,7 +289,7 @@ public:
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
- 
+
         // Set the column names (for error messages)
         columns_[0] = "address";
         columns_[1] = "hwaddr";
@@ -536,7 +536,7 @@ public:
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
- 
+
         // Set the column names (for error messages)
         columns_[0] = "address";
         columns_[1] = "duid";
@@ -809,7 +809,7 @@ private:
     // schema.
     // Note: arrays are declared fixed length for speed of creation
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character 
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
@@ -870,17 +870,10 @@ private:
     MYSQL_STMT*     statement_;     ///< Statement for which results are freed
 };
 
-
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters) 
-    : LeaseMgr(parameters), mysql_(NULL) {
-
-    // Allocate context for MySQL - it is destroyed in the destructor.
-    mysql_ = mysql_init(NULL);
-    if (mysql_ == NULL) {
-        isc_throw(DbOpenError, "unable to initialize MySQL");
-    }
+MySqlLeaseMgr::MySqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
+    : LeaseMgr(parameters) {
 
     // Open the database.
     openDatabase();
@@ -916,9 +909,8 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
         }
     }
 
-    // Close the database
-    mysql_close(mysql_);
-    mysql_ = NULL;
+    // There is no need to close the database in this destructor: it is
+    // closed in the destructor of the mysql_ member variable.
 }
 
 
@@ -970,7 +962,7 @@ MySqlLeaseMgr::convertFromDatabaseTime(const MYSQL_TIME& expire,
     expire_tm.tm_hour = expire.hour;
     expire_tm.tm_min = expire.minute;
     expire_tm.tm_sec = expire.second;
-    expire_tm.tm_isdst = -1;    // Let the system work out about DST 
+    expire_tm.tm_isdst = -1;    // Let the system work out about DST
 
     // Convert to local time
     cltt = mktime(&expire_tm) - valid_lifetime;
@@ -1022,7 +1014,7 @@ MySqlLeaseMgr::openDatabase() {
     }
 
     // Set options for the connection:
-    // 
+    //
     // Automatic reconnection: after a period of inactivity, the client will
     // disconnect from the database.  This option causes it to automatically
     // reconnect when another operation is about to be done.
@@ -1088,7 +1080,7 @@ MySqlLeaseMgr::prepareStatements() {
     // Allocate space for all statements
     statements_.clear();
     statements_.resize(NUM_STATEMENTS, NULL);
-    
+
     text_statements_.clear();
     text_statements_.resize(NUM_STATEMENTS, std::string(""));
 
