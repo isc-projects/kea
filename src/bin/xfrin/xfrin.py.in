@@ -1032,10 +1032,12 @@ class XfrinConnection(asyncore.dispatcher):
             self._diff = None
             if ret == XFRIN_OK:
                 # count successful xfer requests
-                self._counters.inc('zones', self._zone_name.to_text(), 'xfrsuccess')
+                self._counters.inc('zones', self._zone_name.to_text(),
+                                   'xfrsuccess')
             elif ret == XFRIN_FAIL:
                 # count failed xfer requests
-                self._counters.inc('zones', self._zone_name.to_text(), 'xfrfail')
+                self._counters.inc('zones', self._zone_name.to_text(),
+                                   'xfrfail')
 
         return ret
 
@@ -1588,9 +1590,8 @@ class Xfrin:
                 # b10-stats daemon is periodically asking to the
                 # b10-xfrin daemon.
                 answer = create_answer(0, self._counters.get_statistics())
-                logger.debug(DBG_XFRIN_TRACE, \
-                                 XFRIN_RECEIVED_GETSTATS_COMMAND, \
-                                 str(answer))
+                logger.debug(DBG_XFRIN_TRACE, XFRIN_RECEIVED_GETSTATS_COMMAND,
+                             str(answer))
 
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
