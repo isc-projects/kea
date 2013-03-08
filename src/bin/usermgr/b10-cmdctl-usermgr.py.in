@@ -19,6 +19,7 @@
 This tool implements user management for b10-cmdctl. It is used to
 add and remove users from the accounts file.
 '''
+import sys; sys.path.append ('@@PYTHONPATH@@')
 from bind10_config import SYSCONFPATH
 from collections import OrderedDict
 import random
@@ -27,7 +28,6 @@ import csv
 import getpass
 from optparse import OptionParser, OptionValueError
 import os
-import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc.util.process
 
 isc.util.process.rename()
