@@ -19,6 +19,10 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <cstdlib>
+#include <limits>
+#include <stdexcept>
+
 using namespace isc::util;
 using boost::scoped_ptr;
 
@@ -111,7 +115,7 @@ TEST_F(MemorySegmentMappedTest, allocate) {
     EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE + 1),
                  MemorySegmentGrown);
     // The size should have been doubled.
-    EXPECT_EQ(DEFAULT_INITIAL_SIZE * 2,segment_->getSize());
+    EXPECT_EQ(DEFAULT_INITIAL_SIZE * 2, segment_->getSize());
     // In this case it should now succeed.
     void* ptr = segment_->allocate(DEFAULT_INITIAL_SIZE + 1);
     EXPECT_NE(static_cast<void*>(0), ptr);
@@ -121,8 +125,30 @@ TEST_F(MemorySegmentMappedTest, allocate) {
     // Same set of checks, but for a larger size.
     EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE * 10),
                  MemorySegmentGrown);
+    // the segment should have grown to the minimum size that could allocate
+    // the given size of memory.
+    EXPECT_EQ(DEFAULT_INITIAL_SIZE * 16, segment_->getSize());
+    // And allocate() should now succeed.
     ptr = segment_->allocate(DEFAULT_INITIAL_SIZE * 10);
     EXPECT_NE(static_cast<void*>(0), ptr);
+
+    // (we'll left the regions created in the file there; the entire file
+    // will be removed at the end of the test)
+}
+
+TEST_F(MemorySegmentMappedTest, badAllocate) {
+    // Make the mapped file non-writable; managed_mapped_file::grow() will
+    // fail, resulting in std::bad_alloc
+    const std::string chmod_cmd = "chmod 444 " + std::string(mapped_file);
+    std::system(chmod_cmd.c_str());
+    EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE * 2), std::bad_alloc);
+}
+
+// XXX: this test can cause too strong side effect (creating a very large
+// file), so we disable it by default
+TEST_F(MemorySegmentMappedTest, DISABLED_allocateHuge) {
+    EXPECT_THROW(segment_->allocate(std::numeric_limits<size_t>::max()),
+                 std::bad_alloc);
 }
 
 TEST_F(MemorySegmentMappedTest, DISABLED_basics) {
@@ -157,14 +183,6 @@ TEST_F(MemorySegmentMappedTest, DISABLED_basics) {
     EXPECT_TRUE(segment->allMemoryDeallocated());
 #endif
 }
-
-/*
-TEST(MemorySegmentLocal, TestTooMuchMemory) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
-
-    EXPECT_THROW(segment->allocate(ULONG_MAX), bad_alloc);
-}
-*/
 
 /*
 TEST(MemorySegmentLocal, TestBadDeallocate) {
