@@ -17,6 +17,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <boost/interprocess/offset_ptr.hpp>
 
 #include <cassert>
 #include <string>
@@ -25,6 +26,8 @@
 using boost::interprocess::managed_mapped_file;
 using boost::interprocess::open_or_create;
 using boost::interprocess::open_only;
+using boost::interprocess::open_read_only;
+using boost::interprocess::offset_ptr;
 
 namespace isc {
 namespace util {
@@ -36,9 +39,11 @@ struct MemorySegmentMapped::Impl {
                                            initial_size))
     {}
 
-    Impl(const std::string& filename) :
+    Impl(const std::string& filename, bool read_only) :
         filename_(filename),
-        base_sgmt_(new managed_mapped_file(open_only, filename.c_str()))
+        base_sgmt_(read_only ?
+                   new managed_mapped_file(open_read_only, filename.c_str()) :
+                   new managed_mapped_file(open_only, filename.c_str()))
     {}
 
     // mapped file; remember it in case we need to grow it.
@@ -52,7 +57,7 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
     impl_(0)
 {
     try {
-        impl_ = new Impl(filename);
+        impl_ = new Impl(filename, true);
     } catch (const boost::interprocess::interprocess_exception& ex) {
         isc_throw(MemorySegmentOpenError,
                   "failed to open mapped memory segment for " << filename
@@ -68,7 +73,7 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
         if (create) {
             impl_ = new Impl(filename, initial_size);
         } else {
-            impl_ = new Impl(filename);
+            impl_ = new Impl(filename, false);
         }
     } catch (const boost::interprocess::interprocess_exception& ex) {
         isc_throw(MemorySegmentOpenError,
@@ -132,6 +137,31 @@ MemorySegmentMapped::deallocate(void* ptr, size_t /*size*/) {
 bool
 MemorySegmentMapped::allMemoryDeallocated() const {
     return (impl_->base_sgmt_->all_memory_deallocated());
+}
+
+void*
+MemorySegmentMapped::getNamedAddress(const char* name) {
+    offset_ptr<void>* storage =
+        impl_->base_sgmt_->find<offset_ptr<void> >(name).first;
+    if (storage) {
+        return (storage->get());
+    }
+    return (0);
+}
+
+void
+MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
+    if (addr && !impl_->base_sgmt_->belongs_to_segment(addr)) {
+        isc_throw(MemorySegmentError, "out of segment address: " << addr);
+    }
+    offset_ptr<void>* storage =
+        impl_->base_sgmt_->find_or_construct<offset_ptr<void> >(name)();
+    *storage = addr;
+}
+
+bool
+MemorySegmentMapped::clearNamedAddress(const char* name) {
+    return (impl_->base_sgmt_->destroy<offset_ptr<void> >(name));
 }
 
 size_t

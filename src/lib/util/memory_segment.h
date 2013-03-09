@@ -34,6 +34,12 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+class MemorySegmentError : public Exception {
+public:
+    MemorySegmentError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// \brief Memory Segment Class
 ///
 /// This class specifies an interface for allocating memory
@@ -75,6 +81,19 @@ public:
     /// \return Returns <code>true</code> if all allocated memory was
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const = 0;
+
+    virtual void* getNamedAddress(const char* name) = 0;
+
+    /// \brief TBD
+    ///
+    /// \c addr must be 0 (NULL) or an address that belongs to this segment.
+    /// The latter case means it must be the return value of a previous call
+    /// to \c allocate().  The actual implementation is encouraged to detect
+    /// violation of this restriction and signal it with an exception, but
+    /// it's not an API requirement.  It's generally the caller's
+    /// responsibility to meet the restriction.
+    virtual void setNamedAddress(const char* name, void* addr) = 0;
+    virtual bool clearNamedAddress(const char* name) = 0;
 };
 
 } // namespace util
