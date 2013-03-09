@@ -256,19 +256,10 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
         }, "");
 }
 
-/*
-TEST(MemorySegmentLocal, TestNullDeallocate) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
-
-    // By default, nothing is allocated.
-    EXPECT_TRUE(segment->allMemoryDeallocated());
-
+TEST_F(MemorySegmentMappedTest, nullDeallocate) {
     // NULL deallocation is a no-op.
-    EXPECT_NO_THROW(segment->deallocate(NULL, 1024));
-
-    // This should still return true.
-    EXPECT_TRUE(segment->allMemoryDeallocated());
+    EXPECT_NO_THROW(segment_->deallocate(0, 1024));
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
-*/
 
 }
