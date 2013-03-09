@@ -83,14 +83,19 @@ MemorySegmentMapped::~MemorySegmentMapped() {
 
 void*
 MemorySegmentMapped::allocate(size_t size) {
-    void* ptr = impl_->base_sgmt_->allocate(size, std::nothrow);
-    if (ptr) {
-        return (ptr);
+    // We explicitly check the free memory size; it appears
+    // managed_mapped_file::allocate() could incorrectly return a seemingly
+    // valid pointer for some very large requested size.
+    if (impl_->base_sgmt_->get_free_memory() >= size) {
+        void* ptr = impl_->base_sgmt_->allocate(size, std::nothrow);
+        if (ptr) {
+            return (ptr);
+        }
     }
 
     // Grow the mapped segment doubling the size until we have sufficient
     // free memory in the revised segment for the requested size.
-    while (impl_->base_sgmt_->get_free_memory() < size) {
+    do {
         // We first need to unmap it before calling grow().
         const size_t prev_size = impl_->base_sgmt_->get_size();
         impl_->base_sgmt_.reset();
@@ -98,12 +103,22 @@ MemorySegmentMapped::allocate(size_t size) {
         const size_t new_size = prev_size * 2;
         assert(new_size != 0); // assume grow fails before size overflow
 
-        // TBD error handling
-        managed_mapped_file::grow(impl_->filename_.c_str(),
-                                  new_size - prev_size);
-        impl_->base_sgmt_.reset(
-            new managed_mapped_file(open_only, impl_->filename_.c_str()));
-    }
+        if (!managed_mapped_file::grow(impl_->filename_.c_str(),
+                                       new_size - prev_size))
+        {
+            throw std::bad_alloc();
+        }
+
+        try {
+            // Remap the grown file; this should succeed, but it's not 100%
+            // guaranteed.  If it fails we treat it as if we fail to create
+            // the new segment.
+            impl_->base_sgmt_.reset(
+                new managed_mapped_file(open_only, impl_->filename_.c_str()));
+        } catch (const boost::interprocess::interprocess_exception& ex) {
+            throw std::bad_alloc();
+        }
+    } while (impl_->base_sgmt_->get_free_memory() < size);
     isc_throw(MemorySegmentGrown, "mapped memory segment grown, size: "
               << impl_->base_sgmt_->get_size() << ", free size: "
               << impl_->base_sgmt_->get_free_memory());
