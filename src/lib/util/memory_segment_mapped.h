@@ -45,6 +45,19 @@ public:
     virtual void* allocate(size_t size);
 
     /// \brief Deallocate/release a segment of memory.
+    ///
+    /// This implementation does not check the validity of \c size, because
+    /// if this segment object was constructed for an existing file to map,
+    /// the underlying segment may already contain allocated regions, so
+    /// this object cannot reliably detect whether it's safe to deallocate
+    /// the given size of memory from the underlying segment.
+    ///
+    /// Parameter \c ptr must point to an address that was returned by a
+    /// prior call to \c allocate() of this segment object, and there should
+    /// not be a \c MemorySegmentGrown exception thrown from \c allocate()
+    /// since then; if it was thrown the corresponding address must have been
+    /// adjusted some way; e.g., by re-fetching the latest mapped address
+    /// via \c getNamedAddress().
     virtual void deallocate(void* ptr, size_t size);
 
     virtual bool allMemoryDeallocated() const;

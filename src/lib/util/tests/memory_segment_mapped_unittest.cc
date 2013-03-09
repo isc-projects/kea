@@ -34,19 +34,20 @@ const size_t DEFAULT_INITIAL_SIZE = 32 * 1024; // intentionally hardcoded
 class MemorySegmentMappedTest : public ::testing::Test {
 protected:
     MemorySegmentMappedTest() {
-        // Make sure the mapped file doesn't exist; actually it shouldn't
-        // exist in normal cases so remove() should normally fail (returning
-        // false), but we don't care.
-        boost::interprocess::file_mapping::remove(mapped_file);
-
-        // Create a new segment with a new file.  It also confirms the
-        // behavior of this mode of constructor.
-        segment_.reset(new MemorySegmentMapped(mapped_file, true));
+        resetSegment();
     }
 
     ~MemorySegmentMappedTest() {
         segment_.reset();
         boost::interprocess::file_mapping::remove(mapped_file);
+    }
+
+    // For initialization and for tests after the segment possibly becomes
+    // broken.
+    void resetSegment() {
+        segment_.reset();
+        boost::interprocess::file_mapping::remove(mapped_file);
+        segment_.reset(new MemorySegmentMapped(mapped_file, true));
     }
 
     scoped_ptr<MemorySegmentMapped> segment_;
@@ -149,6 +150,32 @@ TEST_F(MemorySegmentMappedTest, badAllocate) {
 TEST_F(MemorySegmentMappedTest, DISABLED_allocateHuge) {
     EXPECT_THROW(segment_->allocate(std::numeric_limits<size_t>::max()),
                  std::bad_alloc);
+}
+
+TEST_F(MemorySegmentMappedTest, badDeallocate) {
+    void* ptr = segment_->allocate(4);
+    EXPECT_NE(static_cast<void*>(0), ptr);
+
+    segment_->deallocate(ptr, 4); // this is okay
+    // This is duplicate dealloc; should trigger assertion failure.
+    EXPECT_DEATH_IF_SUPPORTED({segment_->deallocate(ptr, 4);}, "");
+    resetSegment();             // the segment is possibly broken; reset it.
+
+    // Deallocating at an invalid address; this would result in crash (the
+    // behavior may not be portable enough; if so we should disable it by
+    // default).
+    ptr = segment_->allocate(4);
+    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_DEATH_IF_SUPPORTED({
+            segment_->deallocate(static_cast<char*>(ptr) + 1, 3);
+        }, "");
+    resetSegment();
+
+    // Invalid size; this implementation doesn't detect such errors.
+    ptr = segment_->allocate(4);
+    EXPECT_NE(static_cast<void*>(0), ptr);
+    segment_->deallocate(ptr, 8);
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
 TEST_F(MemorySegmentMappedTest, DISABLED_basics) {
