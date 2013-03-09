@@ -130,7 +130,13 @@ MemorySegmentMapped::allocate(size_t size) {
 }
 
 void
-MemorySegmentMapped::deallocate(void* ptr, size_t /*size*/) {
+MemorySegmentMapped::deallocate(void* ptr, size_t) {
+    // the underlying deallocate() would deal with the case where ptr == 0,
+    // but it's an undocumented behavior, so we handle it ourselves for safety.
+    if (!ptr) {
+        return;
+    }
+
     impl_->base_sgmt_->deallocate(ptr);
 }
 
