@@ -62,6 +62,16 @@ public:
 
     virtual bool allMemoryDeallocated() const;
 
+    virtual void* getNamedAddress(const char* name);
+
+    /// \brief TBD
+    ///
+    /// This implementation detects if \c addr is invalid (see the base class
+    /// description) and throws \c MemorySegmentError in that case.
+    virtual void setNamedAddress(const char* name, void* addr);
+
+    virtual bool clearNamedAddress(const char* name);
+
     size_t getSize() const;
 
 private:

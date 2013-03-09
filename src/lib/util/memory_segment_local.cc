@@ -51,5 +51,19 @@ MemorySegmentLocal::allMemoryDeallocated() const {
     return (allocated_size_ == 0);
 }
 
+void*
+MemorySegmentLocal::getNamedAddress(const char* /*name*/) {
+    return (0);
+}
+
+void
+MemorySegmentLocal::setNamedAddress(const char* /*name*/, void* /*addr*/) {
+}
+
+bool
+MemorySegmentLocal::clearNamedAddress(const char* /*name*/) {
+    return (false);
+}
+
 } // namespace util
 } // namespace isc

@@ -63,6 +63,10 @@ public:
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const;
 
+    virtual void* getNamedAddress(const char* name);
+    virtual void setNamedAddress(const char* name, void* addr);
+    virtual bool clearNamedAddress(const char* name);
+
 private:
     // allocated_size_ can underflow, wrap around to max size_t (which
     // is unsigned). But because we only do a check against 0 and not a
