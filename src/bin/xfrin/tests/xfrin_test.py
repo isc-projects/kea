@@ -1479,7 +1479,7 @@ class TestAXFR(TestXfrinConnection):
                           TEST_ZONE_NAME_STR, 'xfrsuccess')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.conn._counters.get, 'zones',
-                          TEST_ZONE_NAME_STR, 'time_to_axfr')
+                          TEST_ZONE_NAME_STR, 'latest_axfr_duration')
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self.assertFalse(self.conn._datasrc_client._journaling_enabled)
 
@@ -1512,7 +1512,7 @@ class TestAXFR(TestXfrinConnection):
                                                  'xfrsuccess'))
         self.assertGreaterEqual(self.conn._counters.get('zones',
                                                         TEST_ZONE_NAME_STR,
-                                                        'time_to_axfr'),
+                                                        'latest_axfr_duration'),
                                 0.0)
 
     def test_do_xfrin_with_tsig(self):
