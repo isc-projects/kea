@@ -62,16 +62,18 @@ protected:
         ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL,
                              false, false);
         // Prepare the answer beforehand, it'll block until it gets one
-        const ConstElementPtr& reply_el(el(reply));
+        const ConstElementPtr reply_el(el(reply));
         session.getMessages()->add(reply_el);
-        const ConstElementPtr& result(mccs.rpcCall("test", "Spec2",
-                                                   el("{\"param1\": \"Param 1\","
-                                                      "\"param2\": \"Param 2\"}")));
-        const ConstElementPtr& request(el("[\"Spec2\", \"*\", {"
-                                          "  \"command\": [\"test\", {"
-                                          "    \"param1\": \"Param 1\","
-                                          "    \"param2\": \"Param 2\""
-                                          "}]}, -1, true]"));
+        const ConstElementPtr
+            result(mccs.rpcCall("test", "Spec2",
+                                el("{\"param1\": \"Param 1\","
+                                   "\"param2\": \"Param 2\"}")));
+        const ConstElementPtr
+            request(el("[\"Spec2\", \"*\", {"
+                       "  \"command\": [\"test\", {"
+                       "    \"param1\": \"Param 1\","
+                       "    \"param2\": \"Param 2\""
+                       "}]}, -1, true]"));
         // The 0th one is from the initialization, to ConfigManager.
         // our is the 1st.
         EXPECT_TRUE(request->equals(*session.getMsgQueue()->get(1))) <<
@@ -88,7 +90,7 @@ protected:
 // Test we can send an RPC (command) and get an answer. The answer is success
 // in this case.
 TEST_F(CCSessionTest, rpcCallSuccess) {
-    const ConstElementPtr &result =
+    const ConstElementPtr result =
         rpcCheck("{\"result\": [0, {\"Hello\": \"a\"}]}");
     EXPECT_TRUE(el("{\"Hello\": \"a\"}")->equals(*result));
 }
