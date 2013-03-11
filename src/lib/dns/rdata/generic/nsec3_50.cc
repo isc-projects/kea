@@ -64,6 +64,25 @@ struct NSEC3Impl {
     const vector<uint8_t> typebits_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NSEC3 RDATA.  There
+/// can be extra space characters at the beginning or end of the
+/// text (which are simply ignored), but other extra text, including
+/// a new line, will make the construction fail with an exception.
+///
+/// The Hash Algorithm, Flags and Iterations fields must be within their
+/// valid ranges. The Salt field may contain "-" to indicate that the
+/// salt is of length 0. The Salt field must not contain any whitespace.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param nsec3_str A string containing the RDATA to be created
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
@@ -85,6 +104,26 @@ NSEC3::NSEC3(const std::string& nsec3_str) :
     }
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NSEC3 RDATA.
+///
+/// The Hash Algorithm, Flags and Iterations fields must be within their
+/// valid ranges. The Salt field may contain "-" to indicate that the
+/// salt is of length 0. The Salt field must not contain any whitespace.
+///
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
 NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
              MasterLoaderCallbacks&) :
     impl_(NULL)
