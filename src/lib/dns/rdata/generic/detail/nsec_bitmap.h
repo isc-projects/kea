@@ -54,29 +54,6 @@ namespace nsec {
 void checkRRTypeBitmaps(const char* const rrtype_name,
                         const std::vector<uint8_t>& typebits);
 
-/// \brief Convert textual sequence of RR types into type bitmaps.
-///
-/// This function extracts a sequence of strings, converts each sequence
-/// into an RR type, and builds NSEC/NSEC3 type bitmaps with the corresponding
-/// bits for the extracted types being on.  The resulting bitmaps (which are
-/// in the wire format according to RFC4034 and RFC5155) are stored in the
-/// given vector.  This function expects the given string stream ends with
-/// the sequence.
-///
-/// \exception InvalidRdataText The given input stream does not meet the
-/// assumption (e.g. including invalid form of RR type, not ending with
-/// an RR type string).
-///
-/// \param rrtype_name Either "NSEC" or "NSEC3"; used as part of exception
-/// messages.
-/// \param iss Input stream that consists of a complete sequence of textual
-/// RR types for which the corresponding bits are set.
-/// \param typebits A placeholder for the resulting bitmaps.  Expected to be
-/// empty, but it's not checked.
-void buildBitmapsFromText(const char* const rrtype_name,
-                          std::istringstream& iss,
-                          std::vector<uint8_t>& typebits);
-
 /// \brief Convert textual sequence of RR types read from a lexer into
 /// type bitmaps.
 ///
