@@ -944,9 +944,7 @@ class XfrinConnection(asyncore.dispatcher):
         try:
             ret = XFRIN_OK
             self._request_type = request_type
-            # Right now RRType.[IA]XFR().to_text() is 'TYPExxx', so we need
-            # to hardcode here.
-            req_str = 'IXFR' if request_type == RRType.IXFR else 'AXFR'
+            req_str = request_type.to_text()
             if check_soa:
                 self._check_soa_serial()
                 self.close()
