@@ -67,47 +67,33 @@ struct NSEC3Impl {
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
-    istringstream iss(nsec3_str);
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamText("NSEC3", nsec3_str, iss, salt);
+    try {
+        std::istringstream ss(nsec3_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    // Extract Next hash.  It must be an unpadded base32hex string.
-    string nexthash;
-    iss >> nexthash;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
-    }
-    assert(!nexthash.empty());
-    if (*nexthash.rbegin() == '=') {
-        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nsec3_str);
-    }
-    vector<uint8_t> next;
-    decodeBase32Hex(nexthash, next);
-    if (next.size() > 255) {
-        isc_throw(InvalidRdataText, "NSEC3 hash is too long: "
-                  << next.size() << " bytes");
-    }
+        constructFromLexer(lexer);
 
-    // For NSEC3 empty bitmap is possible and allowed.
-    if (iss.eof()) {
-        impl_ = new NSEC3Impl(params.algorithm, params.flags,
-                              params.iterations, salt, next,
-                              vector<uint8_t>());
-        return;
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for NSEC3: " << nsec3_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct NSEC3 from '" << nsec3_str << "': "
+                  << ex.what());
     }
-
-    vector<uint8_t> typebits;
-    buildBitmapsFromText("NSEC3", iss, typebits);
-
-    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
-                          salt, next, typebits);
 }
 
 NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
              MasterLoaderCallbacks&) :
     impl_(NULL)
 {
+    constructFromLexer(lexer);
+}
+
+void
+NSEC3::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamFromLexer("NSEC3", lexer, salt);
