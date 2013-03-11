@@ -16,6 +16,7 @@
 #define MEMORY_SEGMENT_MAPPED_H
 
 #include <util/memory_segment.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 

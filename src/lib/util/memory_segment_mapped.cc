@@ -34,17 +34,19 @@ namespace util {
 
 struct MemorySegmentMapped::Impl {
     Impl(const std::string& filename, size_t initial_size) :
-        filename_(filename),
+        read_only_(false), filename_(filename),
         base_sgmt_(new managed_mapped_file(open_or_create, filename.c_str(),
                                            initial_size))
     {}
 
     Impl(const std::string& filename, bool read_only) :
-        filename_(filename),
+        read_only_(read_only), filename_(filename),
         base_sgmt_(read_only ?
                    new managed_mapped_file(open_read_only, filename.c_str()) :
                    new managed_mapped_file(open_only, filename.c_str()))
     {}
+
+    const bool read_only_;
 
     // mapped file; remember it in case we need to grow it.
     const std::string filename_;
@@ -88,6 +90,10 @@ MemorySegmentMapped::~MemorySegmentMapped() {
 
 void*
 MemorySegmentMapped::allocate(size_t size) {
+    if (impl_->read_only_) {
+        isc_throw(InvalidOperation, "allocate attempt on read-only segment");
+    }
+
     // We explicitly check the free memory size; it appears
     // managed_mapped_file::allocate() could incorrectly return a seemingly
     // valid pointer for some very large requested size.
@@ -157,6 +163,10 @@ MemorySegmentMapped::getNamedAddress(const char* name) {
 
 void
 MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
+    if (impl_->read_only_) {
+        isc_throw(InvalidOperation, "setNamedAddress on read-only segment");
+    }
+
     if (addr && !impl_->base_sgmt_->belongs_to_segment(addr)) {
         isc_throw(MemorySegmentError, "out of segment address: " << addr);
     }
@@ -167,11 +177,19 @@ MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
 
 bool
 MemorySegmentMapped::clearNamedAddress(const char* name) {
+    if (impl_->read_only_) {
+        isc_throw(InvalidOperation, "clearNamedAddress on read-only segment");
+    }
+
     return (impl_->base_sgmt_->destroy<offset_ptr<void> >(name));
 }
 
 void
 MemorySegmentMapped::shrinkToFit() {
+    if (impl_->read_only_) {
+        isc_throw(InvalidOperation, "shrinkToFit on read-only segment");
+    }
+
     // It appears an assertion failure is triggered within Boost if the size
     // is too small.  To work this around we'll make it no-op if the size is
     // already reasonably small.
