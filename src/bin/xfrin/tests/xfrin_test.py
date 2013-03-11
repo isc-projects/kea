@@ -1072,11 +1072,11 @@ class TestAXFR(TestXfrinConnection):
         class FakeSocket(): pass
         self.conn.socket = FakeSocket()
         self.conn.socket.family = socket.AF_INET
-        self.assertEqual(self.conn.get_ipver_str(), 'v4')
+        self.assertEqual(self.conn._get_ipver_str(), 'v4')
         self.conn.socket.family = socket.AF_INET6
-        self.assertEqual(self.conn.get_ipver_str(), 'v6')
+        self.assertEqual(self.conn._get_ipver_str(), 'v6')
         self.conn.socket.family = None
-        self.assertIsNone(self.conn.get_ipver_str())
+        self.assertIsNone(self.conn._get_ipver_str())
         self.conn.socket = orig_socket
 
     def test_soacheck(self):
