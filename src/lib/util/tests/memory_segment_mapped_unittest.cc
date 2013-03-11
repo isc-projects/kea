@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/tests/memory_segment_common_unittest.h>
+
 #include <util/memory_segment_mapped.h>
 #include <exceptions/exceptions.h>
 
@@ -20,6 +22,7 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <stdint.h>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -181,59 +184,17 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
 }
 
 TEST_F(MemorySegmentMappedTest, namedAddress) {
-    // If not exist, null pointer will be returned.
-    EXPECT_EQ(static_cast<void*>(0), segment_->getNamedAddress("test address"));
-
-    // Now set it
-    void* ptr32 = segment_->allocate(sizeof(uint32_t));
-    const uint32_t test_val = 42;
-    std::memcpy(ptr32, &test_val, sizeof(test_val));
-    segment_->setNamedAddress("test address", ptr32);
-
-    // we can now get it; the stored value should be intact.
-    EXPECT_EQ(ptr32, segment_->getNamedAddress("test address"));
-    EXPECT_EQ(test_val, *static_cast<const uint32_t*>(ptr32));
-
-    // Override it.
-    void* ptr16 = segment_->allocate(sizeof(uint16_t));
-    const uint16_t test_val16 = 4200;
-    std::memcpy(ptr16, &test_val16, sizeof(test_val16));
-    segment_->setNamedAddress("test address", ptr16);
-    EXPECT_EQ(ptr16, segment_->getNamedAddress("test address"));
-    EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(ptr16));
-
-    // Clear it.  Then we won't be able to find it any more.
-    EXPECT_TRUE(segment_->clearNamedAddress("test address"));
-    EXPECT_EQ(static_cast<void*>(0), segment_->getNamedAddress("test address"));
-
-    // duplicate attempt of clear will result in false as it doesn't exist.
-    EXPECT_FALSE(segment_->clearNamedAddress("test address"));
-
-    // Setting NULL is okay.
-    segment_->setNamedAddress("null address", 0);
-    EXPECT_EQ(static_cast<void*>(0), segment_->getNamedAddress("null address"));
-
-    // Setting or out-of-segment address is prohibited, and this implementation
-    // detects and rejects it.
-    uint8_t ch = 'A';
-    EXPECT_THROW(segment_->setNamedAddress("local address", &ch),
-                 MemorySegmentError);
+    isc::util::test::checkSegmentNamedAddress(*segment_, false);
 
     // Set it again and read it in the read-only mode.
+    void* ptr16 = segment_->allocate(sizeof(uint16_t));
+    const uint16_t test_val16 = 42000;
+    std::memcpy(ptr16, &test_val16, sizeof(test_val16));
     segment_->setNamedAddress("test address", ptr16);
     MemorySegmentMapped segment_ro(mapped_file);
     EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
                   segment_ro.getNamedAddress("test address")));
-    EXPECT_EQ(static_cast<void*>(0),
-              segment_ro.getNamedAddress("null address"));
-
-    // clean them up all
-    segment_->deallocate(ptr32, sizeof(uint32_t));
-    segment_->deallocate(ptr16, sizeof(uint32_t));
-    EXPECT_TRUE(segment_->clearNamedAddress("test address"));
-    EXPECT_TRUE(segment_->clearNamedAddress("null address"));
-    EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
