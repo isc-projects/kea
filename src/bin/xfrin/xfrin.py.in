@@ -1032,14 +1032,10 @@ class XfrinConnection(asyncore.dispatcher):
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
             self._diff = None
-            if ret == XFRIN_OK:
-                # count successful xfer requests
+            counter_dict = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}
+            if ret in counter_dict:
                 self._counters.inc('zones', self._zone_name.to_text(),
-                                   'xfrsuccess')
-            elif ret == XFRIN_FAIL:
-                # count failed xfer requests
-                self._counters.inc('zones', self._zone_name.to_text(),
-                                   'xfrfail')
+                                   counter_dict[ret])
 
         return ret
 
