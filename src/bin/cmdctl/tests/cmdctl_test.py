@@ -99,8 +99,7 @@ class TmpTextFile:
 
     def __enter__(self):
         with open(self.__path, 'w') as f:
-            for line in self.__contents:
-                f.write(line)
+            f.write("\n".join(self.__contents))
 
     def __exit__(self, type, value, traceback):
         os.unlink(self.__path)
@@ -503,7 +502,6 @@ class TestSecureHTTPServer(unittest.TestCase):
 
     def test_create_user_info_changing_file_time(self):
         self.assertEqual(0, len(self.server._user_infos))
-        self.assertFalse('root' in self.server._user_infos)
 
         # Create a file
         accounts_file = BUILD_FILE_PATH + 'new_file.csv'
@@ -533,7 +531,6 @@ class TestSecureHTTPServer(unittest.TestCase):
         Check that the accounts file is re-read if the file name is different
         """
         self.assertEqual(0, len(self.server._user_infos))
-        self.assertFalse('root' in self.server._user_infos)
 
         # Create two files
         accounts_file1 = BUILD_FILE_PATH + 'new_file.csv'
