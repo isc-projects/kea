@@ -61,16 +61,7 @@ DNSKEY::DNSKEY(const std::string& dnskey_str) :
 
         constructFromLexer(lexer);
 
-        // This elaborate check is done to allow trailing comments in
-        // the string.
-        for (MasterToken::Type token_type = lexer.getNextToken().getType();
-             token_type != MasterToken::END_OF_FILE;
-             token_type = lexer.getNextToken().getType())
-        {
-            if (token_type == MasterToken::END_OF_LINE) {
-                continue;
-            }
-
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
                       "Extra input text for DNSKEY: " << dnskey_str);
         }
