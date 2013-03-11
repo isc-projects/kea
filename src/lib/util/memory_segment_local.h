@@ -17,6 +17,9 @@
 
 #include <util/memory_segment.h>
 
+#include <string>
+#include <map>
+
 namespace isc {
 namespace util {
 
@@ -75,6 +78,8 @@ private:
     // is unsigned). But because we only do a check against 0 and not a
     // relation comparison, this is okay.
     size_t allocated_size_;
+
+    std::map<std::string, void*> named_addrs_;
 };
 
 } // namespace util
