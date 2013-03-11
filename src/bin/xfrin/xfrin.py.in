@@ -955,7 +955,7 @@ class XfrinConnection(asyncore.dispatcher):
 
             # start statistics timer
             self._counters.start_timer('zones', self._zone_name.to_text(),
-                                       'time_to_' + req_str.lower())
+                                       'latest_' + req_str.lower() + '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
             # count (A|X)IXFR requests for statistics
@@ -989,7 +989,7 @@ class XfrinConnection(asyncore.dispatcher):
                            )
             # stop statistics timer
             self._counters.stop_timer('zones', self._zone_name.to_text(),
-                                      'time_to_' + req_str.lower())
+                                      'latest_' + req_str.lower() + '_duration')
 
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger

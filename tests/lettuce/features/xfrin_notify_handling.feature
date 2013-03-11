@@ -63,8 +63,8 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
     Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
     Then the statistics counter xfrfail for the zone _SERVER_ should be 0
-    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
-    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -137,10 +137,10 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter xfrsuccess for the zone example.org. should be 1
     Then the statistics counter xfrfail for the zone _SERVER_ should be 0
     Then the statistics counter xfrfail for the zone example.org. should be 0
-    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
-    Then the statistics counter time_to_ixfr for the zone example.org. should be 0.0
-    Then the statistics counter time_to_axfr for the zone _SERVER_ should be greater than 0.0
-    Then the statistics counter time_to_axfr for the zone example.org. should be greater than 0.0
+    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_ixfr_duration for the zone example.org. should be 0.0
+    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be greater than 0.0
+    Then the statistics counter latest_axfr_duration for the zone example.org. should be greater than 0.0
 
     #
     # Test for Xfr request rejected
@@ -207,8 +207,8 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
     Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
     Then the statistics counter xfrfail for the zone _SERVER_ should be 0
-    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
-    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
 
     #
     # set transfer_acl rejection
@@ -294,10 +294,10 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter xfrsuccess for the zone example.org. should be 0
     Then the statistics counter xfrfail for the zone _SERVER_ should be greater than 0
     Then the statistics counter xfrfail for the zone example.org. should be greater than 0
-    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
-    Then the statistics counter time_to_ixfr for the zone example.org. should be 0.0
-    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
-    Then the statistics counter time_to_axfr for the zone example.org. should be 0.0
+    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_ixfr_duration for the zone example.org. should be 0.0
+    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
+    Then the statistics counter latest_axfr_duration for the zone example.org. should be 0.0
 
     #
     # Test for unreachable slave

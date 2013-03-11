@@ -295,16 +295,16 @@ operation
                   </varlistentry>
 
                   <varlistentry>
-                    <term>time_to_ixfr</term>
+                    <term>latest_ixfr_duration</term>
                     <listitem><simpara>
-                      Elapsed time in second to do the last IXFR
+                      Duration of the latest IXFR
                     </simpara></listitem>
                   </varlistentry>
 
                   <varlistentry>
-                    <term>time_to_axfr</term>
+                    <term>latest_axfr_duration</term>
                     <listitem><simpara>
-                      Elapsed time in second to do the last AXFR
+                      Duration of the latest AXFR
                     </simpara></listitem>
                   </varlistentry>
 

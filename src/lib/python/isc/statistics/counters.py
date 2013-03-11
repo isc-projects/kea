@@ -217,8 +217,8 @@ class Counters():
         zones/example.com./ixfrreqv6
         zones/example.com./xfrsuccess
         zones/example.com./xfrfail
-        zones/example.com./time_to_ixfr
-        zones/example.com./time_to_axfr
+        zones/example.com./latest_ixfr_duration
+        zones/example.com./latest_axfr_duration
         ixfr_running
         axfr_running
         socket/unixdomain/open
