@@ -512,7 +512,7 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         # If the file does not exist, set accounts to empty, and return
         if not os.path.exists(accounts_file):
             self._user_infos = {}
-            self.__accounts_file = accounts_file
+            self.__accounts_file = None
             self.__accounts_file_mtime = 0
             return
 
