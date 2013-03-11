@@ -111,14 +111,21 @@ NSEC3::constructFromLexer(MasterLexer& lexer) {
     }
 
     // For NSEC3 empty bitmap is possible and allowed.
-    if (lexer.getNextToken().getType() == MasterToken::END_OF_FILE) {
+    bool empty_bitmap = false;
+    const MasterToken token = lexer.getNextToken();
+    if ((token.getType() == MasterToken::END_OF_LINE) ||
+        (token.getType() == MasterToken::END_OF_FILE)) {
+         empty_bitmap = true;
+    }
+
+    lexer.ungetToken();
+
+    if (empty_bitmap) {
         impl_ = new NSEC3Impl(params.algorithm, params.flags,
                               params.iterations, salt, next,
                               vector<uint8_t>());
         return;
     }
-
-    lexer.ungetToken();
 
     vector<uint8_t> typebits;
     buildBitmapsFromLexer("NSEC3", lexer, typebits);
