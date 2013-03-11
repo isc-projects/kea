@@ -69,8 +69,8 @@ Goals
  * Minimise waiting for locks.
  * Don't require too much memory.
  * Minimise the number of upstream queries (both because they are slow and
-   expensive and also because we don't to eat too much bandwidth and spam the
-   authoritative servers).
+   expensive and also because we don't want to eat too much bandwidth and spam
+   the authoritative servers).
  * Design simple enough so it can be implemented.
 
 Naïve version
@@ -230,7 +230,7 @@ A query is an object once again, with some kind of state machine.
 Then there are two kinds of threads. The peasants are just to do the heavy
 work. There's a global work-queue for peasants. Once a peasant is idle, it
 comes to the queue and picks up a handful of queries from there. It does as
-much each the query as possible without requiring any shared resource.
+much on each the query as possible without requiring any shared resource.
 
 The other kind, the landlords, have a resource to watch over each. So we would
 have a cache (or several parts of cache), the sockets for accepting queries and
@@ -259,6 +259,14 @@ abstract `boost::function<void (Worker&)>` functors, and each worker would just
 iterate through the queue, calling each functor. The parameter would be to
 allow easy generation of more tasks for other queues (they would be stored
 privately first, and appended to remote queues at the end of batch).
+
+Also, if we wanted to generate multiple parallel upstream queries from a single
+query, we would need to be careful. A query object would not have a lock on
+itself and the upstream queries could end up in a different caches/threads. To
+protect the original query, we would add another landlord that would aggregate
+answers together and let the query continue processing once it got enough
+answers. That way, the answers would be pushed all to the same threads and they
+could not fight over the query.
 
 [NOTE]
 This model would work only with threads, not processes.
