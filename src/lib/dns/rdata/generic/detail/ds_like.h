@@ -79,14 +79,7 @@ public:
 
             constructFromLexer(lexer);
 
-            for (MasterToken::Type token_type = lexer.getNextToken().getType();
-                 token_type != MasterToken::END_OF_FILE;
-                 token_type = lexer.getNextToken().getType())
-            {
-                if (token_type == MasterToken::END_OF_LINE) {
-                    continue;
-                }
-
+            if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
                 isc_throw(InvalidRdataText,
                           "Extra input text for " << RRType(typeCode) << ": "
                           << ds_str);
