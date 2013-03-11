@@ -498,7 +498,7 @@ bool
 Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
                        bool nonblock, int seq)
 {
-    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE);
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE).arg(seq);
     bool result(recvmsg(envelope, msg, nonblock, seq));
     if (result) {
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVED).

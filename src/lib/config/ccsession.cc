@@ -32,7 +32,7 @@
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
-#include <module_spec.h>
+#include <config/module_spec.h>
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
@@ -855,6 +855,28 @@ ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
 void
 ModuleCCSession::cancelAsyncRecv(const AsyncRecvRequestID& id) {
     async_recv_requests_.erase(id);
+}
+
+ConstElementPtr
+ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
+                         const std::string &instance, const std::string &to,
+                         const ConstElementPtr &params)
+{
+    ConstElementPtr command_el(createCommand(command, params));
+    const int seq = groupSendMsg(command_el, group, instance, to, true);
+    ConstElementPtr env, answer;
+    LOG_DEBUG(config_logger, DBGLVL_TRACE_DETAIL, CONFIG_RPC_SEQ).arg(command).
+        arg(group).arg(seq);
+    groupRecvMsg(env, answer, true, seq);
+    int rcode;
+    const ConstElementPtr result(parseAnswer(rcode, answer));
+    if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
+        isc_throw(RPCRecipientMissing, result);
+    } else if (rcode != isc::cc::CC_REPLY_SUCCESS) {
+        isc_throw_1(RPCError, result, rcode);
+    } else {
+        return (result);
+    }
 }
 
 }
