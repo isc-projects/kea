@@ -869,7 +869,7 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
         arg(group).arg(seq);
     groupRecvMsg(env, answer, true, seq);
     int rcode;
-    const ConstElementPtr &result(parseAnswer(rcode, answer));
+    const ConstElementPtr result(parseAnswer(rcode, answer));
     if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
         isc_throw(RPCRecipientMissing, result);
     } else if (rcode != isc::cc::CC_REPLY_SUCCESS) {
