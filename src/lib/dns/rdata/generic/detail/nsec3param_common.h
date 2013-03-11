@@ -15,6 +15,8 @@
 #ifndef NSEC3PARAM_COMMON_H
 #define NSEC3PARAM_COMMON_H 1
 
+#include <dns/master_lexer.h>
+
 #include <util/buffer.h>
 
 #include <stdint.h>
@@ -89,6 +91,10 @@ ParseNSEC3ParamResult parseNSEC3ParamText(const char* const rrtype_name,
                                           const std::string& rdata_str,
                                           std::istringstream& iss,
                                           std::vector<uint8_t>& salt);
+
+ParseNSEC3ParamResult parseNSEC3ParamFromLexer(const char* const rrtype_name,
+                                               isc::dns::MasterLexer& lexer,
+                                               std::vector<uint8_t>& salt);
 
 /// \brief Extract NSEC3 parameters from wire-format data.
 ///

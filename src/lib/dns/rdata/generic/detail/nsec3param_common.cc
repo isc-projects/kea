@@ -89,6 +89,49 @@ parseNSEC3ParamText(const char* const rrtype_name,
 }
 
 ParseNSEC3ParamResult
+parseNSEC3ParamFromLexer(const char* const rrtype_name,
+                         MasterLexer& lexer, vector<uint8_t>& salt)
+{
+    const uint32_t hashalg =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (hashalg > 0xff) {
+        isc_throw(InvalidRdataText, rrtype_name <<
+                  " hash algorithm out of range: " << hashalg);
+    }
+
+    const uint32_t flags =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (flags > 0xff) {
+        isc_throw(InvalidRdataText, rrtype_name << " flags out of range: " <<
+                  flags);
+    }
+
+    const uint32_t iterations =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (iterations > 0xffff) {
+        isc_throw(InvalidRdataText, rrtype_name <<
+                  " iterations out of range: " <<
+            iterations);
+    }
+
+    const string salthex =
+        lexer.getNextToken(MasterToken::STRING).getString();
+
+    // Salt is up to 255 bytes, and space is not allowed in the HEX encoding,
+    // so the encoded string cannot be longer than the double of max length
+    // of the actual salt.
+    if (salthex.size() > 255 * 2) {
+        isc_throw(InvalidRdataText, rrtype_name << " salt is too long: "
+                  << salthex.size() << " (encoded) bytes");
+    }
+    if (salthex != "-") {       // "-" means a 0-length salt
+        decodeHex(salthex, salt);
+    }
+
+    return (ParseNSEC3ParamResult(hashalg, flags, iterations));
+}
+
+ParseNSEC3ParamResult
 parseNSEC3ParamWire(const char* const rrtype_name,
                     InputBuffer& buffer,
                     size_t& rdata_len, std::vector<uint8_t>& salt)
