@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/memory_segment_mapped.h>
+#include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -40,7 +41,7 @@ protected:
 
     ~MemorySegmentMappedTest() {
         segment_.reset();
-        //boost::interprocess::file_mapping::remove(mapped_file);
+        boost::interprocess::file_mapping::remove(mapped_file);
     }
 
     // For initialization and for tests after the segment possibly becomes
@@ -235,27 +236,6 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
-TEST_F(MemorySegmentMappedTest, violateReadOnly) {
-    // If the segment is opened in the read only mode, modification attempt
-    // will result in crash.
-    EXPECT_DEATH_IF_SUPPORTED({
-            MemorySegmentMapped segment_ro(mapped_file);
-            segment_ro.allocate(16);
-        }, "");
-    EXPECT_DEATH_IF_SUPPORTED({
-            MemorySegmentMapped segment_ro(mapped_file);
-            segment_ro.setNamedAddress("test", 0);
-        }, "");
-    EXPECT_DEATH_IF_SUPPORTED({
-            void* ptr = segment_->allocate(sizeof(uint32_t));
-            segment_->setNamedAddress("test address", ptr);
-            MemorySegmentMapped segment_ro(mapped_file);
-            EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
-            *static_cast<uint32_t*>(
-                segment_ro.getNamedAddress("test address")) = 0;
-        }, "");
-}
-
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
     // NULL deallocation is a no-op.
     EXPECT_NO_THROW(segment_->deallocate(0, 1024));
@@ -277,6 +257,35 @@ TEST_F(MemorySegmentMappedTest, shrink) {
     // Check the segment is still usable after shrink.
     void* p = segment_->allocate(sizeof(uint32_t));
     segment_->deallocate(p, sizeof(uint32_t));
+}
+
+TEST_F(MemorySegmentMappedTest, violateReadOnly) {
+    // If the segment is opened in the read only mode, modification attempts
+    // are prohibited.  when detectable it's result in an exception;
+    // an attempt of not directly through the segment class will result in
+    // crash.
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).allocate(16),
+                 isc::InvalidOperation);
+    // allocation that would otherwise require growing the segment; permission
+    // check should be performed before that.
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).
+                 allocate(DEFAULT_INITIAL_SIZE * 2),
+                 isc::InvalidOperation);
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).setNamedAddress("test", 0),
+                 isc::InvalidOperation);
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).clearNamedAddress("test"),
+                 isc::InvalidOperation);
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).shrinkToFit(),
+                 isc::InvalidOperation);
+
+    EXPECT_DEATH_IF_SUPPORTED({
+            void* ptr = segment_->allocate(sizeof(uint32_t));
+            segment_->setNamedAddress("test address", ptr);
+            MemorySegmentMapped segment_ro(mapped_file);
+            EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
+            *static_cast<uint32_t*>(
+                segment_ro.getNamedAddress("test address")) = 0;
+        }, "");
 }
 
 }
