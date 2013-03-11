@@ -26,6 +26,7 @@ import http.client
 import pwd
 import getpass
 import re
+import json
 from optparse import OptionParser
 from isc.config.config_data import ConfigData, MultiConfigData
 from isc.config.module_spec import ModuleSpec
@@ -386,7 +387,7 @@ class TestConfigCommands(unittest.TestCase):
             self.tool.send_POST = send_POST_raiseImmediately
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Socket error while sending login information:  test error')
+                'Error while sending login information: test error')
             self.__check_printed_messages(expected_printed_messages)
 
             def create_send_POST_raiseOnRead(exception):
@@ -405,7 +406,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(socket.error("read error"))
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Socket error while sending login information:  read error')
+                'Error while sending login information: read error')
             self.__check_printed_messages(expected_printed_messages)
 
             # connection reset
@@ -415,13 +416,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(exc)
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'Socket error while sending login information:  '
-                'connection reset')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may be a '
-                'problem accepting SSL connections, such as a permission '
-                'problem on the server certificate file.'
-            )
+                'Error while sending login information: connection reset')
             self.__check_printed_messages(expected_printed_messages)
 
             # 'normal' SSL error
@@ -430,7 +425,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(exc)
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'SSL error while sending login information:  .*')
+                'Error while sending login information: .*')
             self.__check_printed_messages(expected_printed_messages)
 
             # 'EOF' SSL error
@@ -440,12 +435,7 @@ class TestConfigCommands(unittest.TestCase):
                 create_send_POST_raiseOnRead(exc)
             self.assertRaises(FailToLogin, self.tool._try_login, "foo", "bar")
             expected_printed_messages.append(
-                'SSL error while sending login information: .*')
-            expected_printed_messages.append(
-                'Please check the logs of b10-cmdctl, there may be a '
-                'problem accepting SSL connections, such as a permission '
-                'problem on the server certificate file.'
-            )
+                'Error while sending login information: .*')
             self.__check_printed_messages(expected_printed_messages)
 
             # any other exception should be passed through
@@ -456,6 +446,44 @@ class TestConfigCommands(unittest.TestCase):
 
         finally:
             self.tool.send_POST = orig_send_POST
+
+    def test_try_login_calls_cmdctl(self):
+        # Make sure _try_login() makes the right API call to cmdctl.
+        orig_conn = self.tool.conn
+        try:
+            class MyConn:
+                def __init__(self):
+                    self.method = None
+                    self.url = None
+                    self.param = None
+                    self.headers = None
+
+                def request(self, method, url, param, headers):
+                    self.method = method
+                    self.url = url
+                    self.param = param
+                    self.headers = headers
+
+                def getresponse(self):
+                    class MyResponse:
+                        def __init__(self):
+                            self.status = http.client.OK
+                        def read(self):
+                            class MyData:
+                                def decode(self):
+                                    return json.dumps(True)
+                            return MyData()
+                    return MyResponse()
+
+            self.tool.conn = MyConn()
+            self.assertTrue(self.tool._try_login('user32', 'pass64'))
+            self.assertEqual(self.tool.conn.method, 'POST')
+            self.assertEqual(self.tool.conn.url, '/login')
+            self.assertEqual(json.loads(self.tool.conn.param),
+                             {"password": "pass64", "username": "user32"})
+            self.assertIn('cookie', self.tool.conn.headers)
+        finally:
+            self.tool.conn = orig_conn
 
     def test_run(self):
         def login_to_cmdctl():

@@ -97,6 +97,11 @@ def check_file(file_name):
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
+    def __init__(self, request, client_address, server):
+        http.server.BaseHTTPRequestHandler.__init__(self, request,
+                                                    client_address, server)
+        self.session_id = None
+
     def do_GET(self):
         '''The client should send its session id in header with
         the name 'cookie'
@@ -121,7 +126,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         return self.server.get_reply_data_for_GET(id, module)
 
     def _is_session_valid(self):
-        return self.session_id
+        return self.session_id is not None
 
     def _is_user_logged_in(self):
         login_time = self.server.user_sessions.get(self.session_id)
@@ -171,7 +176,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         is_user_valid, error_info = self._check_user_name_and_pwd()
         if is_user_valid:
             self.server.save_user_session_id(self.session_id)
-            return http.client.OK, ["login success "]
+            return http.client.OK, ["login success"]
         else:
             return http.client.UNAUTHORIZED, error_info
 
