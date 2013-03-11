@@ -72,6 +72,8 @@ public:
 
     virtual bool clearNamedAddress(const char* name);
 
+    virtual void shrinkToFit();
+
     size_t getSize() const;
 
 private:
