@@ -94,6 +94,8 @@ public:
     /// responsibility to meet the restriction.
     virtual void setNamedAddress(const char* name, void* addr) = 0;
     virtual bool clearNamedAddress(const char* name) = 0;
+
+    virtual void shrinkToFit() = 0;
 };
 
 } // namespace util
