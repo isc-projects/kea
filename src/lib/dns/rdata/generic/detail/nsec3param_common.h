@@ -92,6 +92,26 @@ ParseNSEC3ParamResult parseNSEC3ParamText(const char* const rrtype_name,
                                           std::istringstream& iss,
                                           std::vector<uint8_t>& salt);
 
+/// \brief Convert textual representation of NSEC3 parameters
+/// (MasterLexer variant).
+///
+/// This function is identical to \c parseNSEC3ParamText(), except that
+/// it reads the NSEC3 parameters from a MasterLexer.
+///
+/// \exception isc::BadValue The salt is not a valid hex string.
+/// \exception InvalidRdataText The given string is otherwise invalid for
+/// NSEC3 or NSEC3PARAM fields.
+/// \exception MasterLexer::LexerError There was a failure reading a
+/// field from the MasterLexer.
+///
+/// \param rrtype_name Either "NSEC3" or "NSEC3PARAM"; used as part of
+/// exception messages.
+/// \param lexer The MasterLexer to read NSEC3 parameter fields from.
+/// \param salt A placeholder for the salt field value of the RDATA.
+/// Expected to be empty, but it's not checked (and will be overridden).
+///
+/// \return The hash algorithm, flags, iterations in the form of
+/// ParseNSEC3ParamResult.
 ParseNSEC3ParamResult parseNSEC3ParamFromLexer(const char* const rrtype_name,
                                                isc::dns::MasterLexer& lexer,
                                                std::vector<uint8_t>& salt);
