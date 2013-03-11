@@ -271,4 +271,77 @@ could not fight over the query.
 [NOTE]
 This model would work only with threads, not processes.
 
-TODO: The shared caches
+Shared caches
+-------------
+
+While it seems it is good to have some sort of L1 cache with pre-rendered
+answers (according to measurements in the #2777 ticket), we probably need some
+kind of larger shared cache.
+
+If we had just a single shared cache protected by lock, there'd be a lot of
+lock contention on the lock.
+
+Partitioning the cache
+~~~~~~~~~~~~~~~~~~~~~~
+
+We split the cache into parts, either by the layers or by parallel bits we
+switch between by a hash. If we take it to the extreme, a lock on each hash
+bucket would be this kind, though that might be wasting resources (how
+expensive is it to create a lock?).
+
+Landlords
+~~~~~~~~~
+
+The landlords do synchronizations themselves. Still, the cache would need to be
+partitioned.
+
+RCU
+~~~
+
+The RCU is a lock-less synchronization mechanism. An item is accessed through a
+pointer.  An updater creates a copy of the structure (in our case, it would be
+content of single hash bucket) and then atomically replaces the pointer. The
+readers from before have the old version, the new ones get the new version.
+When all the old readers die out, the old copy is reclaimed. Also, the
+reclamation can AFAIK be postponed for later times when we are slightly more
+idle or to a different thread.
+
+We could use it for cache ‒ in the fast track, we would just read the cache. In
+the slow one, we would have to wait in queue to do the update, in a single
+updater thread (because we don't really want to be updating the same cell twice
+at the same time).
+
+Proposals
+---------
+
+In either case, we would have some kind of L1 cache with pre-rendered answers.
+For these proposals (except the third), we wouldn't care if we split the cache
+into parallel chunks or layers.
+
+Hybrid RCU/Landlord
+~~~~~~~~~~~~~~~~~~~
+
+The landlord approach, just read only accesses to the cache are done directly
+by the peasants. Only if they don't find what they want, they'd append the
+queue to the task of the landlord. The landlord would be doing the RCU updates.
+It could happen that by the time the landlord gets to the task the answer is
+already there, but that would not matter much.
+
+Accessing network would be from landlords.
+
+Coroutines+RCU
+~~~~~~~~~~~~~~
+
+We would do the coroutines, and the reads from shared cache would go without
+locking. When doing write, we would have to lock.
+
+To avoid locking, each worker thread would have its own set of upstream sockets
+and we would dup the sockets from users so we don't have to lock that.
+
+Multiple processes with coroutines and RCU
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This would need the layered cache. The upper caches would be mapped to local
+memory for read-only access. Each cache would be a separate process. The
+process would do the updates ‒ if the answer was not there, the process would
+be asked by some kind of IPC to pull it from upstream cache or network.
