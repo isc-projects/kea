@@ -51,6 +51,22 @@ struct DNSKEYImpl {
     const vector<uint8_t> keydata_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid DNSKEY RDATA.  There can be
+/// extra space characters at the beginning or end of the text (which
+/// are simply ignored), but other extra text, including a new line,
+/// will make the construction fail with an exception.
+///
+/// The Protocol and Algorithm fields must be within their valid
+/// ranges. The Public Key field must be present and must contain a
+/// Base64 encoding of the public key. Whitespace is allowed within the
+/// Base64 text.
+///
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param dnskey_str A string containing the RDATA to be created
 DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
@@ -88,6 +104,23 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an DNSKEY RDATA.
+///
+/// The Protocol and Algorithm fields must be within their valid
+/// ranges. The Public Key field must be present and must contain a
+/// Base64 encoding of the public key. Whitespace is allowed within the
+/// Base64 text.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
 DNSKEY::DNSKEY(MasterLexer& lexer, const Name*,
                MasterLoader::Options, MasterLoaderCallbacks&) :
     impl_(NULL)
