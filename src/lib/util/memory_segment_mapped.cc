@@ -170,6 +170,29 @@ MemorySegmentMapped::clearNamedAddress(const char* name) {
     return (impl_->base_sgmt_->destroy<offset_ptr<void> >(name));
 }
 
+void
+MemorySegmentMapped::shrinkToFit() {
+    // It appears an assertion failure is triggered within Boost if the size
+    // is too small.  To work this around we'll make it no-op if the size is
+    // already reasonably small.
+    if (getSize() < INITIAL_SIZE) {
+        return;
+    }
+
+    impl_->base_sgmt_.reset();
+    managed_mapped_file::shrink_to_fit(impl_->filename_.c_str());
+    try {
+        // Remap the grown file; this should succeed, but it's not 100%
+        // guaranteed.  If it fails we treat it as if we fail to create
+        // the new segment.
+        impl_->base_sgmt_.reset(
+            new managed_mapped_file(open_only, impl_->filename_.c_str()));
+    } catch (const boost::interprocess::interprocess_exception& ex) {
+        isc_throw(MemorySegmentError,
+                  "remap after shrink failed; segment is now unusable");
+    }
+}
+
 size_t
 MemorySegmentMapped::getSize() const {
     return (impl_->base_sgmt_->get_size());

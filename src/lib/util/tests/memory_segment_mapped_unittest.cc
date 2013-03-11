@@ -40,7 +40,7 @@ protected:
 
     ~MemorySegmentMappedTest() {
         segment_.reset();
-        boost::interprocess::file_mapping::remove(mapped_file);
+        //boost::interprocess::file_mapping::remove(mapped_file);
     }
 
     // For initialization and for tests after the segment possibly becomes
@@ -260,6 +260,23 @@ TEST_F(MemorySegmentMappedTest, nullDeallocate) {
     // NULL deallocation is a no-op.
     EXPECT_NO_THROW(segment_->deallocate(0, 1024));
     EXPECT_TRUE(segment_->allMemoryDeallocated());
+}
+
+TEST_F(MemorySegmentMappedTest, shrink) {
+    segment_->shrinkToFit();
+    // Normally we should be able to expect the resulting size is the smaller
+    // than the initial default size.  It's not really guaranteed by the API,
+    // however, so we may have to disable this check.
+    const size_t shrinked_size = segment_->getSize();
+    EXPECT_GT(DEFAULT_INITIAL_SIZE, shrinked_size);
+
+    // Another shrink shouldn't cause disruption, and the size shouldn't change
+    segment_->shrinkToFit();
+    EXPECT_EQ(shrinked_size, segment_->getSize());
+
+    // Check the segment is still usable after shrink.
+    void* p = segment_->allocate(sizeof(uint32_t));
+    segment_->deallocate(p, sizeof(uint32_t));
 }
 
 }
