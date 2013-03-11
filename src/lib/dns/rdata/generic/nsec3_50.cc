@@ -104,6 +104,43 @@ NSEC3::NSEC3(const std::string& nsec3_str) :
                           salt, next, typebits);
 }
 
+NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
+             MasterLoaderCallbacks&) :
+    impl_(NULL)
+{
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamFromLexer("NSEC3", lexer, salt);
+
+    const string nexthash = lexer.getNextToken(MasterToken::STRING).getString();
+    if (*nexthash.rbegin() == '=') {
+        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nexthash);
+    }
+
+    vector<uint8_t> next;
+    decodeBase32Hex(nexthash, next);
+    if (next.size() > 255) {
+        isc_throw(InvalidRdataText, "NSEC3 hash is too long: "
+                  << next.size() << " bytes");
+    }
+
+    // For NSEC3 empty bitmap is possible and allowed.
+    if (lexer.getNextToken().getType() == MasterToken::END_OF_FILE) {
+        impl_ = new NSEC3Impl(params.algorithm, params.flags,
+                              params.iterations, salt, next,
+                              vector<uint8_t>());
+        return;
+    }
+
+    lexer.ungetToken();
+
+    vector<uint8_t> typebits;
+    buildBitmapsFromLexer("NSEC3", lexer, typebits);
+
+    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
+                          salt, next, typebits);
+}
+
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
