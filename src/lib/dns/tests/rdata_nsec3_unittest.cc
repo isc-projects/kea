@@ -68,6 +68,9 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     // type bitmap is empty.  it's possible and allowed for NSEC3.
     EXPECT_NO_THROW(generic::NSEC3(
                         "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"));
+
+    // empty salt is also okay.
+    EXPECT_NO_THROW(const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt));
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
@@ -136,7 +139,31 @@ TEST_F(Rdata_NSEC3_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
                                      nsec3_txt)));
 
+    // empty salt is also okay.
+    const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt);
+    EXPECT_EQ(0, rdata_nosalt_nsec3.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                     nsec3_nosalt_txt)));
+
     // Exceptions cause NULL to be returned.
+
+    // hash algorithm out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                             "256 1 1 D399EAAB H9RSFB7FPF2L8"
+                                             "HG35CMPC765TDK23RP6"));
+    // flags out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                             "1 256 1 D399EAAB H9RSFB7FPF2L8"
+                                             "HG35CMPC765TDK23RP6"));
+    // iterations out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                             "1 1 65536 D399EAAB H9RSFB7FPF2L8"
+                                             "HG35CMPC765TDK23RP6"));
+    // space is not allowed in salt
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                             "1 1 1 D399 EAAB H9RSFB7FPF2L8"
+                                             "HG35CMPC765TDK23RP6"));
+    // Next hash is padded.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
                                              "1 1 1 ADDAFEEE CPNMU=== "
                                              "A NS SOA"));
