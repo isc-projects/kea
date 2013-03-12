@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <stdint.h>
@@ -264,6 +265,22 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
 
     EXPECT_THROW(MemorySegmentMapped(mapped_file).deallocate(ptr, 4),
                  isc::InvalidOperation);
+}
+
+TEST_F(MemorySegmentMappedTest, getCheckSum) {
+    const size_t old_cksum = segment_->getCheckSum();
+
+    // We assume the initial segment size is sufficiently larger than the
+    // page size.  We'll allocate memory of the page size, and increment all
+    // bytes in that region by one.  It will increase our simple checksum value
+    // by one, too.
+    const size_t page_sz = boost::interprocess::mapped_region::get_page_size();
+    uint8_t* cp0 = static_cast<uint8_t*>(segment_->allocate(page_sz));
+    for (uint8_t* cp = cp0; cp < cp0 + page_sz; ++cp) {
+        ++*cp;
+    }
+
+    EXPECT_EQ(old_cksum + 1, segment_->getCheckSum());
 }
 
 }
