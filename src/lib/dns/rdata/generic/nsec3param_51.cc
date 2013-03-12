@@ -49,24 +49,33 @@ struct NSEC3PARAMImpl {
 NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
-    istringstream iss(nsec3param_str);
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamText("NSEC3PARAM", nsec3param_str, iss, salt);
+    try {
+        std::istringstream ss(nsec3param_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    if (!iss.eof()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM (redundant text): "
-                  << nsec3param_str);
+        constructFromLexer(lexer);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for NSEC3PARAM: " << nsec3param_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct NSEC3PARAM from '" << nsec3param_str
+                  << "': " << ex.what());
     }
-
-    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
-                               params.iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(MasterLexer& lexer, const Name*, MasterLoader::Options,
                        MasterLoaderCallbacks&) :
     impl_(NULL)
 {
+    constructFromLexer(lexer);
+}
+
+void
+NSEC3PARAM::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamFromLexer("NSEC3PARAM", lexer, salt);
