@@ -252,14 +252,18 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     EXPECT_THROW(MemorySegmentMapped(mapped_file).shrinkToFit(),
                  isc::InvalidOperation);
 
+    void* ptr = segment_->allocate(sizeof(uint32_t));
+    segment_->setNamedAddress("test address", ptr);
+
     EXPECT_DEATH_IF_SUPPORTED({
-            void* ptr = segment_->allocate(sizeof(uint32_t));
-            segment_->setNamedAddress("test address", ptr);
             MemorySegmentMapped segment_ro(mapped_file);
             EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
             *static_cast<uint32_t*>(
                 segment_ro.getNamedAddress("test address")) = 0;
         }, "");
+
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).deallocate(ptr, 4),
+                 isc::InvalidOperation);
 }
 
 }
