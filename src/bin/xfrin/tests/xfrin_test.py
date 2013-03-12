@@ -1068,16 +1068,15 @@ class TestAXFR(TestXfrinConnection):
                           self.conn._handle_xfrin_responses)
 
     def test_ipver_str(self):
-        orig_socket = self.conn.socket
-        class FakeSocket(): pass
-        self.conn.socket = FakeSocket()
-        self.conn.socket.family = socket.AF_INET
-        self.assertEqual(self.conn._get_ipver_str(), 'v4')
-        self.conn.socket.family = socket.AF_INET6
-        self.assertEqual(self.conn._get_ipver_str(), 'v6')
-        self.conn.socket.family = None
-        self.assertIsNone(self.conn._get_ipver_str())
-        self.conn.socket = orig_socket
+        addrs = (((socket.AF_INET, socket.SOCK_STREAM), 'v4'),
+                 ((socket.AF_INET6, socket.SOCK_STREAM), 'v6'),
+                 ((socket.AF_UNIX, socket.SOCK_STREAM), None))
+        for (info, ver) in addrs:
+            c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
+                                    threading.Event(), info)
+            c.init_socket()
+            self.assertEqual(ver, c._get_ipver_str())
+            c.close()
 
     def test_soacheck(self):
         # we need to defer the creation until we know the QID, which is
