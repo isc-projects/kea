@@ -43,6 +43,11 @@ public:
     virtual ~MemorySegmentMapped();
 
     /// \brief Allocate/acquire a segment of memory.
+    ///
+    /// This version can throw \c MemorySegmentGrown.
+    ///
+    /// This method cannot be called if the segment object is created in the
+    /// read-only mode; in that case InvalidOperation will be thrown.
     virtual void* allocate(size_t size);
 
     /// \brief Deallocate/release a segment of memory.
@@ -59,22 +64,61 @@ public:
     /// since then; if it was thrown the corresponding address must have been
     /// adjusted some way; e.g., by re-fetching the latest mapped address
     /// via \c getNamedAddress().
+    ///
+    /// This method cannot be called if the segment object is created in the
+    /// read-only mode; in that case InvalidOperation will be thrown.
     virtual void deallocate(void* ptr, size_t size);
 
     virtual bool allMemoryDeallocated() const;
 
-    virtual void* getNamedAddress(const char* name);
-
-    /// \brief TBD
+    /// \brief Mapped segment version of setNamedAddress.
     ///
     /// This implementation detects if \c addr is invalid (see the base class
     /// description) and throws \c MemorySegmentError in that case.
+    ///
+    /// This version can actually return true.
+    ///
+    /// This method cannot be called if the segment object is created in the
+    /// read-only mode; in that case InvalidOperation will be thrown.
     virtual bool setNamedAddress(const char* name, void* addr);
 
+    /// \brief Mapped segment version of getNamedAddress.
+    ///
+    /// This version never throws.
+    virtual void* getNamedAddress(const char* name);
+
+    /// \brief Mapped segment version of clearNamedAddress.
+    ///
+    /// This version never throws.
     virtual bool clearNamedAddress(const char* name);
 
-    virtual void shrinkToFit();
+    /// \brief Shrink the underlying mapped segment to actually used size.
+    ///
+    /// It will be convenient when a large amount of memory is allocated
+    /// then deallocated from the segment in order to keep the resulting
+    /// segment a reasonable size.
+    ///
+    /// This method works best effort basis, and does not guarantee any
+    /// specific result.
+    ///
+    /// This method is generally expected to be failure-free, but it's still
+    /// possible to fail.  For example, the underlying file may not be writable
+    /// at the time of shrink attempt; it also tries to remap the shrunk
+    /// segment internally, and there's a small chance it could fail.
+    /// In such a case it throws \c MemorySegmentError.  If it's thrown the
+    /// segment is not usable any more.
+    ///
+    /// This method cannot be called if the segment object is created in the
+    /// read-only mode; in that case InvalidOperation will be thrown.
+    void shrinkToFit();
 
+    /// \brief Return the actual segment size.
+    ///
+    /// This is generally expected to be the file size to map.  It's
+    /// provided mainly for diagnose an testing purposes; the application
+    /// shouldn't rely on specific return values of this method.
+    ///
+    /// \throw None
     size_t getSize() const;
 
 private:

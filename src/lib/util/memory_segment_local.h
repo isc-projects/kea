@@ -70,9 +70,6 @@ public:
     virtual bool setNamedAddress(const char* name, void* addr);
     virtual bool clearNamedAddress(const char* name);
 
-    /// There's nothing this implementation can do for this.
-    virtual void shrinkToFit() {}
-
 private:
     // allocated_size_ can underflow, wrap around to max size_t (which
     // is unsigned). But because we only do a check against 0 and not a
