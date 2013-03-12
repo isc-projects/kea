@@ -51,11 +51,30 @@ public:
     /// \brief Destructor
     virtual ~MemorySegment() {}
 
-    /// \brief Allocate/acquire a segment of memory. The source of the
-    /// memory is dependent on the implementation used.
+    /// \brief Allocate/acquire a segment of memory.
     ///
-    /// Throws <code>std::bad_alloc</code> if the implementation cannot
-    /// allocate the requested storage.
+    /// The source of the memory is dependent on the implementation used.
+    ///
+    /// Depending on the implementation details, it may have to grow the
+    /// internal memory segment (again, in an implementation dependent way)
+    /// to allocate the required size of memory.  In that case the
+    /// implementation must grow the internal segment sufficiently so the
+    /// next call to allocate() for the same size will succeed and throw
+    /// an \c MemorySegmentGrown exception (not really allocating the memory
+    /// yet).
+    ///
+    /// An application that uses this memory segment abstraction to allocate
+    /// memory should expect this exception, and should normally catch it
+    /// at an appropriate layer (which may be immediately after a call to
+    /// \c allocate() or a bit higher layer).  It should interpret the
+    /// exception as any raw address that belongs to the segment may have
+    /// been remapped and must be re-fetched via an already established
+    /// named address using the \c getNamedAddress() method.
+    ///
+    /// \throw std::bad_alloc The implementation cannot allocate the
+    /// requested storage.
+    /// \throw MemorySegmentGrown The memory segment doesn't have sufficient
+    /// space for the requested size and has grown internally.
     ///
     /// \param size The size of the memory requested in bytes.
     /// \return Returns pointer to the memory allocated.
@@ -101,9 +120,29 @@ public:
     /// it's not an API requirement.  It's generally the caller's
     /// responsibility to meet the restriction.
     ///
+    /// There can be an existing association for the name; in that case the
+    /// association will be overridden with the newly given address.
+    ///
+    /// While normally unexpected, it's possible that available space in the
+    /// segment is not sufficient to allocate a space (if not already exist)
+    /// for the specified name in the segment.  In that case, if possible, the
+    /// implementation should try to grow the internal segment and retry
+    /// establishing the association.  The implementation should throw
+    /// std::bad_alloc if even reasonable attempts of retry still fail.
+    ///
+    /// This method should normally return false, but if the internal segment
+    /// had to grow to store the given name, it must return true.  The
+    /// application should interpret it just like the case of
+    /// \c MemorySegmentGrown exception thrown from the \c allocate() method.
+    ///
+    /// \throw std::bad_alloc Allocation of a segment space for the given name
+    /// failed.
+    ///
     /// \param name A C string to be associated with \c addr.
     /// \param addr A memory address returned by a prior call to \c allocate.
-    virtual void setNamedAddress(const char* name, void* addr) = 0;
+    /// \return true if the internal segment has grown to allocate space for
+    /// the name; false otherwise (see above).
+    virtual bool setNamedAddress(const char* name, void* addr) = 0;
 
     /// \brief Return the address in the segment that has the given name.
     ///
@@ -111,6 +150,12 @@ public:
     /// to the specified \c name.  The name and address must have been
     /// associated by a prior call to \c setNameAddress().  If no address
     /// associated with the given name is found, it returns NULL.
+    ///
+    /// This method should generally be considered exception free, but there
+    /// can be a small chance it throws, depending on the internal
+    /// implementation (e.g., if it converts the name to std::string), so the
+    /// API doesn't guarantee that property.  In general, if this method
+    /// throws it should be considered a fatal condition.
     ///
     /// \param name A C string of which the segment memory address is to be
     /// returned.
@@ -123,6 +168,11 @@ public:
     /// a corresponding segment address previously established by
     /// \c setNamedAddress().  If there is no association for the given name
     /// this method returns false; otherwise it returns true.
+    ///
+    /// See \c getNamedAddress() about exception consideration.
+    ///
+    /// \param name A C string of which the segment memory address is to be
+    /// deleted.
     virtual bool clearNamedAddress(const char* name) = 0;
 
     virtual void shrinkToFit() = 0;
@@ -132,3 +182,7 @@ public:
 } // namespace isc
 
 #endif // MEMORY_SEGMENT_H
+
+// Local Variables:
+// mode: c++
+// End:

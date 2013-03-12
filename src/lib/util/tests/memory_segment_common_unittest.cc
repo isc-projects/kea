@@ -32,7 +32,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     void* ptr32 = segment.allocate(sizeof(uint32_t));
     const uint32_t test_val = 42;
     std::memcpy(ptr32, &test_val, sizeof(test_val));
-    segment.setNamedAddress("test address", ptr32);
+    EXPECT_FALSE(segment.setNamedAddress("test address", ptr32));
 
     // we can now get it; the stored value should be intact.
     EXPECT_EQ(ptr32, segment.getNamedAddress("test address"));
@@ -42,7 +42,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     void* ptr16 = segment.allocate(sizeof(uint16_t));
     const uint16_t test_val16 = 4200;
     std::memcpy(ptr16, &test_val16, sizeof(test_val16));
-    segment.setNamedAddress("test address", ptr16);
+    EXPECT_FALSE(segment.setNamedAddress("test address", ptr16));
     EXPECT_EQ(ptr16, segment.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(ptr16));
 
@@ -54,7 +54,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_FALSE(segment.clearNamedAddress("test address"));
 
     // Setting NULL is okay.
-    segment.setNamedAddress("null address", 0);
+    EXPECT_FALSE(segment.setNamedAddress("null address", 0));
     EXPECT_EQ(static_cast<void*>(0), segment.getNamedAddress("null address"));
 
     // If the underlying implementation performs explicit check against
