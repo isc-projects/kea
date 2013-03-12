@@ -46,6 +46,21 @@ struct NSEC3PARAMImpl {
     const vector<uint8_t> salt_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NSEC3PARAM RDATA.  There
+/// can be extra space characters at the beginning or end of the
+/// text (which are simply ignored), but other extra text, including
+/// a new line, will make the construction fail with an exception.
+///
+/// The Hash Algorithm, Flags and Iterations fields must be within their
+/// valid ranges. The Salt field may contain "-" to indicate that the
+/// salt is of length 0. The Salt field must not contain any whitespace.
+///
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param nsec3param_str A string containing the RDATA to be created
 NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
@@ -67,6 +82,22 @@ NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     }
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NSEC3PARAM RDATA.
+///
+/// The Hash Algorithm, Flags and Iterations fields must be within their
+/// valid ranges. The Salt field may contain "-" to indicate that the
+/// salt is of length 0. The Salt field must not contain any whitespace.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
 NSEC3PARAM::NSEC3PARAM(MasterLexer& lexer, const Name*, MasterLoader::Options,
                        MasterLoaderCallbacks&) :
     impl_(NULL)
