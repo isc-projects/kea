@@ -93,9 +93,9 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
         isc_throw(InvalidRdataLength, "DNSKEY too short: " << rdata_len);
     }
 
-    uint16_t flags = buffer.readUint16();
-    uint16_t protocol = buffer.readUint8();
-    uint16_t algorithm = buffer.readUint8();
+    const uint16_t flags = buffer.readUint16();
+    const uint16_t protocol = buffer.readUint8();
+    const uint16_t algorithm = buffer.readUint8();
 
     rdata_len -= 4;
     vector<uint8_t> keydata(rdata_len);
@@ -234,11 +234,11 @@ DNSKEY::compare(const Rdata& other) const {
         return (impl_->algorithm_ < other_dnskey.impl_->algorithm_ ? -1 : 1);
     }
 
-    size_t this_len = impl_->keydata_.size();
-    size_t other_len = other_dnskey.impl_->keydata_.size();
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&impl_->keydata_[0], &other_dnskey.impl_->keydata_[0],
-                     cmplen);
+    const size_t this_len = impl_->keydata_.size();
+    const size_t other_len = other_dnskey.impl_->keydata_.size();
+    const size_t cmplen = min(this_len, other_len);
+    const int cmp = memcmp(&impl_->keydata_[0],
+                           &other_dnskey.impl_->keydata_[0], cmplen);
     if (cmp != 0) {
         return (cmp);
     } else {
@@ -249,7 +249,7 @@ DNSKEY::compare(const Rdata& other) const {
 uint16_t
 DNSKEY::getTag() const {
     if (impl_->algorithm_ == 1) {
-        int len = impl_->keydata_.size();
+        const int len = impl_->keydata_.size();
         return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);
     }
 
@@ -257,7 +257,7 @@ DNSKEY::getTag() const {
     ac += (impl_->protocol_ << 8);
     ac += impl_->algorithm_;
 
-    size_t size = impl_->keydata_.size();
+    const size_t size = impl_->keydata_.size();
     for (size_t i = 0; i < size; i ++) {
         ac += (i & 1) ? impl_->keydata_[i] : (impl_->keydata_[i] << 8);
     }
