@@ -1,3 +1,8 @@
+589.	[bug]		jelte
+	b10-cmdctl now automatically re-reads the user accounts file when
+	it is updated.
+	(Trac #2710, git 16e8be506f32de668699e6954f5de60ca9d14ddf)
+
 588.	[bug]*		jreed
 	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
 	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
