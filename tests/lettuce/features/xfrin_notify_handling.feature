@@ -22,19 +22,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    # check initial statistics
-    #
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    last bindctl output should not contain "example.org."
-    The statistics counters are 0 in category .Xfrout.zones._SERVER_
-
-    When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout
-
-    When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout
-
+    check initial statistics for Xfrout
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
@@ -43,12 +31,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test2 for Xfrin statistics
     #
-    # check initial statistics
-    #
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    last bindctl output should not contain "error"
-    The statistics counters are 0 in category .Xfrin.zones._SERVER_
-
+    check initial statistics for Xfrin
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
@@ -135,19 +118,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test5 for Xfrout statistics
     #
-    # check initial statistics
-    #
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    last bindctl output should not contain "example.org."
-    The statistics counters are 0 in category .Xfrout.zones._SERVER_
-
-    When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout
-
-    When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout
-
+    check initial statistics for Xfrout
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
@@ -156,12 +127,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test6 for Xfrin statistics
     #
-    # check initial statistics
-    #
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    last bindctl output should not contain "error"
-    The statistics counters are 0 in category .Xfrin.zones._SERVER_
-
+    check initial statistics for Xfrin
     #
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
