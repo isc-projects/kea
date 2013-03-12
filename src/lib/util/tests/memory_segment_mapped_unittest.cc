@@ -184,17 +184,30 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
 }
 
 TEST_F(MemorySegmentMappedTest, namedAddress) {
+    // common test cases
     isc::util::test::checkSegmentNamedAddress(*segment_, false);
 
     // Set it again and read it in the read-only mode.
     void* ptr16 = segment_->allocate(sizeof(uint16_t));
     const uint16_t test_val16 = 42000;
     std::memcpy(ptr16, &test_val16, sizeof(test_val16));
-    segment_->setNamedAddress("test address", ptr16);
+    EXPECT_FALSE(segment_->setNamedAddress("test address", ptr16));
     MemorySegmentMapped segment_ro(mapped_file);
     EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
                   segment_ro.getNamedAddress("test address")));
+
+    // try to set an unusually long name.  We re-create the file so the
+    // creating the name would cause allocation failure and trigger internal
+    // segment extension.
+    segment_.reset();
+    boost::interprocess::file_mapping::remove(mapped_file);
+    segment_.reset(new MemorySegmentMapped(mapped_file, true, 1024));
+    const std::string long_name(1025, 'x'); // definitely larger than segment
+    // setNamedAddress should return true, indicating segment has grown.
+    EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), 0));
+    EXPECT_EQ(static_cast<void*>(0),
+              segment_->getNamedAddress(long_name.c_str()));
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {

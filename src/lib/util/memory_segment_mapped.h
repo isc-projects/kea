@@ -69,7 +69,7 @@ public:
     ///
     /// This implementation detects if \c addr is invalid (see the base class
     /// description) and throws \c MemorySegmentError in that case.
-    virtual void setNamedAddress(const char* name, void* addr);
+    virtual bool setNamedAddress(const char* name, void* addr);
 
     virtual bool clearNamedAddress(const char* name);
 

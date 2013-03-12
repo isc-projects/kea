@@ -60,9 +60,10 @@ MemorySegmentLocal::getNamedAddress(const char* name) {
     return (0);
 }
 
-void
+bool
 MemorySegmentLocal::setNamedAddress(const char* name, void* addr) {
     named_addrs_[name] = addr;
+    return (false);
 }
 
 bool
