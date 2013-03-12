@@ -46,6 +46,33 @@ struct MemorySegmentMapped::Impl {
                    new managed_mapped_file(open_only, filename.c_str()))
     {}
 
+    // Internal helper to grow the underlying mapped segment.
+    void growSegment() {
+        // We first need to unmap it before calling grow().
+        const size_t prev_size = base_sgmt_->get_size();
+        base_sgmt_.reset();
+
+        const size_t new_size = prev_size * 2;
+        assert(new_size != 0); // assume grow fails before size overflow
+
+        if (!managed_mapped_file::grow(filename_.c_str(),
+                                       new_size - prev_size))
+        {
+            throw std::bad_alloc();
+        }
+
+        try {
+            // Remap the grown file; this should succeed, but it's not 100%
+            // guaranteed.  If it fails we treat it as if we fail to create
+            // the new segment.
+            base_sgmt_.reset(new managed_mapped_file(open_only,
+                                                     filename_.c_str()));
+        } catch (const boost::interprocess::interprocess_exception& ex) {
+            throw std::bad_alloc();
+        }
+    }
+
+    // remember if the segment is opened read-only or not
     const bool read_only_;
 
     // mapped file; remember it in case we need to grow it.
@@ -107,28 +134,7 @@ MemorySegmentMapped::allocate(size_t size) {
     // Grow the mapped segment doubling the size until we have sufficient
     // free memory in the revised segment for the requested size.
     do {
-        // We first need to unmap it before calling grow().
-        const size_t prev_size = impl_->base_sgmt_->get_size();
-        impl_->base_sgmt_.reset();
-
-        const size_t new_size = prev_size * 2;
-        assert(new_size != 0); // assume grow fails before size overflow
-
-        if (!managed_mapped_file::grow(impl_->filename_.c_str(),
-                                       new_size - prev_size))
-        {
-            throw std::bad_alloc();
-        }
-
-        try {
-            // Remap the grown file; this should succeed, but it's not 100%
-            // guaranteed.  If it fails we treat it as if we fail to create
-            // the new segment.
-            impl_->base_sgmt_.reset(
-                new managed_mapped_file(open_only, impl_->filename_.c_str()));
-        } catch (const boost::interprocess::interprocess_exception& ex) {
-            throw std::bad_alloc();
-        }
+        impl_->growSegment();
     } while (impl_->base_sgmt_->get_free_memory() < size);
     isc_throw(MemorySegmentGrown, "mapped memory segment grown, size: "
               << impl_->base_sgmt_->get_size() << ", free size: "
@@ -161,7 +167,7 @@ MemorySegmentMapped::getNamedAddress(const char* name) {
     return (0);
 }
 
-void
+bool
 MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
     if (impl_->read_only_) {
         isc_throw(InvalidOperation, "setNamedAddress on read-only segment");
@@ -170,9 +176,20 @@ MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
     if (addr && !impl_->base_sgmt_->belongs_to_segment(addr)) {
         isc_throw(MemorySegmentError, "out of segment address: " << addr);
     }
-    offset_ptr<void>* storage =
-        impl_->base_sgmt_->find_or_construct<offset_ptr<void> >(name)();
-    *storage = addr;
+
+    bool grown = false;
+    while (true) {
+        offset_ptr<void>* storage =
+            impl_->base_sgmt_->find_or_construct<offset_ptr<void> >(
+                name, std::nothrow)();
+        if (storage) {
+            *storage = addr;
+            return (grown);
+        }
+
+        impl_->growSegment();
+        grown = true;
+    }
 }
 
 bool

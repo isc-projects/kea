@@ -67,7 +67,7 @@ public:
     virtual bool allMemoryDeallocated() const;
 
     virtual void* getNamedAddress(const char* name);
-    virtual void setNamedAddress(const char* name, void* addr);
+    virtual bool setNamedAddress(const char* name, void* addr);
     virtual bool clearNamedAddress(const char* name);
 
     /// There's nothing this implementation can do for this.
@@ -86,3 +86,7 @@ private:
 } // namespace isc
 
 #endif // MEMORY_SEGMENT_LOCAL_H
+
+// Local Variables:
+// mode: c++
+// End:
