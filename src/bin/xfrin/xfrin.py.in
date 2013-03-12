@@ -957,7 +957,7 @@ class XfrinConnection(asyncore.dispatcher):
                                        'latest_' + req_str.lower() + '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
-            # count (A|X)IXFR requests for statistics
+            # count AXFR/IXFR requests for statistics
             if self._get_ipver_str():
                 self._counters.inc('zones', self._zone_name.to_text(),
                                    req_str.lower() + 'req' +
