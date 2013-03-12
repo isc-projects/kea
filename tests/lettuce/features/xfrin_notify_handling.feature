@@ -225,13 +225,13 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
     The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name              | min_value |
-      | _SERVER_.soaoutv6      |         1 |
-      | _SERVER_.axfrreqv6     |         1 |
-      | _SERVER_.xfrfail       |         1 |
-      | example.org..soaoutv6  |         1 |
-      | example.org..axfrreqv6 |         1 |
-      | example.org..xfrfail   |         1 |
+      | item_name              | min_value | max_value |
+      | _SERVER_.soaoutv6      |         1 |         3 |
+      | _SERVER_.axfrreqv6     |         1 |         3 |
+      | _SERVER_.xfrfail       |         1 |         3 |
+      | example.org..soaoutv6  |         1 |         3 |
+      | example.org..axfrreqv6 |         1 |         3 |
+      | example.org..xfrfail   |         1 |         3 |
 
     #
     # Test for unreachable slave
@@ -264,9 +264,9 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.zones except for the following items
-      | item_name                | min_value |
-      | _SERVER_.notifyoutv6     |         1 |
-      | example.org..notifyoutv6 |         1 |
+      | item_name                | min_value | max_value |
+      | _SERVER_.notifyoutv6     |         1 |	       5 |
+      | example.org..notifyoutv6 |         1 |	       5 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
