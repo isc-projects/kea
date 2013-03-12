@@ -63,6 +63,18 @@ NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
                                params.iterations, salt);
 }
 
+NSEC3PARAM::NSEC3PARAM(MasterLexer& lexer, const Name*, MasterLoader::Options,
+                       MasterLoaderCallbacks&) :
+    impl_(NULL)
+{
+    vector<uint8_t> salt;
+    const ParseNSEC3ParamResult params =
+        parseNSEC3ParamFromLexer("NSEC3PARAM", lexer, salt);
+
+    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt);
+}
+
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
