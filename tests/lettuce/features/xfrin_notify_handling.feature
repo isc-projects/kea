@@ -27,26 +27,18 @@ Feature: Xfrin incoming notify handling
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     last bindctl output should not contain "error"
     last bindctl output should not contain "example.org."
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
+    The statistics counters are 0 in category .Xfrout.zones._SERVER_
 
     When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter ixfr_running should be 0
+    The statistics counters are 0 in category .Xfrout
 
     When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter axfr_running should be 0
+    The statistics counters are 0 in category .Xfrout
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be between 0 and 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | min_value | max_value |
+      | open      |         0 |         1 |
 
     #
     # Test2 for Xfrin statistics
@@ -55,16 +47,7 @@ Feature: Xfrin incoming notify handling
     #
     When I query statistics zones of bind10 module Xfrin with cmdctl
     last bindctl output should not contain "error"
-    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
-    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
-    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
-    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
+    The statistics counters are 0 in category .Xfrin.zones._SERVER_
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -91,24 +74,18 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 5
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone example.org. should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 1
-    Then the statistics counter xfrreqdone for the zone example.org. should be 1
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value |
+      | _SERVER_.notifyoutv6     |          5 |
+      | _SERVER_.xfrreqdone      |          1 |
+      | example.org..notifyoutv6 |          5 |
+      | example.org..xfrreqdone  |          1 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 1
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
 
     #
     # Test4 for Xfrin statistics
@@ -123,26 +100,16 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter soaoutv4 for the zone example.org. should be 0
-    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 1
-    Then the statistics counter soaoutv6 for the zone example.org. should be 1
-    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv4 for the zone example.org. should be 0
-    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 1
-    Then the statistics counter axfrreqv6 for the zone example.org. should be 1
-    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv4 for the zone example.org. should be 0
-    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv6 for the zone example.org. should be 0
-    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 1
-    Then the statistics counter xfrsuccess for the zone example.org. should be 1
-    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
-    Then the statistics counter xfrfail for the zone example.org. should be 0
-    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
-    Then the statistics counter latest_ixfr_duration for the zone example.org. should be 0.0
-    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be greater than 0.0
-    Then the statistics counter latest_axfr_duration for the zone example.org. should be greater than 0.0
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name                         | item_value | min_value |
+      | _SERVER_.soaoutv6                 |          1 |           |
+      | _SERVER_.axfrreqv6                |          1 |           |
+      | _SERVER_.xfrsuccess               |          1 |           |
+      | _SERVER_.latest_axfr_duration     |            |       0.0 |
+      | example.org..soaoutv6             |          1 |           |
+      | example.org..axfrreqv6            |          1 |           |
+      | example.org..xfrsuccess           |          1 |           |
+      | example.org..latest_axfr_duration |            |       0.0 |
 
     #
     # Test for Xfr request rejected
@@ -173,26 +140,18 @@ Feature: Xfrin incoming notify handling
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     last bindctl output should not contain "error"
     last bindctl output should not contain "example.org."
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
+    The statistics counters are 0 in category .Xfrout.zones._SERVER_
 
     When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter ixfr_running should be 0
+    The statistics counters are 0 in category .Xfrout
 
     When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter axfr_running should be 0
+    The statistics counters are 0 in category .Xfrout
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be between 0 and 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | min_value | max_value |
+      | open      |         0 |         1 |
 
     #
     # Test6 for Xfrin statistics
@@ -201,16 +160,7 @@ Feature: Xfrin incoming notify handling
     #
     When I query statistics zones of bind10 module Xfrin with cmdctl
     last bindctl output should not contain "error"
-    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
-    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
-    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
-    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
+    The statistics counters are 0 in category .Xfrin.zones._SERVER_
 
     #
     # set transfer_acl rejection
@@ -248,26 +198,18 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 5
-    # The counts of rejection would be between 1 and 2. They are not
-    # fixed. It would depend on timing or the platform.
-    Then the statistics counter xfrrej for the zone _SERVER_ should be greater than 0
-    Then the statistics counter xfrrej for the zone example.org. should be greater than 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone example.org. should be 0
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value | min_value |
+      | _SERVER_.notifyoutv6     |          5 |           |
+      | _SERVER_.xfrrej          |            |         1 |
+      | example.org..notifyoutv6 |          5 |           |
+      | example.org..xfrrej      |            |         1 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 1
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
 
     #
     # Test8 for Xfrin statistics
@@ -282,26 +224,14 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter soaoutv4 for the zone example.org. should be 0
-    Then the statistics counter soaoutv6 for the zone _SERVER_ should be greater than 0
-    Then the statistics counter soaoutv6 for the zone example.org. should be greater than 0
-    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter axfrreqv4 for the zone example.org. should be 0
-    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be greater than 0
-    Then the statistics counter axfrreqv6 for the zone example.org. should be greater than 0
-    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv4 for the zone example.org. should be 0
-    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
-    Then the statistics counter ixfrreqv6 for the zone example.org. should be 0
-    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
-    Then the statistics counter xfrsuccess for the zone example.org. should be 0
-    Then the statistics counter xfrfail for the zone _SERVER_ should be greater than 0
-    Then the statistics counter xfrfail for the zone example.org. should be greater than 0
-    Then the statistics counter latest_ixfr_duration for the zone _SERVER_ should be 0.0
-    Then the statistics counter latest_ixfr_duration for the zone example.org. should be 0.0
-    Then the statistics counter latest_axfr_duration for the zone _SERVER_ should be 0.0
-    Then the statistics counter latest_axfr_duration for the zone example.org. should be 0.0
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name              | min_value |
+      | _SERVER_.soaoutv6      |         1 |
+      | _SERVER_.axfrreqv6     |         1 |
+      | _SERVER_.xfrfail       |         1 |
+      | example.org..soaoutv6  |         1 |
+      | example.org..axfrreqv6 |         1 |
+      | example.org..xfrfail   |         1 |
 
     #
     # Test for unreachable slave
@@ -333,21 +263,12 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be greater than 0
-    Then the statistics counter notifyoutv6 for the zone example.org. should be greater than 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone example.org. should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone example.org. should be 0
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | min_value |
+      | _SERVER_.notifyoutv6     |         1 |
+      | example.org..notifyoutv6 |         1 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
