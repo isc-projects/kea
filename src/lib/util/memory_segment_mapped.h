@@ -91,7 +91,12 @@ public:
     MemorySegmentMapped(const std::string& filename, bool create,
                         size_t initial_size = INITIAL_SIZE);
 
-    /// \brief Destructor
+    /// \brief Destructor.
+    ///
+    /// If the object was constructed in the read-write mode and the underlying
+    /// memory segment wasn't broken due to an exceptional event, the
+    /// destructor ensures the content of the mapped memory is written back to
+    /// the corresponding file.
     virtual ~MemorySegmentMapped();
 
     /// \brief Allocate/acquire a segment of memory.
