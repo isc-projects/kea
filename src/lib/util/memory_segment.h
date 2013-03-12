@@ -82,9 +82,17 @@ public:
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const = 0;
 
-    virtual void* getNamedAddress(const char* name) = 0;
-
-    /// \brief TBD
+    /// \brief Associate specified address in the segment with a given name.
+    ///
+    /// This method establishes an association between the given name and
+    /// the address in an implementation specific way.  The stored address
+    /// is retrieved by the name later by calling \c getNamedAddress().
+    /// If the underlying memory segment is sharable by multiple processes,
+    /// the implementation must ensure the portability of the association;
+    /// if a process gives an address in the shared segment a name, another
+    /// process that shares the same segment should be able to retrieve the
+    /// corresponding address by that name (in such cases the real address
+    /// may be different between these two processes).
     ///
     /// \c addr must be 0 (NULL) or an address that belongs to this segment.
     /// The latter case means it must be the return value of a previous call
@@ -92,7 +100,29 @@ public:
     /// violation of this restriction and signal it with an exception, but
     /// it's not an API requirement.  It's generally the caller's
     /// responsibility to meet the restriction.
+    ///
+    /// \param name A C string to be associated with \c addr.
+    /// \param addr A memory address returned by a prior call to \c allocate.
     virtual void setNamedAddress(const char* name, void* addr) = 0;
+
+    /// \brief Return the address in the segment that has the given name.
+    ///
+    /// This method returns the memory address in the segment corresponding
+    /// to the specified \c name.  The name and address must have been
+    /// associated by a prior call to \c setNameAddress().  If no address
+    /// associated with the given name is found, it returns NULL.
+    ///
+    /// \param name A C string of which the segment memory address is to be
+    /// returned.
+    /// \return The address associated with the name, or NULL if not found.
+    virtual void* getNamedAddress(const char* name) = 0;
+
+    /// \brief Delete a name previously associated with a segment address.
+    ///
+    /// This method deletes the association of the given \c name to
+    /// a corresponding segment address previously established by
+    /// \c setNamedAddress().  If there is no association for the given name
+    /// this method returns false; otherwise it returns true.
     virtual bool clearNamedAddress(const char* name) = 0;
 
     virtual void shrinkToFit() = 0;
