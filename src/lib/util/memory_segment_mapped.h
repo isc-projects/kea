@@ -121,6 +121,18 @@ public:
     /// \throw None
     size_t getSize() const;
 
+    /// \brief Calculate a checksum over the memory segment.
+    ///
+    /// This method goes over all pages of the underlying mapped memory
+    /// segment, and returns the sum of the value of the first byte of each
+    /// page (ignoring any possible overflow).  It only proves weak integrity
+    /// of the file contents, but can run fast enough and will ensure all
+    /// pages are actually on memory.  The latter property will be useful
+    /// if the application cannot allow the initial page fault overhead.
+    ///
+    /// \throw None
+    size_t getCheckSum() const;
+
 private:
     struct Impl;
     Impl* impl_;
