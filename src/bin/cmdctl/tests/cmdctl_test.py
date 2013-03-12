@@ -99,7 +99,7 @@ class TmpTextFile:
 
     def __enter__(self):
         with open(self.__path, 'w') as f:
-            f.write("\n".join(self.__contents))
+            f.write("\n".join(self.__contents) + "\n")
 
     def __exit__(self, type, value, traceback):
         os.unlink(self.__path)
