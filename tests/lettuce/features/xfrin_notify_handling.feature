@@ -116,7 +116,7 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test5 for Xfrout statistics
+    # Test1 for Xfrout statistics
     #
     check initial statistics for Xfrout
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
@@ -125,7 +125,7 @@ Feature: Xfrin incoming notify handling
       | open      |         0 |         1 |
 
     #
-    # Test6 for Xfrin statistics
+    # Test2 for Xfrin statistics
     #
     check initial statistics for Xfrin
     #
@@ -152,7 +152,7 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test7 for Xfrout statistics
+    # Test3 for Xfrout statistics
     #
     # check statistics change
     #
@@ -178,7 +178,7 @@ Feature: Xfrin incoming notify handling
       | accept    |          1 |
 
     #
-    # Test8 for Xfrin statistics
+    # Test4 for Xfrin statistics
     #
     # check statistics change
     #
@@ -217,7 +217,7 @@ Feature: Xfrin incoming notify handling
     Then wait for new master stderr message NOTIFY_OUT_TIMEOUT
 
     #
-    # Test9 for Xfrout statistics
+    # Test1 for Xfrout statistics
     #
     # check statistics change
     #
