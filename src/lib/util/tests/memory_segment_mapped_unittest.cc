@@ -28,6 +28,8 @@
 #include <cstring>
 #include <limits>
 #include <stdexcept>
+#include <fstream>
+#include <string>
 
 using namespace isc::util;
 using boost::scoped_ptr;
@@ -111,6 +113,19 @@ TEST_F(MemorySegmentMappedTest, openFail) {
     // Likewise.  read-write mode but creation is suppressed.
     EXPECT_THROW(MemorySegmentMapped(TEST_DATA_BUILDDIR "/nosuchfile.mapped",
                                      false),
+                 MemorySegmentOpenError);
+
+    // Close the segment, break the file with bogus data, and try to reopen.
+    // It should fail with exception whether in the read-only or read-write,
+    // or "create if not exist" mode.
+    segment_.reset();
+    std::ofstream ofs(mapped_file, std::ios::trunc);
+    ofs << std::string(1024, 'x');
+    ofs.close();
+    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file), MemorySegmentOpenError);
+    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, false),
+                 MemorySegmentOpenError);
+    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, true),
                  MemorySegmentOpenError);
 }
 
