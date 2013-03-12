@@ -41,8 +41,12 @@ using namespace isc::dns::rdata;
 namespace {
 class Rdata_NSEC3PARAM_Test : public RdataTest {
 public:
-    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 1 1 D399EAAB") {}
+    Rdata_NSEC3PARAM_Test() :
+        nsec3param_txt("1 1 1 D399EAAB"),
+        nsec3param_nosalt_txt("1 1 1 -")
+    {}
     const string nsec3param_txt;
+    const string nsec3param_nosalt_txt;
 };
 
 TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
@@ -51,8 +55,8 @@ TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
     EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getFlags());
     // (salt is checked in the toText test)
 
-    // With an empty salt
-    EXPECT_EQ(0, generic::NSEC3PARAM("1 0 0 -").getSalt().size());
+    // Empty salt is okay.
+    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_nosalt_txt).getSalt().size());
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toText) {
@@ -63,9 +67,32 @@ TEST_F(Rdata_NSEC3PARAM_Test, toText) {
     // whitespace within the salt field, but any whitespace afterwards
     // should be fine.
     EXPECT_NO_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "));
+
+    // Hash algorithm in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("255 1 1 D399EAAB"));
+
+    // Flags in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 255 1 D399EAAB"));
+
+    // Iterations in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 1 65535 D399EAAB"));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText) {
+    // Salt is missing.
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1"), InvalidRdataText);
+
+    // Salt has whitespace within.
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 D399 EAAB"), InvalidRdataText);
+
+    // Hash algorithm out of range.
+    EXPECT_THROW(generic::NSEC3PARAM("256 1 1 D399EAAB"), InvalidRdataText);
+
+    // Flags out of range.
+    EXPECT_THROW(generic::NSEC3PARAM("1 256 1 D399EAAB"), InvalidRdataText);
+
+    // Iterations out of range.
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 65536 D399EAAB"), InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
@@ -93,6 +120,31 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_nsec3param.compare(
         *test::createRdataUsingLexer(RRType::NSEC3PARAM(), RRClass::IN(),
                                      nsec3param_txt)));
+
+    // empty salt is also okay.
+    const generic::NSEC3PARAM rdata_nosalt_nsec3param(nsec3param_nosalt_txt);
+    EXPECT_EQ(0, rdata_nosalt_nsec3param.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3PARAM(), RRClass::IN(),
+                                     nsec3param_nosalt_txt)));
+
+    // Exceptions cause NULL to be returned.
+
+    // hash algorithm out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3PARAM(),
+                                             RRClass::IN(),
+                                             "256 1 1 D399EAAB"));
+    // flags out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3PARAM(),
+                                             RRClass::IN(),
+                                             "1 256 1 D399EAAB"));
+    // iterations out of range
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3PARAM(),
+                                             RRClass::IN(),
+                                             "1 1 65536 D399EAAB"));
+    // space is not allowed in salt
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3PARAM(),
+                                             RRClass::IN(),
+                                             "1 1 1 D399 EAAB"));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
