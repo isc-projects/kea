@@ -470,12 +470,23 @@ def check_statistics_items(step, category, has_except_for):
         # fetch step tables in the scnario as hashes
         for item in step.hashes:
             name = category+'.'+item['item_name']
-            value = item['item_value']
             assert stats.has_key(name), \
                 'Statistics item %s was not found' % (name)
             found = stats[name]
-            assert int(found) == int(value), \
-                'Statistics item %s has unexpected value %s (expect %s)' % \
+            if 'item_value' in item and item['item_value']:
+                value = item['item_value']
+                assert int(found) == int(value), \
+                    'Statistics item %s has unexpected value %s (expect %s)' % \
+                    (name, found, value)
+            if 'min_value' in item and item['min_value']:
+                value = item['min_value']
+                assert float(value) <= float(found), \
+                    'Statistics item %s has unexpected value %s (expect %s or greater than)' % \
+                    (name, found, value)
+            if 'max_value' in item and item['max_value']:
+                value = item['max_value']
+                assert float(found) <= float(value), \
+                    'Statistics item %s has unexpected value %s (expect %s or less than)' % \
                     (name, found, value)
             del(stats[name])
     for name, found in stats.items():
