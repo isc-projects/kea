@@ -174,8 +174,6 @@ public:
     /// \param name A C string of which the segment memory address is to be
     /// deleted.
     virtual bool clearNamedAddress(const char* name) = 0;
-
-    virtual void shrinkToFit() = 0;
 };
 
 } // namespace util
