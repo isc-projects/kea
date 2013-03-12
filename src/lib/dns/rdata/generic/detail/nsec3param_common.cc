@@ -60,8 +60,7 @@ parseNSEC3ParamFromLexer(const char* const rrtype_name,
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (iterations > 0xffff) {
         isc_throw(InvalidRdataText, rrtype_name <<
-                  " iterations out of range: " <<
-            iterations);
+                  " iterations out of range: " << iterations);
     }
 
     const string salthex =
