@@ -22,18 +22,26 @@
 namespace isc {
 namespace util {
 
+/// \brief Exception that can be thrown on constructing a MemorySegment
+/// object.
 class MemorySegmentOpenError : public Exception {
 public:
     MemorySegmentOpenError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+/// \brief Exception that is thrown when allocating a space in a MemorySegment
+/// results in growing the underlying segment.
+///
+/// See MemorySegment::allocate() for details.
 class MemorySegmentGrown : public Exception {
 public:
     MemorySegmentGrown(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+/// \brief General error that can be thrown by a MemorySegment
+/// implementation.
 class MemorySegmentError : public Exception {
 public:
     MemorySegmentError(const char* file, size_t line, const char* what) :
@@ -46,6 +54,10 @@ public:
 /// segments. This is an abstract class and a real
 /// implementation such as MemorySegmentLocal should be used
 /// in code.
+///
+/// It's intended to provide a unified interface whether the underlying
+/// memory is local to a specific process or is sharable by multiple
+/// processes.
 class MemorySegment {
 public:
     /// \brief Destructor
@@ -97,7 +109,8 @@ public:
 
     /// \brief Check if all allocated memory was deallocated.
     ///
-    /// \return Returns <code>true</code> if all allocated memory was
+    /// \return Returns <code>true</code> if all allocated memory (including
+    /// names associated by memory addresses by \c setNamedAddress()) was
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const = 0;
 

@@ -66,8 +66,22 @@ public:
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const;
 
+    /// \brief Local segment version of getNamedAddress.
+    ///
+    /// There's a small chance this method could throw std::bad_alloc.
+    /// It should be considered a fatal error.
     virtual void* getNamedAddress(const char* name);
+
+    /// \brief Local segment version of setNamedAddress.
+    ///
+    /// This version does not validate the given address to see whether it
+    /// belongs to this segment.
     virtual bool setNamedAddress(const char* name, void* addr);
+
+    /// \brief Local segment version of clearNamedAddress.
+    ///
+    /// There's a small chance this method could throw std::bad_alloc.
+    /// It should be considered a fatal error.
     virtual bool clearNamedAddress(const char* name);
 
 private:
