@@ -711,13 +711,15 @@ class TestXfrinConnection(unittest.TestCase):
 
     '''
 
+    master_addrinfo = TEST_MASTER_IPV4_ADDRINFO
+
     def setUp(self):
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
                                         TEST_RRCLASS, None, threading.Event(),
-                                        TEST_MASTER_IPV4_ADDRINFO)
+                                        self.master_addrinfo)
         self.conn.init_socket()
         self.soa_response_params = {
             'questions': [example_soa_question],
@@ -1660,6 +1662,74 @@ class TestAXFR(TestXfrinConnection):
         self.soa_response_params['bad_qid'] = True
         self.conn.response_generator = self._create_soa_response_data
         self.assertEqual(self.conn.do_xfrin(True), XFRIN_FAIL)
+
+class TestXfrinConnectionV6(TestXfrinConnection):
+    '''Test of TestXfrinConnection for IPv6'''
+    master_addrinfo = TEST_MASTER_IPV6_ADDRINFO
+
+class TestAXFRV6(TestXfrinConnectionV6):
+    def setUp(self):
+        super().setUp()
+        XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def tearDown(self):
+        # clear all statistics counters after each test
+        self.conn._counters.clear_all()
+        super().tearDown()
+
+    def test_soacheck(self):
+        # we need to defer the creation until we know the QID, which is
+        # determined in _check_soa_serial(), so we use response_generator.
+        self.conn.response_generator = self._create_soa_response_data
+        # check the statistics counters
+        name2count = (('soaoutv4', 0),
+                      ('soaoutv6', 1))
+        for (n, c) in name2count:
+            self.assertRaises(isc.cc.data.DataNotFoundError,
+                              self.conn._counters.get, 'zones',
+                              TEST_ZONE_NAME_STR, n)
+        self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        for (n, c) in name2count:
+            self.assertEqual(c, self.conn._counters.get('zones',
+                                                        TEST_ZONE_NAME_STR,
+                                                        n))
+
+    def test_do_xfrin(self):
+        self.conn.response_generator = self._create_normal_response_data
+        # check the statistics counters
+        name2count = (('axfrreqv4', 0),
+                      ('axfrreqv6', 1),
+                      ('ixfrreqv4', 0),
+                      ('ixfrreqv6', 0),
+                      ('xfrsuccess', 1),
+                      ('latest_axfr_duration', 0.0))
+        for (n, c) in name2count:
+            self.assertRaises(isc.cc.data.DataNotFoundError,
+                              self.conn._counters.get, 'zones',
+                              TEST_ZONE_NAME_STR, n)
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self.assertFalse(self.conn._datasrc_client._journaling_enabled)
+
+        self.assertEqual(2, self.conn._transfer_stats.message_count)
+        self.assertEqual(2, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(177, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+        for (n, c) in name2count:
+            if n == 'latest_axfr_duration':
+                self.assertGreaterEqual(
+                    self.conn._counters.get('zones',
+                                            TEST_ZONE_NAME_STR,
+                                            n),
+                    c)
+            else:
+                self.assertEqual(
+                    c,
+                    self.conn._counters.get('zones',
+                                            TEST_ZONE_NAME_STR,
+                                            n))
 
 class TestIXFRResponse(TestXfrinConnection):
     def setUp(self):
