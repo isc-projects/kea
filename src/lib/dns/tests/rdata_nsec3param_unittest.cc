@@ -58,12 +58,14 @@ TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
 TEST_F(Rdata_NSEC3PARAM_Test, toText) {
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(nsec3param_txt, rdata_nsec3param.toText());
+
+    // Garbage space at the end should be ok. RFC5155 only forbids
+    // whitespace within the salt field, but any whitespace afterwards
+    // should be fine.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText) {
-    // garbage space at the end
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "),
-                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
