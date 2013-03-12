@@ -1719,11 +1719,12 @@ class TestAXFRV6(TestXfrinConnectionV6):
         self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
         for (n, c) in name2count:
             if n == 'latest_axfr_duration':
-                self.assertGreaterEqual(
+                self.assertAlmostEqual(
+                    c,
                     self.conn._counters.get('zones',
                                             TEST_ZONE_NAME_STR,
                                             n),
-                    c)
+                    delta=1.0)
             else:
                 self.assertEqual(
                     c,
