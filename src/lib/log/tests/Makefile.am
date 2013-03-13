@@ -71,6 +71,7 @@ AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
 AM_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+AM_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 AM_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
