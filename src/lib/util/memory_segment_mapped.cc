@@ -24,27 +24,34 @@
 #include <string>
 #include <new>
 
-using boost::interprocess::managed_mapped_file;
-using boost::interprocess::open_or_create;
-using boost::interprocess::open_only;
-using boost::interprocess::open_read_only;
-using boost::interprocess::offset_ptr;
+using namespace boost::interprocess;
 
 namespace isc {
 namespace util {
 
+// We customize managed_mapped_file to make it completely lock free.  In our
+// usage the application (or the system of applications) is expected to ensure
+// there's at most one writer process or concurrent writing the shared memory
+// segment is protected at a higher level.  Using the null mutex is mainly for
+// eliminating unnecessary dependency; the default version would require
+// (probably depending on the system) Pthread library that is actually not
+// needed and could cause various build time troubles.
+typedef basic_managed_mapped_file<char,
+                                  rbtree_best_fit<null_mutex_family>,
+                                  iset_index> BaseSegment;
+
 struct MemorySegmentMapped::Impl {
     Impl(const std::string& filename, size_t initial_size) :
         read_only_(false), filename_(filename),
-        base_sgmt_(new managed_mapped_file(open_or_create, filename.c_str(),
-                                           initial_size))
+        base_sgmt_(new BaseSegment(open_or_create, filename.c_str(),
+                                   initial_size))
     {}
 
     Impl(const std::string& filename, bool read_only) :
         read_only_(read_only), filename_(filename),
         base_sgmt_(read_only ?
-                   new managed_mapped_file(open_read_only, filename.c_str()) :
-                   new managed_mapped_file(open_only, filename.c_str()))
+                   new BaseSegment(open_read_only, filename.c_str()) :
+                   new BaseSegment(open_only, filename.c_str()))
     {}
 
     // Internal helper to grow the underlying mapped segment.
@@ -57,8 +64,7 @@ struct MemorySegmentMapped::Impl {
         const size_t new_size = prev_size * 2;
         assert(new_size != 0); // assume grow fails before size overflow
 
-        if (!managed_mapped_file::grow(filename_.c_str(),
-                                       new_size - prev_size))
+        if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size))
         {
             throw std::bad_alloc();
         }
@@ -67,8 +73,7 @@ struct MemorySegmentMapped::Impl {
             // Remap the grown file; this should succeed, but it's not 100%
             // guaranteed.  If it fails we treat it as if we fail to create
             // the new segment.
-            base_sgmt_.reset(new managed_mapped_file(open_only,
-                                                     filename_.c_str()));
+            base_sgmt_.reset(new BaseSegment(open_only, filename_.c_str()));
         } catch (const boost::interprocess::interprocess_exception& ex) {
             throw std::bad_alloc();
         }
@@ -81,7 +86,7 @@ struct MemorySegmentMapped::Impl {
     const std::string filename_;
 
     // actual Boost implementation of mapped segment.
-    boost::scoped_ptr<managed_mapped_file> base_sgmt_;
+    boost::scoped_ptr<BaseSegment> base_sgmt_;
 };
 
 MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
@@ -224,13 +229,13 @@ MemorySegmentMapped::shrinkToFit() {
     }
 
     impl_->base_sgmt_.reset();
-    managed_mapped_file::shrink_to_fit(impl_->filename_.c_str());
+    BaseSegment::shrink_to_fit(impl_->filename_.c_str());
     try {
         // Remap the grown file; this should succeed, but it's not 100%
         // guaranteed.  If it fails we treat it as if we fail to create
         // the new segment.
         impl_->base_sgmt_.reset(
-            new managed_mapped_file(open_only, impl_->filename_.c_str()));
+            new BaseSegment(open_only, impl_->filename_.c_str()));
     } catch (const boost::interprocess::interprocess_exception& ex) {
         isc_throw(MemorySegmentError,
                   "remap after shrink failed; segment is now unusable");
