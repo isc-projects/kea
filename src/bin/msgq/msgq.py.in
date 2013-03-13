@@ -42,7 +42,6 @@ import isc.cc
 isc.util.process.rename()
 
 isc.log.init("b10-msgq", buffer=True)
-isc.log.resetUnitTestRootLogger()
 # Logger that is used in the actual msgq handling - startup, shutdown and the
 # poller thread.
 logger = isc.log.Logger("msgq")
