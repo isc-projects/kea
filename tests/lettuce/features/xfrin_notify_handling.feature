@@ -85,11 +85,12 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
     Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter notifyoutv4 for the zone example.org. should be 0
     Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
@@ -116,11 +117,12 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    last bindctl output should not contain "error"
     Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter soaoutv4 for the zone example.org. should be 0
     Then the statistics counter soaoutv6 for the zone _SERVER_ should be 1
@@ -240,11 +242,12 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
     Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter notifyoutv4 for the zone example.org. should be 0
     Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
@@ -273,11 +276,12 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    last bindctl output should not contain "error"
     Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter soaoutv4 for the zone example.org. should be 0
     Then the statistics counter soaoutv6 for the zone _SERVER_ should be greater than 0
@@ -323,11 +327,12 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
     Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter notifyoutv4 for the zone example.org. should be 0
     Then the statistics counter notifyoutv6 for the zone _SERVER_ should be greater than 0
