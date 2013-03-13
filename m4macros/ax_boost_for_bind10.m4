@@ -118,7 +118,7 @@ BOOST_MAPPED_FILE_CXXFLAG=
 CXXFLAGS_SAVED="$CXXFLAGS"
 try_flags="no"
 if test "X$GXX" = "Xyes"; then
-  CXXFLAGS="$CXXFLAGS -Werror"
+  CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror"
   try_flags="$try_flags -Wno-error"
 fi
 # clang can cause false positives with -Werror without -Qunused-arguments
