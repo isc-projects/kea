@@ -884,6 +884,17 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
+use_shared_memory=yes
+AC_ARG_WITH(shared-memory,
+    AC_HELP_STRING([--with-shared-memory],
+    [Build with Boost shared memory support; for large scale authoritative DNS servers]),
+    [use_shared_memory=$withval])
+if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
+    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it; using a different compiler or a different version of Boost may also help.])
+fi
+AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
+AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
+
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
