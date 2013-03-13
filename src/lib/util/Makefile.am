@@ -6,6 +6,18 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exce
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DLOCKFILE_DIR=\"${localstatedir}/${PACKAGE_NAME}\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+# If we use the shared-memory support, corresponding Boost library may
+# cause build failures especially if it's strict about warnings.  We've
+# detected it in ./configure and set BOOST_MAPPED_FILE_CXXFLAG to be more
+# lenient as necessary (specifically, when set it'd usually supporess -Werror).
+# This is a module wide setting, and has a possible bad side effect of hiding
+# issues in other files, but making it per-file seems to be too costly.
+# So we begin with the wider setting. If the side effect turns out to be too
+# harmful, we'll consider other measure, e.g, moving the related files into
+# a subdirectory.
+if USE_SHARED_MEMORY
+AM_CXXFLAGS += $(BOOST_MAPPED_FILE_CXXFLAG)
+endif
 
 lib_LTLIBRARIES = libb10-util.la
 libb10_util_la_SOURCES  = filename.h filename.cc
