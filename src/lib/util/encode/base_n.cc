@@ -40,6 +40,15 @@ namespace isc {
 namespace util {
 namespace encode {
 
+// Some versions of clang cannot handle exceptions in unnamed namespaces
+// so this exception is defined in an 'internal' namespace
+namespace clang_unnamed_namespace_workaround {
+// An internally caught exception to unify a few possible cases of the same
+// error.
+class IncompleteBaseInput : public std::exception {
+};
+} // end namespace internal
+
 // In the following anonymous namespace, we provide a generic framework
 // to encode/decode baseN format.  We use the following tools:
 // - boost base64_from_binary/binary_from_base64: provide mapping table for
@@ -144,11 +153,6 @@ private:
     bool in_pad_;
 };
 
-// An internally caught exception to unify a few possible cases of the same
-// error.
-class IncompleteBaseInput : public std::exception {
-};
-
 // DecodeNormalizer is an input iterator intended to be used as a filter
 // between the encoded baseX stream and binary_from_baseXX.
 // A DecodeNormalizer object is configured with three string iterators
@@ -217,7 +221,9 @@ public:
             // but in that case we need to catch incomplete baseX input in
             // a different way.  It's done via char_count_ and after the
             // completion of decoding.
-            throw IncompleteBaseInput(); // throw this now and convert it
+
+            // throw this now and convert it
+            throw clang_unnamed_namespace_workaround::IncompleteBaseInput();
         }
         if (*base_ == BASE_PADDING_CHAR) {
             // Padding can only happen at the end of the input string.  We can
@@ -378,9 +384,10 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
         // a multiple of 8; otherwise the decoder reaches the end of input
         // with some incomplete bits of data, which is invalid.
         if (((char_count * BitsPerChunk) % 8) != 0) {
-            throw IncompleteBaseInput(); // catch this immediately below
+            // catch this immediately below
+            throw clang_unnamed_namespace_workaround::IncompleteBaseInput();
         }
-    } catch (const IncompleteBaseInput&) {
+    } catch (const clang_unnamed_namespace_workaround::IncompleteBaseInput&) {
         // we unify error handling for incomplete input here.
         isc_throw(BadValue, "Incomplete input for " << algorithm
                   << ": " << input);
