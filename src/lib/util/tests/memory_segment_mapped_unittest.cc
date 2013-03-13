@@ -180,8 +180,10 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
 
     segment_->deallocate(ptr, 4); // this is okay
     // This is duplicate dealloc; should trigger assertion failure.
-    EXPECT_DEATH_IF_SUPPORTED({segment_->deallocate(ptr, 4);}, "");
-    resetSegment();             // the segment is possibly broken; reset it.
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED({segment_->deallocate(ptr, 4);}, "");
+        resetSegment();   // the segment is possibly broken; reset it.
+    }
 
     // Deallocating at an invalid address; this would result in crash (the
     // behavior may not be portable enough; if so we should disable it by
@@ -274,12 +276,14 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     void* ptr = segment_->allocate(sizeof(uint32_t));
     segment_->setNamedAddress("test address", ptr);
 
-    EXPECT_DEATH_IF_SUPPORTED({
-            MemorySegmentMapped segment_ro(mapped_file);
-            EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
-            *static_cast<uint32_t*>(
-                segment_ro.getNamedAddress("test address")) = 0;
-        }, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED({
+                MemorySegmentMapped segment_ro(mapped_file);
+                EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
+                *static_cast<uint32_t*>(
+                    segment_ro.getNamedAddress("test address")) = 0;
+            }, "");
+    }
 
     EXPECT_THROW(MemorySegmentMapped(mapped_file).deallocate(ptr, 4),
                  isc::InvalidOperation);
