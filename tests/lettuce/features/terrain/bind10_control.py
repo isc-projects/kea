@@ -379,67 +379,6 @@ def query_statistics(step, statistics, name, cmdctl_port):
         % (port_str, name,\
                ' name=%s' % statistics if statistics else ''))
 
-def find_value(dictionary, key):
-    """A helper method. Recursively find a value corresponding to the
-    key of the dictionary and returns it. Returns None if the
-    dictionary is not dict type."""
-    if type(dictionary) is not dict:
-        return
-    if key in dictionary:
-        return dictionary[key]
-    else:
-        for v in dictionary.values():
-            return find_value(v, key)
-
-@step('the statistics counter (\S+)(?: in the category (\S+))?'+ \
-          '(?: for the zone (\S+))? should be' + \
-          '(?:( greater than| less than| between))? (\-?\d+)(?: and (\-?\d+))?')
-def check_statistics(step, counter, category, zone, gtltbt, number, upper):
-    """
-    check the output of bindctl for statistics of specified counter
-    and zone.
-    Parameters:
-    counter ('counter <counter>'): The counter name of statistics.
-    category ('category <category>', optional): The category of counter.
-    zone ('zone <zone>', optional): The zone name.
-    gtltbt (' greater than'|' less than'|' between', optional): greater than
-          <number> or less than <number> or between <number> and <upper>.
-    number ('<number>): The expect counter number. <number> is assumed
-          to be an unsigned integer.
-    upper ('<upper>, optional): The expect upper counter number when
-          using 'between'.
-    """
-    output = parse_bindctl_output_as_data_structure()
-    found = None
-    category_str = ""
-    zone_str = ""
-    depth = []
-    if category:
-        depth.insert(0, category)
-        category_str = " for category %s" % category
-    if zone:
-        depth.insert(0, zone)
-        zone_str = " for zone %s" % zone
-    for level in depth:
-        output = find_value(output, level)
-    found = find_value(output, counter)
-    assert found is not None, \
-        'Not found statistics counter %s%s%s' % \
-            (counter, category_str, zone_str)
-    msg = "Got %s, expected%s %s as counter %s%s" % \
-        (found, '' if gtltbt is None else gtltbt, number, counter, zone_str)
-    if gtltbt and 'between' in gtltbt and upper:
-        msg = "Got %s, expected%s %s and %s as counter %s%s" % \
-            (found, gtltbt, number, upper, counter, zone_str)
-        assert float(number) <= float(found) \
-            and float(found) <= float(upper), msg
-    elif gtltbt and 'greater' in gtltbt:
-        assert float(found) > float(number), msg
-    elif gtltbt and 'less' in gtltbt:
-        assert float(found) < float(number), msg
-    else:
-        assert float(found) == float(number), msg
-
 @step('statistics counters are 0 in category (\S+)( except for the' + \
           ' following items)?')
 def check_statistics_items(step, category, has_except_for):
