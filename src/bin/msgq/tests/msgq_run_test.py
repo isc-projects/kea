@@ -235,11 +235,11 @@ class MsgqRunTest(unittest.TestCase):
             self.assertTrue(lname in lnames)
             lnames.remove(lname)
 
-        # Wait a short time, so messages sent where they don't belong get some
-        # time to arrive. They could still be late, so the test could still
-        # pass on a slow machine, but an unreliable test is better than none
-        # at all. Any idea how to do it in a better way?
-        time.sleep(0.1)
+        # The barrier makes the msgq process everything we sent. As the
+        # processing is single-threaded in it, any stray message would have
+        # arrived before the barrier ends.
+        self.__barrier(conn_b)
+        self.__barrier([conn_a])
         for c in conn_b:
             self.assertEqual((None, None), c.group_recvmsg())
         self.assertEqual((None, None), conn_a.group_recvmsg())
