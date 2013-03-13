@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/tests/memory_segment_common_unittest.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <util/memory_segment_mapped.h>
 #include <exceptions/exceptions.h>
@@ -185,12 +186,14 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
     // Deallocating at an invalid address; this would result in crash (the
     // behavior may not be portable enough; if so we should disable it by
     // default).
-    ptr = segment_->allocate(4);
-    EXPECT_NE(static_cast<void*>(0), ptr);
-    EXPECT_DEATH_IF_SUPPORTED({
-            segment_->deallocate(static_cast<char*>(ptr) + 1, 3);
-        }, "");
-    resetSegment();
+    if (!isc::util::unittests::runningOnValgrind()) {
+        ptr = segment_->allocate(4);
+        EXPECT_NE(static_cast<void*>(0), ptr);
+        EXPECT_DEATH_IF_SUPPORTED({
+                segment_->deallocate(static_cast<char*>(ptr) + 1, 3);
+            }, "");
+        resetSegment();
+    }
 
     // Invalid size; this implementation doesn't detect such errors.
     ptr = segment_->allocate(4);
