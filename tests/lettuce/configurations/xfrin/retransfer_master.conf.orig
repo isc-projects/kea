@@ -33,9 +33,6 @@
             "port": 47806
         } ]
     },
-    "Stats": {
-        "poll-interval": 1
-    },
     "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
