@@ -205,6 +205,24 @@ class DatasrcTest(unittest.TestCase):
             "params": {},
             "name": "Whatever"
         }]})
+        # The same, but across different classes
+        self.reject({
+        "IN": [
+            {
+                "type": "MasterFiles",
+                "cache-enable": True,
+                "params": {},
+                "name": "Whatever"
+            }
+        ],
+        "CH": [
+            {
+                "type": "MasterFiles",
+                "cache-enable": True,
+                "params": {},
+                "name": "Whatever"
+            }
+        ]})
         self.reject({"IN": [
         {
             "type": "MasterFiles",
