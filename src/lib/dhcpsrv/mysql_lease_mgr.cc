@@ -21,7 +21,7 @@
 #include <dhcpsrv/mysql_lease_mgr.h>
 
 #include <boost/static_assert.hpp>
-#include <mysql/mysqld_error.h>
+#include <mysqld_error.h>
 
 #include <iostream>
 #include <iomanip>
