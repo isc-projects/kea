@@ -101,6 +101,12 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     vector<uint8_t> keydata(rdata_len);
     buffer.readData(&keydata[0], rdata_len);
 
+    // See RFC 4034 appendix B.1 for why the key data has to be at least
+    // 3 bytes long with RSA/MD5.
+    if (algorithm == 1 && keydata.size() < 3) {
+        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
+    }
+
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
