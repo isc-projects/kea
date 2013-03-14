@@ -350,6 +350,7 @@ public:
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
+        std::string name_;
     };
 
     /// \brief The collection of data sources.
