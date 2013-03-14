@@ -134,6 +134,10 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                                         "rdata_dnskey_fromWire")));
+    // Empty keydata should throw
+    EXPECT_THROW(rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
+                                      "rdata_dnskey_empty_keydata_fromWire"),
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_DNSKEY_Test, getTag) {
