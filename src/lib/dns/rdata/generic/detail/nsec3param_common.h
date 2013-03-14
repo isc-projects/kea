@@ -72,8 +72,8 @@ struct ParseNSEC3ParamResult {
 /// \exception isc::BadValue The salt is not a valid hex string.
 /// \exception InvalidRdataText The given RDATA is otherwise invalid for
 /// NSEC3 or NSEC3PARAM fields.
-/// \exception MasterLexer::LexerError There was a failure reading a
-/// field from the MasterLexer.
+/// \exception MasterLexer::LexerError There was a syntax error reading
+/// a field from the MasterLexer.
 ///
 /// \param rrtype_name Either "NSEC3" or "NSEC3PARAM"; used as part of
 /// exception messages.
