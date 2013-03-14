@@ -168,6 +168,8 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> keydata;
     decodeBase64(keydatastr, keydata);
 
+    // See RFC 4034 appendix B.1 for why the key data has to be at least
+    // 3 bytes long with RSA/MD5.
     if (algorithm == 1 && keydata.size() < 3) {
         isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
     }
