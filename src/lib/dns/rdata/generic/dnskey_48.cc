@@ -98,6 +98,12 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     const uint16_t algorithm = buffer.readUint8();
 
     rdata_len -= 4;
+    // Though the size of the public key is algorithm-dependent, we
+    // assume that it should not be empty.
+    if (rdata_len < 1) {
+        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
+    }
+
     vector<uint8_t> keydata(rdata_len);
     buffer.readData(&keydata[0], rdata_len);
 
