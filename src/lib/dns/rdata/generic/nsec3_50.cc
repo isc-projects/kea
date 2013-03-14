@@ -137,7 +137,8 @@ NSEC3::constructFromLexer(MasterLexer& lexer) {
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamFromLexer("NSEC3", lexer, salt);
 
-    const string nexthash = lexer.getNextToken(MasterToken::STRING).getString();
+    const string& nexthash =
+        lexer.getNextToken(MasterToken::STRING).getString();
     if (*nexthash.rbegin() == '=') {
         isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nexthash);
     }
@@ -151,7 +152,7 @@ NSEC3::constructFromLexer(MasterLexer& lexer) {
 
     // For NSEC3 empty bitmap is possible and allowed.
     bool empty_bitmap = false;
-    const MasterToken token = lexer.getNextToken();
+    const MasterToken& token = lexer.getNextToken();
     if ((token.getType() == MasterToken::END_OF_LINE) ||
         (token.getType() == MasterToken::END_OF_FILE)) {
          empty_bitmap = true;
