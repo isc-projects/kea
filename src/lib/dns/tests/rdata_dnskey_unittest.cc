@@ -138,6 +138,10 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                                       "rdata_dnskey_empty_keydata_fromWire"),
                  InvalidRdataLength);
+    // Short keydata for RSA/MD5 should throw
+    EXPECT_THROW(rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
+                                      "rdata_dnskey_short_keydata1_fromWire"),
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_DNSKEY_Test, getTag) {
