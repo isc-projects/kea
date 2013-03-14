@@ -76,7 +76,7 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
                  InvalidRdataLength);
 
     // Missing algorithm
-    EXPECT_THROW(generic::DNSKEY("257 3 5BEAAEFTd"),
+    EXPECT_THROW(generic::DNSKEY("257 3 YmFiYWJhYmE="),
                  InvalidRdataText);
 
     // How about this?  It's even more confusing for the parser because
