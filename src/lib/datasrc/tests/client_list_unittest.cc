@@ -834,6 +834,54 @@ TEST_F(ListTest, masterFiles) {
     EXPECT_EQ(0, list_->getDataSources().size());
 }
 
+// Test the names are set correctly and collission is detected.
+TEST_F(ListTest, names) {
+    // Explicit name
+    const ConstElementPtr elem1(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   },"
+        "   \"name\": \"Whatever\""
+        "}]"));
+    list_->configure(elem1, true);
+    EXPECT_EQ("Whatever", list_->getDataSources()[0].name_);
+
+    // Default name
+    const ConstElementPtr elem2(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem2, true);
+    EXPECT_EQ("MasterFiles", list_->getDataSources()[0].name_);
+
+    // Collission
+    const ConstElementPtr elem3(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "},"
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   },"
+        "   \"name\": \"MasterFiles\""
+        "}]"));
+    EXPECT_THROW(list_->configure(elem3, true),
+                 ConfigurableClientList::ConfigurationError);
+}
+
 TEST_F(ListTest, BadMasterFile) {
     // Configuration should succeed, and the good zones in the list
     // below should be loaded. No bad zones should be loaded.
