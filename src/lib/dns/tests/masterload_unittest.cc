@@ -170,7 +170,7 @@ TEST_F(MasterLoadTest, loadRRsigs) {
 // This test was disabled by #2387, because the test data has trailing
 // comments and it (eventually) uses the string RDATA constructor which
 // doesn't support them. This test should be fixed and re-enabled by
-// ##2381, or deleted.
+// #2381, or deleted.
 TEST_F(MasterLoadTest, DISABLED_loadRRWithComment) {
     // Comment at the end of line should be ignored and the RR should be
     // accepted.
@@ -187,7 +187,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithComment) {
 // This test was disabled by #2387, because the test data has trailing
 // comments and it (eventually) uses the string RDATA constructor which
 // doesn't support them. This test should be fixed and re-enabled by
-// ##2381, or deleted.
+// #2381, or deleted.
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentNoSpace) {
     // Similar to the previous one, but there's no space before comments.
     // It should still work.
@@ -204,7 +204,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentNoSpace) {
 // This test was disabled by #2387, because the test data has trailing
 // comments and it (eventually) uses the string RDATA constructor which
 // doesn't support them. This test should be fixed and re-enabled by
-// ##2381, or deleted.
+// #2381, or deleted.
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyComment) {
     // Similar to the previous one, but there's no data after the ;
     // It should still work.
@@ -221,7 +221,7 @@ TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyComment) {
 // This test was disabled by #2387, because the test data has trailing
 // comments and it (eventually) uses the string RDATA constructor which
 // doesn't support them. This test should be fixed and re-enabled by
-// ##2381, or deleted.
+// #2381, or deleted.
 TEST_F(MasterLoadTest, DISABLED_loadRRWithCommentEmptyCommentNoSpace) {
     // Similar to the previous one, but there's no space before or after ;
     // It should still work.
