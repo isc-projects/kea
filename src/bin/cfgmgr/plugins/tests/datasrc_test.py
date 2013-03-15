@@ -205,8 +205,9 @@ class DatasrcTest(unittest.TestCase):
             "params": {},
             "name": "Whatever"
         }]})
-        # The same, but across different classes
-        self.reject({
+        # The same, but across different classes is allowed (we would
+        # identify the data source by class+name tuple)
+        self.accept({
         "IN": [
             {
                 "type": "MasterFiles",
@@ -239,7 +240,7 @@ class DatasrcTest(unittest.TestCase):
             "type": "MasterFiles",
             "cache-enable": True,
             "params": {},
-            "name": "IN/MasterFiles"
+            "name": "MasterFiles"
         },
         {
             "type": "MasterFiles",
