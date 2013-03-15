@@ -43,7 +43,9 @@ import isc.log
 import isc.cc.session
 from isc.cc.proto_defs import *
 
-SOCKET_PATH = os.path.abspath(os.environ['BIND10_TEST_SOCKET_FILE'])
+# Due to problems with too long path on build bots, we place the socket
+# into the top-level build directory. That is ugly, but works.
+SOCKET_PATH = os.path.abspath(os.environ['B10_FROM_BUILD'] + '/msgq.sock')
 MSGQ_PATH = os.environ['B10_FROM_BUILD'] + '/src/bin/msgq/run_msgq.sh'
 TIMEOUT = 15 # Some long time (seconds), for single test.
 
