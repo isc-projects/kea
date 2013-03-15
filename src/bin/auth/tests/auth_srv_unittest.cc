@@ -1679,7 +1679,7 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), ztable_segment_));
+                                false, RRClass::IN(), ztable_segment_, ""));
         }
     }
 private:
