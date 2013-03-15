@@ -278,7 +278,7 @@ public:
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
                                    ds.get(), DataSourceClientContainerPtr(),
-                                   false, rrclass_, ztable_segment_));
+                                   false, rrclass_, ztable_segment_, ""));
         }
     }
 
