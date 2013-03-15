@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <string.h>
 
 namespace isc {
 namespace dhcp {
