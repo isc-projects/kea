@@ -332,13 +332,14 @@ public:
                        const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
                                ztable_segment,
-                       bool has_cache = false);
+                       bool has_cache = false,
+                       const std::string& name = std::string());
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
                        const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment);
+                               ztable_segment, const std::string& name);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 
