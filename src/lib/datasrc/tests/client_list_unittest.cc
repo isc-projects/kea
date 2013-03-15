@@ -1136,4 +1136,13 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
                                                          RRType::TXT())->code);
 }
 
+// Check the status holds data and can change the segment state
+TEST(DataSourceStatus, status) {
+    DataSourceStatus status("Test", MSS_UNUSED);
+    EXPECT_EQ("Test", status.getName());
+    EXPECT_EQ(MSS_UNUSED, status.getSegmentState());
+    status.setSegmentState(MSS_LOCAL);
+    EXPECT_EQ(MSS_LOCAL, status.getSegmentState());
+}
+
 }
