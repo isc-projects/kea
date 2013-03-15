@@ -430,6 +430,12 @@ public:
     virtual DataSourcePair getDataSourceClient(const std::string& type,
                                                const data::ConstElementPtr&
                                                configuration);
+
+    /// \brief Get status information of all internal data sources.
+    ///
+    /// Get a DataSourceStatus for current state of each data source client
+    /// in this list.
+    std::vector<DataSourceStatus> getStatus() const;
 public:
     /// \brief Access to the data source clients.
     ///

@@ -475,5 +475,16 @@ ConfigurableClientList::getDataSourceClient(const string& type,
     return (DataSourcePair(&container->getInstance(), container));
 }
 
+vector<DataSourceStatus>
+ConfigurableClientList::getStatus() const {
+    vector<DataSourceStatus> result;
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        // TODO: Once we support mapped cache, provide the correct MSS_ value
+        result.push_back(DataSourceStatus(info.name_, info.cache_ ? MSS_LOCAL :
+                                          MSS_UNUSED));
+    }
+    return (result);
+}
+
 }
 }
