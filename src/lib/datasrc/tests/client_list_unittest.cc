@@ -512,12 +512,12 @@ TEST_F(ListTest, configureMulti) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
-        "   \"cache\": \"off\","
+        "   \"cache-enable\": false,"
         "   \"params\": {}"
         "},"
         "{"
         "   \"type\": \"type2\","
-        "   \"cache\": \"off\","
+        "   \"cache-enable\": false,"
         "   \"params\": {}"
         "}]"
     ));
@@ -546,13 +546,38 @@ TEST_F(ListTest, configureParams) {
         ConstElementPtr elem(Element::fromJSON(string("["
             "{"
             "   \"type\": \"t\","
-            "   \"cache\": \"off\","
+            "   \"cache-enable\": false,"
             "   \"params\": ") + *param +
             "}]"));
         list_->configure(elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
         checkDS(0, "t", *param, false);
     }
+}
+
+TEST_F(ListTest, status) {
+    EXPECT_TRUE(list_->getStatus().empty());
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": false,"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"name\": \"Test name\","
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(elem, true);
+    const vector<DataSourceStatus> statuses(list_->getStatus());
+    ASSERT_EQ(2, statuses.size());
+    EXPECT_EQ("type1", statuses[0].getName());
+    EXPECT_EQ(MSS_UNUSED, statuses[0].getSegmentState());
+    EXPECT_EQ("Test name", statuses[1].getName());
+    EXPECT_EQ(MSS_LOCAL, statuses[1].getSegmentState());
 }
 
 TEST_F(ListTest, wrongConfig) {
