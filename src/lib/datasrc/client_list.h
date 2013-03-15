@@ -46,6 +46,55 @@ class InMemoryClient;
 class ZoneWriter;
 }
 
+/// \brief Segment status of the cache
+///
+/// Describes the status in which the memory segment of given data source
+/// is.
+enum MemorySegmentState {
+    /// \brief The segment is local one.
+    MSS_LOCAL,
+    /// \brief No segment used for this data source.
+    MSS_UNUSED,
+    /// \brief It is a mapped segment and we wait for information how to map
+    ///     it.
+    MSS_WAITING,
+    /// \brief A mapped segment and in active use.
+    MSS_MAPPED
+};
+
+/// \brief Status of one data source.
+///
+/// This indicates the status a data soure is in. It is used with segment
+/// and cache management, to discover the data sources than need external
+/// mapping or local loading.
+class DataSourceStatus {
+public:
+    /// \brief Constructor
+    ///
+    /// Sets initial values.
+    DataSourceStatus(const std::string& name, MemorySegmentState state) :
+        name_(name),
+        state_(state)
+    {}
+    /// \brief Change the current segment state
+    void setSegmentState(MemorySegmentState state) {
+        state_ = state;
+    }
+    /// \brief Get the current segment state
+    MemorySegmentState getSegmentState() const {
+        return (state_);
+    }
+    /// \brief Get the current name.
+    ///
+    /// \note The name may not be changed once the object is constructed.
+    const std::string& getName() const {
+        return (name_);
+    }
+private:
+    std::string name_;
+    MemorySegmentState state_;
+};
+
 /// \brief The list of data source clients.
 ///
 /// The purpose of this class is to hold several data source clients and search
