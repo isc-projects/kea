@@ -1035,9 +1035,8 @@ class XfrinConnection(asyncore.dispatcher):
             # as possible
             self._diff = None
             counter_dict = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}
-            if ret in counter_dict:
-                self._counters.inc('zones', self._zone_name.to_text(),
-                                   counter_dict[ret])
+            self._counters.inc('zones', self._zone_name.to_text(),
+                               counter_dict[ret])
 
         return ret
 
