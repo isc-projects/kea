@@ -1077,7 +1077,10 @@ class TestAXFR(TestXfrinConnection):
             c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
                                     threading.Event(), info)
             c.init_socket()
-            self.assertEqual(ver, c._get_ipver_str())
+            if ver:
+                self.assertEqual(ver, c._get_ipver_str())
+            else:
+                self.assertRaises(ValueError, c._get_ipver_str)
             c.close()
 
     def test_soacheck(self):
