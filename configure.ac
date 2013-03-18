@@ -323,9 +323,9 @@ if test -x ${PYTHON}-config; then
 	# so we only go through the flag if it's contained; also, protecting
 	# the output with [] seems necessary for environment to avoid getting
 	# an empty output accidentally.
-	python_config_ldflags=[`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`]
+	python_config_ldflags=[`${PYTHON}-config --ldflags | $${SED} -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/gp'`]
 	for flag in $python_config_ldflags; do
-		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
+		flag=`echo $flag | $${SED} -ne 's/^\(\-L.*\)$/\1/p'`
 		if test "X${flag}" != X; then
 			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
 		fi
@@ -351,7 +351,7 @@ fi
 if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
+		python_rpath="${python_rpath} `echo $flag | $${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -536,7 +536,7 @@ if test "$lcov" != "no"; then
 		AC_MSG_ERROR([Cannot find lcov.])
 	fi
 	# is genhtml always in the same directory?
-	GENHTML=`echo "$LCOV" | sed s/lcov$/genhtml/`
+	GENHTML=`echo "$LCOV" | $${SED} s/lcov$/genhtml/`
 	if test ! -x $GENHTML; then
 		AC_MSG_ERROR([genhtml not found, needed for lcov])
 	fi
@@ -712,15 +712,15 @@ fi
 BOTAN_LDFLAGS=
 BOTAN_NEWLIBS=
 for flag in ${BOTAN_LIBS}; do
-    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | sed -ne '/^\(\-L\)/p'`"
-    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | sed -ne '/^\(\-l\)/p'`"
+    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | $${SED} -ne '/^\(\-L\)/p'`"
+    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | $${SED} -ne '/^\(\-l\)/p'`"
 done
 
 # See python_rpath for some info on why we do this
 if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | $${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
