@@ -895,7 +895,8 @@ class XfrinConnection(asyncore.dispatcher):
 
     def _get_ipver_str(self):
         """Returns a 'v4' or 'v6' string representing a IP version
-        depending on the socket family"""
+        depending on the socket family. This is for an internal use
+        only."""
         if self.socket.family == socket.AF_INET:
             return 'v4'
         elif self.socket.family == socket.AF_INET6:
