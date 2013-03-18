@@ -194,7 +194,7 @@
               "item_optional": false,
               "item_default": 0.0,
               "item_title": "Latest IXFR duration",
-              "item_description": "Duration of the latest IXFR"
+              "item_description": "Duration of the latest IXFR. 0.0 means no successful IXFR done."
             },
             {
               "item_name": "latest_axfr_duration",
@@ -202,7 +202,7 @@
               "item_optional": false,
               "item_default": 0.0,
               "item_title": "Latest AXFR duration",
-              "item_description": "Duration of the latest AXFR"
+              "item_description": "Duration of the latest AXFR. 0.0 means no successful AXFR done."
             }
           ]
         }
