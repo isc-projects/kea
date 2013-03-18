@@ -94,8 +94,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
-        shared_ptr<ZoneTableSegment> ztable_segment(
-            ZoneTableSegment::create(*config, rrclass_));
         set<string> used_names;
         for (; i < config->size(); ++i) {
             // Extract the parameters
@@ -119,6 +117,12 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             if (!used_names.insert(name).second) {
                 isc_throw(ConfigurationError, "Duplicit name in client list: "
                           << name);
+            }
+
+            shared_ptr<ZoneTableSegment> ztable_segment;
+            if (want_cache) {
+                ztable_segment.reset(ZoneTableSegment::create(*config,
+                                                              rrclass_));
             }
 
             if (type == "MasterFiles") {
