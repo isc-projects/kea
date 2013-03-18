@@ -79,7 +79,7 @@ Feature: Xfrin incoming notify handling
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
-    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
@@ -175,7 +175,7 @@ Feature: Xfrin incoming notify handling
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
-    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
@@ -282,7 +282,7 @@ Feature: Xfrin incoming notify handling
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
-    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
@@ -387,7 +387,7 @@ Feature: Xfrin incoming notify handling
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
     wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
-    wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
