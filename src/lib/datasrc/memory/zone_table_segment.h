@@ -106,18 +106,6 @@ public:
     static ZoneTableSegment* create(const isc::data::Element& config,
                                     const isc::dns::RRClass& rrclass);
 
-    /// \brief Temporary/Testing version of create.
-    ///
-    /// This exists as a temporary solution during the migration phase
-    /// towards using the ZoneTableSegment. It doesn't take a config,
-    /// but a memory segment instead. If you can, you should use the
-    /// other version, this one will be gone soon.
-    ///
-    /// \param segment The memory segment to use.
-    /// \return Returns a new ZoneTableSegment object.
-    /// \todo Remove this method.
-    static ZoneTableSegment* create(isc::util::MemorySegment& segment);
-
     /// \brief Destroy a ZoneTableSegment
     ///
     /// This method destroys the passed ZoneTableSegment. It must be
