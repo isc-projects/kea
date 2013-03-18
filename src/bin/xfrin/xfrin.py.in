@@ -896,11 +896,13 @@ class XfrinConnection(asyncore.dispatcher):
     def _get_ipver_str(self):
         """Returns a 'v4' or 'v6' string representing a IP version
         depending on the socket family. This is for an internal use
-        only."""
+        only. This is supported only for IP sockets. It raises a
+        ValueError exception on other address families."""
         if self.socket.family == socket.AF_INET:
             return 'v4'
         elif self.socket.family == socket.AF_INET6:
             return 'v6'
+        raise ValueError("Invalid address family. This is supported only for IP sockets")
 
     def _check_soa_serial(self):
         '''Send SOA query and compare the local and remote serials.
@@ -913,9 +915,8 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._send_query(RRType.SOA)
         # count soaoutv4 or soaoutv6 requests
-        if self._get_ipver_str():
-            self._counters.inc('zones', self._zone_name.to_text(),
-                               'soaout' + self._get_ipver_str())
+        self._counters.inc('zones', self._zone_name.to_text(),
+                           'soaout' + self._get_ipver_str())
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -959,10 +960,9 @@ class XfrinConnection(asyncore.dispatcher):
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
             # count AXFR/IXFR requests for statistics
-            if self._get_ipver_str():
-                self._counters.inc('zones', self._zone_name.to_text(),
-                                   req_str.lower() + 'req' +
-                                   self._get_ipver_str())
+            self._counters.inc('zones', self._zone_name.to_text(),
+                               req_str.lower() + 'req' +
+                               self._get_ipver_str())
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
             # Depending what data was found, we log different status reports
