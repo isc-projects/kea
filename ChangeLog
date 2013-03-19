@@ -1,7 +1,14 @@
+591.	[func]		vorner
+	Ported the remaining tests from the old shell/perl based system to
+	lettuce. Make target `systest' is now gone. Currently, the lettuce tests
+	are in git only, not part of the release tarball.
+	(Trac #2624, git df1c5d5232a2ab551cd98b77ae388ad568a683ad)
+
 590.	[bug]		tmark
 	Modified "include" statements in DHCP MySQL lease manager code to
 	fix build problems if MySQL is installed in a non-standard location.
 	(Trac #2825, git 4813e06cf4e0a9d9f453890557b639715e081eca)
+
 589.	[bug]		jelte
 	b10-cmdctl now automatically re-reads the user accounts file when
 	it is updated.
