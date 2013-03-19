@@ -28,6 +28,7 @@ import tempfile
 import json
 import errno
 from isc.cc import data
+from isc.cc.proto_defs import *
 from isc.config import ccsession, config_data, module_spec
 from isc.util.file import path_search
 import bind10_config
@@ -603,7 +604,7 @@ class ConfigManager:
             # ignore 'None' value (even though they should not occur)
             # and messages that are answers to questions we did
             # not ask
-            if msg is not None and not 'result' in msg:
+            if msg is not None and not CC_PAYLOAD_RESULT in msg:
                 answer = self.handle_msg(msg);
                 # Only respond if there actually is something to respond with
                 if answer is not None:
