@@ -1166,8 +1166,6 @@ TEST(DataSourceStatus, status) {
     DataSourceStatus status("Test", MSS_UNUSED);
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(MSS_UNUSED, status.getSegmentState());
-    status.setSegmentState(MSS_LOCAL);
-    EXPECT_EQ(MSS_LOCAL, status.getSegmentState());
 }
 
 }

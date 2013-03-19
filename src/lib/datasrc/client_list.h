@@ -76,10 +76,6 @@ public:
         name_(name),
         state_(state)
     {}
-    /// \brief Change the current segment state
-    void setSegmentState(MemorySegmentState state) {
-        state_ = state;
-    }
     /// \brief Get the current segment state
     MemorySegmentState getSegmentState() const {
         return (state_);
