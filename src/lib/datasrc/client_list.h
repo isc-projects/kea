@@ -76,10 +76,12 @@ public:
         name_(name),
         state_(state)
     {}
+
     /// \brief Get the current segment state
     MemorySegmentState getSegmentState() const {
         return (state_);
     }
+
     /// \brief Get the current name.
     ///
     /// \note The name may not be changed once the object is constructed.
