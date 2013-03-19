@@ -144,3 +144,45 @@ Feature: Xfrin
     # FIXME: This step fails. Probably an empty zone is created in the data
     # source :-|. This should be REFUSED, not SERVFAIL.
     A query for www.example.org to [::1]:47806 should have rcode SERVFAIL
+
+    # TODO:
+    # * IXFR - generate an sqlite db that contains the journal. Check it was
+    #   IXFR by logs.
+    # * IXFR->AXFR fallback if IXFR is not available (even rejected or
+    #   something, not just the differences missing).
+    # * Retransfer with short refresh time (without notify).
+    Scenario: With differences
+    # We transfer from one bind10 to other, just like in the Retransfer command
+    # scenario. Just this time, the master contains the differences table
+    # and the slave has a previous version of the zone, so we use the IXFR.
+
+    Given I have bind10 running with configuration xfrin/retransfer_master_diffs.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_diffs.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    A query for example. type SOA to [::1]:47806 should have rcode NOERROR
+    The answer section of the last query response should be
+    """
+    example.    3600    IN      SOA     ns1.example. hostmaster.example. 94 3600 900 7200 300
+    """
+
+    When I send bind10 the command Xfrin retransfer example. IN ::1 47807
+    Then wait for new bind10 stderr message XFRIN_GOT_INCREMENTAL_RESP
+    Then wait for new bind10 stderr message XFRIN_IXFR_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
+
+    A query for example. type SOA to [::1]:47806 should have rcode NOERROR
+    The answer section of the last query response should be
+    """
+    example.    3600    IN      SOA     ns1.example. hostmaster.example. 100 3600 900 7200 300
+    """

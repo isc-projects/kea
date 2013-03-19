@@ -1305,7 +1305,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/statistics/Makefile
                  src/lib/statistics/tests/Makefile
                  tests/Makefile
-                 tests/system/Makefile
                  tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
@@ -1389,23 +1388,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/lettuce/setup_intree_bind10.sh
-           tests/system/conf.sh
-           tests/system/run.sh
-           tests/system/glue/setup.sh
-           tests/system/glue/nsx1/b10-config.db
-           tests/system/bindctl/nsx1/b10-config.db.template
-           tests/system/ixfr/db.example.n0
-           tests/system/ixfr/db.example.n2
-           tests/system/ixfr/db.example.n2.refresh
-           tests/system/ixfr/db.example.n4
-           tests/system/ixfr/db.example.n6
-           tests/system/ixfr/ixfr_init.sh
-           tests/system/ixfr/b10-config.db
-           tests/system/ixfr/common_tests.sh
-           tests/system/ixfr/in-1/setup.sh
-           tests/system/ixfr/in-2/setup.sh
-           tests/system/ixfr/in-3/setup.sh
-           tests/system/ixfr/in-4/setup.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -1436,14 +1418,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
-           chmod +x tests/system/conf.sh
-           chmod +x tests/system/run.sh
-           chmod +x tests/system/ixfr/ixfr_init.sh
-           chmod +x tests/system/ixfr/common_tests.sh
-           chmod +x tests/system/ixfr/in-1/setup.sh
-           chmod +x tests/system/ixfr/in-2/setup.sh
-           chmod +x tests/system/ixfr/in-3/setup.sh
-           chmod +x tests/system/ixfr/in-4/setup.sh
           ])
 AC_OUTPUT
 
