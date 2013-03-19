@@ -849,7 +849,7 @@ ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
     }
     if (!request.is_reply &&
         (request.recipient.empty() || request.recipient ==
-         envelope->get(isc::cc::CC_HEADER_REPLY)->stringValue())) {
+         envelope->get(isc::cc::CC_HEADER_GROUP)->stringValue())) {
         // This is the correct command
         return (true);
     }
