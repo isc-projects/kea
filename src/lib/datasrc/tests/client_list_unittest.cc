@@ -1165,11 +1165,11 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
 
 // Check the status holds data and can change the segment state
 TEST(DataSourceStatus, status) {
-    DataSourceStatus status("Test", SEGMENT_MAPPED, SEGMENT_LOCAL);
+    const DataSourceStatus status("Test", SEGMENT_MAPPED, SEGMENT_LOCAL);
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(SEGMENT_MAPPED, status.getSegmentState());
     EXPECT_EQ(SEGMENT_LOCAL, status.getSegmentType());
-    DataSourceStatus statusUnused("Unused", SEGMENT_UNUSED, SEGMENT_FILE);
+    const DataSourceStatus statusUnused("Unused", SEGMENT_UNUSED, SEGMENT_FILE);
     EXPECT_EQ("Unused", statusUnused.getName());
     EXPECT_EQ(SEGMENT_UNUSED, statusUnused.getSegmentState());
     EXPECT_THROW(statusUnused.getSegmentType(), isc::BadValue);
