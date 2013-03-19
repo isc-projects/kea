@@ -114,8 +114,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                   dconf->contains("cache-enable") &&
                                   dconf->get("cache-enable")->boolValue());
             // Get the name (either explicit, or guess)
-            const ConstElementPtr nameElem(dconf->get("name"));
-            const string name(nameElem ? nameElem->stringValue() : type);
+            const ConstElementPtr name_elem(dconf->get("name"));
+            const string name(name_elem ? name_elem->stringValue() : type);
             if (!used_names.insert(name).second) {
                 isc_throw(ConfigurationError, "Duplicit name in client list: "
                           << name);

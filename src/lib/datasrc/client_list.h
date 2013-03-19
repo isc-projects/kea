@@ -65,7 +65,7 @@ enum MemorySegmentState {
 /// \brief Status of one data source.
 ///
 /// This indicates the status a data soure is in. It is used with segment
-/// and cache management, to discover the data sources than need external
+/// and cache management, to discover the data sources that need external
 /// mapping or local loading.
 class DataSourceStatus {
 public:
