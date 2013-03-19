@@ -1,3 +1,0 @@
-com.					      300 IN SOA	postmaster.example. ns.example.com. 2000042100 600 600 1200 600
-com.					      300 IN NS		ns.example.com.
-ns.example.com.				      300 IN A		192.0.2.2
