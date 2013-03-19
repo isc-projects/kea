@@ -51,15 +51,18 @@ class ZoneWriter;
 /// Describes the status in which the memory segment of given data source
 /// is.
 enum MemorySegmentState {
-    /// \brief The segment is local one.
-    MSS_LOCAL,
     /// \brief No segment used for this data source.
-    MSS_UNUSED,
+    ///
+    /// This is usually a result of the cache being disabled.
+
+    SEGMENT_UNUSED,
+
     /// \brief It is a mapped segment and we wait for information how to map
     ///     it.
-    MSS_WAITING,
-    /// \brief A mapped segment and in active use.
-    MSS_MAPPED
+    SEGMENT_WAITING,
+
+    /// \brief The segment is ready to be used.
+    SEGMENT_MAPPED
 };
 
 /// \brief Status of one data source.
