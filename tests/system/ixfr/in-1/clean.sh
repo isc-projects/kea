@@ -1,1 +1,0 @@
-../clean_ns.sh
