@@ -622,7 +622,7 @@ class XfrinConnection(asyncore.dispatcher):
         it if the constructor raises an exception after opening the socket.
         '''
         self.create_socket(self._master_addrinfo[0], self._master_addrinfo[1])
-        self.setblocking(1)
+        self.socket.setblocking(1)
 
     def _get_zone_soa(self):
         '''Retrieve the current SOA RR of the zone to be transferred.
