@@ -61,7 +61,7 @@ class Session:
             env, msg = self.recvmsg(False)
             if not env:
                 raise ProtocolError("Could not get local name")
-            self._lname = msg[CC_HEADER_LNAME]
+            self._lname = msg[CC_PAYLOAD_LNAME]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
             logger.debug(logger.DBGLVL_TRACE_BASIC, PYCC_LNAME_RECEIVED,
