@@ -13,16 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#include "client_list.h"
-#include "exceptions.h"
-#include "client.h"
-#include "factory.h"
-#include "memory/memory_client.h"
-#include "memory/zone_table_segment.h"
-#include "memory/zone_writer.h"
-#include "memory/zone_data_loader.h"
-#include "memory/zone_data_updater.h"
-#include "logger.h"
+#include <datasrc/client_list.h>
+#include <datasrc/exceptions.h>
+#include <datasrc/client.h>
+#include <datasrc/factory.h>
+#include <datasrc/zone_table_config.h>
+#include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_writer.h>
+#include <datasrc/memory/zone_data_loader.h>
+#include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/logger.h>
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
 
@@ -121,7 +122,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
 
             shared_ptr<ZoneTableSegment> ztable_segment;
             if (want_cache) {
-                ztable_segment.reset(ZoneTableSegment::create(*config,
+                internal::ZoneTableConfig ztconfig(type, 0, *dconf);
+                ztable_segment.reset(ZoneTableSegment::create(*dconf, // XXX
                                                               rrclass_));
             }
 
