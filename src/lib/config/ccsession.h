@@ -369,8 +369,8 @@ public:
      */
     int groupSendMsg(isc::data::ConstElementPtr msg,
                      std::string group,
-                     std::string instance = "*",
-                     std::string to = "*",
+                     std::string instance = isc::cc::CC_INSTANCE_WILDCARD,
+                     std::string to = isc::cc::CC_TO_WILDCARD,
                      bool want_answer = false) {
         return (session_.group_sendmsg(msg, group, instance, to, want_answer));
     };
