@@ -54,7 +54,6 @@ enum MemorySegmentState {
     /// \brief No segment used for this data source.
     ///
     /// This is usually a result of the cache being disabled.
-
     SEGMENT_UNUSED,
 
     /// \brief It is a mapped segment and we wait for information how to map
@@ -63,6 +62,15 @@ enum MemorySegmentState {
 
     /// \brief The segment is ready to be used.
     SEGMENT_MAPPED
+};
+
+/// \brief The type of the memory segment in cache
+enum MemorySegmentType {
+    /// \brief A locally loaded, unshared cache. Normal memory.
+    SEGMENT_LOCAL,
+
+    /// \brief A file image mapped into memory
+    SEGMENT_FILE
 };
 
 /// \brief Status of one data source.
@@ -74,10 +82,13 @@ class DataSourceStatus {
 public:
     /// \brief Constructor
     ///
-    /// Sets initial values.
-    DataSourceStatus(const std::string& name, MemorySegmentState state) :
+    /// Sets initial values. It doesn't matter what is provided for the type
+    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    DataSourceStatus(const std::string& name, MemorySegmentState state,
+                     MemorySegmentType type) :
         name_(name),
-        state_(state)
+        state_(state),
+        type_(type)
     {}
 
     /// \brief Get the current segment state
@@ -85,15 +96,24 @@ public:
         return (state_);
     }
 
-    /// \brief Get the current name.
+    /// \brief Get the current segment type
     ///
-    /// \note The name may not be changed once the object is constructed.
+    /// \throw isc::BadValue if called and state is SEGMENT_UNUSED.
+    MemorySegmentType getSegmentType() const {
+        if (getSegmentState() == SEGMENT_UNUSED) {
+            isc_throw(isc::BadValue, "No segment used, no type therefore.");
+        }
+        return (type_);
+    }
+
+    /// \brief Get the current name.
     const std::string& getName() const {
         return (name_);
     }
 private:
     std::string name_;
     MemorySegmentState state_;
+    MemorySegmentType type_;
 };
 
 /// \brief The list of data source clients.
