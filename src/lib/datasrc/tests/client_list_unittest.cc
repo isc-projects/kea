@@ -575,9 +575,9 @@ TEST_F(ListTest, status) {
     const vector<DataSourceStatus> statuses(list_->getStatus());
     ASSERT_EQ(2, statuses.size());
     EXPECT_EQ("type1", statuses[0].getName());
-    EXPECT_EQ(MSS_UNUSED, statuses[0].getSegmentState());
+    EXPECT_EQ(SEGMENT_UNUSED, statuses[0].getSegmentState());
     EXPECT_EQ("Test name", statuses[1].getName());
-    EXPECT_EQ(MSS_LOCAL, statuses[1].getSegmentState());
+    EXPECT_EQ(SEGMENT_MAPPED, statuses[1].getSegmentState());
 }
 
 TEST_F(ListTest, wrongConfig) {
@@ -1163,9 +1163,9 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
 
 // Check the status holds data and can change the segment state
 TEST(DataSourceStatus, status) {
-    DataSourceStatus status("Test", MSS_UNUSED);
+    DataSourceStatus status("Test", SEGMENT_UNUSED);
     EXPECT_EQ("Test", status.getName());
-    EXPECT_EQ(MSS_UNUSED, status.getSegmentState());
+    EXPECT_EQ(SEGMENT_UNUSED, status.getSegmentState());
 }
 
 }
