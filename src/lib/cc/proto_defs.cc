@@ -46,8 +46,10 @@ const char* const CC_INSTANCE_WILDCARD = "*";
 // Reply codes
 const int CC_REPLY_NO_RECPT = -1;
 const int CC_REPLY_SUCCESS = 0;
-// Others
+// Payload in the message
 const char *const CC_PAYLOAD_LNAME = "lname";
+const char *const CC_PAYLOAD_RESULT = "result";
+const char *const CC_PAYLOAD_COMMAND = "command";
 
 }
 }
