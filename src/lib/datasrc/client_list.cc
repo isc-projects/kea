@@ -482,7 +482,8 @@ ConfigurableClientList::getStatus() const {
         // TODO: Once we support mapped cache, decide when we need the
         // SEGMENT_WAITING.
         result.push_back(DataSourceStatus(info.name_, info.cache_ ?
-                                          SEGMENT_MAPPED : SEGMENT_UNUSED));
+                                          SEGMENT_MAPPED : SEGMENT_UNUSED,
+                                          SEGMENT_LOCAL));
     }
     return (result);
 }
