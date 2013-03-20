@@ -26,6 +26,7 @@ from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
 from isc.statistics import Counters
+from isc.util.address_formatter import AddressFormatter
 
 logger = isc.log.Logger("notify_out")
 
@@ -433,13 +434,13 @@ class NotifyOut:
                     self._notify_next_target(zone_notify_info)
 
         elif event_type == _EVENT_TIMEOUT and zone_notify_info.notify_try_num > 0:
-            logger.info(NOTIFY_OUT_TIMEOUT, tgt[0], tgt[1])
+            logger.info(NOTIFY_OUT_TIMEOUT, AddressFormatter(tgt))
 
         tgt = zone_notify_info.get_current_notify_target()
         if tgt:
             zone_notify_info.notify_try_num += 1
             if zone_notify_info.notify_try_num > _MAX_NOTIFY_TRY_NUM:
-                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
+                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, AddressFormatter(tgt),
                             _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
@@ -487,15 +488,14 @@ class NotifyOut:
             elif zone_notify_info.get_socket().family == socket.AF_INET6:
                 self._counters.inc('zones', zone_notify_info.zone_name,
                                   'notifyoutv6')
-            logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
-                        addrinfo[1])
+            logger.info(NOTIFY_OUT_SENDING_NOTIFY, AddressFormatter(addrinfo))
         except (socket.error, addr.InvalidAddress) as err:
-            logger.error(NOTIFY_OUT_SOCKET_ERROR, addrinfo[0],
-                         addrinfo[1], err)
+            logger.error(NOTIFY_OUT_SOCKET_ERROR, AddressFormatter(addrinfo),
+                         err)
             return False
         except addr.InvalidAddress as iae:
-            logger.error(NOTIFY_OUT_INVALID_ADDRESS, addrinfo[0],
-                         addrinfo[1], iae)
+            logger.error(NOTIFY_OUT_INVALID_ADDRESS,
+                         AddressFormatter(addrinfo), iae)
             return False
 
         return True
@@ -544,26 +544,28 @@ class NotifyOut:
         try:
             msg.from_wire(msg_data)
             if not msg.get_header_flag(Message.HEADERFLAG_QR):
-                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET, from_addr[0],
-                            from_addr[1])
+                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET,
+                            AddressFormatter(from_addr))
                 return _BAD_QR
 
             if msg.get_qid() != zone_notify_info.notify_msg_id:
-                logger.warn(NOTIFY_OUT_REPLY_BAD_QID, from_addr[0],
-                            from_addr[1], msg.get_qid(),
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QID,
+                            AddressFormatter(from_addr), msg.get_qid(),
                             zone_notify_info.notify_msg_id)
                 return _BAD_QUERY_ID
 
             question = msg.get_question()[0]
             if question.get_name() != Name(zone_notify_info.zone_name):
-                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME, from_addr[0],
-                            from_addr[1], question.get_name().to_text(),
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME,
+                            AddressFormatter(from_addr),
+                            question.get_name().to_text(),
                             Name(zone_notify_info.zone_name).to_text())
                 return _BAD_QUERY_NAME
 
             if msg.get_opcode() != Opcode.NOTIFY:
-                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
-                            from_addr[1], msg.get_opcode().to_text())
+                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE,
+                            AddressFormatter(from_addr),
+                            msg.get_opcode().to_text())
                 return _BAD_OPCODE
         except Exception as err:
             # We don't care what exception, just report it?
@@ -576,8 +578,8 @@ class NotifyOut:
         try:
             msg, addr = sock.recvfrom(512)
         except socket.error as err:
-            logger.error(NOTIFY_OUT_SOCKET_RECV_ERROR, tgt_addr[0],
-                         tgt_addr[1], err)
+            logger.error(NOTIFY_OUT_SOCKET_RECV_ERROR,
+                         AddressFormatter(tgt_addr), err)
             return None
 
         return msg
