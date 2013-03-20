@@ -68,6 +68,8 @@ copylist = [
      "configurations/xfrin/retransfer_master_nons.conf"],
     ["configurations/xfrin/retransfer_slave.conf.orig",
      "configurations/xfrin/retransfer_slave.conf"],
+    ["configurations/xfrin/retransfer_slave_notify.conf.orig",
+     "configurations/xfrin/retransfer_slave_notify.conf"],
     ["data/inmem-xfrin.sqlite3.orig",
      "data/inmem-xfrin.sqlite3"],
     ["data/xfrin-before-diffs.sqlite3.orig",
