@@ -801,8 +801,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
         .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
 
-    const string remote_ip_address =
-        io_message.getRemoteEndpoint().getAddress().toText();
+    const string remote_ip_address = remote_ep.getAddress().toText();
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_master = "\", \"master\" : \"";
