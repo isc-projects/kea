@@ -630,7 +630,8 @@ class Zonemgr:
             """ Handle Auth notify command"""
             # master is the source sender of the notify message.
             zone_name_class, master = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_NOTIFY, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_NOTIFY,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_handle_notify(zone_name_class, master)
             # Send notification to zonemgr timer thread
@@ -639,7 +640,8 @@ class Zonemgr:
         elif command == notify_out.ZONE_NEW_DATA_READY_CMD:
             """ Handle xfrin success command"""
             zone_name_class = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_success(zone_name_class)
             self._master_socket.send(b" ")# make self._slave_socket readble
@@ -647,7 +649,8 @@ class Zonemgr:
         elif command == notify_out.ZONE_XFRIN_FAILED:
             """ Handle xfrin fail command"""
             zone_name_class = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_FAILED, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_FAILED,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_fail(zone_name_class)
             self._master_socket.send(b" ")# make self._slave_socket readble

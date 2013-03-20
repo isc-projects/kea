@@ -315,14 +315,18 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_zone_handle_notify(self):
         self.zone_refresh.zone_handle_notify(ZONE_NAME_CLASS1_IN,"127.0.0.1")
-        notify_master = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"]
+        notify_master = self.zone_refresh.\
+            _zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"]
         self.assertEqual("127.0.0.1", notify_master)
-        zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
+        zone_timeout = self.zone_refresh.\
+            _zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
         current_time = time.time()
         self.assertTrue(zone_timeout <= current_time)
-        self.assertRaises(ZonemgrException, self.zone_refresh.zone_handle_notify,\
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.zone_handle_notify,
                           ZONE_NAME_CLASS3_CH, "127.0.0.1")
-        self.assertRaises(ZonemgrException, self.zone_refresh.zone_handle_notify,\
+        self.assertRaises(ZonemgrException,
+                          self.zone_refresh.zone_handle_notify,
                           ZONE_NAME_CLASS3_IN, "127.0.0.1")
 
     def test_zone_refresh_success(self):
@@ -672,15 +676,21 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(TEST_SQLITE3_DBFILE, self.zonemgr.get_db_file())
 
     def test_parse_cmd_params(self):
-        params1 = {"zone_name" : "example.com.", "zone_class" : "CH", "master" : "127.0.0.1"}
+        params1 = {"zone_name" : "example.com.", "zone_class" : "CH",
+                   "master" : "127.0.0.1"}
         answer1 = (ZONE_NAME_CLASS3_CH, "127.0.0.1")
-        self.assertEqual(answer1, self.zonemgr._parse_cmd_params(params1, ZONE_NOTIFY_COMMAND))
+        self.assertEqual(answer1,
+                         self.zonemgr._parse_cmd_params(params1,
+                                                        ZONE_NOTIFY_COMMAND))
         params2 = {"zone_name" : "example.com.", "zone_class" : "IN"}
         answer2 = ZONE_NAME_CLASS3_IN
-        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(params2, notify_out.ZONE_NEW_DATA_READY_CMD))
-        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(
+                params2, notify_out.ZONE_NEW_DATA_READY_CMD))
+        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params,
+                          params2, ZONE_NOTIFY_COMMAND)
         params1 = {"zone_class" : "CH"}
-        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params,
+                          params2, ZONE_NOTIFY_COMMAND)
 
     def test_config_data_check(self):
         # jitter should not be bigger than half of the original value
