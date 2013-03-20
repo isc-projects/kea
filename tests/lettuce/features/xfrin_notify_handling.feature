@@ -244,3 +244,88 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter accept should be 0
     Then the statistics counter senderr should be 0
     Then the statistics counter recverr should be 0
+
+    #
+    # Test for NOTIFY that would result in NOTAUTH
+    #
+    Scenario: Handle incoming notify that does match authoritative zones
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    #
+    # replace master's data source with unmatched zone for slave's zone.
+    # we restart Xfrout to make it sure.
+    #
+    When I send bind10 the following commands with cmdctl port 47804
+    """
+    config set data_sources/classes/IN[0]/params/database_file data/ixfr-out/zones.sqlite3
+    config set Auth/database_file data/ixfr-out/zones.sqlite3
+    config set Xfrout/zone_config[0]/origin example.com
+    config commit
+    Xfrout shutdown
+    """
+    last bindctl output should not contain "error"
+    And wait 2 times for master stderr message XFROUT_STARTED
+
+    A query for www.example.com to [::1]:47806 should have rcode REFUSED
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.com IN
+    Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY_NOTAUTH
+    Then wait for new master stderr message NOTIFY_OUT_REPLY_RECEIVED
+
+    A query for www.example.com to [::1]:47806 should have rcode REFUSED
+
+    #
+    # Test for NOTIFY that's not in the secondaries list
+    #
+    Scenario: Handle incoming notify that is not in the secondaries list
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    #
+    # Empty slave's secondaries list, and restart zonemgr to make it sure
+    #
+    When I send bind10 the following commands with cmdctl
+    """
+    config remove Zonemgr/secondary_zones[0]
+    config commit
+    Zonemgr shutdown
+    """
+    last bindctl output should not contain "error"
+    And wait 2 times for bind10 stderr message ZONEMGR_STARTED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
+    Then wait for new bind10 stderr message ZONEMGR_ZONE_NOTIFY_NOT_SECONDARY
+    Then wait for new master stderr message NOTIFY_OUT_REPLY_RECEIVED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
