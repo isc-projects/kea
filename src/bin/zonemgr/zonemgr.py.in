@@ -210,8 +210,8 @@ class ZonemgrRefresh:
 
         """
         if self._zone_not_exist(zone_name_class):
-            logger.error(ZONEMGR_UNKNOWN_ZONE_NOTIFIED, zone_name_class[0],
-                         zone_name_class[1], master)
+            logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_ZONE_NOTIFY_NOT_SECONDARY,
+                         zone_name_class[0], zone_name_class[1], master)
             return False
         self._set_zone_notifier_master(zone_name_class, master)
         self._set_zone_notify_timer(zone_name_class)
