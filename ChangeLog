@@ -1,7 +1,7 @@
 591.	[func]		vorner
 	Ported the remaining tests from the old shell/perl based system to
-	lettuce. Make target `systest' is now gone. Currently, the lettuce tests
-	are in git only, not part of the release tarball.
+	lettuce. Make target `systest' is now gone. Currently, the lettuce
+	tests are in git only, not part of the release tarball.
 	(Trac #2624, git df1c5d5232a2ab551cd98b77ae388ad568a683ad)
 
 590.	[bug]		tmark
