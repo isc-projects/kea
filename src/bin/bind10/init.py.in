@@ -38,6 +38,7 @@ __main__.
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
+from isc.util.address_formatter import AddressFormatter
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -428,7 +429,7 @@ class Init:
                         port)
         else:
             logger.info(BIND10_STARTING_PROCESS_PORT_ADDRESS,
-                        self.curproc, address, port)
+                        self.curproc, AddressFormatter(address, port))
 
     def log_started(self, pid = None):
         """
