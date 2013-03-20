@@ -947,6 +947,53 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
                           &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
+
+TEST_F(AuthSrvTest, notifyNotAuth) {
+    // If the server doesn't have authority of the specified zone in NOTIFY,
+    // it will return NOTAUTH
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG /* no AA */, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyNotAuthSubDomain) {
+    // Similar to the previous case, but checking partial match doesn't confuse
+    // the processing.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("child.example"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyNotAuthNoClass) {
+    // Likewise, and there's not even a data source in the specified class.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example"),
+                                       RRClass::CH(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
 // Try giving the server a TSIG signed request and see it can anwer signed as
 // well
 #ifdef USE_STATIC_LINK
