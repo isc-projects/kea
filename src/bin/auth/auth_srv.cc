@@ -747,6 +747,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                            std::auto_ptr<TSIGContext> tsig_context,
                            MessageAttributes& stats_attrs)
 {
+    const IOEndpoint& remote_ep = io_message.getRemoteEndpoint(); // for logs
+
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
     if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
@@ -780,6 +782,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
             dsrc_clients->find(question->getName(), true, false).exact_match_;
     }
     if (!is_auth) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY_NOTAUTH)
+            .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
         makeErrorMessage(renderer_, message, buffer, Rcode::NOTAUTH(),
                          stats_attrs, tsig_context);
         return (true);
@@ -795,7 +799,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
-      .arg(question->getName()).arg(question->getClass());
+        .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
 
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
