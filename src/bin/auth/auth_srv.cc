@@ -769,8 +769,21 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // on, but we don't check these conditions.  This behavior is compatible
     // with BIND 9.
 
-    // TODO check with the conf-mgr whether current server is the auth of the
-    // zone
+    // See if we have the specified zone in our data sources; if not return
+    // NOTAUTH, following BIND 9 (this is not specified in RFC 1996).
+    bool is_auth = false;
+    {
+        auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
+        const shared_ptr<datasrc::ClientList> dsrc_clients =
+            datasrc_holder.findClientList(question->getClass());
+        is_auth = dsrc_clients &&
+            dsrc_clients->find(question->getName(), true, false).exact_match_;
+    }
+    if (!is_auth) {
+        makeErrorMessage(renderer_, message, buffer, Rcode::NOTAUTH(),
+                         stats_attrs, tsig_context);
+        return (true);
+    }
 
     // In the code that follows, we simply ignore the notify if any internal
     // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
