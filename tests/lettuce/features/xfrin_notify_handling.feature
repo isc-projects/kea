@@ -292,6 +292,9 @@ Feature: Xfrin incoming notify handling
       | example.org..soaoutv6  |         1 |         3 |
       | example.org..axfrreqv6 |         1 |         3 |
       | example.org..xfrfail   |         1 |         3 |
+    # Note: The above requests and failures would be done several
+    # times depending on timing or environment. We expect here that
+    # they would be 1 to 3.
 
     #
     # Test for Xfr request rejected in IPv4
@@ -397,6 +400,9 @@ Feature: Xfrin incoming notify handling
       | example.org..soaoutv4  |         1 |         3 |
       | example.org..axfrreqv4 |         1 |         3 |
       | example.org..xfrfail   |         1 |         3 |
+    # Note: The above requests and failures would be done several
+    # times depending on timing or environment. We expect here that
+    # they would be 1 to 3.
 
     #
     # Test for unreachable slave
