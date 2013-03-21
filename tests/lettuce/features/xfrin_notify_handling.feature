@@ -1,5 +1,10 @@
 Feature: Xfrin incoming notify handling
-    Tests for Xfrin incoming notify handling.
+    Tests for Xfrin incoming notify handling. They also test
+    statistics counters incremented, which are related to notifying
+    and transferring by Xfrout and receiveing by Xfrin. Some cases are
+    considered: Transferring is done via IPv4 or IPv6 transport. A
+    transfer request from Xfrin is rejected by Xfrout. The master
+    server or slave server is unreachable.
 
     Scenario: Handle incoming notify
     Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
