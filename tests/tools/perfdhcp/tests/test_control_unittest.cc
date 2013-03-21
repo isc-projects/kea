@@ -672,6 +672,18 @@ TEST_F(TestControlTest, GenerateDuid) {
     testDuid();
 }
 
+TEST_F(TestControlTest, MisMatchVerionServer) {
+    NakedTestControl tc;
+
+    // make sure we catch -6 paired with v4 address
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -6 192.168.1.1"));
+    EXPECT_THROW(tc.openSocket(), isc::InvalidParameter);
+
+    // make sure we catch -4 paired with v6 address
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -4 ff02::1:2"));
+    EXPECT_THROW(tc.openSocket(), isc::InvalidParameter);
+}
+
 TEST_F(TestControlTest, GenerateMacAddress) {
     // Simulate one client only. Always the same MAC address will be
     // generated.
