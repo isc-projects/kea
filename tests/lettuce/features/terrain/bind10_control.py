@@ -390,9 +390,14 @@ def check_statistics_items(step, category, has_except_for):
         with the multiline part.
 
     Expected values of items are taken from the multiline part of the step in
-    the scenario. The multiline part has two columns: item_name and item_value.
-    item_name is a relative name to category. item_value is an expected value
-    for item_name.
+    the scenario. The multiline part has at most 5 columns: item_name,
+    item_value, min_value, and max_value. item_name is a relative name
+    to category. item_value is an expected value for
+    item_name. min_value and max_value are expected to be used when
+    item_value cannot be specified to be item_value. min_value is the
+    minimum value in the expected range, and max_value is the maximum
+    value in the expected range. Values would be examined if they are
+    in columns corresponding to these.
     """
 
     def flatten(dictionary, prefix=''):
