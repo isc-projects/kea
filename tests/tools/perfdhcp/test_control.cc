@@ -594,17 +594,29 @@ TestControl::openSocket() const {
     uint16_t port = options.getLocalPort();
     uint8_t family = AF_INET;
     int sock = 0;
+
+    if (options.getIpVersion() == 6) {
+        family = AF_INET6;
+    }
+
     IOAddress remoteaddr(servername);
+    
+    // check for mismatch between ip option and server
+    if (family != remoteaddr.getFamily())
+    {
+        isc_throw(InvalidParameter, 
+            "Values for Ip version: " <<  (unsigned int)options.getIpVersion()
+            <<  " and Server:" << servername << " are mismatched."); 
+    }
+
     if (port == 0) {
-        if (options.getIpVersion() == 6) {
+        if (family == AF_INET6) {
             port = DHCP6_CLIENT_PORT;
         } else if (options.getIpVersion() == 4) {
             port = 67; //  TODO: find out why port 68 is wrong here.
         }
     }
-    if (options.getIpVersion() == 6) {
-        family = AF_INET6;
-    }
+
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
     if (!localname.empty()) {
