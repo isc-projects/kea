@@ -22,7 +22,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout
+    check initial statistics for Xfrout with cmdctl port 47804
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
@@ -118,7 +118,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout
+    check initial statistics for Xfrout with cmdctl port 47804
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
@@ -214,7 +214,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout
+    check initial statistics for Xfrout with cmdctl port 47804
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
@@ -319,7 +319,7 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout
+    check initial statistics for Xfrout with cmdctl port 47804
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | min_value | max_value |
