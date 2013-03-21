@@ -23,15 +23,12 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics for Xfrout with cmdctl port 47804
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
-      | item_name | min_value | max_value |
-      | open      |         0 |         1 |
 
     #
     # Test2 for Xfrin statistics
     #
     check initial statistics for Xfrin
+
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
@@ -119,15 +116,11 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics for Xfrout with cmdctl port 47804
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
-      | item_name | min_value | max_value |
-      | open      |         0 |         1 |
-
     #
     # Test2 for Xfrin statistics
     #
     check initial statistics for Xfrin
+
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
@@ -215,15 +208,12 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics for Xfrout with cmdctl port 47804
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
-      | item_name | min_value | max_value |
-      | open      |         0 |         1 |
 
     #
     # Test2 for Xfrin statistics
     #
     check initial statistics for Xfrin
+
     #
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
@@ -320,15 +310,12 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics for Xfrout with cmdctl port 47804
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
-      | item_name | min_value | max_value |
-      | open      |         0 |         1 |
 
     #
     # Test2 for Xfrin statistics
     #
     check initial statistics for Xfrin
+
     #
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
