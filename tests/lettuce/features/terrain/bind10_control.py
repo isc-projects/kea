@@ -438,24 +438,17 @@ def check_statistics_items(step, category, has_except_for):
             'Statistics item %s has unexpected value %s (expect %s)' % \
                 (name, found, 0)
 
-@step('check initial statistics for (Xfrin|Xfrout)')
-def check_init_statistics(step, module):
+@step('check initial statistics for (\S+)')
+def check_init_statistics(step, name):
     """
-    check the initial statistics for Xfrin or Xfrout.
+    check the initial statistics for the module
     Parameters:
-    module : Xfrin or Xfrout
+    name ('module <name>'): The name of the module (case sensitive!)
     """
-    query_str = 'When I query statistics %%s of bind10 module %s with cmdctl' % module
+    query_str = 'When I query statistics of bind10 module %s with cmdctl' % name
     notcontain_str = 'last bindctl output should not contain "%s"'
-    check_str = 'The statistics counters are 0 in category .%s%%s' % module
-    if module == 'Xfrout':
-        query_str = query_str + ' port 47804'
-    step.given(query_str % 'zones')
+    check_str = 'The statistics counters are 0 in category .' + name
+    step.given(query_str)
     step.given(notcontain_str % 'error')
     step.given(notcontain_str % 'example.org.')
-    step.given(check_str % '.zones._SERVER_')
-    if module == 'Xfrout':
-        step.given(query_str % 'ixfr_running')
-        step.given(check_str)
-        step.given(query_str % 'axfr_running')
-        step.given(check_str)
+    step.given(check_str)
