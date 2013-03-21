@@ -438,16 +438,20 @@ def check_statistics_items(step, category, has_except_for):
             'Statistics item %s has unexpected value %s (expect %s)' % \
                 (name, found, 0)
 
-@step('check initial statistics for (\S+)')
-def check_init_statistics(step, name):
+@step('check initial statistics for (\S+)( with cmdctl port \d+)?')
+def check_init_statistics(step, name, cmdctl_port):
     """
     check the initial statistics for the module
     Parameters:
     name ('module <name>'): The name of the module (case sensitive!)
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to.
     """
-    query_str = 'When I query statistics of bind10 module %s with cmdctl' % name
+    query_str = 'query statistics of bind10 module ' + name
+    if cmdctl_port:
+        query_str = query_str + cmdctl_port
     notcontain_str = 'last bindctl output should not contain "%s"'
-    check_str = 'The statistics counters are 0 in category .' + name
+    check_str = 'statistics counters are 0 in category .' + name
     step.given(query_str)
     step.given(notcontain_str % 'error')
     step.given(notcontain_str % 'example.org.')
