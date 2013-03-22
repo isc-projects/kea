@@ -165,7 +165,7 @@ Feature: Xfrin incoming notify handling
     # can't use 'wait for new' below.
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
     Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
-    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_TRANSFER_SUCCESS
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
