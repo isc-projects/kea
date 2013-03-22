@@ -570,6 +570,10 @@ class NotifyOut:
             logger.error(NOTIFY_OUT_REPLY_UNCAUGHT_EXCEPTION, err)
             return _BAD_REPLY_PACKET
 
+        logger.debug(logger.DBGLVL_TRACE_BASIC, NOTIFY_OUT_REPLY_RECEIVED,
+                     zone_notify_info.zone_name, zone_notify_info.zone_class,
+                     from_addr[0], from_addr[1], msg.get_rcode())
+
         return _REPLY_OK
 
     def _get_notify_reply(self, sock, tgt_addr):

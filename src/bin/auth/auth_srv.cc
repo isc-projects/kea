@@ -747,6 +747,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                            std::auto_ptr<TSIGContext> tsig_context,
                            MessageAttributes& stats_attrs)
 {
+    const IOEndpoint& remote_ep = io_message.getRemoteEndpoint(); // for logs
+
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
     if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
@@ -769,8 +771,23 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // on, but we don't check these conditions.  This behavior is compatible
     // with BIND 9.
 
-    // TODO check with the conf-mgr whether current server is the auth of the
-    // zone
+    // See if we have the specified zone in our data sources; if not return
+    // NOTAUTH, following BIND 9 (this is not specified in RFC 1996).
+    bool is_auth = false;
+    {
+        auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
+        const shared_ptr<datasrc::ClientList> dsrc_clients =
+            datasrc_holder.findClientList(question->getClass());
+        is_auth = dsrc_clients &&
+            dsrc_clients->find(question->getName(), true, false).exact_match_;
+    }
+    if (!is_auth) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY_NOTAUTH)
+            .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
+        makeErrorMessage(renderer_, message, buffer, Rcode::NOTAUTH(),
+                         stats_attrs, tsig_context);
+        return (true);
+    }
 
     // In the code that follows, we simply ignore the notify if any internal
     // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
@@ -782,10 +799,9 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
-      .arg(question->getName()).arg(question->getClass());
+        .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
 
-    const string remote_ip_address =
-        io_message.getRemoteEndpoint().getAddress().toText();
+    const string remote_ip_address = remote_ep.getAddress().toText();
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_master = "\", \"master\" : \"";
