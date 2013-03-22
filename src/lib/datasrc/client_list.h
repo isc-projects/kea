@@ -101,10 +101,11 @@ public:
 
     /// \brief Get the segment type
     ///
-    /// \throw isc::BadValue if called and state is SEGMENT_UNUSED.
+    /// \throw isc::InvalidOperation if called and state is SEGMENT_UNUSED.
     MemorySegmentType getSegmentType() const {
         if (getSegmentState() == SEGMENT_UNUSED) {
-            isc_throw(isc::BadValue, "No segment used, no type therefore.");
+            isc_throw(isc::InvalidOperation,
+                      "No segment used, no type therefore.");
         }
         return (type_);
     }
