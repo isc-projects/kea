@@ -61,7 +61,7 @@ enum MemorySegmentState {
     SEGMENT_WAITING,
 
     /// \brief The segment is ready to be used.
-    SEGMENT_MAPPED
+    SEGMENT_INUSE
 };
 
 /// \brief The type of the memory segment in cache
