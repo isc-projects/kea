@@ -896,13 +896,16 @@ class XfrinConnection(asyncore.dispatcher):
     def _get_ipver_str(self):
         """Returns a 'v4' or 'v6' string representing a IP version
         depending on the socket family. This is for an internal use
-        only. This is supported only for IP sockets. It raises a
-        ValueError exception on other address families."""
+        only (except for tests). This is supported only for IP sockets.
+        It raises a ValueError exception on other address families.
+
+        """
         if self.socket.family == socket.AF_INET:
             return 'v4'
         elif self.socket.family == socket.AF_INET6:
             return 'v6'
-        raise ValueError("Invalid address family. This is supported only for IP sockets")
+        raise ValueError("Invalid address family. "
+                         "This is supported only for IP sockets")
 
     def _check_soa_serial(self):
         '''Send SOA query and compare the local and remote serials.
