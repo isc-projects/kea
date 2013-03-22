@@ -48,8 +48,8 @@ class ZoneWriter;
 
 /// \brief Segment status of the cache
 ///
-/// Describes the status in which the memory segment of given data source
-/// is.
+/// Describes the status in which the memory segment for the in-memory cache of
+// /given data source is.
 enum MemorySegmentState {
     /// \brief No segment used for this data source.
     ///
@@ -78,6 +78,9 @@ enum MemorySegmentType {
 /// This indicates the status a data soure is in. It is used with segment
 /// and cache management, to discover the data sources that need external
 /// mapping or local loading.
+///
+/// In future, it may be extended for other purposes, such as performing an
+/// operation on named data source.
 class DataSourceStatus {
 public:
     /// \brief Constructor
@@ -91,12 +94,12 @@ public:
         type_(type)
     {}
 
-    /// \brief Get the current segment state
+    /// \brief Get the segment state
     MemorySegmentState getSegmentState() const {
         return (state_);
     }
 
-    /// \brief Get the current segment type
+    /// \brief Get the segment type
     ///
     /// \throw isc::BadValue if called and state is SEGMENT_UNUSED.
     MemorySegmentType getSegmentType() const {
@@ -106,7 +109,7 @@ public:
         return (type_);
     }
 
-    /// \brief Get the current name.
+    /// \brief Get the name.
     const std::string& getName() const {
         return (name_);
     }
@@ -456,6 +459,9 @@ public:
     ///
     /// Get a DataSourceStatus for current state of each data source client
     /// in this list.
+    ///
+    /// This may throw standad exceptions, such as std::bad_alloc. Otherwise,
+    /// it is exception free.
     std::vector<DataSourceStatus> getStatus() const;
 public:
     /// \brief Access to the data source clients.
