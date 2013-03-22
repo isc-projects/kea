@@ -51,14 +51,19 @@ Feature: Xfrin incoming notify handling
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
-    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
-    Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
-    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
-    Then wait 5 times for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
-    Then wait for new master stderr message NOTIFY_OUT_RETRY_EXCEEDED
+    # From this point we can't reliably 'wait for new' because the ordering
+    # of logs from different processes is unpredictable.  But these
+    # should be okay in this case.
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
+    Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
     A query for www.example.org to [::1]:47806 should have rcode NOERROR
+    # Make sure handling statistics command handling checked below is
+    # after this query
+    And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
     #
     # Test for statistics
@@ -67,7 +72,9 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
-    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
+    # note that this does not 100% guarantee the stats updated Xfrout
+    # statistics.  But there doesn't seem to be a better log message that
+    # suggests this event.
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
@@ -155,12 +162,12 @@ Feature: Xfrin incoming notify handling
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
-    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
-    Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_XFR_TRANSFER_STARTED
-    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
-    Then wait 5 times for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
-    Then wait for new master stderr message NOTIFY_OUT_RETRY_EXCEEDED
+    # can't use 'wait for new' below.
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
+    Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
@@ -170,8 +177,7 @@ Feature: Xfrin incoming notify handling
     # check for statistics change
     #
 
-    # wait until the last stats requesting is finished
-    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
+    # wait until stats request at least after NOTIFY_OUT_REPLY_RECEIVED
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
@@ -220,8 +226,7 @@ Feature: Xfrin incoming notify handling
     # check statistics change
     #
 
-    # wait until the last stats requesting is finished
-    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
+    # wait until stats request at least after NOTIFY_OUT_TIMEOUT
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
@@ -277,7 +282,7 @@ Feature: Xfrin incoming notify handling
     Xfrout shutdown
     """
     last bindctl output should not contain "error"
-    And wait 2 times for master stderr message XFROUT_STARTED
+    And wait for new master stderr message XFROUT_STARTED
 
     A query for www.example.com to [::1]:47806 should have rcode REFUSED
 
@@ -317,7 +322,7 @@ Feature: Xfrin incoming notify handling
     Zonemgr shutdown
     """
     last bindctl output should not contain "error"
-    And wait 2 times for bind10 stderr message ZONEMGR_STARTED
+    And wait for new bind10 stderr message ZONEMGR_STARTED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
