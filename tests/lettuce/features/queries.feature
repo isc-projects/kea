@@ -95,6 +95,10 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -137,6 +141,10 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -166,6 +174,10 @@ Feature: Querying feature
         """
         example.org.            3600    IN      SOA     ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200
         """
+
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
@@ -231,6 +243,10 @@ Feature: Querying feature
         mail.example.org.       3600    IN      A       192.0.2.10
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -281,6 +297,10 @@ Feature: Querying feature
         """
         ns.sub.example.org.	3600	IN	A	192.0.2.101
         """
+
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
@@ -333,6 +353,10 @@ Feature: Querying feature
         A query for example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 0
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -358,6 +382,9 @@ Feature: Querying feature
         """
         shell.example.org.      3600    IN      SSHFP   2 1 123456789abcdef67890123456789abcdef67890
         """
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command

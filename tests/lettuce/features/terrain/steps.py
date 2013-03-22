@@ -37,8 +37,10 @@ def wait_for_stderr_message(step, times, new, process_name, message, not_message
     output.
     Parameter:
     times: Check for the string this many times.
-    new: (' new', optional): Only check the output printed since last time
-                             this step was used for this process.
+    new: (' new', optional): Only check the output from the process that has
+                             not been covered in previous calls to this
+                             function.  See RunningProcess._wait_for_output_str
+                             for details.
     process_name ('<name> stderr'): Name of the process to check the output of.
     message ('message <message>'): Output (part) to wait for.
     not_message ('not <message>'): Output (part) to wait for, and fail
@@ -60,8 +62,10 @@ def wait_for_stdout_message(step, times, new, process_name, message, not_message
     output.
     Parameter:
     times: Check for the string this many times.
-    new: (' new', optional): Only check the output printed since last time
-                             this step was used for this process.
+    new: (' new', optional): Only check the output from the process that has
+                             not been covered in previous calls to this
+                             function.  See RunningProcess._wait_for_output_str
+                             for details.
     process_name ('<name> stderr'): Name of the process to check the output of.
     message ('message <message>'): Output (part) to wait for, and succeed.
     not_message ('not <message>'): Output (part) to wait for, and fail
