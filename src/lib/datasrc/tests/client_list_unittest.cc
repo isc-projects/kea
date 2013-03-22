@@ -576,7 +576,7 @@ TEST_F(ListTest, status) {
     ASSERT_EQ(2, statuses.size());
     EXPECT_EQ("type1", statuses[0].getName());
     EXPECT_EQ(SEGMENT_UNUSED, statuses[0].getSegmentState());
-    EXPECT_THROW(statuses[0].getSegmentType(), isc::BadValue);
+    EXPECT_THROW(statuses[0].getSegmentType(), isc::InvalidOperation);
     EXPECT_EQ("Test name", statuses[1].getName());
     EXPECT_EQ(SEGMENT_INUSE, statuses[1].getSegmentState());
     EXPECT_EQ(SEGMENT_LOCAL, statuses[1].getSegmentType());
@@ -1169,10 +1169,11 @@ TEST(DataSourceStatus, status) {
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(SEGMENT_INUSE, status.getSegmentState());
     EXPECT_EQ(SEGMENT_LOCAL, status.getSegmentType());
-    const DataSourceStatus statusUnused("Unused", SEGMENT_UNUSED, SEGMENT_FILE);
+    const DataSourceStatus statusUnused("Unused", SEGMENT_UNUSED,
+                                        SEGMENT_FILE);
     EXPECT_EQ("Unused", statusUnused.getName());
     EXPECT_EQ(SEGMENT_UNUSED, statusUnused.getSegmentState());
-    EXPECT_THROW(statusUnused.getSegmentType(), isc::BadValue);
+    EXPECT_THROW(statusUnused.getSegmentType(), isc::InvalidOperation);
 }
 
 }
