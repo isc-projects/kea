@@ -26,11 +26,15 @@
 
 from lettuce import *
 import subprocess
-import os.path
+import os
 import shutil
 import re
 import sys
 import time
+
+# lettuce cannot directly pass commands to the terrain, so we need to
+# use environment variables to influence behaviour
+KEEP_OUTPUT = 'LETTUCE_KEEP_OUTPUT'
 
 # In order to make sure we start all tests with a 'clean' environment,
 # We perform a number of initialization steps, like restoring configuration
@@ -107,7 +111,7 @@ class RunningProcess:
         self.process = None
         self.step = step
         self.process_name = process_name
-        self.remove_files_on_exit = True
+        self.remove_files_on_exit = (os.environ.get(KEEP_OUTPUT) != '1')
         self._check_output_dir()
         self._create_filenames()
         self._start_process(args)
