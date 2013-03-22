@@ -579,7 +579,7 @@ TEST_F(ListTest, status) {
     EXPECT_THROW(statuses[0].getSegmentType(), isc::InvalidOperation);
     EXPECT_EQ("Test name", statuses[1].getName());
     EXPECT_EQ(SEGMENT_INUSE, statuses[1].getSegmentState());
-    EXPECT_EQ(SEGMENT_LOCAL, statuses[1].getSegmentType());
+    EXPECT_EQ("local", statuses[1].getSegmentType());
 }
 
 TEST_F(ListTest, wrongConfig) {
@@ -1163,14 +1163,14 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
                                                          RRType::TXT())->code);
 }
 
-// Check the status holds data and the data can be extracted
+// Check the status holds data and can change the segment state
 TEST(DataSourceStatus, status) {
-    const DataSourceStatus status("Test", SEGMENT_INUSE, SEGMENT_LOCAL);
+    const DataSourceStatus status("Test", SEGMENT_INUSE, "local");
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(SEGMENT_INUSE, status.getSegmentState());
-    EXPECT_EQ(SEGMENT_LOCAL, status.getSegmentType());
+    EXPECT_EQ("local", status.getSegmentType());
     const DataSourceStatus statusUnused("Unused", SEGMENT_UNUSED,
-                                        SEGMENT_FILE);
+                                        "");
     EXPECT_EQ("Unused", statusUnused.getName());
     EXPECT_EQ(SEGMENT_UNUSED, statusUnused.getSegmentState());
     EXPECT_THROW(statusUnused.getSegmentType(), isc::InvalidOperation);

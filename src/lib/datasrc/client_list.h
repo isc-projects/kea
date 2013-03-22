@@ -64,15 +64,6 @@ enum MemorySegmentState {
     SEGMENT_INUSE
 };
 
-/// \brief The type of the memory segment in cache
-enum MemorySegmentType {
-    /// \brief A locally loaded, unshared cache. Normal memory.
-    SEGMENT_LOCAL,
-
-    /// \brief A file image mapped into memory
-    SEGMENT_FILE
-};
-
 /// \brief Status of one data source.
 ///
 /// This indicates the status a data soure is in. It is used with segment
@@ -88,10 +79,10 @@ public:
     /// Sets initial values. It doesn't matter what is provided for the type
     /// if state is SEGMENT_UNUSED, the value is effectively ignored.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
-                     MemorySegmentType type) :
+                     const std::string& type) :
         name_(name),
-        state_(state),
-        type_(type)
+        type_(type),
+        state_(state)
     {}
 
     /// \brief Get the segment state
@@ -102,7 +93,7 @@ public:
     /// \brief Get the segment type
     ///
     /// \throw isc::InvalidOperation if called and state is SEGMENT_UNUSED.
-    MemorySegmentType getSegmentType() const {
+    const std::string& getSegmentType() const {
         if (getSegmentState() == SEGMENT_UNUSED) {
             isc_throw(isc::InvalidOperation,
                       "No segment used, no type therefore.");
@@ -116,8 +107,8 @@ public:
     }
 private:
     std::string name_;
+    std::string type_;
     MemorySegmentState state_;
-    MemorySegmentType type_;
 };
 
 /// \brief The list of data source clients.

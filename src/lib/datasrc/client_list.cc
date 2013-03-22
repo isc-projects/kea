@@ -483,7 +483,7 @@ ConfigurableClientList::getStatus() const {
         // SEGMENT_WAITING.
         result.push_back(DataSourceStatus(info.name_, info.cache_ ?
                                           SEGMENT_INUSE : SEGMENT_UNUSED,
-                                          SEGMENT_LOCAL));
+                                          "local"));
     }
     return (result);
 }
