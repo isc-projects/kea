@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@ using namespace isc::dns::rdata;
 const char* const afsdb_text = "1 afsdb.example.com.";
 const char* const afsdb_text2 = "0 root.example.com.";
 const char* const too_long_label("012345678901234567890123456789"
-        "0123456789012345678901234567890123");
+        "0123456789012345678901234567890123.");
 
 namespace {
 class Rdata_AFSDB_Test : public RdataTest {
@@ -68,9 +68,17 @@ TEST_F(Rdata_AFSDB_Test, badText) {
     // number of fields (must be 2) is incorrect
     EXPECT_THROW(const generic::AFSDB rdata_afsdb("10 afsdb. example.com."),
                  InvalidRdataText);
+    // No origin and relative
+    EXPECT_THROW(const generic::AFSDB rdata_afsdb("1 afsdb.example.com"),
+                 MissingNameOrigin);
     // bad name
     EXPECT_THROW(const generic::AFSDB rdata_afsdb("1 afsdb.example.com." +
-                string(too_long_label)), TooLongLabel);
+                 string(too_long_label)), TooLongLabel);
+}
+
+TEST_F(Rdata_AFSDB_Test, copy) {
+    const generic::AFSDB rdata_afsdb2(rdata_afsdb);
+    EXPECT_EQ(0, rdata_afsdb.compare(rdata_afsdb2));
 }
 
 TEST_F(Rdata_AFSDB_Test, assignment) {
@@ -119,9 +127,24 @@ TEST_F(Rdata_AFSDB_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
                                      afsdb_text)));
 
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    generic::AFSDB tmp = generic::AFSDB("1 afsdb2.example.org.");
+    EXPECT_EQ(0, tmp.compare(
+        *test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                     "1 afsdb2")));
+
     // Exceptions cause NULL to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
                                              "1root.example.com."));
+
+    // 65536 is larger than maximum possible subtype
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                             "65536 afsdb.example.com."));
+
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::AFSDB(), RRClass::IN(),
+                                             "1 afsdb.example.com. extra."));
 }
 
 TEST_F(Rdata_AFSDB_Test, toWireBuffer) {
@@ -197,9 +220,9 @@ TEST_F(Rdata_AFSDB_Test, compare) {
     EXPECT_EQ(0, rdata_afsdb.compare(generic::AFSDB("1 "
                                 "AFSDB.example.com.")));
 
-    const generic::AFSDB small1("10 afsdb.example.com");
-    const generic::AFSDB large1("65535 afsdb.example.com");
-    const generic::AFSDB large2("256 afsdb.example.com");
+    const generic::AFSDB small1("10 afsdb.example.com.");
+    const generic::AFSDB large1("65535 afsdb.example.com.");
+    const generic::AFSDB large2("256 afsdb.example.com.");
 
     // confirm these are compared as unsigned values
     EXPECT_GT(0, rdata_afsdb.compare(large1));
@@ -210,7 +233,7 @@ TEST_F(Rdata_AFSDB_Test, compare) {
     EXPECT_LT(0, large2.compare(small1));
 
     // another AFSDB whose server name is larger than that of rdata_afsdb.
-    const generic::AFSDB large3("256 zzzzz.example.com");
+    const generic::AFSDB large3("256 zzzzz.example.com.");
     EXPECT_GT(0, large2.compare(large3));
     EXPECT_LT(0, large3.compare(large2));
 
