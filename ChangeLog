@@ -1,3 +1,12 @@
+592.	[bug]		jinmei
+	b10-auth and zonemgr now handle some uncommon NOTIFY messages more
+	gracefully: auth immediately returns a NOTAUTH response if the
+	server does not have authority for the zone (the behavior
+	compatible with BIND 9) without bothering zonemgr; zonemgr now
+	simply skips retransfer if the specified zone is not in its
+	secondary zone list, instead of producing noisy error logs.
+	(Trac #1938, git 89d7de8e2f809aef2184b450e7dee1bfec98ad14)
+
 591.	[func]		vorner
 	Ported the remaining tests from the old shell/perl based system to
 	lettuce. Make target `systest' is now gone. Currently, the lettuce
