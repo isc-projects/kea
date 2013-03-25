@@ -74,7 +74,6 @@ struct NSEC3Impl {
 /// The Hash Algorithm, Flags and Iterations fields must be within their
 /// valid ranges. The Salt field may contain "-" to indicate that the
 /// salt is of length 0. The Salt field must not contain any whitespace.
-///
 /// The type mnemonics must be valid, and separated by whitespace. If
 /// any invalid mnemonics are found, InvalidRdataText exception is
 /// thrown.
@@ -109,13 +108,8 @@ NSEC3::NSEC3(const std::string& nsec3_str) :
 /// The \c lexer should point to the beginning of valid textual
 /// representation of an NSEC3 RDATA.
 ///
-/// The Hash Algorithm, Flags and Iterations fields must be within their
-/// valid ranges. The Salt field may contain "-" to indicate that the
-/// salt is of length 0. The Salt field must not contain any whitespace.
-///
-/// The type mnemonics must be valid, and separated by whitespace. If
-/// any invalid mnemonics are found, InvalidRdataText exception is
-/// thrown.
+/// See \c NSEC3::NSEC3(const std::string&) for description of the
+/// expected RDATA fields.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as
 /// missing field.
