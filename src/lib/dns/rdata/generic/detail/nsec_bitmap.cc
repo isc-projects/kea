@@ -87,8 +87,14 @@ buildBitmapsFromLexer(const char* const rrtype_name,
     bool have_rrtypes = false;
     while (true) {
         const MasterToken& token = lexer.getNextToken();
-        if (token.getType() != MasterToken::STRING) {
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
             break;
+        }
+
+        if (token.getType() != MasterToken::STRING) {
+             isc_throw(InvalidRdataText,
+                       "Non-string token found when parsing key data");
         }
 
         have_rrtypes = true;
