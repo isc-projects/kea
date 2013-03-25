@@ -168,9 +168,6 @@ private:
     /// @brief defines a pool type
     Pool6Type type_;
 
-    /// @brief prefix length
-    /// used by TYPE_PD only (zeroed for other types)
-    uint8_t prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool
