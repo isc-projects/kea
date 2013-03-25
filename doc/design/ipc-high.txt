@@ -1,0 +1,52 @@
+The IPC protocol
+================
+
+While the cc-protocol.txt describes the low-level primitives, here we
+describe how the whole IPC should work and how to use it.
+
+Assumptions
+-----------
+
+We assume the low-level protocol keeps ordering of messages. That is,
+if A sends messages 1 and 2 to B, they get delivered in the same order
+as they were sent. However, if A sends message 1 to B and 2 to C, the
+order in which get them or the order in which they answer is not
+defined.
+
+We also assume that the delivery is reliable. If B gets a message from
+A, it can be sure that all previous messages were delivered too. If A
+sends a message to B, B either gets the message or either A or B is
+disconnected during the attempt.
+
+Also, we expect the messages don't get damaged or modified on their
+way.
+
+Addressing
+----------
+
+We can specify the recipient in two different ways:
+
+ * Directly. Each connected client has an unique address. A message
+   addressed to that addressed is sent only to the one client.
+ * By a group. A client might subscribe to any number of groups.
+   When a message is sent to the group, all clients subscribed to the
+   group receive it. It is legal to send to an empty group.
+
+Feedback from the IPC system
+----------------------------
+
+The IPC system generates some additional information to aid the
+communicating clients.
+
+Undeliverable notification::
+  If the client requests it (by a per-message flag) and the set of
+  recipients specified is empty (either because the connection
+  ID/lname is not connected or because the addressed group is empty),
+  an answer message is sent from the MSGQ daemon to notify it about
+  the situation.
+Notifications about connections and disconnections::
+  The system generates notification about following events:
+  * Client with given lname connected
+  * Client with given lname disconnected
+  * Client with given lname subscribed to given group
+  * Client with given lname unsubscribed from given group
