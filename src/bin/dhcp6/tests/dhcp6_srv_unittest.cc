@@ -256,7 +256,12 @@ public:
         }
  
         boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-        EXPECT_EQ(expected_iaid, ia->getIAID() );
+        if (!ia) {
+            ADD_FAILURE() << "IA_NA cannot convert option ptr to Option6";
+            return (boost::shared_ptr<Option6IAAddr>());
+        }
+
+        EXPECT_EQ(expected_iaid, ia->getIAID());
         EXPECT_EQ(expected_t1, ia->getT1());
         EXPECT_EQ(expected_t2, ia->getT2());
  
