@@ -82,7 +82,7 @@ def parse_answer(msg):
        containing an error message"""
     if type(msg) != dict:
         raise ModuleCCSessionError("Answer message is not a dict: " + str(msg))
-    if 'result' not in msg:
+    if CC_PAYLOAD_RESULT not in msg:
         raise ModuleCCSessionError("answer message does not contain 'result' element")
     elif type(msg[CC_PAYLOAD_RESULT]) != list:
         raise ModuleCCSessionError("wrong result type in answer message")
