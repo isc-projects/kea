@@ -52,6 +52,12 @@ string dnskey_txt("257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMV"
 TEST_F(Rdata_DNSKEY_Test, fromText) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(dnskey_txt, rdata_dnskey.toText());
+
+    // Space in key data is OK
+    EXPECT_NO_THROW(generic::DNSKEY("257 3 5 YmluZDEw LmlzYy5vcmc="));
+
+    // Delimited number in key data is OK
+    EXPECT_NO_THROW(generic::DNSKEY("257 3 5 YmluZDEwLmlzYy 5 vcmc="));
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
