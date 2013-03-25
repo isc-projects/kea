@@ -87,7 +87,8 @@ buildBitmapsFromLexer(const char* const rrtype_name,
 
     bool have_rrtypes = false;
     while (true) {
-        const MasterToken& token = lexer.getNextToken();
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
         if ((token.getType() == MasterToken::END_OF_FILE) ||
             (token.getType() == MasterToken::END_OF_LINE)) {
             break;
@@ -100,8 +101,8 @@ buildBitmapsFromLexer(const char* const rrtype_name,
 
         have_rrtypes = true;
         std::string type_str;
+        token.getString(type_str);
         try {
-            type_str = token.getString();
             const int code = RRType(type_str).getCode();
             bitmap[code / 8] |= (0x80 >> (code % 8));
         } catch (const InvalidRRType&) {
