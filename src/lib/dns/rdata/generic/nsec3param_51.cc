@@ -87,9 +87,8 @@ NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
 /// The \c lexer should point to the beginning of valid textual
 /// representation of an NSEC3PARAM RDATA.
 ///
-/// The Hash Algorithm, Flags and Iterations fields must be within their
-/// valid ranges. The Salt field may contain "-" to indicate that the
-/// salt is of length 0. The Salt field must not contain any whitespace.
+/// See \c NSEC3PARAM::NSEC3PARAM(const std::string&) for description of
+/// the expected RDATA fields.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as
 /// missing field.
