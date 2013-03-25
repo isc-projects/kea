@@ -121,10 +121,8 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
 /// The \c lexer should point to the beginning of valid textual
 /// representation of an DNSKEY RDATA.
 ///
-/// The Protocol and Algorithm fields must be within their valid
-/// ranges. The Public Key field must be present and must contain a
-/// Base64 encoding of the public key. Whitespace is allowed within the
-/// Base64 text.
+/// See \c DNSKEY::DNSKEY(const std::string&) for description of the
+/// expected RDATA fields.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as
 /// missing field.
