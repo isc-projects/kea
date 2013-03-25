@@ -10,6 +10,7 @@ b10_msgq_DATA = msgq.spec
 CLEANFILES = b10-msgq msgq.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/msgq_messages.pyo
 
 man_MANS = b10-msgq.8
 DISTCLEANFILES = $(man_MANS)
