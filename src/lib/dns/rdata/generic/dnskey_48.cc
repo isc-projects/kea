@@ -163,9 +163,16 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
     std::string keydatastr;
     while (true) {
         const MasterToken& token = lexer.getNextToken();
-        if (token.getType() != MasterToken::STRING) {
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
             break;
         }
+
+        if (token.getType() != MasterToken::STRING) {
+             isc_throw(InvalidRdataText,
+                       "Non-string token found when parsing key data");
+        }
+
         keydatastr.append(token.getString());
     }
 
