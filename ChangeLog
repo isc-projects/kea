@@ -1,7 +1,3 @@
-5XX.    [func]]       tmark
-	b10-dhcp6: Added unit tests for handling requests when no 
-	v6 subnets are configured/defined. (See Trac #2719)
-	(Trac #2721, git TBD)
 583.	[func]*		jelte
 	b10-cmdctl-usermgr has been updated and its options and arguments
 	have changed; it now defaults to the same accounts file as
