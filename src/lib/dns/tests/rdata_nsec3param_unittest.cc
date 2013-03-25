@@ -93,6 +93,14 @@ TEST_F(Rdata_NSEC3PARAM_Test, badText) {
 
     // Iterations out of range.
     EXPECT_THROW(generic::NSEC3PARAM("1 1 65536 D399EAAB"), InvalidRdataText);
+
+    // String instead of number
+    EXPECT_THROW(generic::NSEC3PARAM("foo 1 256 D399EAAB"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1 foo 256 D399EAAB"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 foo D399EAAB"),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {

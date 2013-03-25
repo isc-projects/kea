@@ -84,6 +84,14 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
     // Missing algorithm
     EXPECT_THROW(generic::DNSKEY("257 3 YmFiYWJhYmE="),
                  InvalidRdataText);
+
+    // String instead of number
+    EXPECT_THROW(generic::DNSKEY("foo 3 5 YmFiYWJhYmE="),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("257 foo 5 YmFiYWJhYmE="),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("257 3 foo YmFiYWJhYmE="),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
