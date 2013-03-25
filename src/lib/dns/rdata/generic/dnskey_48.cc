@@ -160,9 +160,10 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
                   "DNSKEY algorithm out of range: " << algorithm);
     }
 
-    std::string keydatastr;
+    std::string keydata_str;
     while (true) {
-        const MasterToken& token = lexer.getNextToken();
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
         if ((token.getType() == MasterToken::END_OF_FILE) ||
             (token.getType() == MasterToken::END_OF_LINE)) {
             break;
@@ -173,19 +174,21 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
                        "Non-string token found when parsing key data");
         }
 
-        keydatastr.append(token.getString());
+        std::string keydata_substr;
+        token.getString(keydata_substr);
+        keydata_str.append(keydata_substr);
     }
 
     lexer.ungetToken();
 
     // Check that some key data was read before end of input was
     // reached.
-    if (keydatastr.size() == 0) {
+    if (keydata_str.size() == 0) {
         isc_throw(InvalidRdataText, "Missing DNSKEY digest");
     }
 
     vector<uint8_t> keydata;
-    decodeBase64(keydatastr, keydata);
+    decodeBase64(keydata_str, keydata);
 
     // See RFC 4034 appendix B.1 for why the key data has to be at least
     // 3 bytes long with RSA/MD5.
