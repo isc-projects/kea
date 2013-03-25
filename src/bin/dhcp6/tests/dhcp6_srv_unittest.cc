@@ -134,17 +134,19 @@ public:
         EXPECT_TRUE(expected_clientid->getData() == tmp->getData());
     }
 
+    // Checks if server response is a NAK
     void checkNakResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
-                       uint32_t expected_transid, uint16_t expected_status_code) {
+                          uint32_t expected_transid, 
+                          uint16_t expected_status_code) {
         // Check if we get response at all
         checkResponse(rsp, expected_message_type, expected_transid);
 
         // Check that IA_NA was returned 
-        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
-        ASSERT_TRUE(tmp);
+        OptionPtr option_ia_na = rsp->getOption(D6O_IA_NA);
+        ASSERT_TRUE(option_ia_na);
 
         // check that the status is no address available
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(option_ia_na);
         ASSERT_TRUE(ia);
 
         checkIA_NAStatusCode(ia, expected_status_code);
@@ -312,7 +314,7 @@ public:
     Pool6Ptr pool_;
 };
 
-// This test verifies that incoming SOLICIT can be handled properly, even when
+// This test verifies that incoming SOLICIT can be handled properly when
 // there are no subnets configured. 
 //
 // This test sends a SOLICIT and the expected response 
@@ -334,7 +336,7 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     checkNakResponse (reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail);
 }
 
-// This test verifies that incoming SOLICIT can be handled properly, even when
+// This test verifies that incoming REQUEST can be handled properly when
 // there are no subnets configured. 
 //
 // This test sends a REQUEST and the expected response 
