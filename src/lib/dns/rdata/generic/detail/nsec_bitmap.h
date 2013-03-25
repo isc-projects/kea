@@ -57,7 +57,8 @@ void checkRRTypeBitmaps(const char* const rrtype_name,
 /// \brief Convert textual sequence of RR types read from a lexer into
 /// type bitmaps.
 ///
-/// See the other variant above for description.
+/// See the other variant above for description. If \c allow_empty is
+/// true and there are no mnemonics, \c typebits is left untouched.
 ///
 /// \exception InvalidRdataText Data read from the given lexer does not
 /// meet the assumption (e.g. including invalid form of RR type, not
@@ -70,9 +71,13 @@ void checkRRTypeBitmaps(const char* const rrtype_name,
 /// bits are set.
 /// \param typebits A placeholder for the resulting bitmaps.  Expected to be
 /// empty, but it's not checked.
+/// \param allow_empty If true, the function simply returns if no RR
+/// type mnemonics are found. Otherwise, it throws an exception if no RR
+/// type mnemonics are found.
 void buildBitmapsFromLexer(const char* const rrtype_name,
                            isc::dns::MasterLexer& lexer,
-                           std::vector<uint8_t>& typebits);
+                           std::vector<uint8_t>& typebits,
+                           bool allow_empty = false);
 
 /// \brief Convert type bitmaps to textual sequence of RR types.
 ///

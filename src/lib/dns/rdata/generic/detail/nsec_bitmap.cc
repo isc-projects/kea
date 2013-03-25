@@ -79,7 +79,8 @@ checkRRTypeBitmaps(const char* const rrtype_name,
 
 void
 buildBitmapsFromLexer(const char* const rrtype_name,
-                      MasterLexer& lexer, vector<uint8_t>& typebits)
+                      MasterLexer& lexer, vector<uint8_t>& typebits,
+                      bool allow_empty)
 {
     uint8_t bitmap[8 * 1024];       // 64k bits
     memset(bitmap, 0, sizeof(bitmap));
@@ -112,6 +113,9 @@ buildBitmapsFromLexer(const char* const rrtype_name,
     lexer.ungetToken();
 
     if (!have_rrtypes) {
+         if (allow_empty) {
+              return;
+         }
          isc_throw(InvalidRdataText,
                    rrtype_name << " record does not end with RR type mnemonic");
     }
