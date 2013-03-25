@@ -178,6 +178,8 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
 
     lexer.ungetToken();
 
+    // Check that some key data was read before end of input was
+    // reached.
     if (keydatastr.size() == 0) {
         isc_throw(InvalidRdataText, "Missing DNSKEY digest");
     }
