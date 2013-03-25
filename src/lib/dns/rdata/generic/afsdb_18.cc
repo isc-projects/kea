@@ -60,7 +60,7 @@ AFSDB::AFSDB(const std::string& afsdb_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-	createFromLexer(lexer, NULL);
+        createFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for AFSDB: "
@@ -75,7 +75,7 @@ AFSDB::AFSDB(const std::string& afsdb_str) :
 /// \brief Constructor with a context of MasterLexer.
 ///
 /// The \c lexer should point to the beginning of valid textual representation
-/// of an AFSDB RDATA.  The EXCHANGE field can be non-absolute if \c origin
+/// of an AFSDB RDATA.  The SERVER field can be non-absolute if \c origin
 /// is non-NULL, in which case \c origin is used to make it absolute.
 /// It must not be represented as a quoted string.
 ///
@@ -88,7 +88,7 @@ AFSDB::AFSDB(const std::string& afsdb_str) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of EXCHANGE when it
+/// \param origin If non NULL, specifies the origin of SERVER when it
 /// is non-absolute.
 AFSDB::AFSDB(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
