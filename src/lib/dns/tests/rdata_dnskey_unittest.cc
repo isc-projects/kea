@@ -52,32 +52,27 @@ protected:
         rdata_dnskey2(dnskey_txt2)
     {}
 
-    void checkFromText_None(const string& rdata_str)
-    {
+    void checkFromText_None(const string& rdata_str) {
         checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
             rdata_str, rdata_dnskey2, false, false);
     }
 
-    void checkFromText_InvalidText(const string& rdata_str)
-    {
+    void checkFromText_InvalidText(const string& rdata_str) {
         checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
             rdata_str, rdata_dnskey2, true, true);
     }
 
-    void checkFromText_InvalidLength(const string& rdata_str)
-    {
+    void checkFromText_InvalidLength(const string& rdata_str) {
         checkFromText<generic::DNSKEY, InvalidRdataLength, InvalidRdataLength>(
             rdata_str, rdata_dnskey2, true, true);
     }
 
-    void checkFromText_BadValue(const string& rdata_str)
-    {
+    void checkFromText_BadValue(const string& rdata_str) {
         checkFromText<generic::DNSKEY, BadValue, BadValue>(
             rdata_str, rdata_dnskey2, true, true);
     }
 
-    void checkFromText_LexerError(const string& rdata_str)
-    {
+    void checkFromText_LexerError(const string& rdata_str) {
         checkFromText
             <generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
                 rdata_str, rdata_dnskey2, true, true);
