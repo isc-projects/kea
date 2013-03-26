@@ -25,6 +25,12 @@ the DHCPv4 and DHCPv6 servers must be considered experimental.
 Limitations and known issues with this DHCP release can be found
 at http://bind10.isc.org/wiki/KeaKnownIssues
 
+NOTE: The API/ABI provided by libraries in BIND 10 may change in future
+point releases. So please do not assume currently that any code that you
+compile for a particular version of a BIND 10 library will work in
+future versions of the library. We aim to stabilize the public API/ABI
+interface of BIND 10 libraries in future releases.
+
 Documentation is included with the source. See doc/guide/bind10-guide.txt
 (or bind10-guide.html) for installation instructions.  The
 documentation is also available via the BIND 10 website at
