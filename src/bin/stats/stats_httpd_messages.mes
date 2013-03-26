@@ -24,7 +24,7 @@ The stats-httpd module was unable to connect to the BIND 10 command
 and control bus. A likely problem is that the message bus daemon
 (b10-msgq) is not running. The stats-httpd module will now shut down.
 
-% STATSHTTPD_CLOSING closing %1#%2
+% STATSHTTPD_CLOSING closing %1
 The stats-httpd daemon will stop listening for requests on the given
 address and port number.
 
@@ -80,7 +80,7 @@ and an error is sent back.
 % STATSHTTPD_SHUTDOWN shutting down
 The stats-httpd daemon is shutting down.
 
-% STATSHTTPD_STARTED listening on %1#%2
+% STATSHTTPD_STARTED listening on %1
 The stats-httpd daemon will now start listening for requests on the
 given address and port number.
 
