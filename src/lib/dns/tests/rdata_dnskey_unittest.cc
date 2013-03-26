@@ -37,20 +37,24 @@ using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_DNSKEY_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+    Rdata_DNSKEY_Test() :
+        dnskey_txt("257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMV"
+                   "Fu2hWLDMvoOMRXjGrhhCeFvAZih7yJHf8ZGfW6hd38hXG/x"
+                   "ylYCO6Krpbdojwx8YMXLA5/kA+u50WIL8ZR1R6KTbsYVMf/"
+                   "Qx5RiNbPClw+vT+U8eXEJmO20jIS1ULgqy347cBB1zMnnz/"
+                   "4LJpA0da9CbKj3A254T515sNIMcwsB8/2+2E63/zZrQzBkj"
+                   "0BrN/9Bexjpiks3jRhZatEsXn3dTy47R09Uix5WcJt+xzqZ"
+                   "7+ysyLKOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA"
+                   "8lVUgEf/rzeC/bByBNsO70aEFTd"),
+        rdata_dnskey(dnskey_txt)
+    {}
+
+    const string dnskey_txt;
+    const generic::DNSKEY rdata_dnskey;
 };
 
-string dnskey_txt("257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMV"
-                  "Fu2hWLDMvoOMRXjGrhhCeFvAZih7yJHf8ZGfW6hd38hXG/x"
-                  "ylYCO6Krpbdojwx8YMXLA5/kA+u50WIL8ZR1R6KTbsYVMf/"
-                  "Qx5RiNbPClw+vT+U8eXEJmO20jIS1ULgqy347cBB1zMnnz/"
-                  "4LJpA0da9CbKj3A254T515sNIMcwsB8/2+2E63/zZrQzBkj"
-                  "0BrN/9Bexjpiks3jRhZatEsXn3dTy47R09Uix5WcJt+xzqZ"
-                  "7+ysyLKOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA"
-                  "8lVUgEf/rzeC/bByBNsO70aEFTd");
-
 TEST_F(Rdata_DNSKEY_Test, fromText) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(dnskey_txt, rdata_dnskey.toText());
 
     // Space in key data is OK
@@ -61,7 +65,6 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     generic::DNSKEY rdata_dnskey2 = rdata_dnskey;
     EXPECT_EQ(0, rdata_dnskey.compare(rdata_dnskey2));
 }
@@ -95,7 +98,6 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
 }
 
 TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(0, rdata_dnskey.compare(
         *test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
                                      dnskey_txt)));
@@ -121,7 +123,6 @@ TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
 
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
     renderer.skip(2);
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     rdata_dnskey.toWire(renderer);
 
     vector<unsigned char> data;
@@ -132,12 +133,11 @@ TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
 }
 
 TEST_F(Rdata_DNSKEY_Test, toWireBuffer) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     rdata_dnskey.toWire(obuffer);
+    // FIXME: Test something here???
 }
 
 TEST_F(Rdata_DNSKEY_Test, createFromWire) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                                         "rdata_dnskey_fromWire")));
@@ -152,17 +152,14 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire) {
 }
 
 TEST_F(Rdata_DNSKEY_Test, getTag) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(12892, rdata_dnskey.getTag());
 }
 
 TEST_F(Rdata_DNSKEY_Test, getAlgorithm) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(5, rdata_dnskey.getAlgorithm());
 }
 
 TEST_F(Rdata_DNSKEY_Test, getFlags) {
-    generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(257, rdata_dnskey.getFlags());
 }
 
