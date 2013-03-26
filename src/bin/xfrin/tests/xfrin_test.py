@@ -2173,8 +2173,7 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
             act = self.conn._counters.get(self.zones,
                                           TEST_ZONE_NAME_STR,
                                           name)
-            msg = '%s is expected %s but actually %s' \
-                % (name, exp, act)
+            msg = '%s is expected %s but actually %s' % (name, exp, act)
             if name == 'latest_axfr_duration' \
                     or name == 'latest_ixfr_duration':
                 # compare at 3 decimal places
@@ -2224,7 +2223,7 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
         self._check_updated_statistics({'ixfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
-                                        'latest_ixfr_duration': \
+                                        'latest_ixfr_duration':
                                             self._get_dur_time()})
 
     def test_do_xfrin_fail(self):
