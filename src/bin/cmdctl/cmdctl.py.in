@@ -42,6 +42,7 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.cc.proto_defs
 import isc.util.process
 import isc.net.parse
 from optparse import OptionParser, OptionValueError
@@ -459,7 +460,8 @@ class CommandControl():
                     else:
                         return rcode, {}
                 else:
-                    errstr = str(answer['result'][1])
+                    errstr = \
+                        str(answer[isc.cc.proto_defs.CC_PAYLOAD_RESULT][1])
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
 
