@@ -429,7 +429,7 @@ class Init:
                         port)
         else:
             logger.info(BIND10_STARTING_PROCESS_PORT_ADDRESS,
-                        self.curproc, AddressFormatter(address, port))
+                        self.curproc, AddressFormatter((address, port)))
 
     def log_started(self, pid = None):
         """
