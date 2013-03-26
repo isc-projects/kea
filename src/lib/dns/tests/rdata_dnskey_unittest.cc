@@ -47,21 +47,63 @@ protected:
                    "0BrN/9Bexjpiks3jRhZatEsXn3dTy47R09Uix5WcJt+xzqZ"
                    "7+ysyLKOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA"
                    "8lVUgEf/rzeC/bByBNsO70aEFTd"),
-        rdata_dnskey(dnskey_txt)
+        dnskey_txt2("257 3 5 YmluZDEwLmlzYy5vcmc="),
+        rdata_dnskey(dnskey_txt),
+        rdata_dnskey2(dnskey_txt2)
     {}
 
     const string dnskey_txt;
+    const string dnskey_txt2;
     const generic::DNSKEY rdata_dnskey;
+    const generic::DNSKEY rdata_dnskey2;
 };
 
 TEST_F(Rdata_DNSKEY_Test, fromText) {
     EXPECT_EQ(dnskey_txt, rdata_dnskey.toText());
 
     // Space in key data is OK
-    EXPECT_NO_THROW(generic::DNSKEY("257 3 5 YmluZDEw LmlzYy5vcmc="));
+    checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
+        "257 3 5 YmluZDEw LmlzYy5vcmc=", rdata_dnskey2, false, false);
 
     // Delimited number in key data is OK
-    EXPECT_NO_THROW(generic::DNSKEY("257 3 5 YmluZDEwLmlzYy 5 vcmc="));
+    checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
+        "257 3 5 YmluZDEwLmlzYy 5 vcmc=", rdata_dnskey2, false, false);
+
+    // Key data missing
+    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
+        "257 3 5", rdata_dnskey2, true, true);
+
+    // Flags field out of range
+    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
+        "65536 3 5 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+
+    // Protocol field out of range
+    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
+        "257 256 5 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+
+    // Algorithm field out of range
+    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
+        "257 3 256 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+
+    // Missing algorithm field
+    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
+        "257 3 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+
+    // Invalid key data field (not Base64)
+    checkFromText<generic::DNSKEY, BadValue, BadValue>(
+        "257 3 5 BAAAAAAAAAAAD", rdata_dnskey2, true, true);
+
+    // Key data too short for algorithm=1
+    checkFromText<generic::DNSKEY, InvalidRdataLength, InvalidRdataLength>(
+        "1 1 1 YQ==", rdata_dnskey2, true, true);
+
+    // String instead of number
+    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
+        "foo 3 5 YmFiYWJhYmE=", rdata_dnskey2, true, true);
+    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
+        "257 foo 5 YmFiYWJhYmE=", rdata_dnskey2, true, true);
+    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
+        "257 3 foo YmFiYWJhYmE=", rdata_dnskey2, true, true);
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
@@ -69,56 +111,10 @@ TEST_F(Rdata_DNSKEY_Test, assign) {
     EXPECT_EQ(0, rdata_dnskey.compare(rdata_dnskey2));
 }
 
-TEST_F(Rdata_DNSKEY_Test, badText) {
-    EXPECT_THROW(generic::DNSKEY("257 3 5"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("99999 3 5 BAAAAAAAAAAAD"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 300 5 BAAAAAAAAAAAD"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 3 500 BAAAAAAAAAAAD"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"), BadValue);
-
-    // Key data too short for algorithm=1
-    EXPECT_THROW(generic::DNSKEY("1 1 1 YQ=="),
-                 InvalidRdataLength);
-
-    // Missing algorithm
-    EXPECT_THROW(generic::DNSKEY("257 3 YmFiYWJhYmE="),
-                 InvalidRdataText);
-
-    // String instead of number
-    EXPECT_THROW(generic::DNSKEY("foo 3 5 YmFiYWJhYmE="),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 foo 5 YmFiYWJhYmE="),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 3 foo YmFiYWJhYmE="),
-                 InvalidRdataText);
-}
-
 TEST_F(Rdata_DNSKEY_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_dnskey.compare(
         *test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
                                      dnskey_txt)));
-
-    // Exceptions cause NULL to be returned.
-
-    // Key data missing
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
-                                             "257 3 5"));
-    // Bad flags
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
-                                             "65536 3 5 ABCDABCD"));
-    // Bad protocol
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
-                                             "1 256 1 ABCDABCD"));
-    // Bad algorithm
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
-                                             "1 1 256 ABCDABCD"));
-    // Key data too short for algorithm=1
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DNSKEY(), RRClass::IN(),
-                                             "1 1 1 YQ=="));
 }
 
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
