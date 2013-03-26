@@ -1076,7 +1076,7 @@ class TestAXFR(TestXfrinConnection):
             c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
                                     threading.Event(), info)
             c.init_socket()
-            if ver:
+            if ver is not None:
                 self.assertEqual(ver, c._get_ipver_str())
             else:
                 self.assertRaises(ValueError, c._get_ipver_str)
