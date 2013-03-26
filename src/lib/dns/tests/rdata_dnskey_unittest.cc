@@ -52,6 +52,37 @@ protected:
         rdata_dnskey2(dnskey_txt2)
     {}
 
+    void checkFromText_None(const string& rdata_str)
+    {
+        checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
+            rdata_str, rdata_dnskey2, false, false);
+    }
+
+    void checkFromText_InvalidText(const string& rdata_str)
+    {
+        checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_dnskey2, true, true);
+    }
+
+    void checkFromText_InvalidLength(const string& rdata_str)
+    {
+        checkFromText<generic::DNSKEY, InvalidRdataLength, InvalidRdataLength>(
+            rdata_str, rdata_dnskey2, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str)
+    {
+        checkFromText<generic::DNSKEY, BadValue, BadValue>(
+            rdata_str, rdata_dnskey2, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str)
+    {
+        checkFromText
+            <generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_dnskey2, true, true);
+    }
+
     const string dnskey_txt;
     const string dnskey_txt2;
     const generic::DNSKEY rdata_dnskey;
@@ -62,48 +93,36 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     EXPECT_EQ(dnskey_txt, rdata_dnskey.toText());
 
     // Space in key data is OK
-    checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
-        "257 3 5 YmluZDEw LmlzYy5vcmc=", rdata_dnskey2, false, false);
+    checkFromText_None("257 3 5 YmluZDEw LmlzYy5vcmc=");
 
     // Delimited number in key data is OK
-    checkFromText<generic::DNSKEY, isc::Exception, isc::Exception>(
-        "257 3 5 YmluZDEwLmlzYy 5 vcmc=", rdata_dnskey2, false, false);
+    checkFromText_None("257 3 5 YmluZDEwLmlzYy 5 vcmc=");
 
     // Key data missing
-    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
-        "257 3 5", rdata_dnskey2, true, true);
+    checkFromText_InvalidText("257 3 5");
 
     // Flags field out of range
-    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
-        "65536 3 5 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+    checkFromText_InvalidText("65536 3 5 YmluZDEwLmlzYy5vcmc=");
 
     // Protocol field out of range
-    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
-        "257 256 5 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+    checkFromText_InvalidText("257 256 5 YmluZDEwLmlzYy5vcmc=");
 
     // Algorithm field out of range
-    checkFromText<generic::DNSKEY, InvalidRdataText, InvalidRdataText>(
-        "257 3 256 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+    checkFromText_InvalidText("257 3 256 YmluZDEwLmlzYy5vcmc=");
 
     // Missing algorithm field
-    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
-        "257 3 YmluZDEwLmlzYy5vcmc=", rdata_dnskey2, true, true);
+    checkFromText_LexerError("257 3 YmluZDEwLmlzYy5vcmc=");
 
     // Invalid key data field (not Base64)
-    checkFromText<generic::DNSKEY, BadValue, BadValue>(
-        "257 3 5 BAAAAAAAAAAAD", rdata_dnskey2, true, true);
+    checkFromText_BadValue("257 3 5 BAAAAAAAAAAAD");
 
     // Key data too short for algorithm=1
-    checkFromText<generic::DNSKEY, InvalidRdataLength, InvalidRdataLength>(
-        "1 1 1 YQ==", rdata_dnskey2, true, true);
+    checkFromText_InvalidLength("1 1 1 YQ==");
 
     // String instead of number
-    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
-        "foo 3 5 YmFiYWJhYmE=", rdata_dnskey2, true, true);
-    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
-        "257 foo 5 YmFiYWJhYmE=", rdata_dnskey2, true, true);
-    checkFromText<generic::DNSKEY, InvalidRdataText, MasterLexer::LexerError>(
-        "257 3 foo YmFiYWJhYmE=", rdata_dnskey2, true, true);
+    checkFromText_LexerError("foo 3 5 YmFiYWJhYmE=");
+    checkFromText_LexerError("257 foo 5 YmFiYWJhYmE=");
+    checkFromText_LexerError("257 3 foo YmFiYWJhYmE=");
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
