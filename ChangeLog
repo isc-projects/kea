@@ -1,3 +1,9 @@
+593.	[func]		jelte
+	Address + port output and logs is now consistent according to our
+	coding guidelines, e.g. <address>:<port> in the case of IPv4, and
+	[<address>]:<port> in the case of IPv6, instead of <address>#<port>
+	(Trac #1086, git bcefe1e95cdd61ee4a09b20522c3c56b315a1acc)
+
 592.	[bug]		jinmei
 	b10-auth and zonemgr now handle some uncommon NOTIFY messages more
 	gracefully: auth immediately returns a NOTAUTH response if the
