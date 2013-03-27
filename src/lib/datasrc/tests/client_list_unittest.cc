@@ -1163,7 +1163,7 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
                                                          RRType::TXT())->code);
 }
 
-// Check the status holds data and can change the segment state
+// Check the status holds data
 TEST(DataSourceStatus, status) {
     const DataSourceStatus status("Test", SEGMENT_INUSE, "local");
     EXPECT_EQ("Test", status.getName());

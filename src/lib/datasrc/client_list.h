@@ -92,6 +92,11 @@ public:
 
     /// \brief Get the segment type
     ///
+    /// \note Specific values of the type are only meaningful for the
+    ///     corresponding memory segment implementation and modules that
+    ///     directly manage the segments. Other normal applications should
+    ///     treat them as opaque identifiers.
+    ///
     /// \throw isc::InvalidOperation if called and state is SEGMENT_UNUSED.
     const std::string& getSegmentType() const {
         if (getSegmentState() == SEGMENT_UNUSED) {
