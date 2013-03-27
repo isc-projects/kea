@@ -33,6 +33,7 @@ import sys
 # Example:
 #     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
 new_rdata_factory_users = [('a', 'in'), ('aaaa', 'in'),
+                           ('afsdb', 'generic'),
                            ('cname', 'generic'),
                            ('dlv', 'generic'),
                            ('dname', 'generic'),

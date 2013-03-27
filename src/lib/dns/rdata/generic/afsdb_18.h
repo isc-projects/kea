@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,6 +61,8 @@ public:
     uint16_t getSubtype() const;
 
 private:
+    void createFromLexer(MasterLexer& lexer, const Name* origin);
+
     uint16_t subtype_;
     Name server_;
 };
