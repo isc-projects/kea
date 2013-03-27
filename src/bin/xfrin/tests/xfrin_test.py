@@ -2150,8 +2150,8 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         returned value is float type as second. It is rounded at six
         decimal places. After all it deletes _start_time."""
         delta = datetime.now() - self._start_time
-        ret = round(delta.days * 86400 + delta.seconds + \
-                        delta.microseconds * 1E-6, 6)
+        ret = round(delta.days * 86400 + delta.seconds +
+                    delta.microseconds * 1E-6, 6)
         del self._start_time
         return ret
 
@@ -2197,7 +2197,7 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self._check_updated_statistics({'axfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
-                                        'latest_axfr_duration': \
+                                        'latest_axfr_duration':
                                             self._get_dur_time()})
 
     def test_do_soacheck_uptodate(self):
