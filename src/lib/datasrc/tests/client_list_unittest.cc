@@ -278,7 +278,7 @@ public:
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
                                    ds.get(), DataSourceClientContainerPtr(),
-                                   false, rrclass_, ztable_segment_));
+                                   false, rrclass_, ztable_segment_, ""));
         }
     }
 
@@ -512,12 +512,12 @@ TEST_F(ListTest, configureMulti) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
-        "   \"cache\": \"off\","
+        "   \"cache-enable\": false,"
         "   \"params\": {}"
         "},"
         "{"
         "   \"type\": \"type2\","
-        "   \"cache\": \"off\","
+        "   \"cache-enable\": false,"
         "   \"params\": {}"
         "}]"
     ));
@@ -546,13 +546,40 @@ TEST_F(ListTest, configureParams) {
         ConstElementPtr elem(Element::fromJSON(string("["
             "{"
             "   \"type\": \"t\","
-            "   \"cache\": \"off\","
+            "   \"cache-enable\": false,"
             "   \"params\": ") + *param +
             "}]"));
         list_->configure(elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
         checkDS(0, "t", *param, false);
     }
+}
+
+TEST_F(ListTest, status) {
+    EXPECT_TRUE(list_->getStatus().empty());
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": false,"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"name\": \"Test name\","
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(elem, true);
+    const vector<DataSourceStatus> statuses(list_->getStatus());
+    ASSERT_EQ(2, statuses.size());
+    EXPECT_EQ("type1", statuses[0].getName());
+    EXPECT_EQ(SEGMENT_UNUSED, statuses[0].getSegmentState());
+    EXPECT_THROW(statuses[0].getSegmentType(), isc::InvalidOperation);
+    EXPECT_EQ("Test name", statuses[1].getName());
+    EXPECT_EQ(SEGMENT_INUSE, statuses[1].getSegmentState());
+    EXPECT_EQ("local", statuses[1].getSegmentType());
 }
 
 TEST_F(ListTest, wrongConfig) {
@@ -834,6 +861,54 @@ TEST_F(ListTest, masterFiles) {
     EXPECT_EQ(0, list_->getDataSources().size());
 }
 
+// Test the names are set correctly and collission is detected.
+TEST_F(ListTest, names) {
+    // Explicit name
+    const ConstElementPtr elem1(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   },"
+        "   \"name\": \"Whatever\""
+        "}]"));
+    list_->configure(elem1, true);
+    EXPECT_EQ("Whatever", list_->getDataSources()[0].name_);
+
+    // Default name
+    const ConstElementPtr elem2(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem2, true);
+    EXPECT_EQ("MasterFiles", list_->getDataSources()[0].name_);
+
+    // Collission
+    const ConstElementPtr elem3(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "},"
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   },"
+        "   \"name\": \"MasterFiles\""
+        "}]"));
+    EXPECT_THROW(list_->configure(elem3, true),
+                 ConfigurableClientList::ConfigurationError);
+}
+
 TEST_F(ListTest, BadMasterFile) {
     // Configuration should succeed, and the good zones in the list
     // below should be loaded. No bad zones should be loaded.
@@ -1086,6 +1161,18 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
                                                          RRType::TXT())->code);
+}
+
+// Check the status holds data
+TEST(DataSourceStatus, status) {
+    const DataSourceStatus status("Test", SEGMENT_INUSE, "local");
+    EXPECT_EQ("Test", status.getName());
+    EXPECT_EQ(SEGMENT_INUSE, status.getSegmentState());
+    EXPECT_EQ("local", status.getSegmentType());
+    const DataSourceStatus status_unused("Unused", SEGMENT_UNUSED, "");
+    EXPECT_EQ("Unused", status_unused.getName());
+    EXPECT_EQ(SEGMENT_UNUSED, status_unused.getSegmentState());
+    EXPECT_THROW(status_unused.getSegmentType(), isc::InvalidOperation);
 }
 
 }
