@@ -27,6 +27,7 @@
 #include <util/memory_segment_local.h>
 
 #include <memory>
+#include <set>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 
@@ -47,9 +48,11 @@ namespace datasrc {
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
     const DataSourceClientContainerPtr& container, bool has_cache,
-    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment) :
+    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
+    const string& name) :
     data_src_client_(data_src_client),
-    container_(container)
+    container_(container),
+    name_(name)
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
@@ -59,8 +62,9 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
-    bool has_cache) :
-    data_src_client_(NULL)
+    bool has_cache, const string& name) :
+    data_src_client_(NULL),
+    name_(name)
 {
     if (has_cache) {
         cache_.reset(new InMemoryClient(segment, rrclass));
@@ -92,6 +96,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         vector<DataSourceInfo> new_data_sources;
         shared_ptr<ZoneTableSegment> ztable_segment(
             ZoneTableSegment::create(*config, rrclass_));
+        set<string> used_names;
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
@@ -108,6 +113,13 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             const bool want_cache(allow_cache &&
                                   dconf->contains("cache-enable") &&
                                   dconf->get("cache-enable")->boolValue());
+            // Get the name (either explicit, or guess)
+            const ConstElementPtr name_elem(dconf->get("name"));
+            const string name(name_elem ? name_elem->stringValue() : type);
+            if (!used_names.insert(name).second) {
+                isc_throw(ConfigurationError, "Duplicit name in client list: "
+                          << name);
+            }
 
             if (type == "MasterFiles") {
                 // In case the cache is not allowed, we just skip the master
@@ -130,7 +142,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 }
                 new_data_sources.push_back(DataSourceInfo(rrclass_,
                                                           ztable_segment,
-                                                          true));
+                                                          true, name));
             } else {
                 // Ask the factory to create the data source for us
                 const DataSourcePair ds(this->getDataSourceClient(type,
@@ -138,7 +150,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 // And put it into the vector
                 new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
                                                           want_cache, rrclass_,
-                                                          ztable_segment));
+                                                          ztable_segment,
+                                                          name));
             }
 
             if (want_cache) {
@@ -460,6 +473,19 @@ ConfigurableClientList::getDataSourceClient(const string& type,
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));
     return (DataSourcePair(&container->getInstance(), container));
+}
+
+vector<DataSourceStatus>
+ConfigurableClientList::getStatus() const {
+    vector<DataSourceStatus> result;
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        // TODO: Once we support mapped cache, decide when we need the
+        // SEGMENT_WAITING.
+        result.push_back(DataSourceStatus(info.name_, info.cache_ ?
+                                          SEGMENT_INUSE : SEGMENT_UNUSED,
+                                          "local"));
+    }
+    return (result);
 }
 
 }
