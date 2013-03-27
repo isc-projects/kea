@@ -375,24 +375,28 @@ public:
         return (session_.group_sendmsg(msg, group, instance, to, want_answer));
     };
 
-    /**
-     * Receive a message from the underlying CC session.
-     * This has the same interface as isc::cc::Session::group_recvmsg()
-     *
-     * \param envelope see isc::cc::Session::group_recvmsg()
-     * \param msg see isc::cc::Session::group_recvmsg()
-     * \param nonblock see isc::cc::Session::group_recvmsg()
-     * \param seq see isc::cc::Session::group_recvmsg()
-     * \return see isc::cc::Session::group_recvmsg()
-     */
+    /// \brief Receive a message from the underlying CC session.
+    /// This has the same interface as isc::cc::Session::group_recvmsg()
+    ///
+    /// NOTE: until #2804 is resolved this method wouldn't work except in
+    /// very limited cases; don't try to use it until then.
+    ///
+    /// \param envelope see isc::cc::Session::group_recvmsg()
+    /// \param msg see isc::cc::Session::group_recvmsg()
+    /// \param nonblock see isc::cc::Session::group_recvmsg()
+    /// \param seq see isc::cc::Session::group_recvmsg()
+    /// \return see isc::cc::Session::group_recvmsg()
     bool groupRecvMsg(isc::data::ConstElementPtr& envelope,
                       isc::data::ConstElementPtr& msg,
                       bool nonblock = true,
                       int seq = -1) {
         return (session_.group_recvmsg(envelope, msg, nonblock, seq));
-    };
+    }
 
     /// \brief Send a command message and wait for the answer.
+    ///
+    /// NOTE: until #2804 is resolved this method wouldn't work except in
+    /// very limited cases; don't try to use it until then.
     ///
     /// This is mostly a convenience wrapper around groupSendMsg
     /// and groupRecvMsg, with some error handling.
