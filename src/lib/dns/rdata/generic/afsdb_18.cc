@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -25,9 +25,12 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <dns/rdata/generic/detail/lexer_util.h>
+
 using namespace std;
+using boost::lexical_cast;
 using namespace isc::util;
-using namespace isc::util::str;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -52,24 +55,58 @@ using namespace isc::util::str;
 AFSDB::AFSDB(const std::string& afsdb_str) :
     subtype_(0), server_(Name::ROOT_NAME())
 {
-    istringstream iss(afsdb_str);
-
     try {
-        const uint32_t subtype = tokenToNum<int32_t, 16>(getToken(iss));
-        const Name servername(getToken(iss));
+        std::istringstream ss(afsdb_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-        if (!iss.eof()) {
-            isc_throw(InvalidRdataText, "Unexpected input for AFSDB"
-                    "RDATA: " << afsdb_str);
+        createFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for AFSDB: "
+                      << afsdb_str);
         }
-
-        subtype_ = subtype;
-        server_ = servername;
-
-    } catch (const StringTokenError& ste) {
-        isc_throw(InvalidRdataText, "Invalid AFSDB text: " <<
-                  ste.what() << ": " << afsdb_str);
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct AFSDB from '" <<
+                  afsdb_str << "': " << ex.what());
     }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an AFSDB RDATA.  The SERVER field can be non-absolute if \c origin
+/// is non-NULL, in which case \c origin is used to make it absolute.
+/// It must not be represented as a quoted string.
+///
+/// The SUBTYPE field must be a valid decimal representation of an
+/// unsigned 16-bit integer.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of SERVER when it
+/// is non-absolute.
+AFSDB::AFSDB(MasterLexer& lexer, const Name* origin,
+       MasterLoader::Options, MasterLoaderCallbacks&) :
+    subtype_(0), server_(".")
+{
+    createFromLexer(lexer, origin);
+}
+
+void
+AFSDB::createFromLexer(MasterLexer& lexer, const Name* origin)
+{
+    const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (num > 65535) {
+        isc_throw(InvalidRdataText, "Invalid AFSDB subtype: " << num);
+    }
+    subtype_ = static_cast<uint16_t>(num);
+
+    server_ = createNameFromLexer(lexer, origin);
 }
 
 /// \brief Constructor from wire-format data.
@@ -111,7 +148,7 @@ AFSDB::operator=(const AFSDB& source) {
 /// \return A \c string object that represents the \c AFSDB object.
 string
 AFSDB::toText() const {
-    return (boost::lexical_cast<string>(subtype_) + " " + server_.toText());
+    return (lexical_cast<string>(subtype_) + " " + server_.toText());
 }
 
 /// \brief Render the \c AFSDB in the wire format without name compression.
