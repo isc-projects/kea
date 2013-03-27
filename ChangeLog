@@ -1,3 +1,12 @@
+594.	[func]		muks, pselkirk
+	libdns++: the NSEC, DS, DLV, and AFSDB Rdata classes now use the
+	generic lexer in constructors from text.  This means that the name
+	fields in such RRs in a zone file can now be non-absolute (the
+	origin name in that context will be used), e.g., when loaded by
+	b10-loadzone.
+	(Trac #2386, git dc0f34afb1eccc574421a802557198e6cd2363fa)
+	(Trac #2391, git 1450d8d486cba3bee8be46e8001d66898edd370c)
+
 593.	[func]		jelte
 	Address + port output and logs is now consistent according to our
 	coding guidelines, e.g. <address>:<port> in the case of IPv4, and
