@@ -868,10 +868,12 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest, notifyWithoutSession) {
+TEST_F(AuthSrvTest, notifyWithoutRecipient) {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
 
-    server.setXfrinSession(NULL);
+    // Emulate the case where msgq tells auth there's no Zonemgr module.
+    notify_session.setMessage(isc::config::createAnswer(CC_REPLY_NO_RECPT,
+                                                        "no recipient"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
                                        default_qid, Name("example"),
