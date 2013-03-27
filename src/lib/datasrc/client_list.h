@@ -452,7 +452,7 @@ public:
     /// Get a DataSourceStatus for current state of each data source client
     /// in this list.
     ///
-    /// This may throw standad exceptions, such as std::bad_alloc. Otherwise,
+    /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
     /// it is exception free.
     std::vector<DataSourceStatus> getStatus() const;
 public:
