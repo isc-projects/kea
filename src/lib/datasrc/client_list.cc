@@ -122,7 +122,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
 
             shared_ptr<ZoneTableSegment> ztable_segment;
             if (want_cache) {
-                internal::ZoneTableConfig ztconfig(type, 0, *dconf);
                 ztable_segment.reset(ZoneTableSegment::create(*dconf, // XXX
                                                               rrclass_));
             }
@@ -190,6 +189,10 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     cache(new_data_sources.back().cache_);
                 const DataSourceClient* const
                     client(new_data_sources.back().data_src_client_);
+
+                // temporary, just validate it
+                internal::ZoneTableConfig ztconfig(type, new_data_sources.back().data_src_client_, *dconf);
+
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
                     const Name origin(*it);
