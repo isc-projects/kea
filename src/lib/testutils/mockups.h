@@ -40,15 +40,16 @@ public:
     MockSession() :
         // by default we return a simple "success" message.
         msg_(isc::data::Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
-        send_ok_(true), receive_ok_(true)
+        send_ok_(true), receive_ok_(true), answer_wanted_(false)
     {}
 
 
     virtual void establish(const char*) {}
     virtual void disconnect() {}
 
-    virtual int group_sendmsg(isc::data::ConstElementPtr msg, std::string group,
-                              std::string, std::string, bool)
+    virtual int group_sendmsg(isc::data::ConstElementPtr msg,
+                              std::string group,
+                              std::string, std::string, bool want_answer)
     {
         if (!send_ok_) {
             isc_throw(isc::cc::SessionError,
@@ -57,6 +58,7 @@ public:
 
         sent_msg_ = msg;
         msg_dest_ = group;
+        answer_wanted_ = want_answer;
         return (0);
     }
 
@@ -93,8 +95,12 @@ public:
     void disableSend() { send_ok_ = false; }
     void disableReceive() { receive_ok_ = false; }
 
-    isc::data::ConstElementPtr getSentMessage() { return (sent_msg_); }
-    std::string getMessageDest() { return (msg_dest_); }
+    isc::data::ConstElementPtr getSentMessage() const { return (sent_msg_); }
+    std::string getMessageDest() const { return (msg_dest_); }
+
+    /// \brief Return the value of want_answer parameter of the previous call
+    /// to group_sendmsg().
+    bool wasAnswerWanted() const { return (answer_wanted_); }
 
 private:
     isc::data::ConstElementPtr sent_msg_;
@@ -102,6 +108,7 @@ private:
     isc::data::ConstElementPtr msg_;
     bool send_ok_;
     bool receive_ok_;
+    bool answer_wanted_;
 };
 
 // This mock object does nothing except for recording passed parameters
