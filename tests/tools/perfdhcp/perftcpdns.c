@@ -136,7 +136,7 @@ uint64_t xrcount;				/* received counters */
  */
 
 uint64_t tooshort, locallimit;			/* error counters */
-uint64_t latesent, compsend, latercvd;		/* rate stats */
+uint64_t latesent, compsend;			/* rate stats */
 uint64_t shortwait, collected;			/* rate stats (cont) */
 double dmin = 999999999.;			/* minimum delay */
 double dmax = 0.;				/* maximum delay */
@@ -393,8 +393,8 @@ build_template_query4(void)
 	*p++ = v & 0xff;
 	/* length */
 	length_query4 = p - template_query4;
-	template_query4[0] = (length_query4 >> 8) & 0xff;
-	template_query4[1] = length_query4 & 0xff;
+	template_query4[0] = ((length_query4 - 2) >> 8) & 0xff;
+	template_query4[1] = (length_query4 - 2) & 0xff;
 }
 
 /*
@@ -630,7 +630,7 @@ receive4(struct exchange *x)
 	if (memcmp(ibuf + NS_OFF_ID, &x->id, 2) != 0)
 		goto close;
 	/* must be a response */
-	memcpy(ibuf + NS_OFF_FLAGS, &v, 2);
+	memcpy(&v, ibuf + NS_OFF_FLAGS, 2);
 	v = ntohs(v);
 	if ((v & NS_FLAG_QR) == 0)
 		goto close;
@@ -811,8 +811,8 @@ build_template_query6(void)
 	*p++ = v & 0xff;
 	/* length */
 	length_query6 = p - template_query6;
-	template_query6[0] = (length_query6 >> 8) & 0xff;
-	template_query6[1] = length_query6 & 0xff;
+	template_query6[0] = ((length_query6 - 2) >> 8) & 0xff;
+	template_query6[1] = (length_query6 - 2) & 0xff;
 }
 
 /*
@@ -1048,7 +1048,7 @@ receive6(struct exchange *x)
 	if (memcmp(ibuf + NS_OFF_ID, &x->id, 2) != 0)
 		goto close;
 	/* must be a response */
-	memcpy(ibuf + NS_OFF_FLAGS, &v, 2);
+	memcpy(&v, ibuf + NS_OFF_FLAGS, 2);
 	v = ntohs(v);
 	if ((v & NS_FLAG_QR) == 0)
 		goto close;
@@ -1837,24 +1837,25 @@ main(const int argc, char * const argv[])
 			perror("ppoll");
 			fatal = 1;
 			continue;
-		} else if (ret == 0)
-			continue;
+		}
 
-		/* packet(s) to receive */
-		if (ipversion == 4)
-			pollrecv4();
-		else
-			pollrecv6();
-		if (fatal)
-			continue;
+		if (ret > 0) {
+			/* packet(s) to receive */
+			if (ipversion == 4)
+				pollrecv4();
+			else
+				pollrecv6();
+			if (fatal)
+				continue;
 
-		/* connections to finish */
-		if (ipversion == 4)
-			pollsend4();
-		else
-			pollsend6();
-		if (fatal)
-			continue;
+			/* connections to finish */
+			if (ipversion == 4)
+				pollsend4();
+			else
+				pollsend6();
+			if (fatal)
+				continue;
+		}
 
 		/* check receive loop exit conditions */
 		if ((numreq != 0) && ((int) xscount >= numreq)) {
@@ -1960,11 +1961,10 @@ main(const int argc, char * const argv[])
 	/* rate processing instrumentation */
 	if ((diags != NULL) && (strchr(diags, 'i') != NULL)) {
 		printf("latesent: %llu, compsend: %llu, shortwait: %llu\n"
-		       "latercvd: %llu, collected:%llu\n",
+		       "collected:%llu\n",
 		       (unsigned long long) latesent,
 		       (unsigned long long) compsend,
 		       (unsigned long long) shortwait,
-		       (unsigned long long) latercvd,
 		       (unsigned long long) collected);
 	}
 
