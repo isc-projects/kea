@@ -68,15 +68,7 @@ MX::MX(const std::string& mx_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        const uint32_t num =
-            lexer.getNextToken(MasterToken::NUMBER).getNumber();
-        if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid MX preference in: "
-                      << mx_str);
-        }
-        preference_ = static_cast<uint16_t>(num);
-
-        mxname_ = createNameFromLexer(lexer, NULL);
+        constructFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for MX: "
@@ -108,8 +100,13 @@ MX::MX(const std::string& mx_str) :
 /// is non-absolute.
 MX::MX(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
-    preference_(0), mxname_(".")
+    preference_(0), mxname_(Name::ROOT_NAME())
 {
+    constructFromLexer(lexer, origin);
+}
+
+void
+MX::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (num > 65535) {
         isc_throw(InvalidRdataText, "Invalid MX preference: " << num);

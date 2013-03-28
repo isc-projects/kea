@@ -42,6 +42,9 @@ public:
     uint16_t getMXPref() const;
 
 private:
+    void constructFromLexer(isc::dns::MasterLexer& lexer,
+                            const isc::dns::Name* origin);
+
     /// Note: this is a prototype version; we may reconsider
     /// this representation later.
     uint16_t preference_;
