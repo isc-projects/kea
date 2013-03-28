@@ -962,7 +962,7 @@ class XfrinConnection(asyncore.dispatcher):
             # not yet stopped due to some error, the last start time
             # is overwritten at this point.
             self._counters.start_timer('zones', self._zone_name.to_text(),
-                                       'latest_' + req_str.lower() + '_duration')
+                                       'last_' + req_str.lower() + '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
             # count AXFR/IXFR requests for statistics
@@ -996,7 +996,7 @@ class XfrinConnection(asyncore.dispatcher):
                            )
             # stop statistics timer
             self._counters.stop_timer('zones', self._zone_name.to_text(),
-                                      'latest_' + req_str.lower() + '_duration')
+                                      'last_' + req_str.lower() + '_duration')
 
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger

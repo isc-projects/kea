@@ -19,8 +19,8 @@
 	    "ixfrreqv6": 0,
 	    "xfrsuccess": 0,
 	    "xfrfail": 0,
-	    "latest_ixfr_duration": 0.0,
-	    "latest_axfr_duration": 0.0
+	    "last_ixfr_duration": 0.0,
+	    "last_axfr_duration": 0.0
           }
         },
         "item_title": "Zone names",
@@ -98,20 +98,20 @@
               "item_description": "Number of zone transfer requests failed"
             },
             {
-              "item_name": "latest_ixfr_duration",
+              "item_name": "last_ixfr_duration",
               "item_type": "real",
               "item_optional": false,
               "item_default": 0.0,
-              "item_title": "Latest IXFR duration",
-              "item_description": "Duration of the latest IXFR. 0.0 means no successful IXFR done."
+              "item_title": "Last IXFR duration",
+              "item_description": "Duration of the last IXFR. 0.0 means no successful IXFR done."
             },
             {
-              "item_name": "latest_axfr_duration",
+              "item_name": "last_axfr_duration",
               "item_type": "real",
               "item_optional": false,
               "item_default": 0.0,
-              "item_title": "Latest AXFR duration",
-              "item_description": "Duration of the latest AXFR. 0.0 means no successful AXFR done."
+              "item_title": "Last AXFR duration",
+              "item_description": "Duration of the last AXFR. 0.0 means no successful AXFR done."
             }
           ]
         }
