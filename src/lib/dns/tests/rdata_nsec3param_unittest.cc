@@ -167,6 +167,12 @@ TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireBuffer) {
     rdata_nsec3param.toWire(obuffer);
+
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, getHashAlg) {
