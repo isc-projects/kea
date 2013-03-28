@@ -85,7 +85,7 @@ typedef int (*close_t)(int);
 /// \param type The type of socket to create (SOCK_STREAM, SOCK_DGRAM, etc).
 /// \param bind_addr The address to bind.
 /// \param addr_len The actual length of bind_addr.
-/// \param close_fun The furction used to close a socket if there's an error
+/// \param close_fun The function used to close a socket if there's an error
 ///     after the creation.
 ///
 /// \return The file descriptor of the newly created socket, if everything

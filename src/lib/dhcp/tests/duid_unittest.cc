@@ -146,7 +146,7 @@ TEST(ClientIdTest, constructor) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 5, 6};
     vector<uint8_t> data2(data1, data1 + sizeof(data1));
 
-    // checks for C-style construtor (uint8_t * + len)
+    // checks for C-style constructor (uint8_t * + len)
     scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
     vector<uint8_t> vecdata = id1->getClientId();
     EXPECT_TRUE(data2 == vecdata);

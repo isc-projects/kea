@@ -76,7 +76,7 @@ TEST_F(HashTest, Algorithm) {
     const int size = HASHTABLE_DEFAULT_SIZE;      // Size of the hash table
     Hash hash(size, 255, false);// Hashing algorithm object with seed
                                 // randomisation disabled
-    string base = "alphabeta";  // Base of the names to behashed
+    string base = "alphabeta";  // Base of the names to be hashed
     vector<uint32_t> values;    // Results stored here
 
     // Generate hash values

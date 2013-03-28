@@ -191,7 +191,7 @@ class Dbserver:
         self.transfer_counter -= 1
 
 class TestXfroutSessionBase(unittest.TestCase):
-    '''Base classs for tests related to xfrout sessions
+    '''Base class for tests related to xfrout sessions
 
     This class defines common setup/teadown and utility methods.  Actual
     tests are delegated to subclasses.

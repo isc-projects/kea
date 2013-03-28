@@ -143,7 +143,7 @@ public:
     /// \brief Constructor
     ///  This constructor has one parameter "query_message", which
     ///  is the shared_ptr to a full query message. It's different
-    ///  with above contructor which has only question section. All
+    ///  with above constructor which has only question section. All
     ///  other parameters are same.
     ///
     /// \param query_message the shared_ptr to a full query message

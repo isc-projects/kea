@@ -398,7 +398,7 @@ TEST(Subnet6Test, addPersistentOption) {
         // those that server sends to clients regardless if they ask
         // for them or not. We pick 3 out of 10 options and mark them
         // non-persistent and 7 other options persistent.
-        // Code values: 102, 105 and 108 are divisable by 3
+        // Code values: 102, 105 and 108 are divisible by 3
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;

@@ -53,7 +53,7 @@ public:
 
         /// \brief Destructor.
         ///
-        /// Dealocates wrapped array of C-strings.
+        /// Deallocates wrapped array of C-strings.
         ~ArgvPtr() {
             if (argv_ != NULL) {
                 for(int i = 0; i < argc_; ++i) {

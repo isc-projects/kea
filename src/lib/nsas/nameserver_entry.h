@@ -168,8 +168,8 @@ public:
      * \short Update RTT of an address.
      *
      * This is similar to updateAddressRTTAtIndex, but you pass the address,
-     * not it's index. Passing the index might be unsafe, because the position
-     * of the address or the cound of addresses may change in time.
+     * not its index. Passing the index might be unsafe, because the position
+     * of the address or the count of addresses may change in time.
      *
      * \param rtt Round-Trip Time
      * \param address The address whose RTT should be updated.
@@ -235,7 +235,7 @@ public:
      * \param resolver Who to ask.
      * \param callback The callback.
      * \param family Which addresses are interesting to the caller. This does
-     *     not change which adresses are requested, but the callback might
+     *     not change which addresses are requested, but the callback might
      *     be executed when at last one requested type is available (eg. not
      *     waiting for the other one).
      * \return The state the entry is currently in. It can return UNREACHABLE

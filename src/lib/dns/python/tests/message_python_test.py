@@ -520,7 +520,7 @@ test.example.com. 3600 IN A 192.0.2.2
         data = read_wire_data("message_fromWire22.wire")
         self.assertRaises(DNSMessageFORMERR, self.p.from_wire, data[:-1])
 
-    def test_from_wire_combind_rrs(self):
+    def test_from_wire_combined_rrs(self):
         factoryFromFile(self.p, "message_fromWire19.wire")
         rrset = self.p.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(RRType("A"), rrset.get_type())

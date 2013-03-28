@@ -46,6 +46,76 @@ class InMemoryClient;
 class ZoneWriter;
 }
 
+/// \brief Segment status of the cache
+///
+/// Describes the status in which the memory segment for the in-memory cache of
+// /given data source is.
+enum MemorySegmentState {
+    /// \brief No segment used for this data source.
+    ///
+    /// This is usually a result of the cache being disabled.
+    SEGMENT_UNUSED,
+
+    /// \brief It is a mapped segment and we wait for information how to map
+    ///     it.
+    SEGMENT_WAITING,
+
+    /// \brief The segment is ready to be used.
+    SEGMENT_INUSE
+};
+
+/// \brief Status of one data source.
+///
+/// This indicates the status a data soure is in. It is used with segment
+/// and cache management, to discover the data sources that need external
+/// mapping or local loading.
+///
+/// In future, it may be extended for other purposes, such as performing an
+/// operation on named data source.
+class DataSourceStatus {
+public:
+    /// \brief Constructor
+    ///
+    /// Sets initial values. It doesn't matter what is provided for the type
+    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    DataSourceStatus(const std::string& name, MemorySegmentState state,
+                     const std::string& type) :
+        name_(name),
+        type_(type),
+        state_(state)
+    {}
+
+    /// \brief Get the segment state
+    MemorySegmentState getSegmentState() const {
+        return (state_);
+    }
+
+    /// \brief Get the segment type
+    ///
+    /// \note Specific values of the type are only meaningful for the
+    ///     corresponding memory segment implementation and modules that
+    ///     directly manage the segments. Other normal applications should
+    ///     treat them as opaque identifiers.
+    ///
+    /// \throw isc::InvalidOperation if called and state is SEGMENT_UNUSED.
+    const std::string& getSegmentType() const {
+        if (getSegmentState() == SEGMENT_UNUSED) {
+            isc_throw(isc::InvalidOperation,
+                      "No segment used, no type therefore.");
+        }
+        return (type_);
+    }
+
+    /// \brief Get the name.
+    const std::string& getName() const {
+        return (name_);
+    }
+private:
+    std::string name_;
+    std::string type_;
+    MemorySegmentState state_;
+};
+
 /// \brief The list of data source clients.
 ///
 /// The purpose of this class is to hold several data source clients and search
@@ -332,13 +402,14 @@ public:
                        const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
                                ztable_segment,
-                       bool has_cache = false);
+                       bool has_cache = false,
+                       const std::string& name = std::string());
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
                        bool has_cache, const dns::RRClass& rrclass,
                        const boost::shared_ptr
                            <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment);
+                               ztable_segment, const std::string& name);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 
@@ -350,6 +421,7 @@ public:
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
+        std::string name_;
     };
 
     /// \brief The collection of data sources.
@@ -379,6 +451,15 @@ public:
     virtual DataSourcePair getDataSourceClient(const std::string& type,
                                                const data::ConstElementPtr&
                                                configuration);
+
+    /// \brief Get status information of all internal data sources.
+    ///
+    /// Get a DataSourceStatus for current state of each data source client
+    /// in this list.
+    ///
+    /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
+    /// it is exception free.
+    std::vector<DataSourceStatus> getStatus() const;
 public:
     /// \brief Access to the data source clients.
     ///

@@ -47,7 +47,7 @@ public:
     /// When an object is dropped from the LRU list because it has not been
     /// accessed for some time, it is possible that the action should trigger
     /// some other functions.  For this reason, it is possible to register
-    /// a list-wide functor object to execute in this casee.
+    /// a list-wide functor object to execute in this case.
     ///
     /// Note that the function does not execute as the result of a call to
     /// remove() - that is an explicit call and it is assumed that the caller

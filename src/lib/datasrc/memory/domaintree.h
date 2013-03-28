@@ -42,7 +42,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-/// Forward declare DomainTree class here is convinent for following
+/// Forward declare DomainTree class here is convenient for following
 /// friend class declare inside DomainTreeNode and DomainTreeNodeChain
 template <typename T>
 class DomainTree;

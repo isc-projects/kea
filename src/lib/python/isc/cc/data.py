@@ -217,7 +217,7 @@ def set(element, identifier, value):
 
     id, list_indices = split_identifier_list_indices(id_parts[-1])
     if list_indices is None:
-        # value can be an empty list or dict, so check for None eplicitely
+        # value can be an empty list or dict, so check for None explicitly
         if value is not None:
             cur_el[id] = value
         else:
@@ -231,7 +231,7 @@ def set(element, identifier, value):
             if len(cur_el) <= list_index:
                 raise DataNotFoundError("List index at " + identifier + " out of range")
             cur_el = cur_el[list_index]
-        # value can be an empty list or dict, so check for None eplicitely
+        # value can be an empty list or dict, so check for None explicitly
         list_index = list_indices[-1]
         if type(cur_el) != list:
             raise DataTypeError("Element at " + identifier + " is not a list")

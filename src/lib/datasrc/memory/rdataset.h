@@ -121,12 +121,15 @@ public:
     /// returns a pointer to it.
     ///
     /// If the optional \c old_rdataset parameter is set to non NULL,
-    /// The given \c RdataSet, RRset, RRSIG will be merged in the new
-    /// \c Rdataset object: the new object contain the union set of all
+    /// the given \c RdataSet, RRset, RRSIG will be merged in the new
+    /// \c Rdataset object: the new object will contain the union set of all
     /// RDATA and RRSIGs contained in these.  Obviously \c old_rdataset
-    /// was previously generated for the same RRClass and RRType as those
+    /// must be previously generated for the same RRClass and RRType as those
     /// for the given RRsets; it's the caller's responsibility to ensure
     /// this condition.  If it's not met the result will be undefined.
+    /// No reference to \c old_rdataset is maintained in the newly
+    /// returned \c RdataSet, so if the caller does not need \c
+    /// old_rdataset anymore, it may be freed by the caller.
     ///
     /// In both cases, this method ensures the stored RDATA and RRSIG are
     /// unique.  Any duplicate data (in the sense of the comparison in the

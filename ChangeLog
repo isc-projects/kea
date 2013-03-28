@@ -1,3 +1,98 @@
+594.	[func]		muks, pselkirk
+	libdns++: the NSEC, DS, DLV, and AFSDB Rdata classes now use the
+	generic lexer in constructors from text.  This means that the name
+	fields in such RRs in a zone file can now be non-absolute (the
+	origin name in that context will be used), e.g., when loaded by
+	b10-loadzone.
+	(Trac #2386, git dc0f34afb1eccc574421a802557198e6cd2363fa)
+	(Trac #2391, git 1450d8d486cba3bee8be46e8001d66898edd370c)
+
+593.	[func]		jelte
+	Address + port output and logs is now consistent according to our
+	coding guidelines, e.g. <address>:<port> in the case of IPv4, and
+	[<address>]:<port> in the case of IPv6, instead of <address>#<port>
+	(Trac #1086, git bcefe1e95cdd61ee4a09b20522c3c56b315a1acc)
+
+592.	[bug]		jinmei
+	b10-auth and zonemgr now handle some uncommon NOTIFY messages more
+	gracefully: auth immediately returns a NOTAUTH response if the
+	server does not have authority for the zone (the behavior
+	compatible with BIND 9) without bothering zonemgr; zonemgr now
+	simply skips retransfer if the specified zone is not in its
+	secondary zone list, instead of producing noisy error logs.
+	(Trac #1938, git 89d7de8e2f809aef2184b450e7dee1bfec98ad14)
+
+591.	[func]		vorner
+	Ported the remaining tests from the old shell/perl based system to
+	lettuce. Make target `systest' is now gone. Currently, the lettuce
+	tests are in git only, not part of the release tarball.
+	(Trac #2624, git df1c5d5232a2ab551cd98b77ae388ad568a683ad)
+
+590.	[bug]		tmark
+	Modified "include" statements in DHCP MySQL lease manager code to
+	fix build problems if MySQL is installed in a non-standard location.
+	(Trac #2825, git 4813e06cf4e0a9d9f453890557b639715e081eca)
+
+589.	[bug]		jelte
+	b10-cmdctl now automatically re-reads the user accounts file when
+	it is updated.
+	(Trac #2710, git 16e8be506f32de668699e6954f5de60ca9d14ddf)
+
+588.	[bug]*		jreed
+	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
+	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
+	(git be41be890f1349ae4c870a887f7acd99ba1eaac5)
+
+587.	[bug]		jelte
+	When used from python, the dynamic datasource factory now
+	explicitely loads the logging messages dictionary, so that correct
+	logging messages does not depend on incidental earlier import
+	statements. Also, the sqlite3-specific log messages have been moved
+	from the general datasource library to the sqlite3 datasource
+	(which also explicitely loads its messages).
+	(Trac 2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
+
+586.	[func]		marcin
+	libdhcp++: Removed unnecesary calls to the function which
+	validates option definitions used to create instances of options
+	being decoded in the received packets. Eliminating these calls
+	lowered the CPU utilization by the server by approximately 10%.
+	Also, added the composite search indexes on the container used to
+	store DHCP leases by Memfile backend. This resulted in the
+	significant performance rise when using this backend to store
+	leases.
+	(Trac #2701, git b96a30b26a045cfaa8ad579b0a8bf84f5ed4e73f)
+
+585.	[func]		jinmei, muks
+	The zone data loader now accepts RRs in any order during load.
+	Before it used to reject adding non-consecutive RRsets. It
+	expected records for a single owner name and its type to be
+	grouped together. These restrictions are now removed.  It now also
+	suppresses any duplicate RRs in the zone file when loading them
+	into memory.
+	(Trac #2440, git 232307060189c47285121f696d4efb206f632432)
+	(Trac #2441, git 0860ae366d73314446d4886a093f4e86e94863d4)
+
+584.	[bug]		jinmei
+	Fixed build failure with Boost 1.53 (and probably higher) in the
+	internal utility library.  Note that with -Werror it may still
+	fail, but it's due to a Boost bug that is reportedly fixed in their
+	development trunk.  See https://svn.boost.org/trac/boost/ticket/8080
+	Until the fix is available in a released Boost version you may need
+	to specify the --without-werror configure option to build BIND 10.
+	(Trac #2764, git ca1da8aa5de24358d7d4e7e9a4625347457118cf)
+
+583.	[func]*		jelte
+	b10-cmdctl-usermgr has been updated and its options and arguments
+	have changed; it now defaults to the same accounts file as
+	b10-cmdctl defaults to. It can now be used to remove users from the
+	accounts file as well, and it now accepts command-line arguments to
+	specify the username and password to add or remove, in which case
+	it will not prompt for them.
+	Note that using a password on the command line is not recommended,
+	as this can be viewed by other users.
+	(Trac #2713, git 9925af3b3f4daa47ba8c2eb66f556b01ed6f0502)
+
 582.	[func]		naokikambe
 	New statistics items related unixdomain sockets added into Xfrout :
 	open, openfail, close, bindfail, acceptfail, accept, senderr, and

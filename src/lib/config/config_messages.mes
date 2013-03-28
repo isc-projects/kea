@@ -94,3 +94,7 @@ manager.
 % CONFIG_OPEN_FAIL error opening %1: %2
 There was an error opening the given file. The reason for the failure
 is included in the message.
+
+% CONFIG_RPC_SEQ RPC call %1 to %2 with seq %3
+Debug message, saying there's a RPC call of given command to given module. It
+has internal sequence number as listed in the message.

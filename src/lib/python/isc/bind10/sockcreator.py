@@ -26,7 +26,7 @@ from libutil_io_python import recv_fd
 logger = isc.log.Logger("init")
 
 """
-Module that comunicates with the privileged socket creator (b10-sockcreator).
+Module that communicates with the privileged socket creator (b10-sockcreator).
 """
 
 class CreatorError(Exception):
@@ -251,7 +251,7 @@ class Creator(Parser):
         """Function used before running a program that needs to run as a
         different user."""
         # Put us into a separate process group so we don't get
-        # SIGINT signals on Ctrl-C (b10-init will shut everthing down by
+        # SIGINT signals on Ctrl-C (b10-init will shut everything down by
         # other means).
         os.setpgrp()
 

@@ -37,7 +37,7 @@ socket listed in the output.
 This debug message indicates that the connection was successfully made, this
 should follow CC_ESTABLISH.
 
-% CC_GROUP_RECEIVE trying to receive a message
+% CC_GROUP_RECEIVE trying to receive a message with seq %1
 Debug message, noting that a message is expected to come over the command
 channel.
 

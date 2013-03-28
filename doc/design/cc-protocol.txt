@@ -1,296 +1,185 @@
-protocol version 0x536b616e
+The CC protocol
+===============
 
-DATA        0x01
-HASH        0x02
-LIST        0x03
-NULL        0x04
-TYPE_MASK   0x0f
+We use our home-grown protocol for IPC between modules. There's a
+central daemon routing the messages.
 
-LENGTH_32   0x00
-LENGTH_16   0x10
-LENGTH_8    0x20
-LENGTH_MASK 0xf0
-
-
-MESSAGE ENCODING
-----------------
-
-When decoding, the entire message length must be known.  If this is
-transmitted over a raw stream such as TCP, this is usually encoded
-with a 4-byte length followed by the message itself.  If some other
-wrapping is used (say as part of a different message structure) the
-length of the message must be preserved and included for decoding.
-
-The first 4 bytes of the message is the protocol version encoded
-directly as a 4-byte value.  Immediately following this is a HASH
-element.  The length of the hash element is the remainder of the
-message after subtracting 4 bytes for the protocol version.
-
-This initial HASH is intended to be used by the message routing system
-if one is in use.
-
-
-ITEM TYPES
+Addressing
 ----------
 
-There are four basic types encoded in this protocol.  A simple data
-blob (DATA), a tag-value series (HASH), an ordered list (LIST), and
-a NULL type (which is used internally to encode DATA types which are
-empty and can be used to indicate existance without data in a hash.)
+Each connected client gets an unique address, called ``l-name''. A
+message can be sent directly to such l-name, if it is known to the
+sender.
 
-Each item can be of any type, so a hash of hashes and hashes of lists
-are typical.
+A client may subscribe to a group of communication. A message can be
+broadcasted to a whole group instead of a single client. There's also
+an instance parameter to addressing, but we didn't find any actual use
+for it and it is not used for anything. It is left in the default `*`
+for most of our code and should be done so in any new code. It wasn't
+priority to remove it yet.
 
-All multi-byte integers which are encoded in binary are in network
-byte order.
+Wire format
+-----------
 
+Each message on the wire looks like this:
 
-ITEM ENCODING
--------------
+  <message length><header length><header><body>
 
-Each item is preceeded by a single byte which describes that item.
-This byte contains the item type and item length encoding:
+The message length is 4-byte unsigned integer in network byte order,
+specifying the number of bytes of the rest of the message (eg. header
+length, header and body put together).
 
-    Thing             Length    Description
-    ----------------  --------  ------------------------------------
-    TyLen             1 byte    Item type and length encoding
-    Length            variable  Item data blob length
-    Item Data         variable  Item data blob
+The header length is 2-byte unsigned integer in network byte order,
+specifying the length of the header.
 
-The TyLen field includes both the item data type and the item's
-length.  The length bytes are encoded depending on the length of data
-portion, and the smallest data encoding type supported should be
-used.  Note that this length compression is used just for data
-compactness.  It is wasteful to encode the most common length (8-bit
-length) as 4 bytes, so this method allows one byte to be used rather
-than 4, three of which are nearly always zero.
+The header is a string representation of single JSON object. It
+specifies the type of message and routing information.
 
+The body is the payload of the message. It takes the whole rest of
+size of the message (so its length is message length - 2 - header
+length). The content is not examined by the routing daemon, but the
+clients expect it to be valid JSON object.
 
-HASH
-----
+The body may be empty in case the message is not to be routed to
+client, but it is instruction for the routing daemon. See message
+types below.
 
-This is a tag/value pair where each tag is an opaque unique blob and
-the data elements are of any type.  Hashes are not encoded in any
-specific tag or item order.
+The message is sent in this format to the routing daemon, the daemon
+optionally modifies the headers and delivers it in the same format to
+the recipient(s).
 
-The length of the HASH's data area is processed for tag/value pairs
-until the entire area is consumed.  Running out of data prematurely
-indicates an incorrectly encoded message.
+The headers
+-----------
 
-The data area consists of repeated items:
+The header object can contain following information:
 
-    Thing             Length    Description
-    ----------------  --------  ------------------------------------
-    Tag Length       1 byte    The length of the tag.
-    Tag              Variable  The tag name
-    Item             Variable  Encoded item
+|====================================================================================================
+|Name       |type  |Description
+|====================================================================================================
+|from       |string|Sender's l-name
+|type       |string|Type of the message. The routed message is "send".
+|group      |string|The group to deliver to.
+|instance   |string|Instance in the group. Purpose lost in history. Defaults to "*".
+|to         |string|Override recipient (group/instance ignored).
+|seq        |int   |Tracking number of the message.
+|reply      |int   |If present, contains a seq number of message this is a reply to.
+|want_answer|bool  |If present and true, the daemon generates error if there's no matching recipient.
+|====================================================================================================
 
-The Tag Length field is always one byte, which limits the tag name to
-255 bytes maximum.  A tag length of zero is invalid.
-
-
-LIST
-----
-
-A LIST is a list of items encoded and decoded in a specific order.
-The order is chosen entirely by the source curing encoding.
-
-The length of the LIST's data is consumed by the ITEMs it contains.
-Running out of room prematurely indicates an incorrectly encoded
-message.
-
-The data area consists of repeated items:
-
-     Thing           Length    Description
-     --------------  ------    ----------------------------------------
-     Item	     Variable  Encoded item
-
-
-DATA
-----
-
-A DATA item is a simple blob of data.  No further processing of this
-data is performed by this protocol on these elements.
-
-The data blob is the entire data area.  The data area can be 0 or more
-bytes long.
-
-It is typical to encode integers as strings rather than binary
-integers.  However, so long as both sender and recipient agree on the
-format of the data blob itself, any blob encoding may be used.
-
-
-NULL
-----
-
-This data element indicates no data is actually present.  This can be
-used to indicate that a tag is present in a HASH but no data is
-actually at that location, or in a LIST to indicate empty item
-positions.
-
-There is no data portion of this type, and the encoded length is
-ignored and is always zero.
-
-Note that this is different than a DATA element with a zero length.
-
-
-EXAMPLE
--------
-
-This is Ruby syntax, but should be clear enough for anyone to read.
-
-Example data encoding:
-
-{
-  "from" => "sender@host",
-  "to" => "recipient@host",
-  "seq" => 1234,
-  "data" => {
-    "list" => [ 1, 2, nil, "this" ],
-    "description" => "Fun for all",
-  },
-}
-
-
-Wire-format:
-
-In this format, strings are not shown in hex, but are included "like
-this."  Descriptions are written (like this.)
-
-Message Length: 0x64 (100 bytes)
-Protocol Version:  0x53 0x6b 0x61 0x6e
-(remaining length: 96 bytes)
-
-0x04 "from" 0x21 0x0b "sender@host"
-0x02 "to" 0x21 0x0e "recipient@host"
-0x03 "seq" 0x21 0x04 "1234"
-0x04 "data" 0x22
-  0x04 "list" 0x23 
-    0x21 0x01 "1"
-    0x21 0x01 "2"
-    0x04
-    0x21 0x04 "this"
-  0x0b "description" 0x0b "Fun for all"
-
-
-MESSAGE ROUTING
----------------
-
-The message routing daemon uses the top-level hash to contain routing
-instructions and additional control data.  Not all of these are
-required for various control message types; see the individual
-descriptions for more information.
-
-    Tag      Description
-    -------  ----------------------------------------
-    msg      Sender-supplied data
-    from     sender's identity
-    group    Group name this message is being sent to
-    instance Instance in this group
-    repl     if present, this message is a reply.
-    seq	     sequence number, used in replies
-    to	     recipient or "*" for no specific receiver
-    type     "send" for a channel message
-
-
-"type" is a DATA element, which indicates to the message routing
-system what the purpose of this message is.
-
+Types of messages
+-----------------
 
 Get Local Name (type "getlname")
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Upon connection, this is the first message to be sent to the control
-daemon.  It will return the local name of this client.  Each
-connection gets its own unique local name, and local names are never
-repeated.  They should be considered opaque strings, in a format
-useful only to the message routing system.  They are used in replies
-or to send to a specific destination.
+Upon connection, this is the first message to be sent to the daemon.
+It will return the local name of this client.  Each connection gets
+its own unique local name, and local names are never repeated.  They
+should be considered opaque strings, in a format useful only to the
+message routing system.  They are used in replies or to send to a
+specific destination.
 
 To request the local name, the only element included is the
-  "type" => "getlname"
+  {"type": "getlname"}
 tuple.  The response is also a simple, single tuple:
-  "lname" => "UTF-8 encoded local name blob"
+  {"lname" => "Opaque utf-8 string"}
 
 Until this message is sent, no other types of messages may be sent on
 this connection.
 
-
 Regular Group Messages (type "send")
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When sending a message:
+Message routed to other client. This one expects the body to be
+non-empty.
 
-"msg" is the sender supplied data.  It is encoded as per its type.
-It is a required field, but may be the NULL type if not needed.
-In OpenReg, this was another wire format message, stored as an
-ITEM_DATA.  This was done to make it easy to decode the routing
-information without having to decode arbitrary application-supplied
-data, but rather treat this application data as an opaque blob.
+Expected headers are:
 
-"from" is a DATA element, and its value is a UTF-8 encoded sender
-identity.  It MUST be the "local name" supplied by the message
-routing system upon connection.  The message routing system will
-enforce this, but will not add it.  It is a required field.
+* from
+* group
+* instance (set to "*" if no specific instance desired)
+* seq (should be unique for the sender)
+* to (set to "*" if not directed to specific client)
+* reply (optional, only if it is reply)
+* want_answer (optional, only when not a reply)
 
-"group" is a DATA element, and its value is the UTF-8 encoded group
-name this message is being transmitted to.  It is a required field for
-all messages of type "send".
-
-"instance" is a DATA element, and its value is the UTF-8 encoded
-instance name, with "*" meaning all instances.
-
-"repl" is the sequence number being replied to, if this is a reply.
-
-"seq" is a unique identity per client.  That is, the <lname, seq>
-tuple must be unique over the lifetime of the connection, or at least
-over the lifetime of the expected reply duration.
-
-"to" is a DATA element, and its value is a UTF-8 encoded recipient
-identity.  This must be a specific recipient name or "*" to indicate
-"all listeners on this channel."  It is a required field.
-
-When a message of type "send" is received by the client, all the data
-is used as above.  This indicates a message of the given type was
-received.
-
-A client does not see its own transmissions. (XXXMLG Need to check this)
-
+A client does not see its own transmissions.
 
 Group Subscriptions (type "subscribe")
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A subscription requires the "group", "instance", and a flag to
-indicate the subscription type ("sybtype").  If instance is "*" the
-instance name will be ignored when decising to forward a message to
-this client or not.
+Indicates the sender wants to be included in the given group.
 
-"subtype" is a DATA element, and contains "normal" for normal channel
-subscriptions, "meonly" for only those messages on a channel with the
-recipient specified exactly as the local name, or "promisc" to receive
-all channel messages regardless of other filters.  As its name
-implies, "normal" is for typical subscriptions, and "promisc" is
-intended for channel message debugging.
+Expected headers are:
 
-There is no response to this message.
+* group
+* instance (leave at "*" for default)
 
+There is no response to this message and the client is subscribed to
+the given group and instance.
+
+The group can be any utf-8 string and the group doesn't have to exist
+before (it is created when at least one client is in it). A client may
+be subscribed in multiple groups.
 
 Group Unsubscribe (type "unsubscribe")
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The fields to be included are "group" and "instance" and have the same
-meaning as a "subscribe" message.
+The headers to be included are "group" and "instance" and have the same
+meaning as a "subscribe" message. Only, the client is removed from the
+group.
 
-There is no response to this message.
+Transmitted messages
+--------------------
 
+These are the messages generally transmitted in the body of the
+message.
 
-Statistics (type "stats")
--------------------------
+Command
+~~~~~~~
 
-Request statistics from the message router.  No other fields are
-inclued in the request.
+It is a command from one process to another, to do something or send
+some information. It is identified by a name and can optionally have
+parameters. It'd look like this:
 
-The response contains a single element "stats" which is an opaque
-element.  This is used mostly for debugging, and its format is
-specific to the message router.  In general, some method to simply
-dump raw messages would produce something useful during debugging.
+  {"command": ["name", <parameters>]}
+
+The parameters may be omitted (then the array is 1 element long). If
+present, it may be any JSON element. However, the most usual is an
+object with named parameter values.
+
+It is usually transmitted with the `want_answer` header turned on to
+cope with the situation the remote end doesn't exist, and sent to a
+group (eg. `to` with value of `*`).
+
+Success reply
+~~~~~~~~~~~~~
+
+When the command is successful, the other side answers by a reply of
+the following format:
+
+  {"result": [0, <result>]}
+
+The result is the return value of the command. It may be any JSON
+element and it may be omitted (for the case of ``void'' function).
+
+This is transmitted with the `reply` header set to the `seq` number of
+the original command. It is sent with the `to` header set.
+
+Error reply
+~~~~~~~~~~~
+
+In case something goes wrong, an error reply is sent. This is similar
+as throwing an exception from local function. The format is similar:
+
+  {"result": [ecode, "Error description"]}
+
+The `ecode` is non-zero error code. Most of the current code uses `1`
+for all errors. The string after that is mandatory and must contain a
+human-readable description of the error.
+
+The negative error codes are reserved for errors from the daemon.
+Currently, only `-1` is used and it is generated when a message with
+`reply` not included is sent, it has the `want_answer` header set to
+`true` and there's no recipient to deliver the message to. This
+usually means a command was sent to a non-existent recipient.

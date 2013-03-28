@@ -99,7 +99,7 @@ udpCheck(const int socknum) {
 }
 
 // The check function (tcpCheck/udpCheck) is passed as a parameter to the test
-// code, so provide a conveniet typedef.
+// code, so provide a convenient typedef.
 typedef void (*socket_check_t)(const int);
 
 // Address-family-specific scoket checks.

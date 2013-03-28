@@ -72,7 +72,7 @@ which it is running.  The server will continue running to allow
 reconfiguration, but will not be listening on any address or port until
 an administrator does so.
 
-% SRVCOMM_ADDRESS_VALUE address to set: %1#%2
+% SRVCOMM_ADDRESS_VALUE address to set: %1:%2
 Debug message. This lists one address and port value of the set of
 addresses we are going to listen on (eg. there will be one log message
 per pair). This appears only after SRVCOMM_SET_LISTEN, but might

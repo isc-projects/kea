@@ -21,7 +21,7 @@ Long term:
   tricky, though, because we need to be thread safe. There seems to be
   solution to use weak_ptr inside the hash_table instead of shared_ptr and
   catch the exception inside get() (and getOrAdd) and delete the dead pointer.
-* Better way to dispatch all calbacks in a list is needed. We take them out of
+* Better way to dispatch all callbacks in a list is needed. We take them out of
   the list and dispatch them one by one.  This is wrong because when an
   exception happens inside the callback, we lose the ones not dispatched yet.
 

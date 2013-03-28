@@ -608,7 +608,7 @@ class TestXfrinIXFRAdd(TestXfrinState):
         # signed, rejecting it.
         self.assertRaises(xfrin.XfrinProtocolError, self.state.handle_rr,
                           self.conn, end_soa_rrset)
-        # No diffs were commited
+        # No diffs were committed
         self.assertEqual([], self.conn._datasrc_client.committed_diffs)
 
     def test_handle_out_of_sync(self):
@@ -2578,7 +2578,7 @@ class TestXfrin(unittest.TestCase):
         # there can be one more outstanding transfer.
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
-        # make sure the # xfrs would excceed the quota
+        # make sure the # xfrs would exceed the quota
         self.xfr.recorder.increment(Name(str(self.xfr._max_transfers_in) + TEST_ZONE_NAME_STR))
         # this one should fail
         self.assertEqual(self.xfr.command_handler("retransfer",
