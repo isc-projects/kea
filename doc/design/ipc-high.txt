@@ -151,3 +151,12 @@ change between the request for the member list and sending the
 command, the actual recipients don't match the list and the server
 could get more answers than expected or could wait for answer of a
 module that no longer exists.
+
+Known limitations
+-----------------
+
+It is meant mostly as signalling protocol. Sending millions of
+messages or messages of several tens of megabytes is probably a bad
+idea. While there's no architectural limitation with regards of the
+number of transferred messages or their sizes, the code is not
+optimised and it would probably be very slow.
