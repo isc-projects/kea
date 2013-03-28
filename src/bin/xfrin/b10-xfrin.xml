@@ -297,14 +297,16 @@ operation
                   <varlistentry>
                     <term>last_ixfr_duration</term>
                     <listitem><simpara>
-                      Duration of the last IXFR. 0.0 means no successful IXFR done.
+                      Duration of the last IXFR. 0.0 means no successful IXFR done
+                      in greater than or equal to a microsecond.
                     </simpara></listitem>
                   </varlistentry>
 
                   <varlistentry>
                     <term>last_axfr_duration</term>
                     <listitem><simpara>
-                      Duration of the last AXFR. 0.0 means no successful AXFR done.
+                      Duration of the last AXFR. 0.0 means no successful AXFR done
+                      in greater than or equal to a microsecond.
                     </simpara></listitem>
                   </varlistentry>
 
