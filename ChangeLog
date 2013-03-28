@@ -1,3 +1,8 @@
+595.	[bug]		tomek
+	All DHCP components now gracefully refuse to handle too short
+	DUIDs and client-id.
+	(Trac #2723, git a043d8ecda6aff57922fe98a33c7c3f6155d5d64)
+
 594.	[func]		muks, pselkirk
 	libdns++: the NSEC, DS, DLV, and AFSDB Rdata classes now use the
 	generic lexer in constructors from text.  This means that the name
