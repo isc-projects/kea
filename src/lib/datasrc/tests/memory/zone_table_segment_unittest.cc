@@ -14,6 +14,7 @@
 
 #include <datasrc/memory/zone_writer_local.h>
 #include <datasrc/memory/zone_table_segment_local.h>
+#include <datasrc/zone_table_config.h>
 #include <util/memory_segment_local.h>
 
 #include <gtest/gtest.h>
@@ -31,8 +32,8 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        ztable_segment_(ZoneTableSegment::create(isc::data::NullElement(),
-                                                 RRClass::IN()))
+        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"params\": {}}")),
+        ztable_segment_(ZoneTableSegment::create(RRClass::IN(), ztconf_))
     {}
 
     void TearDown() {
@@ -40,6 +41,7 @@ protected:
         ztable_segment_ = NULL;
     }
 
+    const isc::datasrc::internal::ZoneTableConfig ztconf_;
     ZoneTableSegment* ztable_segment_;
 };
 

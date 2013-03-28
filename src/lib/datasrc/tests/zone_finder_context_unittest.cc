@@ -23,6 +23,7 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/zone_table_config.h>
 
 #include "test_client.h"
 #include <testutils/dnsmessage_test.h>
@@ -46,6 +47,7 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
+using isc::datasrc::internal::ZoneTableConfig;
 using namespace isc::testutils;
 
 namespace {
@@ -59,15 +61,16 @@ typedef shared_ptr<DataSourceClient> DataSourceClientPtr;
 // This is the type used as the test parameter.  Note that this is
 // intentionally a plain old type (i.e. a function pointer), not a class;
 // otherwise it could cause initialization fiasco at the instantiation time.
-typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
+typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&,
+                                             const ZoneTableConfig&);
 
 // Creator for the in-memory client to be tested
 DataSourceClientPtr
-createInMemoryClient(RRClass zclass, const Name& zname)
+createInMemoryClient(RRClass zclass, const Name& zname,
+                     const ZoneTableConfig& ztconfig)
 {
-    const ElementPtr config(Element::fromJSON("{}"));
     shared_ptr<ZoneTableSegment> ztable_segment(
-        ZoneTableSegment::create(*config, zclass));
+        ZoneTableSegment::create(zclass, ztconfig));
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
     client->load(zname, TEST_ZONE_FILE);
@@ -100,8 +103,11 @@ createSQLite3Client(RRClass zclass, const Name& zname, stringstream& ss) {
     return (client);
 }
 
+// ZoneTableConfig is in-memory specific, unused here.
 DataSourceClientPtr
-createSQLite3ClientWithNS(RRClass zclass, const Name& zname) {
+createSQLite3ClientWithNS(RRClass zclass, const Name& zname,
+                          const ZoneTableConfig&)
+{
     stringstream ss("ns.example.com. 3600 IN A 192.0.2.7");
     return (createSQLite3Client(zclass, zname, ss));
 }
@@ -112,8 +118,15 @@ class ZoneFinderContextTest :
         public ::testing::TestWithParam<ClientCreator>
 {
 protected:
-    ZoneFinderContextTest() : qclass_(RRClass::IN()), qzone_("example.org") {
-        client_ = (*GetParam())(qclass_, qzone_);
+    ZoneFinderContextTest() :
+        qclass_(RRClass::IN()), qzone_("example.org"),
+        ztconfig_("MasterFiles", 0, *Element::fromJSON(
+                      "{\"params\": "
+                      " {\"" + qzone_.toText() + "\": "
+                      "  \"" + TEST_ZONE_FILE + "\"}"
+                      "}"))
+    {
+        client_ = (*GetParam())(qclass_, qzone_, ztconfig_);
         REQUESTED_A.push_back(RRType::A());
         REQUESTED_AAAA.push_back(RRType::AAAA());
         REQUESTED_BOTH.push_back(RRType::A());
@@ -126,9 +139,9 @@ protected:
 
     const RRClass qclass_;
     const Name qzone_;
+    const ZoneTableConfig ztconfig_; // used for in-memory data source
     DataSourceClientPtr client_;
     ZoneFinderPtr finder_;
-
     vector<RRType> requested_types_;
     vector<RRType> REQUESTED_A;
     vector<RRType> REQUESTED_AAAA;
