@@ -306,6 +306,16 @@ public:
     /// @return the only existing instance of interface manager
     static IfaceMgr& instance();
 
+    /// @brief Can be packet can be send directly to the client without address.
+    ///
+    /// Checks if IfaceMgr can send DHCPv4 packet to the client
+    /// who hasn't got address assigned. If this is not supported
+    /// broadcast address should be used to send response to
+    /// the client.
+    ///
+    /// @return true if direct response is supported.
+    bool isDirectResponseSupported();
+
     /// @brief Returns interface with specified interface index
     ///
     /// @param ifindex index of searched interface
