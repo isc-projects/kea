@@ -12,8 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "client.h"
-#include "static_datasrc.h"
+#include <datasrc/static_datasrc.h>
+#include <datasrc/client.h>
+#include <datasrc/zone_table_config.h>
+
+#include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 
@@ -30,30 +33,69 @@ using namespace std;
 
 namespace isc {
 namespace datasrc {
+namespace {
+// XXX: this is a hack: we need to make sure the zone table config is valid
+// throughout the zone table segment, but there's no way to keep it alive
+// within this factory.  So we use a custom segment that internally creates
+// and hold the config.  Actually, we shouldn't need a separate data source
+// client implementation for "static"; the generic "MasterFiles" data source
+// with pre-generated configuration should suffice.  When it's done, we can
+// remove this loadable module with this hack.
+class ZoneTableSegmentStatic : public memory::ZoneTableSegment {
+public:
+    ZoneTableSegmentStatic(const string& zone_file) :
+        memory::ZoneTableSegment(RRClass::CH()),
+        ztconfig_("MasterFiles", 0, *data::Element::fromJSON(
+                      "{\"params\": {\"BIND\": \"" + zone_file + "\"}}")),
+        ztsegment_(memory::ZoneTableSegment::create(RRClass::CH(), ztconfig_))
+    {}
+
+    virtual ~ZoneTableSegmentStatic() {
+        memory::ZoneTableSegment::destroy(ztsegment_);
+    }
+
+    virtual memory::ZoneTableHeader& getHeader() {
+        return (ztsegment_->getHeader());
+    }
+    virtual const memory::ZoneTableHeader& getHeader() const {
+        return (ztsegment_->getHeader());
+    }
+    virtual isc::util::MemorySegment& getMemorySegment() {
+        return (ztsegment_->getMemorySegment());
+    }
+    virtual memory::ZoneWriter* getZoneWriter(
+        const memory::LoadAction& load_action,
+        const dns::Name& origin,
+        const dns::RRClass& rrclass)
+    {
+        return (ztsegment_->getZoneWriter(load_action, origin, rrclass));
+    }
+
+private:
+    const internal::ZoneTableConfig ztconfig_;
+    memory::ZoneTableSegment* ztsegment_; // actual segment
+};
+}
 
 DataSourceClient*
 createInstance(ConstElementPtr config, string& error) {
     try {
-        // FIXME: Fix the config that should be passed to
-        // ZoneTableSegment::create() when it actually uses the config
-        // to do something.
+        // Set up the zone table.
+        const string path(config->stringValue());
         shared_ptr<memory::ZoneTableSegment> ztable_segment(
-            memory::ZoneTableSegment::create(isc::data::NullElement(),
-                                             RRClass::CH()));
+            new ZoneTableSegmentStatic(path));
+
         // Create the data source
         auto_ptr<memory::InMemoryClient> client
             (new memory::InMemoryClient(ztable_segment, RRClass::CH()));
 
         // Fill it with data
-        const string path(config->stringValue());
         client->load(Name("BIND"), path);
 
         return (client.release());
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         error = e.what();
-    }
-    catch (...) {
+    } catch (...) {
         error = "Unknown exception";
     }
     return (NULL);

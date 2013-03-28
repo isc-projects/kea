@@ -14,6 +14,7 @@
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
+#include <datasrc/zone_table_config.h>
 
 using namespace isc::dns;
 
@@ -22,7 +23,9 @@ namespace datasrc {
 namespace memory {
 
 ZoneTableSegment*
-ZoneTableSegment::create(const isc::data::Element&, const RRClass& rrclass) {
+ZoneTableSegment::create(const RRClass& rrclass,
+                         const internal::ZoneTableConfig&)
+{
     /// FIXME: For now, we always return ZoneTableSegmentLocal. This
     /// should be updated eventually to parse the passed Element
     /// argument and construct a corresponding ZoneTableSegment

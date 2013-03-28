@@ -122,8 +122,11 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
 
             shared_ptr<ZoneTableSegment> ztable_segment;
             if (want_cache) {
-                ztable_segment.reset(ZoneTableSegment::create(*dconf, // XXX
-                                                              rrclass_));
+                // For now we use dummy config
+                internal::ZoneTableConfig ztconfig("MasterFiles", 0,
+                                                   *Element::fromJSON("{\"params\": {}}"));
+                ztable_segment.reset(ZoneTableSegment::create(rrclass_,
+                                                              ztconfig));
             }
 
             if (type == "MasterFiles") {
@@ -191,7 +194,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     client(new_data_sources.back().data_src_client_);
 
                 // temporary, just validate it
-                internal::ZoneTableConfig ztconfig(type, new_data_sources.back().data_src_client_, *dconf);
+                internal::ZoneTableConfig ztconfig(type, client, *dconf);
 
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {

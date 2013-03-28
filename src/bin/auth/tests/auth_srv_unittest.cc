@@ -1745,9 +1745,7 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list),
-        config_(Element::fromJSON("{}")),
-        ztable_segment_(ZoneTableSegment::create(*config_, RRClass::IN()))
+        real_(real_list)
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1764,8 +1762,7 @@ public:
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
-    const ConstElementPtr config_;
-    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
+    boost::shared_ptr<ZoneTableSegment> ztable_segment_; // can be null
     vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 

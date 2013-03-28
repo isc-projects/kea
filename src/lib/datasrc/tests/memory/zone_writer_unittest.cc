@@ -15,6 +15,7 @@
 #include <datasrc/memory/zone_writer_local.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
+#include <datasrc/zone_table_config.h>
 
 #include <cc/data.h>
 #include <dns/rrclass.h>
@@ -29,6 +30,7 @@ using boost::scoped_ptr;
 using boost::bind;
 using isc::dns::RRClass;
 using isc::dns::Name;
+using isc::data::Element;
 using namespace isc::datasrc::memory;
 
 namespace {
@@ -41,8 +43,8 @@ public:
         // FIXME: The NullElement probably isn't the best one, but we don't
         // know how the config will look, so it just fills the argument
         // (which is currently ignored)
-        segment_(ZoneTableSegment::create(isc::data::NullElement(),
-                                          RRClass::IN())),
+        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"params\": {}}")),
+        segment_(ZoneTableSegment::create(RRClass::IN(), ztconf_)),
         writer_(new
             ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.
                                                                  get()),
@@ -58,6 +60,7 @@ public:
         writer_.reset();
     }
 protected:
+    const isc::datasrc::internal::ZoneTableConfig ztconf_;
     scoped_ptr<ZoneTableSegment> segment_;
     scoped_ptr<ZoneWriterLocal> writer_;
     bool load_called_;
