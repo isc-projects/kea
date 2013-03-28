@@ -94,7 +94,7 @@ class binary_from_base32hex : public
         Base
     > super_t;
 public:
-    // make composible buy using templated constructor
+    // make composable by using templated constructor
     template<class T>
     binary_from_base32hex(BOOST_PFTO_WRAPPER(T)  start) :
         super_t(

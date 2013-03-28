@@ -65,7 +65,7 @@ class TSIGKeyRingTest(unittest.TestCase):
 
     def test_initialization(self):
         """
-        Test we can initialize and deintialize the keyring. It also
+        Test we can initialize and deinitialize the keyring. It also
         tests the interaction with the keyring() function.
         """
         # The keyring function raises until initialized

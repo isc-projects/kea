@@ -28,6 +28,7 @@ import tempfile
 import json
 import errno
 from isc.cc import data
+from isc.cc.proto_defs import *
 from isc.config import ccsession, config_data, module_spec
 from isc.util.file import path_search
 import bind10_config
@@ -221,7 +222,7 @@ class ConfigManagerData:
 
 class ConfigManager:
     """Creates a configuration manager. The data_path is the path
-       to the directory containing the configuraton file,
+       to the directory containing the configuration file,
        database_filename points to the configuration file.
        If session is set, this will be used as the communication
        channel session. If not, a new session will be created.
@@ -443,7 +444,7 @@ class ConfigManager:
         # (which is possible solution to the offline configuration problem)
         # or when we solve the incorect behaviour here when a config is
         # rejected (spying modules don't know it was rejected and some modules
-        # might have been commited already).
+        # might have been committed already).
         if module_name in self.virtual_modules:
             # The module is virtual, so call it to get the answer
             try:
@@ -603,7 +604,7 @@ class ConfigManager:
             # ignore 'None' value (even though they should not occur)
             # and messages that are answers to questions we did
             # not ask
-            if msg is not None and not 'result' in msg:
+            if msg is not None and not CC_PAYLOAD_RESULT in msg:
                 answer = self.handle_msg(msg);
                 # Only respond if there actually is something to respond with
                 if answer is not None:

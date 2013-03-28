@@ -40,7 +40,7 @@ READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 TEST_ZONE_NAME = Name('example.org')
 TEST_ZONE_NAME_STR = TEST_ZONE_NAME.to_text()
 UPDATE_RRTYPE = RRType.SOA
-TEST_QID = 5353                 # arbitrary chosen
+TEST_QID = 5353                 # arbitrarily chosen
 TEST_RRCLASS = RRClass.IN
 TEST_RRCLASS_STR = TEST_RRCLASS.to_text()
 TEST_SERVER6 = ('2001:db8::53', 53, 0, 0)
@@ -53,7 +53,7 @@ TEST_ACL_CONTEXT = isc.acl.dns.RequestContext(
                        socket.IPPROTO_UDP, socket.AI_NUMERICHOST)[0][4])
 # TSIG key for tests when needed.  The key name is TEST_ZONE_NAME.
 TEST_TSIG_KEY = TSIGKey("example.org:SFuWd/q99SzF8Yzd1QbB9g==")
-# TSIG keyring that contanins the test key
+# TSIG keyring that contains the test key
 TEST_TSIG_KEYRING = TSIGKeyRing()
 TEST_TSIG_KEYRING.add(TEST_TSIG_KEY)
 # Another TSIG key not in the keyring, making verification fail
@@ -450,7 +450,7 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual(1, isc.config.parse_answer(answer)[0])
         self.assertEqual({}, self.ddns_server._zone_config)
 
-        # the first zone cofig is valid, but not the second.  the first one
+        # the first zone config is valid, but not the second.  the first one
         # shouldn't be installed.
         bad_config = { 'zones': [ { 'origin': TEST_ZONE_NAME_STR,
                                     'class': TEST_RRCLASS_STR,
@@ -856,7 +856,7 @@ class TestDDNSServer(unittest.TestCase):
     def test_select_multi_tcp(self):
         '''Test continuation of sending a TCP response, multiple sockets.'''
         # Check if the implementation still works with multiple outstanding
-        # TCP contexts.  We use three (arbitray choice), of which two will be
+        # TCP contexts.  We use three (arbitrary choice), of which two will be
         # writable after select and complete the send.
         tcp_socks = []
         for i in range(0, 3):

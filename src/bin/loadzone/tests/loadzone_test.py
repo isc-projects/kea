@@ -41,7 +41,7 @@ ORIG_SOA_TXT = 'example.org. 3600 IN SOA ns1.example.org. ' +\
     'admin.example.org. 1234 3600 1800 2419200 7200\n'
 NEW_SOA_TXT = 'example.org. 3600 IN SOA ns.example.org. ' +\
     'admin.example.org. 1235 3600 1800 2419200 7200\n'
-# This is the brandnew SOA for a newly created zone
+# This is the brand new SOA for a newly created zone
 ALT_NEW_SOA_TXT = 'example.com. 3600 IN SOA ns.example.com. ' +\
     'admin.example.com. 1234 3600 1800 2419200 7200\n'
 

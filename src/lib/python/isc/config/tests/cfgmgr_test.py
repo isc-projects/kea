@@ -527,7 +527,7 @@ class TestConfigManager(unittest.TestCase):
                          self.fake_session.get_message("Cmdctl", None))
 
         # but if the 'stopping' module is either unknown or not running,
-        # no followup message should be sent
+        # no follow-up message should be sent
         self._handle_msg_helper({ "command":
                                   [ "stopping",
                                     { "module_name": "NoSuchModule" } ] },

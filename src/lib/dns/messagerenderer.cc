@@ -182,7 +182,7 @@ struct MessageRenderer::MessageRendererImpl {
                         size_t hash, bool case_sensitive) const
     {
         // Find a matching entry, if any.  We use some heuristics here: often
-        // the same name appers consecutively (like repeating the same owner
+        // the same name appears consecutively (like repeating the same owner
         // name for a single RRset), so in case there's a collision in the
         // bucket it will be more likely to find it in the tail side of the
         // bucket.

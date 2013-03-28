@@ -174,13 +174,13 @@ SyncUDPServer::operator()(asio::error_code, size_t) {
 void
 SyncUDPServer::stop() {
     /// Using close instead of cancel, because cancel
-    /// will only cancel the asynchornized event already submitted
+    /// will only cancel the asynchronized event already submitted
     /// to io service, the events post to io service after
     /// cancel still can be scheduled by io service, if
-    /// the socket is cloesed, all the asynchronized event
+    /// the socket is closed, all the asynchronized event
     /// for it won't be scheduled by io service not matter it is
-    /// submit to io serice before or after close call. And we will
-    //. get bad_descriptor error
+    /// submit to io service before or after close call. And we will
+    /// get bad_descriptor error.
     socket_->close();
     stopped_ = true;
 }

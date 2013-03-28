@@ -118,21 +118,16 @@ validConnectionString() {
 // There is no error checking in this code: if something fails, one of the
 // tests will (should) fall over.
 void destroySchema() {
-    // Initialise
-    MYSQL handle;
-    (void) mysql_init(&handle);
+    MySqlHolder mysql;
 
     // Open database
-    (void) mysql_real_connect(&handle, "localhost", "keatest",
+    (void) mysql_real_connect(mysql, "localhost", "keatest",
                               "keatest", "keatest", 0, NULL, 0);
 
     // Get rid of everything in it.
     for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        (void) mysql_query(&handle, destroy_statement[i]);
+        (void) mysql_query(mysql, destroy_statement[i]);
     }
-
-    // ... and close
-    (void) mysql_close(&handle);
 }
 
 // @brief Create the Schema
@@ -142,21 +137,16 @@ void destroySchema() {
 // There is no error checking in this code: if it fails, one of the tests
 // will fall over.
 void createSchema() {
-    // Initialise
-    MYSQL handle;
-    (void) mysql_init(&handle);
+    MySqlHolder mysql;
 
     // Open database
-    (void) mysql_real_connect(&handle, "localhost", "keatest",
+    (void) mysql_real_connect(mysql, "localhost", "keatest",
                               "keatest", "keatest", 0, NULL, 0);
 
     // Execute creation statements.
     for (int i = 0; create_statement[i] != NULL; ++i) {
-        (void) mysql_query(&handle, create_statement[i]);
+        (void) mysql_query(mysql, create_statement[i]);
     }
-
-    // ... and close
-    (void) mysql_close(&handle);
 }
 
 /// @brief Test fixture class for testing MySQL Lease Manager

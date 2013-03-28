@@ -149,7 +149,7 @@ TEST_F(LeaseMgrFactoryTest, redactAccessStringEmptyPassword) {
 /// @brief redactConfigString test - no password
 ///
 /// Checks that the redacted configuration string excludes the password if there
-/// was no password to begion with.
+/// was no password to begin with.
 TEST_F(LeaseMgrFactoryTest, redactAccessStringNoPassword) {
 
     LeaseMgr::ParameterMap parameters =

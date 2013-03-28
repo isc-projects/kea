@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     // the parsing starts (console output for the BIND 10 root logger).  This
     // is included in the logging specifications UNLESS the first switch on
     // the command line is a "-l" flag starting a new logger.  To track this,
-    // the "sw_found" flag is set when a switch is completey processed. The
+    // the "sw_found" flag is set when a switch is completely processed. The
     // processing of "-l" will only add information for a previous logger to
     // the list if this flag is set.
     while ((option = getopt(argc, argv, "hc:d:f:l:m:s:y:z:")) != -1) {

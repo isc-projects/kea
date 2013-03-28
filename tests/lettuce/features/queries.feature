@@ -3,6 +3,51 @@ Feature: Querying feature
     for instance whether multiple queries in a row return consistent
     answers.
 
+    Scenario: Glue
+        # Check the auth server returns the correct glue when asked for it.
+        Given I have bind10 running with configuration glue.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        # This query should result in a delegation with two NS; one in the
+        # delegated zone and one in a so called out-of-bailiwick zone for which
+        # the auth server has authority, too.  For the former, the server
+        # should return glue in the parent zone.  For the latter, BIND 9 and
+        # BIND 10 behave differently; BIND 9 uses "glue" in the parent zone
+        # (since this is the root zone everything can be considered a valid
+        # glue).  BIND 10 (using sqlite3 data source) searches the other zone
+        # and uses the authoritative data in that zone (which is intentionally
+        # different from the glue in the root zone).
+        A query for foo.bar.example type A should have rcode NOERROR
+        The answer section of the last query response should be
+        """
+        """
+        The authority section of the last query response should be
+        """
+        example.			172800	IN	NS	NS1.example.COM.
+        example.			172800	IN	NS	NS.example.
+        """
+        The additional section of the last query response should be
+        """
+        NS.example.		172800	IN	A	192.0.2.1
+        NS.example.		172800	IN	A	192.0.2.2
+        NS1.example.COM.	172800	IN	A	192.0.2.3
+        """
+        # Test we don't get out-of-zone glue
+        A query for example.net type A should have rcode NOERROR
+        The answer section of the last query response should be
+        """
+        """
+        The authority section of the last query response should be
+        """
+        example.net.		300	IN	NS	ns2.example.info.
+        example.net.		300	IN	NS	ns1.example.info.
+        """
+        The additional section of the last query response should be
+        """
+        """
+
     Scenario: Repeated queries
         Given I have bind10 running with configuration example.org.inmem.config
         And wait for bind10 stderr message BIND10_STARTED_CC
@@ -50,6 +95,10 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -92,6 +141,10 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -121,6 +174,10 @@ Feature: Querying feature
         """
         example.org.            3600    IN      SOA     ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200
         """
+
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
@@ -186,6 +243,10 @@ Feature: Querying feature
         mail.example.org.       3600    IN      A       192.0.2.10
         """
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -236,6 +297,10 @@ Feature: Querying feature
         """
         ns.sub.example.org.	3600	IN	A	192.0.2.101
         """
+
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
@@ -288,6 +353,10 @@ Feature: Querying feature
         A query for example.org type SSHFP should have rcode NOERROR
         The last query response should have ancount 0
 
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command
         And wait for new bind10 stderr message AUTH_RECEIVED_COMMAND
@@ -313,6 +382,9 @@ Feature: Querying feature
         """
         shell.example.org.      3600    IN      SSHFP   2 1 123456789abcdef67890123456789abcdef67890
         """
+        # Make sure handling statistics command handling checked below is
+        # after this query
+        And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
         When I wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
         # make sure Auth module receives a command

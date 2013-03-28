@@ -41,7 +41,7 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
-const std::vector<uint8_t> DUID::getDuid() const {
+std::vector<uint8_t> DUID::getDuid() const {
     return (duid_);
 }
 
@@ -91,7 +91,7 @@ ClientId::ClientId(const uint8_t *clientid, size_t len)
 }
 
 // Returns a copy of client-id data
-const std::vector<uint8_t> ClientId::getClientId() const {
+std::vector<uint8_t> ClientId::getClientId() const {
     return (duid_);
 }
 

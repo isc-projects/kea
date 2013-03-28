@@ -40,7 +40,7 @@ namespace dhcp {
 /// This singleton class holds the whole configuration for DHCPv4 and DHCPv6
 /// servers. It currently holds information about zero or more subnets6.
 /// Each subnet may contain zero or more pools. Pool4 and Pool6 is the most
-/// basic "chunk" of configuration. It contains a range of assigneable
+/// basic "chunk" of configuration. It contains a range of assignable
 /// addresses.
 ///
 /// Below is a sketch of configuration inheritance (not implemented yet).
@@ -248,7 +248,7 @@ protected:
     /// purposes.
     CfgMgr();
 
-    /// @brief virtual desctructor
+    /// @brief virtual destructor
     virtual ~CfgMgr();
 
     /// @brief a container for IPv6 subnets.

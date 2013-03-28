@@ -23,6 +23,7 @@
 #include <dns/name.h>
 
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/sqlite3_datasrc_messages.h>
 #include <datasrc/logger.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
@@ -1068,7 +1069,7 @@ private:
     /// \param serial Zone serial number for which an index is being sought.
     /// \param diff Code to delete record additions or deletions
     ///
-    /// \return int ID of the row in the difss table corresponding to the
+    /// \return int ID of the row in the diffs table corresponding to the
     ///         statement.
     ///
     /// \exception TooLittleData Internal error, no result returned when one

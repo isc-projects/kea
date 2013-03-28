@@ -16,7 +16,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-@file Dabase Utilities
+@file Database Utilities
 
 This file holds the "dbutil" program, a general utility program for doing
 management of the BIND 10 database.  There are two modes of operation:

@@ -46,7 +46,7 @@ TEST(AsioSession, establish) {
     asio::io_service io_service_;
     Session sess(io_service_);
 
-    // can't return socket desciptor before session is established
+    // can't return socket descriptor before session is established
     EXPECT_THROW(sess.getSocketDesc(), isc::InvalidOperation);
 
     EXPECT_THROW(
@@ -293,7 +293,7 @@ TEST_F(SessionTest, run_with_handler_timeout) {
     msg = isc::data::Element::fromJSON("{ \"a third\": \"message\" }");
     tds->sendmsg(env, msg);
 
-    // No followup message, should time out.
+    // No follow-up message, should time out.
     ASSERT_THROW(my_io_service.run(), SessionTimeout);
 }
 

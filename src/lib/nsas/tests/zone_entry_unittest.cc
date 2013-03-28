@@ -101,7 +101,7 @@ protected:
     /**
      * \short Function returning a new zone.
      *
-     * Convenience funcion, just creating a new zone, to shorten the code.
+     * Convenience function, just creating a new zone, to shorten the code.
      */
     boost::shared_ptr<InheritedZoneEntry> getZone() {
         return (boost::shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
@@ -372,7 +372,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_TRUE(IOAddress("192.0.2.1").equals(
         callback_->successes_[1].getAddress()));
     EXPECT_EQ(1, callback_->unreachable_count_);
-    // Everything arriwed, so we are ready
+    // Everything arrived, so we are ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // Try asking something more and see it asks no more
     zone->addCallback(callback_, V4_ONLY);

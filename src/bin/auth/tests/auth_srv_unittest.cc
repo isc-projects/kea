@@ -244,6 +244,62 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
                 renderer.getLength());
 }
 
+void
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
+    // For now, we use explicit swap than reconfigure() because the latter
+    // involves a separate thread and cannot guarantee the new config is
+    // available for the subsequent test.
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
+}
+
+void
+updateDatabase(AuthSrv& server, const char* params) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": " + string(params) +
+        "}]}"));
+    installDataSrcClientLists(server, configureDataSource(config));
+}
+
+// Note: if with_static is set to true, the corresponding test should be
+// disabled in case of USE_STATIC_LINK.
+void
+updateInMemory(AuthSrv& server, const char* origin, const char* filename,
+               bool with_static = true)
+{
+    string spec_txt = "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
+        "   },"
+        "   \"cache-enable\": true"
+        "}]";
+    if (with_static) {
+        spec_txt += ", \"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+            "}]";
+    }
+    spec_txt += "}";
+
+    const ConstElementPtr config(Element::fromJSON(spec_txt));
+    installDataSrcClientLists(server, configureDataSource(config));
+}
+
+// Note: tests using this function should be disabled in case of
+// USE_STATIC_LINK.
+void
+updateBuiltin(AuthSrv& server) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "}]}"));
+    installDataSrcClientLists(server, configureDataSource(config));
+}
+
 // We did not configure any client lists. Therefore it should be REFUSED
 TEST_F(AuthSrvTest, noClientList) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
@@ -647,8 +703,10 @@ TEST_F(AuthSrvTest, IXFRDisconnectFail) {
 }
 
 TEST_F(AuthSrvTest, notify) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -664,7 +722,7 @@ TEST_F(AuthSrvTest, notify) {
                   stringValue());
     ConstElementPtr notify_args =
         notify_session.getSentMessage()->get("command")->get(1);
-    EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
+    EXPECT_EQ("example.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
     EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
@@ -675,7 +733,7 @@ TEST_F(AuthSrvTest, notify) {
 
     // The question must be identical to that of the received notify
     ConstQuestionPtr question = *parse_message->beginQuestion();
-    EXPECT_EQ(Name("example.com"), question->getName());
+    EXPECT_EQ(Name("example"), question->getName());
     EXPECT_EQ(RRClass::IN(), question->getClass());
     EXPECT_EQ(RRType::SOA(), question->getType());
 
@@ -690,10 +748,17 @@ TEST_F(AuthSrvTest, notify) {
     checkStatisticsCounters(stats_after, expect);
 }
 
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_notifyForCHClass) {
+#else
 TEST_F(AuthSrvTest, notifyForCHClass) {
-    // Same as the previous test, but for the CH RRClass.
+#endif
+    // Same as the previous test, but for the CH RRClass (so we install the
+    // builtin (static) data source.
+    updateBuiltin(server);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("bind"),
                                        RRClass::CH(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -773,9 +838,11 @@ TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
 }
 
 TEST_F(AuthSrvTest, notifyWithoutAA) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     // implicitly leave the AA bit off.  our implementation will accept it.
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -786,8 +853,10 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
 }
 
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
@@ -800,10 +869,12 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
 }
 
 TEST_F(AuthSrvTest, notifyWithoutSession) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     server.setXfrinSession(NULL);
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -816,10 +887,12 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
 }
 
 TEST_F(AuthSrvTest, notifySendFail) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.disableSend();
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -830,10 +903,12 @@ TEST_F(AuthSrvTest, notifySendFail) {
 }
 
 TEST_F(AuthSrvTest, notifyReceiveFail) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.disableReceive();
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -843,10 +918,12 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
 }
 
 TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.setMessage(Element::fromJSON("{\"foo\": 1}"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -856,11 +933,13 @@ TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
 }
 
 TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.setMessage(
         Element::fromJSON("{\"result\": [1, \"FAIL\"]}"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -869,49 +948,50 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
-void
-installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
-    // For now, we use explicit swap than reconfigure() because the latter
-    // involves a separate thread and cannot guarantee the new config is
-    // available for the subsequent test.
-    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
+TEST_F(AuthSrvTest, notifyNotAuth) {
+    // If the server doesn't have authority of the specified zone in NOTIFY,
+    // it will return NOTAUTH
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG /* no AA */, 1, 0, 0, 0);
 }
 
-void
-updateDatabase(AuthSrv& server, const char* params) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"IN\": [{"
-        "    \"type\": \"sqlite3\","
-        "    \"params\": " + string(params) +
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
+TEST_F(AuthSrvTest, notifyNotAuthSubDomain) {
+    // Similar to the previous case, but checking partial match doesn't confuse
+    // the processing.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("child.example"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-void
-updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"IN\": [{"
-        "   \"type\": \"MasterFiles\","
-        "   \"params\": {"
-        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
-        "   },"
-        "   \"cache-enable\": true"
-        "}],"
-        "\"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
-}
+TEST_F(AuthSrvTest, notifyNotAuthNoClass) {
+    // Likewise, and there's not even a data source in the specified class.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
 
-void
-updateBuiltin(AuthSrv& server) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example"),
+                                       RRClass::CH(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
@@ -1679,7 +1759,7 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), ztable_segment_));
+                                false, RRClass::IN(), ztable_segment_, ""));
         }
     }
 private:

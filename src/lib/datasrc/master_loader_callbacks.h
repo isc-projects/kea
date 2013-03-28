@@ -47,7 +47,7 @@ createMasterLoaderCallbacks(const isc::dns::Name& name,
 /// loaded RRsets into a zone updater.
 ///
 /// The zone updater should be opened in the replace mode no changes should
-/// have been done to it yet (but it is not checked). It is not commited
+/// have been done to it yet (but it is not checked). It is not committed
 /// automatically and it is up to the caller to commit the changes (or not).
 /// It must not be destroyed for the whole time of loading.
 ///

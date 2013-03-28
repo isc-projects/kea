@@ -215,7 +215,7 @@ with the specified address to the MySQL backend database.
 % DHCPSRV_MYSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
-the commital may not include a write to disk.
+the committal may not include a write to disk.
 
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or

@@ -261,7 +261,7 @@ class DataSrcClient(unittest.TestCase):
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        # There are 40 non-RRSIG RRsets and 32 dinstinct RRSIGs.
+        # There are 40 non-RRSIG RRsets and 32 distinct RRSIGs.
         self.assertEqual(72, len(list(rrets)))
 
         # same test, but now with explicit False argument for separate_rrs
@@ -593,7 +593,7 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(finder.NXDOMAIN, result)
 
     def test_update_delete_abort(self):
-        # we don't do enything with this one, just making sure loading two
+        # we don't do anything with this one, just making sure loading two
         # datasources
         dsc = isc.datasrc.DataSourceClient("sqlite3", WRITE_ZONE_DB_CONFIG)
 

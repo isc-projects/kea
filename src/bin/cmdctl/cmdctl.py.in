@@ -42,6 +42,7 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.cc.proto_defs
 import isc.util.process
 import isc.net.parse
 from optparse import OptionParser, OptionValueError
@@ -97,6 +98,11 @@ def check_file(file_name):
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
+    def __init__(self, request, client_address, server):
+        http.server.BaseHTTPRequestHandler.__init__(self, request,
+                                                    client_address, server)
+        self.session_id = None
+
     def do_GET(self):
         '''The client should send its session id in header with
         the name 'cookie'
@@ -121,7 +127,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         return self.server.get_reply_data_for_GET(id, module)
 
     def _is_session_valid(self):
-        return self.session_id
+        return self.session_id is not None
 
     def _is_user_logged_in(self):
         login_time = self.server.user_sessions.get(self.session_id)
@@ -171,7 +177,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         is_user_valid, error_info = self._check_user_name_and_pwd()
         if is_user_valid:
             self.server.save_user_session_id(self.session_id)
-            return http.client.OK, ["login success "]
+            return http.client.OK, ["login success"]
         else:
             return http.client.UNAUTHORIZED, error_info
 
@@ -454,7 +460,8 @@ class CommandControl():
                     else:
                         return rcode, {}
                 else:
-                    errstr = str(answer['result'][1])
+                    errstr = \
+                        str(answer[isc.cc.proto_defs.CC_PAYLOAD_RESULT][1])
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
 
@@ -502,12 +509,25 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self._verbose = verbose
         self._lock = threading.Lock()
         self._user_infos = {}
-        self._accounts_file = None
+        self.__accounts_file = None
+        self.__accounts_file_mtime = 0
 
     def _create_user_info(self, accounts_file):
         '''Read all user's name and its' salt, hashed password
         from accounts file.'''
-        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0):
+
+        # If the file does not exist, set accounts to empty, and return
+        if not os.path.exists(accounts_file):
+            self._user_infos = {}
+            self.__accounts_file = None
+            self.__accounts_file_mtime = 0
+            return
+
+        # If the filename hasn't changed, and the file itself
+        # has neither, do nothing
+        accounts_file_mtime = os.stat(accounts_file).st_mtime
+        if self.__accounts_file == accounts_file and\
+           accounts_file_mtime <= self.__accounts_file_mtime:
             return
 
         with self._lock:
@@ -525,7 +545,8 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                 if csvfile:
                     csvfile.close()
 
-        self._accounts_file = accounts_file
+        self.__accounts_file = accounts_file
+        self.__accounts_file_mtime = accounts_file_mtime
         if len(self._user_infos) == 0:
             logger.error(CMDCTL_NO_USER_ENTRIES_READ)
 

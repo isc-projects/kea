@@ -21,7 +21,7 @@ def run_nsupdate(commands):
     """Run nsupdate.
        Parameters:
        commands: a sequence of strings which will be sent.
-       update_address: adress to send the update to
+       update_address: address to send the update to
        update_port: port to send the update to
        zone: zone to update
 

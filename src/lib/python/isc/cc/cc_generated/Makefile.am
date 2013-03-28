@@ -26,6 +26,7 @@ CLEANDIRS = __pycache__
 
 CLEANFILES = proto_defs.py __init__.py
 CLEANFILES += proto_defs.pyc __init__.pyc
+CLEANFILES += proto_defs.pyo __init__.pyo
 
 clean-local:
 	rm -rf $(CLEANDIRS)

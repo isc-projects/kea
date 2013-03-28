@@ -172,10 +172,7 @@ class TestCertGenTool(unittest.TestCase):
         """
         Tests a few pre-created certificates with the -c option
         """
-        if ('CMDCTL_SRC_PATH' in os.environ):
-            path = os.environ['CMDCTL_SRC_PATH'] + "/tests/testdata/"
-        else:
-            path = "testdata/"
+        path = os.environ['CMDCTL_SRC_PATH'] + '/tests/testdata/'
         self.validate_certificate(10, path + 'expired-certfile.pem')
         self.validate_certificate(100, path + 'mangled-certfile.pem')
         self.validate_certificate(17, path + 'noca-certfile.pem')

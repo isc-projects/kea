@@ -65,7 +65,7 @@ class DhcpConfigParser {
     //@{
 private:
 
-    // Private construtor and assignment operator assures that nobody
+    // Private constructor and assignment operator assures that nobody
     // will be able to copy or assign a parser. There are no defined
     // bodies for them.
     DhcpConfigParser(const DhcpConfigParser& source);

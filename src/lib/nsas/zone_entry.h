@@ -125,7 +125,7 @@ protected:
     // Which nameservers didn't have any of our callbacks yet
     std::set<NameserverPtr> nameservers_not_asked_;
     /*
-     * Callbacks. For each fimily type one vector, so we can process
+     * Callbacks. For each family type one vector, so we can process
      * them separately.
      */
     std::vector<boost::shared_ptr<AddressRequestCallback> >
@@ -139,7 +139,7 @@ private:
     /**
      * \short Process all the callbacks that can be processed
      *
-     * The purpose of this funtion is to ask all nameservers for their IP
+     * The purpose of this function is to ask all nameservers for their IP
      * addresses and execute all callbacks that can be executed. It is
      * called whenever new callback appears and there's a chance it could
      * be answered or when new information is available (list of nameservers,
