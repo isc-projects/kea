@@ -144,7 +144,12 @@ TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
 
 TEST_F(Rdata_DNSKEY_Test, toWireBuffer) {
     rdata_dnskey.toWire(obuffer);
-    // FIXME: Test something here???
+
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("rdata_dnskey_fromWire", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_DNSKEY_Test, createFromWire) {
