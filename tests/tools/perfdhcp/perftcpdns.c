@@ -67,14 +67,13 @@
 #define NS_CLASS_IN		1
 #define NS_CLASS_ANY		255
 
-#define NS_OFF_LENGTH		0
-#define NS_OFF_ID		2
-#define NS_OFF_FLAGS		4
-#define NS_OFF_QDCOUNT		6
-#define NS_OFF_ANCOUNT		8
-#define NS_OFF_NSCOUNT		10
-#define NS_OFF_ARCOUNT		12
-#define NS_OFF_QUESTION		14
+#define NS_OFF_ID		0
+#define NS_OFF_FLAGS		2
+#define NS_OFF_QDCOUNT		4
+#define NS_OFF_ANCOUNT		6
+#define NS_OFF_NSCOUNT		8
+#define NS_OFF_ARCOUNT		10
+#define NS_OFF_QUESTION		12
 
 #define NS_FLAG_QR		0x8000U
 #define NS_FLAG_AA		0x0400U
@@ -421,8 +420,6 @@ build_template_query4(void)
 	*p++ = v & 0xff;
 	/* length */
 	length_query4 = p - template_query4;
-	template_query4[0] = ((length_query4 - 2) >> 8) & 0xff;
-	template_query4[1] = (length_query4 - 2) & 0xff;
 }
 
 /*
@@ -450,11 +447,11 @@ get_template_query4(void)
 			templatefile, strerror(errno));
 		exit(1);
 	}
-	if (cc < NS_OFF_QUESTION + 4) {
+	if (cc < NS_OFF_QUESTION + 6) {
 		fprintf(stderr,"file '%s' too small\n", templatefile);
 		exit(2);
 	}
-	if (cc > 511) {
+	if (cc > 509) {
 		fprintf(stderr,"file '%s' too large\n", templatefile);
 		exit(2);
 	}
@@ -615,12 +612,14 @@ send4(struct exchange *x)
 {
 	ssize_t ret;
 
-	memcpy(obuf, template_query4, length_query4);
+	obuf[0] = length_query4 >> 8;
+	obuf[1]= length_query4 & 0xff;
+	memcpy(obuf + 2, template_query4, length_query4);
 	/* ID */
-	memcpy(obuf + NS_OFF_ID, &x->id, 2);
+	memcpy(obuf + 2 + NS_OFF_ID, &x->id, 2);
 	/* random */
 	if (random_query4 > 0)
-		x->rnd = randomize(random_query4, x->rnd);
+		x->rnd = randomize(random_query4 + 2, x->rnd);
 	/* timestamp */
 	errno = 0;
 	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
@@ -629,8 +628,8 @@ send4(struct exchange *x)
 		fatal = 1;
 		return -errno;
 	}
-	ret = send(x->sock, obuf, length_query4, 0);
-	if (ret == (ssize_t) length_query4)
+	ret = send(x->sock, obuf, length_query4 + 2, 0);
+	if (ret == (ssize_t) length_query4 + 2)
 		return 0;
 	/* bad send */
 	return -errno;
@@ -679,7 +678,6 @@ receive4(struct exchange *x)
 	int idx = x - xlist;
 	ssize_t cc;
 	uint16_t v;
-	double delta;
 
 	cc = recv(x->sock, ibuf, sizeof(ibuf), 0);
 	if (cc < 0) {
@@ -692,15 +690,15 @@ receive4(struct exchange *x)
 		goto close;
 	}
 	/* enforce a reasonable length */
-	if (cc < length_query4) {
+	if (cc < (ssize_t) length_query4 + 2) {
 		tooshort++;
 		goto close;
 	}
 	/* must match the ID */
-	if (memcmp(ibuf + NS_OFF_ID, &x->id, 2) != 0)
+	if (memcmp(ibuf + 2 + NS_OFF_ID, &x->id, 2) != 0)
 		goto close;
 	/* must be a response */
-	memcpy(&v, ibuf + NS_OFF_FLAGS, 2);
+	memcpy(&v, ibuf + 2 + NS_OFF_FLAGS, 2);
 	v = ntohs(v);
 	if ((v & NS_FLAG_QR) == 0)
 		goto close;
@@ -874,8 +872,6 @@ build_template_query6(void)
 	*p++ = v & 0xff;
 	/* length */
 	length_query6 = p - template_query6;
-	template_query6[0] = ((length_query6 - 2) >> 8) & 0xff;
-	template_query6[1] = (length_query6 - 2) & 0xff;
 }
 
 /*
@@ -903,11 +899,11 @@ get_template_query6(void)
 			templatefile, strerror(errno));
 		exit(1);
 	}
-	if (cc < NS_OFF_QUESTION + 4) {
+	if (cc < NS_OFF_QUESTION + 6) {
 		fprintf(stderr, "file '%s' too short\n", templatefile);
 		exit(2);
 	}
-	if (cc > 511) {
+	if (cc > 509) {
 		fprintf(stderr,"file '%s' too large\n", templatefile);
 		exit(2);
 	}
@@ -1068,12 +1064,14 @@ send6(struct exchange *x)
 {
 	ssize_t ret;
 
-	memcpy(obuf, template_query6, length_query6);
+	obuf[0] = length_query6 >> 8;
+	obuf[1]= length_query6 & 0xff;
+	memcpy(obuf + 2, template_query6, length_query6);
 	/* ID */
-	memcpy(obuf + NS_OFF_ID, &x->id, 2);
+	memcpy(obuf + 2 + NS_OFF_ID, &x->id, 2);
 	/* random */
 	if (random_query6 > 0)
-		x->rnd = randomize(random_query6, x->rnd);
+		x->rnd = randomize(random_query6 + 2, x->rnd);
 	/* timestamp */
 	errno = 0;
 	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
@@ -1082,8 +1080,8 @@ send6(struct exchange *x)
 		fatal = 1;
 		return -errno;
 	}
-	ret = send(x->sock, obuf, length_query6, 0);
-	if (ret == (ssize_t) length_query6)
+	ret = send(x->sock, obuf, length_query6 + 2, 0);
+	if (ret == (ssize_t) length_query6 + 2)
 		return 0;
 	/* bad send */
 	return -errno;
@@ -1132,7 +1130,6 @@ receive6(struct exchange *x)
 	int idx = x - xlist;
 	ssize_t cc;
 	uint16_t v;
-	double delta;
 
 	cc = recv(x->sock, ibuf, sizeof(ibuf), 0);
 	if (cc < 0) {
@@ -1145,15 +1142,15 @@ receive6(struct exchange *x)
 		goto close;
 	}
 	/* enforce a reasonable length */
-	if (cc < length_query6) {
+	if (cc < (ssize_t) length_query6 + 2) {
 		tooshort++;
 		goto close;
 	}
 	/* must match the ID */
-	if (memcmp(ibuf + NS_OFF_ID, &x->id, 2) != 0)
+	if (memcmp(ibuf + 2 + NS_OFF_ID, &x->id, 2) != 0)
 		goto close;
 	/* must be a response */
-	memcpy(&v, ibuf + NS_OFF_FLAGS, 2);
+	memcpy(&v, ibuf + 2 + NS_OFF_FLAGS, 2);
 	v = ntohs(v);
 	if ((v & NS_FLAG_QR) == 0)
 		goto close;
@@ -1377,27 +1374,19 @@ void
 usage(void)
 {
 	fprintf(stderr, "%s",
-"perftcpdns [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
-"    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
-"    [-l<local-addr>] [-P<preload>] [-a<aggressivity>]\n"
-"    [-L<local-port>] [-s<seed>] [-M<memory>]\n"
-"    [-T<template-file>] [-O<random-offset]\n"
-"    [-x<diagnostic-selector>] [server]\n"
+"perftcpdns [-hv] [-4|-6] [-r<rate>] [-t<report>] [-n<num-request>]\n"
+"    [-p<test-period>] [-d<drop-time>] [-D<max-drop>] [-l<local-addr>]\n"
+"    [-P<preload>] [-a<aggressivity>] [-s<seed>] [-M<memory>]\n"
+"    [-T<template-file>] [-O<random-offset] [-x<diagnostic-selector>]\n"
+"    [server]\n"
 "\f\n"
 "The [server] argument is the name/address of the DNS server to contact.\n"
-"\n"
-"The -r option is used to set up a performance test, without\n"
-"it exchanges are initiated as fast as possible.\n"
 "\n"
 "Options:\n"
 "-4: TCP/IPv4 operation (default). This is incompatible with the -6 option.\n"
 "-6: TCP/IPv6 operation. This is incompatible with the -4 option.\n"
 "-a<aggressivity>: When the target sending rate is not yet reached,\n"
-"    control how many exchanges are initiated before the next pause.\n"
-"-b<base>: The base XXX, etc, used to simulate different queries\n"
-"    This can be specified multiple times, each instance is\n"
-"    in the <type>=<value> form, for instance:\n"
-"    (and default) XXX=...\n"
+"    control how many connections are initiated before the next pause.\n"
 "-d<drop-time>: Specify the time after which a query is treated as\n"
 "    having been lost.  The value is given in seconds and may contain a\n"
 "    fractional component.  The default is 1 second.\n"
@@ -1407,8 +1396,7 @@ usage(void)
 "-M<memory>: Size of the tables (default 60000)\n"
 "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
 "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
-
-"-r<rate>: Initiate <rate> TCP DNS exchanges per second.  A periodic\n"
+"-r<rate>: Initiate <rate> TCP DNS connections per second.  A periodic\n"
 "    report is generated showing the number of exchanges which were not\n"
 "    completed, as well as the average response latency.  The program\n"
 "    continues until interrupted, at which point a final report is\n"
@@ -1424,8 +1412,6 @@ usage(void)
 "   * 'a': print the decoded command line arguments\n"
 "   * 'e': print the exit reason\n"
 "   * 'i': print rate processing details\n"
-"   * 'r': print randomization details\n"
-"   * 't': when finished, print timers of all successful exchanges\n"
 "   * 'T': when finished, print templates\n"
 "\n"
 "The remaining options are used only in conjunction with -r:\n"
@@ -2058,8 +2044,9 @@ main(const int argc, char * const argv[])
 		size_t n;
 
 		if (ipversion == 4) {
-			printf("length = %zu\n", length_query4);
-			printf("random offset = %zu\n", random_query4);
+			printf("length = 0x%zx\n", length_query4);
+			if (random_query4 > 0)
+				printf("random offset = %zu\n", random_query4);
 			printf("content:\n");
 			for (n = 0; n < length_query4; n++) {
 				printf("%s%02hhx",
@@ -2072,8 +2059,9 @@ main(const int argc, char * const argv[])
 				printf("\n");
 			printf("\n");
 		} else {
-			printf("length = %zu\n", length_query6);
-			printf("random offset = %zu\n", random_query6);
+			printf("length = 0x%zx\n", length_query6);
+			if (random_query6 > 0)
+				printf("random offset = %zu\n", random_query6);
 			for (n = 0; n < length_query6; n++) {
 				printf("%s%02hhx",
 				       (n & 15) == 0 ? "" : " ",
