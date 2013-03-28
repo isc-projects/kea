@@ -22,6 +22,7 @@
 #include <config/ccsession.h>
 
 #include <cc/data.h>
+#include <cc/proto_defs.h>
 
 #include <exceptions/exceptions.h>
 
@@ -813,7 +814,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 command_template_end);
         const unsigned int seq =
             xfrin_session_->group_sendmsg(notify_command, "Zonemgr",
-                                          "*", "*");
+                                          CC_INSTANCE_WILDCARD,
+                                          CC_INSTANCE_WILDCARD, true);
         ConstElementPtr env, answer, parsed_answer;
         xfrin_session_->group_recvmsg(env, answer, false, seq);
         int rcode;
