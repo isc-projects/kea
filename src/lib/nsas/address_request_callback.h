@@ -42,7 +42,7 @@ namespace nsas {
 class AddressRequestCallback {
 public:
 
-    /// Default constructor, copy contructor and assignment operator
+    /// Default constructor, copy constructor and assignment operator
     /// are implicitly present and are OK.
 
     /// \brief Virtual Destructor

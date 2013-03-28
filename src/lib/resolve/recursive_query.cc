@@ -930,7 +930,7 @@ private:
     asio::deadline_timer client_timer;
     asio::deadline_timer lookup_timer;
 
-    // Make FowardQuery deletes itself safely. for more information see
+    // Make ForwardQuery deletes itself safely. for more information see
     // the comments of outstanding_events in RunningQuery.
     size_t outstanding_events_;
 

@@ -433,7 +433,7 @@ class XfrinIXFRAdd(XfrinState):
             if soa_serial == conn._end_serial:
                 # The final part is there. Finish the transfer by
                 # checking the last TSIG (if required), the zone data and
-                # commiting.
+                # committing.
                 conn.finish_transfer()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -624,7 +624,7 @@ class XfrinConnection(asyncore.dispatcher):
         it if the constructor raises an exception after opening the socket.
         '''
         self.create_socket(self._master_addrinfo[0], self._master_addrinfo[1])
-        self.setblocking(1)
+        self.socket.setblocking(1)
 
     def _get_zone_soa(self):
         '''Retrieve the current SOA RR of the zone to be transferred.
@@ -822,7 +822,7 @@ class XfrinConnection(asyncore.dispatcher):
     def finish_transfer(self):
         """
         Perform any necessary checks after a transfer. Then complete the
-        transfer by commiting the transaction into the data source.
+        transfer by committing the transaction into the data source.
         """
         self._check_response_tsig_last()
         if not check_zone(self._zone_name, self._rrclass,
@@ -1129,7 +1129,7 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         if db_file is not None:
             # temporary hardcoded sqlite initialization. Once we decide on
             # the config specification, we need to update this (TODO)
-            # this may depend on #1207, or any followup ticket created for #1207
+            # this may depend on #1207, or any follow-up ticket created for #1207
             datasrc_type = "sqlite3"
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)

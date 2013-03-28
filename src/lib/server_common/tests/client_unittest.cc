@@ -92,8 +92,8 @@ TEST_F(ClientTest, constructIPv6) {
 }
 
 TEST_F(ClientTest, toText) {
-    EXPECT_EQ("192.0.2.1#53214", client4->toText());
-    EXPECT_EQ("2001:db8::1#53216", client6->toText());
+    EXPECT_EQ("192.0.2.1:53214", client4->toText());
+    EXPECT_EQ("[2001:db8::1]:53216", client6->toText());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().

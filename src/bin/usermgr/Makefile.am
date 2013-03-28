@@ -1,8 +1,11 @@
+SUBDIRS = tests
+
 sbin_SCRIPTS = b10-cmdctl-usermgr
+noinst_SCRIPTS = run_b10-cmdctl-usermgr.sh
 
 b10_cmdctl_usermgrdir = $(pkgdatadir)
 
-CLEANFILES=	b10-cmdctl-usermgr
+CLEANFILES=	b10-cmdctl-usermgr b10-cmdctl-usermgr.pyc
 
 man_MANS = b10-cmdctl-usermgr.8
 DISTCLEANFILES = $(man_MANS)
@@ -25,3 +28,7 @@ endif
 b10-cmdctl-usermgr: b10-cmdctl-usermgr.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" b10-cmdctl-usermgr.py >$@
 	chmod a+x $@
+
+CLEANDIRS = __pycache__
+clean-local:
+	rm -rf $(CLEANDIRS)

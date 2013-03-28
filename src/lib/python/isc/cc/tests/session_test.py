@@ -257,7 +257,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
 
-        # ask for a differe sequence number reply (that doesn't exist)
+        # ask for a different sequence number reply (that doesn't exist)
         # then ask for the one that is there
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {"hello": "a"})
@@ -270,7 +270,7 @@ class testSession(unittest.TestCase):
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
 
-        # ask for a differe sequence number reply (that doesn't exist)
+        # ask for a different sequence number reply (that doesn't exist)
         # then ask for any message
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {"hello": "a"})
@@ -285,7 +285,7 @@ class testSession(unittest.TestCase):
 
         #print("sending message {'to': 'someone', 'reply': 1}, {'hello': 'a'}")
 
-        # ask for a differe sequence number reply (that doesn't exist)
+        # ask for a different sequence number reply (that doesn't exist)
         # send a new message, ask for specific message (get the first)
         # then ask for any message (get the second)
         self.assertFalse(sess.has_queued_msgs())

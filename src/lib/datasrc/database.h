@@ -228,7 +228,7 @@ public:
     public:
         /// \brief Destructor
         ///
-        /// Virtual destructor, so any descendand class is destroyed correctly.
+        /// Virtual destructor, so any descendant class is destroyed correctly.
         virtual ~IteratorContext() {}
 
         /// \brief Function to provide next resource record

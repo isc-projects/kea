@@ -115,11 +115,6 @@ cppcheck:
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
 
-# system tests
-systest:
-	cd tests/system; \
-	sh $(abs_srcdir)/tests/system/runall.sh
-
 ### include tool to generate documentation from log message specifications
 ### in the distributed tarball:
 EXTRA_DIST = tools/system_messages.py

@@ -34,12 +34,22 @@ const char* const CC_HEADER_WANT_ANSWER = "want_answer";
 const char* const CC_HEADER_REPLY = "reply";
 // The commands in the "type" header
 const char* const CC_COMMAND_SEND = "send";
+const char* const CC_COMMAND_SUBSCRIBE = "subscribe";
+const char* const CC_COMMAND_UNSUBSCRIBE = "unsubscribe";
+const char* const CC_COMMAND_GET_LNAME = "getlname";
+const char* const CC_COMMAND_PING = "ping";
+const char* const CC_COMMAND_PONG = "pong";
+const char* const CC_COMMAND_STOP = "stop";
 // The wildcards of some headers
 const char* const CC_TO_WILDCARD = "*";
 const char* const CC_INSTANCE_WILDCARD = "*";
 // Reply codes
-const int CC_REPLY_SUCCESS = 0;
 const int CC_REPLY_NO_RECPT = -1;
+const int CC_REPLY_SUCCESS = 0;
+// Payload in the message
+const char *const CC_PAYLOAD_LNAME = "lname";
+const char *const CC_PAYLOAD_RESULT = "result";
+const char *const CC_PAYLOAD_COMMAND = "command";
 
 }
 }

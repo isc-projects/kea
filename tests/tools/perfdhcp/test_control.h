@@ -85,7 +85,7 @@ static const size_t DHCPV6_IA_NA_OFFSET = 40;
 ///   - calculate how many packets must be send to satisfy desired rate,
 ///   - receive incoming packets from the server,
 ///   - check the exit conditions - terminate the program if the exit criteria
-///   are fulfiled, e.g. reached maximum number of packet drops,
+///   are fulfilled, e.g. reached maximum number of packet drops,
 ///   - send the number of packets appropriate to satisfy the desired rate,
 ///   - optionally print intermediate reports,
 /// - print statistics, e.g. achieved rate,
@@ -245,7 +245,7 @@ public:
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
-    /// \throw isc::Unexpected if internal Test Controler error occured.
+    /// \throw isc::Unexpected if internal Test Controller error occured.
     /// \return error_code, 3 if number of received packets is not equal
     /// to number of sent packets, 0 if everything is ok.
     int run();
@@ -282,14 +282,14 @@ protected:
 
     /// \brief Check if test exit condtitions fulfilled.
     ///
-    /// Method checks if the test exit conditions are fulfiled.
+    /// Method checks if the test exit conditions are fulfilled.
     /// Exit conditions are checked periodically from the
     /// main loop. Program should break the main loop when
     /// this method returns true. It is calling function
     /// responsibility to break main loop gracefully and
     /// cleanup after test execution.
     ///
-    /// \return true if any of the exit conditions is fulfiled.
+    /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
@@ -483,7 +483,7 @@ protected:
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
     /// \throw isc::InvalidOperation if broadcast option can't be
-    /// set for the v4 socket or if multicast option cat't be set
+    /// set for the v4 socket or if multicast option can't be set
     /// for the v6 socket.
     /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
@@ -643,7 +643,7 @@ protected:
     /// \brief Send DHCPv4 DISCOVER message from template.
     ///
     /// Method sends DHCPv4 DISCOVER message from template. The
-    /// template data is exepcted to be in binary format. Provided
+    /// template data is expected to be in binary format. Provided
     /// buffer is copied and parts of it are replaced with actual
     /// data (e.g. MAC address, transaction id etc.).
     /// Copy of sent packet is stored in the stats_mgr4_ object to

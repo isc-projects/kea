@@ -83,7 +83,7 @@ class base16_from_binary :
     > super_t;
 
 public:
-    // make composible buy using templated constructor
+    // make composable by using templated constructor
     template<class T>
     base16_from_binary(BOOST_PFTO_WRAPPER(T) start) :
         super_t(

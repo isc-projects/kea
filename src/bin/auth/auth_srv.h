@@ -228,7 +228,7 @@ public:
      * \brief Set and get the addresses we listen on.
      */
     void setListenAddresses(const isc::server_common::portconfig::AddressList&
-                            addreses);
+                            addresses);
     const isc::server_common::portconfig::AddressList& getListenAddresses()
         const;
 

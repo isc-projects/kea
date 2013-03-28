@@ -134,7 +134,7 @@ extern const int dhcpv6_type_name_max;
 #define LQ_QUERY_OFFSET 17
 
 /*
- * DHCPv6 well-known multicast addressess, from section 5.1 of RFC 3315
+ * DHCPv6 well-known multicast addresses, from section 5.1 of RFC 3315
  */
 #define ALL_DHCP_RELAY_AGENTS_AND_SERVERS "ff02::1:2"
 #define ALL_DHCP_SERVERS "ff05::1:3"

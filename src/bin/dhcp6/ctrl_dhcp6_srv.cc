@@ -155,7 +155,7 @@ void ControlledDhcpv6Srv::establishSession() {
     // Dumy configuration handler is internally invoked by the
     // constructor and on success the constructor updates
     // the current session with the configuration that had been
-    // commited in the previous session. If we did not install
+    // committed in the previous session. If we did not install
     // the dummy handler, the previous configuration would have
     // been lost.
     config_session_ = new ModuleCCSession(specfile, *cc_session_,

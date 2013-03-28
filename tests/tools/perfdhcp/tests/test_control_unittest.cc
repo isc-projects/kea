@@ -263,7 +263,7 @@ public:
     /// If number of clients is between 257 and 65536 they can differ
     /// on two last positions so the returned value will be 2 and so on.
     ///
-    /// \param clients_num number of simulated clinets
+    /// \param clients_num number of simulated clients
     /// \return maximum mismatch position
     int unequalOctetPosition(int clients_num) const {
         if (!clients_num) {

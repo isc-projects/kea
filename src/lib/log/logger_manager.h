@@ -100,6 +100,9 @@ public:
     /// an attempt is made to log a message before this is function is called,
     /// the results will be dependent on the underlying logging package.
     ///
+    /// Any duplicate log IDs encountered are reported as warning, after which
+    /// the global duplicates vector is cleared
+    ///
     /// \param root Name of the root logger.  This should be set to the name of
     ///        the program.
     /// \param severity Severity at which to log

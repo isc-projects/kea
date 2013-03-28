@@ -34,7 +34,7 @@ The named component is about to be started by the b10-init process.
 
 % BIND10_COMPONENT_START_EXCEPTION component %1 failed to start: %2
 An exception (mentioned in the message) happened during the startup of the
-named component. The componet is not considered started and further actions
+named component. The component is not considered started and further actions
 will be taken about it.
 
 % BIND10_COMPONENT_STOP component %1 is being stopped
@@ -285,9 +285,9 @@ The b10-init module is starting the given process.
 The b10-init module is starting the given process, which will listen on the
 given port number.
 
-% BIND10_STARTING_PROCESS_PORT_ADDRESS starting process %1 (to listen on %2#%3)
+% BIND10_STARTING_PROCESS_PORT_ADDRESS starting process %1 (to listen on %2)
 The b10-init module is starting the given process, which will listen on the
-given address and port number (written as <address>#<port>).
+given address and port number (written as <address>:<port>).
 
 % BIND10_STARTUP_COMPLETE BIND 10 started
 All modules have been successfully started, and BIND 10 is now running.

@@ -62,7 +62,7 @@ usage() {
     std::cout << "Options:" << std::endl;
     std::cout << "-c, --certfile=FILE\t\tfile to read or store the certificate"
               << std::endl;
-    std::cout << "-f, --force\t\t\toverwrite existing certficate even if it"
+    std::cout << "-f, --force\t\t\toverwrite existing certificate even if it"
               << std::endl <<"\t\t\t\tis valid" << std::endl;
     std::cout << "-h, --help\t\t\tshow this help" << std::endl;
     std::cout << "-k, --keyfile=FILE\t\tfile to store the generated private key"
@@ -194,7 +194,7 @@ public:
 
             print("Creating certificate file " + cert_file_name);
 
-            // The exact call changed aftert 1.8, adding the
+            // The exact call changed after 1.8, adding the
             // hash function option
 #if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
             X509_Certificate cert =
@@ -229,7 +229,7 @@ public:
     validateCertificate(const std::string& certfile) {
         // Since we are dealing with a self-signed certificate here, we
         // also use the certificate to check itself; i.e. we add it
-        // as a trusted certificate, then validate the certficate itself.
+        // as a trusted certificate, then validate the certificate itself.
         //const X509_Certificate cert(certfile);
         try {
             X509_Store store;

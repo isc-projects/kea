@@ -142,7 +142,7 @@ def print_dict(dictionary):
     Prints the dictionary with a blank line between entries.
 
     Parameters:
-    dicitionary - Map holding the message dictionary
+    dictionary - Map holding the message dictionary
     """
     count = 0
     for msgid in sorted(dictionary):

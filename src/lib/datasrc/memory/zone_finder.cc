@@ -144,7 +144,7 @@ struct FindState {
 
     // These will be set to a domain node of the highest delegation point,
     // if any.  In fact, we could use a single variable instead of both.
-    // But then we would need to distinquish these two cases by something
+    // But then we would need to distinguish these two cases by something
     // else and it seemed little more confusing when this was written.
     const ZoneNode* zonecut_node_;
     const ZoneNode* dname_node_;

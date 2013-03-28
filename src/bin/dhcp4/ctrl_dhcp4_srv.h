@@ -136,7 +136,7 @@ protected:
     /// @brief Helper session object that represents raw connection to msgq.
     isc::cc::Session* cc_session_;
 
-    /// @brief Session that receives configuation and commands
+    /// @brief Session that receives configuration and commands
     isc::config::ModuleCCSession* config_session_;
 };
 

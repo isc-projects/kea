@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -168,9 +168,6 @@ private:
     /// @brief defines a pool type
     Pool6Type type_;
 
-    /// @brief prefix length
-    /// used by TYPE_PD only (zeroed for other types)
-    uint8_t prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool

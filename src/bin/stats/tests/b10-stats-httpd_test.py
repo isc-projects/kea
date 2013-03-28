@@ -173,7 +173,7 @@ class TestItemNameList(unittest.TestCase):
                          stats_httpd.item_name_list({'a':[1,2,3]}, 'a'))
         self.assertEqual(['a', 'a[0]', 'a[1]', 'a[2]'],
                          stats_httpd.item_name_list({'a':[1,2,3]}, ''))
-        # for a list under adict under a dict
+        # for a list under a dict under a dict
         self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],
                          stats_httpd.item_name_list({'a':{'b':[1,2,3]}}, 'a'))
         self.assertEqual(['a', 'a/b', 'a/b[0]', 'a/b[1]', 'a/b[2]'],

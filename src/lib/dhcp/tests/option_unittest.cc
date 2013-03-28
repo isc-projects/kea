@@ -220,7 +220,7 @@ TEST_F(OptionTest, v6_basic) {
     );
 }
 
-// tests contructor used in pkt reception
+// tests constructor used in pkt reception
 // option contains actual data
 TEST_F(OptionTest, v6_data1) {
     for (int i = 0; i < 32; i++)

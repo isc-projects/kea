@@ -256,7 +256,7 @@ class DiffTest(unittest.TestCase):
         """
         Try to add few items into the diff and see they are stored in there.
 
-        Also try passing an rrset that has differnt amount of RRs than 1.
+        Also try passing an rrset that has different amount of RRs than 1.
         """
         diff = Diff(self, Name('example.org.'))
         self.__data_common(diff, diff.add_data, 'add')

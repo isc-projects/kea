@@ -117,8 +117,14 @@ installListenAddresses(const AddressList& new_addresses,
     try {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
         BOOST_FOREACH(const AddressPair& addr, new_addresses) {
+            string addr_str;
+            if (addr.first.find(':') != string::npos) {
+                addr_str = "[" + addr.first + "]";
+            } else {
+                addr_str = addr.first;
+            }
             LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
-                arg(addr.first).arg(addr.second);
+                arg(addr_str).arg(addr.second);
         }
         setAddresses(service, new_addresses, server_options);
         address_store = new_addresses;
