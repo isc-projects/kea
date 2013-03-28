@@ -16,8 +16,10 @@
 #define ZONE_TABLE_SEGMENT_H
 
 #include <dns/rrclass.h>
+
 #include <datasrc/memory/zone_table.h>
-#include "load_action.h"
+#include <datasrc/memory/load_action.h>
+
 #include <cc/data.h>
 #include <util/memory_segment.h>
 
@@ -32,6 +34,9 @@ class Name;
 class RRClass;
 }
 namespace datasrc {
+namespace internal {
+class ZoneTableConfig;
+}
 namespace memory {
 class ZoneWriter;
 
@@ -103,8 +108,9 @@ public:
     /// \param config The configuration based on which a derived object
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
-    static ZoneTableSegment* create(const isc::data::Element& config,
-                                    const isc::dns::RRClass& rrclass);
+    static ZoneTableSegment* create(
+        const isc::dns::RRClass& rrclass,
+        const isc::datasrc::internal::ZoneTableConfig& config);
 
     /// \brief Destroy a ZoneTableSegment
     ///
@@ -135,3 +141,7 @@ public:
 } // namespace isc
 
 #endif // ZONE_TABLE_SEGMENT_H
+
+// Local Variables:
+// mode: c++
+// End:

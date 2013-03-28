@@ -29,7 +29,7 @@ namespace datasrc {
 namespace internal {
 
 ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
-                                 DataSourceClient* datasrc_client,
+                                 const DataSourceClient* datasrc_client,
                                  const Element& datasrc_conf) :
     datasrc_client_(datasrc_client)
 {

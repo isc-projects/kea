@@ -47,7 +47,7 @@ namespace internal {
 class ZoneTableConfig {
 public:
     ZoneTableConfig(const std::string& datasrc_type,
-                    DataSourceClient* datasrc_client,
+                    const DataSourceClient* datasrc_client,
                     const data::Element& datasrc_conf);
 
     /// Return corresponding \c LoadAction for the given name of zone.
@@ -66,7 +66,7 @@ public:
 
 private:
     // client of underlying data source, will be NULL for MasterFile datasrc
-    DataSourceClient* datasrc_client_;
+    const DataSourceClient* datasrc_client_;
     Zones zone_config_;
 };
 }
