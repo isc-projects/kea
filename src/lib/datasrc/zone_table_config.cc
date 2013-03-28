@@ -17,6 +17,7 @@
 #include <datasrc/memory/load_action.h>
 #include <dns/name.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
 
 #include <map>
 #include <string>
@@ -38,6 +39,11 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
     }
 
     if (datasrc_type == "MasterFiles") {
+        if (datasrc_client) {
+            isc_throw(isc::InvalidParameter,
+                      "data source client is given for MasterFiles");
+        }
+
         typedef std::map<std::string, ConstElementPtr> ZoneToFile;
         const ZoneToFile& zone_to_file = params->mapValue();
         ZoneToFile::const_iterator const it_end = zone_to_file.end();
@@ -48,6 +54,12 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
             zone_config_[dns::Name(it->first)] = it->second->stringValue();
         }
     } else {
+        if (!datasrc_client) {
+            isc_throw(isc::InvalidParameter,
+                      "data source client is missing for data source type: "
+                      << datasrc_type);
+        }
+
         if (!datasrc_conf.contains("cache-zones")) {
             isc_throw(isc::NotImplemented, "Auto-detection of zones "
                       "to cache is not yet implemented, supply "
@@ -56,10 +68,14 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
             // data source.
         }
 
-        // TBD: confirm cache-zones exist, must be a list, no duplicates
         const ConstElementPtr zones = datasrc_conf.get("cache-zones");
         for (size_t i = 0; i < zones->size(); ++i) {
-            zone_config_[dns::Name(zones->get(i)->stringValue())] = "";
+            const dns::Name zone_name(zones->get(i)->stringValue());
+            if (!zone_config_.insert(Zones::value_type(zone_name,
+                                                       "")).second) {
+                isc_throw(InvalidParameter, "Duplicate cache zone: " <<
+                          zone_name);
+            }
         }
     }
 }

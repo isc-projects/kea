@@ -15,9 +15,9 @@
 #ifndef DATASRC_ZONE_TABLE_CONFIG_H
 #define DATASRC_ZONE_TABLE_CONFIG_H
 
-#include <datasrc/memory/load_action.h>
-#include <dns/dns_fwd.h>
+#include <dns/name.h>
 #include <cc/data.h>
+#include <datasrc/memory/load_action.h>
 
 #include <map>
 #include <string>
@@ -61,12 +61,13 @@ public:
     /// it's not clean in terms of encapsulation and performance (eventually
     /// we may have to look up in the underlying data source to get the list
     /// of zones, in which case constructing a map can be very expensive).
-    const std::map<dns::Name, std::string>& getZoneConfig() const;
+    typedef std::map<dns::Name, std::string> Zones;
+    const Zones& getZoneConfig() const { return (zone_config_); }
 
 private:
     // client of underlying data source, will be NULL for MasterFile datasrc
     DataSourceClient* datasrc_client_;
-    std::map<dns::Name, std::string> zone_config_;
+    Zones zone_config_;
 };
 }
 }
