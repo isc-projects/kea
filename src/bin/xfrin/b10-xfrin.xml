@@ -300,7 +300,9 @@ operation
                     <term>last_ixfr_duration</term>
                     <listitem><simpara>
                       Duration of the last IXFR. 0.0 means no successful IXFR done
-                      in greater than or equal to a microsecond.
+                      in greater than or equal to a microsecond. If a started
+                      timer is never stopped because of failure, start time of
+                      duration will be reset next time.
                     </simpara></listitem>
                   </varlistentry>
 
@@ -308,7 +310,9 @@ operation
                     <term>last_axfr_duration</term>
                     <listitem><simpara>
                       Duration of the last AXFR. 0.0 means no successful AXFR done
-                      in greater than or equal to a microsecond.
+                      in greater than or equal to a microsecond. If a started
+                      timer is never stopped because of failure, start time of
+                      duration will be reset next time.
                     </simpara></listitem>
                   </varlistentry>
 
