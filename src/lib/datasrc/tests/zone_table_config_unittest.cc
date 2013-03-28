@@ -164,4 +164,23 @@ TEST_F(ZoneTableConfigTest, badConstructWithMock) {
                  isc::InvalidParameter);
 }
 
+TEST_F(ZoneTableConfigTest, getSegmentType) {
+    // Default type
+    EXPECT_EQ("local",
+              ZoneTableConfig("MasterFiles", 0,
+                              *master_config_).getSegmentType());
+
+    // If we explicitly configure it, that value should be used.
+    ConstElementPtr config(Element::fromJSON("{\"cache-type\": \"mapped\","
+                                             " \"params\": {}}" ));
+    EXPECT_EQ("mapped",
+              ZoneTableConfig("MasterFiles", 0, *config).getSegmentType());
+
+    // Wrong types: should be rejected at construction time
+    ConstElementPtr badconfig(Element::fromJSON("{\"cache-type\": 1,"
+                                                " \"params\": {}}"));
+    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0, *badconfig),
+                 isc::data::TypeError);
+}
+
 }

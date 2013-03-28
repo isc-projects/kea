@@ -28,9 +28,22 @@ namespace isc {
 namespace datasrc {
 namespace internal {
 
+namespace {
+std::string
+getSegmentTypeFromConf(const Element& conf) {
+    // If cache-zones is not explicitly configured, use the default type.
+    // (Ideally we should retrieve the default from the spec).
+    if (!conf.contains("cache-type")) {
+        return ("local");
+    }
+    return (conf.get("cache-type")->stringValue());
+}
+}
+
 ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
                                  const DataSourceClient* datasrc_client,
                                  const Element& datasrc_conf) :
+    segment_type_(getSegmentTypeFromConf(datasrc_conf)),
     datasrc_client_(datasrc_client)
 {
     ConstElementPtr params = datasrc_conf.get("params");
