@@ -118,7 +118,8 @@ buildBitmapsFromLexer(const char* const rrtype_name,
               return;
          }
          isc_throw(InvalidRdataText,
-                   rrtype_name << " record does not end with RR type mnemonic");
+                   rrtype_name <<
+                   " record does not end with RR type mnemonic");
     }
 
     for (int window = 0; window < 256; ++window) {
