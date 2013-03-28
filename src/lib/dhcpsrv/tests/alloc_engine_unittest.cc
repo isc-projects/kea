@@ -160,7 +160,15 @@ public:
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
-        EXPECT_TRUE(*lease->client_id_ == *clientid_);
+        if (lease->client_id_ && !clientid_) {
+            ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
+        } else
+        if (!lease->client_id_ && clientid_) {
+            ADD_FAILURE() << "Lease4 has no client-id, but it was expected to have one.";
+        } else
+        if (lease->client_id_ && clientid_) {
+            EXPECT_TRUE(*lease->client_id_ == *clientid_);
+        }
         EXPECT_TRUE(lease->hwaddr_ == hwaddr_->hwaddr_);
         // @todo: check cltt
      }
@@ -328,6 +336,24 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 }
+
+// This test checks that NULL values are handled properly
+TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Allocations without subnet are not allowed
+    Lease6Ptr lease = engine->allocateAddress6(Subnet6Ptr(), duid_, iaid_,
+                                               IOAddress("::"), false);
+    ASSERT_FALSE(lease);
+
+    // Allocations without DUID are not allowed either
+    lease = engine->allocateAddress6(subnet_, DuidPtr(), iaid_,
+                                     IOAddress("::"), false);
+    ASSERT_FALSE(lease);
+}
+
 
 // This test verifies that the allocator picks addresses that belong to the
 // pool
@@ -700,6 +726,42 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 }
+
+
+// This test checks that NULL values are handled properly
+TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Allocations without subnet are not allowed
+    Lease4Ptr lease = engine->allocateAddress4(SubnetPtr(), clientid_, hwaddr_,
+                                               IOAddress("0.0.0.0"), false);
+    EXPECT_FALSE(lease);
+
+    // Allocations without HW address are not allowed
+    lease = engine->allocateAddress4(subnet_, clientid_, HWAddrPtr(),
+                                     IOAddress("0.0.0.0"), false);
+    EXPECT_FALSE(lease);
+
+    // Allocations without client-id are allowed
+    clientid_ = ClientIdPtr();
+    lease = engine->allocateAddress4(subnet_, ClientIdPtr(), hwaddr_,
+                                     IOAddress("0.0.0.0"), false);
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
 
 
 // This test verifies that the allocator picks addresses that belong to the

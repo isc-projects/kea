@@ -35,6 +35,11 @@ class DUID {
     /// As defined in RFC3315, section 9.1
     static const size_t MAX_DUID_LEN = 128;
 
+    /// @brief minimum duid size
+    /// There's no explicit minimal DUID size specified in RFC3315,
+    /// so let's use absolute minimum
+    static const size_t MIN_DUID_LEN = 1;
+
     /// @brief specifies DUID type
     typedef enum {
         DUID_UNKNOWN = 0, ///< invalid/unknown type
@@ -88,6 +93,13 @@ typedef boost::shared_ptr<DUID> DuidPtr;
 /// a client-id
 class ClientId : public DUID {
 public:
+
+    /// @brief Minimum size of a client ID
+    ///
+    /// Excerpt from RFC2132, section 9.14.
+    /// The code for this option is 61, and its minimum length is 2.
+    static const size_t MIN_CLIENT_ID_LEN = 2;
+
     /// @brief Maximum size of a client ID
     ///
     /// This is the same as the maximum size of the underlying DUID.
