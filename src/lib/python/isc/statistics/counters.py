@@ -328,7 +328,7 @@ class Counters():
         """Starts a timer which is identified by args and keeps it
         running until stop_timer() is called. It acquires a lock to
         support multi-threaded use. If the specified timer is already
-        started but not yet started, the last start time is
+        started but not yet stopped, the last start time is
         overwritten."""
         identifier = _concat(*args)
         with self._rlock:
