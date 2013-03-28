@@ -26,6 +26,8 @@
 #include <dns/rdataclass.h>
 #include <dns/tsig.h>
 
+#include <cc/proto_defs.h>
+
 #include <server_common/portconfig.h>
 #include <server_common/keyring.h>
 
@@ -885,6 +887,9 @@ TEST_F(AuthSrvTest, notifyWithoutRecipient) {
     // happens.
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
+    // want_answer should have been set to true so auth can catch it if zonemgr
+    // is not running.
+    EXPECT_TRUE(notify_session.wasAnswerWanted());
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
