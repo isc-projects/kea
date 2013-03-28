@@ -194,7 +194,7 @@
               "item_optional": false,
               "item_default": 0.0,
               "item_title": "Last IXFR duration",
-              "item_description": "Duration of the last IXFR. 0.0 means no successful IXFR done in greater than or equal to a microsecond."
+              "item_description": "Duration of the last IXFR. 0.0 means no successful IXFR done in greater than or equal to a microsecond. If a started timer is never stopped because of failure, start time of duration will be reset next time."
             },
             {
               "item_name": "last_axfr_duration",
@@ -202,7 +202,7 @@
               "item_optional": false,
               "item_default": 0.0,
               "item_title": "Last AXFR duration",
-              "item_description": "Duration of the last AXFR. 0.0 means no successful AXFR done in greater than or equal to a microsecond."
+              "item_description": "Duration of the last AXFR. 0.0 means no successful AXFR done in greater than or equal to a microsecond. If a started timer is never stopped because of failure, start time of duration will be reset next time."
             }
           ]
         }
