@@ -249,8 +249,10 @@ struct Lease4 : public Lease {
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
            uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id)
         : Lease(addr, t1, t2, valid_lft, subnet_id, cltt),
-        ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len),
-        client_id_(new ClientId(clientid, clientid_len)) {
+        ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len) {
+        if (clientid_len) {
+            client_id_.reset(new ClientId(clientid, clientid_len));
+        }
     }
 
     /// @brief Default constructor

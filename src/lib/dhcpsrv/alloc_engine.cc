@@ -177,6 +177,14 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             isc_throw(InvalidOperation, "No allocator selected");
         }
 
+        if (!subnet) {
+            isc_throw(InvalidOperation, "Subnet is required for allocation");
+        }
+
+        if (!duid) {
+            isc_throw(InvalidOperation, "DUID is mandatory for allocation");
+        }
+
         // check if there's existing lease for that subnet/duid/iaid combination.
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(*duid, iaid, subnet->getID());
         if (existing) {
@@ -282,6 +290,14 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         // currently no other way to set it, so that check is not really necessary.
         if (!allocator_) {
             isc_throw(InvalidOperation, "No allocator selected");
+        }
+
+        if (!subnet) {
+            isc_throw(InvalidOperation, "Can't allocate IPv4 address without subnet");
+        }
+
+        if (!hwaddr) {
+            isc_throw(InvalidOperation, "HWAddr must be defined");
         }
 
         // Check if there's existing lease for that subnet/clientid/hwaddr combination.
