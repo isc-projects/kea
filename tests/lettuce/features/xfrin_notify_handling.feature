@@ -86,15 +86,15 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
     The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name                         | item_value | min_value |
-      | _SERVER_.soaoutv6                 |          1 |           |
-      | _SERVER_.axfrreqv6                |          1 |           |
-      | _SERVER_.xfrsuccess               |          1 |           |
-      | _SERVER_.latest_axfr_duration     |            |       0.0 |
-      | example.org..soaoutv6             |          1 |           |
-      | example.org..axfrreqv6            |          1 |           |
-      | example.org..xfrsuccess           |          1 |           |
-      | example.org..latest_axfr_duration |            |       0.0 |
+      | item_name                       | item_value | min_value |
+      | _SERVER_.soaoutv6               |          1 |           |
+      | _SERVER_.axfrreqv6              |          1 |           |
+      | _SERVER_.xfrsuccess             |          1 |           |
+      | _SERVER_.last_axfr_duration     |            |       0.0 |
+      | example.org..soaoutv6           |          1 |           |
+      | example.org..axfrreqv6          |          1 |           |
+      | example.org..xfrsuccess         |          1 |           |
+      | example.org..last_axfr_duration |            |       0.0 |
 
     #
     # Test for handling incoming notify only in IPv4
@@ -185,15 +185,15 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
     The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name                         | item_value | min_value |
-      | _SERVER_.soaoutv4                 |          1 |           |
-      | _SERVER_.axfrreqv4                |          1 |           |
-      | _SERVER_.xfrsuccess               |          1 |           |
-      | _SERVER_.latest_axfr_duration     |            |       0.0 |
-      | example.org..soaoutv4             |          1 |           |
-      | example.org..axfrreqv4            |          1 |           |
-      | example.org..xfrsuccess           |          1 |           |
-      | example.org..latest_axfr_duration |            |       0.0 |
+      | item_name                       | item_value | min_value |
+      | _SERVER_.soaoutv4               |          1 |           |
+      | _SERVER_.axfrreqv4              |          1 |           |
+      | _SERVER_.xfrsuccess             |          1 |           |
+      | _SERVER_.last_axfr_duration     |            |       0.0 |
+      | example.org..soaoutv4           |          1 |           |
+      | example.org..axfrreqv4          |          1 |           |
+      | example.org..xfrsuccess         |          1 |           |
+      | example.org..last_axfr_duration |            |       0.0 |
 
     #
     # Test for Xfr request rejected

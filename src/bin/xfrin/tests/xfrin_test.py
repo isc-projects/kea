@@ -2129,8 +2129,8 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
                        ('axfrreqv6', 0),
                        ('ixfrreqv4', 0),
                        ('ixfrreqv6', 0),
-                       ('latest_axfr_duration', 0.0),
-                       ('latest_ixfr_duration', 0.0),
+                       ('last_axfr_duration', 0.0),
+                       ('last_ixfr_duration', 0.0),
                        ('soaoutv4', 0),
                        ('soaoutv6', 0),
                        ('xfrfail', 0),
@@ -2174,8 +2174,8 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
                                           TEST_ZONE_NAME_STR,
                                           name)
             msg = '%s is expected %s but actually %s' % (name, exp, act)
-            if name == 'latest_axfr_duration' \
-                    or name == 'latest_ixfr_duration':
+            if name == 'last_axfr_duration' \
+                    or name == 'last_ixfr_duration':
                 # compare at 3 decimal places
                 self.assertAlmostEqual(exp, act, places=3, msg=msg)
             else:
@@ -2197,7 +2197,7 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self._check_updated_statistics({'axfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
-                                        'latest_axfr_duration':
+                                        'last_axfr_duration':
                                             self._get_dur_time()})
 
     def test_do_soacheck_uptodate(self):
@@ -2223,7 +2223,7 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
         self._check_updated_statistics({'ixfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
-                                        'latest_ixfr_duration':
+                                        'last_ixfr_duration':
                                             self._get_dur_time()})
 
     def test_do_xfrin_fail(self):
