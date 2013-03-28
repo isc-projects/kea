@@ -97,6 +97,28 @@
 #define NS_RCODE_NOIMP		4
 #define NS_RCODE_REFUSED	5
 
+/* chaining macros */
+
+#define ISC_INIT(head, headl)		do { \
+	(head) = -1; \
+	(headl) = &(head); \
+} while (0)
+
+#define ISC_INSERT(head, headl, elm)	do { \
+	(elm)->next = -1; \
+	(elm)->prev = (headl); \
+	*(headl) = (elm) - xlist; \
+	(headl) = &((elm)->next); \
+} while (0)
+
+#define ISC_REMOVE(headl, elm)		do { \
+	if ((elm)->next != -1) \
+		xlist[(elm)->next].prev = (elm)->prev; \
+	else \
+		(headl) = (elm)->prev; \
+	*(elm)->prev = (elm)->next; \
+} while (0)
+
 /*
  * Data structures
  */
@@ -113,19 +135,24 @@
  */
 
 struct exchange {				/* per exchange structure */
-	int chain;				/* chaining */
+	int next, *prev;			/* chaining */
 	int sock;				/* socket descriptor */
+	int state;				/* state */
+#define X_FREE	0
+#define X_CONN	1
+#define X_SENT	2
 	uint64_t order;				/* number of this exchange */
 	uint16_t id;				/* ID */
 	uint32_t rnd;				/* random part */
-	struct timespec ts0, ts1;		/* timespecs */
+	struct timespec ts0, ts1, ts2, ts3;	/* timespecs */
 };
 struct exchange *xlist;				/* exchange list */
 struct pollfd *plist;				/* pollfd list */
 int xlast;					/* number of exchanges */
-int xconn;					/* connecting list */
-int xsent;					/* sent list */
-int xfree;					/* free list */
+int xconn, *xconnl;				/* connecting list */
+int xready, *xreadyl;				/* connected list */
+int xsent, *xsentl;				/* sent list */
+int xfree, *xfreel;				/* free list */
 int xused;					/* next to be used list */
 uint64_t xccount;				/* connected counters */
 uint64_t xscount;				/* sent counters */
@@ -136,7 +163,7 @@ uint64_t xrcount;				/* received counters */
  */
 
 uint64_t tooshort, locallimit;			/* error counters */
-uint64_t latesent, compsend;			/* rate stats */
+uint64_t lateconn, compconn;			/* rate stats */
 uint64_t shortwait, collected;			/* rate stats (cont) */
 double dmin = 999999999.;			/* minimum delay */
 double dmax = 0.;				/* maximum delay */
@@ -167,7 +194,6 @@ unsigned int seed;			/* randomization seed */
 char *templatefile;			/* template file name */
 int rndoffset = -1;			/* template offset (random) */
 char *diags;				/* diagnostic selectors */
-char *wrapped;				/* wrapped command */
 char *servername;			/* server */
 
 /*
@@ -184,8 +210,8 @@ uint8_t obuf[4096], ibuf[4096];		/* I/O buffers */
 char tbuf[512];				/* template buffer */
 
 struct timespec boot;			/* the date of boot */
-struct timespec last;			/* the date of last send */
-struct timespec due;			/* the date of next send */
+struct timespec last;			/* the date of last connect */
+struct timespec due;			/* the date of next connect */
 struct timespec dreport;		/* the date of next reporting */
 struct timespec finished;		/* the date of finish */
 
@@ -207,15 +233,17 @@ size_t random_query6;
 void
 inits(void)
 {
+	ISC_INIT(xconn, xconnl);
+	ISC_INIT(xready, xreadyl);
+	ISC_INIT(xsent, xsentl);
+	ISC_INIT(xfree, xfreel);
+
 	xlist = (struct exchange *) malloc(xlast * sizeof(struct exchange));
 	if (xlist == NULL) {
 		perror("malloc(exchanges)");
 		exit(1);
 	}
 	memset(xlist, 0, xlast * sizeof(struct exchange));
-	xconn = xsent = -1;
-	xfree = -1;
-	xused = 0;
 
 	plist = (struct pollfd *) malloc(xlast * sizeof(struct pollfd));
 	if (plist == NULL) {
@@ -280,9 +308,9 @@ receive_reply(int idx, struct timespec *now)
 
 	/* got it: update stats */
 	xrcount++;
-	x->ts1 = *now;
-	delta = x->ts1.tv_sec - x->ts0.tv_sec;
-	delta += (x->ts1.tv_nsec - x->ts0.tv_nsec) / 1e9;
+	x->ts3 = *now;
+	delta = x->ts3.tv_sec - x->ts2.tv_sec;
+	delta += (x->ts3.tv_nsec - x->ts2.tv_nsec) / 1e9;
 	if (delta < dmin)
 		dmin = delta;
 	if (delta > dmax)
@@ -475,11 +503,18 @@ connect4(void)
 	ssize_t ret;
 	int idx;
 
+	ret = clock_gettime(CLOCK_REALTIME, &last);
+	if (ret < 0) {
+		perror("clock_gettime(connect)");
+		fatal = 1;
+		return -errno;
+	}
+
 	if (xfree >= 0) {
 		idx = xfree;
 		x = xlist + idx;
 		p = plist + idx;
-		xfree = x->chain;
+		ISC_REMOVE(xfreel, x);
 	} else if (xused < xlast) {
 		idx = xused;
 		x = xlist + idx;
@@ -490,21 +525,85 @@ connect4(void)
 
 	memset(x, 0, sizeof(*x));
 	memset(p, 0, sizeof(*p));
+	x->next = -1;
+	x->prev = NULL;
+	x->ts0 = last;
 	x->sock = getsock4();
 	if (x->sock < 0) {
-		x->chain = xfree;
-		xfree = idx;
+		ISC_INSERT(xfree, xfreel, x);
 		return x->sock;
 	}
 	p->fd = x->sock;
 	p->events = POLLOUT;
-	x->chain = xconn;
-	xconn = idx;
+	ISC_INSERT(xconn, xconnl, x);
 	x->order = xccount++;
 	x->id = (uint16_t) random();
 	if (random_query4 > 0)
 		x->rnd = (uint32_t) random();
 	return idx;
+}
+
+/*
+ * poll connected (IPv4)
+ */
+
+void
+pollconnect4(void)
+{
+	struct exchange *x;
+	struct pollfd *p;
+	struct timespec now;
+	int idx = xconn;
+	int cnt = 10;
+	int checklost = 1;
+	int err;
+	double waited;
+	socklen_t len = sizeof(int);
+
+	while (--cnt >= 0) {
+		if (idx < 0)
+			return;
+		x = xlist + idx;
+		p = plist + idx;
+		idx = x->next;
+		if ((p->fd < 0) || (p->events != POLLOUT))
+			abort();
+		if (p->revents == 0) {
+			if (checklost == 0)
+				continue;
+			/* check for a timed-out connection */
+			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+				perror("clock_gettime(connected)");
+				fatal = 1;
+				return;
+			}
+			waited = now.tv_sec - x->ts0.tv_sec;
+			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
+			if (waited < losttime) {
+				checklost = 0;
+				continue;
+			}
+			/* garbage collect timed-out connections */
+			ISC_REMOVE(xconnl, x);
+			goto close;
+		}
+		ISC_REMOVE(xconnl, x);
+		if ((p->revents & POLLOUT) == 0)
+			goto close;
+		p->revents = 0;
+		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
+			       &err, &len) < 0)
+			goto close;
+		if (err != 0)
+			goto close;
+		ISC_INSERT(xready, xreadyl, x);
+		continue;
+	    close:
+		p->fd = -1;
+		(void) close(x->sock);
+		collected += 1;
+		ISC_INSERT(xfree, xfreel, x);
+	}
 }
 
 /*
@@ -524,21 +623,21 @@ send4(struct exchange *x)
 		x->rnd = randomize(random_query4, x->rnd);
 	/* timestamp */
 	errno = 0;
-	ret = clock_gettime(CLOCK_REALTIME, &last);
+	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
 	if (ret < 0) {
 		perror("clock_gettime(send)");
 		fatal = 1;
 		return -errno;
 	}
-	x->ts0 = last;
 	ret = send(x->sock, obuf, length_query4, 0);
 	if (ret == (ssize_t) length_query4)
 		return 0;
+	/* bad send */
 	return -errno;
 }	
 
 /*
- * poll connected and send (IPv4)
+ * poll ready and send (IPv4)
  */
 
 void
@@ -546,54 +645,25 @@ pollsend4(void)
 {
 	struct exchange *x;
 	struct pollfd *p;
-	int idx = xconn, prev = -1;
-	int cnt = 10;
-	int err;
-	socklen_t len = sizeof(int);
+	int idx = xready;
 
-	while (--cnt >= 0) {
+	for (;;) {
 		if (idx < 0)
 			return;
 		x = xlist + idx;
 		p = plist + idx;
-		if (p->fd < 0) 
-			goto next;
-		if ((p->revents & POLLOUT) == 0)
-			goto next;
-		p->revents = 0;
-		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &len) < 0)
-			goto close;
-		if (err != 0)
-			goto close;
-		if (send4(x) < 0)
-			goto close;
+		idx = x->next;
+		ISC_REMOVE(xreadyl, x);
+		if (send4(x) < 0) {
+			p->fd = -1;
+			(void) close(x->sock);
+			ISC_INSERT(xfree, xfreel, x);
+			continue;
+		}
 		xscount++;
 		p->events = POLLIN;
-		if (prev < 0)
-			xconn = x->chain;
-		else
-			xlist[prev].chain = x->chain;
-		prev = idx;
-		idx = x->chain;
-		x->chain = xsent;
-		xsent = prev;
+		ISC_INSERT(xsent, xsentl, x);
 		continue;
-	    next:
-		prev = idx;
-		idx = x->chain;
-		continue;
-	    close:
-		(void) close(p->fd);
-		p->fd = -1;
-		if (prev < 0)
-			xconn = x->chain;
-		else
-			xlist[prev].chain = x->chain;
-		prev = idx;
-		idx = x->chain;
-		x->chain = xfree;
-		xfree = prev;
 	}
 }
 
@@ -656,7 +726,7 @@ pollrecv4(void)
 	struct exchange *x;
 	struct pollfd *p;
 	struct timespec now;
-	int idx = xsent, prev = -1;
+	int idx = xsent;
 	int cnt = 5;
 	int checklost = 1;
 	double waited;
@@ -666,46 +736,39 @@ pollrecv4(void)
 			return;
 		x = xlist + idx;
 		p = plist + idx;
-		if (p->fd < 0)
-			goto next;
-		if ((p->revents & POLLIN) == 0) {
+		idx = x->next;
+		if ((p->fd < 0) || (p->events != POLLIN))
+			abort();
+		if (p->revents == 0) {
 			if (checklost == 0)
-				goto next;
+				continue;
 			/* check for a timed-out exchange */
 			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
 				perror("clock_gettime(receive)");
 				fatal = 1;
 				return;
 			}
-			waited = now.tv_sec - x->ts0.tv_sec;
-			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
+			waited = now.tv_sec - x->ts2.tv_sec;
+			waited += (now.tv_nsec - x->ts2.tv_nsec) / 1e9;
 			if (waited < losttime) {
 				checklost = 0;
-				goto next;
+				continue;
 			}
 			/* garbage collect timed-out exchange */
-			p->fd = -1;
-			(void) close(x->sock);
-			if (prev < 0)
-				xsent = x->chain;
-			else
-				xlist[prev].chain = x->chain;
-			prev = idx;
-			idx = x->chain;
-			x->chain = xfree;
-			xfree = idx;
-			collected += 1;
-			continue;
+			goto close;
 		}
+		if ((p->revents & POLLIN) == 0)
+			goto close;
+		ISC_REMOVE(xsentl, x);
 		receive4(x);
-		prev = idx;
-		idx = x->chain;
-		x->chain = xfree;
-		xfree = idx;
+		ISC_INSERT(xfree, xfreel, x);
 		continue;
-	    next:
-		prev = idx;
-		idx = x->chain;
+	    close:
+		ISC_REMOVE(xsentl, x);
+		p->fd = -1;
+		(void) close(x->sock);
+		collected += 1;
+		ISC_INSERT(xfree, xfreel, x);
 	}
 }
 
@@ -893,11 +956,18 @@ connect6(void)
 	ssize_t ret;
 	int idx;
 
+	ret = clock_gettime(CLOCK_REALTIME, &last);
+	if (ret < 0) {
+		perror("clock_gettime(connect)");
+		fatal = 1;
+		return -errno;
+	}
+
 	if (xfree >= 0) {
 		idx = xfree;
 		x = xlist + idx;
 		p = plist + idx;
-		xfree = x->chain;
+		ISC_REMOVE(xfreel, x);
 	} else if (xused < xlast) {
 		idx = xused;
 		x = xlist + idx;
@@ -908,21 +978,85 @@ connect6(void)
 
 	memset(x, 0, sizeof(*x));
 	memset(p, 0, sizeof(*p));
+	x->next = -1;
+	x->prev = NULL;
+	x->ts0 = last;
 	x->sock = getsock6();
 	if (x->sock < 0) {
-		x->chain = xfree;
-		xfree = idx;
+		ISC_INSERT(xfree, xfreel, x);
 		return x->sock;
 	}
 	p->fd = x->sock;
 	p->events = POLLOUT;
-	x->chain = xconn;
-	xconn = idx;
+	ISC_INSERT(xconn, xconnl, x);
 	x->order = xccount++;
 	x->id = (uint16_t) random();
 	if (random_query6 > 0)
 		x->rnd = (uint32_t) random();
 	return idx;
+}
+
+/*
+ * poll connected and send (IPv6)
+ */
+
+void
+pollconnect6(void)
+{
+	struct exchange *x;
+	struct pollfd *p;
+	struct timespec now;
+	int idx = xconn;
+	int cnt = 10;
+	int checklost = 1;
+	int err;
+	double waited;
+	socklen_t len = sizeof(int);
+
+	while (--cnt >= 0) {
+		if (idx < 0)
+			return;
+		x = xlist + idx;
+		p = plist + idx;
+		idx = x->next;
+		if ((p->fd < 0) || (p->events != POLLOUT))
+			abort();
+		if (p->revents == 0) {
+			if (checklost == 0)
+				continue;
+			/* check for a timed-out connection */
+			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+				perror("clock_gettime(connected)");
+				fatal = 1;
+				return;
+			}
+			waited = now.tv_sec - x->ts0.tv_sec;
+			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
+			if (waited < losttime) {
+				checklost = 0;
+				continue;
+			}
+			/* garbage collect timed-out connections */
+			ISC_REMOVE(xconnl, x);
+			goto close;
+		}
+		ISC_REMOVE(xconnl, x);
+		if ((p->revents & POLLOUT) == 0)
+			goto close;
+		p->revents = 0;
+		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
+			       &err, &len) < 0)
+			goto close;
+		if (err != 0)
+			goto close;
+		ISC_INSERT(xready, xreadyl, x);
+		continue;
+	    close:
+		p->fd = -1;
+		(void) close(x->sock);
+		collected += 1;
+		ISC_INSERT(xfree, xfreel, x);
+	}
 }
 
 /*
@@ -942,21 +1076,21 @@ send6(struct exchange *x)
 		x->rnd = randomize(random_query6, x->rnd);
 	/* timestamp */
 	errno = 0;
-	ret = clock_gettime(CLOCK_REALTIME, &last);
+	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
 	if (ret < 0) {
 		perror("clock_gettime(send)");
 		fatal = 1;
 		return -errno;
 	}
-	x->ts0 = last;
 	ret = send(x->sock, obuf, length_query6, 0);
 	if (ret == (ssize_t) length_query6)
 		return 0;
+	/* bad send */
 	return -errno;
 }
 
 /*
- * poll connected and send (IPv6)
+ * poll ready and send (IPv6)
  */
 
 void
@@ -964,54 +1098,25 @@ pollsend6(void)
 {
 	struct exchange *x;
 	struct pollfd *p;
-	int idx = xconn, prev = -1;
-	int cnt = 10;
-	int err;
-	socklen_t len = sizeof(int);
+	int idx = xready;
 
-	while (--cnt >= 0) {
+	for (;;) {
 		if (idx < 0)
 			return;
 		x = xlist + idx;
 		p = plist + idx;
-		if (p->fd < 0) 
-			goto next;
-		if ((p->revents & POLLOUT) == 0)
-			goto next;
-		p->revents = 0;
-		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &len) < 0)
-			goto close;
-		if (err != 0)
-			goto close;
-		if (send6(x) < 0)
-			goto close;
+		idx = x->next;
+		ISC_REMOVE(xreadyl, x);
+		if (send6(x) < 0) {
+			p->fd = -1;
+			(void) close(x->sock);
+			ISC_INSERT(xfree, xfreel, x);
+			continue;
+		}
 		xscount++;
 		p->events = POLLIN;
-		if (prev < 0)
-			xconn = x->chain;
-		else
-			xlist[prev].chain = x->chain;
-		prev = idx;
-		idx = x->chain;
-		x->chain = xsent;
-		xsent = prev;
+		ISC_INSERT(xsent, xsentl, x);
 		continue;
-	    next:
-		prev = idx;
-		idx = x->chain;
-		continue;
-	    close:
-		(void) close(p->fd);
-		p->fd = -1;
-		if (prev < 0)
-			xconn = x->chain;
-		else
-			xlist[prev].chain = x->chain;
-		prev = idx;
-		idx = x->chain;
-		x->chain = xfree;
-		xfree = prev;
 	}
 }
 
@@ -1074,7 +1179,7 @@ pollrecv6(void)
 	struct exchange *x;
 	struct pollfd *p;
 	struct timespec now;
-	int idx = xsent, prev = -1;
+	int idx = xsent;
 	int cnt = 5;
 	int checklost = 1;
 	double waited;
@@ -1084,46 +1189,39 @@ pollrecv6(void)
 			return;
 		x = xlist + idx;
 		p = plist + idx;
+		idx = x->next;
 		if (p->fd < 0)
-			goto next;
-		if ((p->revents & POLLIN) == 0) {
+			abort();
+		if (p->revents == 0) {
 			if (checklost == 0)
-				goto next;
+				continue;
 			/* check for a timed-out exchange */
 			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
 				perror("clock_gettime(receive)");
 				fatal = 1;
 				return;
 			}
-			waited = now.tv_sec - x->ts0.tv_sec;
-			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
+			waited = now.tv_sec - x->ts2.tv_sec;
+			waited += (now.tv_nsec - x->ts2.tv_nsec) / 1e9;
 			if (waited < losttime) {
 				checklost = 0;
-				goto next;
+				continue;
 			}
 			/* garbage collect timed-out exchange */
-			p->fd = -1;
-			(void) close(x->sock);
-			if (prev < 0)
-				xsent = x->chain;
-			else
-				xlist[prev].chain = x->chain;
-			prev = idx;
-			idx = x->chain;
-			x->chain = xfree;
-			xfree = idx;
-			collected += 1;
-			continue;
+			goto close;
 		}
+		if ((p->revents & POLLIN) == 0)
+			goto close;
+		ISC_REMOVE(xsentl, x);
 		receive6(x);
-		prev = idx;
-		idx = x->chain;
-		x->chain = xfree;
-		xfree = idx;
+		ISC_INSERT(xfree, xfreel, x);
 		continue;
-	    next:
-		prev = idx;
-		idx = x->chain;
+	    close:
+		ISC_REMOVE(xsentl, x);
+		p->fd = -1;
+		(void) close(x->sock);
+		collected += 1;
+		ISC_INSERT(xfree, xfreel, x);
 	}
 }
 
@@ -1218,10 +1316,13 @@ reporting(void)
 {
 	dreport.tv_sec += report;
 
-	if (xscount == 0) {
-		printf("sent: %llu, received: %llu (drops: %lld)",
+	if (xccount != 0) {
+		printf("connect: %llu, sent: %llu, received: %llu "
+		       "(embryonics: %lld, drops: %lld)",
+		       (unsigned long long) xccount,
 		       (unsigned long long) xscount,
 		       (unsigned long long) xrcount,
+		       (long long) (xccount - xscount),
 		       (long long) (xscount - xrcount));
 		if (xrcount != 0) {
 			double avg;
@@ -1281,7 +1382,7 @@ usage(void)
 "    [-l<local-addr>] [-P<preload>] [-a<aggressivity>]\n"
 "    [-L<local-port>] [-s<seed>] [-M<memory>]\n"
 "    [-T<template-file>] [-O<random-offset]\n"
-"    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
+"    [-x<diagnostic-selector>] [server]\n"
 "\f\n"
 "The [server] argument is the name/address of the DNS server to contact.\n"
 "\n"
@@ -1316,8 +1417,6 @@ usage(void)
 "-T<template-file>: The name of a file containing the template to use\n"
 "    as a stream of hexadecimal digits.\n"
 "-v: Report the version number of this program.\n"
-"-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
-"    the program.\n"
 "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
 "    <diagnostic-selector> is a string of single-keywords specifying\n"
 "    the operations for which verbose output is desired.  The selector\n"
@@ -1372,7 +1471,7 @@ main(const int argc, char * const argv[])
 	extern char *optarg;
 	extern int optind;
 
-#define OPTIONS	"hv46M:r:t:R:b:n:p:d:D:l:P:a:s:T:O:x:w:"
+#define OPTIONS	"hv46M:r:t:R:b:n:p:d:D:l:P:a:s:T:O:x:"
 
 	/* decode options */
 	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
@@ -1566,10 +1665,6 @@ main(const int argc, char * const argv[])
 		diags = optarg;
 		break;
 
-	case 'w':
-		wrapped = optarg;
-		break;
-
 	default:
 		usage();
 		exit(2);
@@ -1619,8 +1714,6 @@ main(const int argc, char * const argv[])
 		if (rndoffset >= 0)
 			printf(" rnd-offset=%d", rndoffset);
 		printf(" diagnotic-selectors='%s'", diags);
-		if (wrapped != NULL)
-			printf(" wrapped='%s'", wrapped);
 		printf("\n");
 	}
 
@@ -1706,19 +1799,6 @@ main(const int argc, char * const argv[])
 			get_template_query6();
 	}
 
-	/* wrapped start */
-	if (wrapped != NULL) {
-		pid_t pid;
-
-		(void) signal(SIGCHLD, reapchild);
-		pid = fork();
-		if (pid < 0) {
-			perror("fork");
-			exit(1);
-		} else if (pid == 0)
-			(void) execlp(wrapped, "start", (char *) NULL);
-	}
-
 	/* boot is done! */
 	if (clock_gettime(CLOCK_REALTIME, &boot) < 0) {
 		perror("clock_gettime(boot)");
@@ -1736,15 +1816,15 @@ main(const int argc, char * const argv[])
 		seed = (unsigned int) (boot.tv_sec + boot.tv_nsec);
 	srandom(seed);
 
-	/* preload the server with at least one packet */
-	compsend = preload + 1;
+	/* preload the server with at least one connection */
+	compconn = preload + 1;
 	for (i = 0; i <= preload; i++) {
 		if (ipversion == 4)
 			ret = connect4();
 		else
 			ret = connect6();
 		if (ret < 0) {
-			/* failure at the first packet is fatal */
+			/* failure at the first connection is fatal */
 			if (i == 0) {
 				fprintf(stderr,
 					"initial connect failed: %s\n",
@@ -1803,14 +1883,12 @@ main(const int argc, char * const argv[])
 		      (dreport.tv_nsec < now.tv_nsec))))
 			reporting();
 
-		/* compute the delay for the next send */
+		/* compute the delay for the next connection */
 		due = last;
 		if (rate == 1)
 			due.tv_sec += 1;
-		else if (rate != 0)
-			due.tv_nsec += 1010000000 / rate;
 		else
-			due.tv_nsec += 1;
+			due.tv_nsec += 1010000000 / rate;
 		while (due.tv_nsec >= 1000000000) {
 			due.tv_sec += 1;
 			due.tv_nsec -= 1000000000;
@@ -1822,10 +1900,10 @@ main(const int argc, char * const argv[])
 			ts.tv_sec -= 1;
 			ts.tv_nsec += 1000000000;
 		}
-		/* the send was already due? */
+		/* the connection was already due? */
 		if (ts.tv_sec < 0) {
 			ts.tv_sec = ts.tv_nsec = 0;
-			latesent++;
+			lateconn++;
 		}
 
 		/* ppoll() */
@@ -1840,6 +1918,14 @@ main(const int argc, char * const argv[])
 		}
 
 		if (ret > 0) {
+			/* connection(s) to finish */
+			if (ipversion == 4)
+				pollconnect4();
+			else
+				pollconnect6();
+			if (fatal)
+				continue;
+
 			/* packet(s) to receive */
 			if (ipversion == 4)
 				pollrecv4();
@@ -1848,7 +1934,7 @@ main(const int argc, char * const argv[])
 			if (fatal)
 				continue;
 
-			/* connections to finish */
+			/* packet(s) to send */
 			if (ipversion == 4)
 				pollsend4();
 			else
@@ -1877,7 +1963,7 @@ main(const int argc, char * const argv[])
 			break;
 		}
 
-		/* compute how many packets to send */
+		/* compute how many connections to open */
 		if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
 			perror("clock_gettime(now2)");
 			fatal = 1;
@@ -1886,22 +1972,19 @@ main(const int argc, char * const argv[])
 		if ((now.tv_sec > due.tv_sec) ||
 		    ((now.tv_sec == due.tv_sec) &&
 		     (now.tv_nsec >= due.tv_nsec))) {
-			double tosend;
+			double toconnect;
 
-			if (rate != 0) {
-				tosend = (now.tv_nsec - due.tv_nsec) / 1e9;
-				tosend += now.tv_sec - due.tv_sec;
-				tosend *= rate;
-				tosend += 1;
-				if (tosend > (double) aggressivity)
-					i = aggressivity;
-				else
-					i = (int) tosend;
-			} else
+			toconnect = (now.tv_nsec - due.tv_nsec) / 1e9;
+			toconnect += now.tv_sec - due.tv_sec;
+			toconnect *= rate;
+			toconnect += 1;
+			if (toconnect > (double) aggressivity)
 				i = aggressivity;
-			compsend += i;
-			/* send packets */
-			for (;;) {
+			else
+				i = (int) toconnect;
+			compconn += i;
+			/* open connections */
+			while (i-- > 0) {
 				if (ipversion == 4)
 					ret = connect4();
 				else
@@ -1917,12 +2000,9 @@ main(const int argc, char * const argv[])
 						strerror(-ret));
 					break;
 				}
-				i--;
-				if (i == 0)
-					break;
 			}
 		} else
-			/* there was no packet to send */
+			/* there was no connection to open */
 			shortwait++;
 	}
 
@@ -1930,19 +2010,13 @@ main(const int argc, char * const argv[])
 	if (clock_gettime(CLOCK_REALTIME, &finished) < 0)
 		perror("clock_gettime(finished)");
 
-	/* wrapped stop */
-	if (wrapped != NULL) {
-		pid_t pid;
-
-		pid = fork();
-		if (pid == 0)
-			(void) execlp(wrapped, "stop", (char *) NULL);
-	}
-
 	/* main statictics */
-	printf("sent: %llu, received: %llu (drops: %lld)\n",
+	printf("connect: %llu, sent: %llu, received: %llu "
+	       "(embryonics: %lld, drops: %lld)\n",
+	       (unsigned long long) xccount,
 	       (unsigned long long) xscount,
 	       (unsigned long long) xrcount,
+	       (long long) (xccount - xscount),
 	       (long long) (xscount - xrcount));
 	printf("tooshort: %llu, local limits: %llu\n",
 	       (unsigned long long) tooshort,
@@ -1960,10 +2034,10 @@ main(const int argc, char * const argv[])
 
 	/* rate processing instrumentation */
 	if ((diags != NULL) && (strchr(diags, 'i') != NULL)) {
-		printf("latesent: %llu, compsend: %llu, shortwait: %llu\n"
+		printf("lateconn: %llu, compconn: %llu, shortwait: %llu\n"
 		       "collected:%llu\n",
-		       (unsigned long long) latesent,
-		       (unsigned long long) compsend,
+		       (unsigned long long) lateconn,
+		       (unsigned long long) compconn,
 		       (unsigned long long) shortwait,
 		       (unsigned long long) collected);
 	}
