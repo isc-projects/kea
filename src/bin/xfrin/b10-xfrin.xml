@@ -295,16 +295,16 @@ operation
                   </varlistentry>
 
                   <varlistentry>
-                    <term>latest_ixfr_duration</term>
+                    <term>last_ixfr_duration</term>
                     <listitem><simpara>
-                      Duration of the latest IXFR. 0.0 means no successful IXFR done.
+                      Duration of the last IXFR. 0.0 means no successful IXFR done.
                     </simpara></listitem>
                   </varlistentry>
 
                   <varlistentry>
-                    <term>latest_axfr_duration</term>
+                    <term>last_axfr_duration</term>
                     <listitem><simpara>
-                      Duration of the latest AXFR. 0.0 means no successful AXFR done.
+                      Duration of the last AXFR. 0.0 means no successful AXFR done.
                     </simpara></listitem>
                   </varlistentry>
 
