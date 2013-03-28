@@ -50,6 +50,9 @@ public:
                     const DataSourceClient* datasrc_client,
                     const data::Element& datasrc_conf);
 
+    /// \brief Return the memory segment type to be used for the zone table.
+    const std::string& getSegmentType() const { return (segment_type_); }
+
     /// Return corresponding \c LoadAction for the given name of zone.
     /// It would return a different functor depending on the details of the
     /// underlying data source.
@@ -65,6 +68,7 @@ public:
     const Zones& getZoneConfig() const { return (zone_config_); }
 
 private:
+    const std::string segment_type_;
     // client of underlying data source, will be NULL for MasterFile datasrc
     const DataSourceClient* datasrc_client_;
     Zones zone_config_;
