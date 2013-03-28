@@ -317,7 +317,7 @@ Dhcpv4Srv::writeServerID(const std::string& file_name) {
     return (true);
 }
 
-string 
+string
 Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     if (!srvid) {
         isc_throw(BadValue, "NULL pointer passed to srvidToString()");
@@ -516,6 +516,22 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
         answer->setYiaddr(lease->addr_);
+
+        // If remote address is not set, we are dealing with a directly
+        // connected client requesting new lease. We scan end response to
+        // the address assigned in the lease, but first we have to make sure
+        // that IfaceMgr supports responding directly to the client when
+        // client doesn't have address assigned to its interface yet.
+        if (answer->getRemoteAddr().toText() == "0.0.0.0") {
+            if (IfaceMgr::instance().isDirectResponseSupported()) {
+                answer->setRemoteAddr(lease->addr_);
+            } else {
+                // Since IfaceMgr does not support direct responses to
+                // clients not having IP address, we have to send response
+                // to broadcast.
+                answer->setRemoteAddr(IOAddress("255.255.255.255"));
+            }
+        }
 
         // IP Address Lease time (type 51)
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
