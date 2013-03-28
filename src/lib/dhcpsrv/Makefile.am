@@ -78,6 +78,6 @@ EXTRA_DIST += dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
 dist_pkgdata_DATA = dhcpdb_create.mysql
 
 install-data-local:
-	$(mkinstalldirs) $(dhcp_data_dir)
+	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
 
 
