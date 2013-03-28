@@ -334,3 +334,42 @@ Feature: Xfrin incoming notify handling
     Then wait for new master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    #
+    # Test for NOTIFY when zonemgr is not running
+    #
+    Scenario: Handle incoming notify while zonemgr is not running
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    # remove zonemgr from the system.  a subsequent notify is ignored, but
+    # an error message shouldn't be logged at auth.
+    When I send bind10 the following commands with cmdctl
+    """
+    config remove Init/components b10-zonemgr
+    config commit
+    """
+    last bindctl output should not contain "error"
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    Then wait for master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
+    Then wait for new bind10 stderr message AUTH_ZONEMGR_NOTEXIST not AUTH_ZONEMGR_ERROR
+    Then wait for master stderr message NOTIFY_OUT_TIMEOUT not NOTIFY_OUT_REPLY_RECEIVED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
