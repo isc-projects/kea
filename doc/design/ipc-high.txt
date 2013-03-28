@@ -50,3 +50,104 @@ Notifications about connections and disconnections::
   * Client with given lname disconnected
   * Client with given lname subscribed to given group
   * Client with given lname unsubscribed from given group
+List of group members:
+  The MSGQ provides a command to list members of given group and list
+  of all connections.
+
+Communication paradigms
+-----------------------
+
+Event notifications
+~~~~~~~~~~~~~~~~~~~
+
+Sometimes, an event that may be interesting to other parts of the
+system happens. The originating module may not know what other modules
+are interested in that kind of event, nor it may know if any at all
+wants to know that. With such event, the originating module does not
+need any feedback.
+
+For each kind or family of notifications, there's a group. Everybody
+interested in that family of notifications subscribes to the group.
+When the event happens, it is sent (broadcasted) to the group, without
+requiring an answer.
+
+[[NOTE]]
+To avoid race conditions on start up, it is important to first
+subscribe to the group and then load the initial state (for which
+change the notification would be), not the other way around. The other
+way, the state could be loaded, and then, before subscribing, an event
+could happen and be unnoticed. On the other hand, we may still receive
+event for change to the state we already loaded (which should be
+generally safe), but not lose an update.
+
+Examples of these kinds could be change to a zone data (so it would
+get reloaded by every process that has the data),
+connection/disconnection notification from msgq, or change to
+configuration data.
+
+It would be the recipients responsibility to handle the notification,
+or at least, produce an error log message. In these situations, the
+originator can not reasonably handle error cases anyway (the zone data
+has been written), so if something does not work, log is everything we
+can do.
+
+One-to-one RPC call
+~~~~~~~~~~~~~~~~~~~
+
+Sometimes, a process needs to call remote function (or command) in
+other process. An example could be asking the configuration manager
+for the current configuration or asking it to change it, asking single
+process to terminate, etc.
+
+It may be that the group is a singleton group (eg. the command
+manager, there must be exactly one in a running system, and is used
+just as a stable name for the process) or an lname received by means
+of other communication (like a previous subscribe notification).
+
+A command message (containing the parameters, name of the command,
+etc) is sent, with the want-answer flag set. The other side processes
+the command and sends a result or error back.
+
+If the recipient does not exist, the msgq sends an error right away.
+
+There are still two ways this may fail to provide an answer:
+
+ * The receiving module reads the command, but does not provide an
+   answer. Clearly, such module is broken. There should be some (long)
+   timeout for this situation, and loud logging to get it fixed.
+ * The receiving module terminated at the exact time when msgq tried
+   to send to it, or crashed handling the command. Therefore the
+   sender listens for disconnect or unsubscription notifications
+   (depending on if it was sent by lname or group name) and if the
+   recipient disconnects, the sender knows it should not expect the
+   answer any more.
+
+An asynchronous waiting for the answer is preferred.
+
+One-to-many RPC call
+~~~~~~~~~~~~~~~~~~~~
+
+Sometimes it is needed to send a command to bunch of modules at once,
+usually all members of a group that can contain any number of clients.
+
+This would be done by requesting the members of the group from msgq
+and then sending a one-to-one RPC call to each of them, tracking them
+separately.
+
+[NOTE]
+It might happen the list of group members changes between the time it
+was requested and the time the commands are sent. If a client gets
+disconnected, the sender gets an undeliverable error back from msgq.
+If anything else happens (the client unsubscribes, connects,
+subscribes), it must explicitly synchronise to the state anyway,
+because we could have sent the commands before the change actually
+happened and it would look the same to the client.
+
+[WARNING]
+It would look better to first request the list of group members and
+then send the command to the group, and use the list to track the
+answers only. But that is prone to race conditions ‒ if there's any
+change between the request for the member list and sending the
+command, the actual recipients don't match the list and the server
+could get more answers than expected or could wait for answer of a
+module that no longer exists.
