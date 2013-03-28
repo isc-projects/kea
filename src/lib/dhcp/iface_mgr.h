@@ -567,9 +567,12 @@ protected:
     /// @param iface reference to interface structure.
     /// @param addr an address the created socket should be bound to
     /// @param port a port that created socket should be bound to
+    /// @param receive_bcast configure socket to receive broadcast messages
+    /// @param send_bcast configure socket to send broadcast messages.
     ///
     /// @return socket descriptor
-    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port,
+                    bool receive_bcast = false, bool send_bcast = false);
 
     /// @brief Opens IPv6 socket.
     ///
