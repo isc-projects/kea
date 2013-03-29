@@ -54,7 +54,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
@@ -80,7 +79,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
@@ -179,7 +177,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
@@ -257,7 +254,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    wait for new master stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
@@ -286,7 +282,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
@@ -393,7 +388,6 @@ Feature: Xfrin incoming notify handling
 
     # wait until the last stats requesting is finished
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
