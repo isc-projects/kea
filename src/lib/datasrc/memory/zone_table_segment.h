@@ -15,6 +15,8 @@
 #ifndef ZONE_TABLE_SEGMENT_H
 #define ZONE_TABLE_SEGMENT_H
 
+#include <exceptions/exceptions.h>
+
 #include <dns/rrclass.h>
 
 #include <datasrc/memory/zone_table.h>
@@ -39,6 +41,15 @@ class ZoneTableConfig;
 }
 namespace memory {
 class ZoneWriter;
+
+/// \brief Exception thrown when unknown or unsupported type of zone table
+/// segment is specified.
+class UnknownSegmentType : public Exception {
+public:
+    UnknownSegmentType(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
 
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
@@ -102,9 +113,10 @@ public:
     /// dynamically-allocated object. The caller is responsible for
     /// destroying it with \c ZoneTableSegment::destroy().
     ///
-    /// FIXME: For now, we always return ZoneTableSegmentLocal
-    /// regardless of the passed \c config.
+    /// \throw UnknownSegmentType The memory segment type specified in
+    /// \c config is not known or not supported in this implementation.
     ///
+    /// \param rrclass The RR class of the zones to be maintained in the table.
     /// \param config The configuration based on which a derived object
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
