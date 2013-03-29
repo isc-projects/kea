@@ -19,7 +19,8 @@
 #endif
 
 #include <sys/types.h>
-#include <sys/poll.h>
+#include <sys/epoll.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
@@ -95,6 +96,7 @@
 #define NS_RCODE_NXDOMAIN	3
 #define NS_RCODE_NOIMP		4
 #define NS_RCODE_REFUSED	5
+#define NS_RCODE_LAST		6
 
 /* chaining macros */
 
@@ -134,19 +136,18 @@
  */
 
 struct exchange {				/* per exchange structure */
-	int next, *prev;			/* chaining */
 	int sock;				/* socket descriptor */
-	int state;				/* state */
+	int next, *prev;			/* chaining */
 #define X_FREE	0
 #define X_CONN	1
-#define X_SENT	2
-	uint64_t order;				/* number of this exchange */
+#define X_READY	2
+#define X_SENT	3
+	int state;				/* state */
 	uint16_t id;				/* ID */
-	uint32_t rnd;				/* random part */
+	uint64_t order;				/* number of this exchange */
 	struct timespec ts0, ts1, ts2, ts3;	/* timespecs */
 };
 struct exchange *xlist;				/* exchange list */
-struct pollfd *plist;				/* pollfd list */
 int xlast;					/* number of exchanges */
 int xconn, *xconnl;				/* connecting list */
 int xready, *xreadyl;				/* connected list */
@@ -161,9 +162,11 @@ uint64_t xrcount;				/* received counters */
  * statictics counters and accumulators
  */
 
-uint64_t tooshort, locallimit;			/* error counters */
-uint64_t lateconn, compconn;			/* rate stats */
-uint64_t shortwait, collected;			/* rate stats (cont) */
+uint64_t recverr, tooshort, locallimit;		/* error counters */
+uint64_t loops, lateconn, compconn, shortwait;	/* rate stats */
+uint64_t badconn, collconn, badsent, collsent;	/* rate stats (cont) */
+uint64_t badid, notresp;			/* bad response counters */
+uint64_t rcodes[NS_RCODE_LAST + 1];		/* rcode counters */
 double dmin = 999999999.;			/* minimum delay */
 double dmax = 0.;				/* maximum delay */
 double dsum = 0.;				/* delay sum */
@@ -173,8 +176,9 @@ double dsumsq = 0.;				/* square delay sum */
  * command line parameters
  */
 
+int edns0;				/* EDNS0 DO flag */
 int ipversion = 0;			/* IP version */
-int rate;				/* rate in exchange per second */
+int rate;				/* rate in connections per second */
 int report;				/* delay between two reports */
 uint32_t range;				/* randomization range */
 uint32_t maxrandom;			/* maximum random value */
@@ -194,6 +198,7 @@ char *templatefile;			/* template file name */
 int rndoffset = -1;			/* template offset (random) */
 char *diags;				/* diagnostic selectors */
 char *servername;			/* server */
+int ixann;				/* ixann NXDOMAIN */
 
 /*
  * global variables
@@ -203,10 +208,15 @@ int locbind;
 struct sockaddr_storage localaddr;	/* local socket address */
 struct sockaddr_storage serveraddr;	/* server socket address */
 
+int epoll_fd;				/* epoll file descriptor */
+#ifndef EVENTS_CNT
+#define EVENTS_CNT	16
+#endif
+struct epoll_event events[EVENTS_CNT];	/* polled events */
 int interrupted, fatal;			/* to finish flags */
 
-uint8_t obuf[4096], ibuf[4096];		/* I/O buffers */
-char tbuf[512];				/* template buffer */
+uint8_t obuf[4098], ibuf[4098];		/* I/O buffers */
+char tbuf[4098];			/* template buffer */
 
 struct timespec boot;			/* the date of boot */
 struct timespec last;			/* the date of last connect */
@@ -218,12 +228,9 @@ struct timespec finished;		/* the date of finish */
  * template
  */
 
-size_t length_query4;
-uint8_t template_query4[4096];
-size_t random_query4;
-size_t length_query6;
-uint8_t template_query6[4096];
-size_t random_query6;
+size_t length_query;
+uint8_t template_query[4096];
+size_t random_query;
 
 /*
  * initialize data structures handling exchanges
@@ -232,10 +239,18 @@ size_t random_query6;
 void
 inits(void)
 {
+	int idx;
+
 	ISC_INIT(xconn, xconnl);
 	ISC_INIT(xready, xreadyl);
 	ISC_INIT(xsent, xsentl);
 	ISC_INIT(xfree, xfreel);
+
+	epoll_fd = epoll_create(EVENTS_CNT);
+	if (epoll_fd < 0) {
+		perror("epoll_create");
+		exit(1);
+	}
 
 	xlist = (struct exchange *) malloc(xlast * sizeof(struct exchange));
 	if (xlist == NULL) {
@@ -244,14 +259,164 @@ inits(void)
 	}
 	memset(xlist, 0, xlast * sizeof(struct exchange));
 
-	plist = (struct pollfd *) malloc(xlast * sizeof(struct pollfd));
-	if (plist == NULL) {
-		perror("malloc(pollfd)");
-		exit(1);
-	}
-	memset(plist, 0, xlast * sizeof(struct pollfd));
+	for (idx = 0; idx < xlast; idx++)
+		xlist[idx].sock = xlist[idx].next = -1;
 }
 
+/*
+ * build a TCP DNS QUERY
+ */
+
+void
+build_template_query(void)
+{
+	uint8_t *p = template_query;
+	uint16_t v;
+
+	/* flags */
+	p += NS_OFF_FLAGS;
+	v = NS_FLAG_RD;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* qdcount */
+	v = 1;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* ancount */
+	v = 0;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* nscount */
+	v = 0;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* arcount */
+	v = edns0;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* icann.link (or ixann.link) */
+	*p++ = 5;
+	*p++ = 'i';
+	if (ixann == 0)
+		*p++ = 'c';
+	else
+		*p++ = 'x';
+	*p++ = 'a';
+	*p++ = 'n';
+	*p++ = 'n';
+	*p++ = 4;
+	*p++ = 'l';
+	*p++ = 'i';
+	*p++ = 'n';
+	*p++ = 'k';
+	*p++ = 0;
+	/* type A/AAAA */
+	if (ipversion == 4)
+		v = NS_TYPE_A;
+	else
+		v = NS_TYPE_AAAA;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* class IN */
+	v = NS_CLASS_IN;
+	*p++ = v >> 8;
+	*p++ = v & 0xff;
+	/* EDNS0 OPT with DO */
+	if (edns0) {
+		/* root name */
+		*p++ = 0;
+		/* type OPT */
+		v = NS_TYPE_OPT;
+		*p++ = v >> 8;
+		*p++ = v & 0xff;
+		/* class UDP length */
+		v = 4096;
+		*p++ = v >> 8;
+		*p++ = v & 0xff;
+		/* extended rcode 0 */
+		*p++ = 0;
+		/* version 0 */
+		*p++ = 0;
+		/* extended flags DO */
+		v = NS_XFLAG_DO;
+		*p++ = v >> 8;
+		*p++ = v & 0xff;
+		/* rdlength */
+		v = 0;
+		*p++ = v >> 8;
+		*p++ = v & 0xff;
+	}
+	/* length */
+	length_query = p - template_query;
+}
+
+/*
+ * get a TCP DNS client QUERY template
+ * from the file given in the command line (-T<template-file>)
+ * and rnd offset (-O<random-offset>)
+ */
+
+void
+get_template_query(void)
+{
+	uint8_t *p = template_query;
+	int fd, cc, i, j;
+
+	fd = open(templatefile, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open(%s): %s\n",
+			templatefile, strerror(errno));
+		exit(2);
+	}
+	cc = read(fd, tbuf, sizeof(tbuf));
+	(void) close(fd);
+	if (cc < 0) {
+		fprintf(stderr, "read(%s): %s\n",
+			templatefile, strerror(errno));
+		exit(1);
+	}
+	if (cc < NS_OFF_QUESTION + 6) {
+		fprintf(stderr,"file '%s' too small\n", templatefile);
+		exit(2);
+	}
+	if (cc > 4096) {
+		fprintf(stderr,"file '%s' too large\n", templatefile);
+		exit(2);
+	}
+	j = 0;
+	for (i = 0; i < cc; i++) {
+		if (isspace((int) tbuf[i]))
+			continue;
+		if (!isxdigit((int) tbuf[i])) {
+			fprintf(stderr,
+				"illegal char[%d]='%c' in file '%s'\n",
+				i, (int) tbuf[i], templatefile);
+			exit(2);
+		}
+		tbuf[j] = tbuf[i];
+		j++;
+	}
+	cc = j;
+	if ((cc & 1) != 0) {
+		fprintf(stderr,
+			"odd number of hexadecimal digits in file '%s'\n",
+			templatefile);
+		exit(2);
+	}
+	length_query = cc >> 1;
+	for (i = 0; i < cc; i += 2)
+		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
+	if (rndoffset >= 0)
+		random_query = (size_t) rndoffset;
+	if (random_query > length_query) {
+		fprintf(stderr,
+			"random (at %zu) outside the template (length %zu)?\n",
+			random_query, length_query);
+		exit(2);
+	}
+}
+
+#if 0
 /*
  * randomize the value of the given field:
  *   - offset of the field
@@ -292,22 +457,205 @@ randomize(size_t offset, uint32_t r)
 	obuf[offset - 3] = v;
 	return r;
 }
+#endif
 
 /*
- * receive a response, shared between IPv4 and IPv6:
- *   - receiving time-stamp now
- * called from receive[46]()
+ * flush/timeout connect
  */
 
 void
-receive_reply(int idx, struct timespec *now)
+flushconnect(void)
 {
-	struct exchange *x = xlist + idx;
+	struct exchange *x;
+	struct timespec now;
+	int idx = xconn;
+	int cnt = 10;
+	double waited;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+		perror("clock_gettime(flushconnect)");
+		fatal = 1;
+		return;
+	}
+
+	while (--cnt >= 0) {
+		if (idx < 0)
+			return;
+		x = xlist + idx;
+		idx = x->next;
+		if (x->state != X_CONN)
+			abort();
+		/* check for a timed-out connection */
+		waited = now.tv_sec - x->ts0.tv_sec;
+		waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
+		if (waited < losttime)
+			return;
+		/* garbage collect timed-out connections */
+		ISC_REMOVE(xconnl, x);
+		(void) close(x->sock);
+		x->sock = -1;
+		collconn++;
+		x->state = X_FREE;
+		ISC_INSERT(xfree, xfreel, x);
+	}
+}
+
+/*
+ * poll connected
+ */
+
+void
+pollconnect(int topoll)
+{
+	struct exchange *x;
+	int evn, idx, err;
+	socklen_t len = sizeof(int);
+
+	for (evn = 0; evn < topoll; evn++) {
+		idx = events[evn].data.fd;
+		x = xlist + idx;
+		if (x->state != X_CONN)
+			continue;
+		if (events[evn].events == 0)
+			continue;
+		ISC_REMOVE(xconnl, x);
+		events[evn].events = 0;
+		if ((getsockopt(x->sock, SOL_SOCKET, SO_ERROR,
+				&err, &len) < 0) ||
+		    (err != 0)) {
+			(void) close(x->sock);
+			x->sock = -1;
+			badconn++;
+			x->state = X_FREE;
+			ISC_INSERT(xfree, xfreel, x);
+			continue;
+		}
+		x->state = X_READY;
+		ISC_INSERT(xready, xreadyl, x);
+	}
+}
+
+/*
+ * send the TCP DNS QUERY
+ */
+
+int
+sendquery(struct exchange *x)
+{
+	ssize_t ret;
+
+	obuf[0] = length_query >> 8;
+	obuf[1]= length_query & 0xff;
+	memcpy(obuf + 2, template_query, length_query);
+	/* ID */
+	memcpy(obuf + 2 + NS_OFF_ID, &x->id, 2);
+#if 0
+	/* random */
+	if (random_query > 0)
+		x->rnd = randomize(random_query + 2, x->rnd);
+#endif
+	/* timestamp */
+	errno = 0;
+	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
+	if (ret < 0) {
+		perror("clock_gettime(send)");
+		fatal = 1;
+		return -errno;
+	}
+	ret = send(x->sock, obuf, length_query + 2, 0);
+	if (ret == (ssize_t) length_query + 2)
+		return 0;
+	return -errno;
+}	
+
+/*
+ * poll ready and send
+ */
+
+void
+pollsend(void)
+{
+	struct exchange *x;
+	int idx = xready;
+	struct epoll_event ev;
+
+	memset(&ev, 0, sizeof(ev));
+	ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+	for (;;) {
+		if (idx < 0)
+			return;
+		x = xlist + idx;
+		ev.data.fd = idx;
+		idx = x->next;
+		ISC_REMOVE(xreadyl, x);
+		if (sendquery(x) < 0) {
+			(void) close(x->sock);
+			x->sock = -1;
+			badsent++;
+			x->state = X_FREE;
+			ISC_INSERT(xfree, xfreel, x);
+			continue;
+		}
+		xscount++;
+		x->state = X_SENT;
+		ISC_INSERT(xsent, xsentl, x);
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, x->sock, &ev) < 0) {
+			perror("epoll_fd");
+			fatal = 1;
+			return;
+		}
+	}
+}
+
+/*
+ * receive a TCP DNS RESPONSE
+ */
+
+void
+receiveresp(struct exchange *x)
+{
+	struct timespec now;
+	ssize_t cc;
+	uint16_t v;
 	double delta;
 
+	cc = recv(x->sock, ibuf, sizeof(ibuf), 0);
+	if (cc < 0) {
+		if ((errno == EAGAIN) ||
+		    (errno == EWOULDBLOCK) ||
+		    (errno == EINTR)) {
+			recverr++;
+			return;
+		}
+		perror("recv");
+		fatal = 1;
+		return;
+	}
+	/* enforce a reasonable length */
+	if (cc < (ssize_t) length_query + 2) {
+		tooshort++;
+		return;
+	}
+	/* must match the ID */
+	if (memcmp(ibuf + 2 + NS_OFF_ID, &x->id, 2) != 0) {
+		badid++;
+		return;
+	}
+	/* must be a response */
+	memcpy(&v, ibuf + 2 + NS_OFF_FLAGS, 2);
+	v = ntohs(v);
+	if ((v & NS_FLAG_QR) == 0) {
+		notresp++;
+		return;
+	}
+	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+		perror("clock_gettime(receive)");
+		fatal = 1;
+		return;
+	}
 	/* got it: update stats */
 	xrcount++;
-	x->ts3 = *now;
+	x->ts3 = now;
 	delta = x->ts3.tv_sec - x->ts2.tv_sec;
 	delta += (x->ts3.tv_nsec - x->ts2.tv_nsec) / 1e9;
 	if (delta < dmin)
@@ -316,6 +664,78 @@ receive_reply(int idx, struct timespec *now)
 		dmax = delta;
 	dsum += delta;
 	dsumsq += delta * delta;
+	v &= NS_RCODE_MASK;
+	if (v >= NS_RCODE_LAST)
+		v = NS_RCODE_LAST;
+	rcodes[v] += 1;
+}
+
+/*
+ * flush/timeout receive
+ */
+
+void
+flushrecv(void)
+{
+	struct exchange *x;
+	struct timespec now;
+	int idx = xsent;
+	int cnt = 5;
+	double waited;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
+		perror("clock_gettime(receive)");
+		fatal = 1;
+		return;
+	}
+
+	while (--cnt >= 0) {
+		if (idx < 0)
+			return;
+		x = xlist + idx;
+		idx = x->next;
+		if (x->state != X_SENT)
+			abort();
+		/* check for a timed-out exchange */
+		waited = now.tv_sec - x->ts2.tv_sec;
+		waited += (now.tv_nsec - x->ts2.tv_nsec) / 1e9;
+		if (waited < losttime)
+			return;
+		/* garbage collect timed-out exchange */
+		ISC_REMOVE(xsentl, x);
+		(void) close(x->sock);
+		x->sock = -1;
+		collsent++;
+		x->state = X_FREE;
+		ISC_INSERT(xfree, xfreel, x);
+	}
+}
+
+/*
+ * poll receive
+ */
+
+void
+pollrecv(int topoll)
+{
+	struct exchange *x;
+	int evn, idx;
+
+	for (evn = 0; evn < topoll; evn++) {
+		idx = events[evn].data.fd;
+		x = xlist + idx;
+		if (x->state != X_SENT)
+			continue;
+		if (events[evn].events == 0)
+			continue;
+		ISC_REMOVE(xsentl, x);
+		receiveresp(x);
+		events[evn].events = 0;
+		(void) close(x->sock);
+		x->sock = -1;
+		x->state = X_FREE;
+		ISC_INSERT(xfree, xfreel, x);
+	}
 }
 
 /*
@@ -367,128 +787,6 @@ getsock4(void)
 }
 
 /*
- * build a TCP DNS QUERY (IPv4)
- */
-
-void
-build_template_query4(void)
-{
-	uint8_t *p = template_query4;
-	uint16_t v;
-
-	/* flags */
-	p += NS_OFF_FLAGS;
-	v = NS_FLAG_RD;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* qdcount */
-	v = 1;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* ancount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* nscount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* arcount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* icann.link */
-	*p++ = 5;
-	*p++ = 'i';
-	*p++ = 'c';
-	*p++ = 'a';
-	*p++ = 'n';
-	*p++ = 'n';
-	*p++ = 4;
-	*p++ = 'l';
-	*p++ = 'i';
-	*p++ = 'n';
-	*p++ = 'k';
-	*p++ = 0;
-	/* type A */
-	v = NS_TYPE_A;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* class IN */
-	v = NS_CLASS_IN;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* length */
-	length_query4 = p - template_query4;
-}
-
-/*
- * get a TCP/IPv4 DNS client QUERY template
- * from the file given in the command line (-T<template-file>)
- * and rnd offset (-O<random-offset>)
- */
-
-void
-get_template_query4(void)
-{
-	uint8_t *p = template_query4;
-	int fd, cc, i, j;
-
-	fd = open(templatefile, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "open(%s): %s\n",
-			templatefile, strerror(errno));
-		exit(2);
-	}
-	cc = read(fd, tbuf, sizeof(tbuf));
-	(void) close(fd);
-	if (cc < 0) {
-		fprintf(stderr, "read(%s): %s\n",
-			templatefile, strerror(errno));
-		exit(1);
-	}
-	if (cc < NS_OFF_QUESTION + 6) {
-		fprintf(stderr,"file '%s' too small\n", templatefile);
-		exit(2);
-	}
-	if (cc > 509) {
-		fprintf(stderr,"file '%s' too large\n", templatefile);
-		exit(2);
-	}
-	j = 0;
-	for (i = 0; i < cc; i++) {
-		if (isspace((int) tbuf[i]))
-			continue;
-		if (!isxdigit((int) tbuf[i])) {
-			fprintf(stderr,
-				"illegal char[%d]='%c' in file '%s'\n",
-				i, (int) tbuf[i], templatefile);
-			exit(2);
-		}
-		tbuf[j] = tbuf[i];
-		j++;
-	}
-	cc = j;
-	if ((cc & 1) != 0) {
-		fprintf(stderr,
-			"odd number of hexadecimal digits in file '%s'\n",
-			templatefile);
-		exit(2);
-	}
-	length_query4 = cc >> 1;
-	for (i = 0; i < cc; i += 2)
-		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
-	if (rndoffset >= 0)
-		random_query4 = (size_t) rndoffset;
-	if (random_query4 > length_query4) {
-		fprintf(stderr,
-			"random (at %zu) outside the template (length %zu)?\n",
-			random_query4, length_query4);
-		exit(2);
-	}
-}
-
-/*
  * connect the TCP DNS QUERY (IPv4)
  */
 
@@ -496,9 +794,9 @@ int
 connect4(void)
 {
 	struct exchange *x;
-	struct pollfd *p;
 	ssize_t ret;
 	int idx;
+	struct epoll_event ev;
 
 	ret = clock_gettime(CLOCK_REALTIME, &last);
 	if (ret < 0) {
@@ -510,18 +808,19 @@ connect4(void)
 	if (xfree >= 0) {
 		idx = xfree;
 		x = xlist + idx;
-		p = plist + idx;
 		ISC_REMOVE(xfreel, x);
 	} else if (xused < xlast) {
 		idx = xused;
 		x = xlist + idx;
-		p = plist + idx;
 		xused++;
 	} else
 		return -ENOMEM;
 
+	if ((x->state != X_FREE) || (x->sock != -1))
+		abort();
+
 	memset(x, 0, sizeof(*x));
-	memset(p, 0, sizeof(*p));
+	memset(&ev, 0, sizeof(ev));
 	x->next = -1;
 	x->prev = NULL;
 	x->ts0 = last;
@@ -530,244 +829,22 @@ connect4(void)
 		ISC_INSERT(xfree, xfreel, x);
 		return x->sock;
 	}
-	p->fd = x->sock;
-	p->events = POLLOUT;
+	x->state = X_CONN;
 	ISC_INSERT(xconn, xconnl, x);
-	x->order = xccount++;
-	x->id = (uint16_t) random();
-	if (random_query4 > 0)
-		x->rnd = (uint32_t) random();
-	return idx;
-}
-
-/*
- * poll connected (IPv4)
- */
-
-void
-pollconnect4(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	struct timespec now;
-	int idx = xconn;
-	int cnt = 10;
-	int checklost = 1;
-	int err;
-	double waited;
-	socklen_t len = sizeof(int);
-
-	while (--cnt >= 0) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		if ((p->fd < 0) || (p->events != POLLOUT))
-			abort();
-		if (p->revents == 0) {
-			if (checklost == 0)
-				continue;
-			/* check for a timed-out connection */
-			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-				perror("clock_gettime(connected)");
-				fatal = 1;
-				return;
-			}
-			waited = now.tv_sec - x->ts0.tv_sec;
-			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
-			if (waited < losttime) {
-				checklost = 0;
-				continue;
-			}
-			/* garbage collect timed-out connections */
-			ISC_REMOVE(xconnl, x);
-			goto close;
-		}
-		ISC_REMOVE(xconnl, x);
-		if ((p->revents & POLLOUT) == 0)
-			goto close;
-		p->revents = 0;
-		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &len) < 0)
-			goto close;
-		if (err != 0)
-			goto close;
-		ISC_INSERT(xready, xreadyl, x);
-		continue;
-	    close:
-		p->fd = -1;
-		(void) close(x->sock);
-		collected += 1;
-		ISC_INSERT(xfree, xfreel, x);
-	}
-}
-
-/*
- * send the TCP DNS QUERY (IPv4)
- */
-
-int
-send4(struct exchange *x)
-{
-	ssize_t ret;
-
-	obuf[0] = length_query4 >> 8;
-	obuf[1]= length_query4 & 0xff;
-	memcpy(obuf + 2, template_query4, length_query4);
-	/* ID */
-	memcpy(obuf + 2 + NS_OFF_ID, &x->id, 2);
-	/* random */
-	if (random_query4 > 0)
-		x->rnd = randomize(random_query4 + 2, x->rnd);
-	/* timestamp */
-	errno = 0;
-	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
-	if (ret < 0) {
-		perror("clock_gettime(send)");
+	ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+	ev.data.fd = idx;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, x->sock, &ev) < 0) {
+		perror("epoll_ctl");
 		fatal = 1;
 		return -errno;
 	}
-	ret = send(x->sock, obuf, length_query4 + 2, 0);
-	if (ret == (ssize_t) length_query4 + 2)
-		return 0;
-	/* bad send */
-	return -errno;
-}	
-
-/*
- * poll ready and send (IPv4)
- */
-
-void
-pollsend4(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	int idx = xready;
-
-	for (;;) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		ISC_REMOVE(xreadyl, x);
-		if (send4(x) < 0) {
-			p->fd = -1;
-			(void) close(x->sock);
-			ISC_INSERT(xfree, xfreel, x);
-			continue;
-		}
-		xscount++;
-		p->events = POLLIN;
-		ISC_INSERT(xsent, xsentl, x);
-		continue;
-	}
-}
-
-/*
- * receive a TCP DNS RESPONSE (IPv4)
- */
-
-void
-receive4(struct exchange *x)
-{
-	struct pollfd *p;
-	struct timespec now;
-	int idx = x - xlist;
-	ssize_t cc;
-	uint16_t v;
-
-	cc = recv(x->sock, ibuf, sizeof(ibuf), 0);
-	if (cc < 0) {
-		if ((errno == EAGAIN) ||
-		    (errno == EWOULDBLOCK) ||
-		    (errno == EINTR))
-			goto close;
-		perror("recv");
-		fatal = 1;
-		goto close;
-	}
-	/* enforce a reasonable length */
-	if (cc < (ssize_t) length_query4 + 2) {
-		tooshort++;
-		goto close;
-	}
-	/* must match the ID */
-	if (memcmp(ibuf + 2 + NS_OFF_ID, &x->id, 2) != 0)
-		goto close;
-	/* must be a response */
-	memcpy(&v, ibuf + 2 + NS_OFF_FLAGS, 2);
-	v = ntohs(v);
-	if ((v & NS_FLAG_QR) == 0)
-		goto close;
-	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-		perror("clock_gettime(receive)");
-		fatal = 1;
-		goto close;
-	}
-	receive_reply(idx, &now);
-    close:
-	p = plist + idx;
-	p->fd = -1;
-	(void) close(x->sock);
-}
-
-/*
- * poll receive and timeouts (IPv4)
- */
-
-void
-pollrecv4(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	struct timespec now;
-	int idx = xsent;
-	int cnt = 5;
-	int checklost = 1;
-	double waited;
-
-	while (--cnt >= 0) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		if ((p->fd < 0) || (p->events != POLLIN))
-			abort();
-		if (p->revents == 0) {
-			if (checklost == 0)
-				continue;
-			/* check for a timed-out exchange */
-			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-				perror("clock_gettime(receive)");
-				fatal = 1;
-				return;
-			}
-			waited = now.tv_sec - x->ts2.tv_sec;
-			waited += (now.tv_nsec - x->ts2.tv_nsec) / 1e9;
-			if (waited < losttime) {
-				checklost = 0;
-				continue;
-			}
-			/* garbage collect timed-out exchange */
-			goto close;
-		}
-		if ((p->revents & POLLIN) == 0)
-			goto close;
-		ISC_REMOVE(xsentl, x);
-		receive4(x);
-		ISC_INSERT(xfree, xfreel, x);
-		continue;
-	    close:
-		ISC_REMOVE(xsentl, x);
-		p->fd = -1;
-		(void) close(x->sock);
-		collected += 1;
-		ISC_INSERT(xfree, xfreel, x);
-	}
+	x->order = xccount++;
+	x->id = (uint16_t) random();
+#if 0
+	if (random_query > 0)
+		x->rnd = (uint32_t) random();
+#endif
+	return idx;
 }
 
 /*
@@ -819,128 +896,6 @@ getsock6(void)
 }
 
 /*
- * build a TCP DNS QUERY (IPv6)
- */
-
-void
-build_template_query6(void)
-{
-	uint8_t *p = template_query6;
-	uint16_t v;
-
-	/* flags */
-	p += NS_OFF_FLAGS;
-	v = NS_FLAG_RD;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* qdcount */
-	v = 1;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* ancount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* nscount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* arcount */
-	v = 0;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* icann.link */
-	*p++ = 5;
-	*p++ = 'i';
-	*p++ = 'c';
-	*p++ = 'a';
-	*p++ = 'n';
-	*p++ = 'n';
-	*p++ = 4;
-	*p++ = 'l';
-	*p++ = 'i';
-	*p++ = 'n';
-	*p++ = 'k';
-	*p++ = 0;
-	/* type AAAA */
-	v = NS_TYPE_AAAA;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* class IN */
-	v = NS_CLASS_IN;
-	*p++ = v >> 8;
-	*p++ = v & 0xff;
-	/* length */
-	length_query6 = p - template_query6;
-}
-
-/*
- * get a TCP/IPv6 DNS clinet QUERY template
- * from the file given in the command line (-T<template-file>)
- * and rnd offset (-O<random-offset>)
- */
-
-void
-get_template_query6(void)
-{
-	uint8_t *p = template_query6;
-	int fd, cc, i, j;
-
-	fd = open(templatefile, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "open(%s): %s\n",
-			templatefile, strerror(errno));
-		exit(2);
-	}
-	cc = read(fd, tbuf, sizeof(tbuf));
-	(void) close(fd);
-	if (cc < 0) {
-		fprintf(stderr, "read(%s): %s\n",
-			templatefile, strerror(errno));
-		exit(1);
-	}
-	if (cc < NS_OFF_QUESTION + 6) {
-		fprintf(stderr, "file '%s' too short\n", templatefile);
-		exit(2);
-	}
-	if (cc > 509) {
-		fprintf(stderr,"file '%s' too large\n", templatefile);
-		exit(2);
-	}
-	j = 0;
-	for (i = 0; i < cc; i++) {
-		if (isspace((int) tbuf[i]))
-			continue;
-		if (!isxdigit((int) tbuf[i])) {
-			fprintf(stderr,
-				"illegal char[%d]='%c' in file '%s'\n",
-				i, (int) tbuf[i], templatefile);
-			exit(2);
-		}
-		tbuf[j] = tbuf[i];
-		j++;
-	}
-	cc = j;
-	if ((cc & 1) != 0) {
-		fprintf(stderr,
-			"odd number of hexadecimal digits in file '%s'\n",
-			templatefile);
-		exit(2);
-	}
-	length_query6 = cc >> 1;
-	for (i = 0; i < cc; i += 2)
-		(void) sscanf(tbuf + i, "%02hhx", &p[i >> 1]);
-	if (rndoffset >= 0)
-		random_query6 = (size_t) rndoffset;
-	if (random_query6 > length_query6) {
-		fprintf(stderr,
-			"random (at %zu) outside the template (length %zu)?\n",
-			random_query6, length_query6);
-		exit(2);
-	}
-}
-
-/*
  * connect the TCP DNS QUERY (IPv6)
  */
 
@@ -948,9 +903,9 @@ int
 connect6(void)
 {
 	struct exchange *x;
-	struct pollfd *p;
 	ssize_t ret;
 	int idx;
+	struct epoll_event ev;
 
 	ret = clock_gettime(CLOCK_REALTIME, &last);
 	if (ret < 0) {
@@ -962,18 +917,16 @@ connect6(void)
 	if (xfree >= 0) {
 		idx = xfree;
 		x = xlist + idx;
-		p = plist + idx;
 		ISC_REMOVE(xfreel, x);
 	} else if (xused < xlast) {
 		idx = xused;
 		x = xlist + idx;
-		p = plist + idx;
 		xused++;
 	} else
 		return -ENOMEM;
 
 	memset(x, 0, sizeof(*x));
-	memset(p, 0, sizeof(*p));
+	memset(&ev, 0, sizeof(ev));
 	x->next = -1;
 	x->prev = NULL;
 	x->ts0 = last;
@@ -982,244 +935,22 @@ connect6(void)
 		ISC_INSERT(xfree, xfreel, x);
 		return x->sock;
 	}
-	p->fd = x->sock;
-	p->events = POLLOUT;
+	x->state = X_CONN;
 	ISC_INSERT(xconn, xconnl, x);
-	x->order = xccount++;
-	x->id = (uint16_t) random();
-	if (random_query6 > 0)
-		x->rnd = (uint32_t) random();
-	return idx;
-}
-
-/*
- * poll connected and send (IPv6)
- */
-
-void
-pollconnect6(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	struct timespec now;
-	int idx = xconn;
-	int cnt = 10;
-	int checklost = 1;
-	int err;
-	double waited;
-	socklen_t len = sizeof(int);
-
-	while (--cnt >= 0) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		if ((p->fd < 0) || (p->events != POLLOUT))
-			abort();
-		if (p->revents == 0) {
-			if (checklost == 0)
-				continue;
-			/* check for a timed-out connection */
-			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-				perror("clock_gettime(connected)");
-				fatal = 1;
-				return;
-			}
-			waited = now.tv_sec - x->ts0.tv_sec;
-			waited += (now.tv_nsec - x->ts0.tv_nsec) / 1e9;
-			if (waited < losttime) {
-				checklost = 0;
-				continue;
-			}
-			/* garbage collect timed-out connections */
-			ISC_REMOVE(xconnl, x);
-			goto close;
-		}
-		ISC_REMOVE(xconnl, x);
-		if ((p->revents & POLLOUT) == 0)
-			goto close;
-		p->revents = 0;
-		if (getsockopt(p->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &len) < 0)
-			goto close;
-		if (err != 0)
-			goto close;
-		ISC_INSERT(xready, xreadyl, x);
-		continue;
-	    close:
-		p->fd = -1;
-		(void) close(x->sock);
-		collected += 1;
-		ISC_INSERT(xfree, xfreel, x);
-	}
-}
-
-/*
- * send the TCP DNS QUERY (IPv6)
- */
-
-int
-send6(struct exchange *x)
-{
-	ssize_t ret;
-
-	obuf[0] = length_query6 >> 8;
-	obuf[1]= length_query6 & 0xff;
-	memcpy(obuf + 2, template_query6, length_query6);
-	/* ID */
-	memcpy(obuf + 2 + NS_OFF_ID, &x->id, 2);
-	/* random */
-	if (random_query6 > 0)
-		x->rnd = randomize(random_query6 + 2, x->rnd);
-	/* timestamp */
-	errno = 0;
-	ret = clock_gettime(CLOCK_REALTIME, &x->ts2);
-	if (ret < 0) {
-		perror("clock_gettime(send)");
+	ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+	ev.data.fd = idx;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, x->sock, &ev) < 0) {
+		perror("epoll_ctl");
 		fatal = 1;
 		return -errno;
 	}
-	ret = send(x->sock, obuf, length_query6 + 2, 0);
-	if (ret == (ssize_t) length_query6 + 2)
-		return 0;
-	/* bad send */
-	return -errno;
-}
-
-/*
- * poll ready and send (IPv6)
- */
-
-void
-pollsend6(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	int idx = xready;
-
-	for (;;) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		ISC_REMOVE(xreadyl, x);
-		if (send6(x) < 0) {
-			p->fd = -1;
-			(void) close(x->sock);
-			ISC_INSERT(xfree, xfreel, x);
-			continue;
-		}
-		xscount++;
-		p->events = POLLIN;
-		ISC_INSERT(xsent, xsentl, x);
-		continue;
-	}
-}
-
-/*
- * receive a TCP DNS RESPONSE (IPv6)
- */
-
-void
-receive6(struct exchange *x)
-{
-	struct pollfd *p;
-	struct timespec now;
-	int idx = x - xlist;
-	ssize_t cc;
-	uint16_t v;
-
-	cc = recv(x->sock, ibuf, sizeof(ibuf), 0);
-	if (cc < 0) {
-		if ((errno == EAGAIN) ||
-		    (errno == EWOULDBLOCK) ||
-		    (errno == EINTR))
-			goto close;
-		perror("recv");
-		fatal = 1;
-		goto close;
-	}
-	/* enforce a reasonable length */
-	if (cc < (ssize_t) length_query6 + 2) {
-		tooshort++;
-		goto close;
-	}
-	/* must match the ID */
-	if (memcmp(ibuf + 2 + NS_OFF_ID, &x->id, 2) != 0)
-		goto close;
-	/* must be a response */
-	memcpy(&v, ibuf + 2 + NS_OFF_FLAGS, 2);
-	v = ntohs(v);
-	if ((v & NS_FLAG_QR) == 0)
-		goto close;
-	if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-		perror("clock_gettime(receive)");
-		fatal = 1;
-		goto close;
-	}
-	receive_reply(idx, &now);
-    close:
-	p = plist + idx;
-	p->fd = -1;
-	(void) close(x->sock);
-}
-
-/*
- * poll receive and timeouts (IPv6)
- */
-
-void
-pollrecv6(void)
-{
-	struct exchange *x;
-	struct pollfd *p;
-	struct timespec now;
-	int idx = xsent;
-	int cnt = 5;
-	int checklost = 1;
-	double waited;
-
-	while (--cnt >= 0) {
-		if (idx < 0)
-			return;
-		x = xlist + idx;
-		p = plist + idx;
-		idx = x->next;
-		if (p->fd < 0)
-			abort();
-		if (p->revents == 0) {
-			if (checklost == 0)
-				continue;
-			/* check for a timed-out exchange */
-			if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
-				perror("clock_gettime(receive)");
-				fatal = 1;
-				return;
-			}
-			waited = now.tv_sec - x->ts2.tv_sec;
-			waited += (now.tv_nsec - x->ts2.tv_nsec) / 1e9;
-			if (waited < losttime) {
-				checklost = 0;
-				continue;
-			}
-			/* garbage collect timed-out exchange */
-			goto close;
-		}
-		if ((p->revents & POLLIN) == 0)
-			goto close;
-		ISC_REMOVE(xsentl, x);
-		receive6(x);
-		ISC_INSERT(xfree, xfreel, x);
-		continue;
-	    close:
-		ISC_REMOVE(xsentl, x);
-		p->fd = -1;
-		(void) close(x->sock);
-		collected += 1;
-		ISC_INSERT(xfree, xfreel, x);
-	}
+	x->order = xccount++;
+	x->id = (uint16_t) random();
+#if 0
+	if (random_query > 0)
+		x->rnd = (uint32_t) random();
+#endif
+	return idx;
 }
 
 /*
@@ -1374,7 +1105,7 @@ void
 usage(void)
 {
 	fprintf(stderr, "%s",
-"perftcpdns [-hv] [-4|-6] [-r<rate>] [-t<report>] [-n<num-request>]\n"
+"perftcpdns [-hvX0] [-4|-6] [-r<rate>] [-t<report>] [-n<num-request>]\n"
 "    [-p<test-period>] [-d<drop-time>] [-D<max-drop>] [-l<local-addr>]\n"
 "    [-P<preload>] [-a<aggressivity>] [-s<seed>] [-M<memory>]\n"
 "    [-T<template-file>] [-O<random-offset] [-x<diagnostic-selector>]\n"
@@ -1383,6 +1114,7 @@ usage(void)
 "The [server] argument is the name/address of the DNS server to contact.\n"
 "\n"
 "Options:\n"
+"-0: Add EDNS0 option with DO flag.\n"
 "-4: TCP/IPv4 operation (default). This is incompatible with the -6 option.\n"
 "-6: TCP/IPv6 operation. This is incompatible with the -4 option.\n"
 "-a<aggressivity>: When the target sending rate is not yet reached,\n"
@@ -1405,6 +1137,7 @@ usage(void)
 "-T<template-file>: The name of a file containing the template to use\n"
 "    as a stream of hexadecimal digits.\n"
 "-v: Report the version number of this program.\n"
+"-X: change default template to get NXDOMAIN responses.\n"
 "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
 "    <diagnostic-selector> is a string of single-keywords specifying\n"
 "    the operations for which verbose output is desired.  The selector\n"
@@ -1432,8 +1165,20 @@ usage(void)
 "-t<report>: Delay in seconds between two periodic reports.\n"
 "\n"
 "Errors:\n"
-"- tooshort: received a too short message\n"
 "- locallimit: reached to local system limits when sending a message.\n"
+"- badconn: connection failed (from getsockopt(SO_ERROR))\n"
+"- collconn: connect() timed out\n"
+"- badsent: send() failed\n"
+"- callsent: timed out waiting from a response\n"
+"- recverr: recv() system call failed\n"
+"- tooshort: received a too short message\n"
+"- badid: the id mismatches between the query and the response\n"
+"- notresp: doesn't receive a response\n"
+"Rate stats:\n"
+"- loops: number of main loop iterations\n"
+"- compconn: computed number of connect() calls\n"
+"- lateconn: connect() already dued when computing delay to the next one\n"
+"- shortwait: no connect() to perform at the end of current iteration\n"
 "\n"
 "Exit status:\n"
 "The exit status is:\n"
@@ -1457,7 +1202,7 @@ main(const int argc, char * const argv[])
 	extern char *optarg;
 	extern int optind;
 
-#define OPTIONS	"hv46M:r:t:R:b:n:p:d:D:l:P:a:s:T:O:x:"
+#define OPTIONS	"hv460XM:r:t:R:b:n:p:d:D:l:P:a:s:T:O:x:"
 
 	/* decode options */
 	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
@@ -1469,6 +1214,10 @@ main(const int argc, char * const argv[])
 	case 'v':
 		version();
 		exit(0);
+
+	case '0':
+		edns0 = 1;
+		break;
 
 	case '4':
 		if (ipversion == 6) {
@@ -1486,6 +1235,10 @@ main(const int argc, char * const argv[])
 			exit(2);
 		}
 		ipversion = 6;
+		break;
+
+	case 'X':
+		ixann = 1;
 		break;
 
 	case 'M':
@@ -1668,6 +1421,8 @@ main(const int argc, char * const argv[])
 	if ((diags != NULL) && (strchr(diags, 'a') != NULL)) {
 		printf("IPv%d", ipversion);
 		printf(" rate=%d", rate);
+		if (edns0 != 0)
+			printf(" EDNS0");
 		if (report != 0)
 			printf(" report=%d", report);
 		if (range != 0) {
@@ -1697,6 +1452,8 @@ main(const int argc, char * const argv[])
 			printf(" seed=%u", seed);
 		if (templatefile != NULL)
 			printf(" template-file='%s'", templatefile);
+		else if (ixann != 0)
+			printf(" Xflag");
 		if (rndoffset >= 0)
 			printf(" rnd-offset=%d", rndoffset);
 		printf(" diagnotic-selectors='%s'", diags);
@@ -1773,17 +1530,10 @@ main(const int argc, char * const argv[])
 	inits();
 
 	/* get the socket descriptor and template(s) */
-	if (ipversion == 4) {
-		if (templatefile == NULL)
-			build_template_query4();
-		else
-			get_template_query4();
-	} else {
-		if (templatefile == NULL)
-			build_template_query6();
-		else
-			get_template_query6();
-	}
+	if (templatefile == NULL)
+		build_template_query();
+	else
+		get_template_query();
 
 	/* boot is done! */
 	if (clock_gettime(CLOCK_REALTIME, &boot) < 0) {
@@ -1835,7 +1585,8 @@ main(const int argc, char * const argv[])
 	/* main loop */
 	for (;;) {
 		struct timespec now, ts;
-		unsigned int nfds;
+		fd_set rfds;
+		int nfds;
 
 		/* immediate loop exit conditions */
 		if (interrupted) {
@@ -1848,6 +1599,8 @@ main(const int argc, char * const argv[])
 				printf("got a fatal error\n");
 			break;
 		}
+
+		loops++;
 
 		/* get the date and use it */
 		if (clock_gettime(CLOCK_REALTIME, &now) < 0) {
@@ -1892,42 +1645,49 @@ main(const int argc, char * const argv[])
 			lateconn++;
 		}
 
-		/* ppoll() */
-		nfds = (unsigned int) xused;
-		ret = ppoll(plist, nfds, &ts, NULL);
+		/* pselect() */
+		FD_ZERO(&rfds);
+		FD_SET(epoll_fd, &rfds);
+		ret = pselect(epoll_fd + 1, &rfds, NULL, NULL, &ts, NULL);
 		if (ret < 0) {
 			if (errno == EINTR)
 				continue;
-			perror("ppoll");
+			perror("pselect");
+			fatal = 1;
+			continue;
+		}
+			
+		/* epoll_wait() */
+		memset(events, 0, sizeof(events));
+		nfds = epoll_wait(epoll_fd, events, EVENTS_CNT, 0);
+		if (nfds < 0) {
+			if (errno == EINTR)
+				continue;
+			perror("epoll");
 			fatal = 1;
 			continue;
 		}
 
-		if (ret > 0) {
-			/* connection(s) to finish */
-			if (ipversion == 4)
-				pollconnect4();
-			else
-				pollconnect6();
-			if (fatal)
-				continue;
+		/* connection(s) to finish */
+		pollconnect(nfds);
+		if (fatal)
+			continue;
+		flushconnect();
+		if (fatal)
+			continue;
 
-			/* packet(s) to receive */
-			if (ipversion == 4)
-				pollrecv4();
-			else
-				pollrecv6();
-			if (fatal)
-				continue;
+		/* packet(s) to receive */
+		pollrecv(nfds);
+		if (fatal)
+			continue;
+		flushrecv();
+		if (fatal)
+			continue;
 
-			/* packet(s) to send */
-			if (ipversion == 4)
-				pollsend4();
-			else
-				pollsend6();
-			if (fatal)
-				continue;
-		}
+		/* packet(s) to send */
+		pollsend();
+		if (fatal)
+			continue;
 
 		/* check receive loop exit conditions */
 		if ((numreq != 0) && ((int) xscount >= numreq)) {
@@ -1963,7 +1723,7 @@ main(const int argc, char * const argv[])
 			toconnect = (now.tv_nsec - due.tv_nsec) / 1e9;
 			toconnect += now.tv_sec - due.tv_sec;
 			toconnect *= rate;
-			toconnect += 1;
+			toconnect++;
 			if (toconnect > (double) aggressivity)
 				i = aggressivity;
 			else
@@ -2004,9 +1764,29 @@ main(const int argc, char * const argv[])
 	       (unsigned long long) xrcount,
 	       (long long) (xccount - xscount),
 	       (long long) (xscount - xrcount));
-	printf("tooshort: %llu, local limits: %llu\n",
+	printf("local limits: %llu, bad connects: %llu, "
+	       "connect time outs: %llu\n",
+	       (unsigned long long) locallimit,
+	       (unsigned long long) badconn,
+	       (unsigned long long) collconn);
+	printf("bad sends: %llu, bad recvs: %llu, recv time outs: %llu\n",
+	       (unsigned long long) badsent,
+	       (unsigned long long) recverr,
+	       (unsigned long long) collsent);
+	printf("too shorts: %llu, bad IDs: %llu, not responses: %llu\n",
 	       (unsigned long long) tooshort,
-	       (unsigned long long) locallimit);
+	       (unsigned long long) badid,
+	       (unsigned long long) notresp);
+	printf("rcode counters:\n noerror: %llu, formerr: %llu, "
+	       "servfail: %llu\n "
+	       "nxdomain: %llu, noimp: %llu, refused: %llu, others: %llu\n",
+	       (unsigned long long) rcodes[NS_RCODE_NOERROR],
+	       (unsigned long long) rcodes[NS_RCODE_FORMERR],
+	       (unsigned long long) rcodes[NS_RCODE_SERVFAIL],
+	       (unsigned long long) rcodes[NS_RCODE_NXDOMAIN],
+	       (unsigned long long) rcodes[NS_RCODE_NOIMP],
+	       (unsigned long long) rcodes[NS_RCODE_REFUSED],
+	       (unsigned long long) rcodes[NS_RCODE_LAST]);
 
 	/* print the rate */
 	if (finished.tv_sec != 0) {
@@ -2020,12 +1800,20 @@ main(const int argc, char * const argv[])
 
 	/* rate processing instrumentation */
 	if ((diags != NULL) && (strchr(diags, 'i') != NULL)) {
-		printf("lateconn: %llu, compconn: %llu, shortwait: %llu\n"
-		       "collected:%llu\n",
-		       (unsigned long long) lateconn,
+		printf("loops: %llu, compconn: %llu, "
+		       "lateconn: %llu, shortwait: %llu\n",
+		       (unsigned long long) loops,
 		       (unsigned long long) compconn,
-		       (unsigned long long) shortwait,
-		       (unsigned long long) collected);
+		       (unsigned long long) lateconn,
+		       (unsigned long long) shortwait);
+		printf("badconn: %llu, collconn: %llu, "
+		       "recverr: %llu, collsent: %llu\n",
+		       (unsigned long long) badconn,
+		       (unsigned long long) collconn,
+		       (unsigned long long) recverr,
+		       (unsigned long long) collsent);
+		printf("memory: used(%d) / allocated(%d)\n",
+		       xused, xlast);
 	}
 
 	/* round-time trip statistics */
@@ -2043,36 +1831,20 @@ main(const int argc, char * const argv[])
 	if ((diags != NULL) && (strchr(diags, 'T') != NULL)) {
 		size_t n;
 
-		if (ipversion == 4) {
-			printf("length = 0x%zx\n", length_query4);
-			if (random_query4 > 0)
-				printf("random offset = %zu\n", random_query4);
-			printf("content:\n");
-			for (n = 0; n < length_query4; n++) {
-				printf("%s%02hhx",
-				       (n & 15) == 0 ? "" : " ",
-				       template_query4[n]);
-				if ((n & 15) == 15)
-					printf("\n");
-			}
-			if ((n & 15) != 15)
+		printf("length = 0x%zx\n", length_query);
+		if (random_query > 0)
+			printf("random offset = %zu\n", random_query);
+		printf("content:\n");
+		for (n = 0; n < length_query; n++) {
+			printf("%s%02hhx",
+			       (n & 15) == 0 ? "" : " ",
+			       template_query[n]);
+			if ((n & 15) == 15)
 				printf("\n");
-			printf("\n");
-		} else {
-			printf("length = 0x%zx\n", length_query6);
-			if (random_query6 > 0)
-				printf("random offset = %zu\n", random_query6);
-			for (n = 0; n < length_query6; n++) {
-				printf("%s%02hhx",
-				       (n & 15) == 0 ? "" : " ",
-				       template_query6[n]);
-				if ((n & 15) == 15)
-					printf("\n");
-			}
-			if ((n & 15) != 15)
-				printf("\n");
-			printf("\n");
 		}
+		if ((n & 15) != 15)
+			printf("\n");
+		printf("\n");
 	}
 
 	/* compute the exit code (and exit) */
