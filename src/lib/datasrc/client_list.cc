@@ -116,7 +116,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             const ConstElementPtr name_elem(dconf->get("name"));
             const string name(name_elem ? name_elem->stringValue() : type);
             if (!used_names.insert(name).second) {
-                isc_throw(ConfigurationError, "Duplicit name in client list: "
+                isc_throw(ConfigurationError, "Duplicate name in client list: "
                           << name);
             }
 
