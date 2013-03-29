@@ -234,7 +234,9 @@ operation
               <term><replaceable>zonename</replaceable></term>
               <listitem><simpara>
                 An actual zone name or special zone name
-		<quote>_SERVER_</quote> representing the entire server
+                <quote>_SERVER_</quote> representing the entire server.
+                Zone classes (IN, CH, HS) are mixed and counted so far. But
+                these will be distinguished in future release.
                 </simpara>
                 <variablelist>
 
