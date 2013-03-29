@@ -1,3 +1,9 @@
+597.	[func]		tmark
+	b10-dhcp6: Added unit tests for handling requests when no
+	IPv6 subnets are configured/defined. Testing these conditions
+	was overlooked during implementation of Trac #2719.
+	(Trac #2721, git ce7f53b2de60e2411483b4aa31c714763a36da64)
+
 596.	[bug]		jinmei
 	Added special handling for the case where b10-auth receives a
 	NOTIFY message, but zonemgr isn't running. Previously this was
