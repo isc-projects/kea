@@ -49,6 +49,13 @@ protected:
 TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
     EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
+
+    // Unknown types of segment are rejected.
+    const isc::datasrc::internal::ZoneTableConfig bad_ztconf(
+        "MasterFiles", 0, *Element::fromJSON("{\"cache-type\": \"unknown\","
+                                             " \"params\": {}}"));
+    EXPECT_THROW(ZoneTableSegment::create(RRClass::IN(), bad_ztconf),
+                 UnknownSegmentType);
 }
 
 // Helper function to check const and non-const methods.
