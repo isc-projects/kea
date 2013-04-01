@@ -136,7 +136,7 @@ TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
     rdata_dnskey.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_dnskey_fromWire", data);
+    UnitTestUtil::readWireData("rdata_dnskey_fromWire.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(renderer.getData()) + 2,
                         renderer.getLength() - 2, &data[2], data.size() - 2);
@@ -146,7 +146,7 @@ TEST_F(Rdata_DNSKEY_Test, toWireBuffer) {
     rdata_dnskey.toWire(obuffer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_dnskey_fromWire", data);
+    UnitTestUtil::readWireData("rdata_dnskey_fromWire.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         &data[2], data.size() - 2);
@@ -155,14 +155,16 @@ TEST_F(Rdata_DNSKEY_Test, toWireBuffer) {
 TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
-                                        "rdata_dnskey_fromWire")));
+                                        "rdata_dnskey_fromWire.wire")));
     // Empty keydata should throw
-    EXPECT_THROW(rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
-                                      "rdata_dnskey_empty_keydata_fromWire"),
+    EXPECT_THROW(rdataFactoryFromFile
+                 (RRType("DNSKEY"), RRClass("IN"),
+                  "rdata_dnskey_empty_keydata_fromWire.wire"),
                  InvalidRdataLength);
     // Short keydata for RSA/MD5 should throw
-    EXPECT_THROW(rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
-                                      "rdata_dnskey_short_keydata1_fromWire"),
+    EXPECT_THROW(rdataFactoryFromFile
+                 (RRType("DNSKEY"), RRClass("IN"),
+                  "rdata_dnskey_short_keydata1_fromWire.wire"),
                  InvalidRdataLength);
 }
 
