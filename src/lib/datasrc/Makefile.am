@@ -43,7 +43,7 @@ libb10_datasrc_la_SOURCES += cache_config.h cache_config.cc
 nodist_libb10_datasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libb10_datasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-pkglib_LTLIBRARIES = sqlite3_ds.la static_ds.la
+pkglib_LTLIBRARIES = sqlite3_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
@@ -53,12 +53,6 @@ sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
 sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 sqlite3_ds_la_LIBADD += libb10-datasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
-
-static_ds_la_SOURCES = static_datasrc_link.cc
-static_ds_la_SOURCES += static_datasrc.h
-static_ds_la_LDFLAGS = -module -avoid-version
-static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-static_ds_la_LIBADD += libb10-datasrc.la
 
 libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
