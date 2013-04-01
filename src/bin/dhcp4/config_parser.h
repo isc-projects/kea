@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <cc/data.h>
 #include <stdint.h>
 #include <string>
@@ -66,7 +67,7 @@ configureDhcp4Server(Dhcpv4Srv&,
 /// Uint32Parser works as expected.
 ///
 /// @return a reference to a global uint32 values storage.
-const std::map<std::string, uint32_t>& getUint32Defaults();
+const Uint32Storage& getUint32Defaults();
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
