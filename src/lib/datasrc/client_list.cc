@@ -109,9 +109,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             if (paramConf == ConstElementPtr()) {
                 paramConf.reset(new NullElement());
             }
-            const bool want_cache(allow_cache &&
-                                  dconf->contains("cache-enable") &&
-                                  dconf->get("cache-enable")->boolValue());
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
             const string name(name_elem ? name_elem->stringValue() : type);
@@ -147,7 +144,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                                       rrclass_, ztable_segment,
                                                       name));
 
-            if (want_cache) {
+            if (cache_conf.isEnabled()) {
                 // List the zones we are loading
                 vector<string> zones_origins;
                 if (type == "MasterFiles") {
