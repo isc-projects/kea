@@ -27,7 +27,8 @@
 
 #include <boost/interprocess/offset_ptr.hpp>
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <string>
 
 namespace isc {
 // Some forward declarations
@@ -36,9 +37,6 @@ class Name;
 class RRClass;
 }
 namespace datasrc {
-namespace internal {
-class ZoneTableConfig;
-}
 namespace memory {
 class ZoneWriter;
 
@@ -120,9 +118,8 @@ public:
     /// \param config The configuration based on which a derived object
     ///               is returned.
     /// \return Returns a ZoneTableSegment object
-    static ZoneTableSegment* create(
-        const isc::dns::RRClass& rrclass,
-        const isc::datasrc::internal::ZoneTableConfig& config);
+    static ZoneTableSegment* create(const isc::dns::RRClass& rrclass,
+                                    const std::string& type);
 
     /// \brief Destroy a ZoneTableSegment
     ///

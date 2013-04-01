@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_ZONE_TABLE_CONFIG_H
-#define DATASRC_ZONE_TABLE_CONFIG_H
+#ifndef DATASRC_CACHE_CONFIG_H
+#define DATASRC_CACHE_CONFIG_H
 
 #include <exceptions/exceptions.h>
 
@@ -30,10 +30,10 @@ class DataSourceClient;
 
 namespace internal {
 
-/// \brief Exception thrown for configuration error related to zone table.
-class ZoneTableConfigError : public Exception {
+/// \brief Exception thrown for configuration error related to in-memory cache.
+class CacheConfigError : public Exception {
 public:
-    ZoneTableConfigError(const char* file, size_t line, const char* what) :
+    CacheConfigError(const char* file, size_t line, const char* what) :
         Exception(file, line, what)
     {}
 };
@@ -54,11 +54,11 @@ public:
 /// defined in an "internal" namespace, and isn't expected to be used by
 /// other classes or user applications.  Likewise, this file is not expected
 /// to be installed with other publicly usable header files.
-class ZoneTableConfig {
+class CacheConfig {
 public:
-    ZoneTableConfig(const std::string& datasrc_type,
-                    const DataSourceClient* datasrc_client,
-                    const data::Element& datasrc_conf);
+    CacheConfig(const std::string& datasrc_type,
+                const DataSourceClient* datasrc_client,
+                const data::Element& datasrc_conf);
 
     /// \brief Return if the cache is enabled.
     ///
@@ -95,7 +95,7 @@ private:
 }
 }
 
-#endif  // DATASRC_ZONE_TABLE_CONFIG_H
+#endif  // DATASRC_CACHE_CONFIG_H
 
 // Local Variables:
 // mode: c++

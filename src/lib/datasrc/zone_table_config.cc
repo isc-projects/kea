@@ -46,9 +46,9 @@ getSegmentTypeFromConf(const Element& conf) {
 }
 }
 
-ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
-                                 const DataSourceClient* datasrc_client,
-                                 const Element& datasrc_conf) :
+CacheConfig::CacheConfig(const std::string& datasrc_type,
+                         const DataSourceClient* datasrc_client,
+                         const Element& datasrc_conf) :
     enabled_(getEnabledFromConf(datasrc_conf)),
     segment_type_(getSegmentTypeFromConf(datasrc_conf)),
     datasrc_client_(datasrc_client)
@@ -63,7 +63,7 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
                       "data source client is given for MasterFiles");
         }
         if (!enabled_) {
-            isc_throw(ZoneTableConfigError,
+            isc_throw(CacheConfigError,
                       "The cache must be enabled for the MasterFiles type");
         }
 

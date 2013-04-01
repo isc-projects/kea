@@ -14,7 +14,6 @@
 
 #include <datasrc/memory/zone_writer_local.h>
 #include <datasrc/memory/zone_table_segment_local.h>
-#include <datasrc/zone_table_config.h>
 #include <util/memory_segment_local.h>
 
 #include <gtest/gtest.h>
@@ -32,9 +31,7 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"cache-enable\": true,"
-                                                     " \"params\": {}}")),
-        ztable_segment_(ZoneTableSegment::create(RRClass::IN(), ztconf_))
+        ztable_segment_(ZoneTableSegment::create(RRClass::IN(), "local"))
     {}
 
     void TearDown() {
@@ -42,7 +39,6 @@ protected:
         ztable_segment_ = NULL;
     }
 
-    const isc::datasrc::internal::ZoneTableConfig ztconf_;
     ZoneTableSegment* ztable_segment_;
 };
 
@@ -52,11 +48,7 @@ TEST_F(ZoneTableSegmentTest, create) {
     EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
 
     // Unknown types of segment are rejected.
-    const isc::datasrc::internal::ZoneTableConfig bad_ztconf(
-        "MasterFiles", 0, *Element::fromJSON("{\"cache-enable\": true,"
-                                             " \"cache-type\": \"unknown\","
-                                             " \"params\": {}}"));
-    EXPECT_THROW(ZoneTableSegment::create(RRClass::IN(), bad_ztconf),
+    EXPECT_THROW(ZoneTableSegment::create(RRClass::IN(), "unknown"),
                  UnknownSegmentType);
 }
 
