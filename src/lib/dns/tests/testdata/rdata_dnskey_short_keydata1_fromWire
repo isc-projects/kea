@@ -1,8 +1,0 @@
-# RDLENGTH = 6 bytes
- 00 06
-# DNSKEY, flags 257
- 01 01
-# protocol 3, algorithm 1
- 03 01
-# keydata (only 2 bytes long for algorithm 1):
- 04 40
