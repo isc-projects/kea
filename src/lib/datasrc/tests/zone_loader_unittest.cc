@@ -32,13 +32,11 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/foreach.hpp>
 
-#include <cassert>
 #include <string>
 #include <vector>
 
 using namespace isc::dns;
 using namespace isc::datasrc;
-using isc::data::Element;
 using boost::shared_ptr;
 using std::string;
 using std::vector;
