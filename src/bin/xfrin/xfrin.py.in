@@ -964,13 +964,22 @@ class XfrinConnection(asyncore.dispatcher):
             self._counters.start_timer('zones', self._zone_name.to_text(),
                                        'last_' + req_str.lower() + '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
-            self._send_query(self._request_type)
-            # count AXFR/IXFR requests for statistics
+            # An AXFR or IXFR is being requested.
             self._counters.inc('zones', self._zone_name.to_text(),
                                req_str.lower() + 'req' +
                                self._get_ipver_str())
-            self.__state = XfrinInitialSOA()
-            self._handle_xfrin_responses()
+            try:
+                self._send_query(self._request_type)
+                self.__state = XfrinInitialSOA()
+                self._handle_xfrin_responses()
+            except:
+                # The AXFR or IXFR request failed.
+                self._counters.inc('zones', self._zone_name.to_text(),
+                                   'xfrfail')
+                raise
+            # The AXFR or IXFR request succeeded.
+            self._counters.inc('zones', self._zone_name.to_text(),
+                               'xfrsuccess')
             # Depending what data was found, we log different status reports
             # (In case of an AXFR-style IXFR, print the 'AXFR' message)
             if self._transfer_stats.axfr_rr_count == 0:
@@ -1037,10 +1046,6 @@ class XfrinConnection(asyncore.dispatcher):
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
             self._diff = None
-            counter_dict = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}
-            self._counters.inc('zones', self._zone_name.to_text(),
-                               counter_dict[ret])
-
         return ret
 
     def _check_response_header(self, msg):
