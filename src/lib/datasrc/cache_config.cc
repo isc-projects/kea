@@ -59,7 +59,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
         params.reset(new NullElement());
     }
     if (datasrc_type == "MasterFiles") {
-        if (datasrc_client) {
+        if (datasrc_client_) {
             isc_throw(isc::InvalidParameter,
                       "data source client is given for MasterFiles");
         }
@@ -79,7 +79,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
             zone_config_[dns::Name(it->first)] = it->second->stringValue();
         }
     } else {
-        if (!datasrc_client) {
+        if (!datasrc_client_) {
             isc_throw(isc::InvalidParameter,
                       "data source client is missing for data source type: "
                       << datasrc_type);
