@@ -115,9 +115,9 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     checkFromText_InvalidLength("1 1 1 YQ==");
 
     // String instead of number
-    checkFromText_LexerError("foo 3 5 YmFiYWJhYmE=");
-    checkFromText_LexerError("257 foo 5 YmFiYWJhYmE=");
-    checkFromText_LexerError("257 3 foo YmFiYWJhYmE=");
+    checkFromText_LexerError("foo 3 5 YmluZDEwLmlzYy5vcmc=");
+    checkFromText_LexerError("257 foo 5 YmluZDEwLmlzYy5vcmc=");
+    checkFromText_LexerError("257 3 foo YmluZDEwLmlzYy5vcmc=");
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
