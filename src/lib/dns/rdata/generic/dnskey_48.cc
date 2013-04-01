@@ -161,6 +161,7 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
     }
 
     std::string keydata_str;
+    std::string keydata_substr;
     while (true) {
         const MasterToken& token =
             lexer.getNextToken(MasterToken::STRING, true);
@@ -171,7 +172,6 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
 
         // token is now assured to be of type STRING.
 
-        std::string keydata_substr;
         token.getString(keydata_substr);
         keydata_str.append(keydata_substr);
     }
