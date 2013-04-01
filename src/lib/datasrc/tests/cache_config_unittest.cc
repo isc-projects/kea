@@ -99,6 +99,11 @@ TEST_F(CacheConfigTest, badConstructMasterFiles) {
                              *Element::fromJSON("{\"cache-enable\": false,"
                                                 " \"params\": {}}"), true),
                  CacheConfigError);
+    // cache enabled but not "allowed"
+    EXPECT_THROW(CacheConfig("MasterFiles", 0,
+                             *Element::fromJSON("{\"cache-enable\": false,"
+                                                " \"params\": {}}"), false),
+                 CacheConfigError);
     // type error for cache-enable
     EXPECT_THROW(CacheConfig("MasterFiles", 0,
                              *Element::fromJSON("{\"cache-enable\": 1,"
@@ -162,8 +167,13 @@ TEST_F(CacheConfigTest, constructWithMock) {
     const ConstElementPtr config_elem_disabled(
         Element::fromJSON("{\"cache-enable\": false,"
                           " \"cache-zones\": [\"example.com\"]}"));
-    EXPECT_TRUE(CacheConfig("mock", &mock_client_, *config_elem_disabled, true).
-                getZoneConfig().empty());
+    EXPECT_FALSE(CacheConfig("mock", &mock_client_, *config_elem_disabled,
+                             true).isEnabled());
+    // enabled but not "allowed".  same effect.
+    EXPECT_FALSE(CacheConfig("mock", &mock_client_,
+                             *Element::fromJSON("{\"cache-enable\": true,"
+                                                " \"cache-zones\": []}"),
+                             false).isEnabled());
 }
 
 TEST_F(CacheConfigTest, badConstructWithMock) {
