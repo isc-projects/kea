@@ -169,10 +169,7 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
             break;
         }
 
-        if (token.getType() != MasterToken::STRING) {
-             isc_throw(InvalidRdataText,
-                       "Non-string token found when parsing key data");
-        }
+        // token is now assured to be of type STRING.
 
         std::string keydata_substr;
         token.getString(keydata_substr);
