@@ -2140,20 +2140,24 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         super().setUp()
         # clear all statistics counters before each test
         self.conn._counters.clear_all()
+        # fake datetime
+        self._orig_datetime = isc.statistics.counters.datetime
+        self._orig_start_timer = isc.statistics.counters._start_timer
+        time1 = datetime(2000, 1, 1, 0, 0, 0, 0)
+        time2 = datetime(2000, 1, 1, 0, 0, 0, 1)
+        class fakedatatime:
+            @classmethod
+            def now(cls): return time2
+        isc.statistics.counters.datetime = fakedatatime
+        isc.statistics.counters._start_timer = lambda : time1
+        delta = time2 - time1
+        self._const_sec = round(delta.days * 86400 + delta.seconds +
+                                delta.microseconds * 1E-6, 6)
 
-    def _set_start_time(self):
-        """sets _start_time to datetime of current time"""
-        self._start_time = datetime.now()
-
-    def _get_dur_time(self):
-        """Returns duration time between _start_time and current. A
-        returned value is float type as second. It is rounded at six
-        decimal places. After all it deletes _start_time."""
-        delta = datetime.now() - self._start_time
-        ret = round(delta.days * 86400 + delta.seconds +
-                    delta.microseconds * 1E-6, 6)
-        del self._start_time
-        return ret
+    def tearDown(self):
+        super().tearDown()
+        isc.statistics.counters.datetime = self._orig_datetime
+        isc.statistics.counters._start_timer = self._orig_start_timer
 
     def _check_init_statistics(self):
         '''checks exception being raised if not incremented statistics
@@ -2174,12 +2178,7 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
                                           TEST_ZONE_NAME_STR,
                                           name)
             msg = '%s is expected %s but actually %s' % (name, exp, act)
-            if name == 'last_axfr_duration' \
-                    or name == 'last_ixfr_duration':
-                # compare at 3 decimal places
-                self.assertAlmostEqual(exp, act, places=3, msg=msg)
-            else:
-                self.assertEqual(exp, act, msg=msg)
+            self.assertEqual(exp, act, msg=msg)
 
 class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     '''Xfrin AXFR tests for IPv4 to check statistics counters'''
@@ -2193,12 +2192,11 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     def test_do_xfrin(self):
         self.conn.response_generator = self._create_normal_response_data
         self._check_init_statistics()
-        self._set_start_time()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self._check_updated_statistics({'axfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
                                         'last_axfr_duration':
-                                            self._get_dur_time()})
+                                            self._const_sec})
 
     def test_do_soacheck_uptodate(self):
         self.soa_response_params['answers'] = [begin_soa_rrset]
@@ -2219,12 +2217,12 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
                 answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
         self.conn.response_generator = create_ixfr_response
         self._check_init_statistics()
-        self._set_start_time()
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
         self._check_updated_statistics({'ixfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
                                         'last_ixfr_duration':
-                                            self._get_dur_time()})
+                                            self._const_sec})
+
 
     def test_do_xfrin_fail(self):
         def create_ixfr_response():
