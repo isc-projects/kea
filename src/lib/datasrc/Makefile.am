@@ -39,7 +39,7 @@ libb10_datasrc_la_SOURCES += master_loader_callbacks.h
 libb10_datasrc_la_SOURCES += master_loader_callbacks.cc
 libb10_datasrc_la_SOURCES += rrset_collection_base.h rrset_collection_base.cc
 libb10_datasrc_la_SOURCES += zone_loader.h zone_loader.cc
-libb10_datasrc_la_SOURCES += zone_table_config.h zone_table_config.cc
+libb10_datasrc_la_SOURCES += cache_config.h cache_config.cc
 nodist_libb10_datasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libb10_datasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 

@@ -58,7 +58,8 @@ class CacheConfig {
 public:
     CacheConfig(const std::string& datasrc_type,
                 const DataSourceClient* datasrc_client,
-                const data::Element& datasrc_conf);
+                const data::Element& datasrc_conf,
+                bool allowed);
 
     /// \brief Return if the cache is enabled.
     ///
