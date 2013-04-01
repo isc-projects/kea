@@ -94,10 +94,7 @@ buildBitmapsFromLexer(const char* const rrtype_name,
             break;
         }
 
-        if (token.getType() != MasterToken::STRING) {
-             isc_throw(InvalidRdataText,
-                       "Non-string token found when parsing key data");
-        }
+        // token is now assured to be of type STRING.
 
         have_rrtypes = true;
         std::string type_str;
