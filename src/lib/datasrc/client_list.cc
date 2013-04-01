@@ -133,16 +133,17 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             const DataSourcePair dsrc_pair = getDataSourceClient(type,
                                                                  paramConf);
 
-            internal::ZoneTableConfig ztconfig(type, dsrc_pair.first, *dconf);
+            internal::CacheConfig cache_conf(type, dsrc_pair.first, *dconf);
             shared_ptr<ZoneTableSegment> ztable_segment;
-            if (ztconfig.isEnabled()) {
-                ztable_segment.reset(ZoneTableSegment::create(rrclass_,
-                                                              ztconfig));
+            if (cache_conf.isEnabled()) {
+                ztable_segment.reset(ZoneTableSegment::create(
+                                         rrclass_,
+                                         cache_conf.getSegmentType()));
             }
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
                                                       allow_cache &&
-                                                      ztconfig.isEnabled(),
+                                                      cache_conf.isEnabled(),
                                                       rrclass_, ztable_segment,
                                                       name));
 
@@ -212,7 +213,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
-    } catch (const internal::ZoneTableConfigError& ex) {
+    } catch (const internal::CacheConfigError& ex) {
         // convert to the "public" exception type.
         isc_throw(ConfigurationError, ex.what());
     }
