@@ -15,6 +15,8 @@
 #ifndef DATASRC_ZONE_TABLE_CONFIG_H
 #define DATASRC_ZONE_TABLE_CONFIG_H
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <cc/data.h>
 #include <datasrc/memory/load_action.h>
@@ -27,6 +29,14 @@ namespace datasrc {
 class DataSourceClient;
 
 namespace internal {
+
+/// \brief Exception thrown for configuration error related to zone table.
+class ZoneTableConfigError : public Exception {
+public:
+    ZoneTableConfigError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
 
 /// This class is intended to be an interface between DataSourceClient and
 /// memory ZoneTableSegment implementations.  This class understands the
@@ -50,7 +60,14 @@ public:
                     const DataSourceClient* datasrc_client,
                     const data::Element& datasrc_conf);
 
+    /// \brief Return if the cache is enabled.
+    ///
+    /// \throw None
+    bool isEnabled() const { return (enabled_); }
+
     /// \brief Return the memory segment type to be used for the zone table.
+    ///
+    /// \throw None
     const std::string& getSegmentType() const { return (segment_type_); }
 
     /// Return corresponding \c LoadAction for the given name of zone.
@@ -68,6 +85,7 @@ public:
     const Zones& getZoneConfig() const { return (zone_config_); }
 
 private:
+    const bool enabled_; // if the use of in-memory zone table is enabled
     const std::string segment_type_;
     // client of underlying data source, will be NULL for MasterFile datasrc
     const DataSourceClient* datasrc_client_;

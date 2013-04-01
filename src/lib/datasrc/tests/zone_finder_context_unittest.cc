@@ -121,7 +121,8 @@ protected:
     ZoneFinderContextTest() :
         qclass_(RRClass::IN()), qzone_("example.org"),
         ztconfig_("MasterFiles", 0, *Element::fromJSON(
-                      "{\"params\": "
+                      "{\"cache-enable\": true,"
+                      " \"params\": "
                       " {\"" + qzone_.toText() + "\": "
                       "  \"" + TEST_ZONE_FILE + "\"}"
                       "}"))

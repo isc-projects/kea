@@ -25,6 +25,7 @@ using namespace isc::data;
 using namespace isc::dns;
 using isc::datasrc::unittest::MockDataSourceClient;
 using isc::datasrc::internal::ZoneTableConfig;
+using isc::datasrc::internal::ZoneTableConfigError;
 
 namespace {
 
@@ -39,10 +40,12 @@ protected:
     ZoneTableConfigTest() :
         mock_client_(zones),
         master_config_(Element::fromJSON(
-                           "{\"params\": "
+                           "{\"cache-enable\": true,"
+                           " \"params\": "
                            "  {\".\": \"" TEST_DATA_DIR "/root.zone\"}"
                            "}")),
-        mock_config_(Element::fromJSON("{\"cache-zones\": [\".\"]}"))
+        mock_config_(Element::fromJSON("{\"cache-enable\": true,"
+                                       " \"cache-zones\": [\".\"]}"))
     {}
 
     MockDataSourceClient mock_client_;
@@ -64,7 +67,8 @@ TEST_F(ZoneTableConfigTest, constructMasterFiles) {
     // only check the size of getZoneConfig.  Note that the constructor
     // doesn't check if the file exists, so they can be anything.
     const ConstElementPtr config_elem_multi(
-        Element::fromJSON("{\"params\": "
+        Element::fromJSON("{\"cache-enable\": true,"
+                          " \"params\": "
                           "{\"example.com\": \"file1\","
                           " \"example.org\": \"file2\","
                           " \"example.info\": \"file3\"}"
@@ -74,36 +78,59 @@ TEST_F(ZoneTableConfigTest, constructMasterFiles) {
 
     // A bit unusual, but acceptable case: empty parameters, so no zones.
     EXPECT_TRUE(ZoneTableConfig("MasterFiles", 0,
-                                *Element::fromJSON("{\"params\": {}}")).
+                                *Element::fromJSON("{\"cache-enable\": true,"
+                                                   " \"params\": {}}")).
                 getZoneConfig().empty());
 }
 
 TEST_F(ZoneTableConfigTest, badConstructMasterFiles) {
     // no "params"
-    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0, *Element::fromJSON("{}")),
+    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0,
+                                 *Element::fromJSON("{\"cache-enable\": "
+                                                    "true}")),
+                 isc::data::TypeError);
+
+    // no "cache-enable"
+    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0,
+                                 *Element::fromJSON("{\"params\": {}}")),
+                 ZoneTableConfigError);
+    // cache disabled for MasterFiles
+    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0,
+                                 *Element::fromJSON("{\"cache-enable\": "
+                                                    " false,"
+                                                    " \"params\": {}}")),
+                 ZoneTableConfigError);
+    // type error for cache-enable
+    EXPECT_THROW(ZoneTableConfig("MasterFiles", 0,
+                                 *Element::fromJSON("{\"cache-enable\": 1,"
+                                                    " \"params\": {}}")),
                  isc::data::TypeError);
 
     // "params" is not a map
     EXPECT_THROW(ZoneTableConfig("MasterFiles", 0,
-                                 *Element::fromJSON("{\"params\": []}")),
+                                 *Element::fromJSON("{\"cache-enable\": true,"
+                                                    " \"params\": []}")),
                  isc::data::TypeError);
 
     // bogus zone name
     const ConstElementPtr bad_config(Element::fromJSON(
-                                         "{\"params\": "
+                                         "{\"cache-enable\": true,"
+                                         " \"params\": "
                                          "{\"bad..name\": \"file1\"}}"));
     EXPECT_THROW(ZoneTableConfig("MasterFiles", 0, *bad_config),
                  isc::dns::EmptyLabel);
 
     // file name is not a string
     const ConstElementPtr bad_config2(Element::fromJSON(
-                                          "{\"params\": {\".\": 1}}"));
+                                          "{\"cache-enable\": true,"
+                                          " \"params\": {\".\": 1}}"));
     EXPECT_THROW(ZoneTableConfig("MasterFiles", 0, *bad_config2),
                  isc::data::TypeError);
 
     // Specify data source client (must be null for MasterFiles)
     EXPECT_THROW(ZoneTableConfig("MasterFiles", &mock_client_,
-                                 *Element::fromJSON("{\"params\": {}}")),
+                                 *Element::fromJSON("{\"cache-enable\": true,"
+                                                    " \"params\": {}}")),
                  isc::InvalidParameter);
 }
 
@@ -115,10 +142,12 @@ TEST_F(ZoneTableConfigTest, constructWithMock) {
     EXPECT_EQ(1, ztconf.getZoneConfig().size());
     EXPECT_EQ(Name::ROOT_NAME(), ztconf.getZoneConfig().begin()->first);
     EXPECT_EQ("", ztconf.getZoneConfig().begin()->second);
+    EXPECT_TRUE(ztconf.isEnabled());
 
     // Configure with multiple zones.
     const ConstElementPtr config_elem_multi(
-        Element::fromJSON("{\"cache-zones\": "
+        Element::fromJSON("{\"cache-enable\": true,"
+                          " \"cache-zones\": "
                           "[\"example.com\", \"example.org\",\"example.info\"]"
                           "}"));
     EXPECT_EQ(3, ZoneTableConfig("mock", &mock_client_, *config_elem_multi).
@@ -126,35 +155,48 @@ TEST_F(ZoneTableConfigTest, constructWithMock) {
 
     // Empty
     EXPECT_TRUE(ZoneTableConfig("mock", &mock_client_,
-                                *Element::fromJSON("{\"cache-zones\": []}")).
+                                *Element::fromJSON("{\"cache-enable\": true,"
+                                                   " \"cache-zones\": []}")).
+                getZoneConfig().empty());
+
+    // disabled.  value of cache-zones are ignored.
+    const ConstElementPtr config_elem_disabled(
+        Element::fromJSON("{\"cache-enable\": false,"
+                          " \"cache-zones\": [\"example.com\"]}"));
+    EXPECT_TRUE(ZoneTableConfig("mock", &mock_client_, *config_elem_disabled).
                 getZoneConfig().empty());
 }
 
 TEST_F(ZoneTableConfigTest, badConstructWithMock) {
     // no "cache-zones" (may become valid in future, but for now "notimp")
     EXPECT_THROW(ZoneTableConfig("mock", &mock_client_,
-                                 *Element::fromJSON("{}")),
+                                 *Element::fromJSON(
+                                     "{\"cache-enable\": true}")),
                  isc::NotImplemented);
 
     // "cache-zones" is not a list
     EXPECT_THROW(ZoneTableConfig("mock", &mock_client_,
-                                 *Element::fromJSON("{\"cache-zones\": {}}")),
+                                 *Element::fromJSON("{\"cache-enable\": true,"
+                                                    " \"cache-zones\": {}}")),
                  isc::data::TypeError);
 
     // "cache-zone" entry is not a string
     EXPECT_THROW(ZoneTableConfig("mock", &mock_client_,
-                                 *Element::fromJSON("{\"cache-zones\": [1]}")),
+                                 *Element::fromJSON("{\"cache-enable\": true,"
+                                                    " \"cache-zones\": [1]}")),
                  isc::data::TypeError);
 
     // bogus zone name
     const ConstElementPtr bad_config(Element::fromJSON(
-                                         "{\"cache-zones\": [\"bad..\"]}"));
+                                         "{\"cache-enable\": true,"
+                                         " \"cache-zones\": [\"bad..\"]}"));
     EXPECT_THROW(ZoneTableConfig("mock", &mock_client_, *bad_config),
                  isc::dns::EmptyLabel);
 
     // duplicate zone name
     const ConstElementPtr dup_config(Element::fromJSON(
-                                         "{\"cache-zones\": "
+                                         "{\"cache-enable\": true,"
+                                         " \"cache-zones\": "
                                          " [\"example\", \"example\"]}"));
     EXPECT_THROW(ZoneTableConfig("mock", &mock_client_, *dup_config),
                  isc::InvalidParameter);
@@ -171,13 +213,15 @@ TEST_F(ZoneTableConfigTest, getSegmentType) {
                               *master_config_).getSegmentType());
 
     // If we explicitly configure it, that value should be used.
-    ConstElementPtr config(Element::fromJSON("{\"cache-type\": \"mapped\","
+    ConstElementPtr config(Element::fromJSON("{\"cache-enable\": true,"
+                                             " \"cache-type\": \"mapped\","
                                              " \"params\": {}}" ));
     EXPECT_EQ("mapped",
               ZoneTableConfig("MasterFiles", 0, *config).getSegmentType());
 
     // Wrong types: should be rejected at construction time
-    ConstElementPtr badconfig(Element::fromJSON("{\"cache-type\": 1,"
+    ConstElementPtr badconfig(Element::fromJSON("{\"cache-enable\": true,"
+                                                " \"cache-type\": 1,"
                                                 " \"params\": {}}"));
     EXPECT_THROW(ZoneTableConfig("MasterFiles", 0, *badconfig),
                  isc::data::TypeError);

@@ -305,7 +305,7 @@ protected:
 
         // (re)configure zone table, then (re)construct the in-memory client
         // with it.
-        string ztconf_txt = "{\"params\": {";
+        string ztconf_txt = "{\"cache-enable\": true, \"params\": {";
         if (filename) {
             ztconf_txt += "\"" + zone.toText() + "\": \"" + filename + "\"";
         }
