@@ -48,28 +48,18 @@ namespace datasrc {
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
-    const DataSourceClientContainerPtr& container, bool has_cache,
-    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
-    const string& name) :
+    const DataSourceClientContainerPtr& container,
+    boost::shared_ptr<internal::CacheConfig> cache_conf,
+    const RRClass& rrclass, const string& name) :
     data_src_client_(data_src_client),
     container_(container),
-    name_(name)
+    name_(name),
+    cache_conf_(cache_conf)
 {
-    if (has_cache) {
-        cache_.reset(new InMemoryClient(segment, rrclass));
-        ztable_segment_ = segment;
-    }
-}
-
-ConfigurableClientList::DataSourceInfo::DataSourceInfo(
-    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
-    bool has_cache, const string& name) :
-    data_src_client_(NULL),
-    name_(name)
-{
-    if (has_cache) {
-        cache_.reset(new InMemoryClient(segment, rrclass));
-        ztable_segment_ = segment;
+    if (cache_conf_ && cache_conf_->isEnabled()) {
+        ztable_segment_.reset(ZoneTableSegment::create(
+                                  rrclass, cache_conf_->getSegmentType()));
+        cache_.reset(new InMemoryClient(ztable_segment_, rrclass));
     }
 }
 
@@ -129,21 +119,15 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 continue;
             }
 
-            internal::CacheConfig cache_conf(type, dsrc_pair.first, *dconf,
-                                             allow_cache);
-            shared_ptr<ZoneTableSegment> ztable_segment;
-            if (cache_conf.isEnabled()) {
-                ztable_segment.reset(ZoneTableSegment::create(
-                                         rrclass_,
-                                         cache_conf.getSegmentType()));
-            }
+            boost::shared_ptr<internal::CacheConfig> cache_conf(
+                new internal::CacheConfig(type, dsrc_pair.first, *dconf,
+                                          allow_cache));
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
-                                                      cache_conf.isEnabled(),
-                                                      rrclass_, ztable_segment,
+                                                      cache_conf, rrclass_,
                                                       name));
 
-            if (cache_conf.isEnabled()) {
+            if (cache_conf->isEnabled()) {
                 // List the zones we are loading
                 vector<string> zones_origins;
                 if (type == "MasterFiles") {
