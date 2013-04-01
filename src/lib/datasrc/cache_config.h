@@ -21,6 +21,8 @@
 #include <cc/data.h>
 #include <datasrc/memory/load_action.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <map>
 #include <string>
 
@@ -54,7 +56,7 @@ public:
 /// defined in an "internal" namespace, and isn't expected to be used by
 /// other classes or user applications.  Likewise, this file is not expected
 /// to be installed with other publicly usable header files.
-class CacheConfig {
+class CacheConfig : boost::noncopyable {
 public:
     CacheConfig(const std::string& datasrc_type,
                 const DataSourceClient* datasrc_client,
@@ -71,25 +73,23 @@ public:
     /// \throw None
     const std::string& getSegmentType() const { return (segment_type_); }
 
-    /// Return corresponding \c LoadAction for the given name of zone.
-    /// It would return a different functor depending on the details of the
-    /// underlying data source.
-    memory::LoadAction getLoadAction(const dns::Name& zone_name) const;
-
     /// This allows ZoneTableSegment to iterate over all zones to be loaded
     /// in to memory.  In this initial implementation we directly give
     /// read-only access to the underlying map to minimize the diff, but
     /// it's not clean in terms of encapsulation and performance (eventually
     /// we may have to look up in the underlying data source to get the list
     /// of zones, in which case constructing a map can be very expensive).
-    typedef std::map<dns::Name, std::string> Zones;
-    const Zones& getZoneConfig() const { return (zone_config_); }
+    typedef std::map<dns::Name, std::string>::const_iterator ConstZoneIterator;
+    ConstZoneIterator begin() const { return (zone_config_.begin()); }
+    ConstZoneIterator end() const { return (zone_config_.end()); }
 
 private:
     const bool enabled_; // if the use of in-memory zone table is enabled
     const std::string segment_type_;
     // client of underlying data source, will be NULL for MasterFile datasrc
     const DataSourceClient* datasrc_client_;
+
+    typedef std::map<dns::Name, std::string> Zones;
     Zones zone_config_;
 };
 }

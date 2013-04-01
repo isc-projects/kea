@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include <iterator>             // for std::distance
+
 using namespace isc::datasrc;
 using namespace isc::data;
 using namespace isc::dns;
@@ -53,15 +55,15 @@ protected:
     const ConstElementPtr mock_config_; // valid config for MasterFiles
 };
 
+size_t
+countZones(const CacheConfig& cache_config) {
+    return (std::distance(cache_config.begin(), cache_config.end())); 
+}
+
 TEST_F(CacheConfigTest, constructMasterFiles) {
     // A simple case: configuring a MasterFiles table with a single zone
     const CacheConfig cache_conf("MasterFiles", 0, *master_config_, true);
-    // getZoneConfig() returns a map containing exactly one entry
-    // corresponding to the root zone information in the configuration.
-    EXPECT_EQ(1, cache_conf.getZoneConfig().size());
-    EXPECT_EQ(Name::ROOT_NAME(), cache_conf.getZoneConfig().begin()->first);
-    EXPECT_EQ(TEST_DATA_DIR "/root.zone",
-              cache_conf.getZoneConfig().begin()->second);
+    EXPECT_EQ(1, countZones(cache_conf));
 
     // With multiple zones.  There shouldn't be anything special, so we
     // only check the size of getZoneConfig.  Note that the constructor
@@ -73,14 +75,14 @@ TEST_F(CacheConfigTest, constructMasterFiles) {
                           " \"example.org\": \"file2\","
                           " \"example.info\": \"file3\"}"
                           "}"));
-    EXPECT_EQ(3, CacheConfig("MasterFiles", 0, *config_elem_multi, true).
-              getZoneConfig().size());
+    EXPECT_EQ(3, countZones(CacheConfig("MasterFiles", 0, *config_elem_multi,
+                                        true)));
 
     // A bit unusual, but acceptable case: empty parameters, so no zones.
-    EXPECT_TRUE(CacheConfig("MasterFiles", 0,
-                            *Element::fromJSON("{\"cache-enable\": true,"
-                                               " \"params\": {}}"), true).
-                getZoneConfig().empty());
+    EXPECT_EQ(0, countZones(
+                  CacheConfig("MasterFiles", 0,
+                              *Element::fromJSON("{\"cache-enable\": true,"
+                                                 " \"params\": {}}"), true)));
 }
 
 TEST_F(CacheConfigTest, badConstructMasterFiles) {
@@ -143,9 +145,7 @@ TEST_F(CacheConfigTest, constructWithMock) {
 
     // Configure with a single zone.
     const CacheConfig cache_conf("mock", &mock_client_, *mock_config_, true);
-    EXPECT_EQ(1, cache_conf.getZoneConfig().size());
-    EXPECT_EQ(Name::ROOT_NAME(), cache_conf.getZoneConfig().begin()->first);
-    EXPECT_EQ("", cache_conf.getZoneConfig().begin()->second);
+    EXPECT_EQ(1, countZones(cache_conf));
     EXPECT_TRUE(cache_conf.isEnabled());
 
     // Configure with multiple zones.
@@ -154,14 +154,15 @@ TEST_F(CacheConfigTest, constructWithMock) {
                           " \"cache-zones\": "
                           "[\"example.com\", \"example.org\",\"example.info\"]"
                           "}"));
-    EXPECT_EQ(3, CacheConfig("mock", &mock_client_, *config_elem_multi, true).
-              getZoneConfig().size());
+    EXPECT_EQ(3, countZones(CacheConfig("mock", &mock_client_,
+                                        *config_elem_multi, true)));
 
     // Empty
-    EXPECT_TRUE(CacheConfig("mock", &mock_client_,
-                            *Element::fromJSON("{\"cache-enable\": true,"
-                                               " \"cache-zones\": []}"), true).
-                getZoneConfig().empty());
+    EXPECT_EQ(0, countZones(
+                  CacheConfig("mock", &mock_client_,
+                              *Element::fromJSON("{\"cache-enable\": true,"
+                                                 " \"cache-zones\": []}"),
+                              true)));
 
     // disabled.  value of cache-zones are ignored.
     const ConstElementPtr config_elem_disabled(
