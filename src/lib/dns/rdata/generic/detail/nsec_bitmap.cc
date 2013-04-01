@@ -86,6 +86,7 @@ buildBitmapsFromLexer(const char* const rrtype_name,
     memset(bitmap, 0, sizeof(bitmap));
 
     bool have_rrtypes = false;
+    std::string type_str;
     while (true) {
         const MasterToken& token =
             lexer.getNextToken(MasterToken::STRING, true);
@@ -97,7 +98,6 @@ buildBitmapsFromLexer(const char* const rrtype_name,
         // token is now assured to be of type STRING.
 
         have_rrtypes = true;
-        std::string type_str;
         token.getString(type_str);
         try {
             const int code = RRType(type_str).getCode();
