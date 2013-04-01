@@ -321,12 +321,12 @@ not contain RRs the requested type.  AN NXRRSET indication is returned.
 A debug message indicating that a query for the given name and RR type is being
 processed.
 
-% DATASRC_LIST_NOT_CACHED zone %1/%2 not cached, cache disabled globally. Will not be available.
-The process disabled caching of RR data completely. However, the given zone
-is provided as a master file and it can be served from memory cache only.
-Therefore, the zone will not be available for this process. If this is
-a problem, you should move the zone to some database backend (sqlite3, for
-example) and use it from there.
+% DATASRC_LIST_NOT_CACHED zones in data source %1 for class %2 not cached, cache disabled globally. Will not be available.
+The process disabled caching of RR data completely. However, this data source
+is provided from a master file and it can be served from memory cache only.
+Therefore, the entire data source will not be available for this process. If
+this is a problem, you should configure the zones of that data source to some
+database backend (sqlite3, for example) and use it from there.
 
 % DATASRC_LOAD_FROM_FILE_ERROR Error loading zone %1: %2
 An error was found in the zone data when it was being loaded from a

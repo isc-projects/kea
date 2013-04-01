@@ -118,13 +118,12 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             }
 
             // Create a client for the underling data source via factory.
-            // (If it's our internal type of data source, this is essentially
-            // no-op).
+            // If it's our internal type of data source, this is essentially
+            // no-op.  In the latter case, it's of no use unless cache is
+            // allowed; we simply skip building it in that case.
             const DataSourcePair dsrc_pair = getDataSourceClient(type,
                                                                  paramConf);
             if (!allow_cache && !dsrc_pair.first) {
-                // We're not going to load these zones. Issue warnings about
-                // it.
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
                     arg(name).arg(rrclass_);
                 continue;
