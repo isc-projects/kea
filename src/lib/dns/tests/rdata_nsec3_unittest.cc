@@ -46,8 +46,9 @@ class Rdata_NSEC3_Test : public RdataTest {
 protected:
     Rdata_NSEC3_Test() :
         nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                  "NS SOA RRSIG DNSKEY NSEC3PARAM"),
-        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A"),
+                  "A NS SOA"),
+        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA"),
+        nsec3_notype_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"),
         rdata_nsec3(nsec3_txt)
     {}
 
@@ -74,6 +75,7 @@ protected:
 
     const string nsec3_txt;
     const string nsec3_nosalt_txt;
+    const string nsec3_notype_txt;
     const generic::NSEC3 rdata_nsec3;
 };
 
@@ -87,47 +89,50 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     // of the original to 8 characters, so 260 * 8 / 5 is the smallest length
     // of the encoded string that exceeds the max and doesn't require padding.
     checkFromText_InvalidText("1 1 1 D399EAAB " + string((260 * 8) / 5, '0') +
-                              " NS");
+                              " A NS SOA");
 
     // Type bitmap is empty.  it's possible and allowed for NSEC3.
-    EXPECT_NO_THROW(generic::NSEC3(
-                        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"));
+    EXPECT_NO_THROW(const generic::NSEC3 rdata_notype_nsec3(nsec3_notype_txt));
 
     // Empty salt is also okay.
     EXPECT_NO_THROW(const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt));
 
     // Bad type mnemonics
-    checkFromText_InvalidText("1 1 1 ADDAFEEE 0123456789ABCDEFGHIJKLMNOPQRSTUV "
+    checkFromText_InvalidText("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                               "BIFF POW SPOON");
 
     // Bad base32hex
-    checkFromText_BadValue("1 1 1 ADDAFEEE "
+    checkFromText_BadValue("1 1 1 D399EAAB "
                            "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA");
 
     // Hash algorithm out of range
-    checkFromText_InvalidText("256 1 1 ADDAFEEE "
-                              "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA");
+    checkFromText_InvalidText("256 1 1 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 
     // Flags out of range
-    checkFromText_InvalidText("1 256 1 ADDAFEEE "
-                              "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA");
+    checkFromText_InvalidText("1 256 1 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 
     // Iterations out of range
-    checkFromText_InvalidText("1 1 65536 ADDAFEEE "
-                              "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA");
+    checkFromText_InvalidText("1 1 65536 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 
-    // Space is not allowed in salt (this actually causes the Base64
+    // Space is not allowed in salt (this actually causes the Base32
     // decoder to throw)
     checkFromText_BadValue("1 1 1 D399 EAAB H9RSFB7FPF2L8"
-                           "HG35CMPC765TDK23RP6");
+                           "HG35CMPC765TDK23RP6 A NS SOA");
 
-    // Next hash shouldn't be padded
-    checkFromText_InvalidText("1 1 1 ADDAFEEE CPNMU=== A NS SOA");
+    // Next hash must not contain padding (trailing '=' characters)
+    checkFromText_InvalidText("1 1 1 D399EAAB "
+                              "AAECAwQFBgcICQoLDA0ODw== A NS SOA");
 
     // String instead of number
-    checkFromText_LexerError("foo 1 1 ADDAFEEECPNMU=== A NS SOA");
-    checkFromText_LexerError("1 foo 1 ADDAFEEECPNMU=== A NS SOA");
-    checkFromText_LexerError("1 1 foo ADDAFEEECPNMU=== A NS SOA");
+    checkFromText_LexerError("foo 1 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+    checkFromText_LexerError("1 foo 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+    checkFromText_LexerError("1 1 foo D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
