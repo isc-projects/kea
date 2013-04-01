@@ -2201,10 +2201,14 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     def test_do_soacheck_uptodate(self):
         self.soa_response_params['answers'] = [begin_soa_rrset]
         self.conn.response_generator = self._create_soa_response_data
+        self.conn._tsig_key = TSIG_KEY
+        self.conn._tsig_ctx_creator = \
+            lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
+        self.conn.response_generator = self._create_normal_response_data
         self._check_init_statistics()
-        self.assertEqual(self.conn.do_xfrin(True), XFRIN_OK)
-        self._check_updated_statistics({'soaout' + self.ipver: 1,
-                                        'xfrsuccess': 1})
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+        self._check_updated_statistics({'axfrreq' + self.ipver: 1,
+                                        'xfrfail': 1})
 
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
@@ -2223,20 +2227,6 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
                                         'last_ixfr_duration':
                                             self._const_sec})
 
-
-    def test_do_xfrin_fail(self):
-        def create_ixfr_response():
-            self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.IXFR)],
-                answers=[soa_rrset, begin_soa_rrset, soa_rrset,
-                         self._create_soa('1235')])
-        self.conn.response_generator = create_ixfr_response
-        self._check_init_statistics()
-        self.assertEqual(XFRIN_FAIL, self.conn.do_xfrin(False, RRType.IXFR))
-        self._check_updated_statistics({'ixfrreq' + self.ipver: 1,
-                                        'xfrfail': 1})
-
     def test_do_xfrin_uptodate(self):
         def create_response():
             self.conn.reply_data = self.conn.create_response_data(
@@ -2247,7 +2237,7 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self._check_init_statistics()
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
         self._check_updated_statistics({'ixfrreq' + self.ipver: 1,
-                                        'xfrsuccess': 1})
+                                        'xfrfail': 1})
 
 class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
     '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
