@@ -131,9 +131,6 @@ private:
     /// \brief Lock the mutex
     ///
     /// This method blocks until the mutex can be locked.
-    ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
     void lock();
 
     /// \brief Try to lock the mutex
@@ -141,16 +138,10 @@ private:
     /// This method doesn't block and returns immediately with a status
     /// on whether the lock operation was successful.
     ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
-    ///
     /// \return true if the lock was successful, false otherwise.
     bool tryLock();
 
     /// \brief Unlock the mutex
-    ///
-    /// Please consider not using this method directly and instead using
-    /// a Mutex::Locker object instead.
     void unlock();
 
 private:
