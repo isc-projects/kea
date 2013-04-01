@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/zone_table_config.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/load_action.h>
 #include <dns/name.h>
@@ -48,8 +48,9 @@ getSegmentTypeFromConf(const Element& conf) {
 
 CacheConfig::CacheConfig(const std::string& datasrc_type,
                          const DataSourceClient* datasrc_client,
-                         const Element& datasrc_conf) :
-    enabled_(getEnabledFromConf(datasrc_conf)),
+                         const Element& datasrc_conf,
+                         bool allowed) :
+    enabled_(allowed && getEnabledFromConf(datasrc_conf)),
     segment_type_(getSegmentTypeFromConf(datasrc_conf)),
     datasrc_client_(datasrc_client)
 {
@@ -62,6 +63,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
             isc_throw(isc::InvalidParameter,
                       "data source client is given for MasterFiles");
         }
+
         if (!enabled_) {
             isc_throw(CacheConfigError,
                       "The cache must be enabled for the MasterFiles type");
