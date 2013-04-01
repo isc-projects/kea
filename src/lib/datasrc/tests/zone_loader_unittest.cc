@@ -14,7 +14,6 @@
 
 #include <datasrc/zone_loader.h>
 #include <datasrc/data_source.h>
-#include <datasrc/zone_table_config.h>
 #include <datasrc/rrset_collection_base.h>
 
 #include <datasrc/memory/zone_table_segment.h>
@@ -301,19 +300,11 @@ protected:
         // Cleanup the existing data in the right order
         source_client_.reset();
         ztable_segment_.reset();
-        ztconfig_.reset();
 
         // (re)configure zone table, then (re)construct the in-memory client
         // with it.
-        string ztconf_txt = "{\"cache-enable\": true, \"params\": {";
-        if (filename) {
-            ztconf_txt += "\"" + zone.toText() + "\": \"" + filename + "\"";
-        }
-        ztconf_txt += "}}";
-        ztconfig_.reset(new internal::ZoneTableConfig(
-                            "MasterFiles", 0, *Element::fromJSON(ztconf_txt)));
         ztable_segment_.reset(memory::ZoneTableSegment::create(rrclass_,
-                                                               *ztconfig_));
+                                                               "local"));
         source_client_.reset(new memory::InMemoryClient(ztable_segment_,
                                                         rrclass_));
         if (filename) {
@@ -325,8 +316,6 @@ private:
     // This is because of the in-memory client. We use it to read data
     // from. It is still easier than setting up sqlite3 client, since
     // we have this one in the linked library.
-
-    boost::scoped_ptr<internal::ZoneTableConfig> ztconfig_;
 
     // FIXME: We should be destroying it by ZoneTableSegment::destroy.
     // But the shared pointer won't let us, will it?

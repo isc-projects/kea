@@ -14,7 +14,6 @@
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
-#include <datasrc/zone_table_config.h>
 
 #include <string>
 
@@ -25,19 +24,15 @@ namespace datasrc {
 namespace memory {
 
 ZoneTableSegment*
-ZoneTableSegment::create(const RRClass& rrclass,
-                         const internal::ZoneTableConfig& config)
-{
-    const std::string& sgmt_type = config.getSegmentType();
-
+ZoneTableSegment::create(const RRClass& rrclass, const std::string& type) {
     // This will be a few sequences of if-else and hardcoded.  Not really
     // sophisticated, but we don't expect to have too many types at the moment.
     // Until that it becomes a real issue we won't be too smart.
-    if (sgmt_type == "local") {
+    if (type == "local") {
         return (new ZoneTableSegmentLocal(rrclass));
     }
     isc_throw(UnknownSegmentType, "Zone table segment type not supported: "
-              << sgmt_type);
+              << type);
 }
 
 void

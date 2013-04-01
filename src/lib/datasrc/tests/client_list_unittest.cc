@@ -16,7 +16,6 @@
 #include <datasrc/client.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/data_source.h>
-#include <datasrc/zone_table_config.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_finder.h>
@@ -120,10 +119,7 @@ public:
             "   \"params\": [\"example.org\", \"example.com\", "
             "                \"noiter.org\", \"null.org\"]"
             "}]")),
-        ztconfig_("MasterFiles", 0,
-                  *Element::fromJSON("{\"cache-enable\": true,"
-                                     " \"params\": {}}")),
-        ztable_segment_(ZoneTableSegment::create(rrclass_, ztconfig_))
+        ztable_segment_(ZoneTableSegment::create(rrclass_, "local"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
@@ -236,7 +232,6 @@ public:
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_, config_elem_zones_;
-    const internal::ZoneTableConfig ztconfig_;
     shared_ptr<ZoneTableSegment> ztable_segment_;
 };
 
