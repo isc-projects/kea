@@ -325,7 +325,7 @@ What you are expected to do is as follows:
   examples.
 """
 
-import configparser, re, time, socket, sys
+import configparser, re, time, socket, sys, base64
 from datetime import datetime
 from optparse import OptionParser
 
@@ -412,6 +412,11 @@ def encode_string(name, len=None):
     if type(name) is int and len is not None:
         return '%0.*x' % (len * 2, name)
     return ''.join(['%02x' % ord(ch) for ch in name])
+
+def encode_bytes(name, len=None):
+    if type(name) is int and len is not None:
+        return '%0.*x' % (len * 2, name)
+    return ''.join(['%02x' % ch for ch in name])
 
 def count_namelabels(name):
     if name == '.':             # special case
@@ -887,6 +892,42 @@ class AFSDB(RR):
         self.dump_header(f, self.rdlen)
         f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
         f.write('%04x %s\n' % (self.subtype, server_wire))
+
+class DNSKEY(RR):
+    '''Implements rendering DNSKEY RDATA in the test data format.
+
+    Configurable parameters are as follows (see code below for the
+    default values):
+    - flags (16-bit int): The flags field.
+    - protocol (8-bit int): The protocol field.
+    - algorithm (8-bit int): The algorithm field.
+    - digest (string): The key digest field.
+    '''
+    flags = 257
+    protocol = 3
+    algorithm = 5
+    digest = 'AAECAwQFBgcICQoLDA0ODw=='
+
+    def dump(self, f):
+        decoded_digest = base64.b64decode(bytes(self.digest, 'ascii'))
+        if self.rdlen is None:
+            self.rdlen = 4 + len(decoded_digest)
+        else:
+            self.rdlen = int(self.rdlen)
+
+        self.dump_header(f, self.rdlen)
+
+        f.write('# FLAGS=%d\n' % (self.flags))
+        f.write('%04x\n' % (self.flags))
+
+        f.write('# PROTOCOL=%d\n' % (self.protocol))
+        f.write('%02x\n' % (self.protocol))
+
+        f.write('# ALGORITHM=%d\n' % (self.algorithm))
+        f.write('%02x\n' % (self.algorithm))
+
+        f.write('# DIGEST=%s\n' % (self.digest))
+        f.write('%s\n' % (encode_bytes(decoded_digest)))
 
 class NSECBASE(RR):
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for
