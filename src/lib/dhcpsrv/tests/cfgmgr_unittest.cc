@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -35,6 +36,107 @@ using namespace isc;
 using boost::scoped_ptr;
 
 namespace {
+
+// This test verifies that BooleanStorage functions properly. 
+TEST(ValueStorageTest, BooleanTesting) {
+    BooleanStorage testStore;
+
+    // verify that we can add and retrieve them
+    testStore.setParam("firstBool", false);
+    testStore.setParam("secondBool", true);
+
+    EXPECT_FALSE(testStore.getParam("firstBool"));
+    EXPECT_TRUE(testStore.getParam("secondBool"));
+
+    // verify that we can update them
+    testStore.setParam("firstBool", true);
+    testStore.setParam("secondBool", false);
+
+    EXPECT_TRUE(testStore.getParam("firstBool"));
+    EXPECT_FALSE(testStore.getParam("secondBool"));
+
+    // verify that we can delete one
+    testStore.delParam("firstBool");
+    ASSERT_THROW(testStore.getParam("firstBool"), isc::dhcp::DhcpConfigError);
+
+    // verify that the delete was safe
+    EXPECT_FALSE(testStore.getParam("secondBool"));
+
+    // verify that we can empty the list
+    testStore.clear();
+    ASSERT_THROW(testStore.getParam("secondBool"), isc::dhcp::DhcpConfigError);
+}
+
+// This test verifies that Uint32Storage functions properly. 
+TEST(ValueStorageTest, Uint32Testing) {
+    Uint32Storage testStore;
+
+    uint32_t intOne = -77;
+    uint32_t intTwo = 33;
+
+    // verify that we can add and retrieve them
+    testStore.setParam("firstInt", intOne);
+    testStore.setParam("secondInt", intTwo);
+
+    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // verify that we can update them
+    testStore.setParam("firstInt", --intOne);
+    testStore.setParam("secondInt", ++intTwo);
+
+    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // verify that we can delete one
+    testStore.delParam("firstInt");
+    ASSERT_THROW(testStore.getParam("firstInt"), isc::dhcp::DhcpConfigError);
+
+    // verify that the delete was safe
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // verify that we can empty the list
+    testStore.clear();
+    ASSERT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
+}
+
+// This test verifies that StringStorage functions properly. 
+TEST(ValueStorageTest, StringTesting) {
+    StringStorage testStore;
+
+    std::string stringOne = "seventy-seven";
+    std::string stringTwo = "thirty-three";
+
+    // verify that we can add and retrieve them
+    testStore.setParam("firstString", stringOne);
+    testStore.setParam("secondString", stringTwo);
+
+    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // verify that we can update them
+    stringOne.append("-boo");
+    stringTwo.append("-boo");
+
+    testStore.setParam("firstString", stringOne);
+    testStore.setParam("secondString", stringTwo);
+
+    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // verify that we can delete one
+    testStore.delParam("firstString");
+    ASSERT_THROW(testStore.getParam("firstString"), isc::dhcp::DhcpConfigError);
+
+    // verify that the delete was safe
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // verify that we can empty the list
+    testStore.clear();
+    ASSERT_THROW(testStore.getParam("secondString"), isc::dhcp::DhcpConfigError);
+}
+
+
 
 class CfgMgrTest : public ::testing::Test {
 public:
