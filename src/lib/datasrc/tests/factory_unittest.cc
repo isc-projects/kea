@@ -28,8 +28,6 @@ using namespace isc::datasrc;
 using namespace isc::data;
 
 std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
-const std::string STATIC_DS_FILE = TEST_DATA_DIR "/static.zone";
-const std::string STATIC_BAD_DS_FILE = TEST_DATA_DIR "/static-bad.zone";
 const std::string ROOT_ZONE_FILE = TEST_DATA_DIR "/root.zone";
 
 namespace {
@@ -164,56 +162,6 @@ TEST(FactoryTest, sqlite3ClientBadConfig) {
 TEST(FactoryTest, badType) {
     ASSERT_THROW(DataSourceClientContainer("foo", ElementPtr()),
                                            DataSourceError);
-}
-
-// Check the static data source can be loaded.
-TEST(FactoryTest, staticDS) {
-    // The only configuration is the file to load.
-    const ConstElementPtr config(new StringElement(STATIC_DS_FILE));
-    // Get the data source
-    DataSourceClientContainer dsc("static", config);
-    // And try getting something out to see if it really works.
-    DataSourceClient::FindResult
-        result(dsc.getInstance().findZone(isc::dns::Name("BIND")));
-    ASSERT_EQ(result::SUCCESS, result.code);
-    EXPECT_EQ(isc::dns::Name("BIND"), result.zone_finder->getOrigin());
-    EXPECT_EQ(isc::dns::RRClass::CH(), result.zone_finder->getClass());
-    const isc::dns::ConstRRsetPtr
-        version(result.zone_finder->find(isc::dns::Name("VERSION.BIND"),
-                                         isc::dns::RRType::TXT())->rrset);
-    ASSERT_NE(isc::dns::ConstRRsetPtr(), version);
-    EXPECT_EQ(isc::dns::Name("VERSION.BIND"), version->getName());
-    EXPECT_EQ(isc::dns::RRClass::CH(), version->getClass());
-    EXPECT_EQ(isc::dns::RRType::TXT(), version->getType());
-}
-
-// Check that file not containing BIND./CH is rejected
-TEST(FactoryTest, staticDSBadFile) {
-    // The only configuration is the file to load.
-    const ConstElementPtr config(new StringElement(STATIC_BAD_DS_FILE));
-    // See it does not want the file
-    EXPECT_THROW(DataSourceClientContainer("static", config), DataSourceError);
-}
-
-// Check that some bad configs are rejected
-TEST(FactoryTest, staticDSBadConfig) {
-    const char* configs[] = {
-        // The file does not exist
-        "\"/does/not/exist\"",
-        // Bad types
-        "null",
-        "42",
-        "{}",
-        "[]",
-        "true",
-        NULL
-    };
-    for (const char** config(configs); *config; ++config) {
-        SCOPED_TRACE(*config);
-        EXPECT_THROW(DataSourceClientContainer("static",
-                                               Element::fromJSON(*config)),
-                     DataSourceError);
-    }
 }
 
 } // end anonymous namespace
