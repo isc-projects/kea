@@ -76,7 +76,6 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using namespace isc::auth::unittest;
-using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 using isc::auth::statistics::Counters;
@@ -1757,12 +1756,13 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), ztable_segment_, ""));
+                                boost::shared_ptr<
+                                isc::datasrc::internal::CacheConfig>(),
+                                RRClass::IN(), ""));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
-    boost::shared_ptr<ZoneTableSegment> ztable_segment_; // can be null
     vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 
