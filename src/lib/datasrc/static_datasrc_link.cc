@@ -46,7 +46,8 @@ public:
     ZoneTableSegmentStatic(const string& zone_file) :
         memory::ZoneTableSegment(RRClass::CH()),
         ztconfig_("MasterFiles", 0, *data::Element::fromJSON(
-                      "{\"params\": {\"BIND\": \"" + zone_file + "\"}}")),
+                      "{\"cache-enable\": true,"
+                      " \"params\": {\"BIND\": \"" + zone_file + "\"}}")),
         ztsegment_(memory::ZoneTableSegment::create(RRClass::CH(), ztconfig_))
     {}
 

@@ -29,6 +29,12 @@ namespace datasrc {
 namespace internal {
 
 namespace {
+bool
+getEnabledFromConf(const Element& conf) {
+    return (conf.contains("cache-enable") &&
+            conf.get("cache-enable")->boolValue());
+}
+
 std::string
 getSegmentTypeFromConf(const Element& conf) {
     // If cache-zones is not explicitly configured, use the default type.
@@ -43,6 +49,7 @@ getSegmentTypeFromConf(const Element& conf) {
 ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
                                  const DataSourceClient* datasrc_client,
                                  const Element& datasrc_conf) :
+    enabled_(getEnabledFromConf(datasrc_conf)),
     segment_type_(getSegmentTypeFromConf(datasrc_conf)),
     datasrc_client_(datasrc_client)
 {
@@ -50,11 +57,14 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
     if (!params) {
         params.reset(new NullElement());
     }
-
     if (datasrc_type == "MasterFiles") {
         if (datasrc_client) {
             isc_throw(isc::InvalidParameter,
                       "data source client is given for MasterFiles");
+        }
+        if (!enabled_) {
+            isc_throw(ZoneTableConfigError,
+                      "The cache must be enabled for the MasterFiles type");
         }
 
         typedef std::map<std::string, ConstElementPtr> ZoneToFile;
@@ -71,6 +81,9 @@ ZoneTableConfig::ZoneTableConfig(const std::string& datasrc_type,
             isc_throw(isc::InvalidParameter,
                       "data source client is missing for data source type: "
                       << datasrc_type);
+        }
+        if (!enabled_) {
+            return;
         }
 
         if (!datasrc_conf.contains("cache-zones")) {

@@ -67,6 +67,9 @@ public:
         if (type == "error") {
             isc_throw(DataSourceError, "The error data source type");
         }
+        if (type == "MasterFiles") {
+            return (DataSourcePair(0, DataSourceClientContainerPtr()));
+        }
         shared_ptr<MockDataSourceClient>
             ds(new MockDataSourceClient(type, configuration));
         // Make sure it is deleted when the test list is deleted.
@@ -117,7 +120,9 @@ public:
             "   \"params\": [\"example.org\", \"example.com\", "
             "                \"noiter.org\", \"null.org\"]"
             "}]")),
-        ztconfig_("MasterFiles", 0, *Element::fromJSON("{\"params\": {}}")),
+        ztconfig_("MasterFiles", 0,
+                  *Element::fromJSON("{\"cache-enable\": true,"
+                                     " \"params\": {}}")),
         ztable_segment_(ZoneTableSegment::create(rrclass_, ztconfig_))
     {
         for (size_t i(0); i < ds_count; ++ i) {

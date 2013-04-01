@@ -120,57 +120,33 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                           << name);
             }
 
+            if (type == "MasterFiles" && !allow_cache) { // XXX type specific
+                // We're not going to load these zones. Issue warnings about
+                // it.
+                LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
+                            arg(name).arg(rrclass_);
+                continue;
+            }
+            // Create a client for the underling data source via factory.
+            // (If it's our internal type of data source, this is essentially
+            // no-op).
+            const DataSourcePair dsrc_pair = getDataSourceClient(type,
+                                                                 paramConf);
+
+            internal::ZoneTableConfig ztconfig(type, dsrc_pair.first, *dconf);
             shared_ptr<ZoneTableSegment> ztable_segment;
-            if (want_cache) {
-                // For now we use dummy config
-                internal::ZoneTableConfig ztconfig("MasterFiles", 0,
-                                                   *Element::fromJSON("{\"params\": {}}"));
+            if (ztconfig.isEnabled()) {
                 ztable_segment.reset(ZoneTableSegment::create(rrclass_,
                                                               ztconfig));
             }
-
-            if (type == "MasterFiles") {
-                // In case the cache is not allowed, we just skip the master
-                // files (at least for now)
-                if (!allow_cache) {
-                    // We're not going to load these zones. Issue warnings about it.
-                    const map<string, ConstElementPtr>
-                        zones_files(paramConf->mapValue());
-                    for (map<string, ConstElementPtr>::const_iterator
-                         it(zones_files.begin()); it != zones_files.end();
-                         ++it) {
-                        LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                            arg(it->first).arg(rrclass_);
-                    }
-                    continue;
-                }
-                if (!want_cache) {
-                    isc_throw(ConfigurationError, "The cache must be enabled "
-                              "for the MasterFiles type");
-                }
-                new_data_sources.push_back(DataSourceInfo(rrclass_,
-                                                          ztable_segment,
-                                                          true, name));
-            } else {
-                // Ask the factory to create the data source for us
-                const DataSourcePair ds(this->getDataSourceClient(type,
-                                                                  paramConf));
-                // And put it into the vector
-                new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
-                                                          want_cache, rrclass_,
-                                                          ztable_segment,
-                                                          name));
-            }
+            new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
+                                                      dsrc_pair.second,
+                                                      allow_cache &&
+                                                      ztconfig.isEnabled(),
+                                                      rrclass_, ztable_segment,
+                                                      name));
 
             if (want_cache) {
-                if (!dconf->contains("cache-zones") && type != "MasterFiles") {
-                    isc_throw(isc::NotImplemented, "Auto-detection of zones "
-                              "to cache is not yet implemented, supply "
-                              "cache-zones parameter");
-                    // TODO: Auto-detect list of all zones in the
-                    // data source.
-                }
-
                 // List the zones we are loading
                 vector<string> zones_origins;
                 if (type == "MasterFiles") {
@@ -192,9 +168,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     cache(new_data_sources.back().cache_);
                 const DataSourceClient* const
                     client(new_data_sources.back().data_src_client_);
-
-                // temporary, just validate it
-                internal::ZoneTableConfig ztconfig(type, client, *dconf);
 
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
@@ -239,6 +212,9 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
+    } catch (const internal::ZoneTableConfigError& ex) {
+        // convert to the "public" exception type.
+        isc_throw(ConfigurationError, ex.what());
     }
 }
 
@@ -482,6 +458,10 @@ ConfigurableClientList::getDataSourceClient(const string& type,
                                             const ConstElementPtr&
                                             configuration)
 {
+    if (type == "MasterFiles") {
+        return (DataSourcePair(0, DataSourceClientContainerPtr()));
+    }
+
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));
     return (DataSourcePair(&container->getInstance(), container));
