@@ -2183,13 +2183,17 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
 class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     '''Xfrin AXFR tests for IPv4 to check statistics counters'''
     ipver = 'v4'
-    def test_soacheck(self):
+    def test_soaout(self):
+        '''tests that an soaoutv4 or soaoutv6 counter is incremented
+        when an soa query succeeds'''
         self.conn.response_generator = self._create_soa_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
         self._check_updated_statistics({'soaout' + self.ipver: 1})
 
-    def test_do_xfrin(self):
+    def test_axfrreq_xfrsuccess_last_axfr_duration(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
+        and last_axfr_duration timer are incremented when xfr succeeds'''
         self.conn.response_generator = self._create_normal_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
@@ -2198,7 +2202,9 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
                                         'last_axfr_duration':
                                             self._const_sec})
 
-    def test_do_soacheck_uptodate(self):
+    def test_axfrreq_xfrfail(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
+        incremented when xfr requesting fails'''
         self.soa_response_params['answers'] = [begin_soa_rrset]
         self.conn.response_generator = self._create_soa_response_data
         self.conn._tsig_key = TSIG_KEY
@@ -2213,7 +2219,9 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
     ipver = 'v4'
-    def test_do_xfrin(self):
+    def test_ixfrreq_xfrsuccess_last_ixfr_duration(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
+        and last_ixfr_duration timer are incremented when xfr succeeds'''
         def create_ixfr_response():
             self.conn.reply_data = self.conn.create_response_data(
                 questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
@@ -2227,7 +2235,9 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
                                         'last_ixfr_duration':
                                             self._const_sec})
 
-    def test_do_xfrin_uptodate(self):
+    def test_ixfrreq_xfrfail(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters
+        are incremented when xfr succeeds'''
         def create_response():
             self.conn.reply_data = self.conn.create_response_data(
                 questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
