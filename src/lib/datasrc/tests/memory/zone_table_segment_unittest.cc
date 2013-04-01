@@ -32,7 +32,8 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"params\": {}}")),
+        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"cache-enable\": true,"
+                                                     " \"params\": {}}")),
         ztable_segment_(ZoneTableSegment::create(RRClass::IN(), ztconf_))
     {}
 
@@ -52,7 +53,8 @@ TEST_F(ZoneTableSegmentTest, create) {
 
     // Unknown types of segment are rejected.
     const isc::datasrc::internal::ZoneTableConfig bad_ztconf(
-        "MasterFiles", 0, *Element::fromJSON("{\"cache-type\": \"unknown\","
+        "MasterFiles", 0, *Element::fromJSON("{\"cache-enable\": true,"
+                                             " \"cache-type\": \"unknown\","
                                              " \"params\": {}}"));
     EXPECT_THROW(ZoneTableSegment::create(RRClass::IN(), bad_ztconf),
                  UnknownSegmentType);

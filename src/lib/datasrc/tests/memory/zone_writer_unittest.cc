@@ -43,7 +43,8 @@ public:
         // FIXME: The NullElement probably isn't the best one, but we don't
         // know how the config will look, so it just fills the argument
         // (which is currently ignored)
-        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"params\": {}}")),
+        ztconf_("MasterFiles", 0, *Element::fromJSON("{\"cache-enable\": true,"
+                                                     " \"params\": {}}")),
         segment_(ZoneTableSegment::create(RRClass::IN(), ztconf_)),
         writer_(new
             ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.

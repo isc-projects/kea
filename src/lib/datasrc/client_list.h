@@ -441,6 +441,13 @@ public:
     /// Also, derived classes could want to create the data source clients
     /// in a different way, though inheriting this class is not recommended.
     ///
+    /// Some types of data sources can be internal to the \c ClientList
+    /// implementation and do not require a corresponding dynamic module
+    /// loaded via \c DataSourceClientContainer.  In such a case, this method
+    /// simply returns a pair of null pointers.  It will help the caller reduce
+    /// type dependent processing.  Currently, "MasterFiles" is considered to
+    /// be this type of data sources.
+    ///
     /// The parameters are the same as of the constructor.
     /// \return Pair containing both the data source client and the container.
     ///     The container might be NULL in the derived class, it is
