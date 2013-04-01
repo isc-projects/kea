@@ -110,9 +110,7 @@ class ZoneFinderContextTest :
         public ::testing::TestWithParam<ClientCreator>
 {
 protected:
-    ZoneFinderContextTest() :
-        qclass_(RRClass::IN()), qzone_("example.org")
-    {
+    ZoneFinderContextTest() : qclass_(RRClass::IN()), qzone_("example.org") {
         client_ = (*GetParam())(qclass_, qzone_);
         REQUESTED_A.push_back(RRType::A());
         REQUESTED_AAAA.push_back(RRType::AAAA());
@@ -128,6 +126,7 @@ protected:
     const Name qzone_;
     DataSourceClientPtr client_;
     ZoneFinderPtr finder_;
+
     vector<RRType> requested_types_;
     vector<RRType> REQUESTED_A;
     vector<RRType> REQUESTED_AAAA;
