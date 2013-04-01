@@ -17,7 +17,7 @@
 #include <datasrc/exceptions.h>
 #include <datasrc/client.h>
 #include <datasrc/factory.h>
-#include <datasrc/zone_table_config.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_writer.h>
@@ -120,20 +120,21 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                           << name);
             }
 
-            if (type == "MasterFiles" && !allow_cache) { // XXX type specific
-                // We're not going to load these zones. Issue warnings about
-                // it.
-                LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                            arg(name).arg(rrclass_);
-                continue;
-            }
             // Create a client for the underling data source via factory.
             // (If it's our internal type of data source, this is essentially
             // no-op).
             const DataSourcePair dsrc_pair = getDataSourceClient(type,
                                                                  paramConf);
+            if (!allow_cache && !dsrc_pair.first) {
+                // We're not going to load these zones. Issue warnings about
+                // it.
+                LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
+                    arg(name).arg(rrclass_);
+                continue;
+            }
 
-            internal::CacheConfig cache_conf(type, dsrc_pair.first, *dconf);
+            internal::CacheConfig cache_conf(type, dsrc_pair.first, *dconf,
+                                             allow_cache);
             shared_ptr<ZoneTableSegment> ztable_segment;
             if (cache_conf.isEnabled()) {
                 ztable_segment.reset(ZoneTableSegment::create(
@@ -142,7 +143,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             }
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
-                                                      allow_cache &&
                                                       cache_conf.isEnabled(),
                                                       rrclass_, ztable_segment,
                                                       name));
