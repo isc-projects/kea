@@ -24,7 +24,7 @@
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client.h>
 #include <datasrc/zone.h>
 #include <datasrc/logger.h>

@@ -15,7 +15,7 @@
 #ifndef DATASRC_ZONE_LOADER_H
 #define DATASRC_ZONE_LOADER_H
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <dns/master_loader.h>
 

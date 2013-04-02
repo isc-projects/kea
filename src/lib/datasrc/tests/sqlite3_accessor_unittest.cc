@@ -16,7 +16,7 @@
 
 #include <datasrc/sqlite3_accessor.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <dns/rrclass.h>
 

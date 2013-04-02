@@ -26,7 +26,7 @@
 #include <dns/masterload.h>
 
 #include <datasrc/result.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data_updater.h>

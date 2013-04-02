@@ -28,7 +28,7 @@
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/memory_client.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client.h>
 #include <testutils/dnsmessage_test.h>
 
