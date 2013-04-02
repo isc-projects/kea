@@ -115,9 +115,8 @@ public:
     /// \c config is not known or not supported in this implementation.
     ///
     /// \param rrclass The RR class of the zones to be maintained in the table.
-    /// \param config The configuration based on which a derived object
-    ///               is returned.
-    /// \return Returns a ZoneTableSegment object
+    /// \param type The memory segment type used for the zone table segment.
+    /// \return Returns a ZoneTableSegment object of the specified type.
     static ZoneTableSegment* create(const isc::dns::RRClass& rrclass,
                                     const std::string& type);
 
