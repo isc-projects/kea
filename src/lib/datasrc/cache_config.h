@@ -43,7 +43,7 @@ public:
 /// \brief Configuration for in-memory cache of a data source.
 ///
 /// This class understands and validates the configuration parameters for
-/// \c DataSourceClient related to in-memory cache, and convert it to native,
+/// \c DataSourceClient related to in-memory cache, and converts it to native,
 /// type-safe objects for the convenience of the user of this class.
 /// Specifically, it allows the user to get the underlying memory segment
 /// type for the cache as a string and to iterate over zone names to be
@@ -96,7 +96,7 @@ public:
     ///
     /// For other data source types than "MasterFiles", cache can be disabled.
     /// In this case cache-zones configuration item is simply ignored, even
-    /// it contains a syntax or semantics error.
+    /// it contains an error that would other trigger an exception.
     ///
     /// The specified set of zones (directly in "params" in case of
     /// "MasterFile", and specified in "cache-zones" for others) can be
@@ -110,8 +110,10 @@ public:
     /// in the configuration (see above)
     /// \throw CacheConfigError There is a semantics error in the given
     /// configuration (see above)
-    /// \throw data::TypeError There is a syntax error in the given
+    /// \throw data::TypeError Invalid type of data is found in the
     /// configuration (see above)
+    /// \throw Other Exceptions from the dns::Name class when conversion from
+    /// text fails (see above)
     ///
     /// \param datasrc_type Type of data source. This must be the "type"
     /// value of the data source configuration.
