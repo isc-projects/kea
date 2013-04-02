@@ -119,8 +119,9 @@ public:
     /// value of the data source configuration.
     /// \param datasrc_client Client of the underlying data source for the
     /// cache, if it's used; for MasterFiles types it's null.
-    /// \param datasrc_conf System-wide configuration for the data source.
-    /// This must be the configuration element for the data source.
+    /// \param datasrc_conf Configuration element for the data source.
+    /// This must be the value of, e.g., data_sources/classes/IN[0] of
+    /// BIND 10 configuration.
     /// \param allowed Whether in-memory cache is allowed by the process.
     /// This must be derived from the allow_cache parameter of
     /// \c ConfigurableClientList::configure().
