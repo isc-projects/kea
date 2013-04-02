@@ -292,7 +292,7 @@ protected:
     {
         // Use ROOT_NAME as a placeholder; it will be ignored if filename is
         // null.
-        prepareSource(Name::ROOT_NAME(), 0);
+        prepareSource(Name::ROOT_NAME(), NULL);
     }
     void prepareSource(const Name& zone, const char* filename) {
         // Cleanup the existing data in the right order
