@@ -71,6 +71,12 @@ protected:
                 rdata_str, rdata_nsec3, true, true);
     }
 
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <generic::NSEC3, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_nsec3, true, false);
+    }
+
     const string nsec3_txt;
     const string nsec3_nosalt_txt;
     const string nsec3_notype_txt;
@@ -131,6 +137,13 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
     checkFromText_LexerError("1 1 foo D399EAAB "
                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString(
+        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA ;comment\n"
+        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
