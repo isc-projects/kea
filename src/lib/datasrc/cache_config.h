@@ -17,7 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/name.h>
+#include <dns/dns_fwd.h>
 #include <cc/data.h>
 #include <datasrc/memory/load_action.h>
 
@@ -143,6 +143,9 @@ public:
     ///
     /// \throw None
     const std::string& getSegmentType() const { return (segment_type_); }
+
+    memory::LoadAction getLoadAction(const dns::RRClass& rrlcass,
+                                     const dns::Name& zone_name) const;
 
     /// \todo the following definition is tentative, mainly for tests.
     /// In #2834 we'll (probably) extend it to be a custom iterator so
