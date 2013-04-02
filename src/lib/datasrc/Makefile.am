@@ -24,8 +24,7 @@ CLEANFILES += datasrc_config.h
 CLEANFILES += static.zone
 
 lib_LTLIBRARIES = libb10-datasrc.la
-libb10_datasrc_la_SOURCES = data_source.h
-libb10_datasrc_la_SOURCES += exceptions.h
+libb10_datasrc_la_SOURCES = exceptions.h
 libb10_datasrc_la_SOURCES += zone.h zone_finder.h zone_finder.cc
 libb10_datasrc_la_SOURCES += zone_finder_context.cc
 libb10_datasrc_la_SOURCES += zone_iterator.h

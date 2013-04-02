@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/zone_loader.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/rrset_collection_base.h>
 
 #include <datasrc/memory/zone_table_segment.h>
