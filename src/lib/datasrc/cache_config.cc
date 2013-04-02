@@ -101,7 +101,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
             const dns::Name zone_name(zones->get(i)->stringValue());
             if (!zone_config_.insert(Zones::value_type(zone_name,
                                                        "")).second) {
-                isc_throw(InvalidParameter, "Duplicate cache zone: " <<
+                isc_throw(CacheConfigError, "Duplicate cache zone: " <<
                           zone_name);
             }
         }

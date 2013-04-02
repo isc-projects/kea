@@ -204,13 +204,13 @@ TEST_F(CacheConfigTest, badConstructWithMock) {
     EXPECT_THROW(CacheConfig("mock", &mock_client_, *bad_config, true),
                  isc::dns::EmptyLabel);
 
-    // duplicate zone name
+    // duplicate zone name (note that comparison is case insensitive)
     const ConstElementPtr dup_config(Element::fromJSON(
                                          "{\"cache-enable\": true,"
                                          " \"cache-zones\": "
-                                         " [\"example\", \"example\"]}"));
+                                         " [\"example\", \"EXAMPLE\"]}"));
     EXPECT_THROW(CacheConfig("mock", &mock_client_, *dup_config, true),
-                 isc::InvalidParameter);
+                 CacheConfigError);
 
     // datasrc is null
     EXPECT_THROW(CacheConfig("mock", 0, *mock_config_, true),
