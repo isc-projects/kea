@@ -27,7 +27,7 @@ Addressing
 We can specify the recipient in two different ways:
 
  * Directly. Each connected client has an unique address. A message
-   addressed to that addressed is sent only to the one client.
+   addressed to that address is sent only to the one client.
  * By a group. A client might subscribe to any number of groups.
    When a message is sent to the group, all clients subscribed to the
    group receive it. It is legal to send to an empty group.
