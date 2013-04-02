@@ -39,6 +39,65 @@ IfaceMgr::isDirectResponseSupported() {
     return (false);
 }
 
+int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
+                          bool receive_bcast, bool send_bcast) {
+
+    struct sockaddr_in addr4;
+    memset(&addr4, 0, sizeof(sockaddr));
+    addr4.sin_family = AF_INET;
+    addr4.sin_port = htons(port);
+
+    // If we are to receive broadcast messages we have to bind
+    // to "ANY" address.
+    addr4.sin_addr.s_addr = receive_bcast ? INADDR_ANY : htonl(addr);
+
+    int sock = socket_handler_->openSocket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
+    }
+
+    if (receive_bcast) {
+        // Bind to device so as we receive traffic on a specific interface.
+        if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.getName().c_str(),
+                       iface.getName().length() + 1) < 0) {
+            close(sock);
+            isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
+                      << "on socket " << sock);
+        }
+    }
+
+    if (send_bcast) {
+        // Enable sending to broadcast address.
+        int flag = 1;
+        if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &flag, sizeof(flag)) < 0) {
+            close(sock);
+            isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
+                      << "on socket " << sock);
+        }
+    }
+
+    if (bind(sock, (struct sockaddr *)&addr4, sizeof(addr4)) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
+                  << "/port=" << port);
+    }
+
+    // if there is no support for IP_PKTINFO, we are really out of luck
+    // it will be difficult to undersand, where this packet came from
+#if defined(IP_PKTINFO)
+    int flag = 1;
+    if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "setsockopt: IP_PKTINFO: failed.");
+    }
+#endif
+
+    SocketInfo info(sock, addr, port);
+    iface.addSocket(info);
+
+    return (sock);
+}
+
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt)
 {

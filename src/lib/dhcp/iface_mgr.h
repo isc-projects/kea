@@ -38,6 +38,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief IfaceMgr exception thrown when invalid socket handler supplied.
+class InvalidSocketHandler : public Exception {
+public:
+    InvalidSocketHandler(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief IfaceMgr exception thrown thrown when socket opening
 /// or configuration failed.
 class SocketConfigError : public Exception {
@@ -60,6 +67,13 @@ class SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
+};
+
+class SocketHandler {
+public:
+    virtual int openSocket(int socket_family, int socket_type, int protocol) {
+        return socket(socket_family, socket_type, protocol);
+    }
 };
 
 /// @brief handles network interfaces, transmission and reception
@@ -544,6 +558,13 @@ public:
         session_callback_ = callback;
     }
 
+    void setSocketHandler(const boost::shared_ptr<SocketHandler>& handler) {
+        if (!handler) {
+            isc_throw(InvalidSocketHandler, "NULL socket handler spcified");
+        }
+        socket_handler_ = handler;
+    }
+
     /// A value of socket descriptor representing "not specified" state.
     static const int INVALID_SOCKET = -1;
 
@@ -691,6 +712,8 @@ private:
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
+
+    boost::shared_ptr<SocketHandler> socket_handler_;
 };
 
 }; // namespace isc::dhcp
