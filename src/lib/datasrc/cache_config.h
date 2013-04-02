@@ -40,30 +40,96 @@ public:
     {}
 };
 
-/// This class is intended to be an interface between DataSourceClient and
-/// memory ZoneTableSegment implementations.  This class understands the
-/// configuration parameters for DataSourceClient related to in-memory cache,
-/// and convert it to native, type-safe objects so that it can be used by
-/// ZoneTableSegment implementations.  It also provides unified interface
-/// for getting a list of zones to be loaded in to memory and
-/// and memory::LoadAction object that can be used for the load, regardless
-/// of the underlying data source properties, i.e., whether it's special
-/// "MasterFiles" type or other generic data sources.
+/// \brief Configuration for in-memory cache of a data source.
 ///
-/// This class is publicly defined because it has to be referenced by both
-/// DataSourceClient and ZoneTableSegment (other than for testing purposes),
-/// but it's essentially private to these two classes.  It's therefore
-/// defined in an "internal" namespace, and isn't expected to be used by
-/// other classes or user applications.  Likewise, this file is not expected
-/// to be installed with other publicly usable header files.
+/// This class understands and validates the configuration parameters for
+/// \c DataSourceClient related to in-memory cache, and convert it to native,
+/// type-safe objects for the convenience of the user of this class.
+/// Specifically, it allows the user to get the underlying memory segment
+/// type for the cache as a string and to iterate over zone names to be
+/// cached in memory.
+///
+/// It also provides unified interface for getting \c memory::LoadAction
+/// object that can be used for loading zones, regardless of the underlying
+/// data source properties, i.e., whether it's special "MasterFiles" type
+/// or other generic data sources.
+/// NOTE: this part will be done in #2834.
+///
+/// This class is publicly defined so it can be tested directly, but
+/// it's essentially private to the \c ConfigurableClientList class.
+/// It's therefore defined in an "internal" namespace, and isn't expected
+/// to be used by other classes or user applications.  Likewise, this file
+/// is not expected to be installed with other publicly usable header files.
+///
+/// It's defined as noncopyable, simply because it's not expected to be
+/// copied in the intended usage for \c ConfigurableClientList.  Prohibiting
+/// copies will help avoid unexpected disruption due to accidental copy and
+/// sharing internal resources as a result of that.
 class CacheConfig : boost::noncopyable {
 public:
+    /// \brief Constructor.
+    ///
+    /// It performs the following validation on the given configuration:
+    /// - For the "MasterFiles" type
+    ///   - datasrc_client_ must not be provided (must be null); throws
+    ///     InvalidParameter otherwise.
+    ///   - cache must be enabled: "cache-enable" configuration item exists
+    ///     and is true, and allowed parameter is true, too; throws
+    ///     CacheConfigError otherwise.
+    ///   - "params" configuration item must be provided and of a map type,
+    ///     and each map entry maps a string to another string; throws
+    ///     data::TypeError otherwise.
+    ///   - the key string of each map entry must be a valid textual
+    ///     representation of a domain name.  Otherwise corresponding
+    ///     exception from the dns::Name class will be thrown.
+    /// - For other types
+    ///   - datasrc_client_ must be provided (must not be null); throws
+    ///     InvalidParameter otherwise.
+    ///   - (Unless cache is disabled) "cache-zones" configuration item must
+    ///     exist and must be a list of strings; throws data::TypeError
+    ///     otherwise.
+    ///   - Each string value of cache-zones entries must be a valid textual
+    ///     representation of a domain name.  Otherwise corresponding
+    ///     exception from the dns::Name class will be thrown.
+    ///
+    /// For other data source types than "MasterFiles", cache can be disabled.
+    /// In this case cache-zones configuration item is simply ignored, even
+    /// it contains a syntax or semantics error.
+    ///
+    /// The specified set of zones (directly in "params" in case of
+    /// "MasterFile", and specified in "cache-zones" for others) can be
+    /// empty.
+    ///
+    /// This constructor also identifies the underlying memory segment type
+    /// used for the cache.  It's given via the "cache-type" configuration
+    /// item if defined; otherwise it defaults to "local".
+    ///
+    /// \throw InvalidParameter Program error at the caller side rather than
+    /// in the configuration.
+    /// \throw CacheConfigError There is a semantics error in the given
+    /// configuration.
+    /// \throw data::TypeError There is a syntax error in the given
+    /// configuration.
+    ///
+    /// \param datasrc_type Type of data source. This must be the "type"
+    /// value of the data source configuration.
+    /// \param datasrc_client Client of the underlying data source for the
+    /// cache, if it's used; for MasterFiles types it's null.
+    /// \param datasrc_conf System-wide configuration for the data source.
+    /// This must be the configuration element for the data source.
+    /// \param allowed Whether in-memory cache is allowed by the process.
+    /// This must be derived from the allow_cache parameter of
+    /// \c ConfigurableClientList::configure().
     CacheConfig(const std::string& datasrc_type,
                 const DataSourceClient* datasrc_client,
                 const data::Element& datasrc_conf,
                 bool allowed);
 
     /// \brief Return if the cache is enabled.
+    ///
+    /// The cache is considered enabled iff the "cache-enable" configuration
+    /// item (given on construction) existed and was set to true, and
+    /// the \c allowed parameter to the constructor was true.
     ///
     /// \throw None
     bool isEnabled() const { return (enabled_); }
@@ -73,12 +139,10 @@ public:
     /// \throw None
     const std::string& getSegmentType() const { return (segment_type_); }
 
-    /// This allows ZoneTableSegment to iterate over all zones to be loaded
-    /// in to memory.  In this initial implementation we directly give
-    /// read-only access to the underlying map to minimize the diff, but
-    /// it's not clean in terms of encapsulation and performance (eventually
-    /// we may have to look up in the underlying data source to get the list
-    /// of zones, in which case constructing a map can be very expensive).
+    /// \todo the following definition is tentative, mainly for tests.
+    /// In #2834 we'll (probably) extend it to be a custom iterator so
+    /// the caller can iterate over the whole set of zones, loading the
+    /// content in memory.
     typedef std::map<dns::Name, std::string>::const_iterator ConstZoneIterator;
     ConstZoneIterator begin() const { return (zone_config_.begin()); }
     ConstZoneIterator end() const { return (zone_config_.end()); }

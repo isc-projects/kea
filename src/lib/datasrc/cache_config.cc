@@ -60,7 +60,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
     }
     if (datasrc_type == "MasterFiles") {
         if (datasrc_client_) {
-            isc_throw(isc::InvalidParameter,
+            isc_throw(InvalidParameter,
                       "data source client is given for MasterFiles");
         }
 
@@ -80,7 +80,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
         }
     } else {
         if (!datasrc_client_) {
-            isc_throw(isc::InvalidParameter,
+            isc_throw(InvalidParameter,
                       "data source client is missing for data source type: "
                       << datasrc_type);
         }
@@ -89,7 +89,7 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
         }
 
         if (!datasrc_conf.contains("cache-zones")) {
-            isc_throw(isc::NotImplemented, "Auto-detection of zones "
+            isc_throw(NotImplemented, "Auto-detection of zones "
                       "to cache is not yet implemented, supply "
                       "cache-zones parameter");
             // TODO: Auto-detect list of all zones in the
