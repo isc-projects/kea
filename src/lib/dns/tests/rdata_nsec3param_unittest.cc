@@ -65,6 +65,14 @@ protected:
                 rdata_str, rdata_nsec3param, true, true);
     }
 
+    void checkFromText_BadString(const string& rdata_str,
+                                 const generic::NSEC3PARAM& rdata)
+    {
+        checkFromText
+            <generic::NSEC3PARAM, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata, true, false);
+    }
+
     const string nsec3param_txt;
     const string nsec3param_nosalt_txt;
     const generic::NSEC3PARAM rdata_nsec3param;
@@ -81,8 +89,7 @@ TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
     // constructor, as the lexer constructor stops reading at the end of
     // its RDATA.
     const generic::NSEC3PARAM rdata_nsec3param2("1 1 1 D399");
-    checkFromText<generic::NSEC3PARAM, InvalidRdataText, isc::Exception>(
-        "1 1 1 D399 EAAB", rdata_nsec3param2, true, false);
+    checkFromText_BadString("1 1 1 D399 EAAB", rdata_nsec3param2);
 
     // Hash algorithm out of range.
     checkFromText_InvalidText("256 1 1 D399EAAB");
@@ -100,6 +107,12 @@ TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
     checkFromText_LexerError("foo 1 256 D399EAAB");
     checkFromText_LexerError("1 foo 256 D399EAAB");
     checkFromText_LexerError("1 1 foo D399EAAB");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString("1 1 1 D399EAAB ; comment\n"
+                            "1 1 1 D399EAAB", rdata_nsec3param);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toText) {

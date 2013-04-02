@@ -78,6 +78,12 @@ protected:
                 rdata_str, rdata_dnskey2, true, true);
     }
 
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <generic::DNSKEY, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_dnskey2, true, false);
+    }
+
     const string dnskey_txt;
     const string dnskey_txt2;
     const generic::DNSKEY rdata_dnskey;
@@ -118,6 +124,12 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     checkFromText_LexerError("foo 3 5 YmluZDEwLmlzYy5vcmc=");
     checkFromText_LexerError("257 foo 5 YmluZDEwLmlzYy5vcmc=");
     checkFromText_LexerError("257 3 foo YmluZDEwLmlzYy5vcmc=");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString("257 3 5 YmluZDEwLmlzYy5vcmc= ; comment\n"
+                            "257 3 4 YmluZDEwLmlzYy5vcmc=");
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
