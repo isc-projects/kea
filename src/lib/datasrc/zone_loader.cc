@@ -16,7 +16,7 @@
 #include <datasrc/master_loader_callbacks.h>
 
 #include <datasrc/client.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/zone.h>
 #include <datasrc/logger.h>

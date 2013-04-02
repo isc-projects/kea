@@ -15,7 +15,7 @@
 #ifndef DATA_SOURCE_FACTORY_H
 #define DATA_SOURCE_FACTORY_H 1
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client.h>
 
 #include <cc/data.h>

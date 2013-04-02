@@ -25,7 +25,7 @@
 #include <datasrc/database.h>
 #include <datasrc/zone.h>
 #include <datasrc/zone_finder.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 
 #include <testutils/dnsmessage_test.h>

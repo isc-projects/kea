@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/rrset_collection_base.h>
 
@@ -30,7 +30,7 @@
 #include <dns/rdataclass.h>
 #include <dns/nsec3hash.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>

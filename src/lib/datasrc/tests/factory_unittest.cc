@@ -16,7 +16,7 @@
 
 #include <datasrc/datasrc_config.h>
 #include <datasrc/factory.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/sqlite3_accessor.h>
 
 #include <dns/rrclass.h>

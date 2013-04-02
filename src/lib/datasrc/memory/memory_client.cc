@@ -26,7 +26,7 @@
 
 #include <util/memory_segment_local.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/factory.h>
 #include <datasrc/result.h>
 

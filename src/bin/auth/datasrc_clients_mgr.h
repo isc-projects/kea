@@ -25,7 +25,7 @@
 
 #include <cc/data.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client_list.h>
 #include <datasrc/memory/zone_writer.h>
 

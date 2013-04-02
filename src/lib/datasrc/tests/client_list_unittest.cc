@@ -15,7 +15,7 @@
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
 #include <datasrc/zone_iterator.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_finder.h>

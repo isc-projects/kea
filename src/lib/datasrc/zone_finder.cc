@@ -13,8 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/zone_finder.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
+#include <dns/rrclass.h>
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>

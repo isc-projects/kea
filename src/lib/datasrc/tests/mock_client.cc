@@ -16,7 +16,7 @@
 #include <datasrc/client.h>
 #include <datasrc/result.h>
 #include <datasrc/zone_iterator.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>

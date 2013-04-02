@@ -25,7 +25,7 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/sqlite3_datasrc_messages.h>
 #include <datasrc/logger.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/factory.h>
 #include <datasrc/database.h>
 #include <util/filename.h>

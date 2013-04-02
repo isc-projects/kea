@@ -42,7 +42,7 @@
 
 #include <asiodns/dns_service.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>

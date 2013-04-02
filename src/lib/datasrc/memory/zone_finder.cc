@@ -18,7 +18,7 @@
 #include <datasrc/memory/rdata_serialization.h>
 
 #include <datasrc/zone_finder.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
