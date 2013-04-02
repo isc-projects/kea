@@ -91,6 +91,8 @@ public:
     ///   - Each string value of cache-zones entries must be a valid textual
     ///     representation of a domain name.  Otherwise corresponding
     ///     exception from the dns::Name class will be thrown.
+    ///   - Names in the list must not have duplicates;
+    ///     throws CacheConfigError otherwise.
     ///
     /// For other data source types than "MasterFiles", cache can be disabled.
     /// In this case cache-zones configuration item is simply ignored, even
@@ -105,11 +107,11 @@ public:
     /// item if defined; otherwise it defaults to "local".
     ///
     /// \throw InvalidParameter Program error at the caller side rather than
-    /// in the configuration.
+    /// in the configuration (see above)
     /// \throw CacheConfigError There is a semantics error in the given
-    /// configuration.
+    /// configuration (see above)
     /// \throw data::TypeError There is a syntax error in the given
-    /// configuration.
+    /// configuration (see above)
     ///
     /// \param datasrc_type Type of data source. This must be the "type"
     /// value of the data source configuration.
