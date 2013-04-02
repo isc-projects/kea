@@ -65,9 +65,8 @@ TEST_F(CacheConfigTest, constructMasterFiles) {
     const CacheConfig cache_conf("MasterFiles", 0, *master_config_, true);
     EXPECT_EQ(1, countZones(cache_conf));
 
-    // With multiple zones.  There shouldn't be anything special, so we
-    // only check the size of getZoneConfig.  Note that the constructor
-    // doesn't check if the file exists, so they can be anything.
+    // With multiple zones.  Note that the constructor doesn't check if the
+    // file exists, so they can be anything.
     const ConstElementPtr config_elem_multi(
         Element::fromJSON("{\"cache-enable\": true,"
                           " \"params\": "
