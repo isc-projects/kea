@@ -148,9 +148,9 @@ class BindCmdInterpreter(Cmd):
         # is processed by a script that expects a specific format.
         if my_readline == sys.stdin.readline and sys.stdin.isatty():
             sys.stdout.write("""\
-WARNING: Python readline module isn't available, so the command line editor
-         (including command history management) does not work.  See BIND 10
-         guide for more details.\n\n""")
+WARNING: The Python readline module isn't available, so some command line
+         editing features (including command history management) will not
+         work.  See the BIND 10 guide for more details.\n\n""")
 
         try:
             if not self.login_to_cmdctl():
