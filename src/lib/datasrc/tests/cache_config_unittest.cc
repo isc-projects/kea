@@ -13,10 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/cache_config.h>
+#include <datasrc/memory/load_action.h>
+#include <datasrc/memory/zone_data.h>
 #include <datasrc/tests/mock_client.h>
 
 #include <cc/data.h>
+#include <util/memory_segment_local.h>
 #include <dns/name.h>
+#include <dns/rrclass.h>
 
 #include <gtest/gtest.h>
 
@@ -28,6 +32,8 @@ using namespace isc::dns;
 using isc::datasrc::unittest::MockDataSourceClient;
 using isc::datasrc::internal::CacheConfig;
 using isc::datasrc::internal::CacheConfigError;
+using isc::datasrc::memory::LoadAction;
+using isc::datasrc::memory::ZoneData;
 
 namespace {
 
@@ -50,9 +56,14 @@ protected:
                                        " \"cache-zones\": [\".\"]}"))
     {}
 
+    virtual void TearDown() {
+        EXPECT_TRUE(msgmt_.allMemoryDeallocated());
+    }
+
     MockDataSourceClient mock_client_;
     const ConstElementPtr master_config_; // valid config for MasterFiles
     const ConstElementPtr mock_config_; // valid config for MasterFiles
+    isc::util::MemorySegmentLocal msgmt_;
 };
 
 size_t
@@ -137,6 +148,29 @@ TEST_F(CacheConfigTest, badConstructMasterFiles) {
                              *Element::fromJSON("{\"cache-enable\": true,"
                                                 " \"params\": {}}"), true),
                  isc::InvalidParameter);
+}
+
+TEST_F(CacheConfigTest, getLoadActionWithMasterFiles) {
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+
+    const CacheConfig cache_conf("MasterFiles", 0, *master_config_, true);
+
+    // Check getLoadAction.  Since it returns a mere functor, we can only
+    // check the behavior by actually calling it.  For the purpose of this
+    // test, it should suffice if we confirm the call succeeds and shows
+    // some reasonably valid behavior (we'll check the origin name for that).
+    LoadAction action = cache_conf.getLoadAction(RRClass::IN(),
+                                                 Name::ROOT_NAME());
+    ZoneData* zone_data = action(msgmt_);
+    ASSERT_TRUE(zone_data);
+    EXPECT_EQ(".", zone_data->getOriginNode()->
+              getAbsoluteLabels(labels_buf).toText());
+    ZoneData::destroy(msgmt_, zone_data, RRClass::IN());
+
+    // If the specified zone name is not configured to be cached,
+    // getLoadAction should result in exception.
+    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")),
+                 isc::Unexpected);
 }
 
 TEST_F(CacheConfigTest, constructWithMock) {

@@ -15,9 +15,17 @@
 #include <datasrc/cache_config.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/load_action.h>
+#include <datasrc/memory/zone_data_loader.h>
+
+#include <util/memory_segment.h>
+
 #include <dns/name.h>
+#include <dns/rrclass.h>
+
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+
+#include <boost/bind.hpp>
 
 #include <map>
 #include <string>
@@ -106,6 +114,33 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
             }
         }
     }
+}
+
+namespace {
+
+// We can't use the loadZoneData function directly in boost::bind, since
+// it is overloaded and the compiler can't choose the correct version
+// reliably and fails. So we simply wrap it into an unique name.
+memory::ZoneData*
+loadZoneDataFromFile(util::MemorySegment& segment, const dns::RRClass& rrclass,
+                     const dns::Name& name, const std::string& filename)
+{
+    return (memory::loadZoneData(segment, rrclass, name, filename));
+}
+
+} // unnamed namespace
+
+memory::LoadAction
+CacheConfig::getLoadAction(const dns::RRClass& rrclass,
+                           const dns::Name& zone_name) const
+{
+    Zones::const_iterator found = zone_config_.find(zone_name);
+    if (found == zone_config_.end()) {
+        isc_throw(Unexpected, "zone not found for getting LoadAction: "
+                  << zone_name);
+    }
+    return (boost::bind(loadZoneDataFromFile, _1, rrclass, zone_name,
+                        found->second));
 }
 
 } // namespace internal
