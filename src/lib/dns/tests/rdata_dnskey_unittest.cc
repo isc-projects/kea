@@ -130,6 +130,9 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     // parsing from it.
     checkFromText_BadString("257 3 5 YmluZDEwLmlzYy5vcmc= ; comment\n"
                             "257 3 4 YmluZDEwLmlzYy5vcmc=");
+
+    // Unmatched parenthesis should cause a lexer error
+    checkFromText_LexerError("257 3 5 )YmluZDEwLmlzYy5vcmc=");
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {

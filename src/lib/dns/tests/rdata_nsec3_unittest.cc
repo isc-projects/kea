@@ -121,8 +121,9 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     checkFromText_InvalidText("1 1 65536 D399EAAB "
                               "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
 
-    // Space is not allowed in salt (this actually causes the Base32
-    // decoder to throw)
+    // Space is not allowed in salt or the next hash. This actually
+    // causes the Base32 decoder that parses the next hash that comes
+    // afterwards, to throw.
     checkFromText_BadValue("1 1 1 D399 EAAB H9RSFB7FPF2L8"
                            "HG35CMPC765TDK23RP6 A NS SOA");
 
@@ -144,6 +145,10 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     checkFromText_BadString(
         "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA ;comment\n"
         "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Unmatched parenthesis should cause a lexer error
+    checkFromText_LexerError("1 1 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A ) NS SOA");
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
