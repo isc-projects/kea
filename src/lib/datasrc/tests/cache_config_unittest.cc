@@ -57,7 +57,7 @@ protected:
 
 size_t
 countZones(const CacheConfig& cache_config) {
-    return (std::distance(cache_config.begin(), cache_config.end())); 
+    return (std::distance(cache_config.begin(), cache_config.end()));
 }
 
 TEST_F(CacheConfigTest, constructMasterFiles) {
