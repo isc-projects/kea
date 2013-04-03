@@ -31,8 +31,7 @@ namespace {
 class ZoneTableSegmentTest : public ::testing::Test {
 protected:
     ZoneTableSegmentTest() :
-        ztable_segment_(ZoneTableSegment::create(isc::data::NullElement(),
-                                                 RRClass::IN()))
+        ztable_segment_(ZoneTableSegment::create(RRClass::IN(), "local"))
     {}
 
     void TearDown() {
@@ -47,6 +46,10 @@ protected:
 TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
     EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
+
+    // Unknown types of segment are rejected.
+    EXPECT_THROW(ZoneTableSegment::create(RRClass::IN(), "unknown"),
+                 UnknownSegmentType);
 }
 
 // Helper function to check const and non-const methods.

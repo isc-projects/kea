@@ -34,7 +34,11 @@ ORIG_DB_FILE = TESTDATA_PATH + '/example.com.sqlite3'
 DB_FILE = TESTDATA_WRITE_PATH + '/zoneloadertest.sqlite3'
 DB_CLIENT_CONFIG = '{ "database_file": "' + DB_FILE + '" }'
 DB_SOURCE_CLIENT_CONFIG = '{ "database_file": "' + SOURCE_DB_FILE + '" }'
-STATIC_ZONE_CONFIG = '"' + TESTDATA_PATH + "/static.zone" + '"'
+# In-memory data source must be built via client list.
+INMEMORY_ZONE_CONFIG = '''[{
+   "type": "MasterFiles",
+   "cache-enable": true,
+   "params": {"example.com": "''' + TESTDATA_PATH + '/example.com"}}]'
 
 ORIG_SOA_TXT = 'example.com. 3600 IN SOA master.example.com. ' +\
                'admin.example.com. 1234 3600 1800 2419200 7200\n'
@@ -216,15 +220,11 @@ class ZoneLoaderTests(unittest.TestCase):
                           self.client, zone_name, self.source_client)
 
     def test_no_ds_load_support(self):
-        # As the memory datasource module no longer exists, we check the
-        # static datasource instead (as that uses the memory datasource
-        # anyway).
-        #
-        # This may change in the future, but ATM, the static ds does not
-        # support the API the zone loader uses (it has direct load
-        # calls).
-        inmem_client = isc.datasrc.DataSourceClient('static',
-                                                    STATIC_ZONE_CONFIG);
+        # This may change in the future, but ATM, in-memory ds does not
+        # support the API the zone loader uses.
+        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        clist.configure(INMEMORY_ZONE_CONFIG, True)
+        inmem_client = clist.find(isc.dns.Name("example.com"), True, False)[0]
         self.assertRaises(isc.datasrc.NotImplemented,
                           isc.datasrc.ZoneLoader,
                           inmem_client, self.test_name, self.test_file)
@@ -239,8 +239,10 @@ class ZoneLoaderTests(unittest.TestCase):
         # For ds->ds loading, wrong class is detected upon construction
         # Need a bit of the extended setup for CH source client
         clientlist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
-        clientlist.configure('[ { "type": "static", "params": "' +
-                             STATIC_ZONE_FILE +'" } ]', False)
+        clientlist.configure('[ { "type": "MasterFiles", ' +
+                             '"cache-enable": true, ' +
+                             '"params": {"BIND": "' +
+                             STATIC_ZONE_FILE + '" }} ]', True)
         self.source_client, _, _ = clientlist.find(isc.dns.Name("bind."),
                                                    False, False)
         self.assertRaises(isc.dns.InvalidParameter, isc.datasrc.ZoneLoader,

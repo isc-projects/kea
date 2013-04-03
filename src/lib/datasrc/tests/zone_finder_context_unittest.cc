@@ -63,11 +63,9 @@ typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
 
 // Creator for the in-memory client to be tested
 DataSourceClientPtr
-createInMemoryClient(RRClass zclass, const Name& zname)
-{
-    const ElementPtr config(Element::fromJSON("{}"));
+createInMemoryClient(RRClass zclass, const Name& zname) {
     shared_ptr<ZoneTableSegment> ztable_segment(
-        ZoneTableSegment::create(*config, zclass));
+        ZoneTableSegment::create(zclass, "local"));
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
     client->load(zname, TEST_ZONE_FILE);

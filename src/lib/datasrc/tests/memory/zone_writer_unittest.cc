@@ -16,7 +16,6 @@
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
 
-#include <cc/data.h>
 #include <dns/rrclass.h>
 #include <dns/name.h>
 
@@ -38,11 +37,7 @@ class TestException {};
 class ZoneWriterLocalTest : public ::testing::Test {
 public:
     ZoneWriterLocalTest() :
-        // FIXME: The NullElement probably isn't the best one, but we don't
-        // know how the config will look, so it just fills the argument
-        // (which is currently ignored)
-        segment_(ZoneTableSegment::create(isc::data::NullElement(),
-                                          RRClass::IN())),
+        segment_(ZoneTableSegment::create(RRClass::IN(), "local")),
         writer_(new
             ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.
                                                                  get()),

@@ -78,7 +78,6 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using namespace isc::auth::unittest;
-using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 using isc::auth::statistics::Counters;
@@ -264,8 +263,6 @@ updateDatabase(AuthSrv& server, const char* params) {
     installDataSrcClientLists(server, configureDataSource(config));
 }
 
-// Note: if with_static is set to true, the corresponding test should be
-// disabled in case of USE_STATIC_LINK.
 void
 updateInMemory(AuthSrv& server, const char* origin, const char* filename,
                bool with_static = true)
@@ -280,8 +277,9 @@ updateInMemory(AuthSrv& server, const char* origin, const char* filename,
         "}]";
     if (with_static) {
         spec_txt += ", \"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {\"BIND\": \"" + string(STATIC_DSRC_FILE) + "\"}"
             "}]";
     }
     spec_txt += "}";
@@ -290,14 +288,13 @@ updateInMemory(AuthSrv& server, const char* origin, const char* filename,
     installDataSrcClientLists(server, configureDataSource(config));
 }
 
-// Note: tests using this function should be disabled in case of
-// USE_STATIC_LINK.
 void
 updateBuiltin(AuthSrv& server) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {\"BIND\": \"" + string(STATIC_DSRC_FILE) + "\"}"
         "}]}"));
     installDataSrcClientLists(server, configureDataSource(config));
 }
@@ -750,11 +747,7 @@ TEST_F(AuthSrvTest, notify) {
     checkStatisticsCounters(stats_after, expect);
 }
 
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_notifyForCHClass) {
-#else
 TEST_F(AuthSrvTest, notifyForCHClass) {
-#endif
     // Same as the previous test, but for the CH RRClass (so we install the
     // builtin (static) data source.
     updateBuiltin(server);
@@ -1003,11 +996,7 @@ TEST_F(AuthSrvTest, notifyNotAuthNoClass) {
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
 // well
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_TSIGSigned) { // Needs builtin
-#else
 TEST_F(AuthSrvTest, TSIGSigned) {
-#endif
     // Prepare key, the client message, etc
     updateBuiltin(server);
     const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
@@ -1065,11 +1054,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
 // authoritative only server in terms of performance, and it's quite likely
 // we need to drop it for the authoritative server implementation.
 // At that point we can drop this test, too.
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) {
-#else
 TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
-#endif
     updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
@@ -1097,11 +1082,7 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
 
 // The most primitive check: checking the result of the processMessage()
 // method
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_builtInQuery) {
-#else
 TEST_F(AuthSrvTest, builtInQuery) {
-#endif
     updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
@@ -1118,11 +1099,7 @@ TEST_F(AuthSrvTest, builtInQuery) {
 }
 
 // Same type of test as builtInQueryViaDNSServer but for an error response.
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
-#else
-TEST_F(AuthSrvTest, iqueryViaDNSServer) { // Needs builtin
-#endif
+TEST_F(AuthSrvTest, iqueryViaDNSServer) {
     updateBuiltin(server);
     createDataFromFile("iquery_fromWire.wire");
     (*server.getDNSLookupProvider())(*io_message, parse_message,
@@ -1233,11 +1210,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientNoDNSSEC) {
-#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
-#endif
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
@@ -1253,11 +1226,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientDNSSEC) {
-#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
-#endif
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
@@ -1272,14 +1241,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 2, 3, 3);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_chQueryWithInMemoryClient
-#else
-       chQueryWithInMemoryClient
-#endif
-    )
-{
+TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
     // Set up the in-memory
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
@@ -1752,9 +1714,7 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list),
-        config_(Element::fromJSON("{}")),
-        ztable_segment_(ZoneTableSegment::create(*config_, RRClass::IN()))
+        real_(real_list)
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1766,13 +1726,13 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), ztable_segment_, ""));
+                                boost::shared_ptr<
+                                isc::datasrc::internal::CacheConfig>(),
+                                RRClass::IN(), ""));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
-    const ConstElementPtr config_;
-    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 
@@ -1782,14 +1742,7 @@ private:
 //
 // Set the proxies to never throw, this should have the same result as
 // queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientProxy
-#else
-       queryWithInMemoryClientProxy
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
     boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
@@ -1836,14 +1789,7 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
     mgr.setDataSrcClientLists(lists);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithThrowingProxyServfails
-#else
-       queryWithThrowingProxyServfails
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
     // Test the common cases, all of which should simply return SERVFAIL
     // Use THROW_NEVER as end marker
     ThrowWhen throws[] = { THROW_AT_FIND_ZONE,
@@ -1867,14 +1813,7 @@ TEST_F(AuthSrvTest,
 
 // Throw isc::Exception in getClass(). (Currently?) getClass is not called
 // in the processMessage path, so this should result in a normal answer
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientProxyGetClass
-#else
-       queryWithInMemoryClientProxyGetClass
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     setupThrow(server, THROW_AT_GET_CLASS, true);
 
@@ -1887,14 +1826,7 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithThrowingInToWire
-#else
-       queryWithThrowingInToWire
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
     // Set up a faked data source.  It will return an empty RRset for the
     // query.
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
