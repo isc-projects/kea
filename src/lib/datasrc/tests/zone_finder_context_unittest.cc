@@ -18,9 +18,13 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
+#include <cc/data.h>
+
 #include <datasrc/zone_finder.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_writer.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
 
@@ -32,6 +36,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -39,11 +44,13 @@
 
 using namespace std;
 using boost::shared_ptr;
+using boost::scoped_ptr;
 
 using namespace isc::data;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::datasrc;
+using isc::data::Element;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
 using namespace isc::testutils;
@@ -64,11 +71,22 @@ typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
 // Creator for the in-memory client to be tested
 DataSourceClientPtr
 createInMemoryClient(RRClass zclass, const Name& zname) {
+    const internal::CacheConfig cache_conf(
+        "MasterFiles", 0, *Element::fromJSON(
+            "{\"cache-enable\": true,"
+            " \"params\":"
+            "  {\"" + zname.toText() + "\": \"" +
+            string(TEST_ZONE_FILE) + "\"}}"), true);
     shared_ptr<ZoneTableSegment> ztable_segment(
-        ZoneTableSegment::create(zclass, "local"));
+        ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
+    scoped_ptr<memory::ZoneWriter> writer(
+        ztable_segment->getZoneWriter(cache_conf.getLoadAction(zclass, zname),
+                                      zname, zclass));
+    writer->load();
+    writer->install();
+    writer->cleanup();
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
-    client->load(zname, TEST_ZONE_FILE);
 
     return (client);
 }
