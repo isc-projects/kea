@@ -426,7 +426,7 @@ protected:
     /// It is used when calculating message size and packing message
     /// @param relay RelayInfo structure that holds information about relay
     /// @return number of bytes needed to store relay information
-    uint16_t getRelayOverhead(const RelayInfo& relay);
+    uint16_t getRelayOverhead(const RelayInfo& relay) const;
 
     /// @brief calculates overhead for all relays defined for this message
     /// @return number of bytes needed to store all relay information
@@ -436,7 +436,7 @@ protected:
     ///
     /// This is equal to len() if the message was not relayed.
     /// @return number of bytes required to store the message
-    uint16_t directLen();
+    uint16_t directLen() const;
 
     /// UDP (usually) or TCP (bulk leasequery or failover)
     DHCPv6Proto proto_;
