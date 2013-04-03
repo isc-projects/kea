@@ -2487,8 +2487,8 @@ can use various data source backends.
       <para>
         The configuration is located in data_sources/classes. Each item there
         represents one RR class and a list used to answer queries for that
-        class. The default contains two classes. The CH class contains a static
-        data source &mdash; one that serves things like
+        class. The default contains two classes. The CH class contains a
+        built-in data source &mdash; one that serves things like
         <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
         data source with database file located at
         <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
@@ -2555,7 +2555,7 @@ can use various data source backends.
         </para>
 
         <para>
-          First, let's disable the static data source
+          First, let's disable the built-in data source
           (<quote>VERSION.BIND</quote> and friends). As it is the only
           data source in the CH class, we can remove the whole class.
 
