@@ -20,6 +20,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/pkt_filter.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
@@ -38,10 +39,10 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief IfaceMgr exception thrown when invalid socket handler supplied.
-class InvalidSocketHandler : public Exception {
+/// @brief IfaceMgr exception thrown when invalid packet filter object specified.
+class InvalidPacketFilter : public Exception {
 public:
-    InvalidSocketHandler(const char* file, size_t line, const char* what) :
+    InvalidPacketFilter(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -67,13 +68,6 @@ class SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
-};
-
-class SocketHandler {
-public:
-    virtual int openSocket(int socket_family, int socket_type, int protocol) {
-        return socket(socket_family, socket_type, protocol);
-    }
 };
 
 /// @brief handles network interfaces, transmission and reception
@@ -558,11 +552,11 @@ public:
         session_callback_ = callback;
     }
 
-    void setSocketHandler(const boost::shared_ptr<SocketHandler>& handler) {
-        if (!handler) {
-            isc_throw(InvalidSocketHandler, "NULL socket handler spcified");
+    void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
+        if (!packet_filter) {
+            isc_throw(InvalidPacketFilter, "NULL packet filter object specified");
         }
-        socket_handler_ = handler;
+        packet_filter_ = packet_filter;
     }
 
     /// A value of socket descriptor representing "not specified" state.
@@ -713,7 +707,8 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
-    boost::shared_ptr<SocketHandler> socket_handler_;
+    /// Low level packet handler used to open socket and send/receive packets.
+    boost::shared_ptr<PktFilter> packet_filter_;
 };
 
 }; // namespace isc::dhcp
