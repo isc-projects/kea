@@ -11,6 +11,8 @@ LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryp
 endif
 
 # test using command-line arguments, so use check-local target instead of TESTS
+# We need to set B10_FROM_BUILD as some of the tests need to create lock file
+# for logging.
 check-local:
 if ENABLE_PYTHON_COVERAGE
 	touch $(abs_top_srcdir)/.coverage
@@ -20,6 +22,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	B10_TEST_PLUGIN_DIR=$(abs_srcdir)/..:$(abs_builddir)/.. \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/cfgmgr:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \

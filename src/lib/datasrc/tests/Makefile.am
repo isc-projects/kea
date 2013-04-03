@@ -48,6 +48,7 @@ common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 run_unittests_SOURCES = $(common_sources)
 
 run_unittests_SOURCES += test_client.h test_client.cc
+run_unittests_SOURCES += mock_client.h mock_client.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += client_unittest.cc
 run_unittests_SOURCES += database_unittest.h database_unittest.cc
@@ -58,6 +59,7 @@ run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 run_unittests_SOURCES += client_list_unittest.cc
 run_unittests_SOURCES += master_loader_callbacks_test.cc
 run_unittests_SOURCES += zone_loader_unittest.cc
+run_unittests_SOURCES += cache_config_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)

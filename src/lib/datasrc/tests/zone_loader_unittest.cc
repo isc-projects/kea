@@ -31,6 +31,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/foreach.hpp>
+
 #include <string>
 #include <vector>
 
@@ -287,13 +288,26 @@ MockClient::getUpdater(const Name& name, bool replace, bool journaling) const {
 class ZoneLoaderTest : public ::testing::Test {
 protected:
     ZoneLoaderTest() :
-        rrclass_(RRClass::IN()),
-        ztable_segment_(memory::ZoneTableSegment::
-                        create(isc::data::NullElement(), rrclass_)),
-        source_client_(ztable_segment_, rrclass_)
-    {}
+        rrclass_(RRClass::IN())
+    {
+        // Use ROOT_NAME as a placeholder; it will be ignored if filename is
+        // null.
+        prepareSource(Name::ROOT_NAME(), NULL);
+    }
     void prepareSource(const Name& zone, const char* filename) {
-        source_client_.load(zone, string(TEST_DATA_DIR) + "/" + filename);
+        // Cleanup the existing data in the right order
+        source_client_.reset();
+        ztable_segment_.reset();
+
+        // (re)configure zone table, then (re)construct the in-memory client
+        // with it.
+        ztable_segment_.reset(memory::ZoneTableSegment::create(rrclass_,
+                                                               "local"));
+        source_client_.reset(new memory::InMemoryClient(ztable_segment_,
+                                                        rrclass_));
+        if (filename) {
+            source_client_->load(zone, string(TEST_DATA_DIR) + "/" + filename);
+        }
     }
 private:
     const RRClass rrclass_;
@@ -305,7 +319,7 @@ private:
     // But the shared pointer won't let us, will it?
     shared_ptr<memory::ZoneTableSegment> ztable_segment_;
 protected:
-    memory::InMemoryClient source_client_;
+    boost::scoped_ptr<memory::InMemoryClient> source_client_;
     // This one is mocked. It will help us see what is happening inside.
     // Also, mocking it is simpler than setting up an sqlite3 client.
     MockClient destination_client_;
@@ -314,7 +328,7 @@ protected:
 // Use the loader to load an unsigned zone.
 TEST_F(ZoneLoaderTest, copyUnsigned) {
     prepareSource(Name::ROOT_NAME(), "root.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), *source_client_);
     // It gets the updater directly in the constructor
     ASSERT_EQ(1, destination_client_.provided_updaters_.size());
     EXPECT_EQ(Name::ROOT_NAME(), destination_client_.provided_updaters_[0]);
@@ -355,7 +369,7 @@ TEST_F(ZoneLoaderTest, copyUnsigned) {
 // Try loading incrementally.
 TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
     prepareSource(Name::ROOT_NAME(), "root.zone");
-    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), source_client_);
+    ZoneLoader loader(destination_client_, Name::ROOT_NAME(), *source_client_);
 
     // Try loading few RRs first.
     loader.loadIncremental(10);
@@ -390,7 +404,7 @@ TEST_F(ZoneLoaderTest, copyUnsignedIncremental) {
 TEST_F(ZoneLoaderTest, copySigned) {
     prepareSource(Name("example.org"), "example.org.nsec3-signed");
     ZoneLoader loader(destination_client_, Name("example.org"),
-                      source_client_);
+                      *source_client_);
     loader.load();
 
     // All the RRs are there, including the ones in NSEC3 namespace
@@ -416,13 +430,13 @@ TEST_F(ZoneLoaderTest, copyMissingDestination) {
     destination_client_.missing_zone_ = true;
     prepareSource(Name::ROOT_NAME(), "root.zone");
     EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
-                            source_client_), DataSourceError);
+                            *source_client_), DataSourceError);
 }
 
 // If the source zone does not exist, it throws
 TEST_F(ZoneLoaderTest, copyMissingSource) {
     EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
-                            source_client_), DataSourceError);
+                            *source_client_), DataSourceError);
 }
 
 // The class of the source and destination are different
@@ -430,7 +444,7 @@ TEST_F(ZoneLoaderTest, classMismatch) {
     destination_client_.rrclass_ = RRClass::CH();
     prepareSource(Name::ROOT_NAME(), "root.zone");
     EXPECT_THROW(ZoneLoader(destination_client_, Name::ROOT_NAME(),
-                            source_client_), isc::InvalidParameter);
+                            *source_client_), isc::InvalidParameter);
 }
 
 // Load an unsigned zone, all at once
@@ -593,7 +607,7 @@ TEST_F(ZoneLoaderTest, loadCheckWarn) {
 TEST_F(ZoneLoaderTest, copyCheckWarn) {
     prepareSource(Name("example.org"), "checkwarn.zone");
     ZoneLoader loader(destination_client_, Name("example.org"),
-                      source_client_);
+                      *source_client_);
     EXPECT_TRUE(loader.loadIncremental(10));
     // The messages go to the log. We don't have an easy way to examine them.
     // But the zone was committed and contains all 3 RRs

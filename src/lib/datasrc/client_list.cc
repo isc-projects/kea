@@ -13,16 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#include "client_list.h"
-#include "exceptions.h"
-#include "client.h"
-#include "factory.h"
-#include "memory/memory_client.h"
-#include "memory/zone_table_segment.h"
-#include "memory/zone_writer.h"
-#include "memory/zone_data_loader.h"
-#include "memory/zone_data_updater.h"
-#include "logger.h"
+#include <datasrc/client_list.h>
+#include <datasrc/exceptions.h>
+#include <datasrc/client.h>
+#include <datasrc/factory.h>
+#include <datasrc/cache_config.h>
+#include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_writer.h>
+#include <datasrc/memory/zone_data_loader.h>
+#include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/logger.h>
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
 
@@ -47,28 +48,18 @@ namespace datasrc {
 
 ConfigurableClientList::DataSourceInfo::DataSourceInfo(
     DataSourceClient* data_src_client,
-    const DataSourceClientContainerPtr& container, bool has_cache,
-    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
-    const string& name) :
+    const DataSourceClientContainerPtr& container,
+    boost::shared_ptr<internal::CacheConfig> cache_conf,
+    const RRClass& rrclass, const string& name) :
     data_src_client_(data_src_client),
     container_(container),
-    name_(name)
+    name_(name),
+    cache_conf_(cache_conf)
 {
-    if (has_cache) {
-        cache_.reset(new InMemoryClient(segment, rrclass));
-        ztable_segment_ = segment;
-    }
-}
-
-ConfigurableClientList::DataSourceInfo::DataSourceInfo(
-    const RRClass& rrclass, const shared_ptr<ZoneTableSegment>& segment,
-    bool has_cache, const string& name) :
-    data_src_client_(NULL),
-    name_(name)
-{
-    if (has_cache) {
-        cache_.reset(new InMemoryClient(segment, rrclass));
-        ztable_segment_ = segment;
+    if (cache_conf_ && cache_conf_->isEnabled()) {
+        ztable_segment_.reset(ZoneTableSegment::create(
+                                  rrclass, cache_conf_->getSegmentType()));
+        cache_.reset(new InMemoryClient(ztable_segment_, rrclass));
     }
 }
 
@@ -94,8 +85,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
-        shared_ptr<ZoneTableSegment> ztable_segment(
-            ZoneTableSegment::create(*config, rrclass_));
         set<string> used_names;
         for (; i < config->size(); ++i) {
             // Extract the parameters
@@ -110,59 +99,35 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             if (paramConf == ConstElementPtr()) {
                 paramConf.reset(new NullElement());
             }
-            const bool want_cache(allow_cache &&
-                                  dconf->contains("cache-enable") &&
-                                  dconf->get("cache-enable")->boolValue());
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
             const string name(name_elem ? name_elem->stringValue() : type);
             if (!used_names.insert(name).second) {
-                isc_throw(ConfigurationError, "Duplicit name in client list: "
+                isc_throw(ConfigurationError, "Duplicate name in client list: "
                           << name);
             }
 
-            if (type == "MasterFiles") {
-                // In case the cache is not allowed, we just skip the master
-                // files (at least for now)
-                if (!allow_cache) {
-                    // We're not going to load these zones. Issue warnings about it.
-                    const map<string, ConstElementPtr>
-                        zones_files(paramConf->mapValue());
-                    for (map<string, ConstElementPtr>::const_iterator
-                         it(zones_files.begin()); it != zones_files.end();
-                         ++it) {
-                        LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                            arg(it->first).arg(rrclass_);
-                    }
-                    continue;
-                }
-                if (!want_cache) {
-                    isc_throw(ConfigurationError, "The cache must be enabled "
-                              "for the MasterFiles type");
-                }
-                new_data_sources.push_back(DataSourceInfo(rrclass_,
-                                                          ztable_segment,
-                                                          true, name));
-            } else {
-                // Ask the factory to create the data source for us
-                const DataSourcePair ds(this->getDataSourceClient(type,
-                                                                  paramConf));
-                // And put it into the vector
-                new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
-                                                          want_cache, rrclass_,
-                                                          ztable_segment,
-                                                          name));
+            // Create a client for the underling data source via factory.
+            // If it's our internal type of data source, this is essentially
+            // no-op.  In the latter case, it's of no use unless cache is
+            // allowed; we simply skip building it in that case.
+            const DataSourcePair dsrc_pair = getDataSourceClient(type,
+                                                                 paramConf);
+            if (!allow_cache && !dsrc_pair.first) {
+                LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
+                    arg(name).arg(rrclass_);
+                continue;
             }
 
-            if (want_cache) {
-                if (!dconf->contains("cache-zones") && type != "MasterFiles") {
-                    isc_throw(isc::NotImplemented, "Auto-detection of zones "
-                              "to cache is not yet implemented, supply "
-                              "cache-zones parameter");
-                    // TODO: Auto-detect list of all zones in the
-                    // data source.
-                }
+            boost::shared_ptr<internal::CacheConfig> cache_conf(
+                new internal::CacheConfig(type, dsrc_pair.first, *dconf,
+                                          allow_cache));
+            new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
+                                                      dsrc_pair.second,
+                                                      cache_conf, rrclass_,
+                                                      name));
 
+            if (cache_conf->isEnabled()) {
                 // List the zones we are loading
                 vector<string> zones_origins;
                 if (type == "MasterFiles") {
@@ -184,6 +149,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     cache(new_data_sources.back().cache_);
                 const DataSourceClient* const
                     client(new_data_sources.back().data_src_client_);
+
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
                     const Name origin(*it);
@@ -227,6 +193,9 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
+    } catch (const internal::CacheConfigError& ex) {
+        // convert to the "public" exception type.
+        isc_throw(ConfigurationError, ex.what());
     }
 }
 
@@ -470,6 +439,10 @@ ConfigurableClientList::getDataSourceClient(const string& type,
                                             const ConstElementPtr&
                                             configuration)
 {
+    if (type == "MasterFiles") {
+        return (DataSourcePair(0, DataSourceClientContainerPtr()));
+    }
+
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));
     return (DataSourcePair(&container->getInstance(), container));
