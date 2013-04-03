@@ -96,7 +96,7 @@ public:
     ///
     /// For other data source types than "MasterFiles", cache can be disabled.
     /// In this case cache-zones configuration item is simply ignored, even
-    /// it contains an error that would other trigger an exception.
+    /// it contains an error that would otherwise trigger an exception.
     ///
     /// The specified set of zones (directly in "params" in case of
     /// "MasterFile", and specified in "cache-zones" for others) can be
