@@ -16,6 +16,7 @@
 #define LOGGER_MANAGER_H
 
 #include "exceptions/exceptions.h"
+#include <util/threads/sync.h>
 #include <log/logger_specification.h>
 
 // Generated if, when updating the logging specification, an unknown
@@ -131,6 +132,11 @@ public:
     ///
     /// \param file Name of the local message file
     static void readLocalMessageFile(const char* file);
+
+    /// \brief Return a process-global mutex that's used for mutual
+    /// exclusion among threads of a single process during logging
+    /// calls.
+    static isc::util::thread::Mutex& getMutex();
 
 private:
     /// \brief Initialize Processing
