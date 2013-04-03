@@ -343,7 +343,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     const memory::LoadAction load_action =
         result.info->getCacheConfig()->getLoadAction(rrclass_, name);
     if (!load_action) {
-        ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr());
+        return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
     }
     return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
