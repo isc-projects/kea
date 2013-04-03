@@ -499,18 +499,6 @@ IfaceMgr::isDirectResponseSupported() {
     return (false);
 }
 
-int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
-                          bool receive_bcast, bool send_bcast) {
-
-    int sock = packet_filter_->openSocket(iface, addr, port,
-                                          receive_bcast, send_bcast);
-
-    Iface::SocketInfo info(sock, addr, port);
-    iface.addSocket(info);
-
-    return (sock);
-}
-
 /// @brief sets flag_*_ fields.
 ///
 /// This implementation is OS-specific as bits have different meaning
@@ -527,105 +515,15 @@ void Iface::setFlags(uint32_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
-bool
-IfaceMgr::send(const Pkt4Ptr& pkt)
-{
-    Iface* iface = getIface(pkt->getIface());
-    if (!iface) {
-        isc_throw(BadValue, "Unable to send Pkt4. Invalid interface ("
-                  << pkt->getIface() << ") specified.");
-    }
 
-    memset(&control_buf_[0], 0, control_buf_len_);
+void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
+                        size_t, const Pkt4Ptr&) {
+    return;
 
-    // Set the target address we're sending to.
-    sockaddr_in to;
-    memset(&to, 0, sizeof(to));
-    to.sin_family = AF_INET;
-    to.sin_port = htons(pkt->getRemotePort());
-    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr());
-
-    struct msghdr m;
-    // Initialize our message header structure.
-    memset(&m, 0, sizeof(m));
-    m.msg_name = &to;
-    m.msg_namelen = sizeof(to);
-
-    // Set the data buffer we're sending. (Using this wacky
-    // "scatter-gather" stuff... we only have a single chunk
-    // of data to send, so we declare a single vector entry.)
-    struct iovec v;
-    memset(&v, 0, sizeof(v));
-    // iov_base field is of void * type. We use it for packet
-    // transmission, so this buffer will not be modified.
-    v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
-    v.iov_len = pkt->getBuffer().getLength();
-    m.msg_iov = &v;
-    m.msg_iovlen = 1;
-
-    // call OS-specific routines (like setting interface index)
-    os_send4(m, control_buf_, control_buf_len_, pkt);
-
-    pkt->updateTimestamp();
-
-    int result = sendmsg(getSocket(*pkt), &m, 0);
-    if (result < 0) {
-        isc_throw(SocketWriteError, "pkt4 send failed");
-    }
-
-    return (result);
 }
 
-void IfaceMgr::os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
-                        size_t control_buf_len, const Pkt4Ptr& pkt) {
-
-    // Setting the interface is a bit more involved.
-    //
-    // We have to create a "control message", and set that to
-    // define the IPv4 packet information. We could set the
-    // source address if we wanted, but we can safely let the
-    // kernel decide what that should be.
-    m.msg_control = &control_buf[0];
-    m.msg_controllen = control_buf_len;
-    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
-    cmsg->cmsg_level = IPPROTO_IP;
-    cmsg->cmsg_type = IP_PKTINFO;
-    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
-    struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
-    memset(pktinfo, 0, sizeof(struct in_pktinfo));
-    pktinfo->ipi_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
-}
-
-bool IfaceMgr::os_receive4(struct msghdr& m, Pkt4Ptr& pkt) {
-    struct cmsghdr* cmsg;
-    struct in_pktinfo* pktinfo;
-    struct in_addr to_addr;
-
-    memset(&to_addr, 0, sizeof(to_addr));
-
-    cmsg = CMSG_FIRSTHDR(&m);
-    while (cmsg != NULL) {
-        if ((cmsg->cmsg_level == IPPROTO_IP) &&
-            (cmsg->cmsg_type == IP_PKTINFO)) {
-            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
-
-            pkt->setIndex(pktinfo->ipi_ifindex);
-            pkt->setLocalAddr(IOAddress(htonl(pktinfo->ipi_addr.s_addr)));
-            return (true);
-
-            // This field is useful, when we are bound to unicast
-            // address e.g. 192.0.2.1 and the packet was sent to
-            // broadcast. This will return broadcast address, not
-            // the address we are bound to.
-
-            // XXX: Perhaps we should uncomment this:
-            // to_addr = pktinfo->ipi_spec_dst;
-        }
-        cmsg = CMSG_NXTHDR(&m, cmsg);
-    }
-
-    return (false);
+bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
+    return (true);
 }
 
 } // end of isc::dhcp namespace

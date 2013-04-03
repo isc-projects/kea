@@ -27,6 +27,11 @@ namespace dhcp {
 class PktFilterInet : public PktFilter {
 public:
 
+    /// @brief Constructor
+    ///
+    /// Allocates control buffer.
+    PktFilterInet();
+
     /// @brief Open socket.
     ///
     /// @param iface interface descriptor
@@ -44,15 +49,25 @@ public:
 
     /// @brief Receive packet over specified socket.
     ///
-    /// @param sockfd descriptor of a socket to be used for packet reception
-    /// @param timeout_sec integral part of a timeout.
-    /// @param timeout_usec fractional part of a timeout (in microseconds).
+    /// @param iface interface
+    /// @param socket_info structure holding socket information
     ///
     /// @return Received packet
-    Pkt4Ptr receive(uint16_t sockfd, uint32_t timeout_sec,
-                    uint32_t timeout_usec = 0);
+    virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& socket_info);
 
-    //    bool send(const Pkt4Ptr& pkt) = 0;
+    /// @brief Send packet over specified socket.
+    ///
+    /// @param sockfd socket descriptor
+    /// @param pkt packet to be sent
+    ///
+    /// @return result of sending a packet. It is 0 if successful.
+    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+
+private:
+    /// Length of the control_buf_ array.
+    size_t control_buf_len_;
+    /// Control buffer, used in transmission and reception.
+    boost::scoped_array<char> control_buf_;
 };
 
 } // namespace isc::dhcp

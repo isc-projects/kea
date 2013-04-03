@@ -581,7 +581,19 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         }
     }
 
-    Iface::SocketInfo info(sock, addr, port);
+    SocketInfo info(sock, addr, port);
+    iface.addSocket(info);
+
+    return (sock);
+}
+
+int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
+                          bool receive_bcast, bool send_bcast) {
+
+    int sock = packet_filter_->openSocket(iface, addr, port,
+                                          receive_bcast, send_bcast);
+
+    SocketInfo info(sock, addr, port);
     iface.addSocket(info);
 
     return (sock);
@@ -688,6 +700,18 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     return (result);
 }
 
+bool
+IfaceMgr::send(const Pkt4Ptr& pkt) {
+
+    Iface* iface = getIface(pkt->getIface());
+    if (!iface) {
+        isc_throw(BadValue, "Unable to send Pkt4. Invalid interface ("
+                  << pkt->getIface() << ") specified.");
+    }
+
+    return (packet_filter_->send(getSocket(*pkt), pkt));
+}
+
 
 boost::shared_ptr<Pkt4>
 IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
@@ -696,7 +720,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-    const Iface::SocketInfo* candidate = 0;
+    const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
     fd_set sockets;
     int maxfd = 0;
@@ -783,64 +807,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Now we have a socket, let's get some data from it!
-    struct sockaddr_in from_addr;
-    uint8_t buf[RCVBUFSIZE];
-
-    memset(&control_buf_[0], 0, control_buf_len_);
-    memset(&from_addr, 0, sizeof(from_addr));
-
-    // Initialize our message header structure.
-    struct msghdr m;
-    memset(&m, 0, sizeof(m));
-
-    // Point so we can get the from address.
-    m.msg_name = &from_addr;
-    m.msg_namelen = sizeof(from_addr);
-
-    struct iovec v;
-    v.iov_base = static_cast<void*>(buf);
-    v.iov_len = RCVBUFSIZE;
-    m.msg_iov = &v;
-    m.msg_iovlen = 1;
-
-    // Getting the interface is a bit more involved.
-    //
-    // We set up some space for a "control message". We have
-    // previously asked the kernel to give us packet
-    // information (when we initialized the interface), so we
-    // should get the destination address from that.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
-
-    result = recvmsg(candidate->sockfd_, &m, 0);
-    if (result < 0) {
-        isc_throw(SocketReadError, "failed to receive UDP4 data");
-    }
-
-    // We have all data let's create Pkt4 object.
-    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf, result));
-
-    pkt->updateTimestamp();
-
-    unsigned int ifindex = iface->getIndex();
-
-    IOAddress from(htonl(from_addr.sin_addr.s_addr));
-    uint16_t from_port = htons(from_addr.sin_port);
-
-    // Set receiving interface based on information, which socket was used to
-    // receive data. OS-specific info (see os_receive4()) may be more reliable,
-    // so this value may be overwritten.
-    pkt->setIndex(ifindex);
-    pkt->setIface(iface->getName());
-    pkt->setRemoteAddr(from);
-    pkt->setRemotePort(from_port);
-    pkt->setLocalPort(candidate->port_);
-
-    if (!os_receive4(m, pkt)) {
-        isc_throw(SocketReadError, "unable to find pktinfo");
-    }
-
-    return (pkt);
+    return (packet_filter_->receive(*iface, *candidate));
 }
 
 Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
@@ -850,7 +817,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                   " one million microseconds");
     }
 
-    const Iface::SocketInfo* candidate = 0;
+    const SocketInfo* candidate = 0;
     fd_set sockets;
     int maxfd = 0;
     stringstream names;
