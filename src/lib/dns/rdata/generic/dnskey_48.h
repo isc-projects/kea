@@ -54,7 +54,7 @@ public:
     uint8_t getAlgorithm() const;
 
 private:
-    void constructFromLexer(isc::dns::MasterLexer& lexer);
+    DNSKEYImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
 
     DNSKEYImpl* impl_;
 };

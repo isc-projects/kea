@@ -48,7 +48,7 @@ public:
     const std::vector<uint8_t>& getNext() const;
 
 private:
-    void constructFromLexer(isc::dns::MasterLexer& lexer);
+    NSEC3Impl* constructFromLexer(isc::dns::MasterLexer& lexer);
 
     NSEC3Impl* impl_;
 };
