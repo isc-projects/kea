@@ -70,6 +70,24 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// Holds information about socket.
+struct SocketInfo {
+    uint16_t sockfd_; /// socket descriptor
+    isc::asiolink::IOAddress addr_; /// bound address
+    uint16_t port_;   /// socket port
+    uint16_t family_; /// IPv4 or IPv6
+
+    /// @brief SocketInfo constructor.
+    ///
+    /// @param sockfd socket descriptor
+    /// @param addr an address the socket is bound to
+    /// @param port a port the socket is bound to
+    SocketInfo(uint16_t sockfd, const isc::asiolink::IOAddress& addr,
+               uint16_t port)
+        :sockfd_(sockfd), addr_(addr), port_(port), family_(addr.getFamily()) { }
+};
+
+
 /// @brief represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
@@ -83,23 +101,6 @@ public:
 
     /// type that defines list of addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
-
-    /// Holds information about socket.
-    struct SocketInfo {
-        uint16_t sockfd_; /// socket descriptor
-        isc::asiolink::IOAddress addr_; /// bound address
-        uint16_t port_;   /// socket port
-        uint16_t family_; /// IPv4 or IPv6
-
-        /// @brief SocketInfo constructor.
-        ///
-        /// @param sockfd socket descriptor
-        /// @param addr an address the socket is bound to
-        /// @param port a port the socket is bound to
-        SocketInfo(uint16_t sockfd, const isc::asiolink::IOAddress& addr,
-                   uint16_t port)
-        :sockfd_(sockfd), addr_(addr), port_(port), family_(addr.getFamily()) { }
-    };
 
     /// type that holds a list of socket informations
     /// @todo: Add SocketCollectionConstIter type
