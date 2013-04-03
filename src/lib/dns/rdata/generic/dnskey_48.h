@@ -43,7 +43,13 @@ public:
     ///
     /// Specialized methods
     ///
+
+    /// \brief Returns the key tag
+    ///
+    /// \throw isc::OutOfRange if the key data for RSA/MD5 is too short
+    /// to support tag extraction.
     uint16_t getTag() const;
+
     uint16_t getFlags() const;
     uint8_t getAlgorithm() const;
 
