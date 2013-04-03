@@ -21,8 +21,10 @@ namespace isc {
 namespace dhcp {
 
 int
-PktFilterInet::openSocket(const std::string& ifname, const isc::asiolink::IOAddress& addr,
-                          const uint16_t port, const bool receive_bcast,
+PktFilterInet::openSocket(const Iface& iface,
+                          const isc::asiolink::IOAddress& addr,
+                          const uint16_t port,
+                          const bool receive_bcast,
                           const bool send_bcast) {
 
     struct sockaddr_in addr4;
@@ -41,8 +43,8 @@ PktFilterInet::openSocket(const std::string& ifname, const isc::asiolink::IOAddr
 
     if (receive_bcast) {
         // Bind to device so as we receive traffic on a specific interface.
-        if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname.c_str(),
-                       ifname.length() + 1) < 0) {
+        if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.getName().c_str(),
+                       iface.getName().length() + 1) < 0) {
             close(sock);
             isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
                       << "on socket " << sock);
