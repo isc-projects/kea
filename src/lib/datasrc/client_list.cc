@@ -31,6 +31,7 @@
 #include <set>
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::data;
 using namespace isc::dns;
@@ -119,6 +120,9 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 continue;
             }
 
+            // Build in-memory cache configuration, and create a set of
+            // related objects including the in-memory zone table for the
+            // cache.
             boost::shared_ptr<internal::CacheConfig> cache_conf(
                 new internal::CacheConfig(type, dsrc_pair.first, *dconf,
                                           allow_cache));
@@ -127,60 +131,37 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                                       cache_conf, rrclass_,
                                                       name));
 
-            if (cache_conf->isEnabled()) {
-                // List the zones we are loading
-                vector<string> zones_origins;
-                if (type == "MasterFiles") {
-                    const map<string, ConstElementPtr>
-                        zones_files(paramConf->mapValue());
-                    for (map<string, ConstElementPtr>::const_iterator
-                         it(zones_files.begin()); it != zones_files.end();
-                         ++it) {
-                        zones_origins.push_back(it->first);
-                    }
-                } else {
-                    const ConstElementPtr zones(dconf->get("cache-zones"));
-                    for (size_t i(0); i < zones->size(); ++i) {
-                        zones_origins.push_back(zones->get(i)->stringValue());
-                    }
+            // If cache is disabled we are done for this data source.
+            // Otherwise load zones into the in-memory cache.
+            if (!cache_conf->isEnabled()) {
+                continue;
+            }
+            internal::CacheConfig::ConstZoneIterator end_of_zones =
+                cache_conf->end();
+            for (internal::CacheConfig::ConstZoneIterator zone_it =
+                     cache_conf->begin();
+                 zone_it != end_of_zones;
+                 ++zone_it)
+            {
+                const Name& zname = zone_it->first;
+                memory::LoadAction load_action;
+                try {
+                    load_action = cache_conf->getLoadAction(rrclass_, zname);
+                } catch (const DataSourceError&) {
+                    isc_throw(ConfigurationError, "Unable to cache "
+                              "non-existent zone " << zname);
                 }
-
-                const shared_ptr<InMemoryClient>
-                    cache(new_data_sources.back().cache_);
-                const DataSourceClient* const
-                    client(new_data_sources.back().data_src_client_);
-
-                for (vector<string>::const_iterator it(zones_origins.begin());
-                     it != zones_origins.end(); ++it) {
-                    const Name origin(*it);
-                    if (type == "MasterFiles") {
-                        try {
-                            cache->load(origin,
-                                        paramConf->get(*it)->stringValue());
-                        } catch (const ZoneLoaderException& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_FROM_FILE_ERROR)
-                                .arg(origin).arg(e.what());
-                        }
-                    } else {
-                        ZoneIteratorPtr iterator;
-                        try {
-                            iterator = client->getIterator(origin);
-                        } catch (const DataSourceError&) {
-                            isc_throw(ConfigurationError, "Unable to "
-                                      "cache non-existent zone "
-                                      << origin);
-                        }
-                        if (!iterator) {
-                            isc_throw(isc::Unexpected, "Got NULL iterator "
-                                      "for zone " << origin);
-                        }
-                        try {
-                            cache->load(origin, *iterator);
-                        } catch (const ZoneLoaderException& e) {
-                            LOG_ERROR(logger, DATASRC_LOAD_FROM_ITERATOR_ERROR)
-                                .arg(origin).arg(e.what());
-                        }
-                    }
+                assert(load_action); // in this loop this should be always true
+                boost::scoped_ptr<memory::ZoneWriter> writer;
+                try {
+                    writer.reset(new_data_sources.back().ztable_segment_->
+                                 getZoneWriter(load_action, zname, rrclass_));
+                    writer->load();
+                    writer->install();
+                    writer->cleanup();
+                } catch (const ZoneLoaderException& e) {
+                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR)
+                        .arg(zname).arg(rrclass_).arg(name).arg(e.what());
                 }
             }
         }
