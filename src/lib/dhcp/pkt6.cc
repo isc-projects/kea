@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -64,6 +64,9 @@ uint16_t Pkt6::len() {
     if (relay_info_.empty()) {
         return (directLen());
     } else {
+        // Unfortunately we need to re-calculate relay size every time, because
+        // we need to make sure that once a new option is added, its extra size
+        // is reflected in Pkt6::len().
         calculateRelaySizes();
         return (relay_info_[0].relay_msg_len_ + getRelayOverhead(relay_info_[0]));
     }
@@ -101,12 +104,9 @@ uint16_t Pkt6::calculateRelaySizes() {
 
     uint16_t len = directLen(); // start with length of all options
 
-    int relay_index = relay_info_.size();
-
-    while (relay_index) {
+    for (int relay_index = relay_info_.size(); relay_index > 0; --relay_index) {
         relay_info_[relay_index - 1].relay_msg_len_ = len;
         len += getRelayOverhead(relay_info_[relay_index - 1]);
-        --relay_index;
     }
 
     return (len);
@@ -142,11 +142,21 @@ bool
 Pkt6::packUDP() {
     try {
 
+        // is this a relayed packet?
         if (!relay_info_.empty()) {
+
+            // calculate size needed for each relay (if there is only one relay,
+            // then it will be equal to "regular" length + relay-forw header +
+            // size of relay-msg option header + possibly size of interface-id
+            // option (if present). If there is more than one relay, the whole
+            // process is called iteratively for each relay.
             calculateRelaySizes();
 
+            // Now for each relay, we need to...
             for (vector<RelayInfo>::iterator relay = relay_info_.begin();
                  relay != relay_info_.end(); ++relay) {
+
+                // build relay-forw/relay-repl header (see RFC3315, section 7)
                 bufferOut_.writeUint8(relay->msg_type_);
                 bufferOut_.writeUint8(relay->hop_count_);
                 bufferOut_.writeData(&(relay->linkaddr_.toBytes()[0]),
@@ -154,12 +164,21 @@ Pkt6::packUDP() {
                 bufferOut_.writeData(&relay->peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
+                // store every option in this relay scope. Usually that will be
+                // only interface-id, but occasionally other options may be
+                // present here as well (vendor-opts for Cable modems,
+                // subscriber-id, remote-id, options echoed back from Echo
+                // Request Option, etc.)
                 for (Option::OptionCollection::const_iterator opt =
                          relay->options_.begin();
                      opt != relay->options_.end(); ++opt) {
                     (opt->second)->pack(bufferOut_);
                 }
 
+                // and include header relay-msg option. Its payload will be
+                // generated in the next iteration (if there are more relays)
+                // or outside the loop (if there are no more relays and the
+                // payload is a direct message)
                 bufferOut_.writeUint16(D6O_RELAY_MSG);
                 bufferOut_.writeUint16(relay->relay_msg_len_);
             }

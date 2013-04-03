@@ -1,6 +1,6 @@
 5XX.	[func]		tomek
-	b10-dhcp6: Pkt6 class is now able to parse and build relayed
-	DHCPv6 messages.
+	libdhcp++: Pkt6 class is now able to parse and build relayed DHCPv6
+	messages.
 	(Trac #2827, git TBD)
 
 582.	[func]		naokikambe
