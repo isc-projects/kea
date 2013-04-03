@@ -70,31 +70,19 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief handles network interfaces, transmission and reception
+/// @brief represents a single network interface
 ///
-/// IfaceMgr is an interface manager class that detects available network
-/// interfaces, configured addresses, link-local addresses, and provides
-/// API for using sockets.
-///
-class IfaceMgr : public boost::noncopyable {
+/// Iface structure represents network interface with all useful
+/// information, like name, interface index, MAC address and
+/// list of assigned addresses
+class Iface {
 public:
-    /// type that defines list of addresses
-    typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
-
-    /// defines callback used when commands are received over control session
-    typedef void (*SessionCallback) (void);
 
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
-    /// @brief Packet reception buffer size
-    ///
-    /// RFC3315 states that server responses may be
-    /// fragmented if they are over MTU. There is no
-    /// text whether client's packets may be larger
-    /// than 1500. For now, we can assume that
-    /// we don't support packets larger than 1500.
-    static const uint32_t RCVBUFSIZE = 1500;
+    /// type that defines list of addresses
+    typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
     /// Holds information about socket.
     struct SocketInfo {
@@ -117,189 +105,202 @@ public:
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
-
-    /// @brief represents a single network interface
+    /// @brief Iface constructor.
     ///
-    /// Iface structure represents network interface with all useful
-    /// information, like name, interface index, MAC address and
+    /// Creates Iface object that represents network interface.
+    ///
+    /// @param name name of the interface
+    /// @param ifindex interface index (unique integer identifier)
+    Iface(const std::string& name, int ifindex);
+
+    /// @brief Closes all open sockets on interface.
+    void closeSockets();
+
+    /// @brief Returns full interface name as "ifname/ifindex" string.
+    ///
+    /// @return string with interface name
+    std::string getFullName() const;
+
+    /// @brief Returns link-layer address a plain text.
+    ///
+    /// @return MAC address as a plain text (string)
+    std::string getPlainMac() const;
+
+    /// @brief Sets MAC address of the interface.
+    ///
+    /// @param mac pointer to MAC address buffer
+    /// @param macLen length of mac address
+    void setMac(const uint8_t* mac, size_t macLen);
+
+    /// @brief Returns MAC length.
+    ///
+    /// @return length of MAC address
+    size_t getMacLen() const { return mac_len_; }
+
+    /// @brief Returns pointer to MAC address.
+    ///
+    /// Note: Returned pointer is only valid as long as the interface object
+    /// that returned it.
+    const uint8_t* getMac() const { return mac_; }
+
+    /// @brief Sets flag_*_ fields based on bitmask value returned by OS
+    ///
+    /// Note: Implementation of this method is OS-dependent as bits have
+    /// different meaning on each OS.
+    ///
+    /// @param flags bitmask value returned by OS in interface detection
+    void setFlags(uint32_t flags);
+
+    /// @brief Returns interface index.
+    ///
+    /// @return interface index
+    uint16_t getIndex() const { return ifindex_; }
+
+    /// @brief Returns interface name.
+    ///
+    /// @return interface name
+    std::string getName() const { return name_; };
+
+    /// @brief Sets up hardware type of the interface.
+    ///
+    /// @param type hardware type
+    void setHWType(uint16_t type ) { hardware_type_ = type; }
+
+    /// @brief Returns hardware type of the interface.
+    ///
+    /// @return hardware type
+    uint16_t getHWType() const { return hardware_type_; }
+
+    /// @brief Returns all interfaces available on an interface.
+    ///
+    /// Care should be taken to not use this collection after Iface object
+    /// ceases to exist. That is easy in most cases as Iface objects are
+    /// created by IfaceMgr that is a singleton an is expected to be
+    /// available at all time. We may revisit this if we ever decide to
+    /// implement dynamic interface detection, but such fancy feature would
+    /// mostly be useful for clients with wifi/vpn/virtual interfaces.
+    ///
+    /// @return collection of addresses
+    const AddressCollection& getAddresses() const { return addrs_; }
+
+    /// @brief Adds an address to an interface.
+    ///
+    /// This only adds an address to collection, it does not physically
+    /// configure address on actual network interface.
+    ///
+    /// @param addr address to be added
+    void addAddress(const isc::asiolink::IOAddress& addr) {
+        addrs_.push_back(addr);
+    }
+
+    /// @brief Deletes an address from an interface.
+    ///
+    /// This only deletes address from collection, it does not physically
+    /// remove address configuration from actual network interface.
+    ///
+    /// @param addr address to be removed.
+    ///
+    /// @return true if removal was successful (address was in collection),
+    ///         false otherwise
+    bool delAddress(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Adds socket descriptor to an interface.
+    ///
+    /// @param sock SocketInfo structure that describes socket.
+    void addSocket(const SocketInfo& sock) {
+        sockets_.push_back(sock);
+    }
+
+    /// @brief Closes socket.
+    ///
+    /// Closes socket and removes corresponding SocketInfo structure
+    /// from an interface.
+    ///
+    /// @param sockfd socket descriptor to be closed/removed.
+    /// @return true if there was such socket, false otherwise
+    bool delSocket(uint16_t sockfd);
+
+    /// @brief Returns collection of all sockets added to interface.
+    ///
+    /// When new socket is created with @ref IfaceMgr::openSocket
+    /// it is added to sockets collection on particular interface.
+    /// If socket is opened by other means (e.g. function that does
+    /// not use @ref IfaceMgr::openSocket) it will not be available
+    /// in this collection. Note that functions like
+    /// @ref IfaceMgr::openSocketFromIface use
+    /// @ref IfaceMgr::openSocket internally.
+    /// The returned reference is only valid during the lifetime of
+    /// the IfaceMgr object that returned it.
+    ///
+    /// @return collection of sockets added to interface
+    const SocketCollection& getSockets() const { return sockets_; }
+
+protected:
+    /// socket used to sending data
+    SocketCollection sockets_;
+
+    /// network interface name
+    std::string name_;
+
+    /// interface index (a value that uniquely indentifies an interface)
+    int ifindex_;
+
     /// list of assigned addresses
-    class Iface {
-    public:
-        /// @brief Iface constructor.
-        ///
-        /// Creates Iface object that represents network interface.
-        ///
-        /// @param name name of the interface
-        /// @param ifindex interface index (unique integer identifier)
-        Iface(const std::string& name, int ifindex);
+    AddressCollection addrs_;
 
-        /// @brief Closes all open sockets on interface.
-        void closeSockets();
+    /// link-layer address
+    uint8_t mac_[MAX_MAC_LEN];
 
-        /// @brief Returns full interface name as "ifname/ifindex" string.
-        ///
-        /// @return string with interface name
-        std::string getFullName() const;
+    /// length of link-layer address (usually 6)
+    size_t mac_len_;
 
-        /// @brief Returns link-layer address a plain text.
-        ///
-        /// @return MAC address as a plain text (string)
-        std::string getPlainMac() const;
+    /// hardware type
+    uint16_t hardware_type_;
 
-        /// @brief Sets MAC address of the interface.
-        ///
-        /// @param mac pointer to MAC address buffer
-        /// @param macLen length of mac address
-        void setMac(const uint8_t* mac, size_t macLen);
+public:
+    /// @todo: Make those fields protected once we start supporting more
+    /// than just Linux
 
-        /// @brief Returns MAC length.
-        ///
-        /// @return length of MAC address
-        size_t getMacLen() const { return mac_len_; }
+    /// specifies if selected interface is loopback
+    bool flag_loopback_;
 
-        /// @brief Returns pointer to MAC address.
-        ///
-        /// Note: Returned pointer is only valid as long as the interface object
-        /// that returned it.
-        const uint8_t* getMac() const { return mac_; }
+    /// specifies if selected interface is up
+    bool flag_up_;
 
-        /// @brief Sets flag_*_ fields based on bitmask value returned by OS
-        ///
-        /// Note: Implementation of this method is OS-dependent as bits have
-        /// different meaning on each OS.
-        ///
-        /// @param flags bitmask value returned by OS in interface detection
-        void setFlags(uint32_t flags);
+    /// flag specifies if selected interface is running
+    /// (e.g. cable plugged in, wifi associated)
+    bool flag_running_;
 
-        /// @brief Returns interface index.
-        ///
-        /// @return interface index
-        uint16_t getIndex() const { return ifindex_; }
+    /// flag specifies if selected interface is multicast capable
+    bool flag_multicast_;
 
-        /// @brief Returns interface name.
-        ///
-        /// @return interface name
-        std::string getName() const { return name_; };
+    /// flag specifies if selected interface is broadcast capable
+    bool flag_broadcast_;
 
-        /// @brief Sets up hardware type of the interface.
-        ///
-        /// @param type hardware type
-        void setHWType(uint16_t type ) { hardware_type_ = type; }
+    /// interface flags (this value is as is returned by OS,
+    /// it may mean different things on different OSes)
+    uint32_t flags_;
+};
 
-        /// @brief Returns hardware type of the interface.
-        ///
-        /// @return hardware type
-        uint16_t getHWType() const { return hardware_type_; }
+/// @brief handles network interfaces, transmission and reception
+///
+/// IfaceMgr is an interface manager class that detects available network
+/// interfaces, configured addresses, link-local addresses, and provides
+/// API for using sockets.
+///
+class IfaceMgr : public boost::noncopyable {
+public:
+    /// defines callback used when commands are received over control session
+    typedef void (*SessionCallback) (void);
 
-        /// @brief Returns all interfaces available on an interface.
-        ///
-        /// Care should be taken to not use this collection after Iface object
-        /// ceases to exist. That is easy in most cases as Iface objects are
-        /// created by IfaceMgr that is a singleton an is expected to be
-        /// available at all time. We may revisit this if we ever decide to
-        /// implement dynamic interface detection, but such fancy feature would
-        /// mostly be useful for clients with wifi/vpn/virtual interfaces.
-        ///
-        /// @return collection of addresses
-        const AddressCollection& getAddresses() const { return addrs_; }
-
-        /// @brief Adds an address to an interface.
-        ///
-        /// This only adds an address to collection, it does not physically
-        /// configure address on actual network interface.
-        ///
-        /// @param addr address to be added
-        void addAddress(const isc::asiolink::IOAddress& addr) {
-            addrs_.push_back(addr);
-        }
-
-        /// @brief Deletes an address from an interface.
-        ///
-        /// This only deletes address from collection, it does not physically
-        /// remove address configuration from actual network interface.
-        ///
-        /// @param addr address to be removed.
-        ///
-        /// @return true if removal was successful (address was in collection),
-        ///         false otherwise
-        bool delAddress(const isc::asiolink::IOAddress& addr);
-
-        /// @brief Adds socket descriptor to an interface.
-        ///
-        /// @param sock SocketInfo structure that describes socket.
-        void addSocket(const SocketInfo& sock)
-            { sockets_.push_back(sock); }
-
-        /// @brief Closes socket.
-        ///
-        /// Closes socket and removes corresponding SocketInfo structure
-        /// from an interface.
-        ///
-        /// @param sockfd socket descriptor to be closed/removed.
-        /// @return true if there was such socket, false otherwise
-        bool delSocket(uint16_t sockfd);
-
-        /// @brief Returns collection of all sockets added to interface.
-        ///
-        /// When new socket is created with @ref IfaceMgr::openSocket
-        /// it is added to sockets collection on particular interface.
-        /// If socket is opened by other means (e.g. function that does
-        /// not use @ref IfaceMgr::openSocket) it will not be available
-        /// in this collection. Note that functions like
-        /// @ref IfaceMgr::openSocketFromIface use
-        /// @ref IfaceMgr::openSocket internally.
-        /// The returned reference is only valid during the lifetime of
-        /// the IfaceMgr object that returned it.
-        ///
-        /// @return collection of sockets added to interface
-        const SocketCollection& getSockets() const { return sockets_; }
-
-    protected:
-        /// socket used to sending data
-        SocketCollection sockets_;
-
-        /// network interface name
-        std::string name_;
-
-        /// interface index (a value that uniquely indentifies an interface)
-        int ifindex_;
-
-        /// list of assigned addresses
-        AddressCollection addrs_;
-
-        /// link-layer address
-        uint8_t mac_[MAX_MAC_LEN];
-
-        /// length of link-layer address (usually 6)
-        size_t mac_len_;
-
-        /// hardware type
-        uint16_t hardware_type_;
-
-    public:
-        /// @todo: Make those fields protected once we start supporting more
-        /// than just Linux
-
-        /// specifies if selected interface is loopback
-        bool flag_loopback_;
-
-        /// specifies if selected interface is up
-        bool flag_up_;
-
-        /// flag specifies if selected interface is running
-        /// (e.g. cable plugged in, wifi associated)
-        bool flag_running_;
-
-        /// flag specifies if selected interface is multicast capable
-        bool flag_multicast_;
-
-        /// flag specifies if selected interface is broadcast capable
-        bool flag_broadcast_;
-
-        /// interface flags (this value is as is returned by OS,
-        /// it may mean different things on different OSes)
-        uint32_t flags_;
-    };
+    /// @brief Packet reception buffer size
+    ///
+    /// RFC3315 states that server responses may be
+    /// fragmented if they are over MTU. There is no
+    /// text whether client's packets may be larger
+    /// than 1500. For now, we can assume that
+    /// we don't support packets larger than 1500.
+    static const uint32_t RCVBUFSIZE = 1500;
 
     // TODO performance improvement: we may change this into
     //      2 maps (ifindex-indexed and name-indexed) and

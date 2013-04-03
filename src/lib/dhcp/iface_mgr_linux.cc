@@ -103,7 +103,7 @@ public:
     void rtnl_send_request(int family, int type);
     void rtnl_store_reply(NetlinkMessages& storage, const nlmsghdr* msg);
     void parse_rtattr(RTattribPtrs& table, rtattr* rta, int len);
-    void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info);
+    void ipaddrs_get(Iface& iface, NetlinkMessages& addr_info);
     void rtnl_process_reply(NetlinkMessages& info);
     void release_list(NetlinkMessages& messages);
     void rtnl_close_socket();
@@ -277,7 +277,7 @@ void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr* rta, int len)
 ///
 /// @param iface interface representation (addresses will be added here)
 /// @param addr_info collection of parsed netlink messages
-void Netlink::ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
+void Netlink::ipaddrs_get(Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[V6ADDRESS_LEN];
     RTattribPtrs rta_tb;
 
@@ -502,10 +502,10 @@ IfaceMgr::isDirectResponseSupported() {
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
                           bool receive_bcast, bool send_bcast) {
 
-    int sock = packet_filter_->openSocket(iface.getName(), addr, port,
+    int sock = packet_filter_->openSocket(iface, addr, port,
                                           receive_bcast, send_bcast);
 
-    SocketInfo info(sock, addr, port);
+    Iface::SocketInfo info(sock, addr, port);
     iface.addSocket(info);
 
     return (sock);
@@ -517,7 +517,7 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
 /// on different OSes.
 ///
 /// @param flags flags bitfield read from OS
-void IfaceMgr::Iface::setFlags(uint32_t flags) {
+void Iface::setFlags(uint32_t flags) {
     flags_ = flags;
 
     flag_loopback_ = flags & IFF_LOOPBACK;
