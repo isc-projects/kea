@@ -71,6 +71,7 @@ AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
 AM_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+AM_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 AM_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
@@ -130,6 +131,13 @@ endif
 # where the global logging environment is affected, and where the
 # output needs to be compared with stored output (where "cut" and
 # "diff" are useful utilities).
+
+noinst_SCRIPTS  = console_test.sh
+noinst_SCRIPTS += destination_test.sh
+noinst_SCRIPTS += init_logger_test.sh
+noinst_SCRIPTS += local_file_test.sh
+noinst_SCRIPTS += logger_lock_test.sh
+noinst_SCRIPTS += severity_test.sh
 
 check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
