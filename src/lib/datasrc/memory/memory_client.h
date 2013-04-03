@@ -192,7 +192,6 @@ private:
 
     boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     const isc::dns::RRClass rrclass_;
-    unsigned int zone_count_;
     FileNameTree* file_name_tree_;
 };
 
