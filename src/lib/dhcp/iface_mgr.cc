@@ -22,6 +22,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 #include <util/io/pktinfo_utilities.h>
 
@@ -125,7 +126,7 @@ IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
      session_socket_(INVALID_SOCKET), session_callback_(NULL),
-     socket_handler_(new SocketHandler())
+     packet_filter_(new PktFilterInet())
 {
 
     try {
@@ -531,7 +532,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     // TODO: use sockcreator once it becomes available
 
     // make a socket
-    int sock = socket_handler_->openSocket(AF_INET6, SOCK_DGRAM, 0);
+    int sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0) {
         isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
     }
