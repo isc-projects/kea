@@ -170,9 +170,8 @@ TEST_F(CacheConfigTest, getLoadActionWithMasterFiles) {
     ZoneData::destroy(msgmt_, zone_data, RRClass::IN());
 
     // If the specified zone name is not configured to be cached,
-    // getLoadAction should result in exception.
-    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")),
-                 isc::Unexpected);
+    // getLoadAction returns empty (false) functor.
+    EXPECT_FALSE(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")));
 }
 
 TEST_F(CacheConfigTest, constructWithMock) {
@@ -275,8 +274,7 @@ TEST_F(CacheConfigTest, getLoadActionWithMock) {
     ZoneData::destroy(msgmt_, zone_data, RRClass::IN());
 
     // Zone not configured for the cache
-    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")),
-                 isc::Unexpected);
+    EXPECT_FALSE(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")));
 
     // Zone configured for the cache but doesn't exist in the underling data
     // source.
