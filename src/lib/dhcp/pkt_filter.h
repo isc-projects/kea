@@ -20,6 +20,9 @@
 namespace isc {
 namespace dhcp {
 
+/// Forward declaration to the class representing interface
+class Iface;
+
 /// @brief Abstract packet handling class
 ///
 /// This class represents low level method to send and receive DHCP packet.
@@ -39,14 +42,14 @@ public:
 
     /// @brief Open socket.
     ///
-    /// @param interface name
+    /// @param iface interface descriptor
     /// @param addr address on the interface to be used to send packets.
     /// @param port port number.
     /// @param receive_bcast configure socket to receive broadcast messages
     /// @param send_bcast configure socket to send broadcast messages.
     ///
     /// @return created socket's descriptor
-    virtual int openSocket(const std::string& ifname,
+    virtual int openSocket(const Iface& iface,
                            const isc::asiolink::IOAddress& addr,
                            const uint16_t port,
                            const bool receive_bcast,

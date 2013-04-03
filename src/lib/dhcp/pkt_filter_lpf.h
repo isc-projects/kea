@@ -12,31 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef PKT_FILTER_INET_H
-#define PKT_FILTER_INET_H
+#ifndef PKT_FILTER_LPF_H
+#define PKT_FILTER_LPF_H
 
 #include <dhcp/pkt_filter.h>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Packet handling class using AF_INET socket family
+/// @brief Packet handling class using Linux Packet Filtering
 ///
-/// This class provides methods to send and recive packet via socket using
-/// AF_INET family and SOCK_DGRAM type.
-class PktFilterInet : public PktFilter {
+/// This class provides methods to send and recive packet using raw sockets
+/// and Linux Packet Filtering.
+class PktFilterLPF : public PktFilter {
 public:
 
     /// @brief Open socket.
     ///
-    /// @param iface interface descriptor
+    /// @param interface name
     /// @param addr address on the interface to be used to send packets.
     /// @param port port number.
     /// @param receive_bcast configure socket to receive broadcast messages
     /// @param send_bcast configure socket to send broadcast messages.
     ///
     /// @return created socket's descriptor
-    virtual int openSocket(const Iface& iface,
+    virtual int openSocket(const std::string& ifname,
                            const isc::asiolink::IOAddress& addr,
                            const uint16_t port,
                            const bool receive_bcast,
@@ -58,4 +58,4 @@ public:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif // PKT_FILTER_INET_H
+#endif // PKT_FILTER_LPF_H
