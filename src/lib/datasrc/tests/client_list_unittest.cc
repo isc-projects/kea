@@ -134,8 +134,9 @@ public:
     }
 
     // Install a "fake" cached zone using a temporary underlying data source
-    // client.
-    void prepareCache(size_t index, const Name& zone) {
+    // client.  If 'enabled' is set to false, emulate a disabled cache, in
+    // which case there will be no data in memory.
+    void prepareCache(size_t index, const Name& zone, bool enabled = true) {
         ConfigurableClientList::DataSourceInfo& dsrc_info =
                 list_->getDataSources()[index];
         MockDataSourceClient* mock_client =
@@ -149,7 +150,9 @@ public:
         // Build new cache config to load the specified zone, and replace
         // the data source info with the new config.
         ConstElementPtr cache_conf_elem =
-            Element::fromJSON("{\"type\": \"mock\", \"cache-enable\": true,"
+            Element::fromJSON("{\"type\": \"mock\","
+                              " \"cache-enable\": " +
+                              string(enabled ? "true," : "false,") +
                               " \"cache-zones\": "
                               "   [\"" + zone.toText() + "\"]}");
         boost::shared_ptr<internal::CacheConfig> cache_conf(
@@ -161,13 +164,15 @@ public:
             cache_conf, rrclass_, dsrc_info.name_);
 
         // Load the data into the zone table.
-        boost::scoped_ptr<memory::ZoneWriter> writer(
-            dsrc_info.ztable_segment_->getZoneWriter(
-                cache_conf->getLoadAction(rrclass_, zone),
-                zone, rrclass_));
-        writer->load();
-        writer->install();
-        writer->cleanup(); // not absolutely necessary, but just in case
+        if (enabled) {
+            boost::scoped_ptr<memory::ZoneWriter> writer(
+                dsrc_info.ztable_segment_->getZoneWriter(
+                    cache_conf->getLoadAction(rrclass_, zone),
+                    zone, rrclass_));
+            writer->load();
+            writer->install();
+            writer->cleanup(); // not absolutely necessary, but just in case
+        }
 
         // On completion of load revert to the previous state of underlying
         // data source.
@@ -891,7 +896,7 @@ TYPED_TEST(ReloadTest, reloadSuccess) {
 }
 
 // The cache is not enabled. The load should be rejected.
-TYPED_TEST(ReloadTest, reloadNotEnabled) {
+TYPED_TEST(ReloadTest, reloadNotAllowed) {
     this->list_->configure(this->config_elem_zones_, false);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
@@ -908,6 +913,17 @@ TYPED_TEST(ReloadTest, reloadNotEnabled) {
               this->list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
+}
+
+// Similar to the previous case, but the cache is disabled in config.
+TYPED_TEST(ReloadTest, reloadNotEnabled) {
+    this->list_->configure(this->config_elem_zones_, true);
+    const Name name("example.org");
+    // We put the cache, actually disabling it.
+    this->prepareCache(0, name, false);
+    // In this case we cannot really look up due to the limitation of
+    // the mock implementation.  We only check reload fails.
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED, this->doReload(name));
 }
 
 // Test several cases when the zone does not exist
