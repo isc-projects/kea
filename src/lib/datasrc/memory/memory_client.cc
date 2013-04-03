@@ -71,7 +71,6 @@ InMemoryClient::InMemoryClient(shared_ptr<ZoneTableSegment> ztable_segment,
                                RRClass rrclass) :
     ztable_segment_(ztable_segment),
     rrclass_(rrclass),
-    zone_count_(0),
     file_name_tree_(FileNameTree::create(
         ztable_segment_->getMemorySegment(), false))
 {}
@@ -116,11 +115,6 @@ InMemoryClient::loadInternal(const isc::dns::Name& zone_name,
     const ZoneTable::AddResult result(zone_table->addZone(mem_sgmt, rrclass_,
                                                           zone_name,
                                                           holder.release()));
-    if (result.code == result::SUCCESS) {
-        // Only increment the zone count if the zone doesn't already
-        // exist.
-        ++zone_count_;
-    }
     // Destroy the old instance of the zone if there was any
     if (result.zone_data != NULL) {
         ZoneData::destroy(mem_sgmt, result.zone_data, rrclass_);
@@ -136,7 +130,8 @@ InMemoryClient::getClass() const {
 
 unsigned int
 InMemoryClient::getZoneCount() const {
-    return (zone_count_);
+    const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
+    return (zone_table->getZoneCount());
 }
 
 isc::datasrc::DataSourceClient::FindResult
