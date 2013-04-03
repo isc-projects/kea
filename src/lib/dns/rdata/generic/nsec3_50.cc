@@ -85,12 +85,14 @@ struct NSEC3Impl {
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
+    std::auto_ptr<NSEC3Impl> impl_ptr(NULL);
+
     try {
         std::istringstream ss(nsec3_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer);
+        impl_ptr.reset(constructFromLexer(lexer));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -101,6 +103,8 @@ NSEC3::NSEC3(const std::string& nsec3_str) :
                   "Failed to construct NSEC3 from '" << nsec3_str << "': "
                   << ex.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -122,10 +126,10 @@ NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
              MasterLoaderCallbacks&) :
     impl_(NULL)
 {
-    constructFromLexer(lexer);
+    impl_ = constructFromLexer(lexer);
 }
 
-void
+NSEC3Impl*
 NSEC3::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
@@ -147,11 +151,13 @@ NSEC3::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> typebits;
     // For NSEC3 empty bitmap is possible and allowed.
     buildBitmapsFromLexer("NSEC3", lexer, typebits, true);
-    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
-                          salt, next, typebits);
+    return (new NSEC3Impl(params.algorithm, params.flags, params.iterations,
+                          salt, next, typebits));
 }
 
-NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
+NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) :
+    impl_(NULL)
+{
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamWire("NSEC3", buffer, rdata_len, salt);

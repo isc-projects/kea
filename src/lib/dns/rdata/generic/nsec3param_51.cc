@@ -64,12 +64,14 @@ struct NSEC3PARAMImpl {
 NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
+    std::auto_ptr<NSEC3PARAMImpl> impl_ptr(NULL);
+
     try {
         std::istringstream ss(nsec3param_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer);
+        impl_ptr.reset(constructFromLexer(lexer));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -80,6 +82,8 @@ NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
                   "Failed to construct NSEC3PARAM from '" << nsec3param_str
                   << "': " << ex.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -101,20 +105,22 @@ NSEC3PARAM::NSEC3PARAM(MasterLexer& lexer, const Name*, MasterLoader::Options,
                        MasterLoaderCallbacks&) :
     impl_(NULL)
 {
-    constructFromLexer(lexer);
+    impl_ = constructFromLexer(lexer);
 }
 
-void
+NSEC3PARAMImpl*
 NSEC3PARAM::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamFromLexer("NSEC3PARAM", lexer, salt);
 
-    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
-                               params.iterations, salt);
+    return (new NSEC3PARAMImpl(params.algorithm, params.flags,
+                               params.iterations, salt));
 }
 
-NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
+NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) :
+    impl_(NULL)
+{
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamWire("NSEC3PARAM", buffer, rdata_len, salt);

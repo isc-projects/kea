@@ -70,12 +70,14 @@ struct DNSKEYImpl {
 DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
+    std::auto_ptr<DNSKEYImpl> impl_ptr(NULL);
+
     try {
         std::istringstream ss(dnskey_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer);
+        impl_ptr.reset(constructFromLexer(lexer));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -86,9 +88,13 @@ DNSKEY::DNSKEY(const std::string& dnskey_str) :
                   "Failed to construct DNSKEY from '" << dnskey_str << "': "
                   << ex.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
-DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
+DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) :
+    impl_(NULL)
+{
     if (rdata_len < 4) {
         isc_throw(InvalidRdataLength, "DNSKEY too short: " << rdata_len);
     }
@@ -131,10 +137,10 @@ DNSKEY::DNSKEY(MasterLexer& lexer, const Name*,
                MasterLoader::Options, MasterLoaderCallbacks&) :
     impl_(NULL)
 {
-    constructFromLexer(lexer);
+    impl_ = constructFromLexer(lexer);
 }
 
-void
+DNSKEYImpl*
 DNSKEY::constructFromLexer(MasterLexer& lexer) {
     const uint32_t flags = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (flags > 0xffff) {
@@ -183,7 +189,7 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
         decodeBase64(keydata_str, keydata);
     }
 
-    impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
+    return (new DNSKEYImpl(flags, protocol, algorithm, keydata));
 }
 
 DNSKEY::DNSKEY(const DNSKEY& source) :
