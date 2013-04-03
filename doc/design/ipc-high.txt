@@ -176,3 +176,10 @@ messages or messages of several tens of megabytes is probably a bad
 idea. While there's no architectural limitation with regards of the
 number of transferred messages or their sizes, the code is not
 optimised and it would probably be very slow.
+
+We currently expect the system not to be at heavy load. Therefore, we
+expect the daemon to keep up with clients sending messages. The
+libraries write in blocking mode, which is no problem if the
+expectation is true, as the write buffers will generally be empty and
+the write wouldn't block, but if it turns out it is not the case, we
+might need to reconsider.
