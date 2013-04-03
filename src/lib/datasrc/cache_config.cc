@@ -161,11 +161,12 @@ memory::LoadAction
 CacheConfig::getLoadAction(const dns::RRClass& rrclass,
                            const dns::Name& zone_name) const
 {
+    // First, check if the specified zone is configured to be cached.
     Zones::const_iterator found = zone_config_.find(zone_name);
     if (found == zone_config_.end()) {
-        isc_throw(Unexpected, "zone not found for getting LoadAction: "
-                  << zone_name << "/" << rrclass);
+        return (memory::LoadAction());
     }
+
     if (!found->second.empty()) {
         // This is "MasterFiles" data source.
         return (boost::bind(loadZoneDataFromFile, _1, rrclass, zone_name,
