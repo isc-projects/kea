@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/cache_config.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/load_action.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/tests/mock_client.h>
@@ -40,6 +41,7 @@ namespace {
 const char* zones[] = {
     "example.org.",
     "example.com.",
+    "null.org",                 // test for bad iterator case
     NULL
 };
 
@@ -249,6 +251,41 @@ TEST_F(CacheConfigTest, badConstructWithMock) {
     // datasrc is null
     EXPECT_THROW(CacheConfig("mock", 0, *mock_config_, true),
                  isc::InvalidParameter);
+}
+
+TEST_F(CacheConfigTest, getLoadActionWithMock) {
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+
+    // Similar to MasterFiles counterpart, but using underlying source
+    // data source.
+
+    // Note: there's a mismatch between this configuration and the actual
+    // mock data source content: example.net doesn't exist in the data source.
+    const ConstElementPtr config(Element::fromJSON(
+                                     "{\"cache-enable\": true,"
+                                     " \"cache-zones\": [\"example.org\","
+                                     " \"example.net\", \"null.org\"]}"));
+    const CacheConfig cache_conf("mock", &mock_client_, *config, true);
+    LoadAction action = cache_conf.getLoadAction(RRClass::IN(),
+                                                 Name("example.org"));
+    ZoneData* zone_data = action(msgmt_);
+    ASSERT_TRUE(zone_data);
+    EXPECT_EQ("example.org.", zone_data->getOriginNode()->
+              getAbsoluteLabels(labels_buf).toText());
+    ZoneData::destroy(msgmt_, zone_data, RRClass::IN());
+
+    // Zone not configured for the cache
+    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.com")),
+                 isc::Unexpected);
+
+    // Zone configured for the cache but doesn't exist in the underling data
+    // source.
+    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.net")),
+                 DataSourceError);
+
+    // buggy data source client: it returns a null pointer from getIterator.
+    EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("null.org")),
+                 isc::Unexpected);
 }
 
 TEST_F(CacheConfigTest, getSegmentType) {
