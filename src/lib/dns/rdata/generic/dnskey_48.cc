@@ -109,12 +109,6 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
         buffer.readData(&keydata[0], rdata_len);
     }
 
-    // See RFC 4034 appendix B.1 for why the key data has to be at least
-    // 3 bytes long with RSA/MD5.
-    if (algorithm == 1 && keydata.size() < 3) {
-        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
-    }
-
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
@@ -187,12 +181,6 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
     // unknown algorithms, we are lenient here.
     if (keydata_str.size() > 0) {
         decodeBase64(keydata_str, keydata);
-    }
-
-    // See RFC 4034 appendix B.1 for why the key data has to be at least
-    // 3 bytes long with RSA/MD5.
-    if (algorithm == 1 && keydata.size() < 3) {
-        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
     }
 
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
@@ -273,6 +261,16 @@ uint16_t
 DNSKEY::getTag() const {
     if (impl_->algorithm_ == 1) {
         const int len = impl_->keydata_.size();
+
+        // See RFC 4034 appendix B.1 for why the key data must contain
+        // at least 4 bytes with RSA/MD5: 3 trailing bytes to extract
+        // the tag from, and 1 byte of exponent length subfield before
+        // modulus.
+        if (len < 4) {
+            isc_throw(isc::OutOfRange,
+                      "DNSKEY keydata too short for tag extraction");
+        }
+
         return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);
     }
 
