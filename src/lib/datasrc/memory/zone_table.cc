@@ -94,6 +94,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     if (old != NULL) {
         return (AddResult(result::EXIST, old));
     } else {
+        ++zone_count_;
         return (AddResult(result::SUCCESS, NULL));
     }
 }
