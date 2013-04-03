@@ -99,8 +99,8 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     // Delimited number in key data is OK
     checkFromText_None("257 3 5 YmluZDEwLmlzYy 5 vcmc=");
 
-    // Key data missing
-    checkFromText_InvalidText("257 3 5");
+    // Missing keydata is OK
+    EXPECT_NO_THROW(const generic::DNSKEY rdata_dnskey3("257 3 5"));
 
     // Flags field out of range
     checkFromText_InvalidText("65536 3 5 YmluZDEwLmlzYy5vcmc=");
@@ -171,11 +171,13 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                                         "rdata_dnskey_fromWire.wire")));
-    // Empty keydata should throw
-    EXPECT_THROW(rdataFactoryFromFile
-                 (RRType("DNSKEY"), RRClass("IN"),
-                  "rdata_dnskey_empty_keydata_fromWire.wire"),
-                 InvalidRdataLength);
+
+    // Missing keydata is OK
+    const generic::DNSKEY rdata_dnskey_missing_keydata("257 3 5");
+    EXPECT_EQ(0, rdata_dnskey_missing_keydata.compare(
+        *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
+                              "rdata_dnskey_empty_keydata_fromWire.wire")));
+
     // Short keydata for RSA/MD5 should throw
     EXPECT_THROW(rdataFactoryFromFile
                  (RRType("DNSKEY"), RRClass("IN"),

@@ -98,14 +98,16 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     const uint16_t algorithm = buffer.readUint8();
 
     rdata_len -= 4;
-    // Though the size of the public key is algorithm-dependent, we
-    // assume that it should not be empty.
-    if (rdata_len < 1) {
-        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
-    }
 
-    vector<uint8_t> keydata(rdata_len);
-    buffer.readData(&keydata[0], rdata_len);
+    vector<uint8_t> keydata;
+    // If key data is missing, it's OK. BIND 9 seems to accept such
+    // cases. What we should do could be debatable, but since this field
+    // is algorithm dependent and our implementation doesn't reject
+    // unknown algorithms, we are lenient here.
+    if (rdata_len > 0) {
+        keydata.resize(rdata_len);
+        buffer.readData(&keydata[0], rdata_len);
+    }
 
     // See RFC 4034 appendix B.1 for why the key data has to be at least
     // 3 bytes long with RSA/MD5.
@@ -178,14 +180,14 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
 
     lexer.ungetToken();
 
-    // Check that some key data was read before end of input was
-    // reached.
-    if (keydata_str.size() == 0) {
-        isc_throw(InvalidRdataText, "Missing DNSKEY digest");
-    }
-
     vector<uint8_t> keydata;
-    decodeBase64(keydata_str, keydata);
+    // If key data is missing, it's OK. BIND 9 seems to accept such
+    // cases. What we should do could be debatable, but since this field
+    // is algorithm dependent and our implementation doesn't reject
+    // unknown algorithms, we are lenient here.
+    if (keydata_str.size() > 0) {
+        decodeBase64(keydata_str, keydata);
+    }
 
     // See RFC 4034 appendix B.1 for why the key data has to be at least
     // 3 bytes long with RSA/MD5.
