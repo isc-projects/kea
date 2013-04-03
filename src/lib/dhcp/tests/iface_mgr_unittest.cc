@@ -166,7 +166,7 @@ TEST_F(IfaceMgrTest, basic) {
 TEST_F(IfaceMgrTest, ifaceClass) {
     // basic tests for Iface inner class
 
-    IfaceMgr::Iface* iface = new IfaceMgr::Iface("eth5", 7);
+    Iface* iface = new Iface("eth5", 7);
 
     EXPECT_STREQ("eth5/7", iface->getFullName().c_str());
 
@@ -181,10 +181,10 @@ TEST_F(IfaceMgrTest, getIface) {
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // interface name, ifindex
-    IfaceMgr::Iface iface1("lo1", 100);
-    IfaceMgr::Iface iface2("eth9", 101);
-    IfaceMgr::Iface iface3("en3", 102);
-    IfaceMgr::Iface iface4("e1000g4", 103);
+    Iface iface1("lo1", 100);
+    Iface iface2("eth9", 101);
+    Iface iface3("en3", 102);
+    Iface iface4("e1000g4", 103);
     cout << "This test assumes that there are less than 100 network interfaces"
          << " in the tested system and there are no lo1, eth9, en3, e1000g4"
          << " or wifi15 interfaces present." << endl;
@@ -205,7 +205,7 @@ TEST_F(IfaceMgrTest, getIface) {
 
 
     // check that interface can be retrieved by ifindex
-    IfaceMgr::Iface* tmp = ifacemgr->getIface(102);
+    Iface* tmp = ifacemgr->getIface(102);
     ASSERT_TRUE(tmp != NULL);
 
     EXPECT_EQ("en3", tmp->getName());
@@ -354,7 +354,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
 
     // Get loopback interface. If we don't find one we are unable to run
     // this test but we don't want to fail.
-    IfaceMgr::Iface* iface_ptr = ifacemgr->getIface(LOOPBACK);
+    Iface* iface_ptr = ifacemgr->getIface(LOOPBACK);
     if (iface_ptr == NULL) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
@@ -362,7 +362,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     // Once sockets have been sucessfully opened, they are supposed to
     // be on the list. Here we start to test if all expected sockets
     // are on the list and no other (unexpected) socket is there.
-    IfaceMgr::SocketCollection sockets = iface_ptr->getSockets();
+    Iface::SocketCollection sockets = iface_ptr->getSockets();
     int matched_sockets = 0;
     for (std::list<uint16_t>::iterator init_sockets_it =
              init_sockets.begin();
@@ -379,7 +379,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
         EXPECT_EQ(EWOULDBLOCK, errno);
         // Apart from the ability to use the socket we want to make
         // sure that socket on the list is the one that we created.
-        for (IfaceMgr::SocketCollection::const_iterator socket_it =
+        for (Iface::SocketCollection::const_iterator socket_it =
                  sockets.begin(); socket_it != sockets.end(); ++socket_it) {
             if (*init_sockets_it == socket_it->sockfd_) {
                 // This socket is the one that we created.
@@ -788,9 +788,9 @@ TEST_F(IfaceMgrTest, socket4) {
 
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {
-    IfaceMgr::Iface* iface = NULL;
+    Iface* iface = NULL;
     EXPECT_NO_THROW(
-        iface = new IfaceMgr::Iface("eth0",1);
+        iface = new Iface("eth0",1);
     );
 
     EXPECT_EQ("eth0", iface->getName());
@@ -798,7 +798,7 @@ TEST_F(IfaceMgrTest, iface) {
     EXPECT_EQ("eth0/1", iface->getFullName());
 
     // Let's make a copy of this address collection.
-    IfaceMgr::AddressCollection addrs = iface->getAddresses();
+    Iface::AddressCollection addrs = iface->getAddresses();
 
     EXPECT_EQ(0, addrs.size());
 
@@ -828,13 +828,13 @@ TEST_F(IfaceMgrTest, iface) {
 }
 
 TEST_F(IfaceMgrTest, iface_methods) {
-    IfaceMgr::Iface iface("foo", 1234);
+    Iface iface("foo", 1234);
 
     iface.setHWType(42);
     EXPECT_EQ(42, iface.getHWType());
 
-    uint8_t mac[IfaceMgr::MAX_MAC_LEN+10];
-    for (int i = 0; i < IfaceMgr::MAX_MAC_LEN + 10; i++)
+    uint8_t mac[Iface::MAX_MAC_LEN+10];
+    for (int i = 0; i < Iface::MAX_MAC_LEN + 10; i++)
         mac[i] = 255 - i;
 
     EXPECT_EQ("foo", iface.getName());
@@ -843,7 +843,7 @@ TEST_F(IfaceMgrTest, iface_methods) {
     // MAC is too long. Exception should be thrown and
     // MAC length should not be set.
     EXPECT_THROW(
-        iface.setMac(mac, IfaceMgr::MAX_MAC_LEN + 1),
+        iface.setMac(mac, Iface::MAX_MAC_LEN + 1),
         OutOfRange
     );
 
@@ -851,11 +851,11 @@ TEST_F(IfaceMgrTest, iface_methods) {
     EXPECT_EQ(0, iface.getMacLen());
 
     // Setting maximum length MAC should be ok.
-    iface.setMac(mac, IfaceMgr::MAX_MAC_LEN);
+    iface.setMac(mac, Iface::MAX_MAC_LEN);
 
     // For some reason constants cannot be used directly in EXPECT_EQ
     // as this produces linking error.
-    size_t len = IfaceMgr::MAX_MAC_LEN;
+    size_t len = Iface::MAX_MAC_LEN;
     EXPECT_EQ(len, iface.getMacLen());
     EXPECT_EQ(0, memcmp(mac, iface.getMac(), iface.getMacLen()));
 }
@@ -863,14 +863,14 @@ TEST_F(IfaceMgrTest, iface_methods) {
 TEST_F(IfaceMgrTest, socketInfo) {
 
     // check that socketinfo for IPv4 socket is functional
-    IfaceMgr::SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
+    Iface::SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
     EXPECT_EQ(7, sock1.sockfd_);
     EXPECT_EQ("192.0.2.56", sock1.addr_.toText());
     EXPECT_EQ(AF_INET, sock1.family_);
     EXPECT_EQ(DHCP4_SERVER_PORT + 7, sock1.port_);
 
     // check that socketinfo for IPv6 socket is functional
-    IfaceMgr::SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
+    Iface::SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
     EXPECT_EQ(9, sock2.sockfd_);
     EXPECT_EQ("2001:db8:1::56", sock2.addr_.toText());
     EXPECT_EQ(AF_INET6, sock2.family_);
@@ -878,7 +878,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // now let's test if IfaceMgr handles socket info properly
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
-    IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
+    Iface* loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
@@ -955,7 +955,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 /// it in binary format. Text format is expected to be separate with
 /// semicolons, e.g. f4:6d:04:96:58:f2
 ///
-/// TODO: IfaceMgr::Iface::mac_ uses uint8_t* type, should be vector<uint8_t>
+/// TODO: Iface::mac_ uses uint8_t* type, should be vector<uint8_t>
 ///
 /// @param textMac string with MAC address to parse
 /// @param mac pointer to output buffer
@@ -1045,7 +1045,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             string name = line.substr(0, offset);
 
             // sadly, ifconfig does not return ifindex
-            ifaces.push_back(IfaceMgr::Iface(name, 0));
+            ifaces.push_back(Iface(name, 0));
             iface = ifaces.end();
             --iface; // points to the last element
 
@@ -1057,8 +1057,8 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
                 mac = line.substr(offset, string::npos);
                 mac = mac.substr(0, mac.find_first_of(" "));
 
-                uint8_t buf[IfaceMgr::MAX_MAC_LEN];
-                int mac_len = parse_mac(mac, buf, IfaceMgr::MAX_MAC_LEN);
+                uint8_t buf[Iface::MAX_MAC_LEN];
+                int mac_len = parse_mac(mac, buf, Iface::MAX_MAC_LEN);
                 iface->setMac(buf, mac_len);
             }
         }
@@ -1165,8 +1165,8 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
             cout << " BROADCAST";
         }
         cout << ", addrs:";
-        const IfaceMgr::AddressCollection& addrs = i->getAddresses();
-        for (IfaceMgr::AddressCollection::const_iterator a= addrs.begin();
+        const Iface::AddressCollection& addrs = i->getAddresses();
+        for (Iface::AddressCollection::const_iterator a= addrs.begin();
              a != addrs.end(); ++a) {
             cout << a->toText() << " ";
         }
@@ -1208,13 +1208,13 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
             EXPECT_EQ(detected->getAddresses().size(), i->getAddresses().size());
 
             // now compare addresses
-            const IfaceMgr::AddressCollection& addrs = detected->getAddresses();
-            for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+            const Iface::AddressCollection& addrs = detected->getAddresses();
+            for (Iface::AddressCollection::const_iterator addr = addrs.begin();
                  addr != addrs.end(); ++addr) {
                 bool addr_found = false;
 
-                const IfaceMgr::AddressCollection& addrs2 = detected->getAddresses();
-                for (IfaceMgr::AddressCollection::const_iterator a = addrs2.begin();
+                const Iface::AddressCollection& addrs2 = detected->getAddresses();
+                for (Iface::AddressCollection::const_iterator a = addrs2.begin();
                      a != addrs2.end(); ++a) {
                     if (*addr != *a) {
                         continue;
