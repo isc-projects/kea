@@ -50,7 +50,7 @@ public:
     const std::vector<uint8_t>& getSalt() const;
 
 private:
-    void constructFromLexer(isc::dns::MasterLexer& lexer);
+    NSEC3PARAMImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
 
     NSEC3PARAMImpl* impl_;
 };
