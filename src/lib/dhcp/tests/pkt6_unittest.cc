@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,6 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
-using namespace boost;
 
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
@@ -106,7 +105,7 @@ Pkt6* capture1() {
     return (pkt);
 }
 
-/// @brief creates doubly related solicit message
+/// @brief creates doubly relayed solicit message
 ///
 /// This is a traffic capture exported from wireshark. It includes a SOLICIT
 /// message that passed through two relays. Each relay include interface-id,
@@ -302,7 +301,7 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 }
 
 TEST_F(Pkt6Test, Timestamp) {
-    scoped_ptr<Pkt6> pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+    boost::scoped_ptr<Pkt6> pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
 
     // Just after construction timestamp is invalid
     ASSERT_TRUE(pkt->getTimestamp().is_not_a_date_time());
@@ -311,17 +310,17 @@ TEST_F(Pkt6Test, Timestamp) {
     pkt->updateTimestamp();
 
     // Get updated packet time.
-    posix_time::ptime ts_packet = pkt->getTimestamp();
+    boost::posix_time::ptime ts_packet = pkt->getTimestamp();
 
     // After timestamp is updated it should be date-time.
     ASSERT_FALSE(ts_packet.is_not_a_date_time());
 
     // Check current time.
-    posix_time::ptime ts_now =
-        posix_time::microsec_clock::universal_time();
+    boost::posix_time::ptime ts_now =
+        boost::posix_time::microsec_clock::universal_time();
 
     // Calculate period between packet time and now.
-    posix_time::time_period ts_period(ts_packet, ts_now);
+    boost::posix_time::time_period ts_period(ts_packet, ts_now);
 
     // Duration should be positive or zero.
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
@@ -378,7 +377,7 @@ TEST_F(Pkt6Test, getName) {
 // relays can be parsed properly. See capture2() method description
 // for details regarding the packet.
 TEST_F(Pkt6Test, relayUnpack) {
-    scoped_ptr<Pkt6> msg(capture2());
+    boost::scoped_ptr<Pkt6> msg(capture2());
 
     EXPECT_NO_THROW(msg->unpack());
 
@@ -405,7 +404,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     // get the remote-id option
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
     EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
-    shared_ptr<OptionCustom> custom = dynamic_pointer_cast<OptionCustom>(opt);
+    boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
     uint32_t vendor_id = custom->readInteger<uint32_t>(0);
     EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
@@ -428,7 +427,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     // get the remote-id option
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
     EXPECT_EQ(8, opt->len());
-    custom = dynamic_pointer_cast<OptionCustom>(opt);
+    custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
     vendor_id = custom->readInteger<uint32_t>(0);
     EXPECT_EQ(3561, vendor_id); // 3561 = Broadband Forum
@@ -454,7 +453,8 @@ TEST_F(Pkt6Test, relayUnpack) {
     ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
 
     ASSERT_TRUE(opt = msg->getOption(D6O_IA_NA));
-    shared_ptr<Option6IA> ia = dynamic_pointer_cast<Option6IA>(opt);
+    boost::shared_ptr<Option6IA> ia =
+        boost::dynamic_pointer_cast<Option6IA>(opt);
     ASSERT_TRUE(ia);
     EXPECT_EQ(1, ia->getIAID());
     EXPECT_EQ(0xffffffff, ia->getT1());
@@ -462,12 +462,14 @@ TEST_F(Pkt6Test, relayUnpack) {
 
     ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
     EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
-    shared_ptr<OptionInt<uint16_t> > elapsed = dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
+    boost::shared_ptr<OptionInt<uint16_t> > elapsed =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
     ASSERT_TRUE(elapsed);
     EXPECT_EQ(0, elapsed->getValue());
 
     ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
-    shared_ptr<OptionIntArray<uint16_t> > oro = dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
+    boost::shared_ptr<OptionIntArray<uint16_t> > oro =
+        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
     const std::vector<uint16_t> oro_list = oro->getValues();
     EXPECT_EQ(3, oro_list.size());
     EXPECT_EQ(23, oro_list[0]);
@@ -479,7 +481,7 @@ TEST_F(Pkt6Test, relayUnpack) {
 // packed and then unpacked.
 TEST_F(Pkt6Test, relayPack) {
 
-    scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+    boost::scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
 
     Pkt6::RelayInfo relay1;
     relay1.msg_type_ = DHCPV6_RELAY_REPL;
@@ -492,7 +494,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
 
-    relay1.options_.insert(pair<int, shared_ptr<Option> >(optRelay1->getType(), optRelay1));
+    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(optRelay1->getType(), optRelay1));
 
     OptionPtr opt1(new Option(Option::V6, 100));
     OptionPtr opt2(new Option(Option::V6, 101));
@@ -516,9 +518,9 @@ TEST_F(Pkt6Test, relayPack) {
               parent->len());
 
     // create second packet,based on assembled data from the first one
-    scoped_ptr<Pkt6> clone(new Pkt6(static_cast<const uint8_t*>(
-                                    parent->getBuffer().getData()),
-                                    parent->getBuffer().getLength()));
+    boost::scoped_ptr<Pkt6> clone(new Pkt6(static_cast<const uint8_t*>(
+                                           parent->getBuffer().getData()),
+                                           parent->getBuffer().getLength()));
 
     // now recreate options list
     EXPECT_TRUE( clone->unpack() );

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -184,7 +184,22 @@ public:
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
 
-    OptionPtr getRelayOption(uint16_t type, uint8_t nesting_level);
+    /// @brief returns option inserted by relay
+    ///
+    /// Returns an option from specified relay scope (inserted by a given relay
+    /// if this is received packet or to be decapsulated by a given relay if
+    /// this is a transmitted packet). nesting_level specifies which relay
+    /// scope is to be used 0 is the outermost encapsulation (relay closest to
+    /// the server). pkt->relay_info_.size() - 1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if nesting level has invalid value.
+    ///
+    /// @param option_code code of the requested option
+    /// @param nesting_level see description above
+    ///
+    /// @return pointer to the option (or NULL if there is no such option)
+    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
 
     /// @brief Returns all instances of specified type.
     ///
@@ -409,6 +424,7 @@ protected:
     /// @brief calculates overhead introduced in specified relay
     ///
     /// It is used when calculating message size and packing message
+    /// @param relay RelayInfo structure that holds information about relay
     /// @return number of bytes needed to store relay information
     uint16_t getRelayOverhead(const RelayInfo& relay);
 
@@ -416,9 +432,9 @@ protected:
     /// @return number of bytes needed to store all relay information
     uint16_t calculateRelaySizes();
 
-    /// @brief calculates size of the message as if were sent directly
+    /// @brief calculates size of the message as if it was not relayed at all
     ///
-    /// This is equal to len() if the message is direct.
+    /// This is equal to len() if the message was not relayed.
     /// @return number of bytes required to store the message
     uint16_t directLen();
 
