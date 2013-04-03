@@ -29,14 +29,14 @@ public:
 
     /// @brief Open socket.
     ///
-    /// @param interface name
+    /// @param iface interface descriptor
     /// @param addr address on the interface to be used to send packets.
     /// @param port port number.
     /// @param receive_bcast configure socket to receive broadcast messages
     /// @param send_bcast configure socket to send broadcast messages.
     ///
     /// @return created socket's descriptor
-    virtual int openSocket(const std::string& ifname,
+    virtual int openSocket(const Iface& iface,
                            const isc::asiolink::IOAddress& addr,
                            const uint16_t port,
                            const bool receive_bcast,
@@ -44,15 +44,20 @@ public:
 
     /// @brief Receive packet over specified socket.
     ///
-    /// @param sockfd descriptor of a socket to be used for packet reception
-    /// @param timeout_sec integral part of a timeout.
-    /// @param timeout_usec fractional part of a timeout (in microseconds).
+    /// @param iface interface
+    /// @param socket_info structure holding socket information
     ///
     /// @return Received packet
-    Pkt4Ptr receive(uint16_t sockfd, uint32_t timeout_sec,
-                    uint32_t timeout_usec = 0);
+    virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& socket_info);
 
-    //    bool send(const Pkt4Ptr& pkt) = 0;
+    /// @brief Send packet over specified socket.
+    ///
+    /// @param sockfd socket descriptor
+    /// @param pkt packet to be sent
+    ///
+    /// @return result of sending a packet. It is 0 if successful.
+    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+
 };
 
 } // namespace isc::dhcp
