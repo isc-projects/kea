@@ -102,6 +102,11 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
     // Missing keydata is OK
     EXPECT_NO_THROW(const generic::DNSKEY rdata_dnskey3("257 3 5"));
 
+    // Key data too short for RSA/MD5 algorithm is OK when
+    // constructing. But getTag() on this object would throw (see
+    // .getTag tests).
+    EXPECT_NO_THROW(const generic::DNSKEY rdata_dnskey4("1 1 1 YQ=="));
+
     // Flags field out of range
     checkFromText_InvalidText("65536 3 5 YmluZDEwLmlzYy5vcmc=");
 
@@ -116,9 +121,6 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
 
     // Invalid key data field (not Base64)
     checkFromText_BadValue("257 3 5 BAAAAAAAAAAAD");
-
-    // Key data too short for algorithm=1
-    checkFromText_InvalidLength("1 1 1 YQ==");
 
     // String instead of number
     checkFromText_LexerError("foo 3 5 YmluZDEwLmlzYy5vcmc=");
@@ -177,16 +179,18 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dnskey_missing_keydata.compare(
         *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                               "rdata_dnskey_empty_keydata_fromWire.wire")));
-
-    // Short keydata for RSA/MD5 should throw
-    EXPECT_THROW(rdataFactoryFromFile
-                 (RRType("DNSKEY"), RRClass("IN"),
-                  "rdata_dnskey_short_keydata1_fromWire.wire"),
-                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_DNSKEY_Test, getTag) {
     EXPECT_EQ(12892, rdata_dnskey.getTag());
+
+    // Short keydata with algorithm RSA/MD5 must throw.
+    const generic::DNSKEY rdata_dnskey_short_keydata1("1 1 1 YQ==");
+    EXPECT_THROW(rdata_dnskey_short_keydata1.getTag(), isc::OutOfRange);
+
+    // Short keydata with algorithm not RSA/MD5 must not throw.
+    const generic::DNSKEY rdata_dnskey_short_keydata2("257 3 5 YQ==");
+    EXPECT_NO_THROW(rdata_dnskey_short_keydata2.getTag());
 }
 
 TEST_F(Rdata_DNSKEY_Test, getAlgorithm) {
