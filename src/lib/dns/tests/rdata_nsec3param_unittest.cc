@@ -194,7 +194,8 @@ TEST_F(Rdata_NSEC3PARAM_Test, getFlags) {
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, assign) {
-    generic::NSEC3PARAM other_nsec3param = rdata_nsec3param;
+    generic::NSEC3PARAM other_nsec3param("1 1 1 -");
+    other_nsec3param = rdata_nsec3param;
     EXPECT_EQ(0, rdata_nsec3param.compare(other_nsec3param));
 }
 
