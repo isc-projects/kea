@@ -21,10 +21,20 @@ namespace isc {
 namespace dhcp {
 
 int
-PktFilterLPF::openSocket(const std::string& ifname, const isc::asiolink::IOAddress& addr,
-                          const uint16_t port, const bool receive_bcast,
-                          const bool send_bcast) {
+PktFilterLPF::openSocket(const Iface&, const isc::asiolink::IOAddress&,
+                         const uint16_t, const bool,
+                         const bool) {
 
+    return (-1);
+}
+
+Pkt4Ptr
+PktFilterLPF::receive(const Iface&, const SocketInfo&) {
+    return (Pkt4Ptr());
+}
+
+int
+PktFilterLPF::send(uint16_t, const Pkt4Ptr&) {
     return (-1);
 }
 

@@ -37,6 +37,7 @@ libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libb10_dhcp___la_SOURCES += pkt_filter.h
 libb10_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
+libb10_dhcp___la_SOURCES += pkt_filter_lpf.cc pkt_filter_lpf.h
 libb10_dhcp___la_SOURCES += std_option_defs.h
 
 libb10_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
