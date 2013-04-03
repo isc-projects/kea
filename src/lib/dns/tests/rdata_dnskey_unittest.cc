@@ -138,7 +138,8 @@ TEST_F(Rdata_DNSKEY_Test, fromText) {
 }
 
 TEST_F(Rdata_DNSKEY_Test, assign) {
-    generic::DNSKEY rdata_dnskey2 = rdata_dnskey;
+    generic::DNSKEY rdata_dnskey2("257 3 5 YQ==");
+    rdata_dnskey2 = rdata_dnskey;
     EXPECT_EQ(0, rdata_dnskey.compare(rdata_dnskey2));
 }
 
