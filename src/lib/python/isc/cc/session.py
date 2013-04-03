@@ -67,7 +67,9 @@ class Session:
             logger.debug(logger.DBGLVL_TRACE_BASIC, PYCC_LNAME_RECEIVED,
                          self._lname)
         except socket.error as se:
-                raise SessionError(se)
+            if self._socket:
+                self._socket.close()
+            raise SessionError(se)
 
     @property
     def lname(self):
