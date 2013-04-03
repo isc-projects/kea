@@ -14,6 +14,7 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/exceptions.h>
 #include <datasrc/memory/memory_client.h>
@@ -135,27 +136,43 @@ public:
     // Install a "fake" cached zone using a temporary underlying data source
     // client.
     void prepareCache(size_t index, const Name& zone) {
-        // Prepare the temporary data source client
-        const char* zones[2];
-        const std::string zonename_txt = zone.toText();
-        zones[0] = zonename_txt.c_str();
-        zones[1] = NULL;
-        MockDataSourceClient mock_client(zones);
-        // Disable some default features of the mock to distinguish the
-        // temporary case from normal case.
-        mock_client.disableA();
-        mock_client.disableBadIterator();
-
-        // Create cache from the temporary data source, and push it to the
-        // client list.
-        const shared_ptr<InMemoryClient> cache(
-            new InMemoryClient(ztable_segment_, rrclass_));
-        cache->load(zone, *mock_client.getIterator(zone, false));
-
         ConfigurableClientList::DataSourceInfo& dsrc_info =
                 list_->getDataSources()[index];
-        dsrc_info.cache_ = cache;
-        dsrc_info.ztable_segment_ = ztable_segment_;
+        MockDataSourceClient* mock_client =
+            static_cast<MockDataSourceClient*>(dsrc_info.data_src_client_);
+
+        // Disable some default features of the mock to distinguish the
+        // temporary case from normal case.
+        mock_client->disableA();
+        mock_client->disableBadIterator();
+
+        // Build new cache config to load the specified zone, and replace
+        // the data source info with the new config.
+        ConstElementPtr cache_conf_elem =
+            Element::fromJSON("{\"type\": \"mock\", \"cache-enable\": true,"
+                              " \"cache-zones\": "
+                              "   [\"" + zone.toText() + "\"]}");
+        boost::shared_ptr<internal::CacheConfig> cache_conf(
+            new internal::CacheConfig("mock", mock_client, *cache_conf_elem,
+                                      true));
+        dsrc_info = ConfigurableClientList::DataSourceInfo(
+            dsrc_info.data_src_client_,
+            dsrc_info.container_,
+            cache_conf, rrclass_, dsrc_info.name_);
+
+        // Load the data into the zone table.
+        boost::scoped_ptr<memory::ZoneWriter> writer(
+            dsrc_info.ztable_segment_->getZoneWriter(
+                cache_conf->getLoadAction(rrclass_, zone),
+                zone, rrclass_));
+        writer->load();
+        writer->install();
+        writer->cleanup(); // not absolutely necessary, but just in case
+
+        // On completion of load revert to the previous state of underlying
+        // data source.
+        mock_client->enableA();
+        mock_client->enableBadIterator();
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
@@ -926,7 +943,7 @@ TYPED_TEST(ReloadTest, reloadNoSuchZone) {
 // Check we gracefuly throw an exception when a zone disappeared in
 // the underlying data source when we want to reload it
 TYPED_TEST(ReloadTest, reloadZoneGone) {
-    this->list_->configure(this->config_elem_, true);
+    this->list_->configure(this->config_elem_zones_, true);
     const Name name("example.org");
     // We put in a cache for non-existent zone. This emulates being loaded
     // and then the zone disappearing. We prefill the cache, so we can check
@@ -936,6 +953,10 @@ TYPED_TEST(ReloadTest, reloadZoneGone) {
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(name).finder_->find(name,
                                                     RRType::SOA())->code);
+    // Remove the zone from the data source.
+    static_cast<MockDataSourceClient*>(
+        this->list_->getDataSources()[0].data_src_client_)->eraseZone(name);
+
     // The zone is not there, so abort the reload.
     EXPECT_THROW(this->doReload(name), DataSourceError);
     // The (cached) zone is not hurt.
