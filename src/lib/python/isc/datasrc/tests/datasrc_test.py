@@ -33,11 +33,11 @@ WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
 
 READ_ZONE_DB_CONFIG = "{ \"database_file\": \"" + READ_ZONE_DB_FILE + "\" }"
 WRITE_ZONE_DB_CONFIG = "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}"
-# Static zone must be built from client list.
-STATIC_ZONE_CONFIG = '''[{
+# In-memory data source must be built via client list.
+INMEMORY_ZONE_CONFIG = '''[{
    "type": "MasterFiles",
    "cache-enable": true,
-   "params": {"BIND": "''' + TESTDATA_PATH + 'static.zone"}}]'
+   "params": {"example.com": "''' + TESTDATA_PATH + 'example.com"}}]'
 
 def add_rrset(rrset_list, name, rrclass, rrtype, ttl, rdatas):
     rrset_to_add = isc.dns.RRset(name, rrclass, rrtype, ttl)
@@ -566,13 +566,10 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertEqual(updater_refs, sys.getrefcount(updater))
 
     def test_two_modules(self):
-        # load two modules, and check if they don't interfere; as the
-        # memory datasource module no longer exists, we check the static
-        # datasource instead (as that uses the memory datasource
-        # anyway).
-        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
-        clist.configure(STATIC_ZONE_CONFIG, True)
-        dsc_static = clist.find(isc.dns.Name("bind"), True, False)[0]
+        # load two modules, and check if they don't interfere.
+        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        clist.configure(INMEMORY_ZONE_CONFIG, True)
+        dsc_static = clist.find(isc.dns.Name("example.com"), True, False)[0]
         dsc_sql = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
 
         # check if exceptions are working
@@ -729,12 +726,9 @@ class DataSrcUpdater(unittest.TestCase):
         self.assertTrue(dsc.delete_zone(zone_name))
 
     def test_create_zone_not_implemented(self):
-        # As the memory datasource module no longer exists, we check the
-        # static datasource instead (as that uses the memory datasource
-        # anyway).
-        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.CH)
-        clist.configure(STATIC_ZONE_CONFIG, True)
-        dsc = clist.find(isc.dns.Name("bind"), True, False)[0]
+        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        clist.configure(INMEMORY_ZONE_CONFIG, True)
+        dsc = clist.find(isc.dns.Name("example.com"), True, False)[0]
         self.assertRaises(isc.datasrc.NotImplemented, dsc.create_zone,
                           isc.dns.Name("example.com"))
 
