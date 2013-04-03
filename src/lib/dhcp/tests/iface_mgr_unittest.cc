@@ -863,14 +863,14 @@ TEST_F(IfaceMgrTest, iface_methods) {
 TEST_F(IfaceMgrTest, socketInfo) {
 
     // check that socketinfo for IPv4 socket is functional
-    Iface::SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
+    SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
     EXPECT_EQ(7, sock1.sockfd_);
     EXPECT_EQ("192.0.2.56", sock1.addr_.toText());
     EXPECT_EQ(AF_INET, sock1.family_);
     EXPECT_EQ(DHCP4_SERVER_PORT + 7, sock1.port_);
 
     // check that socketinfo for IPv6 socket is functional
-    Iface::SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
+    SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
     EXPECT_EQ(9, sock2.sockfd_);
     EXPECT_EQ("2001:db8:1::56", sock2.addr_.toText());
     EXPECT_EQ(AF_INET6, sock2.family_);
