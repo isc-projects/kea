@@ -1,3 +1,20 @@
+598.	[func]*		jinmei
+	The separate "static" data source is now deprecated as it can be
+	served in the more generic "MasterFiles" type of data source.
+	This means existing configuration may not work after an update.
+	If "config show data_sources/classes/CH[0]" on bindctl contains a
+	"static" type of data source, you'll need to update it as follows:
+	> config set data_sources/classes/CH[0]/type MasterFiles
+	> config set data_sources/classes/CH[0]/params {"BIND": =>
+	  "<the value of current data_sources/classes/CH[0]/params>"}
+	> config set data_sources/classes/CH[0]/cache-enable true
+	> config commit
+	(Same for CH[1], CH[2], IN[0], etc, if applicable, although it
+	should be very unlikely in practice.  Also note: '=>' above
+	indicates the next line is actually part of the command.  Do
+	not type in this "arrow").
+	(Part of Trac #2833, git 0363b4187fe3c1a148ad424af39e12846610d2d7)
+
 597.	[func]		tmark
 	b10-dhcp6: Added unit tests for handling requests when no
 	IPv6 subnets are configured/defined. Testing these conditions
