@@ -287,9 +287,9 @@ Dhcpv4Srv::generateServerID() {
             continue;
         }
 
-        const IfaceMgr::AddressCollection addrs = iface->getAddresses();
+        const Iface::AddressCollection addrs = iface->getAddresses();
 
-        for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+        for (Iface::AddressCollection::const_iterator addr = addrs.begin();
              addr != addrs.end(); ++addr) {
             if (addr->getFamily() != AF_INET) {
                 continue;
