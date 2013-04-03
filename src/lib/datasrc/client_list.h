@@ -418,6 +418,10 @@ public:
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
+
+        const internal::CacheConfig* getCacheConfig() const {
+	    return (cache_conf_.get());
+	}
     private:
         // this is kept private for now.  When it needs to be accessed,
         // we'll add a read-only getter method.
