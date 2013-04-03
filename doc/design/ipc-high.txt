@@ -21,6 +21,14 @@ disconnected during the attempt.
 Also, we expect the messages don't get damaged or modified on their
 way.
 
+On unrecoverable error (errors like EINTR or short read/write are
+recoverable, since there's clear way how to continue without losing
+any messages, errors like connection reset are unrecoverable), the
+client should abort completely. If it deems better to reconnect, it
+must assume anything might have happened during the time and start
+communication from scratch, discarding any knowledge gathered from the
+previous connection (configuration, addresses of other clients, etc).
+
 Addressing
 ----------
 
@@ -32,6 +40,12 @@ We can specify the recipient in two different ways:
    When a message is sent to the group, all clients subscribed to the
    group receive it. It is legal to send to an empty group.
 
+[NOTE]
+If it is possible a group may contain multiple recipients, it is
+discouraged to send messages expecting an answer addressed to the
+group. It is not known how many answers are to come. See below for
+details on one-to-many communication.
+
 Feedback from the IPC system
 ----------------------------
 
@@ -42,17 +56,21 @@ Undeliverable notification::
   If the client requests it (by a per-message flag) and the set of
   recipients specified is empty (either because the connection
   ID/lname is not connected or because the addressed group is empty),
-  an answer message is sent from the MSGQ daemon to notify it about
-  the situation.
+  an answer message is sent from the daemon to notify it about
+  the situation. However, since the recipient still can take a long
+  time to answer (if it exists), clients that need high availability
+  should not wait for the answer in blocking way.
 Notifications about connections and disconnections::
   The system generates notification about following events:
-  * Client with given lname connected
-  * Client with given lname disconnected
-  * Client with given lname subscribed to given group
-  * Client with given lname unsubscribed from given group
+  * Client connected (sent with the lname of the client)
+  * Client disconnected (sent with the lname of the client)
+  * Client subscribed (sent with the name of group and lname of
+    client)
+  * Client unsubscribed (sent with the name of group and lname of
+    client)
 List of group members:
-  The MSGQ provides a command to list members of given group and list
-  of all connections.
+  The daemon provides a command to list lnames of clients subscribed
+  to given group, and lnames of all connections.
 
 Communication paradigms
 -----------------------
@@ -72,24 +90,22 @@ When the event happens, it is sent (broadcasted) to the group, without
 requiring an answer.
 
 [[NOTE]]
-To avoid race conditions on start up, it is important to first
-subscribe to the group and then load the initial state (for which
-change the notification would be), not the other way around. The other
-way, the state could be loaded, and then, before subscribing, an event
-could happen and be unnoticed. On the other hand, we may still receive
-event for change to the state we already loaded (which should be
-generally safe), but not lose an update.
+A care should be taken to avoid race conditions. Imagine one module
+provides some kind of state (let's say it's the configuration manager
+and the configuration is the shared state). The other modules are
+using notifications to update their copy when the configuration
+changes (eg. when the configuration changes, the configuration manager
+sends a notification with description of the change).
 
-Examples of these kinds could be change to a zone data (so it would
-get reloaded by every process that has the data),
-connection/disconnection notification from msgq, or change to
-configuration data.
+The correct order is to first subscribe to the notifications and then
+request the whole configuration. If it was done the other way around,
+there would be a short time between the request and the subscription
+when an update to the state could happen without the module noticing.
 
-It would be the recipients responsibility to handle the notification,
-or at least, produce an error log message. In these situations, the
-originator can not reasonably handle error cases anyway (the zone data
-has been written), so if something does not work, log is everything we
-can do.
+With first subscribing, the notification could come before the initial
+version is known or arrive even when the initial version already
+includes the change, but these are possible to handle, while the
+missing update is not.
 
 One-to-one RPC call
 ~~~~~~~~~~~~~~~~~~~
@@ -108,14 +124,14 @@ A command message (containing the parameters, name of the command,
 etc) is sent, with the want-answer flag set. The other side processes
 the command and sends a result or error back.
 
-If the recipient does not exist, the msgq sends an error right away.
+If the recipient does not exist, the daemon sends an error right away.
 
 There are still two ways this may fail to provide an answer:
 
  * The receiving module reads the command, but does not provide an
    answer. Clearly, such module is broken. There should be some (long)
    timeout for this situation, and loud logging to get it fixed.
- * The receiving module terminated at the exact time when msgq tried
+ * The receiving module terminated at the exact time when daemon tried
    to send to it, or crashed handling the command. Therefore the
    sender listens for disconnect or unsubscription notifications
    (depending on if it was sent by lname or group name) and if the
@@ -130,15 +146,15 @@ One-to-many RPC call
 Sometimes it is needed to send a command to bunch of modules at once,
 usually all members of a group that can contain any number of clients.
 
-This would be done by requesting the members of the group from msgq
-and then sending a one-to-one RPC call to each of them, tracking them
-separately.
+This would be done by requesting the members of the group from the
+daemon and then sending a one-to-one RPC call to each of them,
+tracking them separately.
 
 [NOTE]
 It might happen the list of group members changes between the time it
 was requested and the time the commands are sent. If a client gets
-disconnected, the sender gets an undeliverable error back from msgq.
-If anything else happens (the client unsubscribes, connects,
+disconnected, the sender gets an undeliverable error back from the
+daemon.  If anything else happens (the client unsubscribes, connects,
 subscribes), it must explicitly synchronise to the state anyway,
 because we could have sent the commands before the change actually
 happened and it would look the same to the client.
