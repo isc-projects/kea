@@ -88,7 +88,7 @@ OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
     return (OptionPtr());
 }
 
-uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) {
+uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
@@ -112,10 +112,10 @@ uint16_t Pkt6::calculateRelaySizes() {
     return (len);
 }
 
-uint16_t Pkt6::directLen() {
+uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (Option::OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
