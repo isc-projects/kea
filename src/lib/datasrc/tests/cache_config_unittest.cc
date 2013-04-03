@@ -74,14 +74,15 @@ TEST_F(CacheConfigTest, constructMasterFiles) {
                           " \"example.org\": \"file2\","
                           " \"example.info\": \"file3\"}"
                           "}"));
-    EXPECT_EQ(3, countZones(CacheConfig("MasterFiles", 0, *config_elem_multi,
-                                        true)));
+    const CacheConfig cache_conf2("MasterFiles", 0, *config_elem_multi, true);
+    EXPECT_EQ(3, countZones(cache_conf2));
 
     // A bit unusual, but acceptable case: empty parameters, so no zones.
-    EXPECT_EQ(0, countZones(
-                  CacheConfig("MasterFiles", 0,
-                              *Element::fromJSON("{\"cache-enable\": true,"
-                                                 " \"params\": {}}"), true)));
+    const CacheConfig cache_conf3("MasterFiles", 0,
+                                  *Element::fromJSON("{\"cache-enable\": true,"
+                                                     " \"params\": {}}"),
+                                  true);
+    EXPECT_EQ(0, countZones(cache_conf3));
 }
 
 TEST_F(CacheConfigTest, badConstructMasterFiles) {
@@ -153,15 +154,16 @@ TEST_F(CacheConfigTest, constructWithMock) {
                           " \"cache-zones\": "
                           "[\"example.com\", \"example.org\",\"example.info\"]"
                           "}"));
-    EXPECT_EQ(3, countZones(CacheConfig("mock", &mock_client_,
-                                        *config_elem_multi, true)));
+    const CacheConfig cache_conf2("mock", &mock_client_, *config_elem_multi,
+                                  true);
+    EXPECT_EQ(3, countZones(cache_conf2));
 
     // Empty
-    EXPECT_EQ(0, countZones(
-                  CacheConfig("mock", &mock_client_,
-                              *Element::fromJSON("{\"cache-enable\": true,"
-                                                 " \"cache-zones\": []}"),
-                              true)));
+    const CacheConfig cache_conf3(
+        "mock", &mock_client_,
+        *Element::fromJSON("{\"cache-enable\": true,"
+                           " \"cache-zones\": []}"), true);
+    EXPECT_EQ(0, countZones(cache_conf3));
 
     // disabled.  value of cache-zones are ignored.
     const ConstElementPtr config_elem_disabled(
