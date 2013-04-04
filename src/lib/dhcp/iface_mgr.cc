@@ -195,9 +195,22 @@ void IfaceMgr::stubDetectIfaces() {
     addInterface(iface);
 }
 
-bool IfaceMgr::openSockets4(const uint16_t port) {
+bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
     int sock;
     int count = 0;
+
+// This option is used to bind sockets to particular interfaces.
+// This is currently the only way to discover on which interface
+// the broadcast packet has been received. If this option is
+// not supported then only one interface should be confugured
+// to listen for broadcast traffic.
+#ifdef SO_BINDTODEVICE
+    const bool bind_to_device = true;
+#else
+    const bool bind_to_device = false;
+#endif
+
+    int bcast_num = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end();
@@ -219,9 +232,37 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
                 continue;
             }
 
-            // Open socket and enable broadcast traffic
-            // (two last arguments enable broadcast).
-            sock = openSocket(iface->getName(), *addr, port, true, true);
+            // If selected interface is broadcast capable set appropriate
+            // options on the socket so as it can receive and send broadcast
+            // messages.
+            if (iface->flag_broadcast_ && use_bcast) {
+                // If our OS supports binding socket to a device we can listen
+                // for broadcast messages on multiple interfaces. Otherwise we
+                // bind to INADDR_ANY address but we can do it only once. Thus,
+                // if one socket has been bound we can't do it any further.
+                if (!bind_to_device && bcast_num > 0) {
+                    isc_throw(SocketConfigError, "SO_BINDTODEVICE socket option is"
+                              << " not supported on this OS; therefore, DHCP"
+                              << " server can only listen broadcast traffic on"
+                              << " a single interface");
+
+                } else {
+                    // We haven't open any broadcast sockets yet, so we can
+                    // open at least one more.
+                    sock = openSocket(iface->getName(), *addr, port, true, true);
+                    // Binding socket to an interface is not supported so we can't
+                    // open any more broadcast sockets. Increase the number of
+                    // opened broadcast sockets.
+                    if (!bind_to_device) {
+                        ++bcast_num;
+                    }
+                }
+
+            } else {
+                // Not broadcast capable, do not set broadcast flags.
+                sock = openSocket(iface->getName(), *addr, port, false, false);
+
+            }
             if (sock < 0) {
                 isc_throw(SocketConfigError, "failed to open IPv4 socket"
                           << " supporting broadcast traffic");
