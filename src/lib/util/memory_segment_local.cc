@@ -68,8 +68,8 @@ MemorySegmentLocal::setNamedAddress(const char* name, void* addr) {
 
 bool
 MemorySegmentLocal::clearNamedAddress(const char* name) {
-    const size_t n_erase = named_addrs_.erase(name);
-    return (n_erase == 1);
+    const size_t n_erased = named_addrs_.erase(name);
+    return (n_erased != 0);
 }
 
 } // namespace util
