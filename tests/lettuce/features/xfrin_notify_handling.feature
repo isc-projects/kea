@@ -27,7 +27,11 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
+    # Note: Sometime an unixdomain socket could be already opened at
+    # the first time when stats daemon queries xfrout statistics.
 
     #
     # Test2 for Xfrin statistics
@@ -118,7 +122,11 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
+    # Note: Sometime an unixdomain socket could be already opened at
+    # the first time when stats daemon queries xfrout statistics.
     #
     # Test2 for Xfrin statistics
     #
@@ -216,7 +224,11 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
+    # Note: Sometime an unixdomain socket could be already opened at
+    # the first time when stats daemon queries xfrout statistics.
 
     #
     # Test2 for Xfrin statistics
@@ -322,7 +334,11 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
+    # Note: Sometime an unixdomain socket could be already opened at
+    # the first time when stats daemon queries xfrout statistics.
 
     #
     # Test2 for Xfrin statistics
