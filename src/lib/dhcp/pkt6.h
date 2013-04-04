@@ -189,7 +189,7 @@ public:
     /// Returns an option from specified relay scope (inserted by a given relay
     /// if this is received packet or to be decapsulated by a given relay if
     /// this is a transmitted packet). nesting_level specifies which relay
-    /// scope is to be used 0 is the outermost encapsulation (relay closest to
+    /// scope is to be used. 0 is the outermost encapsulation (relay closest to
     /// the server). pkt->relay_info_.size() - 1 is the innermost encapsulation
     /// (relay closest to the client).
     ///
