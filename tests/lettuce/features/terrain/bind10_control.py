@@ -438,11 +438,13 @@ def check_statistics_items(step, category, has_except_for):
             'Statistics item %s has unexpected value %s (expect %s)' % \
                 (name, found, 0)
 
-@step('check initial statistics for (\S+)( with cmdctl port \d+)?')
-def check_init_statistics(step, name, cmdctl_port):
-    """
-    check the initial statistics for the module
+@step('check initial statistics(?:( not)? containing (\S+))? for (\S+)( with cmdctl port \d+)?')
+def check_init_statistics(step, notv, string, name, cmdctl_port):
+    """Checks the initial statistics for the module. Also checks a
+    string is contained or not contained in them.
     Parameters:
+    notv ('not'): reverse the check (fail if string is found)
+    string ('containing <string>') string to look for
     name ('module <name>'): The name of the module (case sensitive!)
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
                 the command to.
@@ -450,9 +452,10 @@ def check_init_statistics(step, name, cmdctl_port):
     query_str = 'query statistics of bind10 module ' + name
     if cmdctl_port:
         query_str = query_str + cmdctl_port
-    notcontain_str = 'last bindctl output should not contain "%s"'
+    notcontain_str = 'last bindctl output should%s contain "%s"'
     check_str = 'statistics counters are 0 in category .' + name
     step.given(query_str)
-    step.given(notcontain_str % 'error')
-    step.given(notcontain_str % 'example.org.')
+    step.given(notcontain_str % (' not', 'error'))
+    if string is not None:
+        step.given(notcontain_str % (notv, string))
     step.given(check_str)
