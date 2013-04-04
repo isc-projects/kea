@@ -219,11 +219,12 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
                 continue;
             }
 
-            // Using openSocket4 directly instead of using openSocket to
-            // pass boolean arguments that enable broadcast traffic.
-            sock = openSocket4(*iface, *addr, port, true, true);
+            // Open socket and enable broadcast traffic
+            // (two last arguments enable broadcast).
+            sock = openSocket(iface->getName(), *addr, port, true, true);
             if (sock < 0) {
-                isc_throw(SocketConfigError, "failed to open unicast socket");
+                isc_throw(SocketConfigError, "failed to open IPv4 socket"
+                          << " supporting broadcast traffic");
             }
 
             count++;
@@ -355,13 +356,14 @@ IfaceMgr::getIface(const std::string& ifname) {
 }
 
 int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
-                         const uint16_t port) {
+                         const uint16_t port, const bool receive_bcast,
+                         const bool send_bcast) {
     Iface* iface = getIface(ifname);
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
     }
     if (addr.isV4()) {
-        return openSocket4(*iface, addr, port);
+        return openSocket4(*iface, addr, port, receive_bcast, send_bcast);
 
     } else if (addr.isV6()) {
         return openSocket6(*iface, addr, port);
@@ -587,8 +589,12 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     return (sock);
 }
 
-int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port,
-                          bool receive_bcast, bool send_bcast) {
+int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
+                          const uint16_t port, const bool receive_bcast,
+                          const bool send_bcast) {
+
+    // Skip checking if the packet_filter_ is non-NULL because this check
+    // has been already done when packet filter object was set.
 
     int sock = packet_filter_->openSocket(iface, addr, port,
                                           receive_bcast, send_bcast);
@@ -709,6 +715,8 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
                   << pkt->getIface() << ") specified.");
     }
 
+    // Skip checking if packet filter is non-NULL because it has been
+    // already checked when packet filter was set.
     return (packet_filter_->send(getSocket(*pkt), pkt));
 }
 
@@ -807,6 +815,8 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Now we have a socket, let's get some data from it!
+    // Skip checking if packet filter is non-NULL because it has been
+    // already checked when packet filter was set.
     return (packet_filter_->receive(*iface, *candidate));
 }
 

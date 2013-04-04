@@ -24,6 +24,9 @@ namespace dhcp {
 ///
 /// This class provides methods to send and recive packet using raw sockets
 /// and Linux Packet Filtering.
+///
+/// @warning This class is not implemented yet. Therefore all functions
+/// currently throw isc::NotImplemented exception.
 class PktFilterLPF : public PktFilter {
 public:
 
@@ -35,6 +38,7 @@ public:
     /// @param receive_bcast configure socket to receive broadcast messages
     /// @param send_bcast configure socket to send broadcast messages.
     ///
+    /// @throw isc::NotImplemented always
     /// @return created socket's descriptor
     virtual int openSocket(const Iface& iface,
                            const isc::asiolink::IOAddress& addr,
@@ -47,6 +51,7 @@ public:
     /// @param iface interface
     /// @param socket_info structure holding socket information
     ///
+    /// @throw isc::NotImplemented always
     /// @return Received packet
     virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& socket_info);
 
@@ -55,6 +60,7 @@ public:
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
+    /// @throw isc::NotImplemented always
     /// @return result of sending a packet. It is 0 if successful.
     virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
 
