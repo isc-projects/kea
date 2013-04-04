@@ -104,7 +104,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO records "      // ADD_RECORD
         "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-    "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
+    "DELETE FROM records WHERE zone_id=?1 AND rname=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
 
     // ITERATE_RECORDS:
@@ -1295,8 +1295,14 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
-        *dbparameters_, DEL_RECORD, params, "delete record from zone");
+    const size_t SQLITE3_DEL_PARAM_COUNT = DEL_PARAM_COUNT - 1;
+    const string sqlite3_params[SQLITE3_DEL_PARAM_COUNT] = {
+        params[DEL_RNAME],
+        params[DEL_TYPE],
+        params[DEL_RDATA]
+    };
+    doUpdate<const string (&)[SQLITE3_DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_RECORD, sqlite3_params, "delete record from zone");
 }
 
 void
@@ -1307,8 +1313,14 @@ SQLite3Accessor::deleteNSEC3RecordInZone(
         isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
-        *dbparameters_, DEL_NSEC3_RECORD, params,
+    const size_t SQLITE3_DEL_PARAM_COUNT = DEL_PARAM_COUNT - 1;
+    const string sqlite3_params[SQLITE3_DEL_PARAM_COUNT] = {
+        params[DEL_NAME],
+        params[DEL_TYPE],
+        params[DEL_RDATA]
+    };
+    doUpdate<const string (&)[SQLITE3_DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_NSEC3_RECORD, sqlite3_params,
         "delete NSEC3 record from zone");
 }
 
