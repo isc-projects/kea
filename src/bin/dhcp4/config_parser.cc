@@ -13,13 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config/ccsession.h>
+#include <dhcp4/config_parser.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/config_parser.h>
 #include <dhcpsrv/dbaccess_parser.h>
-//#include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -1418,7 +1418,7 @@ private:
         try {
             subnet_txt = string_values_.getParam("subnet"); 
         } catch (DhcpConfigError) {
-            // rethrow with precise error
+            // Rethrow with precise error.
             isc_throw(DhcpConfigError,
                       "Mandatory subnet definition in subnet missing");
         }
