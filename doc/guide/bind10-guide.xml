@@ -772,6 +772,16 @@ as a dependency earlier -->
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>--without-werror</term>
+            <listitem>
+              <simpara>Disable the default use of the
+		<option>-Werror</option> compiler flag so that
+		compiler warnings aren't build failures.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
           </variablelist>
           <note>
             <para>
