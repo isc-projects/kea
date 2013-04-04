@@ -312,7 +312,7 @@ protected:
                 string(TEST_DATA_DIR) + "/" + filename + "\"";
         }
         const internal::CacheConfig cache_conf(
-            "MasterFiles", 0, *Element::fromJSON(
+            "MasterFiles", NULL, *Element::fromJSON(
                 "{\"cache-enable\": true,"
                 " \"params\": {" + param_data + "}}"), true);
         ztable_segment_.reset(memory::ZoneTableSegment::create(
