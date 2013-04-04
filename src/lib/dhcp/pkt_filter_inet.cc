@@ -49,6 +49,7 @@ PktFilterInet::openSocket(const Iface& iface,
         isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
     }
 
+#ifdef SO_BINDTODEVICE
     if (receive_bcast) {
         // Bind to device so as we receive traffic on a specific interface.
         if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.getName().c_str(),
@@ -58,6 +59,7 @@ PktFilterInet::openSocket(const Iface& iface,
                       << "on socket " << sock);
         }
     }
+#endif
 
     if (send_bcast) {
         // Enable sending to broadcast address.

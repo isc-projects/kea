@@ -534,10 +534,12 @@ public:
     /// Will throw exception if socket creation fails.
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
+    /// @param use_bcast configure sockets to support broadcast messages.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
-    bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT);
+    bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
+                      const bool use_bcast = true);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
