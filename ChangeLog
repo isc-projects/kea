@@ -1,4 +1,4 @@
-bind10-1.0.0-beta released on April 4, 2013
+bind10-1.0.0-beta1 released on April 4, 2013
 
 598.	[func]*		jinmei
 	The separate "static" data source is now deprecated as it can be
