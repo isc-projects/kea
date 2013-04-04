@@ -104,6 +104,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO records "      // ADD_RECORD
         "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+    // DEL_RECORD:
+    // Delete based on the reverse name, as that one has an index.
     "DELETE FROM records WHERE zone_id=?1 AND rname=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
 
@@ -1295,6 +1297,8 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
+    // We don't pass all the parameters to the query, one name (reserve one
+    // in this case) is sufficient. Pass only the needed ones.
     const size_t SQLITE3_DEL_PARAM_COUNT = DEL_PARAM_COUNT - 1;
     const string sqlite3_params[SQLITE3_DEL_PARAM_COUNT] = {
         params[DEL_RNAME],
