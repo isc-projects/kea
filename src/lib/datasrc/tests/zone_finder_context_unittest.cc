@@ -72,7 +72,7 @@ typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
 DataSourceClientPtr
 createInMemoryClient(RRClass zclass, const Name& zname) {
     const internal::CacheConfig cache_conf(
-        "MasterFiles", 0, *Element::fromJSON(
+        "MasterFiles", NULL, *Element::fromJSON(
             "{\"cache-enable\": true,"
             " \"params\":"
             "  {\"" + zname.toText() + "\": \"" +
