@@ -1,4 +1,4 @@
-bind10-1.0.0-beta1 released on April 4, 2013
+bind10-1.0.0beta1 released on April 4, 2013
 
 598.	[func]*		jinmei
 	The separate "static" data source is now deprecated as it can be
@@ -89,7 +89,7 @@ bind10-1.0.0-beta1 released on April 4, 2013
 	statements. Also, the sqlite3-specific log messages have been moved
 	from the general datasource library to the sqlite3 datasource
 	(which also explicitely loads its messages).
-	(Trac 2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
+	(Trac #2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
 
 586.	[func]		marcin
 	libdhcp++: Removed unnecesary calls to the function which
