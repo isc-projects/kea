@@ -565,3 +565,15 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
+
+% DATASRC_DATABASE_ADDDIFF updated diff table for add: %1 %2 %3
+
+% DATASRC_DATABASE_DELETEDIFF updated diff table for delete: %1 %2 %3
+
+% DATASRC_DATABASE_ADDNSEC3 added NSEC3 RR: %1 %2
+
+% DATASRC_DATABASE_ADDRR added RR: %1 %2 %3
+
+% DATASRC_DATABASE_DELETENSEC3 deleted NSEC3 RR: %1 %2
+
+% DATASRC_DATABASE_DELETERR deleted RR: %1 %2 %3
