@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <datasrc/tests/memory/zone_loader_util.h>
+
 #include <exceptions/exceptions.h>
 
 #include <util/memory_segment_local.h>
@@ -42,6 +44,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <new>                  // for bad_alloc
 
@@ -53,6 +56,7 @@ using namespace isc::datasrc::memory;
 using namespace isc::testutils;
 using boost::shared_ptr;
 using std::vector;
+using isc::datasrc::memory::test::loadZoneIntoTable;
 
 namespace {
 
@@ -169,26 +173,22 @@ protected:
                              zclass_, mem_sgmt_)),
                          client_(new InMemoryClient(ztable_segment_, zclass_))
     {}
-    ~MemoryClientTest() {
-        delete client_;
-    }
     void TearDown() {
-        delete client_;
-        client_ = NULL;
+        client_.reset();
         ztable_segment_.reset();
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
     test::MemorySegmentTest mem_sgmt_;
     shared_ptr<ZoneTableSegment> ztable_segment_;
-    InMemoryClient* client_;
+    boost::scoped_ptr<InMemoryClient> client_;
 };
 
 TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
     // Attempting to load example.org to example.com zone should result
     // in an exception.
-    EXPECT_THROW(client_->load(Name("example.com"),
-                               TEST_DATA_DIR "/example.org-empty.zone"),
+    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("example.com"),
+                              TEST_DATA_DIR "/example.org-empty.zone"),
                  ZoneLoaderException);
 }
 
@@ -196,8 +196,8 @@ TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak1) {
     // Attempting to load broken example.org zone should result in an
     // exception. This should not leak ZoneData and other such
     // allocations.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR "/example.org-broken1.zone"),
+    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
+                              TEST_DATA_DIR "/example.org-broken1.zone"),
                  ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
@@ -206,50 +206,45 @@ TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak2) {
     // Attempting to load broken example.org zone should result in an
     // exception. This should not leak ZoneData and other such
     // allocations.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR "/example.org-broken2.zone"),
+    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
+                              TEST_DATA_DIR "/example.org-broken2.zone"),
                  ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadNonExistentZoneFile) {
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR "/somerandomfilename"),
+    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("example.org"),
+                              TEST_DATA_DIR "/somerandomfilename"),
                  ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
     // When an empty zone file is loaded, the origin doesn't even have
-    // an SOA RR. This condition should be avoided, and hence load()
-    // should throw when an empty zone is loaded.
-
-    EXPECT_EQ(0, client_->getZoneCount());
-
-    EXPECT_THROW(client_->load(Name("."),
-                               TEST_DATA_DIR "/empty.zone"),
+    // an SOA RR. This condition should be avoided, and hence it results in
+    // an exception.
+    EXPECT_THROW(loadZoneData(mem_sgmt_, zclass_, Name("."),
+                              TEST_DATA_DIR "/empty.zone"),
                  ZoneValidationError);
-
-    EXPECT_EQ(0, client_->getZoneCount());
-
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, load) {
     // This is a simple load check for a "full" and correct zone that
     // should not result in any exceptions.
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org.zone");
-    const ZoneData* zone_data =
-        client_->findZoneData(Name("example.org"));
+    ZoneData* zone_data = loadZoneData(mem_sgmt_, zclass_,
+                                       Name("example.org"),
+                                       TEST_DATA_DIR
+                                       "/example.org.zone");
     ASSERT_NE(static_cast<const ZoneData*>(NULL), zone_data);
     EXPECT_FALSE(zone_data->isSigned());
     EXPECT_FALSE(zone_data->isNSEC3Signed());
+    ZoneData::destroy(mem_sgmt_, zone_data, zclass_);
 }
 
 TEST_F(MemoryClientTest, loadFromIterator) {
-    client_->load(Name("example.org"),
-                  *MockIterator::makeIterator(rrset_data));
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      *MockIterator::makeIterator(rrset_data));
 
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
@@ -281,21 +276,23 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     // Iterating past the end should result in an exception
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 
+    // NOTE: The rest of the tests is not actually about InMemoryClient
+
     // Loading the zone with an iterator separating RRs of the same
     // RRset should not fail. It is acceptable to load RRs of the same
     // type again.
-    client_->load(Name("example.org"),
-                  *MockIterator::makeIterator(
-                      rrset_data_separated));
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      *MockIterator::makeIterator(rrset_data_separated));
 
     // Similar to the previous case, but with separated RRSIGs.
-    client_->load(Name("example.org"),
-                  *MockIterator::makeIterator(
-                      rrset_data_sigseparated));
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      *MockIterator::makeIterator(rrset_data_sigseparated));
 
     // Emulating bogus iterator implementation that passes empty RRSIGs.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               *MockIterator::makeIterator(rrset_data, true)),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   *MockIterator::makeIterator(rrset_data,
+                                                               true)),
                  isc::Unexpected);
 }
 
@@ -316,16 +313,16 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
             // fail (due to MemorySegmentTest throwing) and we check for
             // leaks when this happens.
             InMemoryClient client2(ztable_segment, zclass_);
-            client2.load(Name("example.org"),
-                         TEST_DATA_DIR "/example.org.zone");
+            loadZoneIntoTable(*ztable_segment, Name("example.org"), zclass_,
+                              TEST_DATA_DIR "/example.org.zone");
         }, std::bad_alloc);
     }
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadNSEC3Signed) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-nsec3-signed.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-nsec3-signed.zone");
     const ZoneData* zone_data =
         client_->findZoneData(Name("example.org"));
     ASSERT_NE(static_cast<const ZoneData*>(NULL), zone_data);
@@ -336,8 +333,8 @@ TEST_F(MemoryClientTest, loadNSEC3Signed) {
 TEST_F(MemoryClientTest, loadNSEC3EmptySalt) {
     // Load NSEC3 with empty ("-") salt. This should not throw or crash
     // or anything.
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-nsec3-empty-salt.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-nsec3-empty-salt.zone");
     const ZoneData* zone_data =
         client_->findZoneData(Name("example.org"));
     ASSERT_NE(static_cast<const ZoneData*>(NULL), zone_data);
@@ -346,8 +343,8 @@ TEST_F(MemoryClientTest, loadNSEC3EmptySalt) {
 }
 
 TEST_F(MemoryClientTest, loadNSEC3SignedNoParam) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-nsec3-signed-no-param.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-nsec3-signed-no-param.zone");
     const ZoneData* zone_data =
         client_->findZoneData(Name("example.org"));
     ASSERT_NE(static_cast<const ZoneData*>(NULL), zone_data);
@@ -360,14 +357,14 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     // doesn't increase.
     EXPECT_EQ(0, client_->getZoneCount());
 
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-empty.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-empty.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
     // Reload zone with same data
 
-    client_->load(Name("example.org"),
-                  client_->getFileName(Name("example.org")));
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-empty.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
     const ZoneData* zone_data =
@@ -396,8 +393,8 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 
     // Reload zone with different data
 
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
     zone_data = client_->findZoneData(Name("example.org"));
@@ -441,15 +438,14 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 TEST_F(MemoryClientTest, loadDuplicateType) {
     // This should not result in any exceptions (multiple records of the
     // same name, type are present, one after another in sequence).
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-duplicate-type.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-duplicate-type.zone");
 
     // This should not result in any exceptions (multiple records of the
     // same name, type are present, but not one after another in
     // sequence).
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR
-                  "/example.org-duplicate-type-bad.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-duplicate-type-bad.zone");
 
     const ZoneData* zone_data =
         client_->findZoneData(Name("example.org"));
@@ -479,104 +475,116 @@ TEST_F(MemoryClientTest, loadDuplicateType) {
 
 TEST_F(MemoryClientTest, loadMultipleCNAMEThrows) {
     // Multiple CNAME RRs should throw.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-multiple-cname.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-multiple-cname.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadMultipleDNAMEThrows) {
     // Multiple DNAME RRs should throw.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-multiple-dname.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-multiple-dname.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadMultipleNSEC3Throws) {
     // Multiple NSEC3 RRs should throw.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-multiple-nsec3.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-multiple-nsec3.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadMultipleNSEC3PARAMThrows) {
     // Multiple NSEC3PARAM RRs should throw.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-multiple-nsec3param.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-multiple-nsec3param.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadOutOfZoneThrows) {
     // Out of zone names should throw.
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-out-of-zone.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-out-of-zone.zone"),
                  ZoneLoaderException);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadWildcardNSThrows) {
     // Wildcard NS names should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-wildcard-ns.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-wildcard-ns.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadWildcardDNAMEThrows) {
     // Wildcard DNAME names should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-wildcard-dname.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-wildcard-dname.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadWildcardNSEC3Throws) {
     // Wildcard NSEC3 names should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-wildcard-nsec3.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-wildcard-nsec3.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadNSEC3WithFewerLabelsThrows) {
     // NSEC3 names with labels != (origin_labels + 1) should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-nsec3-fewer-labels.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-nsec3-fewer-labels.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadNSEC3WithMoreLabelsThrows) {
     // NSEC3 names with labels != (origin_labels + 1) should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-nsec3-more-labels.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-nsec3-more-labels.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadCNAMEAndNotNSECThrows) {
     // CNAME and not NSEC should throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-cname-and-not-nsec-1.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-cname-and-not-nsec-1.zone"),
                  ZoneDataUpdater::AddError);
 
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-cname-and-not-nsec-2.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-cname-and-not-nsec-2.zone"),
                  ZoneDataUpdater::AddError);
 
     // Teardown checks for memory segment leaks
@@ -584,41 +592,41 @@ TEST_F(MemoryClientTest, loadCNAMEAndNotNSECThrows) {
 
 TEST_F(MemoryClientTest, loadDNAMEAndNSApex1) {
     // DNAME + NS (apex) is OK
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR
-                  "/example.org-dname-ns-apex-1.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-dname-ns-apex-1.zone");
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadDNAMEAndNSApex2) {
     // DNAME + NS (apex) is OK (reverse order)
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR
-                  "/example.org-dname-ns-apex-2.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-dname-ns-apex-2.zone");
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex1) {
     // DNAME + NS (non-apex) must throw
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-dname-ns-nonapex-1.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-dname-ns-nonapex-1.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
     // DNAME + NS (non-apex) must throw (reverse order)
-    EXPECT_THROW(client_->load(Name("example.org"),
-                               TEST_DATA_DIR
-                               "/example.org-dname-ns-nonapex-2.zone"),
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   TEST_DATA_DIR
+                                   "/example.org-dname-ns-nonapex-2.zone"),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, loadRRSIGs) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 }
 
@@ -642,25 +650,29 @@ TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
 
     rrsets_vec.push_back(rrset);
 
-    EXPECT_THROW(
-        client_->load(Name("example.org"),
-                      *MockVectorIterator::makeIterator(rrsets_vec)),
-        ZoneDataUpdater::AddError);
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   *MockVectorIterator::makeIterator(
+                                       rrsets_vec)),
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
-    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-empty.zone");
+    // We've updated the zone table already in the client, so the count
+    // should also be incremented indirectly.
     EXPECT_EQ(1, client_->getZoneCount());
 }
 
-TEST_F(MemoryClientTest, getFileNameForNonExistentZone) {
+TEST_F(MemoryClientTest, DISABLED_getFileNameForNonExistentZone) {
     // Zone "example.org." doesn't exist
     EXPECT_TRUE(client_->getFileName(Name("example.org.")).empty());
 }
 
-TEST_F(MemoryClientTest, getFileName) {
+TEST_F(MemoryClientTest, DISABLED_getFileName) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
     EXPECT_EQ(TEST_DATA_DIR "/example.org-empty.zone",
               client_->getFileName(Name("example.org")));
@@ -672,7 +684,8 @@ TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
 }
 
 TEST_F(MemoryClientTest, getIterator) {
-    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
     // First we have the SOA
@@ -693,8 +706,8 @@ TEST_F(MemoryClientTest, getIterator) {
 }
 
 TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-multiple.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-multiple.zone");
 
     // separate_rrs = false
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
@@ -746,8 +759,8 @@ TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
 
 // Test we get RRSIGs and NSEC3s too for iterating with separate RRs
 TEST_F(MemoryClientTest, getIteratorSeparateSigned) {
-    client_->load(Name("example.org"),
-                       TEST_DATA_DIR "/example.org-nsec3-signed.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-nsec3-signed.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org"), true));
     bool seen_rrsig = false, seen_nsec3 = false;
     for (ConstRRsetPtr rrset = iterator->getNextRRset();
@@ -764,7 +777,8 @@ TEST_F(MemoryClientTest, getIteratorSeparateSigned) {
 }
 
 TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
-    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
     // This method is not implemented.
@@ -780,16 +794,17 @@ TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
     rrsets_vec.push_back(RRsetPtr(new RRset(Name("example.org"), zclass_,
                                             RRType::A(), RRTTL(3600))));
 
-    EXPECT_THROW(
-        client_->load(Name("example.org"),
-                      *MockVectorIterator::makeIterator(rrsets_vec)),
-        ZoneDataUpdater::AddError);
+    EXPECT_THROW(loadZoneIntoTable(*ztable_segment_, Name("example.org"),
+                                   zclass_,
+                                   *MockVectorIterator::makeIterator(
+                                       rrsets_vec)),
+                 ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, findZoneData) {
-    client_->load(Name("example.org"),
-                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/example.org-rrsigs.zone");
 
     const ZoneData* zone_data = client_->findZoneData(Name("example.com"));
     EXPECT_EQ(static_cast<const ZoneData*>(NULL), zone_data);
