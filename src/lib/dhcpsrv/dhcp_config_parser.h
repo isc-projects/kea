@@ -133,23 +133,24 @@ public:
 /// @brief A template class that stores named elements of a given data type.
 ///
 /// This template class is provides data value storage for configuration parameters
-/// of a given data type.  The values are stored by parmater name and as instances 
+/// of a given data type.  The values are stored by parameter name and as instances 
 /// of type "ValueType". 
 ///
-/// @tparam ValueType is the data type of the elements to store.
+/// @param ValueType is the data type of the elements to store.
 template<typename ValueType>
 class ValueStorage {
     public:
         /// @brief  Stores the the parameter and its value in the store.
         ///
-        /// If the parmater does not exist in the store, then it will be added,
+        /// If the parameter does not exist in the store, then it will be added,
         /// otherwise its data value will be updated with the given value. 
         ///
         /// @param name is the name of the paramater to store.
         /// @param value is the data value to store.
-        void setParam(const std::string name, const ValueType value) {
+        void setParam(const std::string name, const ValueType& value) {
             values_[name] = value;
         }
+
         /// @brief Returns the data value for the given parameter.
         ///
         /// Finds and returns the data value for the given parameter.
@@ -163,12 +164,11 @@ class ValueStorage {
                 = values_.find(name);
 
             if (param == values_.end()) {
-                isc_throw(DhcpConfigError, "missing parameter '"
+                isc_throw(DhcpConfigError, "Missing parameter '"
                        << name << "'");
             }
 
-            ValueType value = param->second;
-            return (value);
+            return (param->second);
         }
 
         /// @brief  Remove the parameter from the store.
@@ -177,7 +177,7 @@ class ValueStorage {
         /// exists. 
         ///
         /// @param name is the name of the paramater to delete.
-        void delParam(const std::string name) {
+        void delParam(const std::string& name) {
             values_.erase(name);
         }
 
