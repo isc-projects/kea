@@ -40,7 +40,7 @@ namespace util {
 /// read-only and read-write objects that share the same mapped image;
 /// in fact, the expected usage is the application (or a system of related
 /// processes) ensures there's at most one read-write object and if there's
-/// such an object no read-only object shares the image.  If an application
+/// such an object, no read-only object shares the image.  If an application
 /// uses this class beyond that expectation, it's the application's
 /// responsibility to provide necessary synchronization between the processes.
 class MemorySegmentMapped : boost::noncopyable, public MemorySegment {
@@ -54,8 +54,8 @@ public:
     /// \brief Constructor in the read-only mode.
     ///
     /// This constructor will map the content of the given file into memory
-    /// in the "read only" mode; the resulting memory segment object cannot
-    /// be used with methods that would requite the mapped memory (see method
+    /// in read-only mode; the resulting memory segment object cannot
+    /// be used with methods that would require the mapped memory (see method
     /// descriptions).  Also, if the application tries to modify memory in
     /// the segment, it will make the application crash.
     ///
@@ -76,16 +76,17 @@ public:
     ///
     /// This is similar to the read-only version of the constructor, but
     /// does not have the restrictions that the read-only version has.
-    /// If \c create is true and the specified file does not exist, it tries
-    /// to create a new file of the name and build internal data on it so that
-    /// the file will be mappable by this class object.  If \c create is
-    /// false, the specified file must exist and be writable, and have been
-    /// previously initialized by this version of constructor with \c create
-    /// being true.  If any of these conditions is not met,
-    /// \c MemorySegmentOpenError exception will be thrown.
+    /// If \c create is true and the specified file does not exist, this
+    /// method tries to create a new file of the name and build internal
+    /// data on it so that the file will be mappable by this class
+    /// object.  If \c create is false, the specified file must exist
+    /// and be writable, and have been previously initialized by this
+    /// version of constructor with \c create being true.  If any of
+    /// these conditions is not met, \c MemorySegmentOpenError exception
+    /// will be thrown.
     ///
     /// \param filename The file name to be mapped to memory.
-    /// \param create If true and the file does not exist a new one is created.
+    /// \param create If true and the file does not exist, a new one is created.
     /// \param initial_size Specifies the size of the newly created file;
     /// ignored if \c create is false.
     MemorySegmentMapped(const std::string& filename, bool create,

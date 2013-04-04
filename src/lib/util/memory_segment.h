@@ -22,7 +22,7 @@
 namespace isc {
 namespace util {
 
-/// \brief Exception that can be thrown on constructing a MemorySegment
+/// \brief Exception that can be thrown when constructing a MemorySegment
 /// object.
 class MemorySegmentOpenError : public Exception {
 public:
@@ -30,7 +30,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// \brief Exception that is thrown when allocating a space in a MemorySegment
+/// \brief Exception that is thrown, when allocating space in a MemorySegment
 /// results in growing the underlying segment.
 ///
 /// See MemorySegment::allocate() for details.
@@ -70,8 +70,8 @@ public:
     /// internal memory segment (again, in an implementation dependent way)
     /// to allocate the required size of memory.  In that case the
     /// implementation must grow the internal segment sufficiently so the
-    /// next call to allocate() for the same size will succeed and throw
-    /// an \c MemorySegmentGrown exception (not really allocating the memory
+    /// next call to allocate() for the same size will succeed, and throw
+    /// a \c MemorySegmentGrown exception (not really allocating the memory
     /// yet).
     ///
     /// An application that uses this memory segment abstraction to allocate
