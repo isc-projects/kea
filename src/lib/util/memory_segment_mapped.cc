@@ -248,13 +248,13 @@ MemorySegmentMapped::getSize() const {
 
 size_t
 MemorySegmentMapped::getCheckSum() const {
-    const size_t page_sz = boost::interprocess::mapped_region::get_page_size();
-    const uint8_t* const cp_beg = static_cast<const uint8_t*>(
+    const size_t pagesize = boost::interprocess::mapped_region::get_page_size();
+    const uint8_t* const cp_begin = static_cast<const uint8_t*>(
         impl_->base_sgmt_->get_address());
-    const uint8_t* const cp_end = cp_beg + impl_->base_sgmt_->get_size();
+    const uint8_t* const cp_end = cp_begin + impl_->base_sgmt_->get_size();
 
     size_t sum = 0;
-    for (const uint8_t* cp = cp_beg; cp < cp_end; cp += page_sz) {
+    for (const uint8_t* cp = cp_begin; cp < cp_end; cp += pagesize) {
         sum += *cp;
     }
 
