@@ -1701,7 +1701,8 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
         }
         const string params[Accessor::DEL_PARAM_COUNT] =
             { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
-              cvtr.getType(), rdata_txt };
+              cvtr.getType(), rdata_txt,
+              nsec3_type ? cvtr.getNSEC3Name() : cvtr.getRevName() };
         if (nsec3_type) {
             accessor_->deleteNSEC3RecordInZone(params);
         } else {

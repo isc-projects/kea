@@ -127,7 +127,8 @@ public:
                       ///< or the hash label for deleteNSEC3RecordInZone()
         DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
         DEL_RDATA = 2, ///< Full text representation of the record's RDATA
-        DEL_PARAM_COUNT = 3 ///< Number of parameters
+        DEL_RNAME = 3,
+        DEL_PARAM_COUNT = 4 ///< Number of parameters
     };
 
     /// \brief Operation mode when adding a record diff.
