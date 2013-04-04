@@ -27,12 +27,12 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics for Xfrin
+    check initial statistics not containing example.org for Xfrin
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -118,11 +118,11 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics for Xfrin
+    check initial statistics not containing example.org for Xfrin
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -216,12 +216,12 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics for Xfrin
+    check initial statistics not containing example.org for Xfrin
 
     #
     # set transfer_acl rejection
@@ -322,12 +322,12 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics for Xfrout with cmdctl port 47804
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics for Xfrin
+    check initial statistics not containing example.org for Xfrin
 
     #
     # set transfer_acl rejection
