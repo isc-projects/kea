@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20130221, bind10-dev@isc.org)
+AC_INIT(bind10, 1.1.0beta1, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 # serial-tests is not available in automake version before 1.13. In
 # automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
