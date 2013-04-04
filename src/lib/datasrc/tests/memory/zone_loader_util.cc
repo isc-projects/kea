@@ -14,14 +14,17 @@
 
 #include <datasrc/tests/memory/zone_loader_util.h>
 
+#include <datasrc/zone_iterator.h>
 #include <datasrc/cache_config.h>
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/zone_writer.h>
 
 #include <dns/dns_fwd.h>
 
 #include <cc/data.h>
 
+#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <string>
@@ -36,12 +39,44 @@ loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
                   const dns::RRClass& zclass, const std::string& zone_file)
 {
     const isc::datasrc::internal::CacheConfig cache_conf(
-        "MasterFiles", 0, *data::Element::fromJSON(
+        "MasterFiles", NULL, *data::Element::fromJSON(
             "{\"cache-enable\": true,"
             " \"params\": {\"" + zname.toText() + "\": \"" + zone_file +
             "\"}}"), true);
     boost::scoped_ptr<memory::ZoneWriter> writer(
         zt_sgmt.getZoneWriter(cache_conf.getLoadAction(zclass, zname),
+                              zname, zclass));
+    writer->load();
+    writer->install();
+    writer->cleanup();
+}
+
+namespace {
+// borrowed from CacheConfig's internal
+class IteratorLoader {
+public:
+    IteratorLoader(const dns::RRClass& rrclass, const dns::Name& name,
+                   ZoneIterator& iterator) :
+        rrclass_(rrclass),
+        name_(name),
+        iterator_(iterator)
+    {}
+    memory::ZoneData* operator()(util::MemorySegment& segment) {
+        return (memory::loadZoneData(segment, rrclass_, name_, iterator_));
+    }
+private:
+    const dns::RRClass rrclass_;
+    const dns::Name name_;
+    ZoneIterator& iterator_;
+};
+}
+
+void
+loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
+                  const dns::RRClass& zclass, ZoneIterator& iterator)
+{
+    boost::scoped_ptr<memory::ZoneWriter> writer(
+        zt_sgmt.getZoneWriter(IteratorLoader(zclass, zname, iterator),
                               zname, zclass));
     writer->load();
     writer->install();

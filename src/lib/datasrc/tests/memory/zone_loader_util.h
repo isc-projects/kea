@@ -16,6 +16,7 @@
 #define DATASRC_MEMORY_TEST_ZONE_LOADER_UTIL_H 1
 
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_data_loader.h>
 
 #include <dns/dns_fwd.h>
 
@@ -26,7 +27,8 @@ namespace datasrc {
 namespace memory {
 namespace test {
 
-/// \brief A shortcut utility to load a specified zone into ZoneTableSegment.
+/// \brief A shortcut utility to load a specified zone into ZoneTableSegment
+/// from a file.
 ///
 /// This function does nothing special, simply provides a shortcut for commonly
 /// used pattern that would be used in tests with a ZoneTableSegment loading
@@ -35,6 +37,14 @@ void
 loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
                   const dns::RRClass& zclass, const std::string& zone_file);
 
+/// \brief A shortcut utility to load a specified zone into ZoneTableSegment
+/// from a zone iterator.
+///
+/// This is similar to the other version, but use a zone iterator as the
+/// source of the zone data.
+void
+loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
+                  const dns::RRClass& zclass, ZoneIterator& iterator);
 } // namespace test
 } // namespace memory
 } // namespace datasrc
