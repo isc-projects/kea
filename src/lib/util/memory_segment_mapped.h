@@ -173,7 +173,7 @@ public:
     /// \brief Return the actual segment size.
     ///
     /// This is generally expected to be the file size to map.  It's
-    /// provided mainly for diagnose an testing purposes; the application
+    /// provided mainly for diagnosis and testing purposes; the application
     /// shouldn't rely on specific return values of this method.
     ///
     /// \throw None
@@ -185,7 +185,7 @@ public:
     /// segment, and returns the sum of the value of the first byte of each
     /// page (wrapping around upon overflow).  It only proves weak integrity
     /// of the file contents, but can run fast enough and will ensure all
-    /// pages are actually on memory.  The latter property will be useful
+    /// pages are actually in memory.  The latter property will be useful
     /// if the application cannot allow the initial page fault overhead.
     ///
     /// \throw None
