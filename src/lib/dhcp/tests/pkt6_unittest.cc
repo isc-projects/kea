@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,9 +17,15 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option6_ia.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <util/encode/hex.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -99,6 +105,67 @@ Pkt6* capture1() {
     return (pkt);
 }
 
+/// @brief creates doubly relayed solicit message
+///
+/// This is a traffic capture exported from wireshark. It includes a SOLICIT
+/// message that passed through two relays. Each relay include interface-id,
+/// remote-id and relay-forw encapsulation. It is especially interesting,
+/// because of the following properties:
+/// - double encapsulation
+/// - first relay inserts relay-msg before extra options
+/// - second relay inserts relay-msg after extra options
+/// - both relays are from different vendors
+/// - interface-id are different for each relay
+/// - first relay inserts valid remote-id
+/// - second relay inserts remote-id with empty vendor data
+/// - the solicit message requests for custom options in ORO
+/// - there are option types in RELAY-FORW that do not appear in SOLICIT
+/// - there are option types in SOLICT that do not appear in RELAY-FORW
+///
+/// RELAY-FORW
+///  - relay message option
+///      - RELAY-FORW
+///          - interface-id option
+///          - remote-id option
+///          - RELAY-FORW
+///              SOLICIT
+///                  - client-id option
+///                  - ia_na option
+///                  - elapsed time
+///                  - ORO
+///  - interface-id option
+///  - remote-id option
+///
+/// The original capture was posted to dibbler users mailing list.
+///
+/// @return created double relayed SOLICIT message
+Pkt6* capture2() {
+
+    // string exported from Wireshark
+    string hex_string =
+        "0c01200108880db800010000000000000000fe80000000000000020021fffe5c18a900"
+        "09007d0c0000000000000000000000000000000000fe80000000000000020021fffe5c"
+        "18a9001200154953414d3134342065746820312f312f30352f30310025000400000de9"
+        "00090036016b4fe20001000e0001000118b033410000215c18a90003000c00000001ff"
+        "ffffffffffffff00080002000000060006001700f200f30012001c4953414d3134347c"
+        "3239397c697076367c6e743a76703a313a313130002500120000197f0001000118b033"
+        "410000215c18a9";
+
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    Pkt6* pkt = new Pkt6(&bin[0], bin.size());
+    pkt->setRemotePort(547);
+    pkt->setRemoteAddr(IOAddress("fe80::1234"));
+    pkt->setLocalPort(547);
+    pkt->setLocalAddr(IOAddress("ff05::1:3"));
+    pkt->setIndex(2);
+    pkt->setIface("eth0");
+    return (pkt);
+}
 
 TEST_F(Pkt6Test, unpack_solicit1) {
     Pkt6* sol = capture1();
@@ -306,5 +373,183 @@ TEST_F(Pkt6Test, getName) {
     }
 }
 
+// This test verifies that a fancy solicit that passed through two
+// relays can be parsed properly. See capture2() method description
+// for details regarding the packet.
+TEST_F(Pkt6Test, relayUnpack) {
+    boost::scoped_ptr<Pkt6> msg(capture2());
+
+    EXPECT_NO_THROW(msg->unpack());
+
+    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+    EXPECT_EQ(217, msg->len());
+
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    OptionPtr opt;
+
+    // part 1: Check options inserted by the first relay
+
+    // There should be 2 options in first relay
+    EXPECT_EQ(2, msg->relay_info_[0].options_.size());
+
+    // There should be interface-id option
+    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
+    OptionBuffer data = opt->getData();
+    EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
+    EXPECT_EQ(data.size(), 28);
+    // That's a strange interface-id, but this is a real life example
+    EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
+
+    // get the remote-id option
+    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
+    EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
+    boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
+
+    uint32_t vendor_id = custom->readInteger<uint32_t>(0);
+    EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
+
+    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
+                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    OptionBuffer remote_id = custom->readBinary(1);
+    ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
+    ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
+
+    // part 2: Check options inserted by the second relay
+
+    // get the interface-id from the second relay
+    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
+    data = opt->getData();
+    EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
+    EXPECT_EQ(data.size(), 21);
+    EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
+
+    // get the remote-id option
+    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
+    EXPECT_EQ(8, opt->len());
+    custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
+
+    vendor_id = custom->readInteger<uint32_t>(0);
+    EXPECT_EQ(3561, vendor_id); // 3561 = Broadband Forum
+    // @todo: See if we can validate empty remote-id field
+
+    // Let's check if there is no leak between options stored in
+    // the SOLICIT message and the relay.
+    EXPECT_FALSE(opt = msg->getRelayOption(D6O_IA_NA, 1));
+
+
+    // Part 3: Let's check options in the message itself
+    // This is not redundant compared to other direct messages tests,
+    // as we parsed it differently
+    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+    EXPECT_EQ(0x6b4fe2, msg->getTransid());
+
+    ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
+    EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
+    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0, 0x33, 0x41, 0x00,
+                                     0x00, 0x21, 0x5c, 0x18, 0xa9 };
+    data = opt->getData();
+    ASSERT_EQ(data.size(), sizeof(expected_client_id));
+    ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
+
+    ASSERT_TRUE(opt = msg->getOption(D6O_IA_NA));
+    boost::shared_ptr<Option6IA> ia =
+        boost::dynamic_pointer_cast<Option6IA>(opt);
+    ASSERT_TRUE(ia);
+    EXPECT_EQ(1, ia->getIAID());
+    EXPECT_EQ(0xffffffff, ia->getT1());
+    EXPECT_EQ(0xffffffff, ia->getT2());
+
+    ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
+    EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
+    boost::shared_ptr<OptionInt<uint16_t> > elapsed =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
+    ASSERT_TRUE(elapsed);
+    EXPECT_EQ(0, elapsed->getValue());
+
+    ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
+    boost::shared_ptr<OptionIntArray<uint16_t> > oro =
+        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
+    const std::vector<uint16_t> oro_list = oro->getValues();
+    EXPECT_EQ(3, oro_list.size());
+    EXPECT_EQ(23, oro_list[0]);
+    EXPECT_EQ(242, oro_list[1]);
+    EXPECT_EQ(243, oro_list[2]);
+}
+
+// This test verified that message with relay information can be
+// packed and then unpacked.
+TEST_F(Pkt6Test, relayPack) {
+
+    boost::scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+
+    Pkt6::RelayInfo relay1;
+    relay1.msg_type_ = DHCPV6_RELAY_REPL;
+    relay1.hop_count_ = 17; // not very miningful, but useful for testing
+    relay1.linkaddr_ = IOAddress("2001:db8::1");
+    relay1.peeraddr_ = IOAddress("fe80::abcd");
+
+    uint8_t relay_opt_data[] = { 1, 2, 3, 4, 5, 6, 7, 8};
+    vector<uint8_t> relay_data(relay_opt_data, relay_opt_data + sizeof(relay_opt_data));
+
+    OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
+
+    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(optRelay1->getType(), optRelay1));
+
+    OptionPtr opt1(new Option(Option::V6, 100));
+    OptionPtr opt2(new Option(Option::V6, 101));
+    OptionPtr opt3(new Option(Option::V6, 102));
+    // let's not use zero-length option type 3 as it is IA_NA
+
+    parent->addRelayInfo(relay1);
+
+    parent->addOption(opt1);
+    parent->addOption(opt2);
+    parent->addOption(opt3);
+
+    EXPECT_EQ(DHCPV6_ADVERTISE, parent->getType());
+
+    EXPECT_TRUE(parent->pack());
+
+    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
+              + Pkt6::DHCPV6_RELAY_HDR_LEN // relay header
+              + Option::OPTION6_HDR_LEN // relay-msg
+              + optRelay1->len(),
+              parent->len());
+
+    // create second packet,based on assembled data from the first one
+    boost::scoped_ptr<Pkt6> clone(new Pkt6(static_cast<const uint8_t*>(
+                                           parent->getBuffer().getData()),
+                                           parent->getBuffer().getLength()));
+
+    // now recreate options list
+    EXPECT_TRUE( clone->unpack() );
+
+    // transid, message-type should be the same as before
+    EXPECT_EQ(parent->getTransid(), parent->getTransid());
+    EXPECT_EQ(DHCPV6_ADVERTISE, clone->getType());
+
+    EXPECT_TRUE( clone->getOption(100));
+    EXPECT_TRUE( clone->getOption(101));
+    EXPECT_TRUE( clone->getOption(102));
+    EXPECT_FALSE(clone->getOption(103));
+
+    // Now check relay info
+    ASSERT_EQ(1, clone->relay_info_.size());
+    EXPECT_EQ(DHCPV6_RELAY_REPL, clone->relay_info_[0].msg_type_);
+    EXPECT_EQ(17, clone->relay_info_[0].hop_count_);
+    EXPECT_EQ("2001:db8::1", clone->relay_info_[0].linkaddr_.toText());
+    EXPECT_EQ("fe80::abcd", clone->relay_info_[0].peeraddr_.toText());
+
+    // There should be exactly one option
+    EXPECT_EQ(1, clone->relay_info_[0].options_.size());
+    OptionPtr opt = clone->getRelayOption(200, 0);
+    EXPECT_TRUE(opt);
+    EXPECT_EQ(opt->getType() , optRelay1->getType());
+    EXPECT_EQ(opt->len(), optRelay1->len());
+    OptionBuffer data = opt->getData();
+    ASSERT_EQ(data.size(), sizeof(relay_opt_data));
+    EXPECT_EQ(0, memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+}
 
 }
