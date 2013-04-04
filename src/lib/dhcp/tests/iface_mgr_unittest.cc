@@ -18,6 +18,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/pkt_filter.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -51,6 +52,53 @@ const uint16_t PORT2 = 10548;   // V4 socket
 // For such cases we set the tolerance of 0.01s.
 const uint32_t TIMEOUT_TOLERANCE = 10000;
 
+/// Mock object implementing PktFilter class.  It is used by
+/// IfaceMgrTest::setPacketFilter to verify that IfaceMgr::setPacketFilter
+/// sets this object as a handler for opening sockets. This dummy
+/// class simply records that openSocket function was called by
+/// the IfaceMgr as expected.
+///
+/// @todo This class currently doesn't verify that send/receive functions
+/// were called. In order to test it, there is a need to supply dummy
+/// function performing select() on certain sockets. The system select()
+/// call will fail when dummy socket descriptor is provided and thus
+/// TestPktFilter::receive will never be called. The appropriate extension
+/// to IfaceMgr is planned along with implementation of other "Packet
+/// Filters" such as these supporting Linux Packet Filtering and
+/// Berkley Packet Filtering.
+class TestPktFilter : public PktFilter {
+public:
+
+    /// Constructor
+    TestPktFilter()
+        : open_socket_called_(false) {
+    }
+
+    /// Pretends to open socket. Only records a call to this function.
+    virtual int openSocket(const Iface&,
+                           const isc::asiolink::IOAddress&,
+                           const uint16_t,
+                           const bool,
+                           const bool) {
+        open_socket_called_ = true;
+        return (1024);
+    }
+
+    /// Does nothing
+    virtual Pkt4Ptr receive(const Iface&,
+                            const SocketInfo&) {
+        return (Pkt4Ptr());
+    }
+
+    /// Does nothing
+    virtual int send(uint16_t, const Pkt4Ptr&) {
+        return (0);
+    }
+
+    /// Holds the information whether openSocket was called on this
+    /// object after its creation.
+    bool open_socket_called_;
+};
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -757,6 +805,38 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     close(socket1);
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
+}
+
+// Verifies that it is possible to set custom packet filter object
+// to handle sockets opening and send/receive operation.
+TEST_F(IfaceMgrTest, setPacketFilter) {
+
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Try to set NULL packet filter object and make sure it is rejected.
+    boost::shared_ptr<TestPktFilter> custom_packet_filter;
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 isc::dhcp::InvalidPacketFilter);
+
+    // Create valid object and check if it can be set.
+    custom_packet_filter.reset(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
+
+    // Try to open socket using IfaceMgr. It should call the openSocket() function
+    // on the packet filter object we have set.
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0;
+    EXPECT_NO_THROW(
+        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+    );
+
+    // Check that openSocket function was called.
+    EXPECT_TRUE(custom_packet_filter->open_socket_called_);
+    // This function always returns fake socket descriptor equal to 1024.
+    EXPECT_EQ(1024, socket1);
 }
 
 
