@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -128,7 +128,9 @@ LibDHCP::optionFactory(Option::Universe u,
 
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
-                               isc::dhcp::Option::OptionCollection& options) {
+                               isc::dhcp::Option::OptionCollection& options,
+                               size_t* relay_msg_offset /* = 0 */,
+                               size_t* relay_msg_len /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -143,12 +145,23 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     while (offset + 4 <= length) {
         uint16_t opt_type = isc::util::readUint16(&buf[offset]);
         offset += 2;
+
         uint16_t opt_len = isc::util::readUint16(&buf[offset]);
         offset += 2;
 
         if (offset + opt_len > length) {
             // @todo: consider throwing exception here.
             return (offset);
+        }
+
+        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
+            // remember offset of the beginning of the relay-msg option
+            *relay_msg_offset = offset;
+            *relay_msg_len = opt_len;
+
+            // do not create that relay-msg option
+            offset += opt_len;
+            continue;
         }
 
         // Get all definitions with the particular option code. Note that option
@@ -193,7 +206,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 }
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options) {
+                               isc::dhcp::Option::OptionCollection& options) {
     size_t offset = 0;
 
     // Get the list of stdandard option definitions.
