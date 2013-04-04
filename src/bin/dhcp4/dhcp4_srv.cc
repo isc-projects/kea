@@ -528,7 +528,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             } else {
                 // Since IfaceMgr does not support direct responses to
                 // clients not having IP address, we have to send response
-                // to broadcast.
+                // to broadcast. Note that we don't check whether the
+                // use_bcast flag was set in the constructor or not.
+                // However, the use_bcast flag is mostly used by unit tests
+                // to prevent opening broadcast sockets in the constructor
+                // of this class because opening broadcast sockets requires
+                // root privileges. For this reason, it is rather unlikely
+                // that use_bcast flag is set to false in the real life
+                // scenario. On the other hand, if we fail to set remote
+                // address to broadcast here, we can't unit-test the case when
+                // server doesn't support direct responses to the client
+                // which doesn't have address yet.
                 answer->setRemoteAddr(IOAddress("255.255.255.255"));
             }
         }
