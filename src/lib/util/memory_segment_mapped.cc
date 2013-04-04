@@ -64,8 +64,7 @@ struct MemorySegmentMapped::Impl {
         const size_t new_size = prev_size * 2;
         assert(new_size != 0); // assume grow fails before size overflow
 
-        if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size))
-        {
+        if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size)) {
             throw std::bad_alloc();
         }
 
