@@ -45,7 +45,16 @@ namespace {
 class NakedDhcpv4Srv: public Dhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedDhcpv4Srv(uint16_t port = 0):Dhcpv4Srv(port) { }
+
+    /// @brief Constructor.
+    ///
+    /// It disables configuration of broadcast options on
+    /// sockets that are opened by the Dhcpv4Srv constructor.
+    /// Setting broadcast options requires root privileges
+    /// which is not the case when running unit tests.
+    NakedDhcpv4Srv(uint16_t port = 0)
+        : Dhcpv4Srv(port, "type=memfile", false) {
+    }
 
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
