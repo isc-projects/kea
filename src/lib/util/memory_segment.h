@@ -50,14 +50,13 @@ public:
 
 /// \brief Memory Segment Class
 ///
-/// This class specifies an interface for allocating memory
-/// segments. This is an abstract class and a real
-/// implementation such as MemorySegmentLocal should be used
-/// in code.
-///
-/// It's intended to provide a unified interface whether the underlying
+/// This class specifies an interface for allocating memory segments.
+/// It's intended to provide a unified interface, whether the underlying
 /// memory is local to a specific process or is sharable by multiple
 /// processes.
+///
+/// This is an abstract class and a real implementation such as
+/// MemorySegmentLocal should be used in code.
 class MemorySegment {
 public:
     /// \brief Destructor
