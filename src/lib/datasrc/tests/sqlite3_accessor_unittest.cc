@@ -806,7 +806,7 @@ const char* const new_data[] = {
 };
 const char* const deleted_data[] = {
     // Existing data to be removed commonly used by some of the tests below
-    "foo.bar.example.com.", "A", "192.0.2.1"
+    "foo.bar.example.com.", "A", "192.0.2.1", "com.example.bar.foo."
 };
 const char* const nsec3_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
     // example NSEC3 parameters.  Using "apex_hash" just as a convenient
@@ -823,7 +823,8 @@ const char* const nsec3_sig_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
 const char* const nsec3_deleted_data[] = {
     // Delete parameters for nsec3_data
     apex_hash, nsec3_data[DatabaseAccessor::ADD_NSEC3_TYPE],
-    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA]
+    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA],
+    apex_hash
 };
 
 class SQLite3Update : public SQLite3AccessorTest {
@@ -1222,6 +1223,7 @@ TEST_F(SQLite3Update, deleteNonexistent) {
     // Replace the name with a non existent one, then try to delete it.
     // nothing should happen.
     del_params[DatabaseAccessor::DEL_NAME] = "no-such-name.example.com.";
+    del_params[DatabaseAccessor::DEL_RNAME] = "com.example.no-such-name.";
     checkRecords(*accessor, zone_id, "no-such-name.example.com.",
                  empty_stored);
     accessor->deleteRecordInZone(del_params);
@@ -1535,7 +1537,7 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
     // the basic tests so far pass.  But we check it in case we miss something.
 
     const char* const old_a_record[] = {
-        "dns01.example.com.", "A", "192.0.2.1"
+        "dns01.example.com.", "A", "192.0.2.1", "com.example.dns01."
     };
     const char* const new_a_record[] = {
         "dns01.example.com.", "com.example.dns01.", "3600", "A", "",
@@ -1544,6 +1546,7 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
     const char* const old_soa_record[] = {
         "example.com.", "SOA",
         "ns.example.com. admin.example.com. 1234 3600 1800 2419200 7200",
+        "com.example."
     };
     const char* const new_soa_record[] = {
         "dns01.example.com.", "com.example.dns01.", "3600", "A", "",
