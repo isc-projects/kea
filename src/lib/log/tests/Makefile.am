@@ -127,11 +127,6 @@ initializer_unittests_2_LDFLAGS  = $(AM_LDFLAGS)
 noinst_PROGRAMS += $(TESTS)
 endif
 
-# Additional test using the shell.  These are principally tests
-# where the global logging environment is affected, and where the
-# output needs to be compared with stored output (where "cut" and
-# "diff" are useful utilities).
-
 noinst_SCRIPTS  = console_test.sh
 noinst_SCRIPTS += destination_test.sh
 noinst_SCRIPTS += init_logger_test.sh
@@ -139,6 +134,10 @@ noinst_SCRIPTS += local_file_test.sh
 noinst_SCRIPTS += logger_lock_test.sh
 noinst_SCRIPTS += severity_test.sh
 
+# Additional test using the shell.  These are principally tests
+# where the global logging environment is affected, and where the
+# output needs to be compared with stored output (where "cut" and
+# "diff" are useful utilities).
 check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
 	$(SHELL) $(abs_builddir)/destination_test.sh
@@ -147,11 +146,3 @@ check-local:
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh
-
-noinst_SCRIPTS  = console_test.sh
-noinst_SCRIPTS += destination_test.sh
-noinst_SCRIPTS += init_logger_test.sh
-noinst_SCRIPTS += buffer_logger_test.sh
-noinst_SCRIPTS += local_file_test.sh
-noinst_SCRIPTS += logger_lock_test.sh
-noinst_SCRIPTS += severity_test.sh
