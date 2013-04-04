@@ -1644,17 +1644,23 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
                 { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDDIFF).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
         if (nsec3_type) {
             const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
                 { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(),
                   rdata_txt };
             accessor_->addNSEC3RecordToZone(nsec3_columns);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDNSEC3).
+                arg(cvtr.getNSEC3Name()).arg(rdata_txt);
         } else {
             const string columns[Accessor::ADD_COLUMN_COUNT] =
                 { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
                   cvtr.getType(), sigtype, rdata_txt };
             accessor_->addRecordToZone(columns);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDRR).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
     }
 }
@@ -1698,6 +1704,8 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
                 { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_DELETE, journal);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETEDIFF).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
         const string params[Accessor::DEL_PARAM_COUNT] =
             { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
@@ -1705,8 +1713,12 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
               nsec3_type ? cvtr.getNSEC3Name() : cvtr.getRevName() };
         if (nsec3_type) {
             accessor_->deleteNSEC3RecordInZone(params);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETENSEC3).
+                arg(cvtr.getNSEC3Name()).arg(rdata_txt);
         } else {
             accessor_->deleteRecordInZone(params);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETERR).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
     }
 }
