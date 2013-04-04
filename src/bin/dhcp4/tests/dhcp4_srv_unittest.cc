@@ -506,19 +506,25 @@ TEST_F(Dhcpv4SrvTest, basic) {
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
 TEST_F(Dhcpv4SrvTest, processDiscoverRelay) {
-    testDiscoverRequest(DHCPDISCOVER, IOAddress("192.0.2.56"), IOAddress("192.0.2.67"));
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("192.0.2.56"),
+                        IOAddress("192.0.2.67"));
 }
 
 // Verifies that the non-relayed DISCOVER is processed correctly when
 // client source address is specified.
 TEST_F(Dhcpv4SrvTest, processDiscoverNoRelay) {
-    testDiscoverRequest(DHCPDISCOVER, IOAddress("0.0.0.0"), IOAddress("192.0.2.67"));
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("192.0.2.67"));
 }
 
 // Verified that the non-relayed DISCOVER is processed correctly when
 // client source address is not specified.
 TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
-    testDiscoverRequest(DHCPDISCOVER, IOAddress("0.0.0.0"), IOAddress("0.0.0.0"));
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("0.0.0.0"));
 }
 
 // Verifies that REQUEST received via relay can be processed correctly,
@@ -530,19 +536,25 @@ TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
 TEST_F(Dhcpv4SrvTest, processRequestRelay) {
-    testDiscoverRequest(DHCPREQUEST, IOAddress("192.0.2.56"), IOAddress("192.0.2.67"));
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("192.0.2.56"),
+                        IOAddress("192.0.2.67"));
 }
 
 // Verifies that the non-relayed REQUEST is processed correctly when
 // client source address is specified.
 TEST_F(Dhcpv4SrvTest, processRequestNoRelay) {
-    testDiscoverRequest(DHCPREQUEST, IOAddress("0.0.0.0"), IOAddress("192.0.2.67"));
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("192.0.2.67"));
 }
 
 // Verified that the non-relayed REQUEST is processed correctly when
 // client source address is not specified.
 TEST_F(Dhcpv4SrvTest, processRequestNoClientAddr) {
-    testDiscoverRequest(DHCPREQUEST, IOAddress("0.0.0.0"), IOAddress("0.0.0.0"));
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("0.0.0.0"));
 }
 
 TEST_F(Dhcpv4SrvTest, processRelease) {

@@ -24,18 +24,20 @@ int
 PktFilterLPF::openSocket(const Iface&, const isc::asiolink::IOAddress&,
                          const uint16_t, const bool,
                          const bool) {
-
-    return (-1);
+    isc_throw(isc::NotImplemented,
+              "Linux Packet Filtering is not implemented yet");
 }
 
 Pkt4Ptr
 PktFilterLPF::receive(const Iface&, const SocketInfo&) {
-    return (Pkt4Ptr());
+    isc_throw(isc::NotImplemented,
+              "Linux Packet Filtering is not implemented yet");
 }
 
 int
 PktFilterLPF::send(uint16_t, const Pkt4Ptr&) {
-    return (-1);
+    isc_throw(isc::NotImplemented,
+              "Linux Packet Filtering is not implemented yet");
 }
 
 

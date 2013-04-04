@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -316,7 +316,7 @@ public:
     /// @return the only existing instance of interface manager
     static IfaceMgr& instance();
 
-    /// @brief Can be packet can be send directly to the client without address.
+    /// @brief Check if packet be sent directly to the client having no address.
     ///
     /// Checks if IfaceMgr can send DHCPv4 packet to the client
     /// who hasn't got address assigned. If this is not supported
@@ -454,6 +454,10 @@ public:
     /// @param ifname name of the interface
     /// @param addr address to be bound.
     /// @param port UDP port.
+    /// @param receive_bcast configure IPv4 socket to receive broadcast messages.
+    /// This parameter is ignored for IPv6 sockets.
+    /// @param send_bcast configure IPv4 socket to send broadcast messages.
+    /// This parameter is ignored for IPv6 sockets.
     ///
     /// Method will throw if socket creation, socket binding or multicast
     /// join fails.
@@ -462,7 +466,9 @@ public:
     /// group join were all successful.
     int openSocket(const std::string& ifname,
                    const isc::asiolink::IOAddress& addr,
-                   const uint16_t port);
+                   const uint16_t port,
+                   const bool receive_bcast = false,
+                   const bool send_bcast = false);
 
     /// @brief Opens UDP/IP socket and binds it to interface specified.
     ///
@@ -524,10 +530,6 @@ public:
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
-    /// @brief Closes all open sockets.
-    /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
-    void closeSockets();
-
     /// Opens IPv4 sockets on detected interfaces.
     /// Will throw exception if socket creation fails.
     ///
@@ -536,6 +538,10 @@ public:
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT);
+
+    /// @brief Closes all open sockets.
+    /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
+    void closeSockets();
 
     /// @brief returns number of detected interfaces
     ///
@@ -554,6 +560,17 @@ public:
         session_callback_ = callback;
     }
 
+    /// @brief Set Packet Filter object to handle send/receive packets.
+    ///
+    /// Packet Filters expose low-level functions handling sockets opening
+    /// and sending/receiving packets through those sockets. This function
+    /// sets custom Packet Filter (represented by a class derived from PktFilter)
+    /// to be used by IfaceMgr.
+    ///
+    /// @param packet_filter new packet filter to be used by IfaceMgr to send/receive
+    /// packets and open sockets.
+    ///
+    /// @throw InvalidPacketFilter if provided packet filter object is NULL.
     void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
         if (!packet_filter) {
             isc_throw(InvalidPacketFilter, "NULL packet filter object specified");
@@ -588,8 +605,9 @@ protected:
     /// @param send_bcast configure socket to send broadcast messages.
     ///
     /// @return socket descriptor
-    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port,
-                    bool receive_bcast = false, bool send_bcast = false);
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr,
+                    const uint16_t port, const bool receive_bcast = false,
+                    const bool send_bcast = false);
 
     /// @brief Opens IPv6 socket.
     ///
@@ -709,7 +727,14 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
-    /// Low level packet handler used to open socket and send/receive packets.
+    /// Holds instance of a class derived from PktFilter, used by the
+    /// IfaceMgr to open sockets and send/receive packets through these
+    /// sockets. It is possible to supply custom object using
+    /// setPacketFilter class. Various Packet Filters differ mainly by using
+    /// different types of sockets, e.g. SOCK_DGRAM,  SOCK_RAW and different
+    /// families, e.g. AF_INET, AF_PACKET etc. Another possible type of
+    /// Packet Filter is the one used for unit testing, which doesn't
+    /// open sockets but rather mimics their behavior (mock object).
     boost::shared_ptr<PktFilter> packet_filter_;
 };
 
