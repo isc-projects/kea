@@ -57,7 +57,7 @@ TEST(ValueStorageTest, BooleanTesting) {
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstBool");
-    ASSERT_THROW(testStore.getParam("firstBool"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("firstBool"), isc::dhcp::DhcpConfigError);
 
     // Verify that the delete was safe and the store still operates.
     EXPECT_FALSE(testStore.getParam("secondBool"));
@@ -66,11 +66,11 @@ TEST(ValueStorageTest, BooleanTesting) {
     ASSERT_THROW(testStore.getParam("bogusBool"), isc::dhcp::DhcpConfigError);
 
     // Verify that attempting to delete a parameter that never existed does not throw. 
-    ASSERT_NO_THROW(testStore.delParam("bogusBool"));
+    EXPECT_NO_THROW(testStore.delParam("bogusBool"));
 
     // Verify that we can empty the list.
     testStore.clear();
-    ASSERT_THROW(testStore.getParam("secondBool"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("secondBool"), isc::dhcp::DhcpConfigError);
 
 }
 
@@ -97,7 +97,7 @@ TEST(ValueStorageTest, Uint32Testing) {
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstInt");
-    ASSERT_THROW(testStore.getParam("firstInt"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("firstInt"), isc::dhcp::DhcpConfigError);
 
     // Verify that the delete was safe and the store still operates.
     EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
@@ -106,11 +106,11 @@ TEST(ValueStorageTest, Uint32Testing) {
     ASSERT_THROW(testStore.getParam("bogusInt"), isc::dhcp::DhcpConfigError);
 
     // Verify that attempting to delete a parameter that never existed does not throw. 
-    ASSERT_NO_THROW(testStore.delParam("bogusInt"));
+    EXPECT_NO_THROW(testStore.delParam("bogusInt"));
 
     // Verify that we can empty the list.
     testStore.clear();
-    ASSERT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
 }
 
 // This test verifies that StringStorage functions properly. 
@@ -139,7 +139,7 @@ TEST(ValueStorageTest, StringTesting) {
 
     // Verify that we can delete a parameter and it will no longer be found.
     testStore.delParam("firstString");
-    ASSERT_THROW(testStore.getParam("firstString"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("firstString"), isc::dhcp::DhcpConfigError);
 
     // Verify that the delete was safe and the store still operates.
     EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
@@ -148,11 +148,11 @@ TEST(ValueStorageTest, StringTesting) {
     ASSERT_THROW(testStore.getParam("bogusString"), isc::dhcp::DhcpConfigError);
 
     // Verify that attempting to delete a parameter that never existed does not throw. 
-    ASSERT_NO_THROW(testStore.delParam("bogusString"));
+    EXPECT_NO_THROW(testStore.delParam("bogusString"));
 
     // Verify that we can empty the list.
     testStore.clear();
-    ASSERT_THROW(testStore.getParam("secondString"), isc::dhcp::DhcpConfigError);
+    EXPECT_THROW(testStore.getParam("secondString"), isc::dhcp::DhcpConfigError);
 }
 
 
