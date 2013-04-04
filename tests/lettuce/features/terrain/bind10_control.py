@@ -390,7 +390,7 @@ def check_statistics_items(step, category, has_except_for):
         with the multiline part.
 
     Expected values of items are taken from the multiline part of the step in
-    the scenario. The multiline part has at most 5 columns: item_name,
+    the scenario. The multiline part has at most four columns: item_name,
     item_value, min_value, and max_value. item_name is a relative name
     to category. item_value is an expected value for
     item_name. min_value and max_value are expected to be used when
