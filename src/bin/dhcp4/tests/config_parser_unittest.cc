@@ -52,15 +52,14 @@ public:
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        const std::map<std::string, uint32_t>& uint32_defaults = getUint32Defaults();
-        std::map<std::string, uint32_t>::const_iterator it =
-            uint32_defaults.find(name);
-        if (it == uint32_defaults.end()) {
+        const Uint32Storage& uint32_defaults = getUint32Defaults();
+        try {
+            uint32_t actual_value = uint32_defaults.getParam(name);
+            EXPECT_EQ(expected_value, actual_value);
+        } catch (DhcpConfigError) {
             ADD_FAILURE() << "Expected uint32 with name " << name
                           << " not found";
-            return;
         }
-        EXPECT_EQ(expected_value, it->second);
     }
 
     // Checks if the result of DHCP server configuration has
