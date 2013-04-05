@@ -15,4 +15,5 @@ CLEANFILES = *.gcno *.gcda
 noinst_PROGRAMS = resolver-bench
 
 resolver_bench_SOURCES = main.cc
+resolver_bench_SOURCES += fake_resolution.h
 resolver_bench_LDADD  = $(GTEST_LDADD)
