@@ -56,15 +56,6 @@ typedef isc::dhcp::DhcpConfigParser* ParserFactory(const std::string& config_id)
 /// @brief a collection of factories that creates parsers for specified element names
 typedef std::map<std::string, ParserFactory*> FactoryMap;
 
-/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
-typedef std::map<std::string, uint32_t> Uint32Storage;
-
-/// @brief a collection of elements that store string values
-typedef std::map<std::string, std::string> StringStorage;
-
-/// @brief Storage for parsed boolean values.
-typedef std::map<string, bool> BooleanStorage;
-
 /// @brief Storage for option definitions.
 typedef OptionSpaceContainer<OptionDefContainer,
                              OptionDefinitionPtr> OptionDefStorage;
@@ -198,7 +189,7 @@ public:
     /// @brief Put a parsed value to the storage.
     virtual void commit() {
         if (storage_ != NULL && !param_name_.empty()) {
-            (*storage_)[param_name_] = value_;
+            storage_->setParam(param_name_, value_);
         }
     }
 
@@ -292,7 +283,7 @@ public:
         if (storage_ != NULL && !param_name_.empty()) {
             // If a given parameter already exists in the storage we override
             // its value. If it doesn't we insert a new element.
-            (*storage_)[param_name_] = value_;
+            storage_->setParam(param_name_, value_);
         }
     }
 
@@ -364,7 +355,7 @@ public:
         if (storage_ != NULL && !param_name_.empty()) {
             // If a given parameter already exists in the storage we override
             // its value. If it doesn't we insert a new element.
-            (*storage_)[param_name_] = value_;
+            storage_->setParam(param_name_, value_);
         }
     }
 
@@ -744,7 +735,7 @@ private:
         // Option code is held in the uint32_t storage but is supposed to
         // be uint16_t value. We need to check that value in the configuration
         // does not exceed range of uint8_t and is not zero.
-        uint32_t option_code = getParam<uint32_t>("code", uint32_values_);
+        uint32_t option_code = uint32_values_.getParam("code");
         if (option_code == 0) {
             isc_throw(DhcpConfigError, "option code must not be zero."
                       << " Option code '0' is reserved in DHCPv4.");
@@ -753,9 +744,10 @@ private:
                       << "', it must not exceed '"
                       << std::numeric_limits<uint8_t>::max() << "'");
         }
+
         // Check that the option name has been specified, is non-empty and does not
-        // contain spaces.
-        std::string option_name = getParam<std::string>("name", string_values_);
+        // contain spaces
+        std::string option_name = string_values_.getParam("name"); 
         if (option_name.empty()) {
             isc_throw(DhcpConfigError, "name of the option with code '"
                       << option_code << "' is empty");
@@ -764,7 +756,7 @@ private:
                       << "', space character is not allowed");
         }
 
-        std::string option_space = getParam<std::string>("space", string_values_);
+        std::string option_space = string_values_.getParam("space"); 
         if (!OptionSpace::validateName(option_space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << option_space << "' specified for option '"
@@ -805,8 +797,8 @@ private:
         }
 
         // Get option data from the configuration database ('data' field).
-        const std::string option_data = getParam<std::string>("data", string_values_);
-        const bool csv_format = getParam<bool>("csv-format", boolean_values_);
+        const std::string option_data = string_values_.getParam("data");
+        const bool csv_format = boolean_values_.getParam("csv-format");
 
         // Transform string of hexadecimal digits into binary format.
         std::vector<uint8_t> binary;
@@ -1080,8 +1072,9 @@ private:
 
     /// @brief Create option definition from the parsed parameters.
     void createOptionDef() {
+
         // Get the option space name and validate it.
-        std::string space = getParam<std::string>("space", string_values_);
+        std::string space = string_values_.getParam("space");
         if (!OptionSpace::validateName(space)) {
             isc_throw(DhcpConfigError, "invalid option space name '"
                       << space << "'");
@@ -1089,12 +1082,11 @@ private:
 
         // Get other parameters that are needed to create the
         // option definition.
-        std::string name = getParam<std::string>("name", string_values_);
-        uint32_t code = getParam<uint32_t>("code", uint32_values_);
-        std::string type = getParam<std::string>("type", string_values_);
-        bool array_type = getParam<bool>("array", boolean_values_);
-        std::string encapsulates = getParam<std::string>("encapsulate",
-                                                         string_values_);
+        std::string name = string_values_.getParam("name");
+        uint32_t code = uint32_values_.getParam("code");
+        std::string type = string_values_.getParam("type");
+        bool array_type = boolean_values_.getParam("array");
+        std::string encapsulates = string_values_.getParam("encapsulate");
 
         // Create option definition.
         OptionDefinitionPtr def;
@@ -1124,8 +1116,8 @@ private:
         }
         // The record-types field may carry a list of comma separated names
         // of data types that form a record.
-        std::string record_types = getParam<std::string>("record-types",
-                                                         string_values_);
+        std::string record_types = string_values_.getParam("record-types");
+
         // Split the list of record types into tokens.
         std::vector<std::string> record_tokens =
             isc::util::str::tokens(record_types, ",");
@@ -1422,13 +1414,16 @@ private:
     ///
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing failed.
     void createSubnet() {
-        StringStorage::const_iterator it = string_values_.find("subnet");
-        if (it == string_values_.end()) {
+        std::string subnet_txt;
+        try {
+            subnet_txt = string_values_.getParam("subnet"); 
+        } catch (DhcpConfigError) {
+            // Rethrow with precise error.
             isc_throw(DhcpConfigError,
                       "Mandatory subnet definition in subnet missing");
         }
+
         // Remove any spaces or tabs.
-        string subnet_txt = it->second;
         boost::erase_all(subnet_txt, " ");
         boost::erase_all(subnet_txt, "\t");
 
@@ -1440,7 +1435,7 @@ private:
         size_t pos = subnet_txt.find("/");
         if (pos == string::npos) {
             isc_throw(DhcpConfigError,
-                      "Invalid subnet syntax (prefix/len expected):" << it->second);
+                      "Invalid subnet syntax (prefix/len expected):" << subnet_txt);
         }
 
         // Try to create the address object. It also validates that
@@ -1540,7 +1535,6 @@ private:
     /// @throw NotImplemented if trying to create a parser for unknown config element
     DhcpConfigParser* createSubnet4ConfigParser(const std::string& config_id) {
         FactoryMap factories;
-
         factories["valid-lifetime"] = Uint32Parser::factory;
         factories["renew-timer"] = Uint32Parser::factory;
         factories["rebind-timer"] = Uint32Parser::factory;
@@ -1571,26 +1565,21 @@ private:
     /// @throw DhcpConfigError when requested parameter is not present
     Triplet<uint32_t> getParam(const std::string& name) {
         uint32_t value = 0;
-        bool found = false;
-        Uint32Storage::iterator global = uint32_defaults.find(name);
-        if (global != uint32_defaults.end()) {
-            value = global->second;
-            found = true;
-        }
-
-        Uint32Storage::iterator local = uint32_values_.find(name);
-        if (local != uint32_values_.end()) {
-            value = local->second;
-            found = true;
-        }
-
-        if (found) {
-            return (Triplet<uint32_t>(value));
-        } else {
-            isc_throw(DhcpConfigError, "Mandatory parameter " << name
+        try {
+            // look for local value 
+            value = uint32_values_.getParam(name);
+        } catch (DhcpConfigError) {
+            try {
+                // no local, use global value 
+                value = uint32_defaults.getParam(name);
+            } catch (DhcpConfigError) {
+                isc_throw(DhcpConfigError, "Mandatory parameter " << name
                       << " missing (no global default and no subnet-"
                       << "specific value)");
+            }
         }
+
+        return (Triplet<uint32_t>(value));
     }
 
     /// storage for subnet-specific uint32 values
@@ -1859,7 +1848,7 @@ configureDhcp4Server(Dhcpv4Srv&, ConstElementPtr config_set) {
     return (answer);
 }
 
-const std::map<std::string, uint32_t>& getUint32Defaults() {
+const Uint32Storage& getUint32Defaults() {
     return (uint32_defaults);
 }
 
