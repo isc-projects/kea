@@ -53,7 +53,6 @@ public:
 /// object that can be used for loading zones, regardless of the underlying
 /// data source properties, i.e., whether it's special "MasterFiles" type
 /// or other generic data sources.
-/// NOTE: this part will be done in #2834.
 ///
 /// This class is publicly defined so it can be tested directly, but
 /// it's essentially private to the \c ConfigurableClientList class.
@@ -144,15 +143,56 @@ public:
     /// \throw None
     const std::string& getSegmentType() const { return (segment_type_); }
 
+    /// \brief Return a \c LoadAction functor to load zone data into memory.
+    ///
+    /// This method returns an appropriate \c LoadAction functor that can be
+    /// passed to a \c memory::ZoneWriter object to load data of the specified
+    /// zone into memory.  The source of the zone data differs depending on
+    /// the cache configuration (either a master file or another data source),
+    /// but this method hides the details and works as a unified interface
+    /// for the caller.
+    ///
+    /// If the specified zone is not configured to be cached, it returns an
+    /// empty functor (which can be evaluated to be \c false as a boolean).
+    /// It doesn't throw an exception in this case because the expected caller
+    /// of this method would handle such a case internally.
+    ///
+    /// \throw DataSourceError error happens in the underlying data source
+    /// storing the cache data.  Most commonly it's because the specified zone
+    /// doesn't exist there.
+    /// \throw Unexpected Unexpected error happens in the underlying data
+    /// source storing the cache data.  This shouldn't happen as long as the
+    /// data source implementation meets the public API requirement.
+    ///
+    /// \param rrclass The RR class of the zone
+    /// \param zone_name The origin name of the zone
+    /// \return A \c LoadAction functor to load zone data or an empty functor
+    /// (see above).
     memory::LoadAction getLoadAction(const dns::RRClass& rrlcass,
                                      const dns::Name& zone_name) const;
 
-    /// \todo the following definition is tentative, mainly for tests.
-    /// In #2834 we'll (probably) extend it to be a custom iterator so
-    /// the caller can iterate over the whole set of zones, loading the
-    /// content in memory.
+    /// \brief Read only iterator type over configured cached zones.
+    ///
+    /// \note This initial version exposes the internal data structure (i.e.
+    /// map from name to string) through this public iterator type for
+    /// simplicity.  In terms of data encapsulation it's better to introduce
+    /// a custom iterator type that only goes through the conceptual list
+    /// of zone names, but due to the limitation of the expected user of this
+    /// class that would probably be premature generalization.  In future,
+    /// we might want to allow getting the list of zones directly from the
+    /// underlying data source.  If and when that happens we should introduce
+    /// a custom type.  In any case, the user of this class should only
+    /// use the typedef, not the original map iterator.  It should also
+    /// use this iterator as a forward iterator (datasource-based iterator
+    /// wouldn't be able to be bidirectional), and it shouldn't use the
+    /// value of the map entry (a string, specifying a path to master file
+    /// for MasterFiles data source).
     typedef std::map<dns::Name, std::string>::const_iterator ConstZoneIterator;
+
+    /// \brief Return the beginning of cached zones in the form of iterator.
     ConstZoneIterator begin() const { return (zone_config_.begin()); }
+
+    /// \brief Return the end of cached zones in the form of iterator.
     ConstZoneIterator end() const { return (zone_config_.end()); }
 
 private:
@@ -161,6 +201,9 @@ private:
     // client of underlying data source, will be NULL for MasterFile datasrc
     const DataSourceClient* datasrc_client_;
 
+    // Maps each of zones to be cached to a string.  For "MasterFiles" type
+    // of data source, the string is a path to the master zone file; for
+    // others it's an empty string.
     typedef std::map<dns::Name, std::string> Zones;
     Zones zone_config_;
 };
