@@ -1,0 +1,225 @@
+The communication system consists of
+  - the "bus" (or "msgq" (as a concept name; not necessarily mean a
+    daemon process), or whatever).  below we simply call it "(the)
+    system".
+  - users: a user of the system, which would mean some application
+    process in practice, but in this high level design it's a
+    conceptual entity.
+  - sessions: a session is an interface for a user of the
+    system, through which the user can communicate with other users or
+    with the system itself.  A single user can have multiple
+    sessions (but a session only belongs to one user).
+  - messages: a message is a data blob to be exchanged between users
+    or between a user and the system.  each message has the
+    destination, which is either: the system, a specific session, or a
+    group of sessions.  some types of messages expect a response, and
+    some others are expected to be one-way.  a message sent to a group
+    must always be one-way.
+  - groups: a named set of sessions.  a message can be destined to a
+    specific group, in which case the same copy of the message will be
+    delivered to these sessions.
+
+'''Session Interface'''
+
+The session interface is a conceptual programming interface for a user
+of the system.  It encapsulates one single session to the system, and
+provides methods of sending and receiving messages through the session
+(in practice of our implementation, this basically means the `Session`
+class interface).
+
+- Session establishment: any operation on the session interface begins
+  with session establishment.  It must succeeds and is considered a
+  non blocking operation.  If there's any error the user must consider
+  it fatal and terminate.
+
+- Send operation: a user can send a message over the session.  This
+  interface ensures it always succeeds and is non blocking (note:
+  internally, this could be just based on a (naive) assumption, via
+  internal buffering, or whatever).  If any error is reported the user
+  must consider it fatal and terminate.  If the message expects a
+  response, a unique ID is given for identifying the response.
+
+- Synchronous read operation: a user can receive a message from the
+  system or other user (or possibly even itself).  The message could
+  be either a response to a specific message (called a "request") it
+  has sent before, or any new incoming message (maybe a request from
+  other user or one-way message).  In the former case, the user
+  specifies the ID of the request message.  If this is a response from
+  the system, it must succeed and can (effectively) be considered non
+  blocking; in all other cases it can block.  This operation can fail
+  due to "timeout", which means either the receiver of the request is
+  not compliant and didn't respond, or it's extremely busy and non
+  responsive, or simply isn't running.  If any other error is
+  reported, including a timeout for a response from the system, the
+  user must consider it fatal and terminate.
+
+- Asynchronous read operation: the session interface should also
+  support asynchronous read operation, where the user registers an
+  interest on any new incoming message or a response to a specific
+  request message with a callback.  The registration itself must
+  always succeed and is non blocking.  When the request message is
+  delivered, the interface triggers the registered callback.  It could
+  also mean a timeout or any other error (but any other errors must
+  be considered fatal as the synchronous case).
+
+- Group membership management: this interface supports the concept of
+  session "groups".  a group consists of a set of sessions (called
+  "subscribers") that are interested in receiving messages destined to
+  that group.  the following operations are available to manage the
+  subscription:
+  - subscription operation: a user can indicate an interest on
+    receiving messages for the group on the session.  this would
+    actually be realized via a message exchange with the system,
+    and it must succeed and be non block.
+  - unsubscription operation: a user that has subscribed to a group
+    can indicate it's no longer interested in subscribing to the
+    group.  this would actually be realized via a message exchange
+    with the system, and it must succeed and be non block.
+  - watch operation: a user can indicate an interest on a list of
+    current subscribers of a given group.  a watch operation would
+    actually be realized via a message exchange with the system,
+    and it must succeed and be non block.  it will request a response,
+    and the response contains the list of subscriber sessions.  the
+    system periodically sends a message whenever there's a change in
+    the group subscribers.
+  - unwatch operation: a user that has watched a group can indicate
+    it's no longer interested in watching the group.  this would
+    actually be realized via a message exchange with the system, and
+    it must succeed and be non block.  the system will stop sending
+    the periodic message of changes to the group on receiving this
+    message.
+
+- Group communication: there are two ways for a user to communicate
+  with sessions of a group:
+  - sending a message to a group: a user can send a message to the
+    sessions of a group as a single operation.  this interface and the
+    system ensures the message is delivered to all the sessions
+    subscribing (see the "Reliability" bullet below), but the user
+    cannot get a response from the destination sessions.  in fact,
+    there's technically quite difficult, if not impossible, to
+    effectively get responses in this case, and it will make corner
+    cases such as a subset of the sessions is non responsive trickier.
+  - get a list of subscribers of the group using the "watch"
+    operation, and send the same message to each of the subscriber
+    sessions.  In this case the user can request a response, and make
+    a higher level decision on corner cases for the convenience of the
+    user.  in general, this way of communication is preferred unless
+    the user doesn't have to care who actually receives the message
+    (e.g., when the message is purely informational and could even be
+    lost).
+
+- Reliability: this interface, with the help of the system, ensures
+  message delivery is reliable.  When a user sends messages from
+  session A to session B (or to the system), all of the messages will
+  be delivered in the sent order without any modification, as long as
+  the destination session (B) exists.
+
+'''Additional/supplemental concepts'''
+- session: a session is established by the owner user with the
+  system.  it's given a unique (and never reused) ID (throughout the
+  entire system) by the system at the time of establishment.
+  This ID is called "lname" (but we might revisit this naming at this
+  opportunity - no one knows what 'l' means and it could cause
+  unnecessary confusion).
+
+- group: a "group" consists of a set of "subscriber" sessions and a
+  set of "watcher" sessions.  at least one of the two sets must be non
+  empty, but one of them can be empty.  A group is given a name that
+  is unique throughout the system by the users of these sessions.
+  Implementations of users are assumed to have consistent naming
+  policy of the groups.
+
+- message: a blob of data exchanged between users or between a user
+  and the system.  messages are categorized by their "types".  Known
+  types include: "SEND" used for message exchanges between users;
+  "GET LNAME" used between a user and the system so the user gets
+  the ID (lname) of a session; "SUBSCRIBE" used between a user and
+  the system so the user tells the system it wants to subscribe to a
+  group.  Each message also has a "need response" flag.  If it's on,
+  the sender needs a response to the message.  In that case the
+  message contains a unique sequence ID by the sender (unique per the
+  session through which the message is sent).  that sequence ID should
+  be copied in to the corresponding response.  If the "need response"
+  flag is off, the receiver of the message shouldn't respond to it; if
+  it does, that response should be ignored by the original sender.
+
+- message destination: each message of type "SEND" is associated with
+  its intended destination.  its either a group name or a session ID
+  (lname).  If it's a group name, the message is intended to be
+  delivered to its all subscriber sessions.  If it's a session ID,
+  it's intended to be delivered to that specific session.  The
+  destination of a response cannot be a group.
+
+'''System behavior'''
+
+The following may be too detailed for the purpose of the high level
+design doc.  But hopefully it helps understand it more concretely,
+and, in any event, we'll need this level of specification too.
+
+== Session Management ==
+- the system maintains a list of active sessions established by users
+  with their lnames.
+- when a user establishes a session with the system, the system
+  gives a unique ID ("lname") to the session, and adds the pair of the
+  ID and session to the list.
+- if the system receives a "GET LNAME" message that asks the ID of the
+  session through which the message is delivered, it returns a response
+  containing the requested lname in the data.
+- when a user explicitly closes (one of) its session(s), the system
+  immediately knows the corresponding session is now unusable and
+  updates the list accordingly.  
+- when a user terminates, the system immediately knows any unclosed
+  sessions to the user are now unusable and updates the list
+  accordingly.
+
+== Group Management ==
+- the system maintains a list of active groups.
+- if the system receives a "SUBSCRIBE" type message for a group, it
+  adds the receiving session as a subscriber session of the group in
+  the list.  If the group did not exist in the list, it creates a new
+  one.  It also sends a "NEW SUBSCRIBER" (or something) message,
+  containing the newly added session lname, to each of the current
+  watchers of the group.
+- if the system receives a "WATCH" type message for a group, it
+  adds the receiving session as a watcher session of the group in
+  the list.  If the group did not exist in the list, it creates a new
+  one.  This message must have a "need response" flag on, and the
+  system sends a response containing a list of the current subscribers.
+- if the system receives an "UNSUBSCRIBE" type message for a group, it
+  removes the receiving session as a subscriber session of the group
+  from the list.  If both subscribers and watchers for the group become
+  empty, it removes the group from the list.  It also sends a "LEAVING
+  SUBSCRIBER" (or something) message, containing the lname of the
+  leaving session, to each of the watchers of the group.
+- if the system receives a "UNWATCH" type message for a group, it
+  removes the receiving session as a watcher session of the group
+  from the list.  If both subscribers and watchers for the group become
+  empty, it removes the group from the list.  this message should not
+  have a response flag on.
+- when a user explicitly closes (one of) its session(s), the system
+  goes through the group list.  For each group that has the closing
+  session as a subscriber, it handles the session as if it receives an
+  "UNSUBSCRIBE" message over that session for that group.  Likewise,
+  for each group that has the closing session as a watcher, it handles
+  the session as if it receives an "UNWATCH" message over that session
+  for that group.
+- when a user terminates, the system identifies any unclosed
+  sessions to the user, and performs the action of the previous
+  bullet for each of these sessions.
+
+== Message Routing ==
+- if the system receives a "SEND" message from a session destined to
+  another session (specified as its lname), it identifies the
+  corresponding destination session and delivers the message to it.
+- if the system receives a "SEND" message from a session destined to
+  a session group, it identifies the subscriber sessions of the group,
+  and delivers the message to each of these sessions.
+
+'''User behavior'''
+- A user must have at least one session with the system.  It can
+  have multiple sessions.
+- For each established session, the user must first send the "GET
+  LNAME" type of message and wait for a response.  For any subsequent
+  messages sent from that session should have the given lname to
+  indicate the sender.
+- ... and so on
