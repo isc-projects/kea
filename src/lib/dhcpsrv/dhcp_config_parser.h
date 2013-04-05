@@ -15,6 +15,12 @@
 #ifndef DHCP_CONFIG_PARSER_H
 #define DHCP_CONFIG_PARSER_H
 
+#include <exceptions/exceptions.h>
+#include <cc/data.h>
+#include <stdint.h>
+#include <string>
+#include <map>
+
 namespace isc {
 namespace dhcp {
 
@@ -122,38 +128,83 @@ public:
     /// This method is expected to be called after @c build(), and only once.
     /// The result is undefined otherwise.
     virtual void commit() = 0;
+};
 
-protected:
-
-    /// @brief Return the parsed entry from the provided storage.
-    ///
-    /// This method returns the parsed entry from the provided
-    /// storage. If the entry is not found, then exception is
-    /// thrown.
-    ///
-    /// @param param_id name of the configuration entry.
-    /// @param storage storage where the entry should be searched.
-    /// @tparam ReturnType type of the returned value.
-    /// @tparam StorageType type of the storage.
-    ///
-    /// @throw DhcpConfigError if the entry has not been found
-    /// in the storage.
-    template<typename ReturnType, typename StorageType>
-    static ReturnType getParam(const std::string& param_id,
-                        const StorageType& storage) {
-        typename StorageType::const_iterator param = storage.find(param_id);
-        if (param == storage.end()) {
-            isc_throw(DhcpConfigError, "missing parameter '"
-                      << param_id << "'");
+/// @brief A template class that stores named elements of a given data type.
+///
+/// This template class is provides data value storage for configuration parameters
+/// of a given data type.  The values are stored by parameter name and as instances 
+/// of type "ValueType". 
+///
+/// @param ValueType is the data type of the elements to store.
+template<typename ValueType>
+class ValueStorage {
+    public:
+        /// @brief  Stores the the parameter and its value in the store.
+        ///
+        /// If the parameter does not exist in the store, then it will be added,
+        /// otherwise its data value will be updated with the given value. 
+        ///
+        /// @param name is the name of the paramater to store.
+        /// @param value is the data value to store.
+        void setParam(const std::string name, const ValueType& value) {
+            values_[name] = value;
         }
-        ReturnType value = param->second;
-        return (value);
-    }
 
+        /// @brief Returns the data value for the given parameter.
+        ///
+        /// Finds and returns the data value for the given parameter.
+        /// @param name is the name of the parameter for which the data
+        /// value is desired.
+        ///
+        /// @return The paramater's data value of type <ValueType>.
+        /// @throw DhcpConfigError if the parameter is not found.
+        ValueType getParam(const std::string& name) const {
+            typename std::map<std::string, ValueType>::const_iterator param 
+                = values_.find(name);
+
+            if (param == values_.end()) {
+                isc_throw(DhcpConfigError, "Missing parameter '"
+                       << name << "'");
+            }
+
+            return (param->second);
+        }
+
+        /// @brief  Remove the parameter from the store.
+        ///
+        /// Deletes the entry for the given parameter from the store if it 
+        /// exists. 
+        ///
+        /// @param name is the name of the paramater to delete.
+        void delParam(const std::string& name) {
+            values_.erase(name);
+        }
+
+        /// @brief Deletes all of the entries from the store.
+        ///
+        void clear() {
+            values_.clear();
+        }
+
+
+    private:
+        /// @brief An std::map of the data values, keyed by parameter names.
+        std::map<std::string, ValueType> values_;
 };
 
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+/// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
+typedef ValueStorage<uint32_t> Uint32Storage;
+
+/// @brief a collection of elements that store string values
+typedef ValueStorage<std::string> StringStorage;
+
+/// @brief Storage for parsed boolean values.
+typedef ValueStorage<bool> BooleanStorage;
+
+}; // end of isc::dhcp namespace
+}; // end of isc namespace
 
 #endif // DHCP_CONFIG_PARSER_H
+
