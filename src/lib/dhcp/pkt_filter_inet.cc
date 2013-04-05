@@ -158,13 +158,13 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(socket_info.port_);
 
+#ifdef IP_PKTINFO
     struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
     struct in_addr to_addr;
 
     memset(&to_addr, 0, sizeof(to_addr));
 
-#ifdef IP_PKTINFO
     cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
@@ -219,6 +219,7 @@ PktFilterInet::send(uint16_t sockfd, const Pkt4Ptr& pkt) {
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
+#ifdef IP_PKTINFO
     // Setting the interface is a bit more involved.
     //
     // We have to create a "control message", and set that to
@@ -235,7 +236,8 @@ PktFilterInet::send(uint16_t sockfd, const Pkt4Ptr& pkt) {
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
-    
+#endif
+
     pkt->updateTimestamp();
 
     int result = sendmsg(sockfd, &m, 0);
