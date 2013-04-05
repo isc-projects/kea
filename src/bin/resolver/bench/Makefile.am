@@ -15,5 +15,8 @@ CLEANFILES = *.gcno *.gcda
 noinst_PROGRAMS = resolver-bench
 
 resolver_bench_SOURCES = main.cc
-resolver_bench_SOURCES += fake_resolution.h
+resolver_bench_SOURCES += fake_resolution.h fake_resolution.cc
+resolver_bench_SOURCES += dummy_work.h dummy_work.cc
+
 resolver_bench_LDADD  = $(GTEST_LDADD)
+resolver_bench_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
