@@ -28,12 +28,24 @@ PktFilterInet::PktFilterInet()
 {
 }
 
-int
-PktFilterInet::openSocket(const Iface& iface,
-                          const isc::asiolink::IOAddress& addr,
-                          const uint16_t port,
-                          const bool receive_bcast,
-                          const bool send_bcast) {
+// iface is only used when SO_BINDTODEVICE is defined and thus
+// the code section using this variable is compiled.
+#ifdef SO_BINDTODEVICE
+int PktFilterInet::openSocket(const Iface& iface,
+                              const isc::asiolink::IOAddress& addr,
+                              const uint16_t port,
+                              const bool receive_bcast,
+                              const bool send_bcast) {
+
+#else
+int PktFilterInet::openSocket(const Iface&,
+                              const isc::asiolink::IOAddress& addr,
+                              const uint16_t port,
+                              const bool receive_bcast,
+                              const bool send_bcast) {
+
+
+#endif
 
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
@@ -152,6 +164,7 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
 
     memset(&to_addr, 0, sizeof(to_addr));
 
+#ifdef IP_PKTINFO
     cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
@@ -172,6 +185,7 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
         }
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
+#endif
 
     return (pkt);
 }
