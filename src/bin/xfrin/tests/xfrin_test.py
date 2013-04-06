@@ -2199,8 +2199,7 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self._check_updated_statistics({'axfrreq' + self.ipver: 1,
                                         'xfrsuccess': 1,
-                                        'last_axfr_duration':
-                                            self._const_sec})
+                                        'last_axfr_duration': self._const_sec})
 
     def test_axfrreq_xfrfail(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
@@ -2237,7 +2236,7 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
 
     def test_ixfrreq_xfrfail(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters
-        are incremented when xfr succeeds'''
+        are incremented when xfr fails'''
         def create_response():
             self.conn.reply_data = self.conn.create_response_data(
                 questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
