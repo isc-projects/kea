@@ -148,8 +148,9 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 try {
                     load_action = cache_conf->getLoadAction(rrclass_, zname);
                 } catch (const DataSourceError&) {
-                    isc_throw(ConfigurationError, "Unable to cache "
-                              "non-existent zone " << zname);
+                    isc_throw(ConfigurationError, "Data source error for "
+                              "loading a zone (possibly non-existent) "
+                              << zname << "/" << rrclass_);
                 }
                 assert(load_action); // in this loop this should be always true
                 boost::scoped_ptr<memory::ZoneWriter> writer;
