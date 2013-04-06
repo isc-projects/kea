@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,10 +28,16 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief Constructor from string.
+///
+/// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(const std::string&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
+/// \brief Constructor with a context of MasterLexer.
+///
+/// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
        MasterLoader::Options, MasterLoaderCallbacks&)
 {
