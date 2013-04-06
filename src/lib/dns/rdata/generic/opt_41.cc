@@ -20,6 +20,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 using namespace std;
 using namespace isc::util;
@@ -28,6 +29,12 @@ using namespace isc::util;
 // BEGIN_RDATA_NAMESPACE
 
 OPT::OPT(const std::string&) {
+    isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
+}
+
+OPT::OPT(MasterLexer&, const Name*,
+       MasterLoader::Options, MasterLoaderCallbacks&)
+{
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
