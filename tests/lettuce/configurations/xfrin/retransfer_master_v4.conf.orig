@@ -11,7 +11,7 @@
         "database_file": "data/example.org.sqlite3",
         "listen_on": [ {
             "address": "127.0.0.1",
-            "port": 47807
+            "port": 47809
         } ]
     },
     "data_sources": {
