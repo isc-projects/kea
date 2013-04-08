@@ -227,7 +227,9 @@ MemorySegmentMapped::shrinkToFit() {
         return;
     }
 
+    // First, (unmap and) close the underlying file.
     impl_->base_sgmt_.reset();
+
     BaseSegment::shrink_to_fit(impl_->filename_.c_str());
     try {
         // Remap the grown file; this should succeed, but it's not 100%
