@@ -102,8 +102,8 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
     EXPECT_NO_THROW(const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt));
 
     // Bad type mnemonics
-    checkFromText_InvalidText("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                              "BIFF POW SPOON");
+    checkFromText_InvalidText("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"
+                              " BIFF POW SPOON");
 
     // Bad base32hex
     checkFromText_BadValue("1 1 1 D399EAAB "
