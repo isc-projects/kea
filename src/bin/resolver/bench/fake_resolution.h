@@ -16,6 +16,7 @@
 #define FAKE_RESOLUTION_H
 
 #include <exceptions/exceptions.h>
+#include <asiolink/io_service.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -80,15 +81,6 @@ private:
     friend class FakeInterface;
     /// \brief Constructor
     FakeQuery(FakeInterface& interface);
-    // The scheduled steps for this task.
-    typedef std::pair<Task, size_t> Step;
-    // The scheduled steps. Reversed (first to be done at the end), so we can
-    // pop_back() the completed steps.
-    std::vector<Step> steps_;
-    // The interface to schedule timeouts on.
-    FakeInterface* interface_;
-    // Is an upstream query outstanding?
-    bool outstanding_;
 public:
     /// \brief Is work on the query completely done?
     ///
@@ -150,6 +142,16 @@ public:
         }
         interface_ = &dst_interface;
     }
+private:
+    // The scheduled steps for this task.
+    typedef std::pair<Task, size_t> Step;
+    // The scheduled steps. Reversed (first to be done at the end), so we can
+    // pop_back() the completed steps.
+    std::vector<Step> steps_;
+    // The interface to schedule timeouts on.
+    FakeInterface* interface_;
+    // Is an upstream query outstanding?
+    bool outstanding_;
 };
 
 typedef boost::shared_ptr<FakeQuery> FakeQueryPtr;
@@ -174,12 +176,12 @@ typedef boost::shared_ptr<FakeQuery> FakeQueryPtr;
 /// in advance, on creation time. But you need to create all the needed
 /// interfaces from single thread and then distribute them to your threads.
 class FakeInterface {
-private:
-    friend class FakeQuery;
-    void scheduleUpstreamAnswer(FakeQuery* query,
-                                const FakeQuery::StepCallback& callback,
-                                size_t msec);
 public:
+    /// \brief Constructor
+    ///
+    /// Initiarile the interface and create query_count queries for the
+    /// benchmark. They will be handed out one by one with receiveQuery().
+    FakeInterface(size_t query_count);
     /// \brief Wait for answers from upstream servers.
     ///
     /// Wait until at least one "answer" comes from the remote server. This
@@ -202,6 +204,14 @@ public:
     /// This returns a NULL pointer when there are no more queries to answer
     /// (the number designated for the benchmark was reached).
     FakeQueryPtr receiveQuery();
+private:
+    class UpstreamQuery;
+    friend class FakeQuery;
+    void scheduleUpstreamAnswer(FakeQuery* query,
+                                const FakeQuery::StepCallback& callback,
+                                size_t msec);
+    asiolink::IOService service_;
+    std::vector<FakeQueryPtr> queries_;
 };
 
 }
