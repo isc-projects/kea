@@ -214,7 +214,8 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     std::memcpy(ptr16, &test_val16, sizeof(test_val16));
     EXPECT_FALSE(segment_->setNamedAddress("test address", ptr16));
     MemorySegmentMapped segment_ro(mapped_file);
-    EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
+    EXPECT_NE(static_cast<void*>(NULL),
+              segment_ro.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
                   segment_ro.getNamedAddress("test address")));
 
