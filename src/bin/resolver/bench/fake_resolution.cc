@@ -15,6 +15,10 @@
 #include <resolver/bench/fake_resolution.h>
 #include <resolver/bench/dummy_work.h>
 
+#include <asiolink/interval_timer.h>
+
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <algorithm>
 #include <cstdlib>
 
@@ -82,6 +86,85 @@ FakeQuery::performTask(const StepCallback& callback) {
         steps_.pop_back();
         callback();
     }
+}
+
+FakeInterface::FakeInterface(size_t query_count) :
+    queries_(query_count)
+{
+    BOOST_FOREACH(FakeQueryPtr& query, queries_) {
+        query = FakeQueryPtr(new FakeQuery(*this));
+    }
+}
+
+void
+FakeInterface::processEvents() {
+    service_.run_one();
+}
+
+namespace {
+
+void
+processDone(bool* flag) {
+    *flag = true;
+}
+
+}
+
+FakeQueryPtr
+FakeInterface::receiveQuery() {
+    // Handle all the events that are already scheduled.
+    // As processEvents blocks until an event happens and we want to terminate
+    // if there are no events, we do a small trick. We schedule a timeout with
+    // 0 time. That'll place the event for it directly at the end of the queue.
+    // Then, we'll just call processEvents() until that event happens.
+    bool processed = false;
+    asiolink::IntervalTimer zero_timer(service_);
+    zero_timer.setup(boost::bind(&processDone, &processed), 0);
+    while (!processed) {
+        processEvents();
+    }
+
+    // Now, look if there are more queries to return.
+    if (queries_.empty()) {
+        return (FakeQueryPtr());
+    } else {
+        // Take from the back. The order doesn't matter and it's faster from
+        // there.
+        FakeQueryPtr result(queries_.back());
+        queries_.pop_back();
+        return (result);
+    }
+}
+
+class FakeInterface::UpstreamQuery {
+public:
+    UpstreamQuery(FakeQuery* query, const FakeQuery::StepCallback& callback,
+                  const boost::shared_ptr<asiolink::IntervalTimer> timer) :
+        query_(query),
+        callback_(callback),
+        timer_(timer)
+    {}
+    void operator()() {
+        query_->outstanding_ = false;
+        callback_();
+    }
+private:
+    FakeQuery* const query_;
+    const FakeQuery::StepCallback callback_;
+    // Just to hold it alive before the callback is called (or discarded for
+    // some reason, like destroying the service).
+    const boost::shared_ptr<asiolink::IntervalTimer> timer_;
+};
+
+void
+FakeInterface::scheduleUpstreamAnswer(FakeQuery* query,
+                                      const FakeQuery::StepCallback& callback,
+                                      size_t msec)
+{
+    const boost::shared_ptr<asiolink::IntervalTimer>
+        timer(new asiolink::IntervalTimer(service_));
+    UpstreamQuery q(query, callback, timer);
+    timer->setup(q, msec);
 }
 
 }
