@@ -114,12 +114,11 @@ FakeQueryPtr
 FakeInterface::receiveQuery() {
     // Handle all the events that are already scheduled.
     // As processEvents blocks until an event happens and we want to terminate
-    // if there are no events, we do a small trick. We schedule a timeout with
-    // 0 time. That'll place the event for it directly at the end of the queue.
-    // Then, we'll just call processEvents() until that event happens.
+    // if there are no events, we do a small trick. We post an event to the end
+    // of the queue and work until it is found. This should process all the
+    // events that were there already.
     bool processed = false;
-    asiolink::IntervalTimer zero_timer(service_);
-    zero_timer.setup(boost::bind(&processDone, &processed), 0);
+    service_.post(boost::bind(&processDone, &processed));
     while (!processed) {
         processEvents();
     }
