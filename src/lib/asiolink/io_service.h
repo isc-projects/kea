@@ -15,6 +15,8 @@
 #ifndef ASIOLINK_IO_SERVICE_H
 #define ASIOLINK_IO_SERVICE_H 1
 
+#include <boost/function.hpp>
+
 namespace asio {
     class io_service;
 }
@@ -69,6 +71,17 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service();
+
+    /// \brief Post a callback to the end of the queue.
+    ///
+    /// Requests the callback be called sometime later. It is not guaranteed
+    /// by the underlying asio, but it can reasonably be expected the callback
+    /// is put to the end of the callback queue. It is not called from within
+    /// this function.
+    ///
+    /// It may be used to implement "background" work, for example (doing stuff
+    /// by small bits that are called from time to time).
+    void post(const boost::function<void ()>& callback);
 
 private:
     IOServiceImpl* io_impl_;
