@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,16 +12,33 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <resolver/bench/naive_resolver.h>
+#ifndef RESOLVER_BENCH_NAIVE_H
+#define RESOLVER_BENCH_NAIVE_H
 
-#include <bench/benchmark.h>
+#include <resolver/bench/fake_resolution.h>
 
-const size_t count = 100000; // TODO: We may want to read this from argv.
+namespace isc {
+namespace resolver {
+namespace bench {
 
-int main(int, const char**) {
-    // Run the naive implementation
-    isc::resolver::bench::NaiveResolver naive_resolver(count);
-    isc::bench::BenchMark<isc::resolver::bench::NaiveResolver>
-        (count, naive_resolver, true);
-    return 0;
+/// \brief Naive implementation of resolver for the benchmark
+///
+/// This is here mostly to show how to implement the other benchmark
+/// implementations. Look at the code inside how to use the fake
+/// resolution.
+class NaiveResolver {
+public:
+    /// \brief Constructor. Initializes the data.
+    NaiveResolver(size_t query_count);
+    /// \brief Run the resolution.
+    size_t run();
+private:
+    FakeInterface interface_;
+    bool processed_;
+};
+
 }
+}
+}
+
+#endif
