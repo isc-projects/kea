@@ -28,11 +28,11 @@ namespace bench {
 
 // Parameters of the generated queries.
 // How much work is each operation?
-const size_t parse_size = 10000000;
-const size_t render_size = 10000000;
-const size_t send_size = 100000;
-const size_t cache_read_size = 1000000;
-const size_t cache_write_size = 1000000;
+const size_t parse_size = 100000;
+const size_t render_size = 100000;
+const size_t send_size = 1000;
+const size_t cache_read_size = 10000;
+const size_t cache_write_size = 10000;
 // How large a change is to terminate in this iteration (either by getting
 // the complete answer, or by finding it in the cache). With 0.5, half the
 // queries are found in the cache directly. Half of the rest needs just one
@@ -41,7 +41,7 @@ const float chance_complete = 0.5;
 // Number of milliseconds an upstream query can take. It picks a random number
 // in between.
 const size_t upstream_time_min = 2;
-const size_t upstream_time_max = 30;
+const size_t upstream_time_max = 50;
 
 FakeQuery::FakeQuery(FakeInterface& interface) :
     interface_(&interface),
@@ -52,7 +52,7 @@ FakeQuery::FakeQuery(FakeInterface& interface) :
     steps_.push_back(Step(Compute, parse_size));
     // Look into the cache if it is there
     steps_.push_back(Step(CacheRead, cache_read_size));
-    while (1.0 * random() / RAND_MAX > chance_complete) {
+    while ((1.0 * random()) / RAND_MAX > chance_complete) {
         // Needs another step of recursion. Render the upstream query.
         steps_.push_back(Step(Compute, render_size));
         // Send it and wait for the answer.
