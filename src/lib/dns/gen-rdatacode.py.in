@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -46,6 +46,7 @@ new_rdata_factory_users = [('a', 'in'),
                            ('nsec', 'generic'),
                            ('opt', 'generic'),
                            ('ptr', 'generic'),
+                           ('rrsig', 'generic'),
                            ('soa', 'generic'),
                            ('spf', 'generic'),
                            ('srv', 'in'),
