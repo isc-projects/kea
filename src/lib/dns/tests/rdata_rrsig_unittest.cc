@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -56,42 +56,49 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
 }
 
 TEST_F(Rdata_RRSIG_Test, badText) {
+    // missing fields
     EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
+    // bad algorithm
     EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    // bad labels
     EXPECT_THROW(const generic::RRSIG sig("A 5 4444 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    // bad original ttl
     EXPECT_THROW(const generic::RRSIG sig("A 5 4 999999999999 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRRTTL);
+    // bad signature expiration, inception
     EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
                      "20100223 20100227 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidTime);
+    // bad key tag
     EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
                      "20100223214617 20100222214617 999999 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    // bad signature
     EXPECT_THROW(const generic::RRSIG sig(
                      "A 5 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
-                 BadValue);     // bad base64 input
+                 BadValue);
 }
 
 TEST_F(Rdata_RRSIG_Test, DISABLED_badText) {

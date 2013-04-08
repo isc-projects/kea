@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -289,7 +289,7 @@ protected:
         rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                          RRType::RRSIG(), RRTTL(3600)));
         rrset_rrsig->addRdata(generic::RRSIG("AAAA 5 3 7200 20100322084538 "
-                                             "20100220084538 1 example.com "
+                                             "20100220084538 1 example.com. "
                                              "FAKEFAKEFAKEFAKE"));
         rrset_aaaa->addRRsig(rrset_rrsig);
     }
