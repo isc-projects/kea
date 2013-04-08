@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -36,6 +37,7 @@
 using namespace std;
 using namespace isc::util;
 using namespace isc::util::encode;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -72,38 +74,106 @@ struct RRSIGImpl {
     const vector<uint8_t> signature_;
 };
 
-RRSIG::RRSIG(const std::string& rrsig_str) :
-    impl_(NULL)
+namespace {
+// helper function for string and lexer constructors
+RRSIGImpl* createFromLexer(MasterLexer& lexer, const Name* origin)
 {
-    istringstream iss(rrsig_str);
-    string covered_txt, signer_txt, expire_txt, inception_txt;
-    unsigned int algorithm, labels;
+    string covered_txt, expire_txt, inception_txt, signature_txt;
+    unsigned int algorithm, labels, tag;
     uint32_t originalttl;
-    uint16_t tag;
-    stringbuf signaturebuf;
 
-    iss >> covered_txt >> algorithm >> labels >> originalttl
-        >> expire_txt >> inception_txt >> tag >> signer_txt
-        >> &signaturebuf;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid RRSIG text");
-    }
+    covered_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    algorithm = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    labels = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    originalttl = RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
+    expire_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    inception_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    tag = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    Name signer = createNameFromLexer(lexer, origin);
+    signature_txt = lexer.getNextToken(MasterToken::STRING).getString();
+
     if (algorithm > 0xff) {
         isc_throw(InvalidRdataText, "RRSIG algorithm out of range");
     }
     if (labels > 0xff) {
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
+    if (tag > 0xffff) {
+        isc_throw(InvalidRdataText, "RRSIG key tag out of range");
+    }
 
     const uint32_t timeexpire = timeFromText32(expire_txt);
     const uint32_t timeinception = timeFromText32(inception_txt);
 
     vector<uint8_t> signature;
-    decodeBase64(signaturebuf.str(), signature);
+    decodeBase64(signature_txt, signature);
 
-    impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
-                          originalttl, timeexpire, timeinception, tag,
-                          Name(signer_txt), signature);
+    return new RRSIGImpl(RRType(covered_txt), algorithm, labels,
+                         originalttl, timeexpire, timeinception,
+			 static_cast<uint16_t>(tag), signer, signature);
+}
+}
+
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid RRSIG RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
+///
+/// The Signer's Name must be absolute since there's no parameter that
+/// specifies the origin name; if this is not absolute, \c MissingNameOrigin
+/// exception will be thrown.  This must not be represented as a quoted
+/// string.
+///
+/// See the construction that takes \c MasterLexer for other fields.
+///
+/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw InvalidRdataText Other general syntax errors.
+RRSIG::RRSIG(const std::string& rrsig_str) :
+    impl_(NULL)
+{
+    try {
+        istringstream iss(rrsig_str);
+        MasterLexer lexer;
+        lexer.pushSource(iss);
+
+        impl_ = createFromLexer(lexer, NULL);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for RRSIG: "
+                      << rrsig_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct RRSIG from '" <<
+                  rrsig_str << "': " << ex.what());
+    }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an RRSIG RDATA.  The Signer's Name fields can be non absolute if \c
+/// origin is non NULL, in which case \c origin is used to make it absolute.
+/// This must not be represented as a quoted string.
+///
+/// The Original TTL field can be either a valid decimal representation of an
+/// unsigned 32-bit integer or other valid textual representation of \c RRTTL
+/// such as "1H" (which means 3600).
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// construction of textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of Signer's Name when
+/// it is non absolute.
+RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(NULL)
+{
+    impl_ = createFromLexer(lexer, origin);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
