@@ -16,12 +16,12 @@
 
 #include <bench/benchmark.h>
 
-const size_t count = 100000; // TODO: We may want to read this from argv.
+const size_t count = 1000; // TODO: We may want to read this from argv.
 
 int main(int, const char**) {
     // Run the naive implementation
     isc::resolver::bench::NaiveResolver naive_resolver(count);
     isc::bench::BenchMark<isc::resolver::bench::NaiveResolver>
-        (count, naive_resolver, true);
+        (1, naive_resolver, true);
     return 0;
 }
