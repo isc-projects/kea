@@ -293,8 +293,16 @@ RRset_addRdata(PyObject* self, PyObject* args) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "Rdata type to add must match type of RRset");
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure adding rrset Rdata: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure adding rrset Rdata");
     }
+    return (NULL);
 }
 
 PyObject*
