@@ -152,19 +152,19 @@ public:
 
     /// \brief Shrink the underlying mapped segment to actually used size.
     ///
-    /// It will be convenient when a large amount of memory is allocated
-    /// then deallocated from the segment in order to keep the resulting
-    /// segment a reasonable size.
+    /// When a large amount of memory is allocated and then deallocated
+    /// from the segment, this method can be used to keep the resulting
+    /// segment at a reasonable size.
     ///
-    /// This method works best effort basis, and does not guarantee any
-    /// specific result.
+    /// This method works by a best-effort basis, and does not guarantee
+    /// any specific result.
     ///
     /// This method is generally expected to be failure-free, but it's still
     /// possible to fail.  For example, the underlying file may not be writable
     /// at the time of shrink attempt; it also tries to remap the shrunk
     /// segment internally, and there's a small chance it could fail.
     /// In such a case it throws \c MemorySegmentError.  If it's thrown the
-    /// segment is not usable any more.
+    /// segment is not usable anymore.
     ///
     /// This method cannot be called if the segment object is created in the
     /// read-only mode; in that case InvalidOperation will be thrown.
