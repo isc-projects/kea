@@ -25,7 +25,7 @@ namespace test {
 
 void
 checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
-    // If not exist, null pointer will be returned.
+    // If the name does not exist, NULL should be returned.
     EXPECT_EQ(static_cast<void*>(0), segment.getNamedAddress("test address"));
 
     // Now set it
