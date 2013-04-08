@@ -143,15 +143,16 @@ public:
         callback_(callback),
         timer_(timer)
     {}
-    void operator()() {
+    void trigger() {
         query_->outstanding_ = false;
         callback_();
+        // We are not needed any more.
+        delete this;
     }
 private:
     FakeQuery* const query_;
     const FakeQuery::StepCallback callback_;
-    // Just to hold it alive before the callback is called (or discarded for
-    // some reason, like destroying the service).
+    // Just to hold it alive before the callback is called.
     const boost::shared_ptr<asiolink::IntervalTimer> timer_;
 };
 
@@ -162,8 +163,8 @@ FakeInterface::scheduleUpstreamAnswer(FakeQuery* query,
 {
     const boost::shared_ptr<asiolink::IntervalTimer>
         timer(new asiolink::IntervalTimer(service_));
-    UpstreamQuery q(query, callback, timer);
-    timer->setup(q, msec);
+    UpstreamQuery* q(new UpstreamQuery(query, callback, timer));
+    timer->setup(boost::bind(&UpstreamQuery::trigger, q), msec);
 }
 
 }
