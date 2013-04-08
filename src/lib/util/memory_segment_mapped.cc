@@ -187,7 +187,7 @@ MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
     }
 
     if (addr && !impl_->base_sgmt_->belongs_to_segment(addr)) {
-        isc_throw(MemorySegmentError, "out of segment address: " << addr);
+        isc_throw(MemorySegmentError, "address is out of segment: " << addr);
     }
 
     bool grown = false;
