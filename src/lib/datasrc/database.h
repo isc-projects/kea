@@ -122,6 +122,15 @@ public:
     /// Each derived implementation of deleteRecordInZone() should expect
     /// the "params" array to be filled with the values as described in this
     /// enumeration, in this order.
+    ///
+    /// DEL_RNAME is included in case the reversed from is more convenient
+    /// for the underlying implementation to identify the record to be
+    /// deleted (reversed names are generally easier to sort, which may help
+    /// perform the search faster).  It's up to the underlying implementation
+    /// which one (or both) it uses for the search.   DEL_NAME and DEL_RNAME
+    /// are mutually convertible with the understanding of DNS names, and
+    /// in that sense redundant.  But both are provided so the underlying
+    /// implementation doesn't have to deal with DNS level concepts.
     enum DeleteRecordParams {
         DEL_NAME = 0, ///< The owner name of the record (a domain name)
                       ///< or the hash label for deleteNSEC3RecordInZone()
