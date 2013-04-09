@@ -518,7 +518,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         answer->setYiaddr(lease->addr_);
 
         // If remote address is not set, we are dealing with a directly
-        // connected client requesting new lease. We scan end response to
+        // connected client requesting new lease. We can send response to
         // the address assigned in the lease, but first we have to make sure
         // that IfaceMgr supports responding directly to the client when
         // client doesn't have address assigned to its interface yet.
@@ -527,18 +527,14 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                 answer->setRemoteAddr(lease->addr_);
             } else {
                 // Since IfaceMgr does not support direct responses to
-                // clients not having IP address, we have to send response
-                // to broadcast. Note that we don't check whether the
-                // use_bcast flag was set in the constructor or not.
-                // However, the use_bcast flag is mostly used by unit tests
-                // to prevent opening broadcast sockets in the constructor
-                // of this class because opening broadcast sockets requires
-                // root privileges. For this reason, it is rather unlikely
-                // that use_bcast flag is set to false in the real life
-                // scenario. On the other hand, if we fail to set remote
-                // address to broadcast here, we can't unit-test the case when
-                // server doesn't support direct responses to the client
-                // which doesn't have address yet.
+                // clients not having IP addresses, we have to send response
+                // to broadcast. We don't check whether the use_bcast flag
+                // was set in the constructor, because this flag is only used
+                // by unit tests to prevent opening broadcast sockets, as
+                // it requires root privileges. If this function is invoked by
+                // unit tests, we expect that it sets broadcast address if
+                // direct response is not supported, so as a test can verify
+                // function's behavior, regardless of the use_bcast flag's value.
                 answer->setRemoteAddr(IOAddress("255.255.255.255"));
             }
         }
