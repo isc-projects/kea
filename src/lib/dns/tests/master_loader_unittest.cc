@@ -167,8 +167,8 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     // Hardcode expected values taken from the test data file, assuming it
     // won't change too often.
-    EXPECT_EQ(549, loader_->getSize());
-    EXPECT_EQ(549, loader_->getPosition());
+    EXPECT_EQ(550, loader_->getSize());
+    EXPECT_EQ(550, loader_->getPosition());
 
     checkBasicRRs();
 }
@@ -227,20 +227,20 @@ TEST_F(MasterLoaderTest, includeAndIncremental) {
     EXPECT_EQ(zone_data.size(), loader_->getSize());
     EXPECT_EQ(first_rr.size(), loader_->getPosition());
 
-    // Read next 4.  It includes $INCLUDE processing.  Magic number of 549
-    // is the size of the test zone file (see above); 506 is the position in
+    // Read next 4.  It includes $INCLUDE processing.  Magic number of 550
+    // is the size of the test zone file (see above); 507 is the position in
     // the file at the end of 4th RR (due to extra comments it's smaller than
     // the file size).
     loader_->loadIncremental(4);
-    EXPECT_EQ(zone_data.size() + 549, loader_->getSize());
-    EXPECT_EQ(first_rr.size() + include_str.size() + 506,
+    EXPECT_EQ(zone_data.size() + 550, loader_->getSize());
+    EXPECT_EQ(first_rr.size() + include_str.size() + 507,
               loader_->getPosition());
 
     // Read the last one.  At this point getSize and getPosition return
     // the same value, indicating progress of 100%.
     loader_->loadIncremental(1);
-    EXPECT_EQ(zone_data.size() + 549, loader_->getSize());
-    EXPECT_EQ(zone_data.size() + 549, loader_->getPosition());
+    EXPECT_EQ(zone_data.size() + 550, loader_->getSize());
+    EXPECT_EQ(zone_data.size() + 550, loader_->getPosition());
 
     // we were not interested in checking RRs in this test.  clear them to
     // not confuse TearDown().
