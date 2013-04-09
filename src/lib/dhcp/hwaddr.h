@@ -27,6 +27,8 @@ namespace dhcp {
 /// @brief Hardware type that represents information from DHCPv4 packet
 struct HWAddr {
 public:
+    /// @brief Maximum size of a hardware address.
+    static const size_t MAX_HWADDR_LEN = 20;
 
     /// @brief default constructor
     HWAddr();
