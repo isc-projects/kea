@@ -180,6 +180,8 @@ public:
         EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
         EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
         EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
+        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
+        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
 
         // Check that something is offered
         EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
@@ -434,32 +436,39 @@ public:
 
         messageCheck(req, rsp);
 
-        // There are some options that are always present in the
-        // message, even if not requested.
-        EXPECT_TRUE(rsp->getOption(DHO_DOMAIN_NAME));
-        EXPECT_TRUE(rsp->getOption(DHO_DOMAIN_NAME_SERVERS));
-
         // We did not request any options so these should not be present
         // in the RSP.
         EXPECT_FALSE(rsp->getOption(DHO_LOG_SERVERS));
         EXPECT_FALSE(rsp->getOption(DHO_COOKIE_SERVERS));
         EXPECT_FALSE(rsp->getOption(DHO_LPR_SERVERS));
 
+        // Repeat the test but request some options.
         // Add 'Parameter Request List' option.
         addPrlOption(req);
 
-        // Repeat the test but request some options.
-        ASSERT_NO_THROW(
-            rsp = srv->processRequest(req);
-        );
+        if (msg_type == DHCPDISCOVER) {
+            ASSERT_NO_THROW(
+                rsp = srv->processDiscover(req);
+            );
 
-        // Should return something
-        ASSERT_TRUE(rsp);
+            // Should return non-NULL packet.
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPOFFER, rsp->getType());
 
-        EXPECT_EQ(DHCPACK, rsp->getType());
+        } else {
+            ASSERT_NO_THROW(
+                rsp = srv->processRequest(req);
+            );
+
+            // Should return non-NULL packet.
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPACK, rsp->getType());
+
+        }
 
         // Check that the requested options are returned.
         optionsCheck(rsp);
+
     }
 
     ~Dhcpv4SrvTest() {

@@ -68,7 +68,7 @@ int PktFilterInet::openSocket(const Iface&,
                        iface.getName().length() + 1) < 0) {
             close(sock);
             isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
-                      << "on socket " << sock);
+                      << " on socket " << sock);
         }
     }
 #endif
@@ -78,8 +78,8 @@ int PktFilterInet::openSocket(const Iface&,
         int flag = 1;
         if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &flag, sizeof(flag)) < 0) {
             close(sock);
-            isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
-                      << "on socket " << sock);
+            isc_throw(SocketConfigError, "Failed to set SO_BROADCAST option"
+                      << " on socket " << sock);
         }
     }
 
