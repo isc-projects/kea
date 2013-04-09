@@ -211,7 +211,8 @@ class NotifyOut:
 
             for name_ in not_replied_zones:
                 if not_replied_zones[name_].notify_timeout <= time.time():
-                    self._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
+                    self._zone_notify_handler(not_replied_zones[name_],
+                                              _EVENT_TIMEOUT)
 
     def dispatcher(self, daemon=False):
         """Spawns a thread that will handle notify related events.
@@ -421,11 +422,18 @@ class NotifyOut:
         return replied_zones, not_replied_zones
 
     def _zone_notify_handler(self, zone_notify_info, event_type):
-        '''Notify handler for one zone. The first notify message is
-        always triggered by the event "_EVENT_TIMEOUT" since when
-        one zone prepares to notify its slaves, its notify_timeout
-        is set to now, which is used to trigger sending notify
-        message when dispatcher() scanning zones. '''
+        """Notify handler for one zone.
+
+        The first notify message is always triggered by the event
+        "_EVENT_TIMEOUT" since when one zone prepares to notify its slaves,
+        its notify_timeout is set to now, which is used to trigger sending
+        notify message when dispatcher() scanning zones.
+
+        Parameters:
+        zone_notify_info(ZoneNotifyInfo): the notify context for the event
+        event_type(int): either _EVENT_READ or _EVENT_TIMEOUT constant
+
+        """
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
             reply = self._get_notify_reply(zone_notify_info.get_socket(), tgt)
@@ -445,7 +453,8 @@ class NotifyOut:
                 self._notify_next_target(zone_notify_info)
             else:
                 # set exponential backoff according rfc1996 section 3.6
-                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
+                retry_timeout = (_NOTIFY_TIMEOUT *
+                                 pow(2, zone_notify_info.notify_try_num))
                 zone_notify_info.notify_timeout = time.time() + retry_timeout
                 self._send_notify_message_udp(zone_notify_info, tgt)
 
@@ -537,9 +546,12 @@ class NotifyOut:
         return soa_rrset
 
     def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
-        '''Parse the notify reply message.
-        rcode will not checked here, If we get the response
-        from the slave, it means the slaves has got the notify.'''
+        """Parse the notify reply message.
+
+        rcode will not be checked here; if we get the response
+        from the slave, it means the slave has got the notify.
+
+        """
         msg = Message(Message.PARSE)
         try:
             msg.from_wire(msg_data)
