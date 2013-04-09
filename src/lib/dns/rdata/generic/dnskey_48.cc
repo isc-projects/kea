@@ -63,7 +63,10 @@ struct DNSKEYImpl {
 /// The Protocol and Algorithm fields must be within their valid
 /// ranges. The Public Key field must be present and must contain a
 /// Base64 encoding of the public key. Whitespace is allowed within the
-/// Base64 text.
+/// Base64 text. It is okay for the key data to be missing. BIND 9 seems
+/// to accept such cases. What we should do could be debatable, but
+/// since this field is algorithm dependent and our implementation
+/// doesn't reject unknown algorithms, we are lenient here.
 ///
 /// \throw InvalidRdataText if any fields are out of their valid range,
 /// or are incorrect.
@@ -97,6 +100,15 @@ DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_ = impl_ptr.release();
 }
 
+/// \brief Constructor from InputBuffer.
+///
+/// The passed buffer must contain a valid DNSKEY RDATA.
+///
+/// The Protocol and Algorithm fields are not checked for unknown
+/// values.  It is okay for the key data to be missing. BIND 9 seems to
+/// accept such cases. What we should do could be debatable, but since
+/// this field is algorithm dependent and our implementation doesn't
+/// reject unknown algorithms, we are lenient here.
 DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
@@ -111,10 +123,8 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) :
     rdata_len -= 4;
 
     vector<uint8_t> keydata;
-    // If key data is missing, it's OK. BIND 9 seems to accept such
-    // cases. What we should do could be debatable, but since this field
-    // is algorithm dependent and our implementation doesn't reject
-    // unknown algorithms, we are lenient here.
+    // If key data is missing, it's OK. See the API documentation of the
+    // constructor.
     if (rdata_len > 0) {
         keydata.resize(rdata_len);
         buffer.readData(&keydata[0], rdata_len);
@@ -187,10 +197,8 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
     lexer.ungetToken();
 
     vector<uint8_t> keydata;
-    // If key data is missing, it's OK. BIND 9 seems to accept such
-    // cases. What we should do could be debatable, but since this field
-    // is algorithm dependent and our implementation doesn't reject
-    // unknown algorithms, we are lenient here.
+    // If key data is missing, it's OK. See the API documentation of the
+    // constructor.
     if (keydata_str.size() > 0) {
         decodeBase64(keydata_str, keydata);
     }
