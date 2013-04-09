@@ -42,6 +42,9 @@ class Iface;
 class PktFilter {
 public:
 
+    /// @brief Virtual Destructor
+    virtual ~PktFilter() { }
+
     /// @brief Open socket.
     ///
     /// @param iface interface descriptor
