@@ -54,7 +54,11 @@ int PktFilterInet::openSocket(const Iface&,
 
     // If we are to receive broadcast messages we have to bind
     // to "ANY" address.
-    addr4.sin_addr.s_addr = receive_bcast ? INADDR_ANY : htonl(addr);
+    if (receive_bcast) {
+        addr4.sin_addr.s_addr = INADDR_ANY;
+    } else {
+        addr4.sin_addr.s_addr = htonl(addr);
+    }
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
