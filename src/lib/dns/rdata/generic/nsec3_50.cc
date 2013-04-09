@@ -35,6 +35,8 @@
 #include <dns/rdata/generic/detail/nsec_bitmap.h>
 #include <dns/rdata/generic/detail/nsec3param_common.h>
 
+#include <memory>
+
 #include <stdio.h>
 #include <time.h>
 

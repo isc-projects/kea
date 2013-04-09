@@ -27,6 +27,8 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
+#include <memory>
+
 #include <stdio.h>
 #include <time.h>
 
