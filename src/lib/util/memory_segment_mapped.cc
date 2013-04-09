@@ -224,8 +224,12 @@ MemorySegmentMapped::shrinkToFit() {
     }
 
     // It appears an assertion failure is triggered within Boost if the size
-    // is too small.  To work this around we'll make it no-op if the size is
-    // already reasonably small.
+    // is too small (happening if shrink_to_fit() is called twice without
+    // allocating any memory from the shrunk segment).  To work this around
+    // we'll make it no-op if the size is already reasonably small.
+    // Using INITIAL_SIZE is not 100% reliable as it's irrelevant to the
+    // internal constraint of the Boost implementation.  But, in practice,
+    // it should be sufficiently large and safe.
     if (getSize() < INITIAL_SIZE) {
         return;
     }
