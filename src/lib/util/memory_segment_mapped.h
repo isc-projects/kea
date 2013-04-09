@@ -139,17 +139,17 @@ public:
     ///
     /// This method cannot be called if the segment object is created in the
     /// read-only mode; in that case InvalidOperation will be thrown.
-    virtual bool setNamedAddress(const char* name, void* addr);
+    virtual bool setNamedAddressImpl(const char* name, void* addr);
 
     /// \brief Mapped segment version of getNamedAddress.
     ///
     /// This version never throws.
-    virtual void* getNamedAddress(const char* name);
+    virtual void* getNamedAddressImpl(const char* name);
 
     /// \brief Mapped segment version of clearNamedAddress.
     ///
     /// This version never throws.
-    virtual bool clearNamedAddress(const char* name);
+    virtual bool clearNamedAddressImpl(const char* name);
 
     /// \brief Shrink the underlying mapped segment to actually used size.
     ///

@@ -52,7 +52,7 @@ MemorySegmentLocal::allMemoryDeallocated() const {
 }
 
 void*
-MemorySegmentLocal::getNamedAddress(const char* name) {
+MemorySegmentLocal::getNamedAddressImpl(const char* name) {
     std::map<std::string, void*>::iterator found = named_addrs_.find(name);
     if (found != named_addrs_.end()) {
         return (found->second);
@@ -61,13 +61,13 @@ MemorySegmentLocal::getNamedAddress(const char* name) {
 }
 
 bool
-MemorySegmentLocal::setNamedAddress(const char* name, void* addr) {
+MemorySegmentLocal::setNamedAddressImpl(const char* name, void* addr) {
     named_addrs_[name] = addr;
     return (false);
 }
 
 bool
-MemorySegmentLocal::clearNamedAddress(const char* name) {
+MemorySegmentLocal::clearNamedAddressImpl(const char* name) {
     const size_t n_erased = named_addrs_.erase(name);
     return (n_erased != 0);
 }

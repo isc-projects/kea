@@ -14,6 +14,8 @@
 
 #include <util/memory_segment.h>
 
+#include <exceptions/exceptions.h>
+
 #include <gtest/gtest.h>
 
 #include <cstring>
@@ -25,14 +27,21 @@ namespace test {
 
 void
 checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
+    // NULL name is not allowed.
+    EXPECT_THROW(segment.getNamedAddress(NULL), InvalidParameter);
+
     // If the name does not exist, NULL should be returned.
-    EXPECT_EQ(static_cast<void*>(0), segment.getNamedAddress("test address"));
+    EXPECT_EQ(static_cast<void*>(NULL),
+              segment.getNamedAddress("test address"));
 
     // Now set it
     void* ptr32 = segment.allocate(sizeof(uint32_t));
     const uint32_t test_val = 42;
     std::memcpy(ptr32, &test_val, sizeof(test_val));
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr32));
+
+    // NULL name isn't allowed.
+    EXPECT_THROW(segment.setNamedAddress(NULL, ptr32), InvalidParameter);
 
     // we can now get it; the stored value should be intact.
     EXPECT_EQ(ptr32, segment.getNamedAddress("test address"));
@@ -48,14 +57,16 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
 
     // Clear it.  Then we won't be able to find it any more.
     EXPECT_TRUE(segment.clearNamedAddress("test address"));
-    EXPECT_EQ(static_cast<void*>(0), segment.getNamedAddress("test address"));
+    EXPECT_EQ(static_cast<void*>(NULL),
+              segment.getNamedAddress("test address"));
 
     // duplicate attempt of clear will result in false as it doesn't exist.
     EXPECT_FALSE(segment.clearNamedAddress("test address"));
 
     // Setting NULL is okay.
     EXPECT_FALSE(segment.setNamedAddress("null address", 0));
-    EXPECT_EQ(static_cast<void*>(0), segment.getNamedAddress("null address"));
+    EXPECT_EQ(static_cast<void*>(NULL),
+              segment.getNamedAddress("null address"));
 
     // If the underlying implementation performs explicit check against
     // out-of-segment address, confirm the behavior.
@@ -71,6 +82,8 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     segment.deallocate(ptr16, sizeof(uint16_t));  // not yet
     EXPECT_FALSE(segment.allMemoryDeallocated());
     EXPECT_TRUE(segment.clearNamedAddress("null address"));
+    // null name isn't allowed:
+    EXPECT_THROW(segment.clearNamedAddress(NULL), InvalidParameter);
     EXPECT_TRUE(segment.allMemoryDeallocated()); // now everything is gone
 }
 
