@@ -63,10 +63,13 @@ struct DNSKEYImpl {
 /// The Protocol and Algorithm fields must be within their valid
 /// ranges. The Public Key field must be present and must contain a
 /// Base64 encoding of the public key. Whitespace is allowed within the
-/// Base64 text. It is okay for the key data to be missing. BIND 9 seems
-/// to accept such cases. What we should do could be debatable, but
-/// since this field is algorithm dependent and our implementation
-/// doesn't reject unknown algorithms, we are lenient here.
+/// Base64 text.
+///
+/// It is okay for the key data to be missing.  Note: BIND 9 also accepts
+/// DNSKEY missing key data.  While the RFC is silent in this case, and it
+/// may be debatable what an implementation should do, but since this field
+/// is algorithm dependent and this implementations doesn't reject unknown
+/// algorithms, it's lenient here.
 ///
 /// \throw InvalidRdataText if any fields are out of their valid range,
 /// or are incorrect.
@@ -105,10 +108,8 @@ DNSKEY::DNSKEY(const std::string& dnskey_str) :
 /// The passed buffer must contain a valid DNSKEY RDATA.
 ///
 /// The Protocol and Algorithm fields are not checked for unknown
-/// values.  It is okay for the key data to be missing. BIND 9 seems to
-/// accept such cases. What we should do could be debatable, but since
-/// this field is algorithm dependent and our implementation doesn't
-/// reject unknown algorithms, we are lenient here.
+/// values.  It is okay for the key data to be missing (see the description
+/// of the constructor from string).
 DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
