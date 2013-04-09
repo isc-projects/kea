@@ -280,12 +280,11 @@ DNSKEY::compare(const Rdata& other) const {
 uint16_t
 DNSKEY::getTag() const {
     if (impl_->algorithm_ == 1) {
-        const int len = impl_->keydata_.size();
-
         // See RFC 4034 appendix B.1 for why the key data must contain
         // at least 4 bytes with RSA/MD5: 3 trailing bytes to extract
         // the tag from, and 1 byte of exponent length subfield before
         // modulus.
+        const int len = impl_->keydata_.size();
         if (len < 4) {
             isc_throw(isc::OutOfRange,
                       "DNSKEY keydata too short for tag extraction");
