@@ -84,7 +84,8 @@ TEST_F(MemorySegmentMappedTest, createAndModify) {
 
         EXPECT_TRUE(segment_->allMemoryDeallocated());
 
-        // re-open it.
+        // re-open it in read-write mode, but don't try to create it
+        // this time.
         segment_.reset(new MemorySegmentMapped(mapped_file, false));
     }
 }
@@ -103,22 +104,24 @@ TEST_F(MemorySegmentMappedTest, openFail) {
     // The given file is directory
     EXPECT_THROW(MemorySegmentMapped("/", true), MemorySegmentOpenError);
 
-    // file doesn't exist and directory isn't writable (we assume the root
-    // directory is not writable for the user running the test).
-    EXPECT_THROW(MemorySegmentMapped("/test.mapped", true),
+    // file doesn't exist and directory isn't writable (we assume the
+    // following path is not writable for the user running the test).
+    EXPECT_THROW(MemorySegmentMapped("/random-glkwjer098/test.mapped", true),
                  MemorySegmentOpenError);
 
-    // file doesn't exist and it's read-only (so open-only)
+    // It should fail when file doesn't exist and it's read-only (so
+    // open-only).
     EXPECT_THROW(MemorySegmentMapped(TEST_DATA_BUILDDIR "/nosuchfile.mapped"),
                  MemorySegmentOpenError);
-    // Likewise.  read-write mode but creation is suppressed.
+    // Likewise, it should fail in read-write mode when creation is
+    // suppressed.
     EXPECT_THROW(MemorySegmentMapped(TEST_DATA_BUILDDIR "/nosuchfile.mapped",
                                      false),
                  MemorySegmentOpenError);
 
-    // Close the segment, break the file with bogus data, and try to reopen.
-    // It should fail with exception whether in the read-only or read-write,
-    // or "create if not exist" mode.
+    // Close the existing segment, break its file with bogus data, and
+    // try to reopen.  It should fail with exception whether in the
+    // read-only or read-write, or "create if not exist" mode.
     segment_.reset();
     std::ofstream ofs(mapped_file, std::ios::trunc);
     ofs << std::string(1024, 'x');
