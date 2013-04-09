@@ -76,6 +76,11 @@ public:
     ///
     /// This version does not validate the given address to see whether it
     /// belongs to this segment.
+    ///
+    /// This implementation of this method always returns \c false (but the
+    /// application should expect a return value of \c true unless it knows
+    /// the memory segment class is \c MemorySegmentLocal and needs to
+    /// exploit the fact).
     virtual bool setNamedAddress(const char* name, void* addr);
 
     /// \brief Local segment version of clearNamedAddress.
