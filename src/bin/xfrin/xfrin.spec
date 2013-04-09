@@ -122,7 +122,7 @@
           "item_optional": false,
           "item_default": {},
           "item_title": "Zone name",
-          "item_description": "An actual zone name or special zone name _SERVER_ representing the entire server. Zone classes (IN, CH, HS) are mixed and counted so far. But these will be distinguished in future release.",
+          "item_description": "An actual zone name or special zone name _SERVER_ representing the entire server. Zone classes (e.g. IN, CH, and HS) are mixed and counted so far. But these will be distinguished in future release.",
           "map_item_spec": [
             {
               "item_name": "soaoutv4",
