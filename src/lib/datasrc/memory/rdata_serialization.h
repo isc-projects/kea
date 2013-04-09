@@ -364,7 +364,7 @@ struct RdataEncodeSpec;
 /// from the field sequence, you'll need to build the complete
 /// wire-format data, and then construct a dns::Rdata object from it.
 ///
-/// To use it, contstruct it with the data you got from RDataEncoder,
+/// To use it, construct it with the data you got from RDataEncoder,
 /// provide it with callbacks and then iterate through the data.
 /// The callbacks are called with the data fields contained in the
 /// data.

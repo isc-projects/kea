@@ -194,7 +194,7 @@ class ModuleCCSession(ConfigData):
            it will read the system-wide Logging configuration and call
            the logger manager to apply it. It will also inform the
            logger manager when the logging configuration gets updated.
-           The module does not need to do anything except intializing
+           The module does not need to do anything except initializing
            its loggers, and provide log messages. Defaults to true.
 
            socket_file: If cc_session was none, this optional argument

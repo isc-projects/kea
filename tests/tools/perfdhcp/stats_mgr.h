@@ -719,7 +719,7 @@ public:
         /// \brief Private default constructor.
         ///
         /// Default constructor is private because we want the client
-        /// class to specify exchange type explicitely.
+        /// class to specify exchange type explicitly.
         ExchangeStats();
 
         /// \brief Erase packet from the list of sent packets.
@@ -905,7 +905,7 @@ public:
 
     /// \brief Increment specified counter.
     ///
-    /// Increement counter value by one.
+    /// Increment counter value by one.
     ///
     /// \param counter_key key poiting to the counter in the counters map.
     /// \param value value to increment counter by.

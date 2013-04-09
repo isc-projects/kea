@@ -2193,7 +2193,7 @@ class TestXfrinProcess(unittest.TestCase):
                                    master_addrinfo, tsig_key)
 
         # An awkward check that would specifically identify an old bug
-        # where initialziation of XfrinConnection._tsig_ctx_creator caused
+        # where initialization of XfrinConnection._tsig_ctx_creator caused
         # self reference and subsequently led to reference leak.
         orig_ref = sys.getrefcount(conn)
         conn._tsig_ctx_creator = None

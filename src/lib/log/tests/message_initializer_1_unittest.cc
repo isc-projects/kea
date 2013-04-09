@@ -98,7 +98,7 @@ TEST(MessageInitializerTest1, Duplicates) {
     MessageInitializer::clearDuplicates();
     ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
 
-    // Do it again to make sure, let's explicitely provide false now
+    // Do it again to make sure, let's explicitly provide false now
     const MessageInitializer init_message_initializer_unittest_3(dupe);
     MessageInitializer::loadDictionary(false);
     ASSERT_EQ(1, MessageInitializer::getDuplicates().size());

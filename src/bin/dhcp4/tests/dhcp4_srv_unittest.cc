@@ -116,10 +116,10 @@ public:
 
     /// @brief Configures options being requested in the PRL option.
     ///
-    /// The lpr-servers option is NOT configured here altough it is
+    /// The lpr-servers option is NOT configured here although it is
     /// added to the 'Parameter Request List' option in the
     /// \ref addPrlOption. When requested option is not configured
-    /// the server should not return it in its rensponse. The goal
+    /// the server should not return it in its response. The goal
     /// of not configuring the requested option is to verify that
     /// the server will not return it.
     void configureRequestedOptions() {

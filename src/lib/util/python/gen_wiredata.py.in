@@ -138,7 +138,7 @@ the type.  But there are some common configurable entries.  See the
 description of the RR class.  The most important one would be "as_rr".
 It controls whether the entry should be treated as an RR (with name,
 type, class and TTL) or only as an RDATA.  By default as_rr is
-"False", so if an entry is to be intepreted as an RR, an as_rr entry
+"False", so if an entry is to be interpreted as an RR, an as_rr entry
 must be explicitly specified with a value of "True".
 
 Another common entry is "rdlen".  It specifies the RDLEN field value
@@ -762,7 +762,7 @@ class TXT(RR):
       value will be used.  If this parameter isn't specified either,
       the length of the string will be used.  Note that it means
       this parameter (or any stringlenN) doesn't have to be specified
-      unless you want to intentially build a broken character string.
+      unless you want to intentionally build a broken character string.
     - string (string): the default string.  If nstring >= 1 and the
       corresponding stringN isn't specified in the spec file, this
       string will be used.

@@ -74,7 +74,7 @@ many possible reasons for such a failure.
 % DHCP4_LEASE_ALLOC lease %1 has been allocated for client-id %2, hwaddr %3
 This debug message indicates that the server successfully granted a lease
 in response to client's REQUEST message. This is a normal behavior and
-incicates successful operation.
+indicates successful operation.
 
 % DHCP4_LEASE_ALLOC_FAIL failed to grant a lease for client-id %1, hwaddr %2
 This message indicates that the server failed to grant a lease to the

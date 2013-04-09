@@ -262,7 +262,7 @@ TEST_F(OptionCustomTest, int16Data) {
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
 
-    // Initialize value to 0 explicitely to make sure that is
+    // Initialize value to 0 explicitly to make sure that is
     // modified by readInteger function to expected -234.
     int16_t value = 0;
     ASSERT_NO_THROW(value = option->readInteger<int16_t>(0));
@@ -295,7 +295,7 @@ TEST_F(OptionCustomTest, int32Data) {
     // We should have just one data field.
     ASSERT_EQ(1, option->getDataFieldsNum());
 
-    // Initialize value to 0 explicitely to make sure that is
+    // Initialize value to 0 explicitly to make sure that is
     // modified by readInteger function to expected -234.
     int32_t value = 0;
     ASSERT_NO_THROW(value = option->readInteger<int32_t>(0));

@@ -949,7 +949,7 @@ public:
                                     foo_example("foo.example."),
                                     org("org")
     {
-        // explicitely set to non-zero data, to make sure
+        // explicitly set to non-zero data, to make sure
         // we don't try to use data we don't set
         memset(buf, 0xff, LabelSequence::MAX_SERIALIZED_LENGTH);
     }

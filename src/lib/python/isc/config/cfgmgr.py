@@ -442,7 +442,7 @@ class ConfigManager:
         # polymorphism instead of branching. But it just might turn out it
         # will get solved by itself when we move everything to virtual modules
         # (which is possible solution to the offline configuration problem)
-        # or when we solve the incorect behaviour here when a config is
+        # or when we solve the incorrect behaviour here when a config is
         # rejected (spying modules don't know it was rejected and some modules
         # might have been committed already).
         if module_name in self.virtual_modules:

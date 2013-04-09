@@ -909,7 +909,7 @@ private:
     /// \brief Handle interrupt signal.
     ///
     /// Function sets flag indicating that program has been
-    /// interupted.
+    /// interrupted.
     ///
     /// \param sig signal (ignored)
     static void handleInterrupt(int sig);
@@ -970,7 +970,7 @@ private:
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
 
-    /// Buffer holiding server id received in first packet
+    /// Buffer holding server id received in first packet
     dhcp::OptionBuffer first_packet_serverid_;
 
     /// Packet template buffers.

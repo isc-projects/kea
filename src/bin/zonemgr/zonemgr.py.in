@@ -191,7 +191,7 @@ class ZonemgrRefresh:
         self._set_zone_retry_timer(zone_name_class)
 
     def zone_handle_notify(self, zone_name_class, master):
-        """Handle an incomding NOTIFY message via the Auth module.
+        """Handle an incoming NOTIFY message via the Auth module.
 
         It returns True if the specified zone matches one of the locally
         configured list of secondary zones; otherwise returns False.
