@@ -87,6 +87,9 @@ struct NSEC3Impl {
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the NSEC3Impl that constructFromLexer() returns.
     std::auto_ptr<NSEC3Impl> impl_ptr(NULL);
 
     try {
