@@ -196,12 +196,22 @@ public:
     ///
     /// \throw std::bad_alloc Allocation of a segment space for the given name
     /// failed.
+    /// \throw InvalidParameter name is NULL.
     ///
-    /// \param name A C string to be associated with \c addr.
+    /// \param name A C string to be associated with \c addr. Must not be NULL.
     /// \param addr A memory address returned by a prior call to \c allocate.
     /// \return true if the internal segment has grown to allocate space for
     /// the name; false otherwise (see above).
-    virtual bool setNamedAddress(const char* name, void* addr) = 0;
+    bool setNamedAddress(const char* name, void* addr) {
+        // This public method implements common validation.  The actual
+        // work specific to the derived segment is delegated to the
+        // corresponding protected method.
+        if (!name) {
+            isc_throw(InvalidParameter,
+                      "NULL name is given to setNamedAddress");
+        }
+        return (setNamedAddressImpl(name, addr));
+    }
 
     /// \brief Return the address in the segment that has the given name.
     ///
@@ -216,10 +226,21 @@ public:
     /// API doesn't guarantee that property.  In general, if this method
     /// throws it should be considered a fatal condition.
     ///
+    /// \throw InvalidParameter name is NULL.
+    ///
     /// \param name A C string of which the segment memory address is to be
-    /// returned.
+    /// returned.  Must not be NULL.
     /// \return The address associated with the name, or NULL if not found.
-    virtual void* getNamedAddress(const char* name) = 0;
+    void* getNamedAddress(const char* name) {
+        // This public method implements common validation.  The actual
+        // work specific to the derived segment is delegated to the
+        // corresponding protected method.
+        if (!name) {
+            isc_throw(InvalidParameter,
+                      "NULL name is given to getNamedAddress");
+        }
+        return (getNamedAddressImpl(name));
+    }
 
     /// \brief Delete a name previously associated with a segment address.
     ///
@@ -230,9 +251,30 @@ public:
     ///
     /// See \c getNamedAddress() about exception consideration.
     ///
+    /// \throw InvalidParameter name is NULL.
+    ///
     /// \param name A C string of which the segment memory address is to be
-    /// deleted.
-    virtual bool clearNamedAddress(const char* name) = 0;
+    /// deleted. Must not be NULL.
+    bool clearNamedAddress(const char* name) {
+        // This public method implements common validation.  The actual
+        // work specific to the derived segment is delegated to the
+        // corresponding protected method.
+        if (!name) {
+            isc_throw(InvalidParameter,
+                      "NULL name is given to clearNamedAddress");
+        }
+        return (clearNamedAddressImpl(name));
+    }
+
+protected:
+    /// \brief Implementation of setNamedAddress beyond common validation.
+    virtual bool setNamedAddressImpl(const char* name, void* addr) = 0;
+
+    /// \brief Implementation of getNamedAddress beyond common validation.
+    virtual void* getNamedAddressImpl(const char* name) = 0;
+
+    /// \brief Implementation of clearNamedAddress beyond common validation.
+    virtual bool clearNamedAddressImpl(const char* name) = 0;
 };
 
 } // namespace util

@@ -174,7 +174,7 @@ MemorySegmentMapped::allMemoryDeallocated() const {
 }
 
 void*
-MemorySegmentMapped::getNamedAddress(const char* name) {
+MemorySegmentMapped::getNamedAddressImpl(const char* name) {
     offset_ptr<void>* storage =
         impl_->base_sgmt_->find<offset_ptr<void> >(name).first;
     if (storage) {
@@ -184,7 +184,7 @@ MemorySegmentMapped::getNamedAddress(const char* name) {
 }
 
 bool
-MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
+MemorySegmentMapped::setNamedAddressImpl(const char* name, void* addr) {
     if (impl_->read_only_) {
         isc_throw(InvalidOperation, "setNamedAddress on read-only segment");
     }
@@ -209,7 +209,7 @@ MemorySegmentMapped::setNamedAddress(const char* name, void* addr) {
 }
 
 bool
-MemorySegmentMapped::clearNamedAddress(const char* name) {
+MemorySegmentMapped::clearNamedAddressImpl(const char* name) {
     if (impl_->read_only_) {
         isc_throw(InvalidOperation, "clearNamedAddress on read-only segment");
     }

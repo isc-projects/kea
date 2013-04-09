@@ -70,7 +70,7 @@ public:
     ///
     /// There's a small chance this method could throw std::bad_alloc.
     /// It should be considered a fatal error.
-    virtual void* getNamedAddress(const char* name);
+    virtual void* getNamedAddressImpl(const char* name);
 
     /// \brief Local segment version of setNamedAddress.
     ///
@@ -81,13 +81,13 @@ public:
     /// application should expect a return value of \c true unless it knows
     /// the memory segment class is \c MemorySegmentLocal and needs to
     /// exploit the fact).
-    virtual bool setNamedAddress(const char* name, void* addr);
+    virtual bool setNamedAddressImpl(const char* name, void* addr);
 
     /// \brief Local segment version of clearNamedAddress.
     ///
     /// There's a small chance this method could throw std::bad_alloc.
     /// It should be considered a fatal error.
-    virtual bool clearNamedAddress(const char* name);
+    virtual bool clearNamedAddressImpl(const char* name);
 
 private:
     // allocated_size_ can underflow, wrap around to max size_t (which
