@@ -235,8 +235,8 @@ operation
               <listitem><simpara>
                 An actual zone name or special zone name
                 <quote>_SERVER_</quote> representing the entire server.
-                Zone classes (e.g. IN, CH, HS) are mixed and counted so far. But
-                these will be distinguished in future release.
+                Zone classes (e.g. IN, CH, and HS) are mixed and counted so
+                far. But these will be distinguished in future release.
                 </simpara>
                 <variablelist>
 
