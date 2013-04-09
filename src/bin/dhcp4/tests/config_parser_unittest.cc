@@ -82,7 +82,7 @@ public:
     /// option value. These parameters are: "name", "code", "data",
     /// "csv-format" and "space".
     ///
-    /// @param param_value string holiding option parameter value to be
+    /// @param param_value string holding option parameter value to be
     /// injected into the configuration string.
     /// @param parameter name of the parameter to be configured with
     /// param value.

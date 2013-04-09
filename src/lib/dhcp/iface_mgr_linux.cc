@@ -67,7 +67,7 @@ public:
 /// interfaces) uses memory aliasing. Linux kernel returns a memory
 /// blob that should be interpreted as series of nlmessages. There
 /// are different nlmsg structures defined with varying size. They
-/// have one thing common - inital fields are laid out in the same
+/// have one thing common - initial fields are laid out in the same
 /// way as nlmsghdr. Therefore different messages can be represented
 /// as nlmsghdr with followed variable number of bytes that are
 /// message-specific. The only reasonable way to represent this in
@@ -476,7 +476,7 @@ void IfaceMgr::detectIfaces() {
         iface.setHWType(interface_info->ifi_type);
         iface.setFlags(interface_info->ifi_flags);
 
-        // Does inetface have LL_ADDR?
+        // Does interface have LL_ADDR?
         if (attribs_table[IFLA_ADDRESS]) {
             iface.setMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_ADDRESS])),
                          RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]));

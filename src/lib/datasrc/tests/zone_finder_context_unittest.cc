@@ -105,7 +105,7 @@ createSQLite3ClientWithNS(RRClass zclass, const Name& zname) {
 }
 
 // The test class.  Its parameterized so we can share the test scnearios
-// for any concrete data source implementaitons.
+// for any concrete data source implementations.
 class ZoneFinderContextTest :
         public ::testing::TestWithParam<ClientCreator>
 {

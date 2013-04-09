@@ -206,7 +206,7 @@ public:
     ///
     /// The default implementation throws isc::NotImplemented. This allows
     /// for easy and fast deployment of minimal custom data sources, where
-    /// the user/implementator doesn't have to care about anything else but
+    /// the user/implementer doesn't have to care about anything else but
     /// the actual queries. Also, in some cases, it isn't possible to traverse
     /// the zone from logic point of view (eg. dynamically generated zone
     /// data).

@@ -790,7 +790,7 @@ class MsgQ:
             if not self.running:
                 return
 
-            # TODO: Any config handlig goes here.
+            # TODO: Any config handling goes here.
 
             return isc.config.create_answer(0)
 

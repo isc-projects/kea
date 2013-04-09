@@ -162,7 +162,7 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
         try {
             bool separate_rrs = false;
             if (separate_rrs_obj != NULL) {
-                // store result in local var so we can explicitely check for
+                // store result in local var so we can explicitly check for
                 // -1 error return value
                 int separate_rrs_true = PyObject_IsTrue(separate_rrs_obj);
                 if (separate_rrs_true == 1) {

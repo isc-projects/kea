@@ -267,7 +267,7 @@ class DNSTCPContext:
         when this object is deallocated, but Python seems to expect socket
         objects should be explicitly closed before deallocation.  So it's
         generally advisable for the user of this object to call this method
-        explictily when it doesn't need the context.
+        explicitly when it doesn't need the context.
 
         This method can be called more than once or can be called after
         other I/O related methods have returned CLOSED; it's compatible

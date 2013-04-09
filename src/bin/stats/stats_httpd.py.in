@@ -407,7 +407,7 @@ class StatsHttpd:
         old_config = self.config.copy()
         self.load_config(new_config)
         # If the http sockets aren't opened or
-        # if new_config doesn't have'listen_on', it returns
+        # if new_config doesn't have 'listen_on', it returns
         if len(self.httpd) == 0 or 'listen_on' not in new_config:
             return isc.config.ccsession.create_answer(0)
         self.close_httpd()

@@ -905,8 +905,8 @@ TestControl::readPacketTemplate(const std::string& file_name) {
             hex_digits.push_back(file_contents[i]);
         } else if (!isxdigit(file_contents[i]) &&
                    !isspace(file_contents[i])) {
-            isc_throw(BadValue, "the '" << file_contents[i] << "' is not a"
-                      " heaxadecimal digit");
+            isc_throw(BadValue, "'" << file_contents[i] << "' is not a"
+                      " hexadecimal digit");
         }
     }
     // Expect even number of digits.
@@ -1864,7 +1864,7 @@ TestControl::updateSendDue() {
         // timer resolution.
         duration = time_duration::ticks_per_second() / rate;
     }
-    // Calculate due time to initate next chunk of exchanges.
+    // Calculate due time to initiate next chunk of exchanges.
     send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
     // Check if it is already due.
     ptime now(microsec_clock::universal_time());

@@ -58,7 +58,7 @@ class SocketTest(Test):
 
     def test_init(self):
         """
-        Checks the intrnals of the cache just after the creation.
+        Checks the internals of the cache just after the creation.
         """
         self.assertEqual('UDP', self.__socket.protocol)
         self.assertEqual(self.__address, self.__socket.address)

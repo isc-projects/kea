@@ -241,7 +241,7 @@ Feature: NSEC3 Authoritative service
         """
 
     #
-    # Below are additional tests, not explicitely stated in RFC5155
+    # Below are additional tests, not explicitly stated in RFC5155
     #
 
     Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (closest encloser)

@@ -1684,7 +1684,7 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
         }
     }
 
-    // Exchange the node at the top of the path, as we move horizontaly
+    // Exchange the node at the top of the path, as we move horizontally
     // through the domain tree
     node_path.pop();
     node_path.push(node);

@@ -33,7 +33,7 @@ def reload():
     SYSCONFPATH="@sysconfdir@/@PACKAGE@".replace('${prefix}', PREFIX)
 
     # B10_FROM_SOURCE is set in the environment for internal tests and
-    # an experimental run without installagion.  In that case we need to
+    # an experimental run without installation.  In that case we need to
     # specialize some configuration variables, generally so that they refer
     # to somewhere in the source tree instead of the appropriate places
     # after installation.

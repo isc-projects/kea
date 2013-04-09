@@ -313,12 +313,12 @@ public:
      *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
      * \param handler The handler functor called whenever there's a change.
-     *                Called once initally from this function. May be NULL
+     *                Called once initially from this function. May be NULL
      *                if you don't want any handler to be called and you're
      *                fine with requesting the data through
      *                getRemoteConfigValue() each time.
      *
-     *                The handler should not throw, or it'll fall trough and
+     *                The handler should not throw, or it'll fall through and
      *                the exception will get into strange places, probably
      *                aborting the application.
      * \param spec_is_filename Says if spec_name is filename or module name.

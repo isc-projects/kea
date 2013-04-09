@@ -174,7 +174,7 @@ public:
 
         /// \brief Negative answer constructor.
         ///
-        /// This conscructs a result for negative answer. Both pointers are
+        /// This constructs a result for negative answer. Both pointers are
         /// NULL, and exact_match_ is false.
         FindResult() :
             dsrc_client_(NULL),
