@@ -22,6 +22,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include <vector>
