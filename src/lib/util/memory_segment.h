@@ -62,7 +62,7 @@ public:
     /// \brief Destructor
     virtual ~MemorySegment() {}
 
-    /// \brief Allocate/acquire a segment of memory.
+    /// \brief Allocate/acquire a fragment of memory.
     ///
     /// The source of the memory is dependent on the implementation used.
     ///
@@ -81,6 +81,35 @@ public:
     /// exception as any raw address that belongs to the segment may have
     /// been remapped and must be re-fetched via an already established
     /// named address using the \c getNamedAddress() method.
+    ///
+    /// The intended use case of \c allocate() with the \c MemorySegmentGrown
+    /// exception is to build a complex object that would internally require
+    /// multiple calls to \c allocate():
+    ///
+    /// \code
+    /// ComplicatedStuff* stuff;
+    /// while (true) { // this must eventually succeed or result in bad_alloc
+    ///     try {
+    ///         // create() is a factory method, takes a memory segment
+    ///         // and calls allocate() on it multiple times.  create()
+    ///         // provides exception guarantee in that any intermediately
+    ///         // allocated memory will be properly deallocate()-ed on
+    ///         // exception.
+    ///         stuff = ComplicatedStuff::create(mem_segment);
+    ///     } catch (const MemorySegmentGrown&) { /* just try again */ }
+    /// }
+    /// \endcode
+    ///
+    /// This way, \c create() can be written as if each call to \c allocate()
+    /// always succeeds.
+    ///
+    /// Alternatively, or in addition to this, we could introduce a "no throw"
+    /// version of this method with a way to tell the caller the reason of
+    /// any failure (whether it's really out of memory or just due to growing
+    /// the segment).  That would be more convenient if the caller wants to
+    /// deal with the failures per call basis rather than as a set of calls
+    /// like the above example.  At the moment, we don't expect to have
+    /// such use cases, so we only provide the exception version.
     ///
     /// \throw std::bad_alloc The implementation cannot allocate the
     /// requested storage.
@@ -131,6 +160,10 @@ public:
     /// violation of this restriction and signal it with an exception, but
     /// it's not an API requirement.  It's generally the caller's
     /// responsibility to meet the restriction.
+    ///
+    /// \note Naming an address is intentionally separated from allocation
+    /// so that, for example, one module of a program can name a memory
+    /// region allocated by another module of the program.
     ///
     /// There can be an existing association for the name; in that case the
     /// association will be overridden with the newly given address.
