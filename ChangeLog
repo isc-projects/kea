@@ -1,3 +1,12 @@
+600.	[bug]		tmark]
+	Changed mysql_lease_mgr to set the SQL mode option to STRICT. This
+	causes mysql it to treat invalid input data as an error. Rather than
+	"successfully" inserting a too large value by truncating it, the
+	insert will fail, and the lease manager will throw an exception.
+	Also, attempts to create a HWAddr (hardware address) object with
+	too long an array of data now throw an exception.
+	(Trac #2387, git cac02e9290600407bd6f3071c6654c1216278616)
+
 599.	[func]		tomek
 	libdhcp++: Pkt6 class is now able to parse and build relayed DHCPv6
 	messages.
