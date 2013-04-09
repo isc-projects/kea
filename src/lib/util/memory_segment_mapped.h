@@ -134,7 +134,8 @@ public:
     /// This implementation detects if \c addr is invalid (see the base class
     /// description) and throws \c MemorySegmentError in that case.
     ///
-    /// This version can actually return true.
+    /// This version can actually return true (see also \c MemorySegmentLocal
+    /// version of the method).
     ///
     /// This method cannot be called if the segment object is created in the
     /// read-only mode; in that case InvalidOperation will be thrown.
