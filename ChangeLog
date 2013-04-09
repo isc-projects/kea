@@ -1,4 +1,4 @@
-600.	[bug]		tmark]
+600.	[bug]		tmark
 	Changed mysql_lease_mgr to set the SQL mode option to STRICT. This
 	causes mysql it to treat invalid input data as an error. Rather than
 	"successfully" inserting a too large value by truncating it, the
