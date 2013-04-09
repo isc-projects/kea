@@ -95,9 +95,10 @@ TEST_F(MemorySegmentMappedTest, createWithSize) {
 
     // Re-create the mapped file with a non-default initial size, and confirm
     // the size is actually the specified one.
-    segment_.reset(new MemorySegmentMapped(mapped_file, true, 64 * 1024));
-    EXPECT_NE(DEFAULT_INITIAL_SIZE, 64 * 1024);
-    EXPECT_EQ(64 * 1024, segment_->getSize());
+    const size_t new_size = 64 * 1024;
+    EXPECT_NE(new_size, segment_->getSize());
+    segment_.reset(new MemorySegmentMapped(mapped_file, true, new_size));
+    EXPECT_EQ(new_size, segment_->getSize());
 }
 
 TEST_F(MemorySegmentMappedTest, openFail) {
