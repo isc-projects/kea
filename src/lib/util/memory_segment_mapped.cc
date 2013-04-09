@@ -232,7 +232,7 @@ MemorySegmentMapped::shrinkToFit() {
 
     BaseSegment::shrink_to_fit(impl_->filename_.c_str());
     try {
-        // Remap the grown file; this should succeed, but it's not 100%
+        // Remap the shrunk file; this should succeed, but it's not 100%
         // guaranteed.  If it fails we treat it as if we fail to create
         // the new segment.
         impl_->base_sgmt_.reset(
@@ -250,7 +250,8 @@ MemorySegmentMapped::getSize() const {
 
 size_t
 MemorySegmentMapped::getCheckSum() const {
-    const size_t pagesize = boost::interprocess::mapped_region::get_page_size();
+    const size_t pagesize =
+        boost::interprocess::mapped_region::get_page_size();
     const uint8_t* const cp_begin = static_cast<const uint8_t*>(
         impl_->base_sgmt_->get_address());
     const uint8_t* const cp_end = cp_begin + impl_->base_sgmt_->get_size();
