@@ -879,7 +879,9 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     // @todo: Simply use HWAddr directly once 2589 is implemented
     EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-        HTYPE_ETHER), leases[1]->subnet_id_), isc::dhcp::MultipleRecords);
+                                                    HTYPE_ETHER), 
+                                             leases[1]->subnet_id_), 
+                 isc::dhcp::MultipleRecords);
 
     // Delete all leases in the database
     for (int i = 0; ADDRESS4[i] != NULL; ++i) {
@@ -904,7 +906,8 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
         Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-            HTYPE_ETHER), leases[1]->subnet_id_);
+                                                      HTYPE_ETHER), 
+                                               leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
         (void) lmptr_->deleteLease(leases[1]->addr_);

@@ -28,24 +28,17 @@ HWAddr::HWAddr()
 }
 
 HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype)
-    :htype_(htype) {
-
-    if (len > MAX_HWADDR_LEN)
+    :hwaddr_(hwaddr, hwaddr + len), htype_(htype) {
+    if (len > MAX_HWADDR_LEN) {
         isc_throw(InvalidParameter, "hwaddr length exceeds MAX_HWADDR_LEN");    
-
-    hwaddr_.resize(len);
-    memcpy(&hwaddr_[0], hwaddr, len);
+    }
 }
 
 HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
-    :htype_(htype) {
-
+    :hwaddr_(hwaddr), htype_(htype) {
     if (hwaddr.size() > MAX_HWADDR_LEN)
         isc_throw(InvalidParameter, 
             "address vector size exceeds MAX_HWADDR_LEN");    
-
-    hwaddr_ = hwaddr;
-
 }
 
 std::string HWAddr::toText() const {
