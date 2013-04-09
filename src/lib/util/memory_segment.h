@@ -87,8 +87,8 @@ public:
     /// multiple calls to \c allocate():
     ///
     /// \code
-    /// ComplicatedStuff* stuff;
-    /// while (true) { // this must eventually succeed or result in bad_alloc
+    /// ComplicatedStuff* stuff = NULL;
+    /// while (!stuff) { // this must eventually succeed or result in bad_alloc
     ///     try {
     ///         // create() is a factory method, takes a memory segment
     ///         // and calls allocate() on it multiple times.  create()
