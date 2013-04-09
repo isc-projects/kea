@@ -156,7 +156,7 @@ MemorySegmentMapped::allocate(size_t size) {
 void
 MemorySegmentMapped::deallocate(void* ptr, size_t) {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "allocate attempt on read-only segment");
+        isc_throw(InvalidOperation, "deallocate attempt on read-only segment");
     }
 
     // the underlying deallocate() would deal with the case where ptr == NULL,
