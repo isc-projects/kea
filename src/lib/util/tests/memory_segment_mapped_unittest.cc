@@ -250,26 +250,27 @@ TEST_F(MemorySegmentMappedTest, nullDeallocate) {
 
 TEST_F(MemorySegmentMappedTest, shrink) {
     segment_->shrinkToFit();
-    // Normally we should be able to expect the resulting size is the smaller
-    // than the initial default size.  It's not really guaranteed by the API,
-    // however, so we may have to disable this check.
+    // Normally we should be able to expect that the resulting size is
+    // smaller than the initial default size. But it's not really
+    // guaranteed by the API, so we may have to disable this check (or
+    // use EXPECT_GE).
     const size_t shrinked_size = segment_->getSize();
     EXPECT_GT(DEFAULT_INITIAL_SIZE, shrinked_size);
 
-    // Another shrink shouldn't cause disruption, and the size shouldn't change
+    // Another shrink shouldn't cause disruption, and the size shouldn't
+    // change.
     segment_->shrinkToFit();
     EXPECT_EQ(shrinked_size, segment_->getSize());
 
-    // Check the segment is still usable after shrink.
+    // Check that the segment is still usable after shrink.
     void* p = segment_->allocate(sizeof(uint32_t));
     segment_->deallocate(p, sizeof(uint32_t));
 }
 
 TEST_F(MemorySegmentMappedTest, violateReadOnly) {
-    // If the segment is opened in the read only mode, modification attempts
-    // are prohibited.  when detectable it's result in an exception;
-    // an attempt of not directly through the segment class will result in
-    // crash.
+    // If the segment is opened in the read-only mode, modification
+    // attempts are prohibited. When detectable it must result in an
+    // exception.
     EXPECT_THROW(MemorySegmentMapped(mapped_file).allocate(16),
                  isc::InvalidOperation);
     // allocation that would otherwise require growing the segment; permission
@@ -287,6 +288,8 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     void* ptr = segment_->allocate(sizeof(uint32_t));
     segment_->setNamedAddress("test address", ptr);
 
+    // Attempts to modify memory from the read-only segment directly
+    // will result in a crash.
     if (!isc::util::unittests::runningOnValgrind()) {
         EXPECT_DEATH_IF_SUPPORTED({
                 MemorySegmentMapped segment_ro(mapped_file);
@@ -303,10 +306,11 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
 TEST_F(MemorySegmentMappedTest, getCheckSum) {
     const size_t old_cksum = segment_->getCheckSum();
 
-    // We assume the initial segment size is sufficiently larger than the
-    // page size.  We'll allocate memory of the page size, and increment all
-    // bytes in that region by one.  It will increase our simple checksum value
-    // by one, too.
+    // We assume the initial segment size is sufficiently larger than
+    // the page size.  We'll allocate memory of the page size, and
+    // increment all bytes in that page by one.  It will increase our
+    // simple checksum value (which just uses the first byte of each
+    // page) by one, too.
     const size_t page_sz = boost::interprocess::mapped_region::get_page_size();
     uint8_t* cp0 = static_cast<uint8_t*>(segment_->allocate(page_sz));
     for (uint8_t* cp = cp0; cp < cp0 + page_sz; ++cp) {
