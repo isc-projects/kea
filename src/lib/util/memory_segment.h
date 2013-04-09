@@ -129,6 +129,18 @@ public:
     /// use this argument in some implementations to test if all allocated
     /// memory was deallocated properly.
     ///
+    /// Specific implementation may also throw \c MemorySegmentError if it
+    /// encounters violation of implementation specific restrictions.
+    ///
+    /// In general, however, this method must succeed and exception free
+    /// as long as the caller passes valid parameters (\c ptr specifies
+    /// memory previously allocated and \c size is correct).
+    ///
+    /// \throw OutOfRange The passed size doesn't match the allocated memory
+    /// size (when identifiable for the implementation).
+    /// \throw MemorySegmentError Failure of implementation specific
+    /// validation.
+    ///
     /// \param ptr Pointer to the block of memory to free/release. This
     /// should be equal to a value returned by <code>allocate()</code>.
     /// \param size The size of the memory to be freed in bytes. This
@@ -197,6 +209,8 @@ public:
     /// \throw std::bad_alloc Allocation of a segment space for the given name
     /// failed.
     /// \throw InvalidParameter name is NULL.
+    /// \throw MemorySegmentError Failure of implementation specific
+    /// validation.
     ///
     /// \param name A C string to be associated with \c addr. Must not be NULL.
     /// \param addr A memory address returned by a prior call to \c allocate.
@@ -252,6 +266,8 @@ public:
     /// See \c getNamedAddress() about exception consideration.
     ///
     /// \throw InvalidParameter name is NULL.
+    /// \throw MemorySegmentError Failure of implementation specific
+    /// validation.
     ///
     /// \param name A C string of which the segment memory address is to be
     /// deleted. Must not be NULL.
