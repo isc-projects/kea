@@ -35,7 +35,7 @@ IfaceMgr::detectIfaces() {
 }
 
 bool
-IfaceMgr::isDirectResposeSupported() {
+IfaceMgr::isDirectResponseSupported() {
     return (false);
 }
 
