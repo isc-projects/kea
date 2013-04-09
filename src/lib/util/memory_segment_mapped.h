@@ -16,7 +16,6 @@
 #define MEMORY_SEGMENT_MAPPED_H
 
 #include <util/memory_segment.h>
-#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -85,8 +84,11 @@ public:
     /// these conditions is not met, \c MemorySegmentOpenError exception
     /// will be thrown.
     ///
+    /// \throw MemorySegmentOpenError see the description.
+    ///
     /// \param filename The file name to be mapped to memory.
-    /// \param create If true and the file does not exist, a new one is created.
+    /// \param create If true and the file does not exist, a new one is
+    /// created.
     /// \param initial_size Specifies the size of the newly created file;
     /// ignored if \c create is false.
     MemorySegmentMapped(const std::string& filename, bool create,
@@ -105,7 +107,7 @@ public:
     /// This version can throw \c MemorySegmentGrown.
     ///
     /// This method cannot be called if the segment object is created in the
-    /// read-only mode; in that case InvalidOperation will be thrown.
+    /// read-only mode; in that case MemorySegmentError will be thrown.
     virtual void* allocate(size_t size);
 
     /// \brief Deallocate/release a segment of memory.
@@ -124,7 +126,7 @@ public:
     /// via \c getNamedAddress().
     ///
     /// This method cannot be called if the segment object is created in the
-    /// read-only mode; in that case InvalidOperation will be thrown.
+    /// read-only mode; in that case MemorySegmentError will be thrown.
     virtual void deallocate(void* ptr, size_t size);
 
     virtual bool allMemoryDeallocated() const;
@@ -138,7 +140,7 @@ public:
     /// version of the method).
     ///
     /// This method cannot be called if the segment object is created in the
-    /// read-only mode; in that case InvalidOperation will be thrown.
+    /// read-only mode; in that case MemorySegmentError will be thrown.
     virtual bool setNamedAddressImpl(const char* name, void* addr);
 
     /// \brief Mapped segment version of getNamedAddress.
@@ -148,7 +150,8 @@ public:
 
     /// \brief Mapped segment version of clearNamedAddress.
     ///
-    /// This version never throws.
+    /// This method cannot be called if the segment object is created in the
+    /// read-only mode; in that case MemorySegmentError will be thrown.
     virtual bool clearNamedAddressImpl(const char* name);
 
     /// \brief Shrink the underlying mapped segment to actually used size.
@@ -168,7 +171,9 @@ public:
     /// segment is not usable anymore.
     ///
     /// This method cannot be called if the segment object is created in the
-    /// read-only mode; in that case InvalidOperation will be thrown.
+    /// read-only mode; in that case MemorySegmentError will be thrown.
+    ///
+    /// \throw MemorySegmentError see the description.
     void shrinkToFit();
 
     /// \brief Return the actual segment size.

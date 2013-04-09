@@ -14,6 +14,8 @@
 
 #include <util/memory_segment_mapped.h>
 
+#include <exceptions/exceptions.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
@@ -130,7 +132,7 @@ MemorySegmentMapped::~MemorySegmentMapped() {
 void*
 MemorySegmentMapped::allocate(size_t size) {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "allocate attempt on read-only segment");
+        isc_throw(MemorySegmentError, "allocate attempt on read-only segment");
     }
 
     // We explicitly check the free memory size; it appears
@@ -156,7 +158,8 @@ MemorySegmentMapped::allocate(size_t size) {
 void
 MemorySegmentMapped::deallocate(void* ptr, size_t) {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "deallocate attempt on read-only segment");
+        isc_throw(MemorySegmentError,
+                  "deallocate attempt on read-only segment");
     }
 
     // the underlying deallocate() would deal with the case where ptr == NULL,
@@ -186,7 +189,7 @@ MemorySegmentMapped::getNamedAddressImpl(const char* name) {
 bool
 MemorySegmentMapped::setNamedAddressImpl(const char* name, void* addr) {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "setNamedAddress on read-only segment");
+        isc_throw(MemorySegmentError, "setNamedAddress on read-only segment");
     }
 
     if (addr && !impl_->base_sgmt_->belongs_to_segment(addr)) {
@@ -211,7 +214,8 @@ MemorySegmentMapped::setNamedAddressImpl(const char* name, void* addr) {
 bool
 MemorySegmentMapped::clearNamedAddressImpl(const char* name) {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "clearNamedAddress on read-only segment");
+        isc_throw(MemorySegmentError,
+                  "clearNamedAddress on read-only segment");
     }
 
     return (impl_->base_sgmt_->destroy<offset_ptr<void> >(name));
@@ -220,7 +224,7 @@ MemorySegmentMapped::clearNamedAddressImpl(const char* name) {
 void
 MemorySegmentMapped::shrinkToFit() {
     if (impl_->read_only_) {
-        isc_throw(InvalidOperation, "shrinkToFit on read-only segment");
+        isc_throw(MemorySegmentError, "shrinkToFit on read-only segment");
     }
 
     // It appears an assertion failure is triggered within Boost if the size

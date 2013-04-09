@@ -272,19 +272,18 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     // attempts are prohibited. When detectable it must result in an
     // exception.
     EXPECT_THROW(MemorySegmentMapped(mapped_file).allocate(16),
-                 isc::InvalidOperation);
+                 MemorySegmentError);
     // allocation that would otherwise require growing the segment; permission
     // check should be performed before that.
     EXPECT_THROW(MemorySegmentMapped(mapped_file).
-                 allocate(DEFAULT_INITIAL_SIZE * 2),
-                 isc::InvalidOperation);
+                 allocate(DEFAULT_INITIAL_SIZE * 2), MemorySegmentError);
     EXPECT_THROW(MemorySegmentMapped(mapped_file).setNamedAddress("test",
                                                                   NULL),
-                 isc::InvalidOperation);
+                 MemorySegmentError);
     EXPECT_THROW(MemorySegmentMapped(mapped_file).clearNamedAddress("test"),
-                 isc::InvalidOperation);
+                 MemorySegmentError);
     EXPECT_THROW(MemorySegmentMapped(mapped_file).shrinkToFit(),
-                 isc::InvalidOperation);
+                 MemorySegmentError);
 
     void* ptr = segment_->allocate(sizeof(uint32_t));
     segment_->setNamedAddress("test address", ptr);
@@ -301,7 +300,7 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     }
 
     EXPECT_THROW(MemorySegmentMapped(mapped_file).deallocate(ptr, 4),
-                 isc::InvalidOperation);
+                 MemorySegmentError);
 }
 
 TEST_F(MemorySegmentMappedTest, getCheckSum) {
