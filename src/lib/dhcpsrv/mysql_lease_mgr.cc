@@ -94,9 +94,6 @@ namespace {
 /// colon separators.
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
-/// @brief Maximum size of a hardware address.
-const size_t HWADDR_MAX_LEN = 20;
-
 /// @brief MySQL True/False constants
 ///
 /// Declare typed values so as to avoid problems of data conversion.  These
@@ -533,7 +530,7 @@ private:
     std::string     columns_[LEASE_COLUMNS];///< Column names
     my_bool         error_[LEASE_COLUMNS];  ///< Error array
     std::vector<uint8_t> hwaddr_;       ///< Hardware address
-    uint8_t         hwaddr_buffer_[HWADDR_MAX_LEN];
+    uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
                                         ///< Hardware address buffer
     unsigned long   hwaddr_length_;     ///< Hardware address length
     std::vector<uint8_t> client_id_;    ///< Client identification
@@ -1106,6 +1103,17 @@ MySqlLeaseMgr::openDatabase() {
     int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Set SQL mode options for the connection:  SQL mode governs how what 
+    // constitutes insertable data for a given column, and how to handle
+    // invalid data.  We want to ensure we get the strictest behavior and
+    // to reject invalid data with an error.
+    const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
+    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set SQL mode options: " <<
                   mysql_error(mysql_));
     }
 

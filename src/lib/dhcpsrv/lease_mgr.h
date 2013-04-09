@@ -211,8 +211,6 @@ struct Lease {
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 : public Lease {
-    /// @brief Maximum size of a hardware address
-    static const size_t HWADDR_MAX = 20;
 
     /// @brief Address extension
     ///

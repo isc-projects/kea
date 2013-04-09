@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
 
@@ -883,28 +884,23 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
     vector<Lease4Ptr> leases = createLeases4();
 
     // Now add leases with increasing hardware address size.
-    for (uint8_t i = 0; i <= Lease4::HWADDR_MAX; ++i) {
+    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Collection returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
+        Lease4Collection returned = 
+            lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
+
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
-    // Expect some problem when accessing a lease that had too long a hardware
-    // address. (The 42 is a random value put in each byte of the address.)
-    // In fact the address is stored in a truncated form, so we won't find it
-    // when we look.
-    // @todo Check if there is some way of detecting that data added
-    //       to the database is truncated.  There does not appear to
-    //       be any indication in the C API.
-    leases[1]->hwaddr_.resize(Lease4::HWADDR_MAX + 100, 42);
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    // @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Collection returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
-    EXPECT_EQ(0, returned.size());
+    // Database should not let us add one that is too big
+    // (The 42 is a random value put in each byte of the address.)
+    // @todo: 2589 will make this test impossible
+    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
@@ -921,8 +917,9 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // Get the leases matching the hardware address of lease 1 and
     // subnet ID of lease 1.  Result should be a single lease - lease 1.
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
-                                           leases[1]->subnet_id_);
+    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
+        HTYPE_ETHER), leases[1]->subnet_id_);
+
     ASSERT_TRUE(returned);
     detailCompareLease(leases[1], returned);
 
@@ -957,8 +954,9 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
-                                              leases[1]->subnet_id_),
+    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
+                                                    HTYPE_ETHER), 
+                                             leases[1]->subnet_id_), 
                  isc::dhcp::MultipleRecords);
 
     // Delete all leases in the database
@@ -979,28 +977,22 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
 
     // Now add leases with increasing hardware address size and check
     // that they can be retrieved.
-    for (uint8_t i = 0; i <= Lease4::HWADDR_MAX; ++i) {
+    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
+        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
+                                                      HTYPE_ETHER), 
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
         (void) lmptr_->deleteLease(leases[1]->addr_);
     }
 
-    // Expect some error when getting a lease with too long a hardware
-    // address.  Set the contents of each byte to 42, a random value.
-    // @todo Check if there is some way of detecting that data added
-    //       to the database is truncated.  There does not appear to
-    //       be any indication in the C API.
-    leases[1]->hwaddr_.resize(Lease4::HWADDR_MAX + 100, 42);
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    // @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
-                                           leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
+    // Database should not let us add one that is too big
+    // (The 42 is a random value put in each byte of the address.)
+    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
 }
 
 /// @brief Check GetLease4 methods - access by Client ID
