@@ -28,6 +28,9 @@ using namespace boost::interprocess;
 
 namespace isc {
 namespace util {
+// Definition of class static constant so it can be referenced by address
+// or reference.
+const size_t MemorySegmentMapped::INITIAL_SIZE;
 
 // We customize managed_mapped_file to make it completely lock free.  In our
 // usage the application (or the system of applications) is expected to ensure
