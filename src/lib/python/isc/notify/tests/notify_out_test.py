@@ -341,17 +341,21 @@ class TestNotifyOut(unittest.TestCase):
         example_net_info.prepare_notify_out()
 
         example_net_info.notify_try_num = 2
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_TIMEOUT)
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_TIMEOUT)
         self.assertEqual(3, example_net_info.notify_try_num)
 
         time1 = example_net_info.notify_timeout
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_TIMEOUT)
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_TIMEOUT)
         self.assertEqual(4, example_net_info.notify_try_num)
-        self.assertGreater(example_net_info.notify_timeout, time1 + 2) # bigger than 2 seconds
+        # bigger than 2 seconds:
+        self.assertGreater(example_net_info.notify_timeout, time1 + 2)
 
         cur_tgt = example_net_info._notify_current
         example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_NONE)
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_NONE)
         self.assertNotEqual(cur_tgt, example_net_info._notify_current)
 
         cur_tgt = example_net_info._notify_current
@@ -359,7 +363,8 @@ class TestNotifyOut(unittest.TestCase):
         # dns message, will result in bad_qid, but what we are testing
         # here is whether handle_notify_reply is called correctly
         example_net_info._sock.remote_end().send(b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01')
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_READ)
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_READ)
         self.assertNotEqual(cur_tgt, example_net_info._notify_current)
 
     def test_get_notify_slaves_from_ns(self):
