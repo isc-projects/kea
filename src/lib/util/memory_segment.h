@@ -159,7 +159,11 @@ public:
     /// to \c allocate().  The actual implementation is encouraged to detect
     /// violation of this restriction and signal it with an exception, but
     /// it's not an API requirement.  It's generally the caller's
-    /// responsibility to meet the restriction.
+    /// responsibility to meet the restriction.  Note that NULL is allowed
+    /// as \c addr even if it wouldn't be considered to "belong to" the
+    /// segment in its normal sense; it can be used to indicate that memory
+    /// has not been allocated for the specified name.  A subsequent call
+    /// to \c getNamedAddress() will return NULL for that name.
     ///
     /// \note Naming an address is intentionally separated from allocation
     /// so that, for example, one module of a program can name a memory
