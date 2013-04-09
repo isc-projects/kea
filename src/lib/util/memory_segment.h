@@ -180,6 +180,16 @@ public:
     /// application should interpret it just like the case of
     /// \c MemorySegmentGrown exception thrown from the \c allocate() method.
     ///
+    /// \note The behavior in case the internal segment grows is different
+    /// from that of \c allocate().  This is intentional.  In intended use
+    /// cases (for the moment) this method will be called independently,
+    /// rather than as part of a set of allocations.  It's also expected
+    /// that other raw memory addresses (which would have been invalidated
+    /// due to the change to the segment) won't be referenced directly
+    /// immediately after this call.  So, the caller should normally be able
+    /// to call this method as mostly never-fail one (except in case of real
+    /// memory exhaustion) and ignore the return value.
+    ///
     /// \throw std::bad_alloc Allocation of a segment space for the given name
     /// failed.
     ///
