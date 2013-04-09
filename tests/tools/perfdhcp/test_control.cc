@@ -594,14 +594,14 @@ TestControl::openSocket() const {
     uint16_t port = options.getLocalPort();
     int sock = 0;
 
-    uint8_t family = (options.getIpVersion() == 6) ? AF_NET6 : AF_INET; 
+    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET; 
     IOAddress remoteaddr(servername);
     
     // Check for mismatch between ip option and server
     if (family != remoteaddr.getFamily()) {
         isc_throw(InvalidParameter, 
                   "Values for Ip version: " <<  
-                  static_cast<unsigned int>options.getIpVersion()
+                  static_cast<unsigned int>(options.getIpVersion())
                   <<  " and Server:" << servername << " are mismatched."); 
     }
 
