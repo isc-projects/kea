@@ -137,26 +137,30 @@ TEST_F(MemorySegmentMappedTest, openFail) {
 TEST_F(MemorySegmentMappedTest, allocate) {
     // Various case of allocation.  The simplest cases are covered above.
 
+    // Initially, nothing is allocated.
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
+
     // (Clearly) exceeding the available size, which should cause growing
     // the segment
-    EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE + 1),
-                 MemorySegmentGrown);
+    const size_t prev_size = segment_->getSize();
+    EXPECT_THROW(segment_->allocate(prev_size + 1), MemorySegmentGrown);
     // The size should have been doubled.
-    EXPECT_EQ(DEFAULT_INITIAL_SIZE * 2, segment_->getSize());
-    // In this case it should now succeed.
-    void* ptr = segment_->allocate(DEFAULT_INITIAL_SIZE + 1);
-    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_EQ(prev_size * 2, segment_->getSize());
+    // But nothing should have been allocated.
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
 
+    // Now, the allocation should now succeed.
+    void* ptr = segment_->allocate(prev_size + 1);
+    EXPECT_NE(static_cast<void*>(0), ptr);
     EXPECT_FALSE(segment_->allMemoryDeallocated());
 
     // Same set of checks, but for a larger size.
-    EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE * 10),
-                 MemorySegmentGrown);
-    // the segment should have grown to the minimum size that could allocate
-    // the given size of memory.
-    EXPECT_EQ(DEFAULT_INITIAL_SIZE * 16, segment_->getSize());
+    EXPECT_THROW(segment_->allocate(prev_size * 10), MemorySegmentGrown);
+    // the segment should have grown to the minimum power-of-2 size that
+    // could allocate the given size of memory.
+    EXPECT_EQ(prev_size * 16, segment_->getSize());
     // And allocate() should now succeed.
-    ptr = segment_->allocate(DEFAULT_INITIAL_SIZE * 10);
+    ptr = segment_->allocate(prev_size * 10);
     EXPECT_NE(static_cast<void*>(0), ptr);
 
     // (we'll left the regions created in the file there; the entire file
