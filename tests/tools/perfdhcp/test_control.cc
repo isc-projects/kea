@@ -592,21 +592,17 @@ TestControl::openSocket() const {
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
     uint16_t port = options.getLocalPort();
-    uint8_t family = AF_INET;
     int sock = 0;
 
-    if (options.getIpVersion() == 6) {
-        family = AF_INET6;
-    }
-
+    uint8_t family = (options.getIpVersion() == 6) ? AF_NET6 : AF_INET; 
     IOAddress remoteaddr(servername);
     
-    // check for mismatch between ip option and server
-    if (family != remoteaddr.getFamily())
-    {
+    // Check for mismatch between ip option and server
+    if (family != remoteaddr.getFamily()) {
         isc_throw(InvalidParameter, 
-            "Values for Ip version: " <<  (unsigned int)options.getIpVersion()
-            <<  " and Server:" << servername << " are mismatched."); 
+                  "Values for Ip version: " <<  
+                  static_cast<unsigned int>options.getIpVersion()
+                  <<  " and Server:" << servername << " are mismatched."); 
     }
 
     if (port == 0) {
