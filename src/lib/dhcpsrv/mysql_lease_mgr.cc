@@ -1026,7 +1026,7 @@ MySqlLeaseMgr::openDatabase() {
     // constitutes insertable data for a given column, and how to handle
     // invalid data.  We want to ensure we get the strictest behavior and
     // to reject invalid data with an error.
-    const char *sql_mode = "set SESSION sql_mode ='STRICT_ALL_TABLES'";
+    const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
     result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
