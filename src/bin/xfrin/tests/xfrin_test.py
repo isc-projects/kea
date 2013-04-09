@@ -2135,10 +2135,10 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         self.__orig_start_timer = isc.statistics.counters._start_timer
         time1 = datetime(2000, 1, 1, 0, 0, 0, 0)
         time2 = datetime(2000, 1, 1, 0, 0, 0, 1)
-        class fakedatatime:
+        class FakeDateTime:
             @classmethod
             def now(cls): return time2
-        isc.statistics.counters.datetime = fakedatatime
+        isc.statistics.counters.datetime = FakeDateTime
         isc.statistics.counters._start_timer = lambda : time1
         delta = time2 - time1
         self._const_sec = round(delta.days * 86400 + delta.seconds +
