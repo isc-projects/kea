@@ -89,7 +89,7 @@ struct MemorySegmentMapped::Impl {
 };
 
 MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
-    impl_(0)
+    impl_(NULL)
 {
     try {
         impl_ = new Impl(filename, true);
@@ -102,7 +102,7 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
 
 MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
                                          bool create, size_t initial_size) :
-    impl_(0)
+    impl_(NULL)
 {
     try {
         if (create) {
@@ -156,7 +156,7 @@ MemorySegmentMapped::deallocate(void* ptr, size_t) {
         isc_throw(InvalidOperation, "allocate attempt on read-only segment");
     }
 
-    // the underlying deallocate() would deal with the case where ptr == 0,
+    // the underlying deallocate() would deal with the case where ptr == NULL,
     // but it's an undocumented behavior, so we handle it ourselves for safety.
     if (!ptr) {
         return;
@@ -177,7 +177,7 @@ MemorySegmentMapped::getNamedAddress(const char* name) {
     if (storage) {
         return (storage->get());
     }
-    return (0);
+    return (NULL);
 }
 
 bool
