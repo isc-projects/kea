@@ -42,7 +42,7 @@ TEST(HWAddrTest, constructor) {
     const uint8_t htype = HTYPE_ETHER;
     vector<uint8_t> data2(data1, data1 + sizeof(data1));
 
-    // over the limit data 
+    // Over the limit data 
     vector<uint8_t> big_data_vector(HWAddr::MAX_HWADDR_LEN + 1, 0); 
 
     scoped_ptr<HWAddr> hwaddr1(new HWAddr(data1, sizeof(data1), htype));
@@ -58,11 +58,11 @@ TEST(HWAddrTest, constructor) {
     EXPECT_EQ(0, hwaddr3->hwaddr_.size());
     EXPECT_EQ(htype, hwaddr3->htype_);
 
-    // check that over the limit data length throws exception 
+    // Check that over the limit data length throws exception 
     EXPECT_THROW(HWAddr(&big_data_vector[0], big_data_vector.size(), HTYPE_ETHER), 
         InvalidParameter);
 
-    // check that over the limit vector throws exception
+    // Check that over the limit vector throws exception
     EXPECT_THROW(HWAddr(big_data_vector, HTYPE_ETHER), InvalidParameter);
 }
 
