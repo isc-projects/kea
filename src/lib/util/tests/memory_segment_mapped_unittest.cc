@@ -152,7 +152,7 @@ TEST_F(MemorySegmentMappedTest, allocate) {
 
     // Now, the allocation should now succeed.
     void* ptr = segment_->allocate(prev_size + 1);
-    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_NE(static_cast<void*>(NULL), ptr);
     EXPECT_FALSE(segment_->allMemoryDeallocated());
 
     // Same set of checks, but for a larger size.
@@ -162,7 +162,7 @@ TEST_F(MemorySegmentMappedTest, allocate) {
     EXPECT_EQ(prev_size * 16, segment_->getSize());
     // And allocate() should now succeed.
     ptr = segment_->allocate(prev_size * 10);
-    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_NE(static_cast<void*>(NULL), ptr);
 
     // (we'll left the regions created in the file there; the entire file
     // will be removed at the end of the test)
@@ -186,7 +186,7 @@ TEST_F(MemorySegmentMappedTest, DISABLED_allocateHuge) {
 
 TEST_F(MemorySegmentMappedTest, badDeallocate) {
     void* ptr = segment_->allocate(4);
-    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_NE(static_cast<void*>(NULL), ptr);
 
     segment_->deallocate(ptr, 4); // this is okay
     // This is duplicate dealloc; should trigger assertion failure.
@@ -200,7 +200,7 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
     // default).
     if (!isc::util::unittests::runningOnValgrind()) {
         ptr = segment_->allocate(4);
-        EXPECT_NE(static_cast<void*>(0), ptr);
+        EXPECT_NE(static_cast<void*>(NULL), ptr);
         EXPECT_DEATH_IF_SUPPORTED({
                 segment_->deallocate(static_cast<char*>(ptr) + 1, 3);
             }, "");
@@ -209,7 +209,7 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
 
     // Invalid size; this implementation doesn't detect such errors.
     ptr = segment_->allocate(4);
-    EXPECT_NE(static_cast<void*>(0), ptr);
+    EXPECT_NE(static_cast<void*>(NULL), ptr);
     segment_->deallocate(ptr, 8);
     EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
@@ -237,8 +237,8 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     segment_.reset(new MemorySegmentMapped(mapped_file, true, 1024));
     const std::string long_name(1025, 'x'); // definitely larger than segment
     // setNamedAddress should return true, indicating segment has grown.
-    EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), 0));
-    EXPECT_EQ(static_cast<void*>(0),
+    EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), NULL));
+    EXPECT_EQ(static_cast<void*>(NULL),
               segment_->getNamedAddress(long_name.c_str()));
 }
 
@@ -278,7 +278,8 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     EXPECT_THROW(MemorySegmentMapped(mapped_file).
                  allocate(DEFAULT_INITIAL_SIZE * 2),
                  isc::InvalidOperation);
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).setNamedAddress("test", 0),
+    EXPECT_THROW(MemorySegmentMapped(mapped_file).setNamedAddress("test",
+                                                                  NULL),
                  isc::InvalidOperation);
     EXPECT_THROW(MemorySegmentMapped(mapped_file).clearNamedAddress("test"),
                  isc::InvalidOperation);
