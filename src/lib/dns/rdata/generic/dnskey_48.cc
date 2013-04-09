@@ -173,6 +173,7 @@ DNSKEY::constructFromLexer(MasterLexer& lexer) {
         }
 
         // token is now assured to be of type STRING.
+        assert(token.getType() == MasterToken::STRING);
 
         token.getString(keydata_substr);
         keydata_str.append(keydata_substr);
