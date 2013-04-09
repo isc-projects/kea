@@ -161,7 +161,7 @@ public:
     ///
     /// This method looks up a zone for the given name in the database. It
     /// should match only exact zone name (eg. name is equal to the zone's
-    /// apex), as the DatabaseClient will loop trough the labels itself and
+    /// apex), as the DatabaseClient will loop through the labels itself and
     /// find the most suitable zone.
     ///
     /// It is not specified if and what implementation of this method may
@@ -314,7 +314,7 @@ public:
     /// \note In case there are multiple NSEC3 chains and they collide
     ///     (unlikely, but it can happen), this can return multiple NSEC3
     ///     records.
-    /// \exception any Since any implementaion can be used, the caller should
+    /// \exception any Since any implementation can be used, the caller should
     ///     expect any exception to be thrown.
     /// \exception isc::NotImplemented in case the database does not support
     ///     NSEC3
@@ -868,7 +868,7 @@ public:
     /// database.
     ///
     /// Application should not come directly in contact with this class
-    /// (it should handle it trough generic ZoneFinder pointer), therefore
+    /// (it should handle it through generic ZoneFinder pointer), therefore
     /// it could be completely hidden in the .cc file. But it is provided
     /// to allow testing and for rare cases when a database needs slightly
     /// different handling, so it can be subclassed.

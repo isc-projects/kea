@@ -250,7 +250,7 @@ public:
     virtual std::string findPreviousName(int zone_id, const std::string& rname)
         const;
 
-    /// \brief Conrete implemantion of the pure virtual method of
+    /// \brief Concrete implementation of the pure virtual method of
     /// DatabaseAccessor
     virtual std::string findPreviousNSEC3Hash(int zone_id,
                                               const std::string& hash) const;

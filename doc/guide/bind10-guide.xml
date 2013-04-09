@@ -4110,7 +4110,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this
@@ -4822,7 +4822,7 @@ should include options from the isc option space:
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this

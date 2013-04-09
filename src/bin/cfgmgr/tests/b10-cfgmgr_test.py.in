@@ -70,7 +70,7 @@ class TestPlugins(unittest.TestCase):
 class TestConfigManagerStartup(unittest.TestCase):
     def test_cfgmgr(self):
         # some creative module use;
-        # b10-cfgmgr has a hypen, so we use __import__
+        # b10-cfgmgr has a hyphen, so we use __import__
         # this also gives us the chance to override the imported
         # module ConfigManager in it.
         b = __import__("b10-cfgmgr")

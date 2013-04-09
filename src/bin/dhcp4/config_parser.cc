@@ -726,7 +726,7 @@ private:
     /// are invalid or insufficient this function emits an exception.
     ///
     /// @warning this function does not check if options_ storage pointer
-    /// is intitialized but this check is not needed here because it is done
+    /// is initialized but this check is not needed here because it is done
     /// in the \ref build function.
     ///
     /// @throw DhcpConfigError if parameters provided in the configuration
@@ -830,7 +830,7 @@ private:
                           << " does not have a definition.");
             }
 
-            // @todo We have a limited set of option definitions intiialized at the moment.
+            // @todo We have a limited set of option definitions initialized at the moment.
             // In the future we want to initialize option definitions for all options.
             // Consequently an error will be issued if an option definition does not exist
             // for a particular option code. For now it is ok to create generic option

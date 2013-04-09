@@ -296,7 +296,7 @@ TEST_F(OptionIntTest, basicInt32V6) {
 TEST_F(OptionIntTest, setValueUint8) {
     boost::shared_ptr<OptionInt<uint8_t> > opt(new OptionInt<uint8_t>(Option::V6,
                                                                       D6O_PREFERENCE, 123));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
     opt->setValue(111);
@@ -310,7 +310,7 @@ TEST_F(OptionIntTest, setValueUint8) {
 TEST_F(OptionIntTest, setValueInt8) {
     boost::shared_ptr<OptionInt<int8_t> > opt(new OptionInt<int8_t>(Option::V6,
                                                                     D6O_PREFERENCE, -123));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(-123, opt->getValue());
     // Override the value.
     opt->setValue(-111);
@@ -325,7 +325,7 @@ TEST_F(OptionIntTest, setValueInt8) {
 TEST_F(OptionIntTest, setValueUint16) {
     boost::shared_ptr<OptionInt<uint16_t> > opt(new OptionInt<uint16_t>(Option::V6,
                                                                         D6O_ELAPSED_TIME, 123));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
     opt->setValue(0x0102);
@@ -339,7 +339,7 @@ TEST_F(OptionIntTest, setValueUint16) {
 TEST_F(OptionIntTest, setValueInt16) {
     boost::shared_ptr<OptionInt<int16_t> > opt(new OptionInt<int16_t>(Option::V6,
                                                                       D6O_ELAPSED_TIME, -16500));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(-16500, opt->getValue());
     // Override the value.
     opt->setValue(-20100);
@@ -353,7 +353,7 @@ TEST_F(OptionIntTest, setValueInt16) {
 TEST_F(OptionIntTest, setValueUint32) {
     boost::shared_ptr<OptionInt<uint32_t> > opt(new OptionInt<uint32_t>(Option::V6,
                                                                         D6O_CLT_TIME, 123));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(123, opt->getValue());
     // Override the value.
     opt->setValue(0x01020304);
@@ -367,7 +367,7 @@ TEST_F(OptionIntTest, setValueUint32) {
 TEST_F(OptionIntTest, setValueInt32) {
     boost::shared_ptr<OptionInt<int32_t> > opt(new OptionInt<int32_t>(Option::V6,
                                                                       D6O_CLT_TIME, -120100));
-    // Check if constructor intitialized the option value correctly.
+    // Check if constructor initialized the option value correctly.
     EXPECT_EQ(-120100, opt->getValue());
     // Override the value.
     opt->setValue(-125000);

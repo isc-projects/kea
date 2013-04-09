@@ -656,7 +656,7 @@ class UpdateSession:
         '''
         # For a number of cases, we may need to remove data in the zone
         # (note; SOA is handled separately by __do_update, so that one
-        # is explicitely ignored here)
+        # is explicitly ignored here)
         if rrset.get_type() == RRType.SOA:
             return
         result, orig_rrset, _ = self.__diff.find(rrset.get_name(),

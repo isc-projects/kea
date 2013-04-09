@@ -194,7 +194,7 @@ class Stats:
         '''Constructor
 
         module_ccsession_class is parameterized so that test can specify
-        a mocked class to test the behavior without involing network I/O.
+        a mocked class to test the behavior without involving network I/O.
         In other cases this parameter shouldn't be specified.
 
         '''

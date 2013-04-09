@@ -253,7 +253,7 @@ public:
         /// network interface name
         std::string name_;
 
-        /// interface index (a value that uniquely indentifies an interface)
+        /// interface index (a value that uniquely identifies an interface)
         int ifindex_;
 
         /// list of assigned addresses
@@ -585,7 +585,7 @@ protected:
     ///
     /// This method will eventually detect available interfaces. For now
     /// it offers stub implementation. First interface name and link-local
-    /// IPv6 address is read from intefaces.txt file.
+    /// IPv6 address is read from interfaces.txt file.
     void
     detectIfaces();
 
@@ -594,7 +594,7 @@ protected:
     /// This implementations reads a single line from interfaces.txt file
     /// and pretends to detect such interface. First interface name and
     /// link-local IPv6 address or IPv4 address is read from the
-    /// intefaces.txt file.
+    /// interfaces.txt file.
     void
     stubDetectIfaces();
 
@@ -674,7 +674,7 @@ private:
     /// @param remote_addr remote address to connect to
     /// @param port port to be used
     /// @return local address to be used to connect to remote address
-    /// @throw isc::Unexpected if unable to indentify local address
+    /// @throw isc::Unexpected if unable to identify local address
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);

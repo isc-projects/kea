@@ -216,7 +216,7 @@ protected:
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
-    /// @brief Returns server-intentifier option
+    /// @brief Returns server-identifier option
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }

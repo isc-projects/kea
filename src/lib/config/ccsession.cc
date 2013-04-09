@@ -165,7 +165,7 @@ namespace {
 // getValue() (main problem described in ticket #993)
 // This returns either the value set for the given relative id,
 // or its default value
-// (intentially defined here so this interface does not get
+// (intentionally defined here so this interface does not get
 // included in ConfigData as it is)
 ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
                                   const std::string& relative_id,

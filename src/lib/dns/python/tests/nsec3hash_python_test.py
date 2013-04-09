@@ -41,7 +41,7 @@ class NSEC3HashTest(unittest.TestCase):
                                                       RRClass.IN,
                                                       "1 0 12 aabbccdd"), 1)
 
-        # Invaid type of RDATA
+        # Invalid type of RDATA
         self.assertRaises(TypeError, NSEC3Hash, Rdata(RRType.A, RRClass.IN,
                                                       "192.0.2.1"))
 
