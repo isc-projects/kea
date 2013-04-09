@@ -96,6 +96,7 @@ buildBitmapsFromLexer(const char* const rrtype_name,
         }
 
         // token is now assured to be of type STRING.
+        assert(token.getType() == MasterToken::STRING);
 
         have_rrtypes = true;
         token.getString(type_str);
