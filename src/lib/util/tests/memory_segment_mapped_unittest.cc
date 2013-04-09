@@ -31,6 +31,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <string>
+#include <sys/stat.h>
 
 using namespace isc::util;
 using boost::scoped_ptr;
@@ -170,8 +171,9 @@ TEST_F(MemorySegmentMappedTest, allocate) {
 TEST_F(MemorySegmentMappedTest, badAllocate) {
     // Make the mapped file non-writable; managed_mapped_file::grow() will
     // fail, resulting in std::bad_alloc
-    const std::string chmod_cmd = "chmod 444 " + std::string(mapped_file);
-    std::system(chmod_cmd.c_str());
+    const int ret = chmod(mapped_file, 0444);
+    ASSERT_EQ(0, ret);
+
     EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE * 2), std::bad_alloc);
 }
 
