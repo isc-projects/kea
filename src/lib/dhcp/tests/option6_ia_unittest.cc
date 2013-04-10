@@ -20,6 +20,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -32,6 +33,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
+using boost::scoped_ptr;
 
 namespace {
 class Option6IATest : public ::testing::Test {
@@ -61,11 +63,11 @@ TEST_F(Option6IATest, basic) {
     buf_[10] = 0x02;
     buf_[11] = 0x01;
 
-    // create an option
+    // Create an option
     // unpack() is called from constructor
-    Option6IA* opt = new Option6IA(D6O_IA_NA,
-                                   buf_.begin(),
-                                   buf_.begin() + 12);
+    scoped_ptr<Option6IA> opt(new Option6IA(D6O_IA_NA,
+                                            buf_.begin(),
+                                            buf_.begin() + 12));
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_IA_NA, opt->getType());
@@ -73,10 +75,10 @@ TEST_F(Option6IATest, basic) {
     EXPECT_EQ(0x81020304, opt->getT1());
     EXPECT_EQ(0x84030201, opt->getT2());
 
-    // pack this option again in the same buffer, but in
+    // Pack this option again in the same buffer, but in
     // different place
 
-    // test for pack()
+    // Test for pack()
     opt->pack(outBuf_);
 
     // 12 bytes header + 4 bytes content
@@ -85,31 +87,29 @@ TEST_F(Option6IATest, basic) {
 
     EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
 
-    // check if pack worked properly:
+    // Check if pack worked properly:
     InputBuffer out(outBuf_.getData(), outBuf_.getLength());
 
-    // if option type is correct
+    // - if option type is correct
     EXPECT_EQ(D6O_IA_NA, out.readUint16());
 
-    // if option length is correct
+    // - if option length is correct
     EXPECT_EQ(12, out.readUint16());
 
-    // if iaid is correct
+    // - if iaid is correct
     EXPECT_EQ(0xa1a2a3a4, out.readUint32() );
 
-   // if T1 is correct
+   // - if T1 is correct
     EXPECT_EQ(0x81020304, out.readUint32() );
 
-    // if T1 is correct
+    // - if T1 is correct
     EXPECT_EQ(0x84030201, out.readUint32() );
 
-    EXPECT_NO_THROW(
-        delete opt;
-    );
+    EXPECT_NO_THROW(opt.reset());
 }
 
 TEST_F(Option6IATest, simple) {
-    Option6IA* ia = new Option6IA(D6O_IA_NA, 1234);
+    scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_NA, 1234));
 
     // Check that the values are really different than what we are about
     // to set them to.
@@ -128,9 +128,7 @@ TEST_F(Option6IATest, simple) {
     ia->setIAID(890);
     EXPECT_EQ(890, ia->getIAID());
 
-    EXPECT_NO_THROW(
-        delete ia;
-    );
+    EXPECT_NO_THROW(ia.reset());
 }
 
 
@@ -140,7 +138,7 @@ TEST_F(Option6IATest, suboptions_pack) {
     buf_[1] = 0xfe;
     buf_[2] = 0xfc;
 
-    Option6IA * ia = new Option6IA(D6O_IA_NA, 0x13579ace);
+    scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_NA, 0x13579ace));
     ia->setT1(0x2345);
     ia->setT2(0x3456);
 
@@ -181,9 +179,7 @@ TEST_F(Option6IATest, suboptions_pack) {
 
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 48));
 
-    EXPECT_NO_THROW(
-        delete ia;
-    );
+    EXPECT_NO_THROW(ia.reset());
 }
 
 
@@ -213,10 +209,11 @@ TEST_F(Option6IATest, suboptions_unpack) {
 
     memcpy(&buf_[0], expected, sizeof(expected));
 
-    Option6IA* ia = 0;
-    EXPECT_NO_THROW({
-        ia = new Option6IA(D6O_IA_NA, buf_.begin() + 4, buf_.begin() + sizeof(expected));
-    });
+    scoped_ptr<Option6IA> ia;
+    EXPECT_NO_THROW(
+        ia.reset(new Option6IA(D6O_IA_NA, buf_.begin() + 4,
+                               buf_.begin() + sizeof(expected)));
+    );
     ASSERT_TRUE(ia);
 
     EXPECT_EQ(D6O_IA_NA, ia->getType());
@@ -227,7 +224,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
     OptionPtr subopt = ia->getOption(D6O_IAADDR);
     ASSERT_NE(OptionPtr(), subopt); // non-NULL
 
-    // checks for address option
+    // Checks for address option
     Option6IAAddr * addr = dynamic_cast<Option6IAAddr*>(subopt.get());
     ASSERT_TRUE(NULL != addr);
 
@@ -237,21 +234,19 @@ TEST_F(Option6IATest, suboptions_unpack) {
     EXPECT_EQ(0x7000, addr->getValid());
     EXPECT_EQ("2001:db8:1234:5678::abcd", addr->getAddress().toText());
 
-    // checks for dummy option
+    // Checks for dummy option
     subopt = ia->getOption(0xcafe);
     ASSERT_TRUE(subopt); // should be non-NULL
 
     EXPECT_EQ(0xcafe, subopt->getType());
     EXPECT_EQ(4, subopt->len());
-    // there should be no data at all
+    // There should be no data at all
     EXPECT_EQ(0, subopt->getData().size());
 
     subopt = ia->getOption(1); // get option 1
     ASSERT_FALSE(subopt); // should be NULL
 
-    EXPECT_NO_THROW(
-        delete ia;
-    );
+    EXPECT_NO_THROW(ia.reset());
 }
 
 }
