@@ -65,8 +65,13 @@ struct MemorySegmentMapped::Impl {
         const size_t prev_size = base_sgmt_->get_size();
         base_sgmt_.reset();
 
+        // Double the segment size.  In theory, this process could repeat
+        // so many times, counting to "infinity", and new_size eventually
+        // overflows.  That would cause a harsh disruption or unexpected
+        // behavior.  But we basically assume grow() would fail before this
+        // happens, so we assert it shouldn't happen.
         const size_t new_size = prev_size * 2;
-        assert(new_size != 0); // assume grow fails before size overflow
+        assert(new_size != 0);
 
         if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size)) {
             throw std::bad_alloc();
