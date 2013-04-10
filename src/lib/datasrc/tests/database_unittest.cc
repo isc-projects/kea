@@ -167,7 +167,8 @@ public:
     virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
     {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
-    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string
+                                         (&)[DEL_NSEC3_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -634,8 +635,9 @@ private:
     };
 
     // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
+    template<size_t param_count>
     void deleteRecord(Domains& domains,
-                      const string (&params)[DEL_PARAM_COUNT])
+                      const string (&params)[param_count])
     {
         vector<vector<string> >& records =
             domains[params[DatabaseAccessor::DEL_NAME]];
@@ -655,7 +657,7 @@ public:
     }
 
     virtual void deleteNSEC3RecordInZone(
-        const string (&params)[DEL_PARAM_COUNT])
+        const string (&params)[DEL_NSEC3_PARAM_COUNT])
     {
         deleteRecord(*update_nsec3_namespace_, params);
     }
