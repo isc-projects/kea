@@ -74,9 +74,8 @@ struct RRSIGImpl {
     const vector<uint8_t> signature_;
 };
 
-namespace {
 // helper function for string and lexer constructors
-RRSIGImpl* createFromLexer(MasterLexer& lexer, const Name* origin)
+void RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin)
 {
     string covered_txt, expire_txt, inception_txt, signature_txt;
     unsigned int algorithm, labels, tag;
@@ -108,10 +107,9 @@ RRSIGImpl* createFromLexer(MasterLexer& lexer, const Name* origin)
     vector<uint8_t> signature;
     decodeBase64(signature_txt, signature);
 
-    return new RRSIGImpl(RRType(covered_txt), algorithm, labels,
-                         originalttl, timeexpire, timeinception,
-			 static_cast<uint16_t>(tag), signer, signature);
-}
+    impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
+			  originalttl, timeexpire, timeinception,
+			  static_cast<uint16_t>(tag), signer, signature);
 }
 
 /// \brief Constructor from string.
@@ -138,7 +136,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        impl_ = createFromLexer(lexer, NULL);
+        createFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RRSIG: "
@@ -173,7 +171,7 @@ RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
              MasterLoader::Options, MasterLoaderCallbacks&) :
     impl_(NULL)
 {
-    impl_ = createFromLexer(lexer, origin);
+    createFromLexer(lexer, origin);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
