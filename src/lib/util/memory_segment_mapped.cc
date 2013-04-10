@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/memory_segment_mapped.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <exceptions/exceptions.h>
 
@@ -46,12 +47,21 @@ typedef basic_managed_mapped_file<char,
                                   iset_index> BaseSegment;
 
 struct MemorySegmentMapped::Impl {
-    Impl(const std::string& filename, size_t initial_size) :
+    // Constructor for create-only (and read-write) mode
+    Impl(const std::string& filename, create_only_t, size_t initial_size) :
+        read_only_(false), filename_(filename),
+        base_sgmt_(new BaseSegment(create_only, filename.c_str(),
+                                   initial_size))
+    {}
+
+    // Constructor for open-or-write (and read-write) mode
+    Impl(const std::string& filename, open_or_create_t, size_t initial_size) :
         read_only_(false), filename_(filename),
         base_sgmt_(new BaseSegment(open_or_create, filename.c_str(),
                                    initial_size))
     {}
 
+    // Constructor for existing segment, either read-only or read-write
     Impl(const std::string& filename, bool read_only) :
         read_only_(read_only), filename_(filename),
         base_sgmt_(read_only ?
@@ -110,14 +120,25 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
 }
 
 MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
-                                         bool create, size_t initial_size) :
+                                         OpenMode mode, size_t initial_size) :
     impl_(NULL)
 {
     try {
-        if (create) {
-            impl_ = new Impl(filename, initial_size);
-        } else {
+        switch (mode) {
+        case OPEN_FOR_WRITE:
             impl_ = new Impl(filename, false);
+            break;
+        case OPEN_OR_CREATE:
+            impl_ = new Impl(filename, open_or_create, initial_size);
+            break;
+        case CREATE_ONLY:
+            // Remove any existing file then create a new one
+            file_mapping::remove(filename.c_str());
+            impl_ = new Impl(filename, create_only, initial_size);
+            break;
+        default:
+            isc_throw(InvalidParameter,
+                      "invalid open mode for MemorySegmentMapped: " << mode);
         }
     } catch (const boost::interprocess::interprocess_exception& ex) {
         isc_throw(MemorySegmentOpenError,

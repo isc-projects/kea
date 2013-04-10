@@ -50,6 +50,16 @@ public:
     /// sufficiently but not too large.
     static const size_t INITIAL_SIZE = 32768;
 
+    /// \brief Open modes of \c MemorySegmentMapped.
+    ///
+    /// These modes matter only for \c MemorySegmentMapped to be opened
+    /// in read-write mode, and specify further details of open operation.
+    enum OpenMode {
+        OPEN_FOR_WRITE = 0,     ///< Open only.  File must exist.
+        OPEN_OR_CREATE,         ///< If file doesn't exist it's created.
+        CREATE_ONLY ///< New file is created; existing one will be removed.
+    };
+
     /// \brief Constructor in the read-only mode.
     ///
     /// This constructor will map the content of the given file into memory
@@ -75,13 +85,25 @@ public:
     ///
     /// This is similar to the read-only version of the constructor, but
     /// does not have the restrictions that the read-only version has.
-    /// If \c create is true and the specified file does not exist, this
-    /// method tries to create a new file of the name and build internal
-    /// data on it so that the file will be mappable by this class
-    /// object.  If \c create is false, the specified file must exist
+    ///
+    /// The \c mode parameter specifies further details of how the segment
+    /// should be opened.
+    /// - OPEN_FOR_WRITE: this is open-only mode.  The file must exist,
+    ///   and it will be opened without any initial modification.
+    /// - OPEN_OR_CREATE: similar to OPEN_FOR_WRITE, but if the file does not
+    ///   exist, a new one will be created.  An existing file will be used
+    ///   any initial modification.
+    /// - CREATE_ONLY: a new file (of the given file name) will be created;
+    ///   any existing file of the same name will be removed.
+    ///
+    /// If OPEN_FOR_WRITE is specified, the specified file must exist
     /// and be writable, and have been previously initialized by this
-    /// version of constructor with \c create being true.  If any of
-    /// these conditions is not met, \c MemorySegmentOpenError exception
+    /// version of constructor either with OPEN_OR_CREATE or CREATE_ONLY.
+    /// If the mode is OPEN_OR_CREATE or CREATE_ONLY, and the file needs
+    /// to be created, then this method tries to create a new file of the
+    /// name and build internal data on it so that the file will be mappable
+    /// by this class object.  If any of these conditions is not met, or
+    /// create or initialization fails, \c MemorySegmentOpenError exception
     /// will be thrown.
     ///
     /// When initial_size is specified but is too small (including a value of
@@ -93,11 +115,10 @@ public:
     /// \throw MemorySegmentOpenError see the description.
     ///
     /// \param filename The file name to be mapped to memory.
-    /// \param create If true and the file does not exist, a new one is
-    /// created.
+    /// \param mode Open mode (see the description).
     /// \param initial_size Specifies the size of the newly created file;
-    /// ignored if \c create is false.
-    MemorySegmentMapped(const std::string& filename, bool create,
+    /// ignored if \c mode is OPEN_FOR_WRITE.
+    MemorySegmentMapped(const std::string& filename, OpenMode mode,
                         size_t initial_size = INITIAL_SIZE);
 
     /// \brief Destructor.
