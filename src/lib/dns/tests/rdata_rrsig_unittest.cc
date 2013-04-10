@@ -99,13 +99,10 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
                  BadValue);
-}
-
-TEST_F(Rdata_RRSIG_Test, DISABLED_badText) {
-    // this currently fails
     // no space between the tag and signer
-    EXPECT_THROW(generic::RRSIG("A 5 4 43200 20100223214617 20100222214617 "
-                                "8496isc.org. ofc="), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig(
+                     "A 5 4 43200 20100223214617 20100222214617 "
+                     "8496isc.org. ofc="), InvalidRdataText);
 }
 
 TEST_F(Rdata_RRSIG_Test, createFromLexer) {
