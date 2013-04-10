@@ -1,3 +1,11 @@
+603.	[func]		tmark
+	The directory in which the b10-dchp4 and b10-dhcp6 server id files has
+	been changed from the local state directory (set by the "configure"
+	--localstatedir switch) to the "bind10" subdirectory of it. After an
+	upgrade, server id files in the former location will be orphaned and
+	should be manually removed.
+	(Trac #2770, git a622140d411b3f07a68a1451e19df36118a80650)
+
 602.	[bug]		tmark
 	Perdhcp will now exit gracefully if the command line argument for IP version
 	(-4 or -6) does not match the command line argument given for the server.
