@@ -14,6 +14,7 @@
 
 #include <util/tests/memory_segment_common_unittest.h>
 #include <util/unittests/check_valgrind.h>
+#include <util/tests/interprocess_util.h>
 
 #include <util/memory_segment_mapped.h>
 #include <exceptions/exceptions.h>
@@ -33,10 +34,14 @@
 #include <string>
 #include <vector>
 #include <map>
+
 #include <sys/stat.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 using namespace isc::util;
 using boost::scoped_ptr;
+using isc::util::test::parentReadState;
 
 namespace {
 
@@ -324,6 +329,54 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
         checkNamedData(names[i], data_list[names[i]], *segment_, true);
         segment_->shrinkToFit();
     }
+}
+
+TEST_F(MemorySegmentMappedTest, multiProcess) {
+    // Test using fork() doesn't work well on valgrind
+    if (isc::util::unittests::runningOnValgrind()) {
+        return;
+    }
+
+    // allocate some data and name its address
+    void* ptr = segment_->allocate(sizeof(uint32_t));
+    *static_cast<uint32_t*>(ptr) = 424242;
+    segment_->setNamedAddress("test address", ptr);
+
+    // reopen it in read-only.  our intended use case is to have one or
+    // more reader process or at most one exclusive writer process.  so we
+    // don't mix reader and writer.
+    segment_.reset();
+    segment_.reset(new MemorySegmentMapped(mapped_file));
+    ptr = segment_->getNamedAddress("test address");
+    ASSERT_TRUE(ptr);
+    EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
+
+    // Spawn another process and have it open and read the same data
+    int pipes[2];
+    EXPECT_EQ(0, pipe(pipes));
+    const pid_t child_pid = fork();
+    ASSERT_NE(-1, child_pid);
+    if (child_pid == 0) {       // child
+        close(pipes[0]);
+        MemorySegmentMapped sgmt(mapped_file);
+        void* ptr_child = segment_->getNamedAddress("test address");
+        EXPECT_TRUE(ptr_child);
+        if (ptr_child) {
+            const uint32_t val = *static_cast<const uint32_t*>(ptr_child);
+            EXPECT_EQ(424242, val);
+            if (val == 424242) {
+                // tell the parent it succeeded using a result code other
+                // than 255.
+                const char ok = 0;
+                EXPECT_EQ(1, write(pipes[1], &ok, sizeof(ok)));
+            }
+        }
+        close(pipes[1]);
+        exit(0);
+    }
+    // parent: wait for the completion of the child and checks the result.
+    close(pipes[1]);
+    EXPECT_EQ(0, parentReadState(pipes[0]));
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
