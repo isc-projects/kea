@@ -162,7 +162,10 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(socket_info.port_);
 
-#ifdef IP_PKTINFO
+// In the future the OS-specific code may be abstracted to a different
+// file but for now we keep it here because there is no code yet, which
+// is specific to non-Linux systems.
+#if defined (IP_PKTINFO) && defined (OS_LINUX)
     struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
     struct in_addr to_addr;
@@ -223,7 +226,10 @@ PktFilterInet::send(uint16_t sockfd, const Pkt4Ptr& pkt) {
     m.msg_iov = &v;
     m.msg_iovlen = 1;
 
-#ifdef IP_PKTINFO
+// In the future the OS-specific code may be abstracted to a different
+// file but for now we keep it here because there is no code yet, which
+// is specific to non-Linux systems.
+#if defined (IP_PKTINFO) && defined (OS_LINUX)
     // Setting the interface is a bit more involved.
     //
     // We have to create a "control message", and set that to
