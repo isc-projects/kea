@@ -122,7 +122,7 @@ public:
     /// the "params" array to be filled with the values as described in this
     /// enumeration, in this order.
     ///
-    /// DEL_RNAME is included in case the reversed from is more convenient
+    /// DEL_RNAME is included in case the reversed form is more convenient
     /// for the underlying implementation to identify the record to be
     /// deleted (reversed names are generally easier to sort, which may help
     /// perform the search faster).  It's up to the underlying implementation
