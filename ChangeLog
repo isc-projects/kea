@@ -1,3 +1,15 @@
+601.	[bug]*		jinmei, vorner
+	The "delete record" interface of the database based data source
+	was extended do that the parameter includes reversed name in
+	addition to the actual name.  This may help the underlying
+	accessor implementation if reversed names are more convenient
+	for the delete operation.  This was the case for the SQLite3
+	accessor implementation, and it now performs delete operations
+	much faster.  At a higher level, this means IXFR and DDNS Updates
+	to the sqlite3 database are no longer so slow on large zones as
+	they were before.
+	(Trac #2877, git 33bd949ac7288c61ed0a664b7329b50b36d180e5)
+
 600.	[bug]		tmark
 	Changed mysql_lease_mgr to set the SQL mode option to STRICT. This
 	causes mysql it to treat invalid input data as an error. Rather than
