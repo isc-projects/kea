@@ -106,8 +106,7 @@ if test "X$GXX" = "Xyes"; then
    CXXFLAGS="$CXXFLAGS_SAVED"
 else
    # This doesn't matter for non-g++
-
-   CXXFLAGS="$CXXFLAGS_SAVED"
+   BOOST_NUMERIC_CAST_WOULDFAIL=no
 fi
 
 # Boost interprocess::managed_mapped_file is highly system dependent and
