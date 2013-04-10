@@ -37,6 +37,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using boost::scoped_ptr;
 
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
@@ -48,12 +49,10 @@ public:
 
 TEST_F(Pkt6Test, constructor) {
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
-    Pkt6 * pkt1 = new Pkt6(data, sizeof(data) );
+    scoped_ptr<Pkt6> pkt1(new Pkt6(data, sizeof(data)));
 
     EXPECT_EQ(6, pkt1->getData().size());
     EXPECT_EQ(0, memcmp( &pkt1->getData()[0], data, sizeof(data)));
-
-    delete pkt1;
 }
 
 /// @brief returns captured actual SOLICIT packet
@@ -168,39 +167,36 @@ Pkt6* capture2() {
 }
 
 TEST_F(Pkt6Test, unpack_solicit1) {
-    Pkt6* sol = capture1();
+    scoped_ptr<Pkt6> sol(capture1());
 
     ASSERT_EQ(true, sol->unpack());
 
-    // check for length
+    // Check for length
     EXPECT_EQ(98, sol->len() );
 
-    // check for type
+    // Check for type
     EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
 
-    // check that all present options are returned
+    // Check that all present options are returned
     EXPECT_TRUE(sol->getOption(D6O_CLIENTID)); // client-id is present
     EXPECT_TRUE(sol->getOption(D6O_IA_NA));    // IA_NA is present
     EXPECT_TRUE(sol->getOption(D6O_ELAPSED_TIME));  // elapsed is present
     EXPECT_TRUE(sol->getOption(D6O_NAME_SERVERS));
     EXPECT_TRUE(sol->getOption(D6O_ORO));
 
-    // let's check that non-present options are not returned
+    // Let's check that non-present options are not returned
     EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
     EXPECT_FALSE(sol->getOption(D6O_IA_TA));
     EXPECT_FALSE(sol->getOption(D6O_IAADDR));
-
-    delete sol;
 }
 
 TEST_F(Pkt6Test, packUnpack) {
-
-    Pkt6* parent = new Pkt6(DHCPV6_SOLICIT, 0x020304);
+    scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
 
     OptionPtr opt1(new Option(Option::V6, 1));
     OptionPtr opt2(new Option(Option::V6, 2));
     OptionPtr opt3(new Option(Option::V6, 100));
-    // let's not use zero-length option type 3 as it is IA_NA
+    // Let's not use zero-length option type 3 as it is IA_NA
 
     parent->addOption(opt1);
     parent->addOption(opt2);
@@ -208,7 +204,7 @@ TEST_F(Pkt6Test, packUnpack) {
 
     EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
 
-    // calculated length should be 16
+    // Calculated length should be 16
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
 
@@ -217,30 +213,28 @@ TEST_F(Pkt6Test, packUnpack) {
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
 
-    // create second packet,based on assembled data from the first one
-    Pkt6* clone = new Pkt6(static_cast<const uint8_t*>(parent->getBuffer().getData()),
-                           parent->getBuffer().getLength());
+    // Create second packet,based on assembled data from the first one
+    scoped_ptr<Pkt6> clone(new Pkt6(
+        static_cast<const uint8_t*>(parent->getBuffer().getData()),
+                                    parent->getBuffer().getLength()));
 
-    // now recreate options list
+    // Now recreate options list
     EXPECT_TRUE( clone->unpack() );
 
     // transid, message-type should be the same as before
     EXPECT_EQ(parent->getTransid(), parent->getTransid());
     EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
 
-    EXPECT_TRUE( clone->getOption(1));
-    EXPECT_TRUE( clone->getOption(2));
-    EXPECT_TRUE( clone->getOption(100));
-    EXPECT_FALSE( clone->getOption(4));
-
-    delete parent;
-    delete clone;
+    EXPECT_TRUE(clone->getOption(1));
+    EXPECT_TRUE(clone->getOption(2));
+    EXPECT_TRUE(clone->getOption(100));
+    EXPECT_FALSE(clone->getOption(4));
 }
 
 // This test verifies that options can be added (addOption()), retrieved
 // (getOption(), getOptions()) and deleted (delOption()).
 TEST_F(Pkt6Test, addGetDelOptions) {
-    Pkt6* parent = new Pkt6(DHCPV6_SOLICIT, random() );
+    scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_SOLICIT, random()));
 
     OptionPtr opt1(new Option(Option::V6, 1));
     OptionPtr opt2(new Option(Option::V6, 2));
@@ -253,16 +247,16 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     EXPECT_EQ(opt1, parent->getOption(1));
     EXPECT_EQ(opt2, parent->getOption(2));
 
-    // expect NULL
+    // Expect NULL
     EXPECT_EQ(OptionPtr(), parent->getOption(4));
 
-    // now there are 2 options of type 2
+    // Now there are 2 options of type 2
     parent->addOption(opt3);
 
     Option::OptionCollection options = parent->getOptions(2);
     EXPECT_EQ(2, options.size()); // there should be 2 instances
 
-    // both options must be of type 2 and there must not be
+    // Both options must be of type 2 and there must not be
     // any other type returned
     for (Option::OptionCollection::const_iterator x= options.begin();
          x != options.end(); ++x) {
@@ -278,26 +272,24 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     EXPECT_EQ(1, (*options.begin()).second->getType());
     EXPECT_EQ(opt1, options.begin()->second);
 
-    // let's delete one of them
+    // Let's delete one of them
     EXPECT_EQ(true, parent->delOption(2));
 
-    // there still should be the other option 2
+    // There still should be the other option 2
     EXPECT_NE(OptionPtr(), parent->getOption(2));
 
-    // let's delete the other option 2
+    // Let's delete the other option 2
     EXPECT_EQ(true, parent->delOption(2));
 
-    // no more options with type=2
+    // No more options with type=2
     EXPECT_EQ(OptionPtr(), parent->getOption(2));
 
-    // let's try to delete - should fail
+    // Let's try to delete - should fail
     EXPECT_TRUE(false ==  parent->delOption(2));
 
     // Finally try to get a non-existent option
     options = parent->getOptions(1234);
     EXPECT_EQ(0, options.size());
-
-    delete parent;
 }
 
 TEST_F(Pkt6Test, Timestamp) {
@@ -388,7 +380,7 @@ TEST_F(Pkt6Test, relayUnpack) {
 
     OptionPtr opt;
 
-    // part 1: Check options inserted by the first relay
+    // Part 1: Check options inserted by the first relay
 
     // There should be 2 options in first relay
     EXPECT_EQ(2, msg->relay_info_[0].options_.size());
@@ -401,7 +393,7 @@ TEST_F(Pkt6Test, relayUnpack) {
     // That's a strange interface-id, but this is a real life example
     EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
 
-    // get the remote-id option
+    // Get the remote-id option
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
     EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
     boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
@@ -415,16 +407,16 @@ TEST_F(Pkt6Test, relayUnpack) {
     ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
     ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
 
-    // part 2: Check options inserted by the second relay
+    // Part 2: Check options inserted by the second relay
 
-    // get the interface-id from the second relay
+    // Get the interface-id from the second relay
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
     data = opt->getData();
     EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
     EXPECT_EQ(data.size(), 21);
     EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
 
-    // get the remote-id option
+    // Get the remote-id option
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
     EXPECT_EQ(8, opt->len());
     custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
@@ -481,7 +473,7 @@ TEST_F(Pkt6Test, relayUnpack) {
 // packed and then unpacked.
 TEST_F(Pkt6Test, relayPack) {
 
-    boost::scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+    scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
 
     Pkt6::RelayInfo relay1;
     relay1.msg_type_ = DHCPV6_RELAY_REPL;
@@ -490,16 +482,18 @@ TEST_F(Pkt6Test, relayPack) {
     relay1.peeraddr_ = IOAddress("fe80::abcd");
 
     uint8_t relay_opt_data[] = { 1, 2, 3, 4, 5, 6, 7, 8};
-    vector<uint8_t> relay_data(relay_opt_data, relay_opt_data + sizeof(relay_opt_data));
+    vector<uint8_t> relay_data(relay_opt_data,
+                               relay_opt_data + sizeof(relay_opt_data));
 
     OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
 
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(optRelay1->getType(), optRelay1));
+    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(
+                           optRelay1->getType(), optRelay1));
 
     OptionPtr opt1(new Option(Option::V6, 100));
     OptionPtr opt2(new Option(Option::V6, 101));
     OptionPtr opt3(new Option(Option::V6, 102));
-    // let's not use zero-length option type 3 as it is IA_NA
+    // Let's not use zero-length option type 3 as it is IA_NA
 
     parent->addRelayInfo(relay1);
 
@@ -512,17 +506,17 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_TRUE(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
-              + Pkt6::DHCPV6_RELAY_HDR_LEN // relay header
-              + Option::OPTION6_HDR_LEN // relay-msg
+              + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
+              + Option::OPTION6_HDR_LEN // Relay-msg
               + optRelay1->len(),
               parent->len());
 
-    // create second packet,based on assembled data from the first one
-    boost::scoped_ptr<Pkt6> clone(new Pkt6(static_cast<const uint8_t*>(
-                                           parent->getBuffer().getData()),
-                                           parent->getBuffer().getLength()));
+    // Create second packet,based on assembled data from the first one
+    scoped_ptr<Pkt6> clone(new Pkt6(static_cast<const uint8_t*>(
+                                    parent->getBuffer().getData()),
+                                    parent->getBuffer().getLength()));
 
-    // now recreate options list
+    // Now recreate options list
     EXPECT_TRUE( clone->unpack() );
 
     // transid, message-type should be the same as before
