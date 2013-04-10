@@ -63,7 +63,6 @@ struct MemorySegmentMapped::Impl {
     void growSegment() {
         // We first need to unmap it before calling grow().
         const size_t prev_size = base_sgmt_->get_size();
-        base_sgmt_->flush();
         base_sgmt_.reset();
 
         const size_t new_size = prev_size * 2;
