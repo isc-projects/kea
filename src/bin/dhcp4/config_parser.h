@@ -12,9 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <exceptions/exceptions.h>
-#include <dhcpsrv/dhcp_config_parser.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <dhcpsrv/dhcp_parsers.h>
+
 #include <stdint.h>
 #include <string>
 
@@ -68,6 +69,49 @@ configureDhcp4Server(Dhcpv4Srv&,
 ///
 /// @return a reference to a global uint32 values storage.
 const Uint32Storage& getUint32Defaults();
+
+
+/// @brief Parser for DHCP4 option data value.
+///
+/// This parser parses configuration entries that specify value of
+/// a single option specific to DHCP4.  It provides the DHCP4-specific
+/// implementation of the abstract class OptionDataParser.
+class Dhcp4OptionDataParser : public OptionDataParser {
+public:
+    /// @brief Constructor.
+    ///
+    /// Class constructor.
+    Dhcp4OptionDataParser(const std::string&, OptionStorage *options,
+        OptionDefStorage *option_defs);
+
+    /// @brief static factory method for instantiating Dhcp4OptionDataParsers
+    ///
+    /// @param param_name name fo the parameter to be parsed.
+    /// @param options storage where the parameter value is to be stored.
+    /// @param global_option_defs global option definitions storage 
+    static OptionDataParser* factory(const std::string& param_name, OptionStorage *options,
+        OptionDefStorage *global_option_defs);
+
+protected:
+    /// @brief Finds an option definition within the server's option space
+    /// 
+    /// Given an option space and an option code, find the correpsonding 
+    /// option defintion within the server's option defintion storage.
+    ///
+    /// @param option_space name of the parameter option space 
+    /// @param option_code numeric value of the parameter to find 
+    /// @return OptionDefintionPtr of the option defintion or an 
+    /// empty OptionDefinitionPtr if not found.
+    /// @throw DhcpConfigError if the option space requested is not valid 
+    /// for this server. 
+    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
+        std::string& option_space, uint32_t option_code);
+
+private:
+    // Private default Constructor declared for safety.
+    Dhcp4OptionDataParser() :OptionDataParser("",NULL,NULL,Option::V4) {}
+};
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

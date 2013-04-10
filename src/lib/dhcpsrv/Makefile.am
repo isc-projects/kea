@@ -37,6 +37,7 @@ libb10_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libb10_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libb10_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libb10_dhcpsrv_la_SOURCES += dhcp_config_parser.h
+libb10_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h 
 libb10_dhcpsrv_la_SOURCES += key_from_key.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
@@ -57,6 +58,7 @@ libb10_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcpsrv_la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
+libb10_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libb10-cc.la
 libb10_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 3:0:0
 if HAVE_MYSQL
 libb10_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
