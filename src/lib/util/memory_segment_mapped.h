@@ -84,6 +84,12 @@ public:
     /// these conditions is not met, \c MemorySegmentOpenError exception
     /// will be thrown.
     ///
+    /// When initial_size is specified but is too small (including a value of
+    /// 0), the underlying Boost library will reject it, and this constructor
+    /// throws \c MemorySegmentOpenError exception.  The Boost documentation
+    /// does not specify how large it should be, but the default
+    /// \c INITIAL_SIZE should be sufficiently large in practice.
+    ///
     /// \throw MemorySegmentOpenError see the description.
     ///
     /// \param filename The file name to be mapped to memory.
