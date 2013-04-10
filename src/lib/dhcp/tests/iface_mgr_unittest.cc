@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using boost::scoped_ptr;
 
 namespace {
 
@@ -44,25 +45,24 @@ char LOOPBACK[BUF_SIZE] = "lo";
 const uint16_t PORT1 = 10547;   // V6 socket
 const uint16_t PORT2 = 10548;   // V4 socket
 
-// On some systems measured duration of receive6() and
-// receive4() appears to be shorter than select() timeout.
-// called by these functions. This may be the case
-// if different ime resolutions are used by these functions.
-// For such cases we set the tolerance of 0.01s.
+// On some systems measured duration of receive6() and receive4() appears to be
+// shorter than select() timeout.  This may be the case if different time
+// resolutions are used by these functions.  For such cases we set the
+// tolerance to 0.01s.
 const uint32_t TIMEOUT_TOLERANCE = 10000;
 
 
 class NakedIfaceMgr: public IfaceMgr {
-    // "naked" Interface Manager, exposes internal fields
+    // "Naked" Interface Manager, exposes internal fields
 public:
     NakedIfaceMgr() { }
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
 
-// dummy class for now, but this will be expanded when needed
+// Dummy class for now, but this will be expanded when needed
 class IfaceMgrTest : public ::testing::Test {
 public:
-    // these are empty for now, but let's keep them around
+    // These are empty for now, but let's keep them around
     IfaceMgrTest() {
     }
 
@@ -71,18 +71,17 @@ public:
 
 };
 
-// We need some known interface to work reliably. Loopback interface
-// is named lo on Linux and lo0 on BSD boxes. We need to find out
-// which is available. This is not a real test, but rather a workaround
-// that will go away when interface detection is implemented.
+// We need some known interface to work reliably. Loopback interface is named
+// lo on Linux and lo0 on BSD boxes. We need to find out which is available.
+// This is not a real test, but rather a workaround that will go away when
+// interface detection is implemented.
 
 // NOTE: At this stage of development, write access to current directory
 // during running tests is required.
 TEST_F(IfaceMgrTest, loDetect) {
 
-    // poor man's interface detection
-    // it will go away as soon as proper interface detection
-    // is implemented
+    // Poor man's interface detection.  It will go away as soon as proper
+    // interface detection is implemented
     if (if_nametoindex("lo") > 0) {
         snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
     } else if (if_nametoindex("lo0") > 0) {
@@ -103,7 +102,7 @@ TEST_F(IfaceMgrTest, loDetect) {
 
 #if 0
 TEST_F(IfaceMgrTest, dhcp6Sniffer) {
-    // testing socket operation in a portable way is tricky
+    // Testing socket operation in a portable way is tricky
     // without interface detection implemented
 
     unlink("interfaces.txt");
@@ -150,27 +149,24 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
     }
     cout << "---8X-----------------------------------------" << endl;
 
-    // never happens. Infinite loop is infinite
+    // Never happens. Infinite loop is infinite
     delete pkt;
     delete ifacemgr;
 }
 #endif
 
 TEST_F(IfaceMgrTest, basic) {
-    // checks that IfaceManager can be instantiated
+    // Checks that IfaceManager can be instantiated
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
 }
 
 TEST_F(IfaceMgrTest, ifaceClass) {
-    // basic tests for Iface inner class
+    // Basic tests for Iface inner class
 
-    IfaceMgr::Iface* iface = new IfaceMgr::Iface("eth5", 7);
-
-    EXPECT_STREQ("eth5/7", iface->getFullName().c_str());
-
-    delete iface;
+    IfaceMgr::Iface iface("eth5", 7);
+    EXPECT_STREQ("eth5/7", iface.getFullName().c_str());
 }
 
 // TODO: Implement getPlainMac() test as soon as interface detection
@@ -178,9 +174,9 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 TEST_F(IfaceMgrTest, getIface) {
 
     cout << "Interface checks. Please ignore socket binding errors." << endl;
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    // interface name, ifindex
+    // Interface name, ifindex
     IfaceMgr::Iface iface1("lo1", 100);
     IfaceMgr::Iface iface2("eth9", 101);
     IfaceMgr::Iface iface3("en3", 102);
@@ -189,7 +185,7 @@ TEST_F(IfaceMgrTest, getIface) {
          << " in the tested system and there are no lo1, eth9, en3, e1000g4"
          << " or wifi15 interfaces present." << endl;
 
-    // note: real interfaces may be detected as well
+    // Note: real interfaces may be detected as well
     ifacemgr->getIfacesLst().push_back(iface1);
     ifacemgr->getIfacesLst().push_back(iface2);
     ifacemgr->getIfacesLst().push_back(iface3);
@@ -204,25 +200,22 @@ TEST_F(IfaceMgrTest, getIface) {
     }
 
 
-    // check that interface can be retrieved by ifindex
+    // Check that interface can be retrieved by ifindex
     IfaceMgr::Iface* tmp = ifacemgr->getIface(102);
     ASSERT_TRUE(tmp != NULL);
 
     EXPECT_EQ("en3", tmp->getName());
     EXPECT_EQ(102, tmp->getIndex());
 
-    // check that interface can be retrieved by name
+    // Check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
     ASSERT_TRUE(tmp != NULL);
 
     EXPECT_EQ("lo1", tmp->getName());
     EXPECT_EQ(100, tmp->getIndex());
 
-    // check that non-existing interfaces are not returned
+    // Check that non-existing interfaces are not returned
     EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi15") );
-
-    delete ifacemgr;
-
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
@@ -231,7 +224,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
 
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
     IOAddress loAddr("::1");
     int socket1 = 0;
@@ -283,7 +276,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
 
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
     IOAddress loAddr("127.0.0.1");
     int socket1 = 0;
@@ -330,12 +323,12 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
 }
 
 TEST_F(IfaceMgrTest, multipleSockets) {
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    // container for initialized socket descriptors
+    // Container for initialized socket descriptors
     std::list<uint16_t> init_sockets;
 
-    // create socket #1
+    // Create socket #1
     int socket1 = 0;
     ASSERT_NO_THROW(
         socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET);
@@ -343,7 +336,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     ASSERT_GT(socket1, 0);
     init_sockets.push_back(socket1);
 
-    // create socket #2
+    // Create socket #2
     IOAddress loAddr("127.0.0.1");
     int socket2 = 0;
     ASSERT_NO_THROW(
@@ -388,7 +381,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
             }
         }
     }
-    // all created sockets have been matched if this condition works.
+    // All created sockets have been matched if this condition works.
     EXPECT_EQ(sockets.size(), matched_sockets);
 
     // closeSockets() is the other function that we want to test. It
@@ -396,7 +389,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     // them anymore communication.
     ifacemgr->closeSockets();
 
-    // closed sockets are supposed to be removed from the list
+    // Closed sockets are supposed to be removed from the list
     sockets = iface_ptr->getSockets();
     ASSERT_EQ(0, sockets.size());
 
@@ -418,27 +411,27 @@ TEST_F(IfaceMgrTest, multipleSockets) {
 }
 
 TEST_F(IfaceMgrTest, sockets6) {
-    // testing socket operation in a portable way is tricky
-    // without interface detection implemented
+    // Testing socket operation in a portable way is tricky
+    // without interface detection implemented.
 
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     IOAddress loAddr("::1");
 
     Pkt6 pkt6(DHCPV6_SOLICIT, 123);
     pkt6.setIface(LOOPBACK);
 
-    // bind multicast socket to port 10547
+    // Bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
     EXPECT_GT(socket1, 0); // socket > 0
 
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
-    // bind unicast socket to port 10548
+    // Bind unicast socket to port 10548
     int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
     EXPECT_GT(socket2, 0);
 
-    // removed code for binding socket twice to the same address/port
+    // Removed code for binding socket twice to the same address/port
     // as it caused problems on some platforms (e.g. Mac OS X)
 
     // Close sockets here because the following tests will want to
@@ -463,7 +456,7 @@ TEST_F(IfaceMgrTest, sockets6) {
 }
 
 TEST_F(IfaceMgrTest, socketsFromIface) {
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Open v6 socket on loopback interface and bind to port
     int socket1 = 0;
@@ -499,7 +492,7 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
 
 
 TEST_F(IfaceMgrTest, socketsFromAddress) {
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Open v6 socket on loopback interface and bind to port
     int socket1 = 0;
@@ -534,7 +527,7 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
 }
 
 TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Open v6 socket to connect to remote address.
     // Loopback address is the only one that we know
@@ -582,7 +575,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     IOAddress loAddr("::1");
     IOAddress mcastAddr("ff02::1:2");
@@ -603,8 +596,6 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
     close(socket1);
     close(socket2);
-
-    delete ifacemgr;
 }
 
 TEST_F(IfaceMgrTest, sendReceive6) {
@@ -612,7 +603,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("::1");
@@ -673,7 +664,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("127.0.0.1");
@@ -762,7 +753,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
 TEST_F(IfaceMgrTest, socket4) {
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Let's assume that every supported OS have lo interface.
     IOAddress loAddr("127.0.0.1");
@@ -782,16 +773,12 @@ TEST_F(IfaceMgrTest, socket4) {
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt));
 
     close(socket1);
-
-    delete ifacemgr;
 }
 
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {
-    IfaceMgr::Iface* iface = NULL;
-    EXPECT_NO_THROW(
-        iface = new IfaceMgr::Iface("eth0",1);
-    );
+    scoped_ptr<IfaceMgr::Iface> iface;
+    EXPECT_NO_THROW(iface.reset(new IfaceMgr::Iface("eth0",1)));
 
     EXPECT_EQ("eth0", iface->getName());
     EXPECT_EQ(1, iface->getIndex());
@@ -822,9 +809,7 @@ TEST_F(IfaceMgrTest, iface) {
 
     EXPECT_EQ(0, addrs.size());
 
-    EXPECT_NO_THROW(
-        delete iface;
-    );
+    EXPECT_NO_THROW(iface.reset());
 }
 
 TEST_F(IfaceMgrTest, iface_methods) {
@@ -862,22 +847,22 @@ TEST_F(IfaceMgrTest, iface_methods) {
 
 TEST_F(IfaceMgrTest, socketInfo) {
 
-    // check that socketinfo for IPv4 socket is functional
+    // Check that socketinfo for IPv4 socket is functional
     IfaceMgr::SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
     EXPECT_EQ(7, sock1.sockfd_);
     EXPECT_EQ("192.0.2.56", sock1.addr_.toText());
     EXPECT_EQ(AF_INET, sock1.family_);
     EXPECT_EQ(DHCP4_SERVER_PORT + 7, sock1.port_);
 
-    // check that socketinfo for IPv6 socket is functional
+    // Check that socketinfo for IPv6 socket is functional
     IfaceMgr::SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
     EXPECT_EQ(9, sock2.sockfd_);
     EXPECT_EQ("2001:db8:1::56", sock2.addr_.toText());
     EXPECT_EQ(AF_INET6, sock2.family_);
     EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock2.port_);
 
-    // now let's test if IfaceMgr handles socket info properly
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    // Now let's test if IfaceMgr handles socket info properly
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
@@ -891,14 +876,14 @@ TEST_F(IfaceMgrTest, socketInfo) {
         BadValue
     );
 
-    // try to send over non-existing interface
+    // Try to send over non-existing interface
     pkt6.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
         BadValue
     );
 
-    // this will work
+    // This will work
     pkt6.setIface(LOOPBACK);
     EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
 
@@ -908,13 +893,13 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
     EXPECT_EQ(true, deleted);
 
-    // it should throw again, there's no usable socket anymore
+    // It should throw again, there's no usable socket anymore
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
         Unexpected
     );
 
-    // repeat for pkt4
+    // Repeat for pkt4
     Pkt4 pkt4(DHCPDISCOVER, 1);
 
     // pkt4 does not have interface set yet.
@@ -943,8 +928,6 @@ TEST_F(IfaceMgrTest, socketInfo) {
         ifacemgr->getSocket(pkt4),
         Unexpected
     );
-
-    delete ifacemgr;
 }
 
 #if defined(OS_LINUX)
@@ -1070,14 +1053,17 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
                 // Ubuntu style format: inet6 addr: ::1/128 Scope:Host
                 addr = line.substr(line.find("addr:") + 6, string::npos);
             } else {
-                // Gentoo style format: inet6 fe80::6ef0:49ff:fe96:ba17  prefixlen 64  scopeid 0x20<link>
+                // Gentoo style format: inet6 fe80::6ef0:49ff:fe96:ba17
+                // prefixlen 64  scopeid 0x20<link>
                 addr = line.substr(line.find("inet6") + 6, string::npos);
             }
 
-            // handle Ubuntu format: inet6 addr: fe80::f66d:4ff:fe96:58f2/64 Scope:Link
+            // Handle Ubuntu format: inet6 addr: fe80::f66d:4ff:fe96:58f2/64
+            // Scope:Link
             addr = addr.substr(0, addr.find("/"));
 
-            // handle inet6 fe80::ca3a:35ff:fed4:8f1d  prefixlen 64  scopeid 0x20<link>
+            // Handle inet6 fe80::ca3a:35ff:fed4:8f1d  prefixlen 64
+            // scopeid 0x20<link>
             addr = addr.substr(0, addr.find(" "));
             IOAddress a(addr);
             iface->addAddress(a);
@@ -1096,7 +1082,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             IOAddress a(addr);
             iface->addAddress(a);
         } else if(line.find("Metric") != string::npos) {
-            // flags
+            // Flags
             if (line.find("UP") != string::npos) {
                 iface->flag_up_ = true;
             }
@@ -1117,15 +1103,16 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
 }
 
 
-// This test compares implemented detection routines to output of "ifconfig -a" command.
-// It is far from perfect, but it is able to verify that interface names, flags,
-// MAC address, IPv4 and IPv6 addresses are detected properly. Interface list completeness
-// (check that each interface is reported, i.e. no missing or extra interfaces) and
-// address completeness is verified.
+// This test compares implemented detection routines to output of "ifconfig
+// -a" command.  It is far from perfect, but it is able to verify that
+// interface names, flags, MAC address, IPv4 and IPv6 addresses are detected
+// properly. Interface list completeness (check that each interface is reported,
+// i.e. no missing or extra interfaces) and address completeness is verified.
 //
 // Things that are not tested:
 // - ifindex (ifconfig does not print it out)
-// - address scopes and lifetimes (we don't need it, so it is not implemented in IfaceMgr)
+// - address scopes and lifetimes (we don't need it, so it is not implemented
+//   in IfaceMgr)
 // TODO: temporarily disabled, see ticket #1529
 TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
@@ -1139,7 +1126,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
     ASSERT_EQ(0, result);
 
-    // list of interfaces parsed from ifconfig
+    // List of interfaces parsed from ifconfig
     IfaceMgr::IfaceCollection parsedIfaces;
 
     ASSERT_NO_THROW(
@@ -1173,7 +1160,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
         cout << endl;
     }
 
-    // Ok, now we have 2 lists of interfaces. Need to compare them
+    // OK, now we have 2 lists of interfaces. Need to compare them
     ASSERT_EQ(detectedIfaces.size(), parsedIfaces.size());
 
     // TODO: This could could probably be written simple with find()
@@ -1191,14 +1178,14 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
             cout << "Checking interface " << detected->getName() << endl;
 
-            // start with checking flags
+            // Start with checking flags
             EXPECT_EQ(detected->flag_loopback_, i->flag_loopback_);
             EXPECT_EQ(detected->flag_up_, i->flag_up_);
             EXPECT_EQ(detected->flag_running_, i->flag_running_);
             EXPECT_EQ(detected->flag_multicast_, i->flag_multicast_);
             EXPECT_EQ(detected->flag_broadcast_, i->flag_broadcast_);
 
-            // skip MAC comparison for loopback as netlink returns MAC
+            // Skip MAC comparison for loopback as netlink returns MAC
             // 00:00:00:00:00:00 for lo
             if (!detected->flag_loopback_) {
                 ASSERT_EQ(detected->getMacLen(), i->getMacLen());
@@ -1207,7 +1194,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
             EXPECT_EQ(detected->getAddresses().size(), i->getAddresses().size());
 
-            // now compare addresses
+            // Now compare addresses
             const IfaceMgr::AddressCollection& addrs = detected->getAddresses();
             for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
                  addr != addrs.end(); ++addr) {
@@ -1230,7 +1217,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }
-        if (!found) { // corresponding interface was not found
+        if (!found) { // Corresponding interface was not found
             FAIL();
         }
     }
@@ -1247,14 +1234,14 @@ void my_callback(void) {
 }
 
 TEST_F(IfaceMgrTest, controlSession) {
-    // tests if extra control socket and its callback can be passed and
+    // Tests if extra control socket and its callback can be passed and
     // it is supported properly by receive4() method.
 
     callback_ok = false;
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    // create pipe and register it as extra socket
+    // Create pipe and register it as extra socket
     int pipefd[2];
     EXPECT_TRUE(pipe(pipefd) == 0);
     EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
@@ -1279,8 +1266,6 @@ TEST_F(IfaceMgrTest, controlSession) {
 
     // There was some data, so this time callback should be called
     EXPECT_TRUE(callback_ok);
-
-    delete ifacemgr;
 
     // close both pipe ends
     close(pipefd[1]);

@@ -52,8 +52,7 @@ public:
     /// @param buf option-buffer
     static OptionPtr genericOptionFactory(Option::Universe u, uint16_t type,
                                           const OptionBuffer& buf) {
-        Option* option = new Option(u, type, buf);
-        return OptionPtr(option);
+        return (OptionPtr(new Option(u, type, buf)));
     }
 
     /// @brief Test DHCPv4 option definition.

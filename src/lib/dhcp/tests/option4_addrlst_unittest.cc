@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011i-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
+#include <boost/scoped_ptr.hpp>
 
 #include <iostream>
 #include <sstream>
@@ -32,6 +33,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
+using boost::scoped_ptr;
 
 namespace {
 
@@ -62,7 +64,7 @@ class Option4AddrLstTest : public ::testing::Test {
 protected:
 
     Option4AddrLstTest():
-        vec_(vector<uint8_t>(300,0)) // 300 bytes long filled with 0s
+        vec_(vector<uint8_t>(300, 0)) // 300 bytes long filled with 0s
     {
         sampleAddrs_.push_back(IOAddress("192.0.2.3"));
         sampleAddrs_.push_back(IOAddress("255.255.255.0"));
@@ -79,13 +81,13 @@ TEST_F(Option4AddrLstTest, parse1) {
 
     memcpy(&vec_[0], sampledata, sizeof(sampledata));
 
-    // just one address
-    Option4AddrLst* opt1 = 0;
+    // Just one address
+    scoped_ptr<Option4AddrLst> opt1;
     EXPECT_NO_THROW(
-        opt1 = new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS,
-                                  vec_.begin(),
-                                  vec_.begin()+4);
-        // use just first address (4 bytes), not the whole
+        opt1.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS,
+                                      vec_.begin(),
+                                      vec_.begin()+4));
+        // Use just first address (4 bytes), not the whole
         // sampledata
     );
 
@@ -99,26 +101,21 @@ TEST_F(Option4AddrLstTest, parse1) {
 
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
 
-    EXPECT_NO_THROW(
-        delete opt1;
-        opt1 = 0;
-    );
-
-    // 1 address
+    EXPECT_NO_THROW(opt1.reset());
 }
 
 TEST_F(Option4AddrLstTest, parse4) {
 
-    vector<uint8_t> buffer(300,0); // 300 bytes long filled with 0s
+    vector<uint8_t> buffer(300, 0); // 300 bytes long filled with 0s
 
     memcpy(&buffer[0], sampledata, sizeof(sampledata));
 
     // 4 addresses
-    Option4AddrLst* opt4 = 0;
+    scoped_ptr<Option4AddrLst> opt4;
     EXPECT_NO_THROW(
-        opt4 = new Option4AddrLst(254,
-                                  buffer.begin(),
-                                  buffer.begin()+sizeof(sampledata));
+        opt4.reset(new Option4AddrLst(254,
+                                      buffer.begin(),
+                                      buffer.begin()+sizeof(sampledata)));
     );
 
     EXPECT_EQ(Option::V4, opt4->getUniverse());
@@ -134,17 +131,15 @@ TEST_F(Option4AddrLstTest, parse4) {
     EXPECT_EQ("0.0.0.0", addrs[2].toText());
     EXPECT_EQ("127.0.0.1", addrs[3].toText());
 
-    EXPECT_NO_THROW(
-        delete opt4;
-        opt4 = 0;
-    );
+    EXPECT_NO_THROW(opt4.reset());
 }
 
 TEST_F(Option4AddrLstTest, assembly1) {
 
-    Option4AddrLst* opt = 0;
+    scoped_ptr<Option4AddrLst> opt;
     EXPECT_NO_THROW(
-        opt = new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, IOAddress("192.0.2.3"));
+        opt.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS,
+                                     IOAddress("192.0.2.3")));
     );
     EXPECT_EQ(Option::V4, opt->getUniverse());
     EXPECT_EQ(DHO_DOMAIN_NAME_SERVERS, opt->getType());
@@ -163,28 +158,21 @@ TEST_F(Option4AddrLstTest, assembly1) {
 
     EXPECT_EQ(0, memcmp(expected1, buf.getData(), 6));
 
-    EXPECT_NO_THROW(
-        delete opt;
-        opt = 0;
-    );
+    EXPECT_NO_THROW(opt.reset());
 
     // This is old-fashioned option. We don't serve IPv6 types here!
     EXPECT_THROW(
-        opt = new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, IOAddress("2001:db8::1")),
+        opt.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS,
+                                     IOAddress("2001:db8::1"))),
         BadValue
     );
-    if (opt) {
-        // test failed. Exception was not thrown, but option was created instead.
-        delete opt;
-    }
 }
 
 TEST_F(Option4AddrLstTest, assembly4) {
 
-
-    Option4AddrLst* opt = 0;
+    scoped_ptr<Option4AddrLst> opt;
     EXPECT_NO_THROW(
-        opt = new Option4AddrLst(254, sampleAddrs_);
+        opt.reset(new Option4AddrLst(254, sampleAddrs_));
     );
     EXPECT_EQ(Option::V4, opt->getUniverse());
     EXPECT_EQ(254, opt->getType());
@@ -206,27 +194,21 @@ TEST_F(Option4AddrLstTest, assembly4) {
 
     ASSERT_EQ(0, memcmp(expected4, buf.getData(), 18));
 
-    EXPECT_NO_THROW(
-        delete opt;
-        opt = 0;
-    );
+    EXPECT_NO_THROW(opt.reset());
 
     // This is old-fashioned option. We don't serve IPv6 types here!
     sampleAddrs_.push_back(IOAddress("2001:db8::1"));
     EXPECT_THROW(
-        opt = new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, sampleAddrs_),
+        opt.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS, sampleAddrs_)),
         BadValue
     );
-    if (opt) {
-        // test failed. Exception was not thrown, but option was created instead.
-        delete opt;
-    }
 }
 
 TEST_F(Option4AddrLstTest, setAddress) {
-    Option4AddrLst* opt = 0;
+
+    scoped_ptr<Option4AddrLst> opt;
     EXPECT_NO_THROW(
-        opt = new Option4AddrLst(123, IOAddress("1.2.3.4"));
+        opt.reset(new Option4AddrLst(123, IOAddress("1.2.3.4")));
     );
     opt->setAddress(IOAddress("192.0.255.255"));
 
@@ -240,17 +222,15 @@ TEST_F(Option4AddrLstTest, setAddress) {
         BadValue
     );
 
-    EXPECT_NO_THROW(
-        delete opt;
-    );
+    EXPECT_NO_THROW(opt.reset());
 }
 
 TEST_F(Option4AddrLstTest, setAddresses) {
 
-    Option4AddrLst* opt = 0;
+    scoped_ptr<Option4AddrLst> opt;
 
     EXPECT_NO_THROW(
-        opt = new Option4AddrLst(123); // empty list
+        opt.reset(new Option4AddrLst(123)); // Empty list
     );
 
     opt->setAddresses(sampleAddrs_);
@@ -269,9 +249,7 @@ TEST_F(Option4AddrLstTest, setAddresses) {
         BadValue
     );
 
-    EXPECT_NO_THROW(
-        delete opt;
-    );
+    EXPECT_NO_THROW(opt.reset());
 }
 
 } // namespace
