@@ -44,6 +44,13 @@ using boost::scoped_ptr;
 using isc::util::test::parentReadState;
 
 namespace {
+// Shortcut to keep code shorter
+const MemorySegmentMapped::OpenMode OPEN_FOR_WRITE =
+    MemorySegmentMapped::OPEN_FOR_WRITE;
+const MemorySegmentMapped::OpenMode OPEN_OR_CREATE =
+    MemorySegmentMapped::OPEN_OR_CREATE;
+const MemorySegmentMapped::OpenMode CREATE_ONLY =
+    MemorySegmentMapped::CREATE_ONLY;
 
 const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 const size_t DEFAULT_INITIAL_SIZE = 32 * 1024; // intentionally hardcoded
@@ -64,7 +71,7 @@ protected:
     void resetSegment() {
         segment_.reset();
         boost::interprocess::file_mapping::remove(mapped_file);
-        segment_.reset(new MemorySegmentMapped(mapped_file, true));
+        segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE));
     }
 
     scoped_ptr<MemorySegmentMapped> segment_;
@@ -94,7 +101,7 @@ TEST_F(MemorySegmentMappedTest, createAndModify) {
 
         // re-open it in read-write mode, but don't try to create it
         // this time.
-        segment_.reset(new MemorySegmentMapped(mapped_file, false));
+        segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_FOR_WRITE));
     }
 }
 
@@ -105,18 +112,31 @@ TEST_F(MemorySegmentMappedTest, createWithSize) {
     // the size is actually the specified one.
     const size_t new_size = 64 * 1024;
     EXPECT_NE(new_size, segment_->getSize());
-    segment_.reset(new MemorySegmentMapped(mapped_file, true, new_size));
+    segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE,
+                                           new_size));
     EXPECT_EQ(new_size, segment_->getSize());
+}
+
+TEST_F(MemorySegmentMappedTest, createOnly) {
+    // First, allocate some data in the existing segment
+    EXPECT_TRUE(segment_->allocate(16));
+    // Close it, and then open it again in the create-only mode.  the existing
+    // file should be internally removed, and so the resulting segment
+    // should be "empty" (all deallocated).
+    segment_.reset();
+    segment_.reset(new MemorySegmentMapped(mapped_file, CREATE_ONLY));
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
 TEST_F(MemorySegmentMappedTest, openFail) {
     // The given file is directory
-    EXPECT_THROW(MemorySegmentMapped("/", true), MemorySegmentOpenError);
+    EXPECT_THROW(MemorySegmentMapped("/", OPEN_OR_CREATE),
+                 MemorySegmentOpenError);
 
     // file doesn't exist and directory isn't writable (we assume the
     // following path is not writable for the user running the test).
-    EXPECT_THROW(MemorySegmentMapped("/random-glkwjer098/test.mapped", true),
-                 MemorySegmentOpenError);
+    EXPECT_THROW(MemorySegmentMapped("/random-glkwjer098/test.mapped",
+                                     OPEN_OR_CREATE), MemorySegmentOpenError);
 
     // It should fail when file doesn't exist and it's read-only (so
     // open-only).
@@ -125,14 +145,20 @@ TEST_F(MemorySegmentMappedTest, openFail) {
     // Likewise, it should fail in read-write mode when creation is
     // suppressed.
     EXPECT_THROW(MemorySegmentMapped(TEST_DATA_BUILDDIR "/nosuchfile.mapped",
-                                     false),
-                 MemorySegmentOpenError);
+                                     OPEN_FOR_WRITE), MemorySegmentOpenError);
 
     // creating with a very small size fails (for sure about 0, and other
     // small values should also make it fail, but it's internal restriction
     // of Boost and cannot be predictable).
-    EXPECT_THROW(MemorySegmentMapped(mapped_file, true, 0),
+    EXPECT_THROW(MemorySegmentMapped(mapped_file, OPEN_OR_CREATE, 0),
                  MemorySegmentOpenError);
+
+    // invalid read-write mode
+    EXPECT_THROW(MemorySegmentMapped(
+                     mapped_file,
+                     static_cast<MemorySegmentMapped::OpenMode>(
+                         static_cast<int>(CREATE_ONLY) + 1)),
+                 isc::InvalidParameter);
 
     // Close the existing segment, break its file with bogus data, and
     // try to reopen.  It should fail with exception whether in the
@@ -142,9 +168,9 @@ TEST_F(MemorySegmentMappedTest, openFail) {
     ofs << std::string(1024, 'x');
     ofs.close();
     EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file), MemorySegmentOpenError);
-    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, false),
+    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, OPEN_FOR_WRITE),
                  MemorySegmentOpenError);
-    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, true),
+    EXPECT_THROW(MemorySegmentMapped sgmt(mapped_file, OPEN_OR_CREATE),
                  MemorySegmentOpenError);
 }
 
@@ -277,7 +303,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     // segment extension.
     segment_.reset();
     boost::interprocess::file_mapping::remove(mapped_file);
-    segment_.reset(new MemorySegmentMapped(mapped_file, true, 1024));
+    segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE, 1024));
     const std::string long_name(1025, 'x'); // definitely larger than segment
     // setNamedAddress should return true, indicating segment has grown.
     EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), NULL));
@@ -288,7 +314,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     // shrinking segment.
     segment_.reset();
     boost::interprocess::file_mapping::remove(mapped_file);
-    segment_.reset(new MemorySegmentMapped(mapped_file, true));
+    segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE));
     std::map<std::string, std::vector<uint8_t> > data_list;
     data_list["data1"] =
         std::vector<uint8_t>(80); // arbitrarily chosen small data
