@@ -37,7 +37,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     // Now set it
     void* ptr32 = segment.allocate(sizeof(uint32_t));
     const uint32_t test_val = 42;
-    std::memcpy(ptr32, &test_val, sizeof(test_val));
+    *static_cast<uint32_t*>(ptr32) = test_val;
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr32));
 
     // NULL name isn't allowed.
@@ -50,7 +50,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     // Override it.
     void* ptr16 = segment.allocate(sizeof(uint16_t));
     const uint16_t test_val16 = 4200;
-    std::memcpy(ptr16, &test_val16, sizeof(test_val16));
+    *static_cast<uint16_t*>(ptr16) = test_val16;
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr16));
     EXPECT_EQ(ptr16, segment.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(ptr16));
