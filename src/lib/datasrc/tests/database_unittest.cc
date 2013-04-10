@@ -636,9 +636,7 @@ private:
 
     // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
     template<size_t param_count>
-    void deleteRecord(Domains& domains,
-                      const string (&params)[param_count])
-    {
+    void deleteRecord(Domains& domains, const string (&params)[param_count]) {
         vector<vector<string> >& records =
             domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
