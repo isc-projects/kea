@@ -2208,17 +2208,20 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
 
     def test_axfrreq_xfrfail(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
-        incremented when xfr requesting fails'''
-        self.soa_response_params['answers'] = [begin_soa_rrset]
-        self.conn.response_generator = self._create_soa_response_data
-        self.conn._tsig_key = TSIG_KEY
-        self.conn._tsig_ctx_creator = \
-            lambda key: self.__create_mock_tsig(key, TSIGError.BAD_SIG)
-        self.conn.response_generator = self._create_normal_response_data
+        incremented even if some failure exceptions are expected to be
+        raised inside do_xfrin(): XfrinZoneError, XfrinProtocolError,
+        XfrinException, and Exception'''
         self._check_init_statistics()
-        self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
-        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
-                                        'xfrfail': 1})
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'axfrreq' + self._ipver: count,
+                                            'xfrfail': count})
 
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
@@ -2239,18 +2242,21 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
                                             self._const_sec})
 
     def test_ixfrreq_xfrfail(self):
-        '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters
-        are incremented when xfr fails'''
-        def create_response():
-            self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.IXFR)],
-                answers=[begin_soa_rrset])
-        self.conn.response_generator = create_response
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters are
+        incremented even if some failure exceptions are expected to be
+        raised inside do_xfrin(): XfrinZoneError, XfrinProtocolError,
+        XfrinException, and Exception'''
         self._check_init_statistics()
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
-        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
-                                        'xfrfail': 1})
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'ixfrreq' + self._ipver: count,
+                                            'xfrfail': count})
 
 class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
     '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
