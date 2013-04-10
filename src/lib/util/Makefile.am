@@ -9,7 +9,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 # If we use the shared-memory support, corresponding Boost library may
 # cause build failures especially if it's strict about warnings.  We've
 # detected it in ./configure and set BOOST_MAPPED_FILE_CXXFLAG to be more
-# lenient as necessary (specifically, when set it'd usually supporess -Werror).
+# lenient as necessary (specifically, when set it'd usually suppress -Werror).
 # This is a module wide setting, and has a possible bad side effect of hiding
 # issues in other files, but making it per-file seems to be too costly.
 # So we begin with the wider setting. If the side effect turns out to be too
