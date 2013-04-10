@@ -149,8 +149,8 @@ public:
         DEL_NSEC3_HASH = 0, ///< The hash (1st) label of the owren name,
                             ///< excluding the dot character.
         DEL_NSEC3_TYPE = 1, ///< The type of RR. Either RRSIG or NSEC3.
-        DEL_NSEC3_RDATA = 2, ///< Full text representation of the record's RDATA.
-                             ///< Must match the one in the database.
+        DEL_NSEC3_RDATA = 2, ///< Full text representation of the record's
+                             ///<  RDATA. Must match the one in the database.
         DEL_NSEC3_PARAM_COUNT = 3 ///< Number of parameters.
     };
 
