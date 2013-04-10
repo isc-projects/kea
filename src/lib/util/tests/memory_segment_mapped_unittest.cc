@@ -31,6 +31,8 @@
 #include <stdexcept>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <map>
 #include <sys/stat.h>
 
 using namespace isc::util;
@@ -214,6 +216,18 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
     EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
+void
+checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
+               MemorySegment& sgmt, bool delete_after_check = false)
+{
+    void* dp = sgmt.getNamedAddress(name.c_str());
+    ASSERT_TRUE(dp);
+    EXPECT_EQ(0, std::memcmp(dp, &data[0], data.size()));
+    if (delete_after_check) {
+        sgmt.deallocate(dp, data.size());
+    }
+}
+
 TEST_F(MemorySegmentMappedTest, namedAddress) {
     // common test cases
     isc::util::test::checkSegmentNamedAddress(*segment_, false);
@@ -240,6 +254,58 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), NULL));
     EXPECT_EQ(static_cast<void*>(NULL),
               segment_->getNamedAddress(long_name.c_str()));
+
+    // Check contents pointed by named addresses survive growing and
+    // shrinking segment.
+    segment_.reset();
+    boost::interprocess::file_mapping::remove(mapped_file);
+    segment_.reset(new MemorySegmentMapped(mapped_file, true));
+    std::map<std::string, std::vector<uint8_t> > data_list;
+    data_list["data1"] =
+        std::vector<uint8_t>(80); // arbitrarily chosen small data
+    data_list["data2"] =
+        std::vector<uint8_t>(5000); // larger than usual segment sz
+    data_list["data3"] =
+        std::vector<uint8_t>(65535); // bigger than most usual data
+    bool grown = false;
+
+    // Allocate memory and store data
+    for (std::map<std::string, std::vector<uint8_t> >::iterator it
+             = data_list.begin();
+         it != data_list.end();
+         ++it)
+    {
+        std::vector<uint8_t>& data = it->second;
+        for (int i = 0; i < data.size(); ++i) {
+            data[i] = i;
+        }
+        void *dp = NULL;
+        while (!dp) {
+            try {
+                dp = segment_->allocate(data.size());
+                std::memcpy(dp, &data[0], data.size());
+                segment_->setNamedAddress(it->first.c_str(), dp);
+            } catch (const MemorySegmentGrown&) {
+                grown = true;
+            }
+        }
+    }
+    // Confirm there's at least one segment extension
+    EXPECT_TRUE(grown);
+    // Check named data are still valid
+    for (std::map<std::string, std::vector<uint8_t> >::iterator it
+             = data_list.begin();
+         it != data_list.end();
+         ++it)
+    {
+        checkNamedData(it->first, it->second, *segment_);
+    }
+    // Confirm they are still valid, while we shrink the segment
+    const char* const names[] = { "data3", "data2", "data1", NULL };
+    for (int i = 0; names[i]; ++i) {
+        checkNamedData(names[i], data_list[names[i]], *segment_, true);
+        segment_->shrinkToFit();
+    }
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
