@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <string>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -28,9 +26,25 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
+
+void
+DHCID::createFromLexer(MasterLexer& lexer) {
+    string digest_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    decodeBase64(digest_txt, digest_);
+
+    // RFC4701 states DNS software should consider the RDATA section to
+    // be opaque, but there must be at least three bytes in the data:
+    // < 2 octets >    Identifier type code
+    // < 1 octet >     Digest type code
+    if (digest_.size() < 3) {
+        isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
+                  " too short, need at least 3 bytes");
+    }
+}
 
 /// \brief Constructor from string.
 ///
@@ -48,20 +62,35 @@ using namespace isc::util;
 /// If the data is less than 3 octets (i.e. it cannot contain id type code and
 /// digest type code), an exception of class \c InvalidRdataLength is thrown.
 DHCID::DHCID(const std::string& dhcid_str) {
-    istringstream iss(dhcid_str);
-    stringbuf digestbuf;
+    try {
+        std::istringstream iss(dhcid_str);
+        MasterLexer lexer;
+        lexer.pushSource(iss);
 
-    iss >> &digestbuf;
-    isc::util::encode::decodeBase64(digestbuf.str(), digest_);
+	createFromLexer(lexer);
 
-    // RFC4701 states DNS software should consider the RDATA section to
-    // be opaque, but there must be at least three bytes in the data:
-    // < 2 octets >    Identifier type code
-    // < 1 octet >     Digest type code
-    if (digest_.size() < 3) {
-        isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
-                  " too short, need at least 3 bytes");
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for DHCID: "
+                      << dhcid_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct DHCID from '" <<
+                  dhcid_str << "': " << ex.what());
     }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of a DHCID RDATA.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+DHCID::DHCID(MasterLexer& lexer, const Name*,
+             MasterLoader::Options, MasterLoaderCallbacks&) {
+    createFromLexer(lexer);
 }
 
 /// \brief Constructor from wire-format data.
@@ -112,7 +141,7 @@ DHCID::toWire(AbstractMessageRenderer& renderer) const {
 /// \return A string representation of \c DHCID.
 string
 DHCID::toText() const {
-    return (isc::util::encode::encodeBase64(digest_));
+    return (encodeBase64(digest_));
 }
 
 /// \brief Compare two instances of \c DHCID RDATA.
