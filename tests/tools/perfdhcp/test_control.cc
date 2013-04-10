@@ -592,19 +592,27 @@ TestControl::openSocket() const {
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
     uint16_t port = options.getLocalPort();
-    uint8_t family = AF_INET;
     int sock = 0;
+
+    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET; 
     IOAddress remoteaddr(servername);
+    
+    // Check for mismatch between IP option and server address
+    if (family != remoteaddr.getFamily()) {
+        isc_throw(InvalidParameter, 
+                  "Values for IP version: " <<  
+                  static_cast<unsigned int>(options.getIpVersion()) <<
+                  " and server address: " << servername << " are mismatched."); 
+    }
+
     if (port == 0) {
-        if (options.getIpVersion() == 6) {
+        if (family == AF_INET6) {
             port = DHCP6_CLIENT_PORT;
         } else if (options.getIpVersion() == 4) {
             port = 67; //  TODO: find out why port 68 is wrong here.
         }
     }
-    if (options.getIpVersion() == 6) {
-        family = AF_INET6;
-    }
+
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
     if (!localname.empty()) {
