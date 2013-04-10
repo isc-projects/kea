@@ -128,6 +128,12 @@ TEST_F(MemorySegmentMappedTest, openFail) {
                                      false),
                  MemorySegmentOpenError);
 
+    // creating with a very small size fails (for sure about 0, and other
+    // small values should also make it fail, but it's internal restriction
+    // of Boost and cannot be predictable).
+    EXPECT_THROW(MemorySegmentMapped(mapped_file, true, 0),
+                 MemorySegmentOpenError);
+
     // Close the existing segment, break its file with bogus data, and
     // try to reopen.  It should fail with exception whether in the
     // read-only or read-write, or "create if not exist" mode.
