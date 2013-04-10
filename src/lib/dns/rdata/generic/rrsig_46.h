@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,9 @@ public:
     // specialized methods
     const RRType& typeCovered() const;
 private:
+    // helper function for string and lexer constructors
+    void createFromLexer(MasterLexer& lexer, const Name* origin);
+
     RRSIGImpl* impl_;
 };
 
