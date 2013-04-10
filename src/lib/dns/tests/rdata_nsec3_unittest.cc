@@ -17,7 +17,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -35,7 +34,6 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace isc::util::encode;
 using namespace isc::dns::rdata;
 
 namespace {
@@ -43,55 +41,114 @@ namespace {
 // Note: some tests can be shared with NSEC3PARAM.  They are unified as
 // typed tests defined in nsec3param_like_unittest.
 class Rdata_NSEC3_Test : public RdataTest {
-    // there's nothing to specialize
-public:
+protected:
     Rdata_NSEC3_Test() :
         nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                  "NS SOA RRSIG DNSKEY NSEC3PARAM"),
-        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A" )
+                  "A NS SOA"),
+        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA"),
+        nsec3_notype_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"),
+        rdata_nsec3(nsec3_txt)
     {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<generic::NSEC3, isc::Exception, isc::Exception>(
+            rdata_str, rdata_nsec3, false, false);
+    }
+
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<generic::NSEC3, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_nsec3, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<generic::NSEC3, BadValue, BadValue>(
+            rdata_str, rdata_nsec3, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <generic::NSEC3, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_nsec3, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <generic::NSEC3, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_nsec3, true, false);
+    }
+
     const string nsec3_txt;
     const string nsec3_nosalt_txt;
+    const string nsec3_notype_txt;
+    const generic::NSEC3 rdata_nsec3;
 };
 
 TEST_F(Rdata_NSEC3_Test, fromText) {
-    // A normal case: the test constructor should successfully parse the
-    // text and construct nsec3_txt.  It will be tested against the wire format
-    // representation in the createFromWire test.
-
-    // hash that has the possible max length (see badText about the magic
-    // numbers)
+    // Hash that has the possible max length
     EXPECT_EQ(255, generic::NSEC3("1 1 1 D399EAAB " +
                                   string((255 * 8) / 5, '0') +
                                   " NS").getNext().size());
 
-    // type bitmap is empty.  it's possible and allowed for NSEC3.
-    EXPECT_NO_THROW(generic::NSEC3(
-                        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"));
-}
-
-TEST_F(Rdata_NSEC3_Test, badText) {
-    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
-                                "0123456789ABCDEFGHIJKLMNOPQRSTUV "
-                                "BIFF POW SPOON"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
-                                "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
-                 BadValue);     // bad base32hex
-    EXPECT_THROW(generic::NSEC3("1 1 1000000 ADDAFEEE "
-                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
-                 InvalidRdataText);
-
-    // Next hash shouldn't be padded
-    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE CPNMU=== A NS SOA"),
-                 InvalidRdataText);
-
     // Hash is too long.  Max = 255 bytes, base32-hex converts each 5 bytes
     // of the original to 8 characters, so 260 * 8 / 5 is the smallest length
     // of the encoded string that exceeds the max and doesn't require padding.
-    EXPECT_THROW(generic::NSEC3("1 1 1 D399EAAB " + string((260 * 8) / 5, '0') +
-                                " NS"),
-                 InvalidRdataText);
+    checkFromText_InvalidText("1 1 1 D399EAAB " + string((260 * 8) / 5, '0') +
+                              " A NS SOA");
+
+    // Type bitmap is empty.  it's possible and allowed for NSEC3.
+    EXPECT_NO_THROW(const generic::NSEC3 rdata_notype_nsec3(nsec3_notype_txt));
+
+    // Empty salt is also okay.
+    EXPECT_NO_THROW(const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt));
+
+    // Bad type mnemonics
+    checkFromText_InvalidText("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"
+                              " BIFF POW SPOON");
+
+    // Bad base32hex
+    checkFromText_BadValue("1 1 1 D399EAAB "
+                           "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA");
+
+    // Hash algorithm out of range
+    checkFromText_InvalidText("256 1 1 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Flags out of range
+    checkFromText_InvalidText("1 256 1 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Iterations out of range
+    checkFromText_InvalidText("1 1 65536 D399EAAB "
+                              "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Space is not allowed in salt or the next hash. This actually
+    // causes the Base32 decoder that parses the next hash that comes
+    // afterwards, to throw.
+    checkFromText_BadValue("1 1 1 D399 EAAB H9RSFB7FPF2L8"
+                           "HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Next hash must not contain padding (trailing '=' characters)
+    checkFromText_InvalidText("1 1 1 D399EAAB "
+                              "AAECAwQFBgcICQoLDA0ODw== A NS SOA");
+
+    // String instead of number
+    checkFromText_LexerError("foo 1 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+    checkFromText_LexerError("1 foo 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+    checkFromText_LexerError("1 1 foo D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString(
+        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA ;comment\n"
+        "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A NS SOA");
+
+    // Unmatched parenthesis should cause a lexer error
+    checkFromText_LexerError("1 1 1 D399EAAB "
+                             "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A ) NS SOA");
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
@@ -131,19 +188,18 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromLexer) {
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(0, rdata_nsec3.compare(
         *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
                                      nsec3_txt)));
 
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
-                                             "1 1 1 ADDAFEEE CPNMU=== "
-                                             "A NS SOA"));
+    // empty salt is also okay.
+    const generic::NSEC3 rdata_nosalt_nsec3(nsec3_nosalt_txt);
+    EXPECT_EQ(0, rdata_nosalt_nsec3.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3(), RRClass::IN(),
+                                     nsec3_nosalt_txt)));
 }
 
 TEST_F(Rdata_NSEC3_Test, assign) {
-    generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
     EXPECT_EQ(0, rdata_nsec3.compare(other_nsec3));
 }

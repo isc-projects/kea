@@ -20,6 +20,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
+#include <dns/master_lexer.h>
 
 // BEGIN_HEADER_GUARD
 
@@ -42,11 +43,19 @@ public:
     ///
     /// Specialized methods
     ///
+
+    /// \brief Returns the key tag
+    ///
+    /// \throw isc::OutOfRange if the key data for RSA/MD5 is too short
+    /// to support tag extraction.
     uint16_t getTag() const;
+
     uint16_t getFlags() const;
     uint8_t getAlgorithm() const;
 
 private:
+    DNSKEYImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
+
     DNSKEYImpl* impl_;
 };
 
