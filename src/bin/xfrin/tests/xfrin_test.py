@@ -2131,8 +2131,8 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         # clear all statistics counters before each test
         self.conn._counters.clear_all()
         # fake datetime
-        self._orig_datetime = isc.statistics.counters.datetime
-        self._orig_start_timer = isc.statistics.counters._start_timer
+        self.__orig_datetime = isc.statistics.counters.datetime
+        self.__orig_start_timer = isc.statistics.counters._start_timer
         time1 = datetime(2000, 1, 1, 0, 0, 0, 0)
         time2 = datetime(2000, 1, 1, 0, 0, 0, 1)
         class fakedatatime:
@@ -2158,8 +2158,8 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
 
     def tearDown(self):
         super().tearDown()
-        isc.statistics.counters.datetime = self._orig_datetime
-        isc.statistics.counters._start_timer = self._orig_start_timer
+        isc.statistics.counters.datetime = self.__orig_datetime
+        isc.statistics.counters._start_timer = self.__orig_start_timer
 
     @property
     def _ipver(self):
