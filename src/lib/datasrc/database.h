@@ -122,12 +122,24 @@ public:
     /// Each derived implementation of deleteRecordInZone() should expect
     /// the "params" array to be filled with the values as described in this
     /// enumeration, in this order.
+    ///
+    /// DEL_RNAME is included in case the reversed from is more convenient
+    /// for the underlying implementation to identify the record to be
+    /// deleted (reversed names are generally easier to sort, which may help
+    /// perform the search faster).  It's up to the underlying implementation
+    /// which one (or both) it uses for the search.   DEL_NAME and DEL_RNAME
+    /// are mutually convertible with the understanding of DNS names, and
+    /// in that sense redundant.  But both are provided so the underlying
+    /// implementation doesn't have to deal with DNS level concepts.
     enum DeleteRecordParams {
         DEL_NAME = 0, ///< The owner name of the record (a domain name)
                       ///< or the hash label for deleteNSEC3RecordInZone()
         DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
         DEL_RDATA = 2, ///< Full text representation of the record's RDATA
-        DEL_PARAM_COUNT = 3 ///< Number of parameters
+        DEL_RNAME = 3, ///< As DEL_NAME, but with the labels of domain name
+                       ///< in reverse order (eg. org.example.). With NSEC3,
+                       ///< it is the same as DEL_NAME.
+        DEL_PARAM_COUNT = 4 ///< Number of parameters
     };
 
     /// \brief Operation mode when adding a record diff.
