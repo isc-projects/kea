@@ -258,7 +258,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     // Set it again and read it in the read-only mode.
     void* ptr16 = segment_->allocate(sizeof(uint16_t));
     const uint16_t test_val16 = 42000;
-    std::memcpy(ptr16, &test_val16, sizeof(test_val16));
+    *static_cast<uint16_t*>(ptr16) = test_val16;
     EXPECT_FALSE(segment_->setNamedAddress("test address", ptr16));
     MemorySegmentMapped segment_ro(mapped_file);
     EXPECT_NE(static_cast<void*>(NULL),
