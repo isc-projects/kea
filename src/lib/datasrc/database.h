@@ -116,8 +116,7 @@ public:
         ADD_NSEC3_COLUMN_COUNT = 4 ///< Number of columns
     };
 
-    /// \brief Definitions of the fields to be passed to deleteRecordInZone()
-    /// and deleteNSEC3RecordInZone()
+    /// \brief Definitions of the fields to be passed to deleteRecordInZone().
     ///
     /// Each derived implementation of deleteRecordInZone() should expect
     /// the "params" array to be filled with the values as described in this
@@ -132,14 +131,27 @@ public:
     /// in that sense redundant.  But both are provided so the underlying
     /// implementation doesn't have to deal with DNS level concepts.
     enum DeleteRecordParams {
-        DEL_NAME = 0, ///< The owner name of the record (a domain name)
-                      ///< or the hash label for deleteNSEC3RecordInZone()
+        DEL_NAME = 0, ///< The owner name of the record (a domain name).
         DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
         DEL_RDATA = 2, ///< Full text representation of the record's RDATA
         DEL_RNAME = 3, ///< As DEL_NAME, but with the labels of domain name
-                       ///< in reverse order (eg. org.example.). With NSEC3,
-                       ///< it is the same as DEL_NAME.
+                       ///< in reverse order (eg. org.example.).
         DEL_PARAM_COUNT = 4 ///< Number of parameters
+    };
+
+    /// \brief Definitions of the fields to be passed to
+    /// deleteNSEC3RecordInZone().
+    ///
+    /// Each derived implementation of deleteNSEC3RecordInZone() should expect
+    /// the "params" array to be filled with the values as described in this
+    /// enumeration, in this order.
+    enum DeleteNSEC3RecordParams {
+        DEL_NSEC3_HASH = 0, ///< The hash (1st) label of the owren name,
+                            ///< excluding the dot character.
+        DEL_NSEC3_TYPE = 1, ///< The type of RR. Either RRSIG or NSEC3.
+        DEL_NSEC3_RDATA = 2, ///< Full text representation of the record's RDATA.
+                             ///< Must match the one in the database.
+        DEL_NSEC3_PARAM_COUNT = 3 ///< Number of parameters.
     };
 
     /// \brief Operation mode when adding a record diff.
@@ -588,11 +600,8 @@ public:
     /// \c addRecordToZone() and \c addNSEC3RecordToZone(), and the same
     /// notes apply to this method.
     ///
-    /// This method uses the same set of parameters to specify the record
-    /// to be deleted as \c deleteRecordInZone(), but the \c DEL_NAME column
-    /// is expected to only store the hash label of the owner name.
-    /// This is the same as \c ADD_NSEC3_HASH column for
-    /// \c addNSEC3RecordToZone().
+    /// This method uses the \c DeleteNSEC3RecordParams enum to specify the
+    /// values.
     ///
     /// \exception DataSourceError Invalid call without starting a transaction,
     /// or other internal database error.
@@ -602,7 +611,7 @@ public:
     /// \param params An array of strings that defines a record to be deleted
     /// from the NSEC3 namespace of the zone.
     virtual void deleteNSEC3RecordInZone(
-        const std::string (&params)[DEL_PARAM_COUNT]) = 0;
+        const std::string (&params)[DEL_NSEC3_PARAM_COUNT]) = 0;
 
     /// \brief Start a general transaction.
     ///
