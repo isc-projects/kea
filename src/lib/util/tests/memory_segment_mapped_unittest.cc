@@ -216,6 +216,7 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
     EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
+// A helper of namedAddress.
 void
 checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
                MemorySegment& sgmt, bool delete_after_check = false)
@@ -223,6 +224,23 @@ checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
     void* dp = sgmt.getNamedAddress(name.c_str());
     ASSERT_TRUE(dp);
     EXPECT_EQ(0, std::memcmp(dp, &data[0], data.size()));
+
+    // Open a separate read-only segment and checks the same named data
+    // Since the mapped space should be different, the resulting bare address
+    // from getNamedAddress should also be different, but it should actually
+    // point to the same data.
+    // Note: it's mostly violation of the API assumption to open read-only
+    // and read-write segments at the same time, but unless we modify the
+    // segment throughout the lifetime of the read-only segment, it should
+    // work.
+    scoped_ptr<MemorySegmentMapped> segment_ro(
+        new MemorySegmentMapped(mapped_file));
+    void* dp2 = segment_ro->getNamedAddress(name.c_str());
+    ASSERT_TRUE(dp2);
+    EXPECT_NE(dp, dp2);
+    EXPECT_EQ(0, std::memcmp(dp2, &data[0], data.size()));
+    segment_ro.reset();
+
     if (delete_after_check) {
         sgmt.deallocate(dp, data.size());
     }
