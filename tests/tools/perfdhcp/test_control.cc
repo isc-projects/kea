@@ -597,12 +597,12 @@ TestControl::openSocket() const {
     uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET; 
     IOAddress remoteaddr(servername);
     
-    // Check for mismatch between ip option and server
+    // Check for mismatch between IP option and server address
     if (family != remoteaddr.getFamily()) {
         isc_throw(InvalidParameter, 
-                  "Values for Ip version: " <<  
-                  static_cast<unsigned int>(options.getIpVersion())
-                  <<  " and Server:" << servername << " are mismatched."); 
+                  "Values for IP version: " <<  
+                  static_cast<unsigned int>(options.getIpVersion()) <<
+                  " and server address: " << servername << " are mismatched."); 
     }
 
     if (port == 0) {
