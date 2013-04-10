@@ -136,15 +136,17 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
+/// \param origin The origin to use with a relative Next Domain Name
+/// field
 NSEC::NSEC(MasterLexer& lexer, const Name* origin, MasterLoader::Options,
            MasterLoaderCallbacks&)
 {
-    const Name origin_name(createNameFromLexer(lexer, origin));
+    const Name next_name(createNameFromLexer(lexer, origin));
 
     vector<uint8_t> typebits;
     buildBitmapsFromLexer("NSEC", lexer, typebits);
 
-    impl_ = new NSECImpl(origin_name, typebits);
+    impl_ = new NSECImpl(next_name, typebits);
 }
 
 NSEC::NSEC(const NSEC& source) :

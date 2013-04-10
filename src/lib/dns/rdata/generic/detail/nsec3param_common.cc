@@ -39,40 +39,32 @@ namespace detail {
 namespace nsec3 {
 
 ParseNSEC3ParamResult
-parseNSEC3ParamText(const char* const rrtype_name,
-                    const string& rdata_str, istringstream& iss,
-                    vector<uint8_t>& salt)
+parseNSEC3ParamFromLexer(const char* const rrtype_name,
+                         MasterLexer& lexer, vector<uint8_t>& salt)
 {
-    unsigned int hashalg, flags, iterations;
-    string iterations_str, salthex;
-
-    iss >> hashalg >> flags >> iterations_str >> salthex;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid " << rrtype_name <<
-                  " text: " << rdata_str);
-    }
+    const uint32_t hashalg =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (hashalg > 0xff) {
         isc_throw(InvalidRdataText, rrtype_name <<
                   " hash algorithm out of range: " << hashalg);
     }
+
+    const uint32_t flags =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (flags > 0xff) {
         isc_throw(InvalidRdataText, rrtype_name << " flags out of range: " <<
                   flags);
     }
-    // Convert iteration.  To reject an invalid case where there's no space
-    // between iteration and salt, we extract this field as string and convert
-    // to integer.
-    try {
-        iterations = boost::lexical_cast<unsigned int>(iterations_str);
-    } catch (const boost::bad_lexical_cast&) {
-        isc_throw(InvalidRdataText, "Bad " << rrtype_name <<
-                  " iteration: " << iterations_str);
-    }
+
+    const uint32_t iterations =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (iterations > 0xffff) {
         isc_throw(InvalidRdataText, rrtype_name <<
-                  " iterations out of range: " <<
-            iterations);
+                  " iterations out of range: " << iterations);
     }
+
+    const string salthex =
+        lexer.getNextToken(MasterToken::STRING).getString();
 
     // Salt is up to 255 bytes, and space is not allowed in the HEX encoding,
     // so the encoded string cannot be longer than the double of max length

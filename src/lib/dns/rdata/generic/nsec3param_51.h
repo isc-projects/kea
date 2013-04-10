@@ -21,6 +21,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
+#include <dns/master_lexer.h>
 
 // BEGIN_HEADER_GUARD
 
@@ -47,7 +48,10 @@ public:
     uint8_t getFlags() const;
     uint16_t getIterations() const;
     const std::vector<uint8_t>& getSalt() const;
+
 private:
+    NSEC3PARAMImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
+
     NSEC3PARAMImpl* impl_;
 };
 
