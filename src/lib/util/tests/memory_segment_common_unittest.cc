@@ -64,7 +64,7 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_FALSE(segment.clearNamedAddress("test address"));
 
     // Setting NULL is okay.
-    EXPECT_FALSE(segment.setNamedAddress("null address", 0));
+    EXPECT_FALSE(segment.setNamedAddress("null address", NULL));
     EXPECT_EQ(static_cast<void*>(NULL),
               segment.getNamedAddress("null address"));
 

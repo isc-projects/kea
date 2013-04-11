@@ -89,7 +89,7 @@ TEST_F(MemorySegmentMappedTest, createAndModify) {
         EXPECT_TRUE(segment_->allMemoryDeallocated());
 
         void* ptr = segment_->allocate(1024);
-        EXPECT_NE(static_cast<void*>(0), ptr);
+        EXPECT_NE(static_cast<void*>(NULL), ptr);
 
         // Now, we have an allocation:
         EXPECT_FALSE(segment_->allMemoryDeallocated());
