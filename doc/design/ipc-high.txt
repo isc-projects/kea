@@ -4,169 +4,321 @@ The IPC protocol
 While the cc-protocol.txt describes the low-level primitives, here we
 describe how the whole IPC should work and how to use it.
 
+Definitions
+-----------
+
+system::
+  The system that moves data between the users and does bookkeeping.
+  In our current implementation, it is implemented as the MsgQ daemon,
+  which the users connect to and it routes the data.
+user::
+  Usually a process; generally an entity that wants to communicate
+  with the other users.
+session::
+  Session is the interface by which the user communicates with the
+  system. Single user may have multiple sessions, a session belongs to
+  single user.
+message::
+  A data blob sent by one user. The recipient might be the system
+  itself, other user or set of users (possibly empty). Message is
+  either a response or an original message (TODO: Better name?).
+group::
+  A named set of sessions. Conceptually, all the possible groups
+  exist, there's no explicit creation and deletion of groups.
+session id::
+  Unique identifier of a session. It is not reused for the whole
+  lifetime of the system. Historically called `lname` in the code.
+undelivery notification::
+  While sending an original message, a client may request an
+  undelivery notification. If the recipient specification yields no
+  sessions to deliver the message to, the system informs user about
+  the situation.
+sequence number::
+  Each message sent through the system carries a sequence number. The
+  number should be unique per sender. It can be used to pair a
+  response to the original message, since the response specifies which
+  sequence number had the message it response to. Even responses and
+  messages not expecting answer have their sequence number, but it is
+  generally unused.
+
+The session
+-----------
+
+The session interface allows for several operations interacting with
+the system. In the code, it is represented by a class.
+
+Possible operations include:
+
+Opening a session::
+  The session is created and connects to the system. This operation is
+  fast, but it can still block for short amount of time. The session
+  receives session id from the system.
+
+Group management::
+  A user may subscribe (become member) of a group, or unsubscribe from
+  a group.
+
+Send::
+  A user may send a message, addressed to the system, or other
+  client(s). This operation is generally expected to be non-blocking
+  (but it may be based on the assumption of OS buffering and the
+  system not being overloaded).
+
+Receive synchronously::
+  User may wait for an incoming message in blocking mode. It is
+  possible to specify the kind of message to wait for, either original
+  message or response to a message. This interface has a timeout.
+
+Receive asynchronously::
+  Similar to previous, but non-blocking. It terminates immediately.
+  The user provides a callback that is invoked when the requested
+  message arrives.
+
+Terminate::
+  A session may be terminated. No more messages are sent or received
+  over it, the session is automatically unsubscribed from all the
+  groups. A session is terminated automatically if the user exits.
+
 Assumptions
 -----------
 
-We assume the low-level protocol keeps ordering of messages. That is,
-if A sends messages 1 and 2 to B, they get delivered in the same order
-as they were sent. However, if A sends message 1 to B and 2 to C, the
-order in which get them or the order in which they answer is not
-defined.
+We assume reliability and order of delivery. Messages sent from user A
+to B are all delivered unchanged in original order as long as B
+exists.
 
-We also assume that the delivery is reliable. If B gets a message from
-A, it can be sure that all previous messages were delivered too. If A
-sends a message to B, B either gets the message or either A or B is
-disconnected during the attempt.
-
-Also, we expect the messages don't get damaged or modified on their
-way.
-
-On unrecoverable error (errors like EINTR or short read/write are
-recoverable, since there's clear way how to continue without losing
-any messages, errors like connection reset are unrecoverable), the
-client should abort completely. If it deems better to reconnect, it
-must assume anything might have happened during the time and start
-communication from scratch, discarding any knowledge gathered from the
-previous connection (configuration, addresses of other clients, etc).
+All above operations are expected to always succeed. If there's an
+error reported, it should be considered fatal and user should
+exit. In case a user still wants to continue, the session must be
+considered terminated and a new one must be created. Care must be
+taken not to use any information obtained from the previous session,
+since the state in other users and the system may have changed during
+the reconnect.
 
 Addressing
 ----------
 
-We can specify the recipient in two different ways:
+Addressing happens in three ways:
 
- * Directly. Each connected client has an unique address. A message
-   addressed to that address is sent only to the one client.
- * By a group. A client might subscribe to any number of groups.
-   When a message is sent to the group, all clients subscribed to the
-   group receive it. It is legal to send to an empty group.
+By group name::
+  The message is routed to all the sessions subscribed to this group.
+  It is legal to address an empty group; such message is then
+  delivered to no sessions.
+By session ID::
+  The message is sent to the single session, if it is still alive.
+By an alias::
+  A session may have any number of aliases - well known names. Only
+  single session may hold given alias (but it is not yet enforced by
+  the system). The message is delivered to the one session owning the
+  alias, if any. Internally, the aliases are implemented as groups
+  with single subscribed session, so it is the same as the first
+  option on the protocol level, but semantically it is different.
 
-[NOTE]
-If it is possible a group may contain multiple recipients, it is
-discouraged to send messages expecting an answer addressed to the
-group. It is not known how many answers are to come. See below for
-details on one-to-many communication.
+The system
+----------
 
-Feedback from the IPC system
-----------------------------
+The system performs these goals:
 
-The IPC system generates some additional information to aid the
-communicating clients.
+ * Maintains the open sessions and allows creating new ones.
+ * Keeps information about groups and which sessions are subscribed to
+   which group.
+ * Routes the messages between users.
 
-Undeliverable notification::
-  If the client requests it (by a per-message flag) and the set of
-  recipients specified is empty (either because the connection
-  ID/lname is not connected or because the addressed group is empty),
-  an answer message is sent from the daemon to notify it about
-  the situation. However, since the recipient still can take a long
-  time to answer (if it exists), clients that need high availability
-  should not wait for the answer in blocking way.
-Notifications about connections and disconnections::
-  The system generates notification about following events:
-  * Client connected (sent with the lname of the client)
-  * Client disconnected (sent with the lname of the client)
-  * Client subscribed (sent with the name of group and lname of
-    client)
-  * Client unsubscribed (sent with the name of group and lname of
-    client)
-List of group members:
-  The daemon provides a command to list lnames of clients subscribed
-  to given group, and lnames of all connections.
+Also, the system itself is a user of the system. It can be reached by
+the alias `Msgq` and provides following high-level services (see
+below):
 
-Communication paradigms
------------------------
+Notifications about sessions::
+  When a session is opened to the system or when a session is
+  terminated, a notification is sent to interested users. The
+  notification contains the session ID of the session in question.
+  The termination notification is probably more useful (if a user
+  communicated with a given session before, it might be interested it
+  is no longer available), the opening notification is provided mostly
+  for completeness.
+Notifications about group subscriptions::
+  When a session subscribes to a group or unsubscribes from a group, a
+  notification is sent to interested users. The notification contains
+  both the session ID of the session subscribing/unsubscribing and
+  name of the group.
+Commands to list sessions::
+  There's a command to list session IDs of all currently opened sessions
+  and a command to list session IDs of all sessions subscribed to a
+  given group. Note that using these lists might need some care, as
+  the information might be outdated at the time it is delivered to the
+  user.
 
-Event notifications
-~~~~~~~~~~~~~~~~~~~
+Note that in early stages of startup (before the configuration
+manager's session is opened), the `Msgq` alias is not yet available.
 
-Sometimes, an event that may be interesting to other parts of the
-system happens. The originating module may not know what other modules
-are interested in that kind of event, nor it may know if any at all
-wants to know that. With such event, the originating module does not
-need any feedback.
+Higher-level services
+---------------------
 
-For each kind or family of notifications, there's a group. Everybody
-interested in that family of notifications subscribes to the group.
-When the event happens, it is sent (broadcasted) to the group, without
-requiring an answer.
+While the system is able to send any kind of data, the payload sent by
+users in bind10 is structured data encoded as JSON. The messages sent
+are of three general types:
 
-[[NOTE]]
-A care should be taken to avoid race conditions. Imagine one module
-provides some kind of state (let's say it's the configuration manager
-and the configuration is the shared state). The other modules are
-using notifications to update their copy when the configuration
-changes (eg. when the configuration changes, the configuration manager
-sends a notification with description of the change).
+Command::
+  A message sent to single destination, with the undeliverable
+  notifications turned on and expecting an answer. This is a request
+  to perform some operation on the recipient (it can have side effects
+  or not). The command is identified by a name and it can have
+  parameters. A command with the same name may behave differently (or
+  have different parameters) on different receiving users.
+Reply::
+  An answer to the `Command`. It is sent directly to the session where
+  the command originated from, does not expect further answer and the
+  undeliverable notification is not set. It either confirms the
+  command was run successfully and contains an optional result, or
+  notifies the sender of failure to run the command. Success and
+  failure differ only in the payload sent through the system, not in
+  the way it is sent. The undeliverable notification is failure
+  reply sent by the system on behalf of the missing recipient.
+Notification::
+  A message sent to any number of destinations (eg. sent to a group),
+  not expecting an answer. It notifies other users about an event or
+  change of state.
 
-The correct order is to first subscribe to the notifications and then
-request the whole configuration. If it was done the other way around,
-there would be a short time between the request and the subscription
-when an update to the state could happen without the module noticing.
+Details of the higher-level
+---------------------------
 
-With first subscribing, the notification could come before the initial
-version is known or arrive even when the initial version already
-includes the change, but these are possible to handle, while the
-missing update is not.
+The notifications are probably the simplest. Users interested in
+receiving notifications of some family subscribe to corresponding
+group. Then, a client sends a message to the group. For example, if
+clients `receiver-A` and `receiver-B` want to receive notifications
+about changes to zone data, they'd subscribe to the
+`Notifications/ZoneUpdates` group. Then, other client (let's say
+`XfrIn`, with session ID `s12345`) would send something like:
 
-One-to-one RPC call
-~~~~~~~~~~~~~~~~~~~
+  s12345 -> Notifications/ZoneUpdates
+  {"notification": ["zone-update", {
+      "class": "IN",
+      "origin": "example.org.",
+      "serial": 123456
+  }]}
 
-Sometimes, a process needs to call remote function (or command) in
-other process. An example could be asking the configuration manager
-for the current configuration or asking it to change it, asking single
-process to terminate, etc.
+Both receivers would receive the message and know that the
+`example.org` zone is now at version 123456. Note that multiple users
+may produce the same kind of notification. Also, single group may be
+used to send multiple notification names (but they should be related;
+in our example, the `Notifications/ZoneUpdates` could be used for
+`zone-update`, `zone-available` and `zone-unavailable` notifications
+for change in zone data, configuration of new zone in the system and
+removal of a zone from configuration).
 
-It may be that the group is a singleton group (eg. the command
-manager, there must be exactly one in a running system, and is used
-just as a stable name for the process) or an lname received by means
-of other communication (like a previous subscribe notification).
+Sending a command to single recipient is slightly more complex. The
+sending user sends a message to the receiving one, addressed either by
+session ID or by an alias (group to which at most one session may be
+subscribed). The message contains the name of the command and
+parameters. It is sent with the undeliverable notifications turned on.
+The user also starts a timer (with reasonably long timeout). The
+sender also subscribes to notifications about terminated sessions or
+unsubscription from the alias group.
 
-A command message (containing the parameters, name of the command,
-etc) is sent, with the want-answer flag set. The other side processes
-the command and sends a result or error back.
+The receiving user gets the message, runs the command and sends a
+response back, with the result. The response has the undeliverable
+notification turned off and it is marked as response to the message
+containing the command. The sending user receives the answer and pairs
+it with the command.
 
-If the recipient does not exist, the daemon sends an error right away.
+There are several things that may go wrong.
 
-There are still two ways this may fail to provide an answer:
+* There might be an error on the receiving user (bad parameters, the
+  operation failed, the recipient doesn't know command of that name).
+  The receiving side sends the response as previous, the only
+  difference is the content of the payload. The sending user is
+  notified about it, without delays.
+* The recipient user doesn't exist (either the session ID is wrong or
+  terminated already, or the alias is empty). The system sends a
+  failure response and the sending user knows immediately the command
+  failed.
+* The recipient disconnects while processing the command (possibly
+  crashes). The sender gets a notification about disconnection or
+  unsubscription from the alias group and knows the answer won't come.
+* The recipient ``blackholes'' the command. It receives it, but never
+  answers. The timeout in sender times out. As this is a serious
+  programmer error in the recipient and should be rare, the sender
+  should at least log an error to notify about the case.
 
- * The receiving module reads the command, but does not provide an
-   answer. Clearly, such module is broken. There should be some (long)
-   timeout for this situation, and loud logging to get it fixed.
- * The receiving module terminated at the exact time when daemon tried
-   to send to it, or crashed handling the command. Therefore the
-   sender listens for disconnect or unsubscription notifications
-   (depending on if it was sent by lname or group name) and if the
-   recipient disconnects, the sender knows it should not expect the
-   answer any more.
+One example would be asking the question of life, universe and
+everything (all the examples assume the sending user is already
+subscribed to the notifications):
 
-An asynchronous waiting for the answer is preferred.
+  s12345 -> DeepThought
+  {"command": ["question", {
+      "what": ["Life", "Universe", "*"]
+  }]}
+  s23456 -> s12345
+  {"reply": [0, 42]}
 
-One-to-many RPC call
-~~~~~~~~~~~~~~~~~~~~
+The deep thought had an alias. But the answer is sent from its session
+ID. The `0` in the reply means ``success''.
 
-Sometimes it is needed to send a command to bunch of modules at once,
-usually all members of a group that can contain any number of clients.
+Another example might be asking for some data at a bureau and getting
+an error:
 
-This would be done by requesting the members of the group from the
-daemon and then sending a one-to-one RPC call to each of them,
-tracking them separately.
+  s12345 -> Burreau
+  {"command": ["provide-information", {
+      "about": "me",
+      "topic": "taxes"
+  }]}
+  s23456 -> s12345
+  {"reply": [1, "You need to fill in other form"]}
 
-[NOTE]
-It might happen the list of group members changes between the time it
-was requested and the time the commands are sent. If a client gets
-disconnected, the sender gets an undeliverable error back from the
-daemon.  If anything else happens (the client unsubscribes, connects,
-subscribes), it must explicitly synchronise to the state anyway,
-because we could have sent the commands before the change actually
-happened and it would look the same to the client.
+And, in this example, the sender is trying to reach an non-existent
+session.
 
-[WARNING]
-It would look better to first request the list of group members and
-then send the command to the group, and use the list to track the
-answers only. But that is prone to race conditions ‒ if there's any
-change between the request for the member list and sending the
-command, the actual recipients don't match the list and the server
-could get more answers than expected or could wait for answer of a
-module that no longer exists.
+  s12345 -> s0
+  {"command": ["ping"]}
+  msgq -> s12345
+  {"reply": [-1, "No such recipient"]}
+
+Last, an example when the other user disconnects while processing the
+command.
+
+  s12345 -> s23456
+  {"command": ["shutdown"]}
+  msgq -> s12345
+  {"notification": ["disconnected", {
+    "lname": "s23456"
+  }]}
+
+The system does not support sending a command to multiple users
+directly. It can be accomplished as this:
+
+* The sending user calls a command on the system to get list of
+  sessions in given group. This is command to alias, so it can be done
+  by the previous way.
+* After receiving the list of session IDs, multiple copies of the
+  command are sent by the sending user, one to each of the session
+  IDs.
+* Successes and failures are handled the same as above, since these
+  are just single-recipient commands.
+
+So, this would be an example with unhelpful war council.
+
+  s12345 -> Msgq
+  {"command": ["get-subscriptions", {
+      "group": "WarCouncil"
+  }]}
+  msgq -> s12345
+  {"reply": [0, ["s1", "s2", "s3"]]}
+  s12345 -> s1
+  {"command": ["advice", {
+      "topic": "Should we attack?"
+  }]}
+  s12345 -> s2
+  {"command": ["advice", {
+      "topic": "Should we attack?"
+  }]}
+  s12345 -> s3
+  {"command": ["advice", {
+      "topic": "Should we attack?"
+  }]}
+  s1 -> s12345
+  {"reply": [0, true]}
+  s2 -> s12345
+  {"reply": [0, false]}
+  s3 -> s12345
 
 Known limitations
 -----------------
@@ -174,8 +326,8 @@ Known limitations
 It is meant mostly as signalling protocol. Sending millions of
 messages or messages of several tens of megabytes is probably a bad
 idea. While there's no architectural limitation with regards of the
-number of transferred messages or their sizes, the code is not
-optimised and it would probably be very slow.
+number of transferred messages and the maximum size of message is 4GB,
+the code is not optimised and it would probably be very slow.
 
 We currently expect the system not to be at heavy load. Therefore, we
 expect the daemon to keep up with clients sending messages. The
