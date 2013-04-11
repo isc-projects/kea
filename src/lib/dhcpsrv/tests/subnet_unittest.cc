@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/dhcp6.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -514,6 +515,21 @@ TEST(Subnet6Test, iface) {
 
     subnet.setIface("en1");
     EXPECT_EQ("en1", subnet.getIface());
+}
+
+// This trivial test checks if the interface-id option can be set and
+// later retrieved for a subnet6 object.
+TEST(Subnet6Test, interfaceId) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    EXPECT_FALSE(subnet->getInterfaceId());
+
+    OptionPtr option(new Option(Option::V6, D6O_INTERFACE_ID, OptionBuffer(10, 0xFF)));
+    subnet->setInterfaceId(option);
+
+    EXPECT_EQ(option, subnet->getInterfaceId());
+
 }
 
 };
