@@ -178,14 +178,29 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     return (Subnet6Ptr());
 }
 
-Subnet6Ptr CfgMgr::getSubnet6(OptionPtr /*interfaceId*/) {
-    /// @todo: Implement get subnet6 by interface-id (for relayed traffic)
-    isc_throw(NotImplemented, "Relayed DHCPv6 traffic is not supported yet.");
+Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
+    if (!iface_id_option) {
+        return (Subnet6Ptr());
+    }
+
+    // If there is more than one, we need to choose the proper one
+    for (Subnet6Collection::iterator subnet = subnets6_.begin();
+         subnet != subnets6_.end(); ++subnet) {
+        if ( (*subnet)->getInterfaceId() &&
+             ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6_IFACE_ID)
+                .arg((*subnet)->toText());
+            return (*subnet);
+        }
+    }
+    return (Subnet6Ptr());
 }
 
 void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
+    /// @todo: Check that there is no subnet with the same interface-id
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
     subnets6_.push_back(subnet);

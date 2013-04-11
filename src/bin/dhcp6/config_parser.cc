@@ -1481,11 +1481,27 @@ private:
         std::string iface;
         try {
             iface = string_values_.getParam("interface");
-        } catch (DhcpConfigError) {
+        } catch (const DhcpConfigError&) {
             // iface not mandatory so swallow the exception
         }
 
-        /// @todo: Convert this to logger once the parser is working reliably
+        // Get interface-id option content. For now we support string
+        // represenation only
+        std::string ifaceid;
+        try {
+            ifaceid = string_values_.getParam("interface-id");
+        } catch (DhcpConfigError) {
+            // interface-id is not mandatory
+        }
+
+        if (!iface.empty() && !ifaceid.empty()) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "parser error: interface (defined for locally reachable "
+                      "subnets) and interface-id (defined for subnets reachable"
+                      " via relays) cannot be defined at the same time for "
+                      "subnet " << addr.toText() << "/" << (int)len);
+        }
+
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
@@ -1510,6 +1526,13 @@ private:
             }
 
             subnet_->setIface(iface);
+        }
+
+        // Configure interface-id for remote interfaces, if defined
+        if (!ifaceid.empty()) {
+            OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+            subnet_->setInterfaceId(opt);
         }
 
         // We are going to move configured options to the Subnet object.
@@ -1591,6 +1614,7 @@ private:
         factories["pool"] = PoolParser::factory;
         factories["option-data"] = OptionDataListParser::factory;
         factories["interface"] = StringParser::factory;
+        factories["interface-id"] = StringParser::factory;
 
         FactoryMap::iterator f = factories.find(config_id);
         if (f == factories.end()) {

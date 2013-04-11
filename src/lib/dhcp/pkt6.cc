@@ -72,6 +72,60 @@ uint16_t Pkt6::len() {
     }
 }
 
+OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
+    int start = 0;
+    int end = 0;
+    int direction = 0;
+
+    if (relay_info_.empty()) {
+        // there's no relay info, this is a direct message
+        return (OptionPtr());
+    }
+
+    switch (order) {
+    case RELAY_SEARCH_FROM_CLIENT:
+        // search backwards
+        start = relay_info_.size() - 1;
+        end = 0;
+        direction = -1;
+        break;
+    case RELAY_SEARCH_FROM_SERVER:
+        // search forward
+        start = 0;
+        end = relay_info_.size() - 1;
+        direction = 1;
+        break;
+    case RELAY_SEARCH_FIRST:
+        // look at the innermost relay only
+        start = relay_info_.size() - 1;
+        end = start;
+        direction = 0;
+        break;
+    case RELAY_SEARCH_LAST:
+        // look at the outermost relay only
+        start = 0;
+        end = 0;
+        direction = 0;
+    }
+
+    // this is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end
+    for (int i = start; ; i += direction) {
+        OptionPtr opt = getRelayOption(opt_type, i);
+        if (opt) {
+            return (opt);
+        }
+
+        if (i == end) {
+            break;
+        }
+    }
+
+    return getRelayOption(opt_type, end);
+}
+
+
 OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
     if (relay_level >= relay_info_.size()) {
         isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
@@ -482,6 +536,33 @@ Pkt6::getName(uint8_t type) {
 const char* Pkt6::getName() const {
     return (getName(getType()));
 }
+
+void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
+
+    // we use index rather than iterator, because we need that as a parameter
+    // passed to getRelayOption()
+    for (int i = 0; i < question->relay_info_.size(); ++i) {
+        RelayInfo x;
+        x.msg_type_ = DHCPV6_RELAY_REPL;
+        x.hop_count_ = question->relay_info_[i].hop_count_;
+        x.linkaddr_ = question->relay_info_[i].linkaddr_;
+        x.peeraddr_ = question->relay_info_[i].peeraddr_;
+
+        // Is there interface-id option in this nesting level if there is,
+        // we need to echo it back
+        OptionPtr opt = question->getRelayOption(D6O_INTERFACE_ID, i);
+        // taken from question->RelayInfo_[i].options_
+        if (opt) {
+            x.options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+        }
+
+        /// @todo: implement support for ERO (Echo Request Option, RFC4994)
+
+        // add this relay-repl info to our message
+        relay_info_.push_back(x);
+    }
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
