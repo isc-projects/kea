@@ -181,6 +181,9 @@ Notification::
 Details of the higher-level
 ---------------------------
 
+While there are libraries implementing the communication in convenient
+way, it is useful to know what happens inside.
+
 The notifications are probably the simplest. Users interested in
 receiving notifications of some family subscribe to corresponding
 group. Then, a client sends a message to the group. For example, if
