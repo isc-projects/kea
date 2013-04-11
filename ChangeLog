@@ -1,3 +1,12 @@
+604.	[func]		marcin
+	libdhcp++: abstracted methods which open sockets and send/receive
+	DHCP4 packets to a separate class. Other classes will be derived
+	from it to implement OS-specific methods of DHCPv4 packets filtering.
+	The primary purpose for this change is to add support for Direct
+	DHCPv4 response to a client which doesn't have an address yet on
+	different OSes.
+	(Trac #991, git 33ffc9a750cd3fb34158ef676aab6b05df0302e2)
+
 603.	[func]		tmark
 	The directory in which the b10-dchp4 and b10-dhcp6 server id files has
 	been changed from the local state directory (set by the "configure"
