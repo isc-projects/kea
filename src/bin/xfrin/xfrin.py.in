@@ -972,6 +972,16 @@ class XfrinConnection(asyncore.dispatcher):
                 self._send_query(self._request_type)
                 self.__state = XfrinInitialSOA()
                 self._handle_xfrin_responses()
+            except XfrinZoneUptodate:
+                # Note: Catching an exception XfrinZoneUptodate
+                # defines that IXFR succeeded.  xfrsuccess is
+                # incremented and the timer is stopped here.
+                self._counters.inc('zones', self._zone_name.to_text(),
+                                   'xfrsuccess')
+                self._counters.stop_timer('zones', self._zone_name.to_text(),
+                                          'last_' + req_str.lower() +
+                                          '_duration')
+                raise
             except:
                 # The AXFR or IXFR request failed.
                 self._counters.inc('zones', self._zone_name.to_text(),

@@ -2206,6 +2206,20 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
                                         'xfrsuccess': 1,
                                         'last_axfr_duration': self._const_sec})
 
+    def test_axfrreq_xfrsuccess_last_axfr_duration2(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
+        and last_axfr_duration timer are incremented even if a successful
+        XfrinZoneUptodate is raised while handling an xfr response'''
+        def exception_raiser():
+            raise XfrinZoneUptodate()
+        self.conn._handle_xfrin_responses = exception_raiser
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_axfr_duration':
+                                            self._const_sec})
+
     def test_axfrreq_xfrfail(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
         incremented even if some failure exceptions are expected to be
@@ -2236,6 +2250,20 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = create_ixfr_response
         self._check_init_statistics()
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
+        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_ixfr_duration':
+                                            self._const_sec})
+
+    def test_ixfrreq_xfrsuccess_last_ixfr_duration2(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
+        and last_ixfr_duration timer are incremented even if a successful
+        XfrinZoneUptodate is raised while handling an xfr response'''
+        def exception_raiser():
+            raise XfrinZoneUptodate()
+        self.conn._handle_xfrin_responses = exception_raiser
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_OK)
         self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
                                         'xfrsuccess': 1,
                                         'last_ixfr_duration':
