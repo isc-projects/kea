@@ -1707,15 +1707,16 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETEDIFF).
                 arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
-        const string params[Accessor::DEL_PARAM_COUNT] =
-            { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
-              cvtr.getType(), rdata_txt,
-              nsec3_type ? cvtr.getNSEC3Name() : cvtr.getRevName() };
         if (nsec3_type) {
+            const string params[Accessor::DEL_NSEC3_PARAM_COUNT] =
+                { cvtr.getNSEC3Name(), cvtr.getType(), rdata_txt };
             accessor_->deleteNSEC3RecordInZone(params);
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETENSEC3).
                 arg(cvtr.getNSEC3Name()).arg(rdata_txt);
         } else {
+            const string params[Accessor::DEL_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), rdata_txt,
+                  cvtr.getRevName() };
             accessor_->deleteRecordInZone(params);
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETERR).
                 arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);

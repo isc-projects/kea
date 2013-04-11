@@ -1311,20 +1311,14 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
 
 void
 SQLite3Accessor::deleteNSEC3RecordInZone(
-    const string (&params)[DEL_PARAM_COUNT])
+    const string (&params)[DEL_NSEC3_PARAM_COUNT])
 {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
                   "data source without transaction");
     }
-    const size_t SQLITE3_DEL_PARAM_COUNT = DEL_PARAM_COUNT - 1;
-    const string sqlite3_params[SQLITE3_DEL_PARAM_COUNT] = {
-        params[DEL_NAME],
-        params[DEL_TYPE],
-        params[DEL_RDATA]
-    };
-    doUpdate<const string (&)[SQLITE3_DEL_PARAM_COUNT]>(
-        *dbparameters_, DEL_NSEC3_RECORD, sqlite3_params,
+    doUpdate<const string (&)[DEL_NSEC3_PARAM_COUNT]>(
+        *dbparameters_, DEL_NSEC3_RECORD, params,
         "delete NSEC3 record from zone");
 }
 
