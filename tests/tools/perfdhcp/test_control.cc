@@ -57,7 +57,7 @@ TestControl::TestControlSocket::TestControlSocket(const int socket) :
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(ifindex_);
     if (iface) {
         iface->delSocket(sockfd_);
     }
@@ -70,9 +70,9 @@ TestControl::TestControlSocket::initSocketData() {
     for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
          it != ifaces.end();
          ++it) {
-        const IfaceMgr::SocketCollection& socket_collection =
+        const Iface::SocketCollection& socket_collection =
             it->getSockets();
-        for (IfaceMgr::SocketCollection::const_iterator s =
+        for (Iface::SocketCollection::const_iterator s =
                  socket_collection.begin();
              s != socket_collection.end();
              ++s) {
@@ -661,7 +661,7 @@ TestControl::openSocket() const {
             // If user specified interface name with '-l' the
             // IPV6_MULTICAST_IF has to be set.
             if ((ret >= 0)  && options.isInterface()) {
-                IfaceMgr::Iface* iface =
+                Iface* iface =
                     IfaceMgr::instance().getIface(options.getLocalName());
                 if (iface == NULL) {
                     isc_throw(Unexpected, "unknown interface "
@@ -1799,7 +1799,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -1825,7 +1825,7 @@ TestControl::setDefaults6(const TestControlSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }

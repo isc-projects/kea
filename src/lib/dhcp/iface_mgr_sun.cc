@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,11 @@ IfaceMgr::detectIfaces() {
     /// @todo do the actual detection on Solaris. Currently just calling
     /// stub implementation.
     stubDetectIfaces();
+}
+
+bool
+IfaceMgr::isDirectResponseSupported() {
+    return (false);
 }
 
 void IfaceMgr::os_send4(struct msghdr& /*m*/,
