@@ -29,6 +29,8 @@
 #include <dhcpsrv/utils.h>
 #include <gtest/gtest.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <fstream>
 #include <iostream>
 
@@ -367,26 +369,18 @@ public:
 TEST_F(Dhcpv4SrvTest, basic) {
 
     // Check that the base class can be instantiated
-    Dhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW({
-        srv = new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000);
-    });
-    delete srv;
+    boost::scoped_ptr<Dhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    srv.reset();
 
     // Check that the derived class can be instantiated
-    NakedDhcpv4Srv* naked_srv = NULL;
-    ASSERT_NO_THROW({
-        naked_srv = new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
-    });
-    EXPECT_TRUE(naked_srv->getServerID());
-    delete naked_srv;
-
-    ASSERT_NO_THROW({
-        naked_srv = new NakedDhcpv4Srv(0);
-    });
+    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
+    ASSERT_NO_THROW(
+            naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
     EXPECT_TRUE(naked_srv->getServerID());
 
-    delete naked_srv;
+    ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
+    EXPECT_TRUE(naked_srv->getServerID());
 }
 
 // Verifies that received DISCOVER can be processed correctly,
@@ -398,7 +392,7 @@ TEST_F(Dhcpv4SrvTest, basic) {
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
 TEST_F(Dhcpv4SrvTest, processDiscover) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
     vector<uint8_t> mac(6);
     for (int i = 0; i < 6; i++) {
         mac[i] = 255 - i;
@@ -492,8 +486,6 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 
     // Check that the requested options are returned.
     optionsCheck(offer);
-
-    delete srv;
 }
 
 // Verifies that received REQUEST can be processed correctly,
@@ -504,10 +496,10 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 // are other tests that verify correctness of the allocation
 // engine. See RequestBasic.
 TEST_F(Dhcpv4SrvTest, processRequest) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
     vector<uint8_t> mac(6);
     for (int i = 0; i < 6; i++) {
-        mac[i] = i*10;
+        mac[i] = i * 10;
     }
 
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPREQUEST, 1234));
@@ -592,53 +584,36 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
 
     // Check that the requested options are returned.
     optionsCheck(ack);
-
-    delete srv;
 }
 
 TEST_F(Dhcpv4SrvTest, processRelease) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
+    NakedDhcpv4Srv srv;
     boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPRELEASE, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processRelease(pkt);
-    );
-
-    delete srv;
+    EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
 TEST_F(Dhcpv4SrvTest, processDecline) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
+    NakedDhcpv4Srv srv;
     boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDECLINE, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processDecline(pkt);
-    );
-
-    delete srv;
+    EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
 TEST_F(Dhcpv4SrvTest, processInform) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
+    NakedDhcpv4Srv srv;
     boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPINFORM, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processInform(pkt);
-    );
+    EXPECT_NO_THROW(srv.processInform(pkt));
 
     // Should return something
-    EXPECT_TRUE(srv->processInform(pkt));
+    EXPECT_TRUE(srv.processInform(pkt));
 
     // @todo Implement more reasonable tests before starting
     // work on processSomething() method.
-
-    delete srv;
 }
 
 TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {

@@ -25,7 +25,10 @@
 #include <dhcp/option_int.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -47,7 +50,7 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_ = new Dhcpv4Srv(0);
+        srv_.reset(new Dhcpv4Srv(0));
     }
 
     // Checks if global parameter of name have expected_value
@@ -73,7 +76,6 @@ public:
 
     ~Dhcp4ParserTest() {
         resetConfiguration();
-        delete srv_;
     };
 
     /// @brief Create the simple configuration with single option.
@@ -278,7 +280,7 @@ public:
         }
     }
 
-    Dhcpv4Srv* srv_;
+    boost::scoped_ptr<Dhcpv4Srv> srv_;
 
     int rcode_;
     ConstElementPtr comment_;
