@@ -98,6 +98,16 @@ public:
         return (ia);
     }
 
+    /// @brief generates interface-id option, based on text
+    ///
+    /// @param iface_id textual representation of the interface-id content
+    ///
+    /// @return pointer to the option object
+    OptionPtr generateInterfaceId(const string& iface_id) {
+        OptionBuffer tmp(iface_id.begin(), iface_id.end());
+        return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+    }
+
     // Generate client-id option
     OptionPtr generateClientId(size_t duid_size = 32) {
 
@@ -678,6 +688,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
+    ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr, addr->getAddress(), subnet_->getPreferred(), subnet_->getValid());
@@ -731,6 +742,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
+    ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
     checkIAAddr(addr, hint, subnet_->getPreferred(), subnet_->getValid());
@@ -779,6 +791,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
+    ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr, addr->getAddress(), subnet_->getPreferred(), subnet_->getValid());
@@ -840,6 +853,9 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
                                                 subnet_->getT2());
     boost::shared_ptr<Option6IAAddr> addr3 = checkIA_NA(reply3, 3, subnet_->getT1(),
                                                 subnet_->getT2());
+    ASSERT_TRUE(addr1);
+    ASSERT_TRUE(addr2);
+    ASSERT_TRUE(addr3);
 
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr1, addr1->getAddress(), subnet_->getPreferred(), subnet_->getValid());
@@ -910,6 +926,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
                                                 subnet_->getT2());
+    ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
     checkIAAddr(addr, hint, subnet_->getPreferred(), subnet_->getValid());
@@ -1590,6 +1607,113 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     pkt->setIface("wifi1");
     EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// linkaddr in RELAY-FORW message
+TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:2::1234");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    // CASE 1: We have only one subnet defined and we received relayed traffic.
+    // The only available subnet should NOT be selected.
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    pkt->relay_info_.push_back(relay);
+
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 2: We have three subnets defined and we received relayed traffic.
+    // Nothing should be selected.
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 3: We have three subnets defined and we received relayed traffic
+    // that came out of subnet 2. We should select subnet2 then
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+
+    // source of the packet should have no meaning. Selection is based
+    // on linkaddr field in the relay
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::baca"));
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 4: We have three subnets defined and we received relayed traffic
+    // that came out of undefined subnet. We should select nothing
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+    pkt->relay_info_.clear();
+    relay.linkaddr_ = IOAddress("2001:db8:4::1234");
+    pkt->relay_info_.push_back(relay);
+    selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+}
+
+// This test verifies if selectSubnet() selects proper subnet for a given
+// interface-id option
+TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
+    NakedDhcpv6Srv srv(0);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    subnet1->setInterfaceId(generateInterfaceId("relay1"));
+    subnet2->setInterfaceId(generateInterfaceId("relay2"));
+
+    // CASE 1: We have only one subnet defined and it is for interface-id "relay1"
+    // Packet came with interface-id "relay2". We should not select subnet1
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
+
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:2::1234");
+    relay.peeraddr_ = IOAddress("fe80::1");
+    OptionPtr opt = generateInterfaceId("relay2");
+    relay.options_.insert(pair<int, OptionPtr>(opt->getType(), opt));
+    pkt->relay_info_.push_back(relay);
+
+    // There is only one subnet configured and we are outside of that subnet
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    EXPECT_FALSE(selected);
+
+    // CASE 2: We have only one subnet defined and it is for interface-id "relay2"
+    // Packet came with interface-id "relay2". We should select it
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet2); // just a single subnet
+    selected = srv.selectSubnet(pkt);
+    EXPECT_EQ(selected, subnet2);
+
+    // CASE 3: We have only 3 subnets defined: one remote for interface-id "relay1",
+    // one remote for interface-id "relay2" and third local
+    // packet comes with interface-id "relay2". We should select subnet2
+    CfgMgr::instance().deleteSubnets6();
+    CfgMgr::instance().addSubnet6(subnet1);
+    CfgMgr::instance().addSubnet6(subnet2);
+    CfgMgr::instance().addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet2, srv.selectSubnet(pkt));
 }
 
 // This test verifies if the server-id disk operations (read, write) are

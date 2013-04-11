@@ -107,6 +107,13 @@ given interface.  This particular subnet was selected, because it
 was specified as being directly reachable over given interface. (see
 'interface' parameter in subnet6 definition).
 
+% DHCPSRV_CFGMGR_SUBNET6_IFACE_ID selected subnet %1 (interface-id match) for incoming packet
+This is a debug message reporting that the DHCP configuration manager
+has returned the specified IPv6 subnet for a received packet. This particular
+subnet was selected, because value of interface-id option matched what was
+configured in server's interface-id option for that selected subnet6.
+(see 'interface-id' parameter in subnet6 definition).
+
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
 open lease database.  It is issued at program shutdown and whenever

@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
 
 #include <gtest/gtest.h>
 
@@ -37,7 +38,7 @@ using boost::scoped_ptr;
 
 namespace {
 
-// This test verifies that BooleanStorage functions properly. 
+// This test verifies that BooleanStorage functions properly.
 TEST(ValueStorageTest, BooleanTesting) {
     BooleanStorage testStore;
 
@@ -48,7 +49,7 @@ TEST(ValueStorageTest, BooleanTesting) {
     EXPECT_FALSE(testStore.getParam("firstBool"));
     EXPECT_TRUE(testStore.getParam("secondBool"));
 
-    // Verify that we can update paramaters. 
+    // Verify that we can update paramaters.
     testStore.setParam("firstBool", true);
     testStore.setParam("secondBool", false);
 
@@ -65,7 +66,7 @@ TEST(ValueStorageTest, BooleanTesting) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusBool"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusBool"));
 
     // Verify that we can empty the list.
@@ -74,21 +75,21 @@ TEST(ValueStorageTest, BooleanTesting) {
 
 }
 
-// This test verifies that Uint32Storage functions properly. 
+// This test verifies that Uint32Storage functions properly.
 TEST(ValueStorageTest, Uint32Testing) {
     Uint32Storage testStore;
 
     uint32_t intOne = 77;
     uint32_t intTwo = 33;
 
-    // Verify that we can add and retrieve parameters. 
+    // Verify that we can add and retrieve parameters.
     testStore.setParam("firstInt", intOne);
     testStore.setParam("secondInt", intTwo);
 
     EXPECT_EQ(testStore.getParam("firstInt"), intOne);
     EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
 
-    // Verify that we can update parameters. 
+    // Verify that we can update parameters.
     testStore.setParam("firstInt", --intOne);
     testStore.setParam("secondInt", ++intTwo);
 
@@ -105,7 +106,7 @@ TEST(ValueStorageTest, Uint32Testing) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusInt"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusInt"));
 
     // Verify that we can empty the list.
@@ -113,7 +114,7 @@ TEST(ValueStorageTest, Uint32Testing) {
     EXPECT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
 }
 
-// This test verifies that StringStorage functions properly. 
+// This test verifies that StringStorage functions properly.
 TEST(ValueStorageTest, StringTesting) {
     StringStorage testStore;
 
@@ -127,7 +128,7 @@ TEST(ValueStorageTest, StringTesting) {
     EXPECT_EQ(testStore.getParam("firstString"), stringOne);
     EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
 
-    // Verify that we can update parameters. 
+    // Verify that we can update parameters.
     stringOne.append("-boo");
     stringTwo.append("-boo");
 
@@ -147,7 +148,7 @@ TEST(ValueStorageTest, StringTesting) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusString"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusString"));
 
     // Verify that we can empty the list.
@@ -163,6 +164,16 @@ public:
         // make sure we start with a clean configuration
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
+    }
+
+    /// @brief generates interface-id option based on provided text
+    ///
+    /// @param text content of the option to be created
+    ///
+    /// @return pointer to the option object created
+    OptionPtr generateInterfaceId(const string& text) {
+        OptionBuffer buffer(text.begin(), text.end());
+        return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, buffer));
     }
 
     ~CfgMgrTest() {
@@ -405,6 +416,91 @@ TEST_F(CfgMgrTest, subnet6) {
     EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("3000::123")));
     EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
+
+// This test verifies if the configuration manager is able to hold, select
+// and return valid subnets, based on interface names.
+TEST_F(CfgMgrTest, subnet6Interface) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    subnet1->setIface("foo");
+    subnet2->setIface("bar");
+    subnet3->setIface("foobar");
+
+    // There shouldn't be any subnet configured at this stage
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foo"));
+
+    cfg_mgr.addSubnet6(subnet1);
+
+    // Now we have only one subnet, any request will be served from it
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6("foo"));
+
+    // If we have only a single subnet and the request came from a local
+    // address, let's use that subnet
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef")));
+
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6("foobar"));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6("bar"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("xyzzy")); // no such interface
+
+    // Check that deletion of the subnets works.
+    cfg_mgr.deleteSubnets6();
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foo"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("bar"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foobar"));
+}
+
+// This test verifies if the configuration manager is able to hold, select
+// and return valid leases, based on interface-id option values
+TEST_F(CfgMgrTest, subnet6InterfaceId) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+
+    // interface-id options used in subnets 1,2, and 3
+    OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
+    OptionPtr ifaceid2 = generateInterfaceId("VL32");
+    // That's a strange interface-id, but this is a real life example
+    OptionPtr ifaceid3 = generateInterfaceId("ISAM144|299|ipv6|nt:vp:1:110");
+
+    // bogus interface-id
+    OptionPtr ifaceid_bogus = generateInterfaceId("non-existent");
+
+    subnet1->setInterfaceId(ifaceid1);
+    subnet2->setInterfaceId(ifaceid2);
+    subnet3->setInterfaceId(ifaceid3);
+
+    // There shouldn't be any subnet configured at this stage
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid1));
+
+    cfg_mgr.addSubnet6(subnet1);
+
+    // If we have only a single subnet and the request came from a local
+    // address, let's use that subnet
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(ifaceid1));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid2));
+
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(ifaceid3));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(ifaceid2));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid_bogus));
+
+    // Check that deletion of the subnets works.
+    cfg_mgr.deleteSubnets6();
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid1));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid2));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid3));
+}
+
 
 // This test verifies that new DHCPv4 option spaces can be added to
 // the configuration manager and that duplicated option space is
