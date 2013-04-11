@@ -30,6 +30,7 @@
  *   - @subpage dhcpv6ConfigInherit
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
+ *   - @subpage libdhcpRelay
  *   - @subpage libdhcpIfaceMgr
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
