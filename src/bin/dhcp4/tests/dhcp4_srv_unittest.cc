@@ -366,7 +366,7 @@ public:
                              const IOAddress& client_addr,
                              const IOAddress& relay_addr) {
 
-        NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
+        boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
         vector<uint8_t> mac(6);
         for (int i = 0; i < 6; i++) {
             mac[i] = i*10;
