@@ -384,6 +384,7 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     ptr = segment_->getNamedAddress("test address");
     ASSERT_TRUE(ptr);
     EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
+    segment_.reset();
 
     // Spawn another process and have it open and read the same data
     int pipes[2];
