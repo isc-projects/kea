@@ -281,6 +281,7 @@ checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
 
     if (delete_after_check) {
         sgmt.deallocate(dp, data.size());
+        sgmt.clearNamedAddress(name.c_str());
     }
 }
 
