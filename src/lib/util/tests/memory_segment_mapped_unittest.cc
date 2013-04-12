@@ -300,7 +300,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
                   segment_ro.getNamedAddress("test address")));
 
-    // try to set an unusually long name.  We re-create the file so the
+    // try to set an unusually long name.  We re-create the file so
     // creating the name would cause allocation failure and trigger internal
     // segment extension.
     segment_.reset();
