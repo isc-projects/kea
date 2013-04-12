@@ -274,7 +274,7 @@ checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
     scoped_ptr<MemorySegmentMapped> segment_ro(
         new MemorySegmentMapped(mapped_file));
     void* dp2 = segment_ro->getNamedAddress(name.c_str());
-    ASSERT_TRUE(dp2);
+    ASSERT_NE(static_cast<void*>(NULL), dp2);
     EXPECT_NE(dp, dp2);
     EXPECT_EQ(0, std::memcmp(dp2, &data[0], data.size()));
     segment_ro.reset();
