@@ -319,7 +319,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     data_list["data1"] =
         std::vector<uint8_t>(80); // arbitrarily chosen small data
     data_list["data2"] =
-        std::vector<uint8_t>(5000); // larger than usual segment sz
+        std::vector<uint8_t>(5000); // larger than usual segment size
     data_list["data3"] =
         std::vector<uint8_t>(65535); // bigger than most usual data
     bool grown = false;

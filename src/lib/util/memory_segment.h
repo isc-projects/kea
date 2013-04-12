@@ -90,9 +90,9 @@ public:
     /// ComplicatedStuff* stuff = NULL;
     /// while (!stuff) { // this must eventually succeed or result in bad_alloc
     ///     try {
-    ///         // create() is a factory method, takes a memory segment
+    ///         // create() is a factory method that takes a memory segment
     ///         // and calls allocate() on it multiple times.  create()
-    ///         // provides exception guarantee in that any intermediately
+    ///         // provides an exception guarantee that any intermediately
     ///         // allocated memory will be properly deallocate()-ed on
     ///         // exception.
     ///         stuff = ComplicatedStuff::create(mem_segment);
@@ -107,9 +107,10 @@ public:
     /// version of this method with a way to tell the caller the reason of
     /// any failure (whether it's really out of memory or just due to growing
     /// the segment).  That would be more convenient if the caller wants to
-    /// deal with the failures per call basis rather than as a set of calls
-    /// like the above example.  At the moment, we don't expect to have
-    /// such use cases, so we only provide the exception version.
+    /// deal with the failures on a per-call basis rather than as a set
+    /// of calls like in the above example.  At the moment, we don't expect
+    /// to have such use-cases, so we only provide the exception
+    /// version.
     ///
     /// \throw std::bad_alloc The implementation cannot allocate the
     /// requested storage.
