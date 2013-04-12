@@ -357,9 +357,12 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
         checkNamedData(it->first, it->second, *segment_);
     }
 
-    // Confirm they are still valid, while we shrink the segment
-    BOOST_FOREACH(TestData::value_type e, data_list) {
-        checkNamedData(e.first, e.second, *segment_, true);
+    // Confirm they are still valid, while we shrink the segment.  We'll
+    // intentionally delete bigger data first so it'll be more likely that
+    // shrink has some real effect.
+    const char* const names[] = { "data3", "data2", "data1", NULL };
+    for (int i = 0; names[i]; ++i) {
+        checkNamedData(names[i], data_list[names[i]], *segment_, true);
         segment_->shrinkToFit();
     }
 }
