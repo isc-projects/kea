@@ -399,12 +399,10 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
         if (ptr_child) {
             const uint32_t val = *static_cast<const uint32_t*>(ptr_child);
             EXPECT_EQ(424242, val);
-            if (val == 424242) {
-                // tell the parent it succeeded using a result code other
-                // than 255.
-                const char ok = 0;
-                EXPECT_EQ(1, write(pipes[1], &ok, sizeof(ok)));
-            }
+            // tell the parent whether it succeeded. 0 means it did,
+            // 0xff means it failed.
+            const char ok = (val == 424242) ? 0 : 0xff;
+            EXPECT_EQ(1, write(pipes[1], &ok, sizeof(ok)));
         }
         close(pipes[1]);
         exit(0);
