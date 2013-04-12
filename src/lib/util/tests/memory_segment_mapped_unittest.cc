@@ -357,13 +357,11 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
         checkNamedData(it->first, it->second, *segment_);
     }
 
-    const size_t old_size = segment_->getSize();
     // Confirm they are still valid, while we shrink the segment
     BOOST_FOREACH(TestData::value_type e, data_list) {
         checkNamedData(e.first, e.second, *segment_, true);
         segment_->shrinkToFit();
     }
-    EXPECT_GT(old_size, segment_->getSize());
 }
 
 TEST_F(MemorySegmentMappedTest, multiProcess) {
