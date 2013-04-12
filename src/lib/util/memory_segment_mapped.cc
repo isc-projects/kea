@@ -81,7 +81,7 @@ struct MemorySegmentMapped::Impl {
         // behavior.  But we basically assume grow() would fail before this
         // happens, so we assert it shouldn't happen.
         const size_t new_size = prev_size * 2;
-        assert(new_size != 0);
+        assert(new_size > prev_size);
 
         if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size)) {
             throw std::bad_alloc();
