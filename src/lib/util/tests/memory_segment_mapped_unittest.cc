@@ -24,6 +24,7 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <stdint.h>
 #include <cstdlib>
@@ -315,7 +316,10 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     segment_.reset();
     boost::interprocess::file_mapping::remove(mapped_file);
     segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE));
-    std::map<std::string, std::vector<uint8_t> > data_list;
+
+    typedef std::map<std::string, std::vector<uint8_t> > TestData;
+
+    TestData data_list;
     data_list["data1"] =
         std::vector<uint8_t>(80); // arbitrarily chosen small data
     data_list["data2"] =
@@ -325,9 +329,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     bool grown = false;
 
     // Allocate memory and store data
-    for (std::map<std::string, std::vector<uint8_t> >::iterator it
-             = data_list.begin();
-         it != data_list.end();
+    for (TestData::iterator it = data_list.begin(); it != data_list.end();
          ++it)
     {
         std::vector<uint8_t>& data = it->second;
@@ -348,17 +350,14 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     // Confirm there's at least one segment extension
     EXPECT_TRUE(grown);
     // Check named data are still valid
-    for (std::map<std::string, std::vector<uint8_t> >::iterator it
-             = data_list.begin();
-         it != data_list.end();
+    for (TestData::iterator it = data_list.begin(); it != data_list.end();
          ++it)
     {
         checkNamedData(it->first, it->second, *segment_);
     }
     // Confirm they are still valid, while we shrink the segment
-    const char* const names[] = { "data3", "data2", "data1", NULL };
-    for (int i = 0; names[i]; ++i) {
-        checkNamedData(names[i], data_list[names[i]], *segment_, true);
+    BOOST_FOREACH(TestData::value_type e, data_list) {
+        checkNamedData(e.first, e.second, *segment_, true);
         segment_->shrinkToFit();
     }
 }
