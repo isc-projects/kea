@@ -393,7 +393,7 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     if (child_pid == 0) {       // child
         close(pipes[0]);
         MemorySegmentMapped sgmt(mapped_file);
-        void* ptr_child = segment_->getNamedAddress("test address");
+        void* ptr_child = sgmt.getNamedAddress("test address");
         EXPECT_TRUE(ptr_child);
         if (ptr_child) {
             const uint32_t val = *static_cast<const uint32_t*>(ptr_child);
