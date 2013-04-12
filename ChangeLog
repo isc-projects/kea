@@ -1,3 +1,11 @@
+605.	[bug]		tmark
+	Modified perfdhcp to calculate the times displayed for packet sent 
+	and received as time elapsed since perfdhcp process start time.  
+	Previously these were times since the start of the epoch.
+	However the large numbers involved caused loss of precision
+	in the calculation of the test statistics.
+	(Trac #2785, git e9556924dcd1cf285dc358c47d65ed7c413e02cf)
+
 604.	[func]		marcin
 	libdhcp++: abstracted methods which open sockets and send/receive
 	DHCP4 packets to a separate class. Other classes will be derived
