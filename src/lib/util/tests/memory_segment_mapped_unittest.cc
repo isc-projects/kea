@@ -439,8 +439,11 @@ TEST_F(MemorySegmentMappedTest, shrink) {
     const size_t shrinked_size = segment_->getSize();
     EXPECT_GT(DEFAULT_INITIAL_SIZE, shrinked_size);
 
-    // Another shrink shouldn't cause disruption, and the size shouldn't
-    // change.
+    // Another shrink shouldn't cause disruption.  We expect the size is
+    // the same so we confirm it.  The underlying library doesn't guarantee
+    // that, so we may have to change it to EXPECT_GE if the test fails
+    // on that (MemorySegmentMapped class doesn't rely on this expectation,
+    // so it's okay even if it does not always hold).
     segment_->shrinkToFit();
     EXPECT_EQ(shrinked_size, segment_->getSize());
 
