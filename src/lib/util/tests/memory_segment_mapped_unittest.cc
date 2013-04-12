@@ -378,23 +378,23 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     *static_cast<uint32_t*>(ptr) = 424242;
     segment_->setNamedAddress("test address", ptr);
 
-    // reopen it in read-only.  our intended use case is to have one or
-    // more reader process or at most one exclusive writer process.  so we
-    // don't mix reader and writer.
-    segment_.reset();
-    segment_.reset(new MemorySegmentMapped(mapped_file));
-    ptr = segment_->getNamedAddress("test address");
-    ASSERT_TRUE(ptr);
-    EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
+    // close the read-write segment at this point.  our intended use case is
+    // to have one or more reader process or at most one exclusive writer
+    // process.  so we don't mix reader and writer.
     segment_.reset();
 
-    // Spawn another process and have it open and read the same data
+    // Spawn another process and have it open and read the same data.
     int pipes[2];
     EXPECT_EQ(0, pipe(pipes));
     const pid_t child_pid = fork();
     ASSERT_NE(-1, child_pid);
-    if (child_pid == 0) {       // child
+    if (child_pid == 0) {
+        // child: wait until the parent has opened the read-only segment.
+        char from_parent;
+        EXPECT_EQ(1, read(pipes[0], &from_parent, sizeof(from_parent)));
+        EXPECT_EQ(0, from_parent);
         close(pipes[0]);
+
         MemorySegmentMapped sgmt(mapped_file);
         void* ptr_child = sgmt.getNamedAddress("test address");
         EXPECT_TRUE(ptr_child);
@@ -409,8 +409,17 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
         close(pipes[1]);
         exit(0);
     }
-    // parent: wait for the completion of the child and checks the result.
+    // parent: open another read-only segment, then tell the child to open
+    // its own segment.
+    segment_.reset(new MemorySegmentMapped(mapped_file));
+    ptr = segment_->getNamedAddress("test address");
+    ASSERT_TRUE(ptr);
+    EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
+    const char some_data = 0;
+    EXPECT_EQ(1, write(pipes[1], &some_data, sizeof(some_data)));
     close(pipes[1]);
+
+    // wait for the completion of the child and checks the result.
     EXPECT_EQ(0, parentReadState(pipes[0]));
     close(pipes[0]);
 }
