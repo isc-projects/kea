@@ -238,6 +238,13 @@ TEST_F(CacheConfigTest, getSegmentType) {
                                                 " \"params\": {}}"));
     EXPECT_THROW(CacheConfig("MasterFiles", 0, *badconfig, true),
                  isc::data::TypeError);
+
+    // Bad value: should be rejected at construction time
+    ConstElementPtr badconfig2(Element::fromJSON("{\"cache-enable\": true,"
+                                                " \"cache-type\": \"bogus\","
+                                                " \"params\": {}}"));
+    EXPECT_THROW(CacheConfig("MasterFiles", 0, *badconfig2, true),
+                 isc::datasrc::internal::CacheConfigError);
 }
 
 }

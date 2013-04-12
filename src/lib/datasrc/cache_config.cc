@@ -37,12 +37,16 @@ getEnabledFromConf(const Element& conf) {
 
 std::string
 getSegmentTypeFromConf(const Element& conf) {
-    // If cache-zones is not explicitly configured, use the default type.
+    // If cache-type is not explicitly configured, use the default type.
     // (Ideally we should retrieve the default from the spec).
     if (!conf.contains("cache-type")) {
         return ("local");
     }
-    return (conf.get("cache-type")->stringValue());
+    std::string cache_type = conf.get("cache-type")->stringValue();
+    if ((cache_type != "local") && (cache_type != "mapped")) {
+        isc_throw(CacheConfigError, "invalid cache-type");
+    }
+    return (cache_type);
 }
 }
 
