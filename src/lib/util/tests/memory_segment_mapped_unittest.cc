@@ -411,6 +411,7 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     // parent: wait for the completion of the child and checks the result.
     close(pipes[1]);
     EXPECT_EQ(0, parentReadState(pipes[0]));
+    close(pipes[0]);
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
