@@ -22,12 +22,25 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
 
 #include <cassert>
 #include <string>
 #include <new>
 
-using namespace boost::interprocess;
+// boost::interprocess namespace is big and can cause unexpected import
+// (e.g., it has "read_only"), so it's safer to be specific for shortcuts.
+using boost::interprocess::basic_managed_mapped_file;
+using boost::interprocess::rbtree_best_fit;
+using boost::interprocess::null_mutex_family;
+using boost::interprocess::iset_index;
+using boost::interprocess::create_only_t;
+using boost::interprocess::create_only;
+using boost::interprocess::open_or_create_t;
+using boost::interprocess::open_or_create;
+using boost::interprocess::open_read_only;
+using boost::interprocess::open_only;
+using boost::interprocess::offset_ptr;
 
 namespace isc {
 namespace util {
@@ -47,27 +60,70 @@ typedef basic_managed_mapped_file<char,
                                   iset_index> BaseSegment;
 
 struct MemorySegmentMapped::Impl {
-    // Constructor for create-only (and read-write) mode
+    // Constructor for create-only (and read-write) mode.  this case is
+    // tricky because we want to remove any existing file but we also want
+    // to detect possible conflict with other readers or writers using
+    // file lock.
     Impl(const std::string& filename, create_only_t, size_t initial_size) :
-        read_only_(false), filename_(filename),
-        base_sgmt_(new BaseSegment(create_only, filename.c_str(),
-                                   initial_size))
-    {}
+        read_only_(false), filename_(filename)
+    {
+        try {
+            // First, try opening it in boost create_only mode; it fails if
+            // the file exists (among other reasons).
+            base_sgmt_.reset(new BaseSegment(create_only, filename.c_str(),
+                                             initial_size));
+        } catch (const boost::interprocess::interprocess_exception& ex) {
+            // We assume this is because the file exists; otherwise creating
+            // file_lock would fail with interprocess_exception, and that's
+            // what we want here (we wouldn't be able to create a segment
+            // anyway).
+            lock_.reset(new boost::interprocess::file_lock(filename.c_str()));
+
+            // Confirm there's no other reader or writer, and then release
+            // the lock before we remove the file; there's a chance of race
+            // here, but this check doesn't intend to guarantee 100% safety
+            // and so it should be okay.
+            checkWriter();
+            lock_.reset();
+
+            // now remove the file (if it happens to have been delete, this
+            // will be no-op), then re-open it with create_only.  this time
+            // it should succeed, and if it fails again, that's fatal for this
+            // constructor.
+            boost::interprocess::file_mapping::remove(filename.c_str());
+            base_sgmt_.reset(new BaseSegment(create_only, filename.c_str(),
+                                             initial_size));
+        }
+
+        // confirm there's no other user and there won't either.
+        lock_.reset(new boost::interprocess::file_lock(filename.c_str()));
+        checkWriter();
+    }
 
     // Constructor for open-or-write (and read-write) mode
     Impl(const std::string& filename, open_or_create_t, size_t initial_size) :
         read_only_(false), filename_(filename),
         base_sgmt_(new BaseSegment(open_or_create, filename.c_str(),
-                                   initial_size))
-    {}
+                                   initial_size)),
+        lock_(new boost::interprocess::file_lock(filename.c_str()))
+    {
+        checkWriter();
+    }
 
     // Constructor for existing segment, either read-only or read-write
     Impl(const std::string& filename, bool read_only) :
         read_only_(read_only), filename_(filename),
-        base_sgmt_(read_only ?
+        base_sgmt_(read_only_ ?
                    new BaseSegment(open_read_only, filename.c_str()) :
-                   new BaseSegment(open_only, filename.c_str()))
-    {}
+                   new BaseSegment(open_only, filename.c_str())),
+        lock_(new boost::interprocess::file_lock(filename.c_str()))
+    {
+        if (read_only_) {
+            checkReader();
+        } else {
+            checkWriter();
+        }
+    }
 
     // Internal helper to grow the underlying mapped segment.
     void growSegment() {
@@ -105,6 +161,30 @@ struct MemorySegmentMapped::Impl {
 
     // actual Boost implementation of mapped segment.
     boost::scoped_ptr<BaseSegment> base_sgmt_;
+
+private:
+    // helper methods and member to detect any reader-writer conflict at
+    // the time of construction using an advisory file lock.  The lock will
+    // be held throughout the lifetime of the object and will be released
+    // automatically.
+
+    void checkReader() {
+        if (!lock_->try_lock_sharable()) {
+            isc_throw(MemorySegmentOpenError,
+                      "mapped memory segment can't be opened as read-only "
+                      "with a writer process");
+        }
+    }
+
+    void checkWriter() {
+        if (!lock_->try_lock()) {
+            isc_throw(MemorySegmentOpenError,
+                      "mapped memory segment can't be opened as read-write "
+                      "with other reader or writer processes");
+        }
+    }
+
+    boost::scoped_ptr<boost::interprocess::file_lock> lock_;
 };
 
 MemorySegmentMapped::MemorySegmentMapped(const std::string& filename) :
@@ -132,8 +212,6 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
             impl_ = new Impl(filename, open_or_create, initial_size);
             break;
         case CREATE_ONLY:
-            // Remove any existing file then create a new one
-            file_mapping::remove(filename.c_str());
             impl_ = new Impl(filename, create_only, initial_size);
             break;
         default:

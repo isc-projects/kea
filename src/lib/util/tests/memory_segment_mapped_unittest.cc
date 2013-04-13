@@ -56,6 +56,25 @@ const MemorySegmentMapped::OpenMode CREATE_ONLY =
 const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 const size_t DEFAULT_INITIAL_SIZE = 32 * 1024; // intentionally hardcoded
 
+// A simple RAII-style wrapper for a pipe.  Several tests in this file use
+// pipes, so this helper will be useful.
+class PipeHolder {
+public:
+    PipeHolder() {
+        if (pipe(fds_) == -1) {
+            isc_throw(isc::Unexpected, "pipe failed");
+        }
+    }
+    ~PipeHolder() {
+        close(fds_[0]);
+        close(fds_[1]);
+    }
+    int getReadFD() const { return (fds_[0]); }
+    int getWriteFD() const { return (fds_[1]); }
+private:
+    int fds_[2];
+};
+
 class MemorySegmentMappedTest : public ::testing::Test {
 protected:
     MemorySegmentMappedTest() {
@@ -102,6 +121,7 @@ TEST_F(MemorySegmentMappedTest, createAndModify) {
 
         // re-open it in read-write mode, but don't try to create it
         // this time.
+        segment_.reset();       // make sure close is first.
         segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_FOR_WRITE));
     }
 }
@@ -113,6 +133,7 @@ TEST_F(MemorySegmentMappedTest, createWithSize) {
     // the size is actually the specified one.
     const size_t new_size = 64 * 1024;
     EXPECT_NE(new_size, segment_->getSize());
+    segment_.reset();
     segment_.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE,
                                            new_size));
     EXPECT_EQ(new_size, segment_->getSize());
@@ -263,22 +284,6 @@ checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
     ASSERT_TRUE(dp);
     EXPECT_EQ(0, std::memcmp(dp, &data[0], data.size()));
 
-    // Open a separate read-only segment and checks the same named data
-    // Since the mapped space should be different, the resulting bare address
-    // from getNamedAddress should also be different, but it should actually
-    // point to the same data.
-    // Note: it's mostly violation of the API assumption to open read-only
-    // and read-write segments at the same time, but unless we modify the
-    // segment throughout the lifetime of the read-only segment, it should
-    // work.
-    scoped_ptr<MemorySegmentMapped> segment_ro(
-        new MemorySegmentMapped(mapped_file));
-    void* dp2 = segment_ro->getNamedAddress(name.c_str());
-    ASSERT_NE(static_cast<void*>(NULL), dp2);
-    EXPECT_NE(dp, dp2);
-    EXPECT_EQ(0, std::memcmp(dp2, &data[0], data.size()));
-    segment_ro.reset();
-
     if (delete_after_check) {
         sgmt.deallocate(dp, data.size());
         sgmt.clearNamedAddress(name.c_str());
@@ -384,16 +389,16 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     segment_.reset();
 
     // Spawn another process and have it open and read the same data.
-    int pipes[2];
-    EXPECT_EQ(0, pipe(pipes));
+    PipeHolder pipe_to_child;
+    PipeHolder pipe_to_parent;
     const pid_t child_pid = fork();
     ASSERT_NE(-1, child_pid);
     if (child_pid == 0) {
         // child: wait until the parent has opened the read-only segment.
         char from_parent;
-        EXPECT_EQ(1, read(pipes[0], &from_parent, sizeof(from_parent)));
+        EXPECT_EQ(1, read(pipe_to_child.getReadFD(), &from_parent,
+                          sizeof(from_parent)));
         EXPECT_EQ(0, from_parent);
-        close(pipes[0]);
 
         MemorySegmentMapped sgmt(mapped_file);
         void* ptr_child = sgmt.getNamedAddress("test address");
@@ -404,9 +409,8 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
             // tell the parent whether it succeeded. 0 means it did,
             // 0xff means it failed.
             const char ok = (val == 424242) ? 0 : 0xff;
-            EXPECT_EQ(1, write(pipes[1], &ok, sizeof(ok)));
+            EXPECT_EQ(1, write(pipe_to_parent.getWriteFD(), &ok, sizeof(ok)));
         }
-        close(pipes[1]);
         exit(0);
     }
     // parent: open another read-only segment, then tell the child to open
@@ -416,12 +420,11 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     ASSERT_TRUE(ptr);
     EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
     const char some_data = 0;
-    EXPECT_EQ(1, write(pipes[1], &some_data, sizeof(some_data)));
-    close(pipes[1]);
+    EXPECT_EQ(1, write(pipe_to_child.getWriteFD(), &some_data,
+                       sizeof(some_data)));
 
     // wait for the completion of the child and checks the result.
-    EXPECT_EQ(0, parentReadState(pipes[0]));
-    close(pipes[0]);
+    EXPECT_EQ(0, parentReadState(pipe_to_parent.getReadFD()));
 }
 
 TEST_F(MemorySegmentMappedTest, nullDeallocate) {
@@ -453,25 +456,12 @@ TEST_F(MemorySegmentMappedTest, shrink) {
 }
 
 TEST_F(MemorySegmentMappedTest, violateReadOnly) {
-    // If the segment is opened in the read-only mode, modification
-    // attempts are prohibited. When detectable it must result in an
-    // exception.
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).allocate(16),
-                 MemorySegmentError);
-    // allocation that would otherwise require growing the segment; permission
-    // check should be performed before that.
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).
-                 allocate(DEFAULT_INITIAL_SIZE * 2), MemorySegmentError);
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).setNamedAddress("test",
-                                                                  NULL),
-                 MemorySegmentError);
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).clearNamedAddress("test"),
-                 MemorySegmentError);
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).shrinkToFit(),
-                 MemorySegmentError);
-
+    // Create a named address for the tests below, then reset the writer
+    // segment so that it won't fail for different reason (i.e., read-write
+    // conflict).
     void* ptr = segment_->allocate(sizeof(uint32_t));
     segment_->setNamedAddress("test address", ptr);
+    segment_.reset();
 
     // Attempts to modify memory from the read-only segment directly
     // will result in a crash.
@@ -484,8 +474,23 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
             }, "");
     }
 
-    EXPECT_THROW(MemorySegmentMapped(mapped_file).deallocate(ptr, 4),
+    // If the segment is opened in the read-only mode, modification
+    // attempts are prohibited. When detectable it must result in an
+    // exception.
+    MemorySegmentMapped segment_ro(mapped_file);
+    ptr = segment_ro.getNamedAddress("test address");
+    EXPECT_NE(static_cast<void*>(NULL), ptr);
+
+    EXPECT_THROW(segment_ro.deallocate(ptr, 4), MemorySegmentError);
+
+    EXPECT_THROW(segment_ro.allocate(16), MemorySegmentError);
+    // allocation that would otherwise require growing the segment; permission
+    // check should be performed before that.
+    EXPECT_THROW(segment_ro.allocate(DEFAULT_INITIAL_SIZE * 2),
                  MemorySegmentError);
+    EXPECT_THROW(segment_ro.setNamedAddress("test", NULL), MemorySegmentError);
+    EXPECT_THROW(segment_ro.clearNamedAddress("test"), MemorySegmentError);
+    EXPECT_THROW(segment_ro.shrinkToFit(), MemorySegmentError);
 }
 
 TEST_F(MemorySegmentMappedTest, getCheckSum) {
@@ -503,6 +508,104 @@ TEST_F(MemorySegmentMappedTest, getCheckSum) {
     }
 
     EXPECT_EQ(old_cksum + 1, segment_->getCheckSum());
+}
+
+// Mode of opening segments in the tests below.
+enum TestOpenMode {
+    READER = 0,
+    WRITER_FOR_WRITE,
+    WRITER_OPEN_OR_CREATE,
+    WRITER_CREATE_ONLY
+};
+
+// A shortcut to attempt to open a specified type of segment (generally
+// expecting it to fail)
+void
+setSegment(TestOpenMode mode, scoped_ptr<MemorySegmentMapped>& sgmt_ptr) {
+    switch (mode) {
+    case READER:
+        sgmt_ptr.reset(new MemorySegmentMapped(mapped_file));
+        break;
+    case WRITER_FOR_WRITE:
+        sgmt_ptr.reset(new MemorySegmentMapped(mapped_file, OPEN_FOR_WRITE));
+        break;
+    case WRITER_OPEN_OR_CREATE:
+        sgmt_ptr.reset(new MemorySegmentMapped(mapped_file, OPEN_OR_CREATE));
+        break;
+    case WRITER_CREATE_ONLY:
+        sgmt_ptr.reset(new MemorySegmentMapped(mapped_file, CREATE_ONLY));
+        break;
+    }
+}
+
+// Common logic for conflictReaderWriter test.  The segment opened in the
+// parent process will prevent the segment in the child from being used.
+void
+conflictCheck(TestOpenMode parent_mode, TestOpenMode child_mode) {
+    PipeHolder pipe_to_child;
+    PipeHolder pipe_to_parent;
+    const pid_t child_pid = fork();
+    ASSERT_NE(-1, child_pid);
+
+    if (child_pid == 0) {
+        char ch;
+        EXPECT_EQ(1, read(pipe_to_child.getReadFD(), &ch, sizeof(ch)));
+
+        ch = 0;                 // 0 = open success, 1 = fail
+        try {
+            scoped_ptr<MemorySegmentMapped> sgmt;
+            setSegment(child_mode, sgmt);
+            EXPECT_EQ(1, write(pipe_to_parent.getWriteFD(), &ch, sizeof(ch)));
+        } catch (const MemorySegmentOpenError&) {
+            ch = 1;
+            EXPECT_EQ(1, write(pipe_to_parent.getWriteFD(), &ch, sizeof(ch)));
+        }
+        exit(0);
+    }
+
+    // parent: open a segment, then tell the child to open its own segment of
+    // the specified type.
+    scoped_ptr<MemorySegmentMapped> sgmt;
+    setSegment(parent_mode, sgmt);
+    const char some_data = 0;
+    EXPECT_EQ(1, write(pipe_to_child.getWriteFD(), &some_data,
+                       sizeof(some_data)));
+
+    // wait for the completion of the child and checks the result.  open at
+    // the child side should fail, so the parent should get the value of 1.
+    EXPECT_EQ(1, parentReadState(pipe_to_parent.getReadFD()));
+}
+
+TEST_F(MemorySegmentMappedTest, conflictReaderWriter) {
+    // Test using fork() doesn't work well on valgrind
+    if (isc::util::unittests::runningOnValgrind()) {
+        return;
+    }
+
+    // Below, we check all combinations of conflicts between reader and writer
+    // will fail.  We first make sure there's no other reader or writer.
+    segment_.reset();
+
+    // reader opens segment, then writer (OPEN_FOR_WRITE) tries to open
+    conflictCheck(READER, WRITER_FOR_WRITE);
+    // reader opens segment, then writer (OPEN_OR_CREATE) tries to open
+    conflictCheck(READER, WRITER_OPEN_OR_CREATE);
+    // reader opens segment, then writer (CREATE_ONLY) tries to open
+    conflictCheck(READER, WRITER_CREATE_ONLY);
+
+    // writer (OPEN_FOR_WRITE) opens a segment, then reader tries to open
+    conflictCheck(WRITER_FOR_WRITE, READER);
+    // writer (OPEN_OR_CREATE) opens a segment, then reader tries to open
+    conflictCheck(WRITER_OPEN_OR_CREATE, READER);
+    // writer (CREATE_ONLY) opens a segment, then reader tries to open
+    conflictCheck(WRITER_CREATE_ONLY, READER);
+
+    // writer opens segment, then another writer (OPEN_FOR_WRITE) tries to open
+    conflictCheck(WRITER_FOR_WRITE, WRITER_FOR_WRITE);
+    // writer opens segment, then another writer (OPEN_OR_CREATE) tries to open
+    conflictCheck(WRITER_FOR_WRITE, WRITER_OPEN_OR_CREATE);
+    // writer opens segment, then another writer (CREATE_ONLY) tries to open
+    conflictCheck(WRITER_FOR_WRITE, WRITER_CREATE_ONLY);
 }
 
 }
