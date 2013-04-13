@@ -299,11 +299,13 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     const uint16_t test_val16 = 42000;
     *static_cast<uint16_t*>(ptr16) = test_val16;
     EXPECT_FALSE(segment_->setNamedAddress("test address", ptr16));
-    MemorySegmentMapped segment_ro(mapped_file);
+    segment_.reset();           // close it before opening another one
+
+    segment_.reset(new MemorySegmentMapped(mapped_file));
     EXPECT_NE(static_cast<void*>(NULL),
-              segment_ro.getNamedAddress("test address"));
+              segment_->getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
-                  segment_ro.getNamedAddress("test address")));
+                  segment_->getNamedAddress("test address")));
 
     // try to set an unusually long name.  We re-create the file so
     // creating the name would cause allocation failure and trigger internal
