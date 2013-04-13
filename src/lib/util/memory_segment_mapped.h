@@ -35,13 +35,14 @@ namespace util {
 /// In the read-write mode the object can allocate or deallocate memory
 /// from the mapped image, and the owner process can change the content.
 ///
-/// This class does not provide any synchronization mechanism between
-/// read-only and read-write objects that share the same mapped image;
-/// in fact, the expected usage is the application (or a system of related
-/// processes) ensures there's at most one read-write object and if there's
-/// such an object, no read-only object shares the image.  If an application
-/// uses this class beyond that expectation, it's the application's
-/// responsibility to provide necessary synchronization between the processes.
+/// Multiple processes can open multiple segments for the same file in
+/// read-only mode at the same time.  But there shouldn't be more than
+/// one process that opens segments for the same file in read-write mode
+/// at the same time.  Likewise, if one process opens a segment for a file
+/// there shouldn't be any other process that opens a segment for the file
+/// in read-only mode.  This class tries to detect any violation of this
+/// restriction, but this does not intend to provide 100% safety.  It's
+/// generally the user's responsibility to ensure this condition.
 class MemorySegmentMapped : boost::noncopyable, public MemorySegment {
 public:
     /// \brief The default value of the mapped file size when newly created.
@@ -74,7 +75,8 @@ public:
     /// exception will be thrown.
     ///
     /// \throw MemorySegmentOpenError The given file does not exist, is not
-    /// readable, or not valid mappable segment.
+    /// readable, or not valid mappable segment.  Or there is another process
+    /// that has already opened a segment for the file.
     /// \throw std::bad_alloc (rare case) internal resource allocation
     /// failure.
     ///
@@ -105,6 +107,10 @@ public:
     /// by this class object.  If any of these conditions is not met, or
     /// create or initialization fails, \c MemorySegmentOpenError exception
     /// will be thrown.
+    ///
+    /// This constructor also throws \c MemorySegmentOpenError when it
+    /// detects violation of the restriction on the mixed open of read-only
+    /// and read-write mode (see the class description).
     ///
     /// When initial_size is specified but is too small (including a value of
     /// 0), the underlying Boost library will reject it, and this constructor
