@@ -43,6 +43,16 @@ namespace util {
 /// in read-only mode.  This class tries to detect any violation of this
 /// restriction, but this does not intend to provide 100% safety.  It's
 /// generally the user's responsibility to ensure this condition.
+///
+/// The same restriction applies within the single process, whether
+/// multi-threaded or not: a process shouldn't open read-only and read-write
+/// (or multiple read-write) segments for the same file.  The violation
+/// detection mentioned above may or may not work in such cases due to
+/// limitation of the underlying API.  It's completely user's responsibility
+/// to prevent this from happening.  A single process may open multiple
+/// segments in read-only mode for the same file, but that shouldn't be
+/// necessary in practice; since it's read-only there wouldn't be a reason
+/// to have a redundant copy.
 class MemorySegmentMapped : boost::noncopyable, public MemorySegment {
 public:
     /// \brief The default value of the mapped file size when newly created.
