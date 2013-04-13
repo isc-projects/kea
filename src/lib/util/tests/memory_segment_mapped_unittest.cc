@@ -97,6 +97,13 @@ protected:
     scoped_ptr<MemorySegmentMapped> segment_;
 };
 
+TEST(MemorySegmentMappedConstantTest, staticVariables) {
+    // Attempt to take address of MemorySegmentMapped::INITIAL_SIZE.
+    // It helps in case we accidentally remove the definition from the main
+    // code.
+    EXPECT_EQ(DEFAULT_INITIAL_SIZE, *(&MemorySegmentMapped::INITIAL_SIZE));
+}
+
 TEST_F(MemorySegmentMappedTest, createAndModify) {
     // We are going to do the same set of basic tests twice; one after creating
     // the mapped file, the other by re-opening the existing file in the
