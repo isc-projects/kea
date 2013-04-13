@@ -42,11 +42,7 @@ getSegmentTypeFromConf(const Element& conf) {
     if (!conf.contains("cache-type")) {
         return ("local");
     }
-    std::string cache_type = conf.get("cache-type")->stringValue();
-    if ((cache_type != "local") && (cache_type != "mapped")) {
-        isc_throw(CacheConfigError, "invalid cache-type");
-    }
-    return (cache_type);
+    return (conf.get("cache-type")->stringValue());
 }
 }
 
