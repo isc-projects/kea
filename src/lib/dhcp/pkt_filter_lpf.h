@@ -17,6 +17,8 @@
 
 #include <dhcp/pkt_filter.h>
 
+#include <util/buffer.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -57,13 +59,29 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @oaram iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @throw isc::NotImplemented always
     /// @return result of sending a packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt);
 
+protected:
+
+    static void assembleEthernetHeader(const Iface& iface,
+                                       const Pkt4Ptr& pkt,
+                                       util::OutputBuffer& out_buf);
+
+    static void assembleIpUdpHeader(const Pkt4Ptr& pkt,
+                                    util::OutputBuffer& out_buf);
+
+    static uint16_t checksum(const char* buf, const uint32_t buf_size,
+                             uint32_t sum = 0);
+
+    static uint16_t checksumFinish(uint16_t sum);
+    
 };
 
 } // namespace isc::dhcp

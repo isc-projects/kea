@@ -758,7 +758,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
 
     // Skip checking if packet filter is non-NULL because it has been
     // already checked when packet filter was set.
-    return (packet_filter_->send(getSocket(*pkt), pkt));
+    return (packet_filter_->send(*iface, getSocket(*pkt), pkt));
 }
 
 

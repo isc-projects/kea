@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter_lpf.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -91,7 +92,7 @@ public:
     }
 
     /// Does nothing
-    virtual int send(uint16_t, const Pkt4Ptr&) {
+    virtual int send(const Iface&, uint16_t, const Pkt4Ptr&) {
         return (0);
     }
 
@@ -103,7 +104,9 @@ public:
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
 public:
-    NakedIfaceMgr() { }
+    NakedIfaceMgr() {
+        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
+    }
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
 
@@ -725,14 +728,13 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("127.0.0.1");
-    int socket1 = 0, socket2 = 0;
+    int socket1 = 0;
     EXPECT_NO_THROW(
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
-        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000 + 1);
     );
 
     EXPECT_GE(socket1, 0);
-    EXPECT_GE(socket2, 0);
+    //    EXPECT_GE(socket2, 0);
 
     boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
 
@@ -765,7 +767,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     boost::shared_ptr<Pkt4> rcvPkt;
 
-    EXPECT_EQ(true, ifacemgr->send(sendPkt));
+    EXPECT_NO_THROW(ifacemgr->send(sendPkt));
 
     ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
     ASSERT_TRUE(rcvPkt); // received our own packet
