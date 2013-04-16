@@ -198,7 +198,8 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
 }
 
 int
-PktFilterInet::send(uint16_t sockfd, const Pkt4Ptr& pkt) {
+PktFilterInet::send(const Iface&, uint16_t sockfd,
+                    const Pkt4Ptr& pkt) {
     memset(&control_buf_[0], 0, control_buf_len_);
 
     // Set the target address we're sending to.
