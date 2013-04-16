@@ -16,6 +16,7 @@
 #define PKT_FILTER_H
 
 #include <asiolink/io_address.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -71,12 +72,17 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @return result of sending the packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt) = 0;
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt) = 0;
 };
+
+/// Pointer to a PktFilter object.
+typedef boost::shared_ptr<PktFilter> PktFilterPtr;
 
 } // namespace isc::dhcp
 } // namespace isc

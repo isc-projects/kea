@@ -57,11 +57,13 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @return result of sending a packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt);
 
 private:
     /// Length of the control_buf_ array.
