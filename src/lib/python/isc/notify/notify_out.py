@@ -41,7 +41,6 @@ ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
 _MAX_NOTIFY_NUM = 30
 _MAX_NOTIFY_TRY_NUM = 5
-_EVENT_NONE = 0
 _EVENT_READ = 1
 _EVENT_TIMEOUT = 2
 _NOTIFY_TIMEOUT = 1
@@ -441,8 +440,10 @@ class NotifyOut:
                 if self._handle_notify_reply(zone_notify_info, reply, tgt):
                     self._notify_next_target(zone_notify_info)
 
-        elif event_type == _EVENT_TIMEOUT and zone_notify_info.notify_try_num > 0:
-            logger.info(NOTIFY_OUT_TIMEOUT, AddressFormatter(tgt))
+        else:
+            assert event_type == _EVENT_TIMEOUT
+            if zone_notify_info.notify_try_num > 0:
+                logger.info(NOTIFY_OUT_TIMEOUT, AddressFormatter(tgt))
 
         tgt = zone_notify_info.get_current_notify_target()
         if tgt:
