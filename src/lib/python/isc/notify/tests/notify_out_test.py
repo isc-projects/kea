@@ -352,11 +352,11 @@ class TestNotifyOut(unittest.TestCase):
         # bigger than 2 seconds:
         self.assertGreater(example_net_info.notify_timeout, time1 + 2)
 
+        # Possible event is "read" or "timeout".
         cur_tgt = example_net_info._notify_current
         example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
-        self._notify._zone_notify_handler(example_net_info,
-                                          notify_out._EVENT_NONE)
-        self.assertNotEqual(cur_tgt, example_net_info._notify_current)
+        self.assertRaises(AssertionError, self._notify._zone_notify_handler,
+                          example_net_info, notify_out._EVENT_TIMEOUT + 1)
 
         cur_tgt = example_net_info._notify_current
         example_net_info.create_socket('127.0.0.1')
