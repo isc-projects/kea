@@ -54,9 +54,9 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
 }
 
 Pkt4Ptr
-PktFilterLPF::receive(const Iface&, const SocketInfo& socket_info) {
+PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     // @todo: implement this function
-    unsigned char buf[1536];
+    uint8_t buf[IfaceMgr::RCVBUFSIZE];
     int data_len = read(socket_info.sockfd_, buf, sizeof(buf));
     if (data_len <= 0) {
         return Pkt4Ptr();
@@ -66,6 +66,10 @@ PktFilterLPF::receive(const Iface&, const SocketInfo& socket_info) {
     int data_offset = 42;
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf + data_offset,
                                    data_len - data_offset));
+
+    pkt->setIndex(iface.getIndex());
+    pkt->setIface(iface.getName());
+
     return (pkt);
 }
 
@@ -99,9 +103,9 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     if (result < 0) {
         isc_throw(SocketWriteError, "pkt4 send failed");
     }
-    
+
     return (0);
-    
+
 }
 
 
