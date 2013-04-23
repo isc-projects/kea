@@ -54,8 +54,8 @@ const size_t RRSIG_MINIMUM_LEN = 2 * sizeof(uint8_t) + 2 * sizeof(uint16_t) +
 struct RRSIGImpl {
     // straightforward representation of RRSIG RDATA fields
     RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
-              uint32_t originalttl, uint32_t timeexpire, uint32_t timeinception,
-              uint16_t tag, const Name& signer,
+              uint32_t originalttl, uint32_t timeexpire,
+              uint32_t timeinception, uint16_t tag, const Name& signer,
               const vector<uint8_t>& signature) :
         covered_(covered), algorithm_(algorithm), labels_(labels),
         originalttl_(originalttl), timeexpire_(timeexpire),
@@ -75,21 +75,25 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-void RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin)
-{
-    string covered_txt, expire_txt, inception_txt, signature_txt;
-    unsigned int algorithm, labels, tag;
-    uint32_t originalttl;
-
-    covered_txt = lexer.getNextToken(MasterToken::STRING).getString();
-    algorithm = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    labels = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    originalttl = RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
-    expire_txt = lexer.getNextToken(MasterToken::STRING).getString();
-    inception_txt = lexer.getNextToken(MasterToken::STRING).getString();
-    tag = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    Name signer = createNameFromLexer(lexer, origin);
-    signature_txt = lexer.getNextToken(MasterToken::STRING).getString();
+void
+RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
+    const string covered_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    const uint32_t algorithm = lexer.getNextToken(MasterToken::NUMBER).
+        getNumber();
+    const uint32_t labels = lexer.getNextToken(MasterToken::NUMBER).
+        getNumber();
+    const uint32_t originalttl =
+        RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
+    const string expire_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    const string inception_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    const uint32_t tag =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const Name signer = createNameFromLexer(lexer, origin);
+    const string signature_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
 
     if (algorithm > 0xff) {
         isc_throw(InvalidRdataText, "RRSIG algorithm out of range");
