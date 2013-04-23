@@ -423,6 +423,18 @@ class NotifyOut:
     def _zone_notify_handler(self, zone_notify_info, event_type):
         """Notify handler for one zone.
 
+        For the event type of _EVENT_READ, this method reads a new notify
+        response message from the corresponding socket.  If it succeeds
+        and the response is the expected one, it will send another notify
+        to the next slave for the zone (if any) or the next zone (if any)
+        waiting for its turn of sending notifies.
+
+        In the case of _EVENT_TIMEOUT, or if the read fails or the response
+        is not an expected one in the case of _EVENT_READ, this method will
+        resend the notify request to the same slave up to _MAX_NOTIFY_TRY_NUM
+        times.  If it reaches the max, it will swith to the next slave or
+        the next zone like the successful case above.
+
         The first notify message is always triggered by the event
         "_EVENT_TIMEOUT" since when one zone prepares to notify its slaves,
         its notify_timeout is set to now, which is used to trigger sending
