@@ -33,7 +33,8 @@ using namespace isc::util::encode;
 
 void
 DHCID::createFromLexer(MasterLexer& lexer) {
-    string digest_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    const string digest_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
     decodeBase64(digest_txt, digest_);
 
     // RFC4701 states DNS software should consider the RDATA section to
