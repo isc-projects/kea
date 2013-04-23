@@ -12,15 +12,50 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <protocol_util.h>
+#include <dhcp/dhcp6.h> // defines HWTYPE_ETHERNET
+#include <dhcp/protocol_util.h>
+#include <boost/static_assert.hpp>
 #include <netinet/ip.h>
+
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
 
+void decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
+    // The size of the buffer to be parsed must not be lower
+    // then the size of the Ethernet frame header.
+    if (buf.getLength() - buf.getPosition() < ETHERNET_HEADER_LEN) {
+        isc_throw(InvalidPacketHeader, "size of ethernet header in received "
+                  << "packet is invalid, expected at least 14 bytes, received "
+                  << buf.getLength() - buf.getPosition() << " bytes");
+    }
+    // Packet object must not be NULL. We want to output some values
+    // to this object.
+    if (!pkt) {
+        isc_throw(BadValue, "NULL packet object provided when parsing ethernet"
+                  " frame header");
+    }
+
+    // The size of the single address is always lower then the size of
+    // the header that holds this address. Otherwise, it is a programming
+    // error that we want to detect in the compilation time.
+    BOOST_STATIC_ASSERT(ETHERNET_HEADER_LEN > HWAddr::ETHERNET_HWADDR_LEN);
+
+    // Skip destination address.
+    buf.setPosition(HWAddr::ETHERNET_HWADDR_LEN);
+    // Read the source HW address.
+    std::vector<uint8_t> dest_addr;
+    buf.readVector(dest_addr, HWAddr::ETHERNET_HWADDR_LEN);
+    // Set the address we have read.
+    pkt->setHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, dest_addr);
+    // Move the buffer read pointer to the end of the Ethernet frame header.
+    buf.setPosition(ETHERNET_HEADER_LEN);
+}
+
 void
 writeEthernetHeader(const uint8_t* src_hw_addr, const uint8_t* dest_hw_addr,
-                    util::OutputBuffer& out_buf) {
+                    OutputBuffer& out_buf) {
     // Write destination and source address.
     out_buf.writeData(dest_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);
     out_buf.writeData(src_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);

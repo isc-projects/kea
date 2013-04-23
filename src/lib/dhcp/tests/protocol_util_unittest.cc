@@ -14,6 +14,8 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/protocol_util.h>
 #include <util/buffer.h>
 
@@ -61,6 +63,65 @@ TEST(ProtocolUtilTest, checksum) {
     chksum = ~calcChecksum(hdr, hdr_size, 2);
     // The checkum value should change.
     EXPECT_EQ(0xb1e4, chksum);
+}
+
+// The purpose of this test is to verify that the Ethernet frame header
+// can be decoded correctly. In particular it verifies that the source
+// HW address can be extracted from it.
+TEST(ProtocolUtilTest, decodeEthernetHeader) {
+    // Source HW address, 6 bytes.
+    const uint8_t src_hw_addr[6] = {
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15
+    };
+    // Destination HW address, 6 bytes.
+    const uint8_t dest_hw_addr[6] = {
+        0x20, 0x31, 0x42, 0x53, 0x64, 0x75
+    };
+
+    // Prepare a buffer holding Ethernet frame header and 4 bytes of
+    // dummy data.
+    OutputBuffer buf(1);
+    buf.writeData(dest_hw_addr, sizeof(src_hw_addr));
+    buf.writeData(src_hw_addr, sizeof(src_hw_addr));
+    buf.writeUint16(0x800);
+    // Append dummy data. We will later check that this data is not
+    // removed or corrupted when reading the ethernet header.
+    buf.writeUint32(0x01020304);
+
+    // Create a buffer with truncated ethernet frame header..
+    InputBuffer in_buf_truncated(buf.getData(), buf.getLength() - 6);
+    // But provide valid packet object to make sure that the function
+    // under test does not throw due to NULL pointer packet.
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 0));
+    // Function should throw because header data is truncated.
+    EXPECT_THROW(decodeEthernetHeader(in_buf_truncated, pkt),
+                 InvalidPacketHeader);
+
+    // Get not truncated buffer.
+    InputBuffer in_buf(buf.getData(), buf.getLength());
+    // But provide NULL packet object instead.
+    pkt.reset();
+    // It should throw again but a different exception.
+    EXPECT_THROW(decodeEthernetHeader(in_buf, pkt),
+                 BadValue);
+    // Now provide, correct data.
+    pkt.reset(new Pkt4(DHCPDISCOVER, 0));
+    // It should not throw now.
+    ASSERT_NO_THROW(decodeEthernetHeader(in_buf, pkt));
+    // Verify that the HW address of the source has been initialized.
+    HWAddrPtr hwaddr = pkt->getHWAddr();
+    ASSERT_TRUE(hwaddr);
+    // And that it is correct.
+    EXPECT_EQ(HWTYPE_ETHERNET, hwaddr->htype_);
+    ASSERT_EQ(sizeof(dest_hw_addr), hwaddr->hwaddr_.size());
+    EXPECT_TRUE(std::equal(src_hw_addr, src_hw_addr + sizeof(src_hw_addr),
+                           hwaddr->hwaddr_.begin()));
+    // The entire ethernet packet header should have been read. This means
+    // that the internal buffer pointer should now point to its tail.
+    ASSERT_EQ(ETHERNET_HEADER_LEN, in_buf.getPosition());
+    // And the dummy data should be still readable and correct.
+    uint32_t dummy_data = in_buf.readUint32();
+    EXPECT_EQ(0x01020304, dummy_data);
 }
 
 /// The purpose of this test is to verify that the ethernet
