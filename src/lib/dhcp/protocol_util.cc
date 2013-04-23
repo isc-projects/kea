@@ -12,17 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h> // defines HWTYPE_ETHERNET
 #include <dhcp/protocol_util.h>
 #include <boost/static_assert.hpp>
 #include <netinet/ip.h>
 
+using namespace isc::asiolink;
 using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
 
-void decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
+void
+decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // The size of the buffer to be parsed must not be lower
     // then the size of the Ethernet frame header.
     if (buf.getLength() - buf.getPosition() < ETHERNET_HEADER_LEN) {
@@ -51,6 +54,49 @@ void decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     pkt->setHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, dest_addr);
     // Move the buffer read pointer to the end of the Ethernet frame header.
     buf.setPosition(ETHERNET_HEADER_LEN);
+}
+
+void
+decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
+    // The size of the buffer must be at least equal to the minimal size of
+    // the IPv4 packet header plus UDP header length.
+    if (buf.getLength() - buf.getPosition() < MIN_IP_HEADER_LEN + UDP_HEADER_LEN) {
+        isc_throw(InvalidPacketHeader, "the total size of the IP and UDP headers in "
+                  << "received packet is invalid, expected at least "
+                  << MIN_IP_HEADER_LEN + UDP_HEADER_LEN
+                  << " bytes, received " << buf.getLength() - buf.getPosition()
+                  << " bytes");
+    }
+
+    // Packet object must not be NULL.
+    if (!pkt) {
+        isc_throw(BadValue, "NULL packet object provided when parsing IP and UDP"
+                  " packet headers");
+    }
+
+    BOOST_STATIC_ASSERT(IP_SRC_ADDR_OFFSET < MIN_IP_HEADER_LEN);
+
+    // Read IP header length (mask most significant bits as they indicate IP version).
+    uint8_t ip_len = buf.readUint8() & 0xF;
+    // IP length is the number of 4 byte chunks that construct IPv4 header.
+    // It must not be lower than 5 because first 20 bytes are fixed.
+    if (ip_len < 5) {
+        ip_len = 5;
+    }
+
+    // Seek to the position of source IP address.
+    buf.setPosition(IP_SRC_ADDR_OFFSET);
+    // Read source address.
+    pkt->setRemoteAddr(IOAddress(buf.readUint32()));
+    // Read destination address.
+    pkt->setLocalAddr(IOAddress(buf.readUint32()));
+    // Read source port from UDP header.
+    pkt->setRemotePort(buf.readUint16());
+    // Read destination port from UDP header.
+    pkt->setLocalPort(buf.readUint16());
+
+    // Set the pointer position to the tail of UDP header.
+    buf.setPosition(ip_len * 4 + UDP_HEADER_LEN);
 }
 
 void

@@ -35,6 +35,12 @@ public:
 
 /// Size of the Ethernet frame header.
 static const size_t ETHERNET_HEADER_LEN = 14;
+/// Minimal IPv4 header length.
+static const size_t MIN_IP_HEADER_LEN = 20;
+/// UDP header length.
+static const size_t UDP_HEADER_LEN = 8;
+/// Offset of source address in the IPv4 header.
+static const size_t IP_SRC_ADDR_OFFSET = 12;
 
 /// @brief Decode the Ethernet header.
 ///
@@ -50,6 +56,21 @@ static const size_t ETHERNET_HEADER_LEN = 14;
 /// @throw InvalidPacketHeader if packet header is truncated
 /// @throw BadValue if pkt object is NULL.
 void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
+
+/// @brief Decode IP and UDP header.
+///
+/// This function reads IP and UDP headers from the provided buffer
+/// at the current read position. The source and destination IP
+/// addresses and ports and read from these headers and stored in
+/// the appropriate members of pkt object.
+///
+/// @param buf input buffer holding headers to be parsed.
+/// @param [out] pkt packet object where IP addresses and ports
+/// are stored.
+///
+/// @throw InvalidPacketHeader if packet header is truncated
+/// @throw BadValue if pkt object is NULL.
+void decodeIpUdpHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 
 /// @brief Writes ethernet frame header into a buffer.
 ///

@@ -124,6 +124,70 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     EXPECT_EQ(0x01020304, dummy_data);
 }
 
+/// The purpose of this test is to verify that the IP and UDP header
+/// is decoded correctly and appropriate values of IP addresses and
+/// ports are assigned to a Pkt4 object.
+TEST(ProtocolUtilTest, decodeIpUdpHeader) {
+    // IPv4 header to be parsed.
+    const uint8_t hdr[] = {
+        0x45,                      // IP version and header length
+        0x00,                      // TOS
+        0x00, 0x3c,                // Total length of the IP packet.
+        0x1c, 0x46,                // Identification field.
+        0x40, 0x00,                // Fragmentation.
+        0x40,                      // TTL
+        IPPROTO_UDP,               // Protocol
+        0x00, 0x00,                // Checksum (reset to 0x00).
+        0xc0, 0x00, 0x02, 0x63,    // Source IP address.
+        0xc0, 0x00, 0x02, 0x0c,    // Destination IP address.
+        0x27, 0x54,                // Source port
+        0x27, 0x53,                // Destination port
+        0x00, 0x08,                // UDP length
+        0x00, 0x00                 // Checksum
+    };
+
+    // Write header data to the buffer.
+    OutputBuffer buf(1);
+    buf.writeData(hdr, sizeof(hdr));
+    // Append some dummy data.
+    buf.writeUint32(0x01020304);
+
+    // Create an input buffer holding truncated headers.
+    InputBuffer in_buf_truncated(buf.getData(), buf.getLength() - 10);
+    // Create non NULL Pkt4 object to make sure that the function under
+    // test does not throw due to invalid Pkt4 object.
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 0));
+    // Function should throw because buffer holds truncated data.
+    EXPECT_THROW(decodeIpUdpHeader(in_buf_truncated, pkt), InvalidPacketHeader);
+
+    // Create a valid input buffer (not truncated).
+    InputBuffer in_buf(buf.getData(), buf.getLength());
+    // Set NULL Pkt4 object to verify that function under test will
+    // return exception as expected.
+    pkt.reset();
+    // And check whether it throws exception.
+    EXPECT_THROW(decodeIpUdpHeader(in_buf, pkt), BadValue);
+
+    // Now, let's provide valid arguments and make sure it doesn't throw.
+    pkt.reset(new Pkt4(DHCPDISCOVER, 0));
+    ASSERT_TRUE(pkt);
+    EXPECT_NO_THROW(decodeIpUdpHeader(in_buf, pkt));
+
+    // Verify the source address and port.
+    EXPECT_EQ("192.0.2.99", pkt->getRemoteAddr().toText());
+    EXPECT_EQ(10068, pkt->getRemotePort());
+
+    // Verify the destination address and port.
+    EXPECT_EQ("192.0.2.12", pkt->getLocalAddr().toText());
+    EXPECT_EQ(10067, pkt->getLocalPort());
+
+    // Verify that the dummy data has not been corrupted and that the
+    // internal read pointer has been moved to the tail of the UDP
+    // header.
+    ASSERT_EQ(MIN_IP_HEADER_LEN + UDP_HEADER_LEN, in_buf.getPosition());
+    EXPECT_EQ(0x01020304, in_buf.readUint32());
+}
+
 /// The purpose of this test is to verify that the ethernet
 /// header is correctly constructed from the destination and
 /// hardware addresses.
