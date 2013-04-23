@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,16 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <protocol_util.h>
-
 #include <netinet/ip.h>
-#include <netinet/udp.h>
 
 namespace isc {
 namespace dhcp {
 
 void
 writeEthernetHeader(const uint8_t* src_hw_addr, const uint8_t* dest_hw_addr,
-                         util::OutputBuffer& out_buf) {
+                    util::OutputBuffer& out_buf) {
     // Write destination and source address.
     out_buf.writeData(dest_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);
     out_buf.writeData(src_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);
@@ -33,38 +31,58 @@ writeEthernetHeader(const uint8_t* src_hw_addr, const uint8_t* dest_hw_addr,
 void
 writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
 
-    struct ip ip_hdr;
-    memset(&ip_hdr, 0, sizeof(ip_hdr));
-    ip_hdr.ip_hl = (ip_hdr.ip_hl | 5) & 0xF;
-    ip_hdr.ip_v = (ip_hdr.ip_v | 4) & 0xF;
-    ip_hdr.ip_tos = IPTOS_LOWDELAY;
-    ip_hdr.ip_len = htons(sizeof(ip) + sizeof(udphdr) +
-                          pkt->getBuffer().getLength());
-    ip_hdr.ip_id = 0;
-    ip_hdr.ip_off = 0;
-    ip_hdr.ip_ttl = 128;
-    ip_hdr.ip_p = IPPROTO_UDP;
-    ip_hdr.ip_src.s_addr = htonl(pkt->getLocalAddr());
-    ip_hdr.ip_dst.s_addr = htonl(pkt->getRemoteAddr());
-    ip_hdr.ip_sum =
-        wrapChecksum(calculateChecksum(reinterpret_cast<const char*>(&ip_hdr),
-                                       sizeof(ip_hdr)));
+    out_buf.writeUint8(0x45); // IP version 4, IP header length 5
+    out_buf.writeUint8(IPTOS_LOWDELAY); // DSCP and ECN
+    out_buf.writeUint16(28 + pkt->getBuffer().getLength()); // Total length.
+    out_buf.writeUint16(0); // Identification
+    out_buf.writeUint16(0x4000); // Disable fragmentation.
+    out_buf.writeUint8(128); // TTL
+    out_buf.writeUint8(IPPROTO_UDP); // Protocol UDP.
+    out_buf.writeUint16(0); // Temporarily set checksum to 0.
+    out_buf.writeUint32(pkt->getLocalAddr()); // Source address.
+    out_buf.writeUint32(pkt->getRemoteAddr()); // Destination address.
 
-    out_buf.writeData(static_cast<void*>(&ip_hdr), sizeof(ip_hdr));
+    // Calculate pseudo header checksum. It will be necessary to compute
+    // UDP checksum.
+    // Get the UDP length. This includes udp header's and data length.
+    uint32_t udp_len = 8 + pkt->getBuffer().getLength();
+    // The magic number "8" indicates the offset where the source address
+    // is stored in the buffer. This offset is counted here from the
+    // current tail of the buffer. Starting from this offset we calculate
+    // the checksum using 8 following bytes of data. This will include
+    // 4 bytes of source address and 4 bytes of destination address.
+    // The IPPROTO_UDP and udp_len are also added up to the checksum.
+    uint16_t pseudo_hdr_checksum =
+        calcChecksum(static_cast<const uint8_t*>(out_buf.getData()) + out_buf.getLength() - 8,
+                     8, IPPROTO_UDP + udp_len);
 
-    struct udphdr udp_hdr;
-    memset(&udp_hdr, 0, sizeof(udp_hdr));
-    udp_hdr.source = htons(pkt->getLocalPort());
-    udp_hdr.dest = htons(pkt->getRemotePort());
-    udp_hdr.len = htons(sizeof(udp_hdr) + pkt->getBuffer().getLength());
-    udp_hdr.check = 0;
+    // Calculate IP header checksum.
+    uint16_t ip_checksum = ~calcChecksum(static_cast<const uint8_t*>(out_buf.getData())
+                                         + out_buf.getLength() - 20, 20);
+    // Write checksum in the IP header. The offset of the checksum is 10 bytes
+    // back from the tail of the current buffer.
+    out_buf.writeUint16At(ip_checksum, out_buf.getLength() - 10);
 
-    out_buf.writeData(static_cast<void*>(&udp_hdr), sizeof(udp_hdr));
+    // Start UDP header.
+    out_buf.writeUint16(pkt->getLocalPort()); // Source port.
+    out_buf.writeUint16(pkt->getRemotePort()); // Destination port.
+    out_buf.writeUint16(udp_len); // Length of the header and data.
 
+    // Checksum is calculated from the contents of UDP header, data and pseudo ip header.
+    // The magic number "6" indicates that the UDP header starts at offset 6 from the
+    // tail of the current buffer. These 6 bytes contain source and destination port
+    // as well as the length of the header.
+    uint16_t udp_checksum =
+        ~calcChecksum(static_cast<const uint8_t*>(out_buf.getData()) + out_buf.getLength() - 6, 6,
+                      calcChecksum(static_cast<const uint8_t*>(pkt->getBuffer().getData()),
+                                   pkt->getBuffer().getLength(),
+                                   pseudo_hdr_checksum));
+    // Write UDP checksum.
+    out_buf.writeUint16(udp_checksum);
 }
 
 uint16_t
-calculateChecksum(const char* buf, const uint32_t buf_size, uint32_t sum) {
+calcChecksum(const uint8_t* buf, const uint32_t buf_size, uint32_t sum) {
     uint32_t i;
     for (i = 0; i < (buf_size & ~1U); i += 2) {
         uint16_t chunk = buf[i] << 8 | buf[i+1];
@@ -73,7 +91,7 @@ calculateChecksum(const char* buf, const uint32_t buf_size, uint32_t sum) {
             sum -= 0xFFFF;
         }
     }
-
+    // If one byte has left, we also need to add it to the checksum.
     if (i < buf_size) {
         sum += buf[i] << 8;
         if (sum > 0xFFFF) {
@@ -83,11 +101,6 @@ calculateChecksum(const char* buf, const uint32_t buf_size, uint32_t sum) {
 
     return (sum);
 
-}
-
-uint16_t
-wrapChecksum(uint16_t sum) {
-    return (htons(~sum));
 }
 
 }

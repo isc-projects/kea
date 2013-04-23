@@ -45,20 +45,22 @@ void writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf);
 
 /// @brief Calculates checksum for provided buffer
 ///
+/// This function returns the sum of 16-bit values from the provided
+/// buffer. If the third parameter is specified, it indicates the
+/// initial checksum value. This parameter can be a result of
+/// calcChecksum function's invocation on different data buffer.
+/// The IP or UDP checksum value is a complement of the result returned
+/// by this function. However, this function does not compute complement
+/// of the summed values. It must be calculated outside of this function
+/// before writing the value to the packet buffer.
+///
 /// @param buf buffer for which the checksum is calculated.
 /// @param buf_size size of the buffer for which checksum is calculated.
-/// @param sum initial checksum value.
+/// @param sum initial checksum value, other values will be added to it.
 ///
 /// @return calculated checksum.
-uint16_t calculateChecksum(const char* buf, const uint32_t buf_size,
-                           uint32_t sum = 0);
-
-/// @brief Wraps the calculated checksum and stores it in network byte order.
-///
-/// @param sum calculated checksum
-///
-/// @return wrapped checksum value.
-uint16_t wrapChecksum(uint16_t sum);
+uint16_t calcChecksum(const uint8_t* buf, const uint32_t buf_size,
+                      uint32_t sum = 0);
 
 }
 }
