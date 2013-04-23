@@ -64,15 +64,30 @@ PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
 
     InputBuffer buf(raw_buf, data_len);
 
+    // @todo: This is awkward way to solve the chicken and egg problem
+    // whereby we don't know the offset where DHCP data start in the
+    // received buffer when we create the packet object. The dummy
+    // object is created so as we can pass it to the functions which
+    // decode IP stack and find actual offset of the DHCP packet.
+    // Once we find the offset we can create another Pkt4 object from
+    // the reminder of the input buffer and set the IP addresses and
+    // ports from the dummy packet. We should consider making this
+    // in some more elegant way.
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
+
+    // Decode ethernet, ip and udp headers.
     decodeEthernetHeader(buf, dummy_pkt);
     decodeIpUdpHeader(buf, dummy_pkt);
 
+    // Read the DHCP data.
     std::vector<uint8_t> dhcp_buf;
     buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
 
+    // Decode DHCP data into the Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
 
+    // Set the appropriate packet members using data collected from
+    // the decoded headers.
     pkt->setIndex(iface.getIndex());
     pkt->setIface(iface.getName());
     pkt->setLocalAddr(dummy_pkt->getLocalAddr());
