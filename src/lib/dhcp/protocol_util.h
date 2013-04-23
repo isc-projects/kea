@@ -23,6 +23,34 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Exception thrown when error occured during parsing packet's headers.
+///
+/// This exception is thrown when parsing link, Internet or Transport layer
+/// header has failed.
+class InvalidPacketHeader : public Exception {
+public:
+    InvalidPacketHeader(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// Size of the Ethernet frame header.
+static const size_t ETHERNET_HEADER_LEN = 14;
+
+/// @brief Decode the Ethernet header.
+///
+/// This function reads Ethernet frame header from the provided
+/// buffer at the current read position. The source HW address
+/// is read from the header and assigned as client address in
+/// a pkt object. The buffer read pointer is set to the end
+/// of the Ethernet frame header if read was successful.
+///
+/// @param buf input buffer holding header to be parsed.
+/// @param [out] pkt packet object receiving HW source address read from header.
+///
+/// @throw InvalidPacketHeader if packet header is truncated
+/// @throw BadValue if pkt object is NULL.
+void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
+
 /// @brief Writes ethernet frame header into a buffer.
 ///
 /// @param src_hw_addr source HW address.
