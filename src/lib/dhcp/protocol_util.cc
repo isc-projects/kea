@@ -45,15 +45,18 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // error that we want to detect in the compilation time.
     BOOST_STATIC_ASSERT(ETHERNET_HEADER_LEN > HWAddr::ETHERNET_HWADDR_LEN);
 
+    // Remember initial position.
+    size_t start_pos = buf.getPosition();
+
     // Skip destination address.
-    buf.setPosition(HWAddr::ETHERNET_HWADDR_LEN);
+    buf.setPosition(start_pos + HWAddr::ETHERNET_HWADDR_LEN);
     // Read the source HW address.
     std::vector<uint8_t> dest_addr;
     buf.readVector(dest_addr, HWAddr::ETHERNET_HWADDR_LEN);
     // Set the address we have read.
     pkt->setHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, dest_addr);
     // Move the buffer read pointer to the end of the Ethernet frame header.
-    buf.setPosition(ETHERNET_HEADER_LEN);
+    buf.setPosition(start_pos + ETHERNET_HEADER_LEN);
 }
 
 void
@@ -76,6 +79,9 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
 
     BOOST_STATIC_ASSERT(IP_SRC_ADDR_OFFSET < MIN_IP_HEADER_LEN);
 
+    // Remember initial position of the read pointer.
+    size_t start_pos = buf.getPosition();
+
     // Read IP header length (mask most significant bits as they indicate IP version).
     uint8_t ip_len = buf.readUint8() & 0xF;
     // IP length is the number of 4 byte chunks that construct IPv4 header.
@@ -85,18 +91,22 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     }
 
     // Seek to the position of source IP address.
-    buf.setPosition(IP_SRC_ADDR_OFFSET);
+    buf.setPosition(start_pos + IP_SRC_ADDR_OFFSET);
     // Read source address.
     pkt->setRemoteAddr(IOAddress(buf.readUint32()));
     // Read destination address.
     pkt->setLocalAddr(IOAddress(buf.readUint32()));
+
+    // Skip IP header options (if any).
+    buf.setPosition(start_pos + ip_len * 4);
+
     // Read source port from UDP header.
     pkt->setRemotePort(buf.readUint16());
     // Read destination port from UDP header.
     pkt->setLocalPort(buf.readUint16());
 
     // Set the pointer position to the tail of UDP header.
-    buf.setPosition(ip_len * 4 + UDP_HEADER_LEN);
+    buf.setPosition(start_pos + ip_len * 4 + UDP_HEADER_LEN);
 }
 
 void
