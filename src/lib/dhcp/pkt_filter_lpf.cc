@@ -56,19 +56,29 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
 Pkt4Ptr
 PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     // @todo: implement this function
-    uint8_t buf[IfaceMgr::RCVBUFSIZE];
-    int data_len = read(socket_info.sockfd_, buf, sizeof(buf));
+    uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
     if (data_len <= 0) {
         return Pkt4Ptr();
     }
 
-    // Length of the Ethernet, IP and UDP.
-    int data_offset = 42;
-    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf + data_offset,
-                                   data_len - data_offset));
+    InputBuffer buf(raw_buf, data_len);
+
+    Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
+    decodeEthernetHeader(buf, dummy_pkt);
+    decodeIpUdpHeader(buf, dummy_pkt);
+
+    std::vector<uint8_t> dhcp_buf;
+    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
+
+    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
 
     pkt->setIndex(iface.getIndex());
     pkt->setIface(iface.getName());
+    pkt->setLocalAddr(dummy_pkt->getLocalAddr());
+    pkt->setRemoteAddr(dummy_pkt->getRemoteAddr());
+    pkt->setLocalPort(dummy_pkt->getLocalPort());
+    pkt->setRemotePort(dummy_pkt->getRemotePort());
 
     return (pkt);
 }
