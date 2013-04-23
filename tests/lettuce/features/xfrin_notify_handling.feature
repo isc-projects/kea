@@ -81,8 +81,8 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
     Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 5
+    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 1
+    Then the statistics counter notifyoutv6 for the zone example.org. should be 1
     Then the statistics counter xfrrej for the zone _SERVER_ should be 0
     Then the statistics counter xfrrej for the zone example.org. should be 0
     Then the statistics counter xfrreqdone for the zone _SERVER_ should be 1
@@ -184,8 +184,8 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
     Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
     Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 5
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 5
+    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 1
+    Then the statistics counter notifyoutv6 for the zone example.org. should be 1
     # The counts of rejection would be between 1 and 2. They are not
     # fixed. It would depend on timing or the platform.
     Then the statistics counter xfrrej for the zone _SERVER_ should be greater than 0
