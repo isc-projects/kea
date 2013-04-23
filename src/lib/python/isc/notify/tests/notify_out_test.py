@@ -26,6 +26,15 @@ from isc.dns import *
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
 def get_notify_msgdata(zone_name, qid=0):
+    """A helper function to generate a notify response in wire format.
+
+    Parameters:
+    zone_name(isc.dns.Name()) The zone name for the notify.  Used as the
+    question name.
+    qid (int): The QID of the response.  In most test cases a value of 0 is
+    expected.
+
+    """
     m = Message(Message.RENDER)
     m.set_opcode(Opcode.NOTIFY)
     m.set_rcode(Rcode.NOERROR)
