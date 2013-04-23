@@ -435,9 +435,13 @@ class NotifyOut:
         """
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
+            # Note: _get_notify_reply() should also check the response's
+            # source address (see #2924).  When it's done the following code
+            # should also be adjusted a bit.
             reply = self._get_notify_reply(zone_notify_info.get_socket(), tgt)
             if reply is not None:
-                if self._handle_notify_reply(zone_notify_info, reply, tgt):
+                if (self._handle_notify_reply(zone_notify_info, reply, tgt) ==
+                    _REPLY_OK):
                     self._notify_next_target(zone_notify_info)
 
         else:
@@ -453,7 +457,7 @@ class NotifyOut:
                             _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
-                # set exponential backoff according rfc1996 section 3.6
+                # set exponential backoff according to rfc1996 section 3.6
                 retry_timeout = (_NOTIFY_TIMEOUT *
                                  pow(2, zone_notify_info.notify_try_num))
                 zone_notify_info.notify_timeout = time.time() + retry_timeout
