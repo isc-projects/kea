@@ -79,12 +79,12 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
     def test_set_next_notify_target(self):
         self.info.notify_slaves.append(('127.0.0.1', 53))
-        self.info.notify_slaves.append(('1.1.1.1', 5353))
+        self.info.notify_slaves.append(('192.0.2.1', 5353))
         self.info.prepare_notify_out()
         self.assertEqual(self.info.get_current_notify_target(), ('127.0.0.1', 53))
 
         self.info.set_next_notify_target()
-        self.assertEqual(self.info.get_current_notify_target(), ('1.1.1.1', 5353))
+        self.assertEqual(self.info.get_current_notify_target(), ('192.0.2.1', 5353))
         self.info.set_next_notify_target()
         self.assertIsNone(self.info.get_current_notify_target())
 
@@ -105,14 +105,18 @@ class TestNotifyOut(unittest.TestCase):
 
         net_info = self._notify._notify_infos[('example.net.', 'IN')]
         net_info.notify_slaves.append(('127.0.0.1', 53))
-        net_info.notify_slaves.append(('1.1.1.1', 5353))
+        net_info.notify_slaves.append(('192.0.2.1', 5353))
         com_info = self._notify._notify_infos[('example.com.', 'IN')]
-        com_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_info.notify_slaves.append(('192.0.2.1', 5353))
         com_ch_info = self._notify._notify_infos[('example.com.', 'CH')]
-        com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_ch_info.notify_slaves.append(('192.0.2.1', 5353))
+        # Keep the original library version in case a test case replaces it
+        self.__time_time_orig = notify_out.time.time
 
     def tearDown(self):
         self._notify._counters.clear_all()
+        # restore the original time.time() in case it was replaced.
+        notify_out.time.time = self.__time_time_orig
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -221,7 +225,7 @@ class TestNotifyOut(unittest.TestCase):
         info = self._notify._notify_infos[('example.net.', 'IN')]
         self._notify._notify_next_target(info)
         self.assertEqual(0, info.notify_try_num)
-        self.assertEqual(info.get_current_notify_target(), ('1.1.1.1', 5353))
+        self.assertEqual(info.get_current_notify_target(), ('192.0.2.1', 5353))
         self.assertEqual(2, self._notify.notify_num)
         self.assertEqual(1, len(self._notify._waiting_zones))
 
@@ -328,29 +332,34 @@ class TestNotifyOut(unittest.TestCase):
                           'zones', 'example.net.', 'notifyoutv4')
 
     def test_zone_notify_handler(self):
-        old_send_msg = self._notify._send_notify_message_udp
-        def _fake_send_notify_message_udp(va1, va2):
+        sent_addrs = []
+        def _fake_send_notify_message_udp(notify_info, addrinfo):
+            sent_addrs.append(addrinfo)
             pass
+        notify_out.time.time = lambda: 42
         self._notify._send_notify_message_udp = _fake_send_notify_message_udp
         self._notify.send_notify('example.net.')
-        self._notify.send_notify('example.com.')
-        notify_out._MAX_NOTIFY_NUM = 2
-        self._notify.send_notify('example.org.')
 
         example_net_info = self._notify._notify_infos[('example.net.', 'IN')]
         example_net_info.prepare_notify_out()
 
+        # On timeout, the request will be resent until try_num reaches the max
+        self.assertEqual([], sent_addrs)
         example_net_info.notify_try_num = 2
         self._notify._zone_notify_handler(example_net_info,
                                           notify_out._EVENT_TIMEOUT)
         self.assertEqual(3, example_net_info.notify_try_num)
+        self.assertEqual([('127.0.0.1', 53)], sent_addrs)
+        # the timeout time will be set to "current time(=42)"+2**(new try_num)
+        self.assertEqual(42 + 2**3, example_net_info.notify_timeout)
 
-        time1 = example_net_info.notify_timeout
+        # If try num exceeds max, the next slave will be tried (and then
+        # next zone, but for this test it sufficies to check the former case)
+        example_net_info.notify_try_num = 5
         self._notify._zone_notify_handler(example_net_info,
                                           notify_out._EVENT_TIMEOUT)
-        self.assertEqual(4, example_net_info.notify_try_num)
-        # bigger than 2 seconds:
-        self.assertGreater(example_net_info.notify_timeout, time1 + 2)
+        self.assertEqual(0, example_net_info.notify_try_num) # should be reset
+        self.assertEqual(('192.0.2.1', 5353), example_net_info._notify_current)
 
         # Possible event is "read" or "timeout".
         cur_tgt = example_net_info._notify_current
