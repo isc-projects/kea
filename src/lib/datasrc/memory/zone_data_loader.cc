@@ -253,6 +253,9 @@ loadZoneData(util::MemorySegment& mem_sgmt,
              const isc::dns::Name& zone_name,
              const std::string& zone_file)
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD_FROM_FILE).
+        arg(zone_name).arg(rrclass).arg(zone_file);
+
      return (loadZoneDataInternal(mem_sgmt, rrclass, zone_name,
                                  boost::bind(masterLoaderWrapper,
                                              zone_file.c_str(),
@@ -266,6 +269,9 @@ loadZoneData(util::MemorySegment& mem_sgmt,
              const isc::dns::Name& zone_name,
              ZoneIterator& iterator)
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD_FROM_DATASRC).
+        arg(zone_name).arg(rrclass);
+
     return (loadZoneDataInternal(mem_sgmt, rrclass, zone_name,
                                  boost::bind(generateRRsetFromIterator,
                                              &iterator, _1)));

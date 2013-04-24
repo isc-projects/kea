@@ -21,7 +21,7 @@
 
 #include <cc/data.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <xfr/xfrout_client.h>
 
