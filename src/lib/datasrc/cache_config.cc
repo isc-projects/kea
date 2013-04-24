@@ -15,10 +15,19 @@
 #include <datasrc/cache_config.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/load_action.h>
+#include <datasrc/memory/zone_data_loader.h>
+
+#include <util/memory_segment.h>
+
 #include <dns/name.h>
+#include <dns/rrclass.h>
+
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/bind.hpp>
+
+#include <cassert>
 #include <map>
 #include <string>
 
@@ -106,6 +115,82 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
             }
         }
     }
+}
+
+namespace {
+
+// We would like to use boost::bind for this. However, the loadZoneData takes
+// a reference, while we have a shared pointer to the iterator -- and we need
+// to keep it alive as long as the ZoneWriter is alive. Therefore we can't
+// really just dereference it and pass it, since it would get destroyed once
+// the getCachedZoneWriter would end. This class holds the shared pointer
+// alive, otherwise is mostly simple.
+//
+// It might be doable with nested boost::bind, but it would probably look
+// more awkward and complicated than this.
+class IteratorLoader {
+public:
+    IteratorLoader(const dns::RRClass& rrclass, const dns::Name& name,
+                   const ZoneIteratorPtr& iterator) :
+        rrclass_(rrclass),
+        name_(name),
+        iterator_(iterator)
+    {}
+    memory::ZoneData* operator()(util::MemorySegment& segment) {
+        return (memory::loadZoneData(segment, rrclass_, name_, *iterator_));
+    }
+private:
+    const dns::RRClass rrclass_;
+    const dns::Name name_;
+    ZoneIteratorPtr iterator_;
+};
+
+// We can't use the loadZoneData function directly in boost::bind, since
+// it is overloaded and the compiler can't choose the correct version
+// reliably and fails. So we simply wrap it into an unique name.
+memory::ZoneData*
+loadZoneDataFromFile(util::MemorySegment& segment, const dns::RRClass& rrclass,
+                     const dns::Name& name, const std::string& filename)
+{
+    return (memory::loadZoneData(segment, rrclass, name, filename));
+}
+
+} // unnamed namespace
+
+memory::LoadAction
+CacheConfig::getLoadAction(const dns::RRClass& rrclass,
+                           const dns::Name& zone_name) const
+{
+    // First, check if the specified zone is configured to be cached.
+    Zones::const_iterator found = zone_config_.find(zone_name);
+    if (found == zone_config_.end()) {
+        return (memory::LoadAction());
+    }
+
+    if (!found->second.empty()) {
+        // This is "MasterFiles" data source.
+        return (boost::bind(loadZoneDataFromFile, _1, rrclass, zone_name,
+                            found->second));
+    }
+
+    // Otherwise there must be a "source" data source (ensured by constructor)
+    assert(datasrc_client_);
+
+    // If the specified zone name does not exist in our client of the source,
+    // DataSourceError is thrown, which is exactly the result what we
+    // want, so no need to handle it.
+    ZoneIteratorPtr iterator(datasrc_client_->getIterator(zone_name));
+    if (!iterator) {
+        // This shouldn't happen for a compliant implementation of
+        // DataSourceClient, but we'll protect ourselves from buggy
+        // implementations.
+        isc_throw(Unexpected, "getting LoadAction for " << zone_name
+                  << "/" << rrclass << " resulted in Null zone iterator");
+    }
+
+    // Wrap the iterator into the correct functor (which keeps it alive as
+    // long as it is needed).
+    return (IteratorLoader(rrclass, zone_name, iterator));
 }
 
 } // namespace internal

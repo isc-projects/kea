@@ -52,7 +52,12 @@ public:
     }
     virtual ZoneIteratorPtr getIterator(const dns::Name& name, bool) const;
     void disableA() { have_a_ = false; }
+    void enableA() { have_a_ = true; }
     void disableBadIterator() { use_baditerator_ = false; }
+    void enableBadIterator() { use_baditerator_ = true; }
+    void eraseZone(const dns::Name& zone_name) {
+        zones.erase(zone_name);
+    }
     const std::string type_;
     const data::ConstElementPtr configuration_;
 
