@@ -17,7 +17,7 @@
 #define DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <exceptions/exceptions.h>
 
