@@ -105,7 +105,7 @@ class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
 public:
     NakedIfaceMgr() {
-        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
+        //        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
     }
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
