@@ -154,3 +154,18 @@ Feature: control with bindctl
         bind10 module Xfrout should be running
         bind10 module Xfrin should be running
         bind10 module Zonemgr should be running
+
+    Scenario: Shutting down a certain module
+        # We could test with several modules, but for now we are particularly
+        # interested in shutting down cmdctl.  It previously caused hangup,
+        # so this scenario confirms it's certainly fixed.  Note: since cmdctl
+        # is a "needed" component, shutting it down will result in system
+        # shutdown.  So "send bind10 command" will fail (it cannot complete
+        # "quite").
+        Given I have bind10 running with configuration bindctl/bindctl.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+
+        When I send bind10 ignoring failure the command Cmdctl shutdown
+        And wait for bind10 stderr message CMDCTL_EXITING
+        And wait for bind10 stderr message BIND10_SHUTDOWN_COMPLETE
