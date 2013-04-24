@@ -311,6 +311,14 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
+    def test_handle_post_request_to_itself(self):
+        len = self.handler.rfile.write(json.dumps({}).encode())
+        self.handler.headers['Content-Length'] = len
+        self.handler.rfile.seek(0, 0)
+        self.handler.path = '/Cmdctl/shutdown'
+        rcode, reply = self.handler._handle_post_request()
+        self.assertEqual(http.client.BAD_REQUEST, rcode)
+
     def test_handle_login(self):
         orig_is_user_logged_in = self.handler._is_user_logged_in
         orig_check_user_name_and_pwd = self.handler._check_user_name_and_pwd
@@ -373,7 +381,30 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
             self.handler._is_user_logged_in = orig_is_user_logged_in
             self.handler._check_user_name_and_pwd = orig_check_user_name_and_pwd
 
+class MockSession:
+    """Act like isc.cc.Session, stealing group_sendmsg/recvmsg().
+
+    The initial simple version only records given parameters in
+    group_sendmsg() for later inspection and raise a timeout exception
+    from recvmsg().  As we see the need for more test cases these methods
+    should be extended.
+
+    """
+    def __init__(self, sent_messages):
+        self.__sent_messages = sent_messages
+
+    def group_sendmsg(self, msg, module_name, want_answer):
+        self.__sent_messages.append((msg, module_name))
+
+    def group_recvmsg(self, nonblock, seq):
+        raise isc.cc.session.SessionTimeout('dummy timeout')
+
 class MyCommandControl(CommandControl):
+    def __init__(self, httpserver, verbose):
+        super().__init__(httpserver, verbose)
+        self.sent_messages = [] # for inspection; allow tests to see it
+        self._cc = MockSession(self.sent_messages)
+
     def _get_modules_specification(self):
         return {}
 
@@ -508,8 +539,24 @@ class TestCommandControl(unittest.TestCase):
         os.remove(file_name)
 
     def test_send_command(self):
-        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings', None)
-        self.assertEqual(rcode, 0)
+        # Send a command to other module.  We check an expected message
+        # is sent via the session (cmdct._cc).  Due to the behavior of
+        # our mock session object the anser will be "fail", but it's not
+        # the subject of this test, and so it's okay.
+        # TODO: more detailed cases should be tested.
+        rcode, value = self.cmdctl.send_command('Init', 'shutdown', None)
+        self.assertEqual(1, len(self.cmdctl.sent_messages))
+        self.assertEqual(({'command': ['shutdown']}, 'Init'),
+                         self.cmdctl.sent_messages[-1])
+        self.assertEqual(1, rcode)
+
+        # Send a command to cmdctl itself.  Should be the same effect.
+        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings',
+                                                None)
+        self.assertEqual(2, len(self.cmdctl.sent_messages))
+        self.assertEqual(({'command': ['print_settings']}, 'Cmdctl'),
+                         self.cmdctl.sent_messages[-1])
+        self.assertEqual(1, rcode)
 
 class MySecureHTTPServer(SecureHTTPServer):
     def server_bind(self):
