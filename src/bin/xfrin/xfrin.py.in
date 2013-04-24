@@ -968,28 +968,9 @@ class XfrinConnection(asyncore.dispatcher):
             self._counters.inc('zones', self._zone_name.to_text(),
                                req_str.lower() + 'req' +
                                self._get_ipver_str())
-            try:
-                self._send_query(self._request_type)
-                self.__state = XfrinInitialSOA()
-                self._handle_xfrin_responses()
-            except XfrinZoneUptodate:
-                # Note: Catching an exception XfrinZoneUptodate
-                # defines that IXFR succeeded.  xfrsuccess is
-                # incremented and the timer is stopped here.
-                self._counters.inc('zones', self._zone_name.to_text(),
-                                   'xfrsuccess')
-                self._counters.stop_timer('zones', self._zone_name.to_text(),
-                                          'last_' + req_str.lower() +
-                                          '_duration')
-                raise
-            except:
-                # The AXFR or IXFR request failed.
-                self._counters.inc('zones', self._zone_name.to_text(),
-                                   'xfrfail')
-                raise
-            # The AXFR or IXFR request succeeded.
-            self._counters.inc('zones', self._zone_name.to_text(),
-                               'xfrsuccess')
+            self._send_query(self._request_type)
+            self.__state = XfrinInitialSOA()
+            self._handle_xfrin_responses()
             # Depending what data was found, we log different status reports
             # (In case of an AXFR-style IXFR, print the 'AXFR' message)
             if self._transfer_stats.axfr_rr_count == 0:
@@ -1013,10 +994,6 @@ class XfrinConnection(asyncore.dispatcher):
                             "%.3f" % self._transfer_stats.get_running_time(),
                             "%.f" % self._transfer_stats.get_bytes_per_second()
                            )
-            # stop statistics timer
-            self._counters.stop_timer('zones', self._zone_name.to_text(),
-                                      'last_' + req_str.lower() + '_duration')
-
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger
             # of trying another primary server, etc, but for now we treat it
@@ -1052,6 +1029,17 @@ class XfrinConnection(asyncore.dispatcher):
                          self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
+            # A xfrsuccess or xfrfail counter is incremented depending on
+            # the result.
+            result = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}[ret]
+            self._counters.inc('zones', self._zone_name.to_text(), result)
+            # The started statistics timer is finally stopped only in
+            # a successful case.
+            if ret == XFRIN_OK:
+                self._counters.stop_timer('zones',
+                                          self._zone_name.to_text(),
+                                          'last_' + req_str.lower() +
+                                          '_duration')
             # Make sure any remaining transaction in the diff is closed
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
