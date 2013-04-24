@@ -247,6 +247,7 @@ class CommandControl():
         CommandControl to communicate with other modules. '''
         self._verbose = verbose
         self._httpserver = httpserver
+        self.__msg_handler_thread = None # set in _start_msg_handle_thread
         self._lock = threading.Lock()
         self._setup_session()
         self.modules_spec = self._get_modules_specification()
@@ -326,7 +327,26 @@ class CommandControl():
                     self._cmdctl_config_data[key] = new_config[key]
         return answer
 
+    def _get_current_thread(self):
+        """A simple wrapper of returning the 'current' thread object.
+
+        This is extracted as a 'protected' method so tests can override for
+        their convenience.
+
+        """
+        return threading.currentThread()
+
     def command_handler(self, command, args):
+        """Handle commands from other modules.
+
+        This method must not be called by any other threads than
+        __msg_handler_thread invoked at the intialization of the class;
+        otherwise it would cause critical race or dead locks.
+
+        """
+        # Check the restriction described above.
+        assert self._get_current_thread() == self.__msg_handler_thread
+
         answer = ccsession.create_answer(0)
         if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
             # The 'value' of a specification update can be either
@@ -362,6 +382,7 @@ class CommandControl():
         ''' Start one thread to handle received message from msgq.'''
         td = threading.Thread(target=self._handle_msg_from_msgq)
         td.daemon = True
+        self.__msg_handler_thread = td
         td.start()
 
     def _handle_msg_from_msgq(self):
