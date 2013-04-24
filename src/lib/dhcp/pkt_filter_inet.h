@@ -16,6 +16,7 @@
 #define PKT_FILTER_INET_H
 
 #include <dhcp/pkt_filter.h>
+#include <boost/scoped_array.hpp>
 
 namespace isc {
 namespace dhcp {
