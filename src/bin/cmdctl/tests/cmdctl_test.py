@@ -390,6 +390,12 @@ class MyCommandControl(CommandControl):
     def _handle_msg_from_msgq(self):
         pass
 
+    def _start_msg_handle_thread(self): # just not bother to be threads
+        pass
+
+    def _get_current_thread(self):
+        return None
+
 class TestCommandControl(unittest.TestCase):
 
     def setUp(self):
