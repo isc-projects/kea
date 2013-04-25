@@ -19,7 +19,6 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
-#include <dhcp/pkt_filter_lpf.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -105,7 +104,6 @@ class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
 public:
     NakedIfaceMgr() {
-        //        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
     }
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
