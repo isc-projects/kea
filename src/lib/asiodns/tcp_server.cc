@@ -100,32 +100,49 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
 
     CORO_REENTER (this) {
         do {
-            /// Create a socket to listen for connections
+            /// Create a socket to listen for connections (no-throw operation)
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
 
             /// Wait for new connections. In the event of non-fatal error,
             /// try again
             do {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
-
-                // Abort on fatal errors
-                // TODO: Log error?
                 if (ec) {
                     using namespace asio::error;
-                    if (ec.value() != would_block && ec.value() != try_again &&
-                        ec.value() != connection_aborted &&
-                        ec.value() != interrupted) {
+                    const error_code::value_type err_val = ec.value();
+                    // The following two cases can happen when this server is
+                    // stopped: operation_aborted in case it's stopped after
+                    // starting accept().  bad_descriptor in case it's stopped
+                    // even before starting.  In these cases we should simply
+                    // stop handling events.
+                    if (err_val == operation_aborted ||
+                        err_val == bad_descriptor) {
                         return;
+                    }
+                    // Other errors should generally be temporary and we should
+                    // keep waiting for new connections.  We log errors that
+                    // should really be rare and would only be caused by an
+                    // internal erroneous condition (not an odd remote
+                    // behavior).
+                    if (err_val != would_block && err_val != try_again &&
+                        err_val != connection_aborted &&
+                        err_val != interrupted) {
+                        LOG_ERROR(logger, ASIODNS_TCP_ACCEPT_FAIL).
+                            arg(ec.message());
                     }
                 }
             } while (ec);
 
             /// Fork the coroutine by creating a copy of this one and
             /// scheduling it on the ASIO service queue.  The parent
-            /// will continue listening for DNS connections while the
+            /// will continue listening for DNS connections while the child
             /// handles the one that has just arrived.
             CORO_FORK io_.post(TCPServer(*this));
         } while (is_parent());
+
+        // From this point, we'll simply return on error, which will
+        // immediately trigger destroying this object, cleaning up all
+        // resources including any open sockets.
 
         /// Instantiate the data buffer that will be used by the
         /// asynchronous read call.
@@ -133,8 +150,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
 
         /// Start a timer to drop the connection if it is idle
         if (*tcp_recv_timeout_ > 0) {
-            timeout_.reset(new asio::deadline_timer(io_));
-            timeout_->expires_from_now(
+            timeout_.reset(new asio::deadline_timer(io_)); // shouldn't throw
+            timeout_->expires_from_now( // consider any exception fatal.
                 boost::posix_time::milliseconds(*tcp_recv_timeout_));
             timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
                                  asio::placeholders::error));
@@ -144,8 +161,7 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
         if (ec) {
-            socket_->close();
-            CORO_YIELD return;
+            return;
         }
 
         /// Now read the message itself. (This is done in a different scope
@@ -157,16 +173,7 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         }
 
         if (ec) {
-            socket_->close();
-            CORO_YIELD return;
-        }
-
-        // Due to possible timeouts and other bad behaviour, after the
-        // timely reads are done, there is a chance the socket has
-        // been closed already. So before we move on to the actual
-        // processing, check that, and stop if so.
-        if (!socket_->is_open()) {
-            CORO_YIELD return;
+            return;
         }
 
         // Create an \c IOMessage object to store the query.
@@ -174,7 +181,10 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // (XXX: It would be good to write a factory function
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
-        peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
+        peer_.reset(new TCPEndpoint(socket_->remote_endpoint(ec)));
+        if (ec) {
+            return;
+        }
 
         // The TCP socket class has been extended with asynchronous functions
         // and takes as a template parameter a completion callback class.  As
@@ -183,7 +193,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // the underlying Boost TCP socket - DummyIOCallback is used.  This
         // provides the appropriate operator() but is otherwise functionless.
         iosock_.reset(new TCPSocket<DummyIOCallback>(*socket_));
-        io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
+        io_message_.reset(new IOMessage(data_.get(), length, *iosock_,
+                                        *peer_));
 
         // Perform any necessary operations prior to processing the incoming
         // packet (e.g., checking for queued configuration messages).
@@ -198,8 +209,7 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (lookup_callback_ == NULL) {
-            socket_->close();
-            CORO_YIELD return;
+            return;
         }
 
         // Reset or instantiate objects that will be needed by the
@@ -212,23 +222,22 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // finished, the coroutine will resume immediately after
         // this point.
         CORO_YIELD io_.post(AsyncLookup<TCPServer>(*this));
+        if (ec) {
+            return;
+        }
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
             // TODO: should we keep the connection open for a short time
             // to see if new requests come in?
-            socket_->close();
-            CORO_YIELD return;
+            return;
         }
 
-        if (ec) {
-            CORO_YIELD return;
-        }
         // Call the DNS answer provider to render the answer into
         // wire format
-        (*answer_callback_)(*io_message_, query_message_,
-                            answer_message_, respbuf_);
+        (*answer_callback_)(*io_message_, query_message_, answer_message_,
+                            respbuf_);
 
         // Set up the response, beginning with two length bytes.
         lenbuf.writeUint16(respbuf_->getLength());
@@ -241,12 +250,12 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
 
-        // All done, cancel the timeout timer
+        // All done, cancel the timeout timer. if it throws, consider it fatal.
         timeout_->cancel();
 
         // TODO: should we keep the connection open for a short time
         // to see if new requests come in?
-        socket_->close();
+        socket_->close(ec);     // ignore any error on close()
     }
 }
 
@@ -259,14 +268,18 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
+    // passing error_code to avoid getting exception; we simply ignore any
+    // error on close().
+    asio::error_code ec;
+
     /// we use close instead of cancel, with the same reason
     /// with udp server stop, refer to the udp server code
 
-    acceptor_->close();
+    acceptor_->close(ec);
     // User may stop the server even when it hasn't started to
     // run, in that that socket_ is empty
     if (socket_) {
-        socket_->close();
+        socket_->close(ec);
     }
 }
 /// Post this coroutine on the ASIO service queue so that it will
@@ -275,7 +288,7 @@ void TCPServer::stop() {
 void
 TCPServer::resume(const bool done) {
     done_ = done;
-    io_.post(*this);
+    io_.post(*this);  // this can throw, but can be considered fatal.
 }
 
 } // namespace asiodns

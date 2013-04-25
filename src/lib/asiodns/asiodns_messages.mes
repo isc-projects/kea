@@ -53,6 +53,17 @@ The asynchronous I/O code encountered an error when trying to send data to
 the specified address on the given protocol.  The number of the system
 error that caused the problem is given in the message.
 
+% ASIODNS_TCP_ACCEPT_FAIL failed to accept TCP DNS connection: %1
+Accepting a TCP connection from a DNS client failed due to an error
+that could happen but should be rare.  The reason for the error is
+included in the log message.  The server still keeps accepting new
+connections, so unless it happens often it's probably okay to ignore
+this error.  If the shown error indicates something like "too many
+open files", it's probably because the run time environment is too
+restrictive on this limitation, so consider adjusing the limit using
+a tool such as ulimit.  If you see other types of errors too often,
+there may be something overlooked; please file a bug report in that case.
+
 % ASIODNS_UDP_ASYNC_SEND_FAIL Error sending UDP packet to %1: %2
 The low-level ASIO library reported an error when trying to send a UDP
 packet in asynchronous UDP mode. This can be any error reported by
