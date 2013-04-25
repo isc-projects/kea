@@ -286,7 +286,10 @@ operation
                     <term>xfrsuccess</term>
                     <listitem><simpara>
                       Number of zone transfer requests succeeded
-                    </simpara></listitem>
+                    </simpara></listitem>.  These include the case
+                    where the zone turns out to be the latest as a
+                    result of an initial SOA query (and there is
+                    actually no AXFR or IXFR transaction).
                   </varlistentry>
 
                   <varlistentry>
