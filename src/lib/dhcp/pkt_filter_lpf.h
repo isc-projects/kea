@@ -32,6 +32,15 @@ namespace dhcp {
 class PktFilterLPF : public PktFilter {
 public:
 
+    /// @brief Check if packet can be sent to the host without address directly.
+    ///
+    /// This class supports direct responses to the host without address.
+    ///
+    /// @return true always.
+    virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
+
     /// @brief Open socket.
     ///
     /// @param iface interface descriptor

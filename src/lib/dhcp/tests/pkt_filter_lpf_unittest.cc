@@ -81,6 +81,15 @@ public:
 
 };
 
+// This test verifies that the PktFilterLPF class reports its capability
+// to send packets to the host having no IP address assigned.
+TEST_F(PktFilterLPFTest, isDirectResponseSupported) {
+    // Create object under test.
+    PktFilterLPF pkt_filter;
+    // Must support direct responses.
+    EXPECT_TRUE(pkt_filter.isDirectResponseSupported());
+}
+
 // All tests below require root privileges to execute successfully. If
 // they are run as non-root user they will fail due to insufficient privileges
 // to open raw network sockets. Therefore, they should remain disabled by default
