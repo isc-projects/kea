@@ -566,7 +566,7 @@ class NotifyOut:
         """Parse the notify reply message.
 
         rcode will not be checked here; if we get the response
-        from the slave, it means the slave has got the notify.
+        from the slave, it means the slave got the notify.
 
         """
         msg = Message(Message.PARSE)
