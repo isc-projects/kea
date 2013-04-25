@@ -82,8 +82,8 @@ struct UDPServer::Data {
          answer_callback_(answer)
     {
         if (af != AF_INET && af != AF_INET6) {
-            isc_throw(InvalidParameter, "Address family must be either AF_INET "
-                      "or AF_INET6, not " << af);
+            isc_throw(InvalidParameter, "Address family must be either AF_INET"
+                      " or AF_INET6, not " << af);
         }
         LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
         try {
