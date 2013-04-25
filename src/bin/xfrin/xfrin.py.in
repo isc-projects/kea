@@ -966,8 +966,7 @@ class XfrinConnection(asyncore.dispatcher):
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             # An AXFR or IXFR is being requested.
             self._counters.inc('zones', self._zone_name.to_text(),
-                               req_str.lower() + 'req' +
-                               self._get_ipver_str())
+                               req_str.lower() + 'req' + self._get_ipver_str())
             self._send_query(self._request_type)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
