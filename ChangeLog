@@ -1,3 +1,10 @@
+606.	[bug]		jinmei
+	b10-xfrout now correctly stops sending notify requests once it
+	receives a valid response.  It previously handled it as if the
+	requests are timed out and resent it a few times in a short
+	period.
+	(Trac #2879, git 4c45f29f28ae766a9f7dc3142859f1d0000284e1)
+
 605.	[bug]		tmark
 	Modified perfdhcp to calculate the times displayed for packet sent 
 	and received as time elapsed since perfdhcp process start time.  
