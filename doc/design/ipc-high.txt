@@ -20,17 +20,18 @@ session::
   single user.
 message::
   A data blob sent by one user. The recipient might be the system
-  itself, other user or set of users (possibly empty). Message is
-  either a response or an original message (TODO: Better name?).
+  itself, other session or set of sessions (called group, see below,
+  it is possibly empty). Message is either a response or an original
+  message (TODO: Better name?).
 group::
   A named set of sessions. Conceptually, all the possible groups
   exist, there's no explicit creation and deletion of groups.
 session id::
   Unique identifier of a session. It is not reused for the whole
   lifetime of the system. Historically called `lname` in the code.
-undelivery notification::
+undelivery signal::
   While sending an original message, a client may request an
-  undelivery notification. If the recipient specification yields no
+  undelivery signal. If the recipient specification yields no
   sessions to deliver the message to, the system informs user about
   the situation.
 sequence number::
@@ -60,8 +61,7 @@ Possible operations include:
 
 Opening a session::
   The session is created and connects to the system. This operation is
-  fast. The session
-  receives session id from the system.
+  fast. The session receives session id from the system.
 
 Group management::
   A user may subscribe (become member) of a group, or unsubscribe from
@@ -69,9 +69,9 @@ Group management::
 
 Send::
   A user may send a message, addressed to the system, or other
-  client(s). This operation is generally expected to be non-blocking
-  (but it may be based on the assumption of OS buffering and the
-  system not being overloaded).
+  session(s). This operation is expected to be non-blocking
+  (current implementation is based on assumption of how OS handles the
+  sends, which may need to be revisited if it turns out to be false).
 
 Receive synchronously::
   User may wait for an incoming message in blocking mode. It is
@@ -86,7 +86,8 @@ Receive asynchronously::
 Terminate::
   A session may be terminated. No more messages are sent or received
   over it, the session is automatically unsubscribed from all the
-  groups. A session is terminated automatically if the user exits.
+  groups. This operation is non-blocking. A session is terminated
+  automatically if the user exits.
 
 Assumptions
 -----------
@@ -148,7 +149,8 @@ Notifications about group subscriptions::
   When a session subscribes to a group or unsubscribes from a group, a
   notification is sent to interested users. The notification contains
   both the session ID of the session subscribing/unsubscribing and
-  name of the group.
+  name of the group. This includes notifications about aliases (since
+  aliases are groups internally).
 Commands to list sessions::
   There's a command to list session IDs of all currently opened sessions
   and a command to list session IDs of all sessions subscribed to a
@@ -156,8 +158,15 @@ Commands to list sessions::
   the information might be outdated at the time it is delivered to the
   user.
 
-Note that in early stages of startup (before the configuration
-manager's session is opened), the `Msgq` alias is not yet available.
+User shows interest in notifications about sessions and group
+subscriptions by subscribing to a group with well-known name (as with
+any notification).
+
+Note that due to implementation details, the `Msgq` alias is not yet
+available during early stage of the bootstrap of bind10 system. This
+means some very core services can't rely on the above services of the
+system. The alias is guaranteed to be working before the first
+non-core module is started.
 
 Higher-level services
 ---------------------
@@ -168,7 +177,7 @@ are of three general types:
 
 Command::
   A message sent to single destination, with the undeliverable
-  notifications turned on and expecting an answer. This is a request
+  signal turned on and expecting an answer. This is a request
   to perform some operation on the recipient (it can have side effects
   or not). The command is identified by a name and it can have
   parameters. A command with the same name may behave differently (or
@@ -180,7 +189,7 @@ Reply::
   command was run successfully and contains an optional result, or
   notifies the sender of failure to run the command. Success and
   failure differ only in the payload sent through the system, not in
-  the way it is sent. The undeliverable notification is failure
+  the way it is sent. The undeliverable signal is failure
   reply sent by the system on behalf of the missing recipient.
 Notification::
   A message sent to any number of destinations (eg. sent to a group),
@@ -221,14 +230,14 @@ Sending a command to single recipient is slightly more complex. The
 sending user sends a message to the receiving one, addressed either by
 session ID or by an alias (group to which at most one session may be
 subscribed). The message contains the name of the command and
-parameters. It is sent with the undeliverable notifications turned on.
+parameters. It is sent with the undeliverable signals turned on.
 The user also starts a timer (with reasonably long timeout). The
 sender also subscribes to notifications about terminated sessions or
 unsubscription from the alias group.
 
 The receiving user gets the message, runs the command and sends a
 response back, with the result. The response has the undeliverable
-notification turned off and it is marked as response to the message
+signal turned off and it is marked as response to the message
 containing the command. The sending user receives the answer and pairs
 it with the command.
 
@@ -277,7 +286,8 @@ an error:
   {"reply": [1, "You need to fill in other form"]}
 
 And, in this example, the sender is trying to reach an non-existent
-session.
+session. The `msgq` here is not the alias `Msgq`, but a special
+``phantom'' session ID that is not listed anywhere.
 
   s12345 -> s0
   {"command": ["ping"]}
@@ -331,6 +341,7 @@ So, this would be an example with unhelpful war council.
   s2 -> s12345
   {"reply": [0, false]}
   s3 -> s12345
+  {"reply": [1, "Advice feature not implemented"]}
 
 Known limitations
 -----------------
