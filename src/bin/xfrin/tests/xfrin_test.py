@@ -2208,8 +2208,8 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
 
     def test_axfrreq_xfrsuccess_last_axfr_duration2(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
-        and last_axfr_duration timer are incremented even if a successful
-        XfrinZoneUptodate is raised while handling an xfr response'''
+        and last_axfr_duration timer are incremented when raising
+        XfrinZoneUptodate. The exception is treated as success.'''
         def exception_raiser():
             raise XfrinZoneUptodate()
         self.conn._handle_xfrin_responses = exception_raiser
@@ -2257,8 +2257,8 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
 
     def test_ixfrreq_xfrsuccess_last_ixfr_duration2(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
-        and last_ixfr_duration timer are incremented even if a successful
-        XfrinZoneUptodate is raised while handling an xfr response'''
+        and last_ixfr_duration timer are incremented when raising
+        XfrinZoneUptodate. The exception is treated as success.'''
         def exception_raiser():
             raise XfrinZoneUptodate()
         self.conn._handle_xfrin_responses = exception_raiser
