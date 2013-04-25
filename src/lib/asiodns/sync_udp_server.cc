@@ -152,13 +152,12 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
         }
 
         asio::error_code ec;
-        socket_->send_to(asio::buffer(output_buffer_->getData(),
-                                      output_buffer_->getLength()),
+        socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),
+                                               output_buffer_->getLength()),
                          sender_, 0, ec);
         if (ec) {
             LOG_ERROR(logger, ASIODNS_UDP_SYNC_SEND_FAIL).
-                      arg(sender_.address().to_string()).
-                      arg(ec.message());
+                      arg(sender_.address().to_string()).arg(ec.message());
         }
     }
 
