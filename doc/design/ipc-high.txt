@@ -343,6 +343,28 @@ So, this would be an example with unhelpful war council.
   s3 -> s12345
   {"reply": [1, "Advice feature not implemented"]}
 
+Users
+-----
+
+While there's a lot of flexibility for the behaviour of a client, it
+usually comes to something like this (during the lifetime of the
+client):
+
+* The client starts up.
+* The creates one or more sessions (there may be technical reasons to
+  have more than one session, such as threads, but it is not required
+  by the system).
+* It subscribes to some groups to receive notifications in future.
+* It binds to some aliases if it wants to be reachable by others by a
+  nice name.
+* It invokes some start-up commands (to get the configuration, for
+  example).
+* During the lifetime, it listens for notifications and answers
+  commands. It also invokes remote commands and sends notifications
+  about things that are happening.
+* Eventually, the client terminates, closing all the sessions it had
+  opened.
+
 Known limitations
 -----------------
 
