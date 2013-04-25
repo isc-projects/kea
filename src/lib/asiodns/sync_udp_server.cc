@@ -51,6 +51,10 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
                   "or AF_INET6, not " << af);
     }
+    if (!lookup) {
+        isc_throw(InvalidParameter, "null lookup callback given to "
+                  "SyncUDPServer");
+    }
     LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
     try {
         socket_.reset(new asio::ip::udp::socket(io_service));
@@ -110,13 +114,6 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
         }
     }
 
-    // If we don't have a DNS Lookup provider, there's no point in
-    // continuing; we exit the coroutine permanently.
-    if (lookup_callback_ == NULL) {
-        scheduleRead();
-        return;
-    }
-
     // Make sure the buffers are fresh.  Note that we don't touch query_
     // because it's supposed to be cleared in lookup_callback_.  We should
     // eventually even remove this member variable (and remove it from
@@ -138,18 +135,10 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
                   "No resume called from the lookup callback");
     }
 
-    if (stopped_) {
-        return;
-    }
-
     if (done_) {
         // Good, there's an answer.
         // Call the answer callback to render it.
         (*answer_callback_)(message, query_, answer_, output_buffer_);
-
-        if (stopped_) {
-            return;
-        }
 
         asio::error_code ec;
         socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),

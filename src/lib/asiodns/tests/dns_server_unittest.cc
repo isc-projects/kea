@@ -723,4 +723,10 @@ TEST_F(SyncServerTest, mustResume) {
                  isc::Unexpected);
 }
 
+// SyncUDPServer doesn't allow NULL lookup callback.
+TEST_F(SyncServerTest, nullLookupCallback) {
+    EXPECT_THROW(SyncUDPServer(service, 0, AF_INET, checker_, NULL, answer_),
+                 isc::InvalidParameter);
+}
+
 }
