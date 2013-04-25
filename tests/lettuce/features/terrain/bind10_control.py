@@ -127,6 +127,8 @@ def run_bindctl(commands, cmdctl_port=None, ignore_failure=False):
        cmdctl_port: a port number on which cmdctl is listening, is converted
                     to string if necessary. If not provided, or None, defaults
                     to 47805
+       ignore_failure(bool): if set to True, don't examin the result code
+                    of bindctl and assert it succeeds.
 
        bindctl's stdout and stderr streams are stored (as one multiline string
        in world.last_bindctl_stdout/stderr.
@@ -316,8 +318,9 @@ def send_command(step, cmdctl_port, ignore_failure, command):
     command ('the command <command>'): The command to send.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
                 the command to. Defaults to 47805.
-    ignore_failure ('ignoring failure', optional): set to not None if bindctl
-    is expected to fail (and it's acceptable).
+    ignore_failure ('ignoring failure', optional): set to None if bindctl
+    is expected to succeed (normal case, which is the default); if it is
+    not None, it means bindctl is expected to fail (and it's acceptable).
 
     Fails if bindctl does not exit with status code 0 and ignore_failure
     is not None.
