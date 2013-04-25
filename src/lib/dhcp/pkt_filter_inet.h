@@ -33,6 +33,17 @@ public:
     /// Allocates control buffer.
     PktFilterInet();
 
+    /// @brief Check if packet can be sent to the host without address directly.
+    ///
+    /// This Packet Filter sends packets through AF_INET datagram sockets, so
+    /// it can't inject the HW address of the destionation host into the packet.
+    /// Therefore this class does not support direct responses.
+    ///
+    /// @return false always.
+    virtual bool isDirectResponseSupported() const {
+        return (false);
+    }
+
     /// @brief Open socket.
     ///
     /// @param iface interface descriptor

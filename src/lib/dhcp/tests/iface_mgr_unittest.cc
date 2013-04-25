@@ -74,6 +74,10 @@ public:
         : open_socket_called_(false) {
     }
 
+    virtual bool isDirectResponseSupported() const {
+        return (false);
+    }
+
     /// Pretends to open socket. Only records a call to this function.
     virtual int openSocket(const Iface&,
                            const isc::asiolink::IOAddress&,
@@ -839,6 +843,69 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     EXPECT_EQ(1024, socket1);
 }
 
+#if defined OS_LINUX
+
+// This Linux specific test checks whether it is possible to use
+// IfaceMgr to figure out which Pakcket Filter object should be
+// used when direct responses to hosts, having no address assigned
+// are desired or not desired.
+TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
+
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Let IfaceMgr figure out which Packet Filter to use when
+    // direct response capability is not desired. It should pick
+    // PktFilterInet.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
+    // The PktFilterInet is supposed to report lack of direct
+    // response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+
+    // There is working implementation of direct responses on Linux
+    // in PktFilterLPF. It uses Linux Packet Filtering as underlying
+    // mechanism. When direct responses are desired the object of
+    // this class should be set.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
+    // This object should report that direct responses are supported.
+    EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
+}
+
+#else
+
+// This non-Linux specific test checks whether it is possible to use
+// IfaceMgr to figure out which Pakcket Filter object should be
+// used when direct responses to hosts, having no address assigned
+// are desired or not desired. Since direct responses aren't supported
+// on systems other than Linux the function under test should always
+// set object of PktFilterInet type as current Packet Filter. This
+// object does not support direct responses. Once implementation is
+// added on non-Linux systems the OS specific version of the test
+// will be removed.
+TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
+
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Let IfaceMgr figure out which Packet Filter to use when
+    // direct response capability is not desired. It should pick
+    // PktFilterInet.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
+    // The PktFilterInet is supposed to report lack of direct
+    // response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+
+    // On non-Linux systems, we are missing the direct traffic
+    // implementation. Therefore, we expect that PktFilterInet
+    // object will be set.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
+    // This object should report lack of direct response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+}
+
+#endif
 
 TEST_F(IfaceMgrTest, socket4) {
 

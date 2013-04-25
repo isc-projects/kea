@@ -39,13 +39,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief IfaceMgr exception thrown when invalid packet filter object specified.
-class InvalidPacketFilter : public Exception {
-public:
-    InvalidPacketFilter(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief IfaceMgr exception thrown thrown when socket opening
 /// or configuration failed.
 class SocketConfigError : public Exception {
@@ -324,7 +317,7 @@ public:
     /// the client.
     ///
     /// @return true if direct response is supported.
-    bool isDirectResponseSupported();
+    bool isDirectResponseSupported() const;
 
     /// @brief Returns interface with specified interface index
     ///
@@ -579,6 +572,22 @@ public:
         }
         packet_filter_ = packet_filter;
     }
+
+    /// @brief Set Packet Filter object to handle send/receive packets.
+    ///
+    /// This function sets Packet Filter object to be used by IfaceMgr,
+    /// appropriate for the current OS. They will vary depending on the
+    /// OS being used if the function argument is set 'true'. There is
+    /// no guarantee that there is an implementation that supports this
+    /// feature on a particular OS. If there isn't the PktFilterInet
+    /// object will be set. If the argument is set to 'false' then
+    /// PktFilterInet object instance will be set as the Packet Filter
+    /// regrdaless of the OS.
+    ///
+    /// @param direct_response_desired specifies whether the Packet Filter
+    /// object being set should support direct responses to the host
+    /// not having address assigned.
+    void setMatchingPacketFilter(const bool direct_response_desired = false);
 
     /// A value of socket descriptor representing "not specified" state.
     static const int INVALID_SOCKET = -1;

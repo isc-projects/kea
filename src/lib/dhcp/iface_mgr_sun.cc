@@ -34,11 +34,6 @@ IfaceMgr::detectIfaces() {
     stubDetectIfaces();
 }
 
-bool
-IfaceMgr::isDirectResponseSupported() {
-    return (false);
-}
-
 void IfaceMgr::os_send4(struct msghdr& /*m*/,
                         boost::scoped_array<char>& /*control_buf*/,
                         size_t /*control_buf_len*/,
@@ -52,6 +47,12 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
   // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
 
   return (true); // pretend that we have everything set up for reception.
+}
+
+void
+IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
+    boost::shared_ptr<PktFilter> pkt_filter(new PktFilterInet());
+    setPacketFilter(pkt_filter);
 }
 
 } // end of isc::dhcp namespace
