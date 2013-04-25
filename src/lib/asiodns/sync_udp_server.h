@@ -43,13 +43,21 @@ namespace asiodns {
 class SyncUDPServer : public DNSServer, public boost::noncopyable {
 public:
     /// \brief Constructor
+    ///
+    /// Due to the nature of this server, it's meaningless if the lookup
+    /// callback is NULL.  So the constructor explicitly rejects that case
+    /// with an exception.
+    ///
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
     /// \param af address family, either AF_INET or AF_INET6
     /// \param checkin the callbackprovider for non-DNS events
-    /// \param lookup the callbackprovider for DNS lookup events
+    /// \param lookup the callbackprovider for DNS lookup events (must not be
+    ///        NULL)
     /// \param answer the callbackprovider for DNS answer events
+    ///
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    /// \throw isc::InvalidParameter lookup is NULL
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
     SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
@@ -144,3 +152,7 @@ private:
 } // namespace asiodns
 } // namespace isc
 #endif // SYNC_UDP_SERVER_H
+
+// Local Variables:
+// mode: c++
+// End:
