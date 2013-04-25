@@ -157,6 +157,11 @@ IfaceMgr::~IfaceMgr() {
     closeSockets();
 }
 
+bool
+IfaceMgr::isDirectResponseSupported() const {
+    return (packet_filter_->isDirectResponseSupported());
+}
+
 void IfaceMgr::stubDetectIfaces() {
     string ifaceName;
     const string v4addr("127.0.0.1"), v6addr("::1");

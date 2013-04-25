@@ -61,8 +61,13 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast) 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
-        // it may throw something if things go wrong
-        IfaceMgr::instance();
+        // it may throw something if things go wrong.
+        // The 'true' value of in the call to setMatchingPacketFilter imposes
+        // that IfaceMgr will try to use the mechanism to respond directly
+        // to the client which doesn't have address assigned. This capability
+        // may be lacking on some OSes, so there is no guarantee that server
+        // will be able to respond directly.
+        IfaceMgr::instance().setMatchingPacketFilter(true);
 
         if (port) {
             // open sockets only if port is non-zero. Port 0 is used

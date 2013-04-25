@@ -77,6 +77,17 @@ public:
 
 };
 
+// This test verifies that the PktFilterInet class reports its lack
+// of capability to send packets to the host having no IP address
+// assigned.
+TEST_F(PktFilterInetTest, isDirectResponseSupported) {
+    // Create object under test.
+    PktFilterInet pkt_filter;
+    // This Packet Filter class does not support direct responses
+    // under any conditions.
+    EXPECT_FALSE(pkt_filter.isDirectResponseSupported());
+}
+
 // This test verifies that the INET datagram socket is correctly opened and
 // bound to the appropriate address and port.
 TEST_F(PktFilterInetTest, openSocket) {
