@@ -139,7 +139,12 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     ASSERT_TRUE(pkt);
 
     // Set required fields.
-    pkt->setLocalAddr(IOAddress("127.0.0.1"));
+    // By setting the local address to broadcast we simulate the
+    // typical scenario when client's request was send to broadcast
+    // address and server by default used it as a source address
+    // in its response. The send() function should be able to detect
+    // it and correct the source address.
+    pkt->setLocalAddr(IOAddress("255.255.255.255"));
     pkt->setRemotePort(PORT);
     pkt->setLocalPort(PORT + 1);
     pkt->setIndex(ifindex_);
