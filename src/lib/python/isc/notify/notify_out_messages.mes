@@ -60,7 +60,7 @@ given address, but the reply did not have the QR bit set to one.
 Since there was a response, no more notifies will be sent to this
 server for this notification event.
 
-% NOTIFY_OUT_REPLY_RECEIVED Zone %1/%2: notify response from %3:%4: %5
+% NOTIFY_OUT_REPLY_RECEIVED Zone %1/%2: notify response from %3: %4
 The notify_out library sent a notify message to the nameserver at
 the given address, and received a response.  Its Rcode will be shown,
 too.
