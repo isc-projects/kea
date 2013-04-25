@@ -311,14 +311,6 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
-    def test_handle_post_request_to_itself(self):
-        len = self.handler.rfile.write(json.dumps({}).encode())
-        self.handler.headers['Content-Length'] = len
-        self.handler.rfile.seek(0, 0)
-        self.handler.path = '/Cmdctl/shutdown'
-        rcode, reply = self.handler._handle_post_request()
-        self.assertEqual(http.client.BAD_REQUEST, rcode)
-
     def test_handle_login(self):
         orig_is_user_logged_in = self.handler._is_user_logged_in
         orig_check_user_name_and_pwd = self.handler._check_user_name_and_pwd
