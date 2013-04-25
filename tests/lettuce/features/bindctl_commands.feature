@@ -161,7 +161,7 @@ Feature: control with bindctl
         # so this scenario confirms it's certainly fixed.  Note: since cmdctl
         # is a "needed" component, shutting it down will result in system
         # shutdown.  So "send bind10 command" will fail (it cannot complete
-        # "quite").
+        # "quit").
         Given I have bind10 running with configuration bindctl/bindctl.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
