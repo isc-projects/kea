@@ -75,13 +75,18 @@ If you see a single occurrence of this message, it probably does not
 indicate any significant problem, but if it is logged often, it is probably
 a good idea to inspect your network traffic.
 
-% ASIODNS_UDP_RECEIVE_FAIL failed to accept UDP DNS packet: %1
+% ASIODNS_UDP_RECEIVE_FAIL failed to receive UDP DNS packet: %1
 Receiving a UDP packet from a DNS client failed due to an error that
 could happen but should be very rare.  The server still keeps
 receiving UDP packets on this socket.  The reason for the error is
 included in the log message.  This log message is basically not
 expected to appear at all in practice; if it does, there may be some
 system level failure and other system logs may have to be checked.
+
+% ASIODNS_UDP_SYNC_RECEIVE_FAIL failed to receive UDP DNS packet: %1
+This is the same to ASIODNS_UDP_RECEIVE_FAIL but happens on the
+"synchronous UDP server", mainly used for the authoritative DNS server
+daemon.
 
 % ASIODNS_UDP_SYNC_SEND_FAIL Error sending UDP packet to %1: %2
 The low-level ASIO library reported an error when trying to send a UDP
