@@ -110,6 +110,20 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     }
     writeEthernetHeader(iface.getMac(), &dest_addr[0], buf);
 
+    // It is likely that the local address in pkt object is set to
+    // broadcast address. This is the case if server received the
+    // client's packet on broadcast address. Therefore, we need to
+    // correct it here and assign the actual source address.
+    if (pkt->getLocalAddr().toText() == "255.255.255.255") {
+        const Iface::SocketCollection& sockets = iface.getSockets();
+        for (Iface::SocketCollection::const_iterator it = sockets.begin();
+             it != sockets.end(); ++it) {
+            if (sockfd == it->sockfd_) {
+                pkt->setLocalAddr(it->addr_);
+            }
+        }
+    }
+
     // IP and UDP header
     writeIpUdpHeader(pkt, buf);
 
