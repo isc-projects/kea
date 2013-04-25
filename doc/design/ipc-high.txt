@@ -40,6 +40,15 @@ sequence number::
   sequence number had the message it response to. Even responses and
   messages not expecting answer have their sequence number, but it is
   generally unused.
+non-blocking operation::
+  Operation that will complete without waiting for anything.
+fast operation::
+  Operation that may wait for other process, but only for a very short
+  time. Generally, this includes communication between the user and
+  system, but not between two clients. It can be expected to be fast
+  enough to use this inside an interactive session, but may be too
+  heavy in the middle of query processing, for example. Every
+  non-blocking operation is considered fast.
 
 The session
 -----------
@@ -51,7 +60,7 @@ Possible operations include:
 
 Opening a session::
   The session is created and connects to the system. This operation is
-  fast, but it can still block for short amount of time. The session
+  fast. The session
   receives session id from the system.
 
 Group management::
@@ -333,7 +342,7 @@ number of transferred messages and the maximum size of message is 4GB,
 the code is not optimised and it would probably be very slow.
 
 We currently expect the system not to be at heavy load. Therefore, we
-expect the daemon to keep up with clients sending messages. The
+expect the system to keep up with clients sending messages. The
 libraries write in blocking mode, which is no problem if the
 expectation is true, as the write buffers will generally be empty and
 the write wouldn't block, but if it turns out it is not the case, we
