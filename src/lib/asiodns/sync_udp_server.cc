@@ -72,16 +72,19 @@ SyncUDPServer::scheduleRead() {
 
 void
 SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
-    // Abort on fatal errors
     if (ec) {
         using namespace asio::error;
-        if (ec.value() != would_block && ec.value() != try_again &&
-            ec.value() != interrupted) {
+        const asio::error_code::value_type err_val = ec.value();
+
+        // See TCPServer::operator() for details on error handling.
+        if (err_val == operation_aborted || err_val == bad_descriptor) {
             return;
         }
+        if (err_val != would_block && err_val != try_again &&
+            err_val != interrupted) {
+            LOG_ERROR(logger, ASIODNS_UDP_SYNC_RECEIVE_FAIL).arg(ec.message());
+        }
     }
-    // Some kind of interrupt, spurious wakeup, or like that. Just try reading
-    // again.
     if (ec || length == 0) {
         scheduleRead();
         return;
@@ -173,6 +176,10 @@ SyncUDPServer::operator()(asio::error_code, size_t) {
 /// Stop the UDPServer
 void
 SyncUDPServer::stop() {
+    // passing error_code to avoid getting exception; we simply ignore any
+    // error on close().
+    asio::error_code ec;
+
     /// Using close instead of cancel, because cancel
     /// will only cancel the asynchronized event already submitted
     /// to io service, the events post to io service after
@@ -181,13 +188,10 @@ SyncUDPServer::stop() {
     /// for it won't be scheduled by io service not matter it is
     /// submit to io service before or after close call. And we will
     /// get bad_descriptor error.
-    socket_->close();
+    socket_->close(ec);
     stopped_ = true;
 }
 
-/// Post this coroutine on the ASIO service queue so that it will
-/// resume processing where it left off.  The 'done' parameter indicates
-/// whether there is an answer to return to the client.
 void
 SyncUDPServer::resume(const bool done) {
     resume_called_ = true;
