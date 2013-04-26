@@ -57,7 +57,7 @@ TestControl::TestControlSocket::TestControlSocket(const int socket) :
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(ifindex_);
     if (iface) {
         iface->delSocket(sockfd_);
     }
@@ -70,9 +70,9 @@ TestControl::TestControlSocket::initSocketData() {
     for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
          it != ifaces.end();
          ++it) {
-        const IfaceMgr::SocketCollection& socket_collection =
+        const Iface::SocketCollection& socket_collection =
             it->getSockets();
-        for (IfaceMgr::SocketCollection::const_iterator s =
+        for (Iface::SocketCollection::const_iterator s =
                  socket_collection.begin();
              s != socket_collection.end();
              ++s) {
@@ -592,19 +592,27 @@ TestControl::openSocket() const {
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
     uint16_t port = options.getLocalPort();
-    uint8_t family = AF_INET;
     int sock = 0;
+
+    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET; 
     IOAddress remoteaddr(servername);
+    
+    // Check for mismatch between IP option and server address
+    if (family != remoteaddr.getFamily()) {
+        isc_throw(InvalidParameter, 
+                  "Values for IP version: " <<  
+                  static_cast<unsigned int>(options.getIpVersion()) <<
+                  " and server address: " << servername << " are mismatched."); 
+    }
+
     if (port == 0) {
-        if (options.getIpVersion() == 6) {
+        if (family == AF_INET6) {
             port = DHCP6_CLIENT_PORT;
         } else if (options.getIpVersion() == 4) {
             port = 67; //  TODO: find out why port 68 is wrong here.
         }
     }
-    if (options.getIpVersion() == 6) {
-        family = AF_INET6;
-    }
+
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
     if (!localname.empty()) {
@@ -653,7 +661,7 @@ TestControl::openSocket() const {
             // If user specified interface name with '-l' the
             // IPV6_MULTICAST_IF has to be set.
             if ((ret >= 0)  && options.isInterface()) {
-                IfaceMgr::Iface* iface =
+                Iface* iface =
                     IfaceMgr::instance().getIface(options.getLocalName());
                 if (iface == NULL) {
                     isc_throw(Unexpected, "unknown interface "
@@ -905,8 +913,8 @@ TestControl::readPacketTemplate(const std::string& file_name) {
             hex_digits.push_back(file_contents[i]);
         } else if (!isxdigit(file_contents[i]) &&
                    !isspace(file_contents[i])) {
-            isc_throw(BadValue, "the '" << file_contents[i] << "' is not a"
-                      " heaxadecimal digit");
+            isc_throw(BadValue, "'" << file_contents[i] << "' is not a"
+                      " hexadecimal digit");
         }
     }
     // Expect even number of digits.
@@ -1791,7 +1799,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -1817,7 +1825,7 @@ TestControl::setDefaults6(const TestControlSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -1864,7 +1872,7 @@ TestControl::updateSendDue() {
         // timer resolution.
         duration = time_duration::ticks_per_second() / rate;
     }
-    // Calculate due time to initate next chunk of exchanges.
+    // Calculate due time to initiate next chunk of exchanges.
     send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
     // Check if it is already due.
     ptime now(microsec_clock::universal_time());

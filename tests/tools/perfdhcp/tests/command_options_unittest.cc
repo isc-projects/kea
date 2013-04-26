@@ -546,7 +546,7 @@ TEST_F(CommandOptionsTest, Interface) {
     // In order to make this test portable we need to know
     // at least one interface name on OS where test is run.
     // Interface Manager has ability to detect interfaces.
-    // Although we don't call initIsInterface explicitely
+    // Although we don't call initIsInterface explicitly
     // here it is called by CommandOptions object interally
     // so this function is covered by the test.
     dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();

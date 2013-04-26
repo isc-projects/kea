@@ -42,7 +42,7 @@
 /// libraries.
 ///
 /// This file defines a set of standard debug levels for use across all loggers.
-/// In this way users can have some expection of what will be output when
+/// In this way users can have some expectation of what will be output when
 /// enabling debugging.  Symbols are prefixed DBGLVL so as not to clash with
 /// DBG_ symbols in the various modules.
 ///

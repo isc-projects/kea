@@ -188,7 +188,7 @@ def get_soa_serial(soa_rdata):
 
 class XfrinState:
     '''
-    The states of the incomding *XFR state machine.
+    The states of the incoming *XFR state machine.
 
     We (will) handle both IXFR and AXFR with a single integrated state
     machine because they cannot be distinguished immediately - an AXFR
@@ -270,7 +270,7 @@ class XfrinState:
     can be used as singleton objects.  For now, however, we always instantiate
     a new object for every state transition, partly because the introduction
     of singleton will make a code bit complicated, and partly because
-    the overhead of object instantiotion wouldn't be significant for xfrin.
+    the overhead of object instantiation wouldn't be significant for xfrin.
 
     '''
     def set_xfrstate(self, conn, new_state):

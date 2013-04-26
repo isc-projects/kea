@@ -57,7 +57,7 @@ static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
 // These are hardcoded parameters. Currently this is a skeleton server that only
 // grants those options and a single, fixed, hardcoded lease.
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
+Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
@@ -67,7 +67,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig) {
         if (port) {
             // open sockets only if port is non-zero. Port 0 is used
             // for non-socket related testing.
-            IfaceMgr::instance().openSockets4(port);
+            IfaceMgr::instance().openSockets4(port, use_bcast);
         }
 
         string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
@@ -287,9 +287,9 @@ Dhcpv4Srv::generateServerID() {
             continue;
         }
 
-        const IfaceMgr::AddressCollection addrs = iface->getAddresses();
+        const Iface::AddressCollection addrs = iface->getAddresses();
 
-        for (IfaceMgr::AddressCollection::const_iterator addr = addrs.begin();
+        for (Iface::AddressCollection::const_iterator addr = addrs.begin();
              addr != addrs.end(); ++addr) {
             if (addr->getFamily() != AF_INET) {
                 continue;
@@ -317,7 +317,7 @@ Dhcpv4Srv::writeServerID(const std::string& file_name) {
     return (true);
 }
 
-string 
+string
 Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     if (!srvid) {
         isc_throw(BadValue, "NULL pointer passed to srvidToString()");
@@ -343,7 +343,7 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setIndex(question->getIndex());
     answer->setCiaddr(question->getCiaddr());
 
-    answer->setSiaddr(IOAddress("0.0.0.0")); // explictly set this to 0
+    answer->setSiaddr(IOAddress("0.0.0.0")); // explicitly set this to 0
     answer->setHops(question->getHops());
 
     // copy MAC address
@@ -516,6 +516,28 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
         answer->setYiaddr(lease->addr_);
+
+        // If remote address is not set, we are dealing with a directly
+        // connected client requesting new lease. We can send response to
+        // the address assigned in the lease, but first we have to make sure
+        // that IfaceMgr supports responding directly to the client when
+        // client doesn't have address assigned to its interface yet.
+        if (answer->getRemoteAddr().toText() == "0.0.0.0") {
+            if (IfaceMgr::instance().isDirectResponseSupported()) {
+                answer->setRemoteAddr(lease->addr_);
+            } else {
+                // Since IfaceMgr does not support direct responses to
+                // clients not having IP addresses, we have to send response
+                // to broadcast. We don't check whether the use_bcast flag
+                // was set in the constructor, because this flag is only used
+                // by unit tests to prevent opening broadcast sockets, as
+                // it requires root privileges. If this function is invoked by
+                // unit tests, we expect that it sets broadcast address if
+                // direct response is not supported, so as a test can verify
+                // function's behavior, regardless of the use_bcast flag's value.
+                answer->setRemoteAddr(IOAddress("255.255.255.255"));
+            }
+        }
 
         // IP Address Lease time (type 51)
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));

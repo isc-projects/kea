@@ -138,7 +138,7 @@ the type.  But there are some common configurable entries.  See the
 description of the RR class.  The most important one would be "as_rr".
 It controls whether the entry should be treated as an RR (with name,
 type, class and TTL) or only as an RDATA.  By default as_rr is
-"False", so if an entry is to be intepreted as an RR, an as_rr entry
+"False", so if an entry is to be interpreted as an RR, an as_rr entry
 must be explicitly specified with a value of "True".
 
 Another common entry is "rdlen".  It specifies the RDLEN field value
@@ -325,7 +325,7 @@ What you are expected to do is as follows:
   examples.
 """
 
-import configparser, re, time, socket, sys
+import configparser, re, time, socket, sys, base64
 from datetime import datetime
 from optparse import OptionParser
 
@@ -412,6 +412,11 @@ def encode_string(name, len=None):
     if type(name) is int and len is not None:
         return '%0.*x' % (len * 2, name)
     return ''.join(['%02x' % ord(ch) for ch in name])
+
+def encode_bytes(name, len=None):
+    if type(name) is int and len is not None:
+        return '%0.*x' % (len * 2, name)
+    return ''.join(['%02x' % ch for ch in name])
 
 def count_namelabels(name):
     if name == '.':             # special case
@@ -762,7 +767,7 @@ class TXT(RR):
       value will be used.  If this parameter isn't specified either,
       the length of the string will be used.  Note that it means
       this parameter (or any stringlenN) doesn't have to be specified
-      unless you want to intentially build a broken character string.
+      unless you want to intentionally build a broken character string.
     - string (string): the default string.  If nstring >= 1 and the
       corresponding stringN isn't specified in the spec file, this
       string will be used.
@@ -887,6 +892,42 @@ class AFSDB(RR):
         self.dump_header(f, self.rdlen)
         f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
         f.write('%04x %s\n' % (self.subtype, server_wire))
+
+class DNSKEY(RR):
+    '''Implements rendering DNSKEY RDATA in the test data format.
+
+    Configurable parameters are as follows (see code below for the
+    default values):
+    - flags (16-bit int): The flags field.
+    - protocol (8-bit int): The protocol field.
+    - algorithm (8-bit int): The algorithm field.
+    - digest (string): The key digest field.
+    '''
+    flags = 257
+    protocol = 3
+    algorithm = 5
+    digest = 'AAECAwQFBgcICQoLDA0ODw=='
+
+    def dump(self, f):
+        decoded_digest = base64.b64decode(bytes(self.digest, 'ascii'))
+        if self.rdlen is None:
+            self.rdlen = 4 + len(decoded_digest)
+        else:
+            self.rdlen = int(self.rdlen)
+
+        self.dump_header(f, self.rdlen)
+
+        f.write('# FLAGS=%d\n' % (self.flags))
+        f.write('%04x\n' % (self.flags))
+
+        f.write('# PROTOCOL=%d\n' % (self.protocol))
+        f.write('%02x\n' % (self.protocol))
+
+        f.write('# ALGORITHM=%d\n' % (self.algorithm))
+        f.write('%02x\n' % (self.algorithm))
+
+        f.write('# DIGEST=%s\n' % (self.digest))
+        f.write('%s\n' % (encode_bytes(decoded_digest)))
 
 class NSECBASE(RR):
     '''Implements rendering NSEC/NSEC3 type bitmaps commonly used for

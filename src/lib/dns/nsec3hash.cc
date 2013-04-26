@@ -45,7 +45,7 @@ namespace {
 /// calculation specified in RFC5155.
 ///
 /// Currently the only pre-defined algorithm in the RFC is SHA1.  So we don't
-/// over-generalize it at the moment, and rather hardocde it and assume that
+/// over-generalize it at the moment, and rather hardcode it and assume that
 /// specific algorithm.
 ///
 /// The implementation details are only open within this file, but to avoid

@@ -94,9 +94,6 @@ namespace {
 /// colon separators.
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
-/// @brief Maximum size of a hardware address.
-const size_t HWADDR_MAX_LEN = 20;
-
 /// @brief MySQL True/False constants
 ///
 /// Declare typed values so as to avoid problems of data conversion.  These
@@ -315,6 +312,10 @@ public:
         lease_ = lease;
 
         // Initialize prior to constructing the array of MYSQL_BIND structures.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
         // Set up the structures for the various components of the lease4
@@ -327,6 +328,8 @@ public:
         bind_[0].buffer_type = MYSQL_TYPE_LONG;
         bind_[0].buffer = reinterpret_cast<char*>(&addr4_);
         bind_[0].is_unsigned = MLM_TRUE;
+        // bind_[0].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // hwaddr: varbinary(128)
         // For speed, we avoid copying the data into temporary storage and
@@ -336,6 +339,8 @@ public:
         bind_[1].buffer = reinterpret_cast<char*>(&(lease_->hwaddr_[0]));
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
+        // bind_[1].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // client_id: varbinary(128)
         if (lease_->client_id_) {
@@ -345,6 +350,8 @@ public:
             bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
             bind_[2].buffer_length = client_id_length_;
             bind_[2].length = &client_id_length_;
+            // bind_[2].is_null = &MLM_FALSE; // commented out for performance
+                                              // reasons, see memset() above
         } else {
             bind_[2].buffer_type = MYSQL_TYPE_NULL;
 
@@ -353,15 +360,17 @@ public:
             // fields doesn't matter if type is set to MYSQL_TYPE_NULL,
             // but let's set them to some sane values in case earlier versions
             // didn't have that assumption.
-            static my_bool no_clientid = MLM_TRUE;
+            client_id_null_ = MLM_TRUE;
             bind_[2].buffer = NULL;
-            bind_[2].is_null = &no_clientid;
+            bind_[2].is_null = &client_id_null_;
         }
 
         // valid lifetime: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
         bind_[3].buffer = reinterpret_cast<char*>(&lease_->valid_lft_);
         bind_[3].is_unsigned = MLM_TRUE;
+        // bind_[3].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // expire: timestamp
         // The lease structure holds the client last transmission time (cltt_)
@@ -377,12 +386,16 @@ public:
         bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
         bind_[4].buffer = reinterpret_cast<char*>(&expire_);
         bind_[4].buffer_length = sizeof(expire_);
+        // bind_[4].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // subnet_id: unsigned int
         // Can use lease_->subnet_id_ directly as it is of type uint32_t.
         bind_[5].buffer_type = MYSQL_TYPE_LONG;
         bind_[5].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
         bind_[5].is_unsigned = MLM_TRUE;
+        // bind_[5].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
@@ -404,12 +417,18 @@ public:
     std::vector<MYSQL_BIND> createBindForReceive() {
 
         // Initialize MYSQL_BIND array.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
         // address:  uint32_t
         bind_[0].buffer_type = MYSQL_TYPE_LONG;
         bind_[0].buffer = reinterpret_cast<char*>(&addr4_);
         bind_[0].is_unsigned = MLM_TRUE;
+        // bind_[0].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // hwaddr: varbinary(20)
         hwaddr_length_ = sizeof(hwaddr_buffer_);
@@ -417,6 +436,8 @@ public:
         bind_[1].buffer = reinterpret_cast<char*>(hwaddr_buffer_);
         bind_[1].buffer_length = hwaddr_length_;
         bind_[1].length = &hwaddr_length_;
+        // bind_[1].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // client_id: varbinary(128)
         client_id_length_ = sizeof(client_id_buffer_);
@@ -424,21 +445,30 @@ public:
         bind_[2].buffer = reinterpret_cast<char*>(client_id_buffer_);
         bind_[2].buffer_length = client_id_length_;
         bind_[2].length = &client_id_length_;
+        bind_[2].is_null = &client_id_null_;
+        // bind_[2].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // lease_time: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
         bind_[3].buffer = reinterpret_cast<char*>(&valid_lifetime_);
         bind_[3].is_unsigned = MLM_TRUE;
+        // bind_[3].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // expire: timestamp
         bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
         bind_[4].buffer = reinterpret_cast<char*>(&expire_);
         bind_[4].buffer_length = sizeof(expire_);
+        // bind_[4].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // subnet_id: unsigned int
         bind_[5].buffer_type = MYSQL_TYPE_LONG;
         bind_[5].buffer = reinterpret_cast<char*>(&subnet_id_);
         bind_[5].is_unsigned = MLM_TRUE;
+        // bind_[5].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
@@ -464,6 +494,11 @@ public:
         // structure
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+
+        if (client_id_null_==MLM_TRUE) {
+            // There's no client-id, so we pass client-id_length_ set to 0
+            client_id_length_ = 0;
+        }
 
         // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
@@ -495,13 +530,15 @@ private:
     std::string     columns_[LEASE_COLUMNS];///< Column names
     my_bool         error_[LEASE_COLUMNS];  ///< Error array
     std::vector<uint8_t> hwaddr_;       ///< Hardware address
-    uint8_t         hwaddr_buffer_[HWADDR_MAX_LEN];
+    uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
                                         ///< Hardware address buffer
     unsigned long   hwaddr_length_;     ///< Hardware address length
     std::vector<uint8_t> client_id_;    ///< Client identification
     uint8_t         client_id_buffer_[ClientId::MAX_CLIENT_ID_LEN];
                                         ///< Client ID buffer
     unsigned long   client_id_length_;  ///< Client ID address length
+    my_bool         client_id_null_;    ///< Is Client ID null?
+
     MYSQL_TIME      expire_;            ///< Lease expiry time
     Lease4Ptr       lease_;             ///< Pointer to lease object
     uint32_t        subnet_id_;         ///< Subnet identification
@@ -564,6 +601,10 @@ public:
 
         // Ensure bind_ array clear for constructing the MYSQL_BIND structures
         // for this lease.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
         // address: varchar(39)
@@ -588,6 +629,8 @@ public:
         bind_[0].buffer = const_cast<char*>(addr6_.c_str());
         bind_[0].buffer_length = addr6_length_;
         bind_[0].length = &addr6_length_;
+        // bind_[0].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // duid: varchar(128)
         duid_ = lease_->duid_->getDuid();
@@ -597,11 +640,15 @@ public:
         bind_[1].buffer = reinterpret_cast<char*>(&(duid_[0]));
         bind_[1].buffer_length = duid_length_;
         bind_[1].length = &duid_length_;
+        // bind_[1].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // valid lifetime: unsigned int
         bind_[2].buffer_type = MYSQL_TYPE_LONG;
         bind_[2].buffer = reinterpret_cast<char*>(&lease_->valid_lft_);
         bind_[2].is_unsigned = MLM_TRUE;
+        // bind_[2].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // expire: timestamp
         // The lease structure holds the client last transmission time (cltt_)
@@ -616,18 +663,24 @@ public:
         bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
         bind_[3].buffer = reinterpret_cast<char*>(&expire_);
         bind_[3].buffer_length = sizeof(expire_);
+        // bind_[3].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // subnet_id: unsigned int
         // Can use lease_->subnet_id_ directly as it is of type uint32_t.
         bind_[4].buffer_type = MYSQL_TYPE_LONG;
         bind_[4].buffer = reinterpret_cast<char*>(&lease_->subnet_id_);
         bind_[4].is_unsigned = MLM_TRUE;
+        // bind_[4].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // pref_lifetime: unsigned int
         // Can use lease_->preferred_lft_ directly as it is of type uint32_t.
         bind_[5].buffer_type = MYSQL_TYPE_LONG;
         bind_[5].buffer = reinterpret_cast<char*>(&lease_->preferred_lft_);
         bind_[5].is_unsigned = MLM_TRUE;
+        // bind_[5].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // lease_type: tinyint
         // Must convert to uint8_t as lease_->type_ is a LeaseType variable.
@@ -635,18 +688,24 @@ public:
         bind_[6].buffer_type = MYSQL_TYPE_TINY;
         bind_[6].buffer = reinterpret_cast<char*>(&lease_type_);
         bind_[6].is_unsigned = MLM_TRUE;
+        // bind_[6].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // iaid: unsigned int
         // Can use lease_->iaid_ directly as it is of type uint32_t.
         bind_[7].buffer_type = MYSQL_TYPE_LONG;
         bind_[7].buffer = reinterpret_cast<char*>(&lease_->iaid_);
         bind_[7].is_unsigned = MLM_TRUE;
+        // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // prefix_len: unsigned tinyint
         // Can use lease_->prefixlen_ directly as it is uint32_t.
         bind_[8].buffer_type = MYSQL_TYPE_TINY;
         bind_[8].buffer = reinterpret_cast<char*>(&lease_->prefixlen_);
         bind_[8].is_unsigned = MLM_TRUE;
+        // bind_[8].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
@@ -670,6 +729,10 @@ public:
     std::vector<MYSQL_BIND> createBindForReceive() {
 
         // Initialize MYSQL_BIND array.
+        // It sets all fields, including is_null, to zero, so we need to set
+        // is_null only if it should be true. This gives up minor performance
+        // benefit while being safe approach. For improved readability, the
+        // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
         // address:  varchar(39)
@@ -681,6 +744,8 @@ public:
         bind_[0].buffer = addr6_buffer_;
         bind_[0].buffer_length = addr6_length_;
         bind_[0].length = &addr6_length_;
+        // bind_[0].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // client_id: varbinary(128)
         duid_length_ = sizeof(duid_buffer_);
@@ -688,41 +753,57 @@ public:
         bind_[1].buffer = reinterpret_cast<char*>(duid_buffer_);
         bind_[1].buffer_length = duid_length_;
         bind_[1].length = &duid_length_;
+        // bind_[1].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // lease_time: unsigned int
         bind_[2].buffer_type = MYSQL_TYPE_LONG;
         bind_[2].buffer = reinterpret_cast<char*>(&valid_lifetime_);
         bind_[2].is_unsigned = MLM_TRUE;
+        // bind_[2].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // expire: timestamp
         bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
         bind_[3].buffer = reinterpret_cast<char*>(&expire_);
         bind_[3].buffer_length = sizeof(expire_);
+        // bind_[3].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // subnet_id: unsigned int
         bind_[4].buffer_type = MYSQL_TYPE_LONG;
         bind_[4].buffer = reinterpret_cast<char*>(&subnet_id_);
         bind_[4].is_unsigned = MLM_TRUE;
+        // bind_[4].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // pref_lifetime: unsigned int
         bind_[5].buffer_type = MYSQL_TYPE_LONG;
         bind_[5].buffer = reinterpret_cast<char*>(&pref_lifetime_);
         bind_[5].is_unsigned = MLM_TRUE;
+        // bind_[5].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // lease_type: tinyint
         bind_[6].buffer_type = MYSQL_TYPE_TINY;
         bind_[6].buffer = reinterpret_cast<char*>(&lease_type_);
         bind_[6].is_unsigned = MLM_TRUE;
+        // bind_[6].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // iaid: unsigned int
         bind_[7].buffer_type = MYSQL_TYPE_LONG;
         bind_[7].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[7].is_unsigned = MLM_TRUE;
+        // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // prefix_len: unsigned tinyint
         bind_[8].buffer_type = MYSQL_TYPE_TINY;
         bind_[8].buffer = reinterpret_cast<char*>(&prefixlen_);
         bind_[8].is_unsigned = MLM_TRUE;
+        // bind_[8].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
 
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
@@ -1022,6 +1103,17 @@ MySqlLeaseMgr::openDatabase() {
     int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Set SQL mode options for the connection:  SQL mode governs how what 
+    // constitutes insertable data for a given column, and how to handle
+    // invalid data.  We want to ensure we get the strictest behavior and
+    // to reject invalid data with an error.
+    const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
+    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set SQL mode options: " <<
                   mysql_error(mysql_));
     }
 
