@@ -120,13 +120,15 @@ def have_bind10_running(step, config_file, cmdctl_port, process_name):
     step.given(start_step)
 
 # function to send lines to bindctl, and store the result
-def run_bindctl(commands, cmdctl_port=None):
+def run_bindctl(commands, cmdctl_port=None, ignore_failure=False):
     """Run bindctl.
        Parameters:
        commands: a sequence of strings which will be sent.
        cmdctl_port: a port number on which cmdctl is listening, is converted
                     to string if necessary. If not provided, or None, defaults
                     to 47805
+       ignore_failure(bool): if set to True, don't examin the result code
+                    of bindctl and assert it succeeds.
 
        bindctl's stdout and stderr streams are stored (as one multiline string
        in world.last_bindctl_stdout/stderr.
@@ -140,6 +142,8 @@ def run_bindctl(commands, cmdctl_port=None):
     for line in commands:
         bindctl.stdin.write(line + "\n")
     (stdout, stderr) = bindctl.communicate()
+    if ignore_failure:
+        return
     result = bindctl.returncode
     world.last_bindctl_stdout = stdout
     world.last_bindctl_stderr = stderr
@@ -306,19 +310,25 @@ def config_remove_command(step, name, value, cmdctl_port):
                 "quit"]
     run_bindctl(commands, cmdctl_port)
 
-@step('send bind10(?: with cmdctl port (\d+))? the command (.+)')
-def send_command(step, cmdctl_port, command):
+@step('send bind10(?: with cmdctl port (\d+))?( ignoring failure)? the command (.+)')
+def send_command(step, cmdctl_port, ignore_failure, command):
     """
     Run bindctl, send the given command, and exit bindctl.
     Parameters:
     command ('the command <command>'): The command to send.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
                 the command to. Defaults to 47805.
-    Fails if cmdctl does not exit with status code 0.
+    ignore_failure ('ignoring failure', optional): set to None if bindctl
+    is expected to succeed (normal case, which is the default); if it is
+    not None, it means bindctl is expected to fail (and it's acceptable).
+
+    Fails if bindctl does not exit with status code 0 and ignore_failure
+    is not None.
+
     """
     commands = [command,
                 "quit"]
-    run_bindctl(commands, cmdctl_port)
+    run_bindctl(commands, cmdctl_port, ignore_failure is not None)
 
 @step('bind10 module (\S+) should( not)? be running')
 def module_is_running(step, name, not_str):
