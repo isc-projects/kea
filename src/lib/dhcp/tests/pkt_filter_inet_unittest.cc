@@ -132,6 +132,7 @@ TEST_F(PktFilterInetTest, send) {
 
     // Set required fields.
     pkt->setLocalAddr(IOAddress("127.0.0.1"));
+    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
     pkt->setRemotePort(PORT);
     pkt->setLocalPort(PORT + 1);
     pkt->setIndex(ifindex_);
@@ -210,6 +211,7 @@ TEST_F(PktFilterInetTest, receive) {
 
     // Set required fields.
     pkt->setLocalAddr(IOAddress("127.0.0.1"));
+    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
     pkt->setRemotePort(PORT);
     pkt->setLocalPort(PORT + 1);
     pkt->setIndex(ifindex_);
