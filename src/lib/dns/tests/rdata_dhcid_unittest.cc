@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,24 @@ class Rdata_DHCID_Test : public RdataTest {
 TEST_F(Rdata_DHCID_Test, createFromString) {
     const in::DHCID rdata_dhcid2(string_dhcid);
     EXPECT_EQ(0, rdata_dhcid2.compare(rdata_dhcid));
+}
+
+TEST_F(Rdata_DHCID_Test, spaceSeparatedBase64) {
+    const in::DHCID rdata_dhcid2(
+            "0LIg0LvQtdGB0YMg 0YDQvtC00LjQu9Cw 0YHRjCDRkdC70L7R h9C60LA=");
+    EXPECT_EQ(0, rdata_dhcid2.compare(rdata_dhcid));
+}
+
+TEST_F(Rdata_DHCID_Test, multiLineBase64) {
+    const in::DHCID rdata_dhcid2(
+            "( 0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw\n0YHRjCDRkdC70L7R h9C60LA= )");
+    EXPECT_EQ(0, rdata_dhcid2.compare(rdata_dhcid));
+}
+
+TEST_F(Rdata_DHCID_Test, extraText) {
+    EXPECT_THROW(const in::DHCID rdata_dhcid2(
+            "0LIg0LvQtdGB0YMg 0YDQvtC00LjQu9Cw 0YHRjCDRkdC70L7R h9C60LA="
+            " superextrabogustext"), isc::BadValue);
 }
 
 TEST_F(Rdata_DHCID_Test, badBase64) {

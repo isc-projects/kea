@@ -33,8 +33,15 @@ using namespace isc::util::encode;
 
 void
 DHCID::createFromLexer(MasterLexer& lexer) {
-    const string digest_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
+    string digest_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if (token.getType() != MasterToken::STRING) {
+            break;
+        }
+        digest_txt.append(token.getString());
+    }
+    lexer.ungetToken();
     decodeBase64(digest_txt, digest_);
 
     // RFC4701 states DNS software should consider the RDATA section to
@@ -67,13 +74,12 @@ DHCID::DHCID(const std::string& dhcid_str) {
         std::istringstream iss(dhcid_str);
         MasterLexer lexer;
         lexer.pushSource(iss);
-
-	createFromLexer(lexer);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for DHCID: "
-                      << dhcid_str);
-        }
+        createFromLexer(lexer);
+        // RFC4701 says we have to support white-space-separated substrings,
+        // so we have to read to the end of input. Therefore, we can't detect
+        // extra input past the end of the digest. OTOH, extra text is likely
+        // to result in a base64 decoding error, so BadValue will be thrown in
+        // that case.
     } catch (const MasterLexer::LexerError& ex) {
         isc_throw(InvalidRdataText, "Failed to construct DHCID from '" <<
                   dhcid_str << "': " << ex.what());
