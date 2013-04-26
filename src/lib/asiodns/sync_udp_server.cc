@@ -42,8 +42,7 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
-    answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    lookup_callback_(lookup), stopped_(false)
+    udp_endpoint_(sender_), lookup_callback_(lookup), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -63,6 +62,7 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
         // convert it
         isc_throw(IOError, exception.what());
     }
+    udp_socket_.reset(new UDPSocket<DummyIOCallback>(*socket_));
 }
 
 void
@@ -93,18 +93,12 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     }
     // OK, we have a real packet of data. Let's dig into it!
 
-    // XXX: This is taken (and ported) from UDPSocket class. What the hell does
-    // it really mean?
-
     // The UDP socket class has been extended with asynchronous functions
     // and takes as a template parameter a completion callback class.  As
     // UDPServer does not use these extended functions (only those defined
     // in the IOSocket base class) - but needs a UDPSocket to get hold of
     // the underlying Boost UDP socket - DummyIOCallback is used.  This
     // provides the appropriate operator() but is otherwise functionless.
-    UDPSocket<DummyIOCallback> socket(*socket_);
-    UDPEndpoint endpoint(sender_);
-    IOMessage message(data_, length, socket, endpoint);
 
     // Make sure the buffers are fresh.  Note that we don't touch query_
     // because it's supposed to be cleared in lookup_callback_.  We should
@@ -113,14 +107,14 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     // implementation should be careful that it's the responsibility of
     // the callback implementation.  See also #2239).
     output_buffer_->clear();
-    answer_->clear(isc::dns::Message::RENDER);
 
     // Mark that we don't have an answer yet.
     done_ = false;
     resume_called_ = false;
 
     // Call the actual lookup
-    (*lookup_callback_)(message, query_, answer_, output_buffer_, this);
+    (*lookup_callback_)(IOMessage(data_, length, *udp_socket_, udp_endpoint_),
+                        query_, answer_, output_buffer_, this);
 
     if (!resume_called_) {
         isc_throw(isc::Unexpected,
