@@ -2748,6 +2748,19 @@ class TestXfrin(unittest.TestCase):
             else:
                 # if not set, should default to False
                 self.assertFalse(zone_info.use_ixfr)
+            if ('request_ixfr' in zone_config and
+                zone_config.get('request_ixfr')):
+                cfg_val = zone_config.get('request_ixfr')
+                val = zone_info.request_ixfr
+                if cfg_val == 'yes':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST, val)
+                elif cfg_val == 'no':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED, val)
+                elif cfg_val == 'only':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_ONLY, val)
+            else:               # check the default
+                self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                                 zone_info.request_ixfr)
 
     def test_config_handler_zones(self):
         # This test passes a number of good and bad configs, and checks whether
@@ -2759,7 +2772,7 @@ class TestXfrin(unittest.TestCase):
                    { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
                     'master_port': 53,
-                    'use_ixfr': False
+                    'request_ixfr': 'yes'
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config1)['result'][0], 0)
@@ -2771,11 +2784,23 @@ class TestXfrin(unittest.TestCase):
                     'master_addr': '192.0.2.2',
                     'master_port': 53,
                     'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
-                    'use_ixfr': True
+                    'request_ixfr': 'no'
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config2)['result'][0], 0)
         self._check_zones_config(config2)
+
+        config3 = {'transfers_in': 4,
+                   'zones': [
+                   { 'name': 'test.example.',
+                    'master_addr': '192.0.2.2',
+                    'master_port': 53,
+                    'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
+                    'request_ixfr': 'only'
+                   }
+                 ]}
+        self.assertEqual(self.xfr.config_handler(config3)['result'][0], 0)
+        self._check_zones_config(config3)
 
         # test that configuring the zone multiple times fails
         zones = { 'transfers_in': 5,
@@ -2791,7 +2816,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example.',
@@ -2801,7 +2826,7 @@ class TestXfrin(unittest.TestCase):
                   }
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'master_addr': '192.0.2.4',
@@ -2810,7 +2835,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'bad..zone.',
@@ -2820,7 +2845,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': '',
@@ -2830,7 +2855,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2840,7 +2865,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2850,7 +2875,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2862,7 +2887,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         # let's also add a zone that is correct too, and make sure
         # that the new config is not partially taken
@@ -2879,7 +2904,18 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
+
+        # invalid request_ixfr value
+        zones = { 'zones': [
+                  { 'name': 'test.example',
+                    'master_addr': '192.0.2.7',
+                    'request_ixfr': 'bad value'
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
+        # since this has failed, we should still have the previous config
+        self._check_zones_config(config3)
 
     def test_config_handler_zones_default(self):
         # Checking it some default config values apply.  Using a separate

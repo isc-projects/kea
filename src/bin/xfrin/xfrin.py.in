@@ -1238,6 +1238,11 @@ class XfrinRecorder:
         return ret
 
 class ZoneInfo:
+    # Internal values corresponding to request_ixfr
+    REQUEST_IXFR_FIRST = 0      # request_ixfr=yes, use IXFR 1st then AXFR
+    REQUEST_IXFR_ONLY = 1       # request_ixfr=only, use IXFR only
+    REQUEST_IXFR_DISABLED = 2   # request_ixfr=no, AXFR-only
+
     def __init__(self, config_data, module_cc):
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec. Module_cc is
@@ -1250,6 +1255,17 @@ class ZoneInfo:
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key_name(config_data.get('tsig_key'))
         self.set_use_ixfr(config_data.get('use_ixfr'))
+        self.set_request_ixfr(config_data.get('request_ixfr'))
+
+    @property
+    def request_ixfr(self):
+        """Policy on the use of IXFR.
+
+        Possible values are REQUEST_IXFR_xxx, internally stored in
+        __request_ixfr, read-only outside of the class.
+
+        """
+        return self.__request_ixfr
 
     def set_name(self, name_str):
         """Set the name for this zone given a name string.
@@ -1338,14 +1354,24 @@ class ZoneInfo:
 
     def set_use_ixfr(self, use_ixfr):
         """Set use_ixfr. If set to True, it will use
-           IXFR for incoming transfers. If set to False, it will use AXFR.
-           At this moment there is no automatic fallback"""
-        # TODO: http://bind10.isc.org/ticket/1279
+           IXFR for incoming transfers. If set to False, it will use AXFR."""
         if use_ixfr is None:
             self.use_ixfr = \
                 self._module_cc.get_default_value("zones/use_ixfr")
         else:
             self.use_ixfr = use_ixfr
+
+    def set_request_ixfr(self, request_ixfr):
+        if request_ixfr is None:
+            request_ixfr = 'yes' # if unspecified, use the default
+        cfg_to_val = { 'yes': self.REQUEST_IXFR_FIRST,
+                       'only': self.REQUEST_IXFR_ONLY,
+                       'no': self.REQUEST_IXFR_DISABLED }
+        try:
+            self.__request_ixfr = cfg_to_val[request_ixfr]
+        except KeyError:
+            raise XfrinZoneInfoException('invalid value for request_ixfr: ' +
+                                         request_ixfr)
 
     def get_master_addr_info(self):
         return (self.master_addr.family, socket.SOCK_STREAM,
