@@ -46,30 +46,32 @@ public:
     ///
     /// Due to the nature of this server, it's meaningless if the lookup
     /// callback is NULL.  So the constructor explicitly rejects that case
-    /// with an exception.
+    /// with an exception.  Likewise, it doesn't take "checkin" or "answer"
+    /// callbacks.  In fact, calling "checkin" from receive callback does not
+    /// make sense for any of the DNSServer variants; "answer" callback is
+    /// simply unnecessary for this class because a complete answer is build
+    /// in the lookup callback (it's the user's responsibility to guarantee
+    /// that condition).
     ///
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
     /// \param af address family, either AF_INET or AF_INET6
-    /// \param checkin the callbackprovider for non-DNS events (unused)
     /// \param lookup the callbackprovider for DNS lookup events (must not be
     ///        NULL)
-    /// \param answer the callbackprovider for DNS answer events
     ///
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
     /// \throw isc::InvalidParameter lookup is NULL
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
     SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
-                  isc::asiolink::SimpleCallback* checkin = NULL,
-                  DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
+                  DNSLookup* lookup);
 
     /// \brief Start the SyncUDPServer.
     ///
     /// This is the function operator to keep interface with other server
     /// classes. They need that because they're coroutines.
     virtual void operator()(asio::error_code ec = asio::error_code(),
-                    size_t length = 0);
+                            size_t length = 0);
 
     /// \brief Calls the lookup callback
     virtual void asyncLookup() {
@@ -128,9 +130,8 @@ private:
     std::auto_ptr<asio::ip::udp::socket> socket_;
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
-    // Callbacks
+    // Callback
     const DNSLookup* lookup_callback_;
-    const DNSAnswer* answer_callback_;
     // Answers from the lookup callback (not sent directly, but signalled
     // through resume()
     bool resume_called_, done_;
