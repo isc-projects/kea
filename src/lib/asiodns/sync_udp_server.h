@@ -25,10 +25,13 @@
 
 #include <dns/message.h>
 #include <asiolink/simple_callback.h>
+#include <asiolink/dummy_io_cb.h>
+#include <asiolink/udp_socket.h>
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <stdint.h>
 
@@ -124,12 +127,15 @@ private:
     // If it was OK to have just a buffer, not the wrapper class,
     // we could reuse the data_
     isc::util::OutputBufferPtr output_buffer_;
-    // Objects to hold the query message and the answer
+    // Objects to hold the query message and the answer: these are not used
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
+    boost::scoped_ptr<asiolink::UDPSocket<asiolink::DummyIOCallback> >
+    udp_socket_;
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
+    asiolink::UDPEndpoint udp_endpoint_;
     // Callback
     const DNSLookup* lookup_callback_;
     // Answers from the lookup callback (not sent directly, but signalled
