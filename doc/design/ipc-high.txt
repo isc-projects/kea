@@ -65,7 +65,7 @@ Opening a session::
 
 Group management::
   A user may subscribe (become member) of a group, or unsubscribe from
-  a group.
+  a group. These are fast operations.
 
 Send::
   A user may send a message, addressed to the system, or other
@@ -346,14 +346,14 @@ So, this would be an example with unhelpful war council.
 Users
 -----
 
-While there's a lot of flexibility for the behaviour of a client, it
+While there's a lot of flexibility for the behaviour of a user, it
 usually comes to something like this (during the lifetime of the
-client):
+user):
 
-* The client starts up.
-* The creates one or more sessions (there may be technical reasons to
-  have more than one session, such as threads, but it is not required
-  by the system).
+* The user starts up.
+* Then it creates one or more sessions (there may be technical reasons
+  to have more than one session, such as threads, but it is not
+  required by the system).
 * It subscribes to some groups to receive notifications in future.
 * It binds to some aliases if it wants to be reachable by others by a
   nice name.
@@ -362,7 +362,7 @@ client):
 * During the lifetime, it listens for notifications and answers
   commands. It also invokes remote commands and sends notifications
   about things that are happening.
-* Eventually, the client terminates, closing all the sessions it had
+* Eventually, the user terminates, closing all the sessions it had
   opened.
 
 Known limitations
@@ -375,7 +375,7 @@ number of transferred messages and the maximum size of message is 4GB,
 the code is not optimised and it would probably be very slow.
 
 We currently expect the system not to be at heavy load. Therefore, we
-expect the system to keep up with clients sending messages. The
+expect the system to keep up with users sending messages. The
 libraries write in blocking mode, which is no problem if the
 expectation is true, as the write buffers will generally be empty and
 the write wouldn't block, but if it turns out it is not the case, we
