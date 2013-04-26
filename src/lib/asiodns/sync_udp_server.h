@@ -131,10 +131,16 @@ private:
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
+    // Wrapper of socket_ in the form of asiolink::IOSocket.
+    // "DummyIOCallback" is not necessary for this class, but using the
+    // template is the easiest way to create a UDP instance of IOSocket.
     boost::scoped_ptr<asiolink::UDPSocket<asiolink::DummyIOCallback> >
     udp_socket_;
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
+    // Wrapper of sender_ in the form of asiolink::IOEndpoint.  It's set to
+    // refer to sender_ on initialization, and keeps the reference throughout
+    // this server class.
     asiolink::UDPEndpoint udp_endpoint_;
     // Callback
     const DNSLookup* lookup_callback_;
