@@ -110,6 +110,27 @@ public:
     /// @brief Closes all open sockets on interface.
     void closeSockets();
 
+    /// @brief Closes all IPv4 or IPv6 sockets.
+    ///
+    /// This function closes sockets of the specific 'type' and closes them.
+    /// The 'type' of the socket indicates whether it is used to send IPv4
+    /// or IPv6 packets. The allowed values of the parameter are AF_INET and
+    /// AF_INET6 for IPv4 and IPv6 packets respectively. It is important
+    /// to realize that the actual types of sockets may be different than
+    /// AF_INET for IPv4 packets. This is because, historically the IfaceMgr
+    /// always used AF_INET sockets for IPv4 traffic. This is no longer the
+    /// case when the Direct IPv4 traffic must be supported. In order to support
+    /// direct traffic, the IfaceMgr operates on raw sockets, e.g. AF_PACKET
+    /// family sockets on Linux.
+    ///
+    /// @todo Replace the AF_INET and AF_INET6 values with an enum
+    /// which will not be confused with the actual socket type.
+    ///
+    /// @param family type of the sockets to be closed (AF_INET or AF_INET6)
+    ///
+    /// @throw BadValue if family value is different than AF_INET or AF_INET6.
+    void closeSockets(const uint16_t family);
+
     /// @brief Returns full interface name as "ifname/ifindex" string.
     ///
     /// @return string with interface name
@@ -268,7 +289,7 @@ public:
     /// flag specifies if selected interface is multicast capable
     bool flag_multicast_;
 
-    /// flag specifies if selected interface is broadcast capable
+   /// flag specifies if selected interface is broadcast capable
     bool flag_broadcast_;
 
     /// interface flags (this value is as is returned by OS,
@@ -537,6 +558,27 @@ public:
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
     void closeSockets();
+
+    /// @brief Closes all IPv4 or IPv6 sockets.
+    ///
+    /// This function closes sockets of the specific 'type' and closes them.
+    /// The 'type' of the socket indicates whether it is used to send IPv4
+    /// or IPv6 packets. The allowed values of the parameter are AF_INET and
+    /// AF_INET6 for IPv4 and IPv6 packets respectively. It is important
+    /// to realize that the actual types of sockets may be different than
+    /// AF_INET for IPv4 packets. This is because, historically the IfaceMgr
+    /// always used AF_INET sockets for IPv4 traffic. This is no longer the
+    /// case when the Direct IPv4 traffic must be supported. In order to support
+    /// direct traffic, the IfaceMgr operates on raw sockets, e.g. AF_PACKET
+    /// family sockets on Linux.
+    ///
+    /// @todo Replace the AF_INET and AF_INET6 values with an enum
+    /// which will not be confused with the actual socket type.
+    ///
+    /// @param family type of the sockets to be closed (AF_INET or AF_INET6)
+    ///
+    /// @throw BadValue if family value is different than AF_INET or AF_INET6.
+    void closeSockets(const uint16_t family);
 
     /// @brief returns number of detected interfaces
     ///
