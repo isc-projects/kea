@@ -415,7 +415,7 @@ class SysInfoFreeBSD(SysInfoFreeBSDOSX):
             self._platform_is_smp = True # the value doesn't matter
         except subprocess.CalledProcessError:
             # if this variable isn't defined we should see this exception.
-            # intepret it as an indication of non-SMP kernel.
+            # interpret it as an indication of non-SMP kernel.
             self._platform_is_smp = False
         except OSError:
             pass

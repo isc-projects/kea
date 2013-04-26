@@ -46,6 +46,10 @@ class InMemoryClient;
 class ZoneWriter;
 }
 
+namespace internal {
+class CacheConfig;
+}
+
 /// \brief Segment status of the cache
 ///
 /// Describes the status in which the memory segment for the in-memory cache of
@@ -170,7 +174,7 @@ public:
 
         /// \brief Negative answer constructor.
         ///
-        /// This conscructs a result for negative answer. Both pointers are
+        /// This constructs a result for negative answer. Both pointers are
         /// NULL, and exact_match_ is false.
         FindResult() :
             dsrc_client_(NULL),
@@ -338,8 +342,10 @@ public:
     /// \brief Result of the reload() method.
     enum ReloadResult {
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
-        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
+        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
+                            ///  (including the case cache is disabled for
+                            ///  the specific data source).
+        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
         ZONE_SUCCESS        ///< The zone was successfully reloaded or
                             ///  the writer provided.
     };
@@ -397,19 +403,11 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        // Plays a role of default constructor too (for vector)
-        DataSourceInfo(const dns::RRClass& rrclass,
-                       const boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment,
-                       bool has_cache = false,
-                       const std::string& name = std::string());
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
-                       bool has_cache, const dns::RRClass& rrclass,
-                       const boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment, const std::string& name);
+                       boost::shared_ptr<internal::CacheConfig> cache_conf,
+                       const dns::RRClass& rrclass,
+                       const std::string& name);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 
@@ -422,6 +420,14 @@ public:
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
+
+        const internal::CacheConfig* getCacheConfig() const {
+            return (cache_conf_.get());
+        }
+    private:
+        // this is kept private for now.  When it needs to be accessed,
+        // we'll add a read-only getter method.
+        boost::shared_ptr<internal::CacheConfig> cache_conf_;
     };
 
     /// \brief The collection of data sources.
@@ -440,6 +446,13 @@ public:
     /// to replace the DataSourceClientContainer with something else.
     /// Also, derived classes could want to create the data source clients
     /// in a different way, though inheriting this class is not recommended.
+    ///
+    /// Some types of data sources can be internal to the \c ClientList
+    /// implementation and do not require a corresponding dynamic module
+    /// loaded via \c DataSourceClientContainer.  In such a case, this method
+    /// simply returns a pair of null pointers.  It will help the caller reduce
+    /// type dependent processing.  Currently, "MasterFiles" is considered to
+    /// be this type of data sources.
     ///
     /// The parameters are the same as of the constructor.
     /// \return Pair containing both the data source client and the container.

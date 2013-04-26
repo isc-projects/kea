@@ -143,7 +143,7 @@ public:
     /// when exception occurs). This structure extends parent
     /// structure with new field ifindex_ that holds interface
     /// index where socket is bound to.
-    struct TestControlSocket : public dhcp::IfaceMgr::SocketInfo {
+    struct TestControlSocket : public dhcp::SocketInfo {
         /// Interface index.
         uint16_t ifindex_;
         /// Is socket valid. It will not be valid if the provided socket
@@ -909,7 +909,7 @@ private:
     /// \brief Handle interrupt signal.
     ///
     /// Function sets flag indicating that program has been
-    /// interupted.
+    /// interrupted.
     ///
     /// \param sig signal (ignored)
     static void handleInterrupt(int sig);
@@ -970,7 +970,7 @@ private:
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
 
-    /// Buffer holiding server id received in first packet
+    /// Buffer holding server id received in first packet
     dhcp::OptionBuffer first_packet_serverid_;
 
     /// Packet template buffers.

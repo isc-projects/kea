@@ -329,7 +329,7 @@ public:
         const List &list(description->listValue());
         boost::shared_ptr<ACL<Context, Action> > result(
             new ACL<Context, Action>(default_action_));
-        // Run trough the list of elements
+        // Run through the list of elements
         for (List::const_iterator i(list.begin()); i != list.end(); ++i) {
             Map map;
             try {
@@ -417,7 +417,7 @@ private:
             }
             default: {
                 // This is the AND-abbreviated form. We need to create an
-                // AND (or "ALL") operator, loop trough the whole map and
+                // AND (or "ALL") operator, loop through the whole map and
                 // fill it in. We do a small trick - we create bunch of
                 // single-item maps, call this loader recursively (therefore
                 // it will get into the "case 1" branch, where there is

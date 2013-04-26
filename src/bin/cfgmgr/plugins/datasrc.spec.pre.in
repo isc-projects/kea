@@ -18,9 +18,9 @@
                     ],
                     "CH": [
                         {
-                            "type": "static",
-                            "cache-enable": false,
-                            "params": "@@STATIC_ZONE_FILE@@"
+                            "type": "MasterFiles",
+                            "cache-enable": true,
+                            "params": {"BIND": "@@STATIC_ZONE_FILE@@"}
                         }
                     ]
                 },
@@ -68,6 +68,12 @@
                                 "item_name": "name",
                                 "item_type": "string",
                                 "item_optional": true
+                            },
+                            {
+                                "item_name": "cache-type",
+                                "item_type": "string",
+                                "item_optional": true,
+                                "item_default": "local"
                             }
                         ]
                     }

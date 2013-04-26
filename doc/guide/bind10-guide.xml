@@ -772,6 +772,16 @@ as a dependency earlier -->
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>--without-werror</term>
+            <listitem>
+              <simpara>Disable the default use of the
+		<option>-Werror</option> compiler flag so that
+		compiler warnings aren't build failures.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
           </variablelist>
           <note>
             <para>
@@ -2487,8 +2497,8 @@ can use various data source backends.
       <para>
         The configuration is located in data_sources/classes. Each item there
         represents one RR class and a list used to answer queries for that
-        class. The default contains two classes. The CH class contains a static
-        data source &mdash; one that serves things like
+        class. The default contains two classes. The CH class contains a
+        built-in data source &mdash; one that serves things like
         <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
         data source with database file located at
         <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
@@ -2555,7 +2565,7 @@ can use various data source backends.
         </para>
 
         <para>
-          First, let's disable the static data source
+          First, let's disable the built-in data source
           (<quote>VERSION.BIND</quote> and friends). As it is the only
           data source in the CH class, we can remove the whole class.
 
@@ -4100,7 +4110,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this
@@ -4812,7 +4822,7 @@ should include options from the isc option space:
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this

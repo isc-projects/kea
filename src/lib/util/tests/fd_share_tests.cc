@@ -66,7 +66,7 @@ TEST(FDShare, transfer) {
             if (close(pipes[0])) {
                 exit(1);
             }
-            // Send "data" trough the received fd, close it and be done
+            // Send "data" through the received fd, close it and be done
             if (!write_data(fd, "data", 4) || close(fd) == -1) {
                 exit(1);
             }

@@ -186,7 +186,7 @@ class MsgQTest(unittest.TestCase):
         The test is not exhaustive as it doesn't test all combination
         of existence of the recipient, addressing schemes, want_answer
         header and the reply header. It is not needed, these should
-        be mostly independant. That means, for example, if the message
+        be mostly independent. That means, for example, if the message
         is a reply and there's no recipient to send it to, the error
         would not be generated no matter if we addressed the recipient
         by lname or group. If we included everything, the test would
@@ -338,7 +338,7 @@ class BadSocket:
         self.send_exception = send_exception
 
     # completely wrap all calls and member access
-    # (except explicitely overridden ones)
+    # (except explicitly overridden ones)
     def __getattr__(self, name, *args):
         attr = getattr(self.socket, name)
         if isinstance(attr, collections.Callable):
@@ -834,7 +834,7 @@ class SocketTests(unittest.TestCase):
         self.assertIsNone(self.__killed_socket)
 
     def test_send_data_interrupt(self):
-        '''send() is interruptted. send_data() returns 0, sock isn't killed.'''
+        '''send() is interrupted. send_data() returns 0, sock isn't killed.'''
         expected_blockings = []
         for eno in [errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR]:
             self.__sock_error.errno = eno

@@ -15,12 +15,11 @@
 #ifndef NSEC3PARAM_COMMON_H
 #define NSEC3PARAM_COMMON_H 1
 
+#include <dns/master_lexer.h>
+
 #include <util/buffer.h>
 
 #include <stdint.h>
-
-#include <sstream>
-#include <string>
 #include <vector>
 
 namespace isc {
@@ -59,7 +58,7 @@ struct ParseNSEC3ParamResult {
 
 /// \brief Convert textual representation of NSEC3 parameters.
 ///
-/// This function takes an input string stream that consists of a complete
+/// This function takes an input MasterLexer that points at a complete
 /// textual representation of an NSEC3 or NSEC3PARAM RDATA and parses it
 /// extracting the hash algorithm, flags, iterations, and salt fields.
 ///
@@ -67,28 +66,26 @@ struct ParseNSEC3ParamResult {
 /// The salt will be stored in the given vector.  The vector is expected
 /// to be empty, but if not, the existing content will be overridden.
 ///
-/// On successful return the given input stream will reach the end of the
+/// On successful return the given MasterLexer will reach the end of the
 /// salt field.
 ///
 /// \exception isc::BadValue The salt is not a valid hex string.
-/// \exception InvalidRdataText The given string is otherwise invalid for
+/// \exception InvalidRdataText The given RDATA is otherwise invalid for
 /// NSEC3 or NSEC3PARAM fields.
+/// \exception MasterLexer::LexerError There was a syntax error reading
+/// a field from the MasterLexer.
 ///
 /// \param rrtype_name Either "NSEC3" or "NSEC3PARAM"; used as part of
 /// exception messages.
-/// \param rdata_str A complete textual string of the RDATA; used as part of
-/// exception messages.
-/// \param iss Input stream that consists of a complete textual string of
-/// the RDATA.
+/// \param lexer The MasterLexer to read NSEC3 parameter fields from.
 /// \param salt A placeholder for the salt field value of the RDATA.
 /// Expected to be empty, but it's not checked (and will be overridden).
 ///
 /// \return The hash algorithm, flags, iterations in the form of
 /// ParseNSEC3ParamResult.
-ParseNSEC3ParamResult parseNSEC3ParamText(const char* const rrtype_name,
-                                          const std::string& rdata_str,
-                                          std::istringstream& iss,
-                                          std::vector<uint8_t>& salt);
+ParseNSEC3ParamResult parseNSEC3ParamFromLexer(const char* const rrtype_name,
+                                               isc::dns::MasterLexer& lexer,
+                                               std::vector<uint8_t>& salt);
 
 /// \brief Extract NSEC3 parameters from wire-format data.
 ///

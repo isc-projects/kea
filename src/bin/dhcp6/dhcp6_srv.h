@@ -40,7 +40,7 @@ namespace dhcp {
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
 ///
-/// @note Only one instance of this class is instantated as it encompasses
+/// @note Only one instance of this class is instantiated as it encompasses
 ///       the whole operation of the server.  Nothing, however, enforces the
 ///       singleton status of the object.
 class Dhcpv6Srv : public boost::noncopyable {
@@ -69,7 +69,7 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
-    /// @brief Returns server-intentifier option.
+    /// @brief Returns server-indentifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }

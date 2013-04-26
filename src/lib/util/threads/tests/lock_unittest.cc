@@ -44,6 +44,44 @@ TEST(MutexTest, lockMultiple) {
         Mutex::Locker l2(mutex); // Attempt to lock again.
     }, isc::InvalidOperation);
     EXPECT_TRUE(mutex.locked()); // Debug-only build
+
+    // block=true explicitly.
+    Mutex mutex2;
+    EXPECT_FALSE(mutex2.locked()); // Debug-only build
+    Mutex::Locker l12(mutex2, true);
+    EXPECT_TRUE(mutex2.locked()); // Debug-only build
+}
+
+void
+testThread(Mutex* mutex)
+{
+    // block=false (tryLock).  This should not block indefinitely, but
+    // throw AlreadyLocked. If block were true, this would block
+    // indefinitely here.
+    EXPECT_THROW({
+        Mutex::Locker l3(*mutex, false);
+    }, Mutex::Locker::AlreadyLocked);
+
+    EXPECT_TRUE(mutex->locked()); // Debug-only build
+}
+
+// Test the non-blocking variant using a second thread.
+TEST(MutexTest, lockNonBlocking) {
+    // block=false (tryLock).
+    Mutex mutex;
+    Mutex::Locker l1(mutex, false);
+    EXPECT_TRUE(mutex.locked()); // Debug-only build
+
+    // First, try another locker from the same thread.
+    EXPECT_THROW({
+        Mutex::Locker l2(mutex, false);
+    }, Mutex::Locker::AlreadyLocked);
+
+    EXPECT_TRUE(mutex.locked()); // Debug-only build
+
+    // Now try another locker from a different thread.
+    Thread thread(boost::bind(&testThread, &mutex));
+    thread.wait();
 }
 
 #endif // ENABLE_DEBUG

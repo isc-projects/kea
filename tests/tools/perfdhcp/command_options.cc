@@ -433,7 +433,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     }
     if (server_name_.empty()) {
         isc_throw(InvalidParameter,
-                  "without an inteface server is required");
+                  "without an interface, server is required");
     }
 
     // If DUID is not specified from command line we need to

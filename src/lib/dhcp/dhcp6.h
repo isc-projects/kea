@@ -114,7 +114,7 @@ extern const int dhcpv6_type_name_max;
 // Define hardware types
 // Taken from http://www.iana.org/assignments/arp-parameters/
 #define HWTYPE_ETHERNET    0x0001
-#define HWTYPE_INIFINIBAND 0x0020
+#define HWTYPE_INFINIBAND  0x0020
 
 // Taken from http://www.iana.org/assignments/enterprise-numbers
 #define ENTERPRISE_ID_ISC 2495

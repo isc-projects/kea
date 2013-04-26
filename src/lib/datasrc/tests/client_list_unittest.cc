@@ -14,12 +14,15 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/zone_iterator.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_writer.h>
+
+#include <datasrc/tests/mock_client.h>
 
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
@@ -33,6 +36,7 @@
 #include <fstream>
 
 using namespace isc::datasrc;
+using isc::datasrc::unittest::MockDataSourceClient;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
 using isc::datasrc::memory::InMemoryZoneFinder;
@@ -44,162 +48,6 @@ using boost::shared_ptr;
 using namespace std;
 
 namespace {
-
-// A test data source. It pretends it has some zones.
-class MockDataSourceClient : public DataSourceClient {
-public:
-    class Finder : public ZoneFinder {
-    public:
-        Finder(const Name& origin) :
-            origin_(origin)
-        {}
-        Name getOrigin() const { return (origin_); }
-        // The rest is not to be called, so just have them
-        RRClass getClass() const {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
-        shared_ptr<Context> find(const Name&, const RRType&,
-                                 const FindOptions)
-        {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
-        shared_ptr<Context> findAll(const Name&,
-                                    vector<ConstRRsetPtr>&,
-                                    const FindOptions)
-        {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
-        FindNSEC3Result findNSEC3(const Name&, bool) {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
-    private:
-        Name origin_;
-    };
-    class Iterator : public ZoneIterator {
-    public:
-        Iterator(const Name& origin, bool include_a) :
-            origin_(origin),
-            soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(),
-                           RRTTL(3600)))
-        {
-            // The RData here is bogus, but it is not used to anything. There
-            // just needs to be some.
-            soa_->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
-                                               Name::ROOT_NAME(),
-                                               0, 0, 0, 0, 0));
-            rrsets_.push_back(soa_);
-
-            RRsetPtr rrset(new RRset(origin_, RRClass::IN(), RRType::NS(),
-                                     RRTTL(3600)));
-            rrset->addRdata(rdata::generic::NS(Name::ROOT_NAME()));
-            rrsets_.push_back(rrset);
-
-            if (include_a) {
-                 // Dummy A rrset. This is used for checking zone data
-                 // after reload.
-                 rrset.reset(new RRset(Name("tstzonedata").concatenate(origin_),
-                                       RRClass::IN(), RRType::A(),
-                                       RRTTL(3600)));
-                 rrset->addRdata(rdata::in::A("192.0.2.1"));
-                 rrsets_.push_back(rrset);
-            }
-
-            rrsets_.push_back(ConstRRsetPtr());
-
-            it_ = rrsets_.begin();
-        }
-        virtual isc::dns::ConstRRsetPtr getNextRRset() {
-            ConstRRsetPtr result = *it_;
-            ++it_;
-            return (result);
-        }
-        virtual isc::dns::ConstRRsetPtr getSOA() const {
-            return (soa_);
-        }
-    private:
-        const Name origin_;
-        const RRsetPtr soa_;
-        std::vector<ConstRRsetPtr> rrsets_;
-        std::vector<ConstRRsetPtr>::const_iterator it_;
-    };
-    // Constructor from a list of zones.
-    MockDataSourceClient(const char* zone_names[]) :
-        have_a_(true), use_baditerator_(true)
-    {
-        for (const char** zone(zone_names); *zone; ++zone) {
-            zones.insert(Name(*zone));
-        }
-    }
-    // Constructor from configuration. The list of zones will be empty, but
-    // it will keep the configuration inside for further inspection.
-    MockDataSourceClient(const string& type,
-                         const ConstElementPtr& configuration) :
-        type_(type),
-        configuration_(configuration),
-        have_a_(true), use_baditerator_(true)
-    {
-        EXPECT_NE("MasterFiles", type) << "MasterFiles is a special case "
-            "and it never should be created as a data source client";
-        if (configuration_->getType() == Element::list) {
-            for (size_t i(0); i < configuration_->size(); ++i) {
-                zones.insert(Name(configuration_->get(i)->stringValue()));
-            }
-        }
-    }
-    virtual FindResult findZone(const Name& name) const {
-        if (zones.empty()) {
-            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-        }
-        set<Name>::const_iterator it(zones.upper_bound(name));
-        if (it == zones.begin()) {
-            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-        }
-        --it;
-        NameComparisonResult compar(it->compare(name));
-        const ZoneFinderPtr finder(new Finder(*it));
-        switch (compar.getRelation()) {
-            case NameComparisonResult::EQUAL:
-                return (FindResult(result::SUCCESS, finder));
-            case NameComparisonResult::SUPERDOMAIN:
-                return (FindResult(result::PARTIALMATCH, finder));
-            default:
-                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-        }
-    }
-    // These methods are not used. They just need to be there to have
-    // complete vtable.
-    virtual ZoneUpdaterPtr getUpdater(const Name&, bool, bool) const {
-        isc_throw(isc::NotImplemented, "Not implemented");
-    }
-    virtual pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
-        getJournalReader(const Name&, uint32_t, uint32_t) const
-    {
-        isc_throw(isc::NotImplemented, "Not implemented");
-    }
-    virtual ZoneIteratorPtr getIterator(const Name& name, bool) const {
-        if (use_baditerator_ && name == Name("noiter.org")) {
-            isc_throw(isc::NotImplemented, "Asked not to be implemented");
-        } else if (use_baditerator_ && name == Name("null.org")) {
-            return (ZoneIteratorPtr());
-        } else {
-            FindResult result(findZone(name));
-            if (result.code == isc::datasrc::result::SUCCESS) {
-                return (ZoneIteratorPtr(new Iterator(name, have_a_)));
-            } else {
-                isc_throw(DataSourceError, "No such zone");
-            }
-        }
-    }
-    void disableA() { have_a_ = false; }
-    void disableBadIterator() { use_baditerator_ = false; }
-    const string type_;
-    const ConstElementPtr configuration_;
-private:
-    set<Name> zones;
-    bool have_a_; // control the iterator behavior whether to include A record
-    bool use_baditerator_; // whether to use bogus zone iterators for tests
-};
-
 
 // The test version is the same as the normal version. We, however, add
 // some methods to dig directly in the internals, for the tests.
@@ -218,6 +66,9 @@ public:
     {
         if (type == "error") {
             isc_throw(DataSourceError, "The error data source type");
+        }
+        if (type == "MasterFiles") {
+            return (DataSourcePair(0, DataSourceClientContainerPtr()));
         }
         shared_ptr<MockDataSourceClient>
             ds(new MockDataSourceClient(type, configuration));
@@ -269,8 +120,7 @@ public:
             "   \"params\": [\"example.org\", \"example.com\", "
             "                \"noiter.org\", \"null.org\"]"
             "}]")),
-        config_(Element::fromJSON("{}")),
-        ztable_segment_(ZoneTableSegment::create(*config_, rrclass_))
+        ztable_segment_(ZoneTableSegment::create(rrclass_, "local"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
@@ -278,34 +128,56 @@ public:
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
                                    ds.get(), DataSourceClientContainerPtr(),
-                                   false, rrclass_, ztable_segment_, ""));
+                                   boost::shared_ptr<internal::CacheConfig>(),
+                                   rrclass_, ""));
         }
     }
 
     // Install a "fake" cached zone using a temporary underlying data source
-    // client.
-    void prepareCache(size_t index, const Name& zone) {
-        // Prepare the temporary data source client
-        const char* zones[2];
-        const std::string zonename_txt = zone.toText();
-        zones[0] = zonename_txt.c_str();
-        zones[1] = NULL;
-        MockDataSourceClient mock_client(zones);
-        // Disable some default features of the mock to distinguish the
-        // temporary case from normal case.
-        mock_client.disableA();
-        mock_client.disableBadIterator();
-
-        // Create cache from the temporary data source, and push it to the
-        // client list.
-        const shared_ptr<InMemoryClient> cache(
-            new InMemoryClient(ztable_segment_, rrclass_));
-        cache->load(zone, *mock_client.getIterator(zone, false));
-
+    // client.  If 'enabled' is set to false, emulate a disabled cache, in
+    // which case there will be no data in memory.
+    void prepareCache(size_t index, const Name& zone, bool enabled = true) {
         ConfigurableClientList::DataSourceInfo& dsrc_info =
                 list_->getDataSources()[index];
-        dsrc_info.cache_ = cache;
-        dsrc_info.ztable_segment_ = ztable_segment_;
+        MockDataSourceClient* mock_client =
+            static_cast<MockDataSourceClient*>(dsrc_info.data_src_client_);
+
+        // Disable some default features of the mock to distinguish the
+        // temporary case from normal case.
+        mock_client->disableA();
+        mock_client->disableBadIterator();
+
+        // Build new cache config to load the specified zone, and replace
+        // the data source info with the new config.
+        ConstElementPtr cache_conf_elem =
+            Element::fromJSON("{\"type\": \"mock\","
+                              " \"cache-enable\": " +
+                              string(enabled ? "true," : "false,") +
+                              " \"cache-zones\": "
+                              "   [\"" + zone.toText() + "\"]}");
+        boost::shared_ptr<internal::CacheConfig> cache_conf(
+            new internal::CacheConfig("mock", mock_client, *cache_conf_elem,
+                                      true));
+        dsrc_info = ConfigurableClientList::DataSourceInfo(
+            dsrc_info.data_src_client_,
+            dsrc_info.container_,
+            cache_conf, rrclass_, dsrc_info.name_);
+
+        // Load the data into the zone table.
+        if (enabled) {
+            boost::scoped_ptr<memory::ZoneWriter> writer(
+                dsrc_info.ztable_segment_->getZoneWriter(
+                    cache_conf->getLoadAction(rrclass_, zone),
+                    zone, rrclass_));
+            writer->load();
+            writer->install();
+            writer->cleanup(); // not absolutely necessary, but just in case
+        }
+
+        // On completion of load revert to the previous state of underlying
+        // data source.
+        mock_client->enableA();
+        mock_client->enableBadIterator();
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
@@ -382,7 +254,7 @@ public:
     const ClientList::FindResult negative_result_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
-    const ConstElementPtr config_elem_, config_elem_zones_, config_;
+    const ConstElementPtr config_elem_, config_elem_zones_;
     shared_ptr<ZoneTableSegment> ztable_segment_;
 };
 
@@ -1024,7 +896,7 @@ TYPED_TEST(ReloadTest, reloadSuccess) {
 }
 
 // The cache is not enabled. The load should be rejected.
-TYPED_TEST(ReloadTest, reloadNotEnabled) {
+TYPED_TEST(ReloadTest, reloadNotAllowed) {
     this->list_->configure(this->config_elem_zones_, false);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
@@ -1041,6 +913,17 @@ TYPED_TEST(ReloadTest, reloadNotEnabled) {
               this->list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
+}
+
+// Similar to the previous case, but the cache is disabled in config.
+TYPED_TEST(ReloadTest, reloadNotEnabled) {
+    this->list_->configure(this->config_elem_zones_, true);
+    const Name name("example.org");
+    // We put the cache, actually disabling it.
+    this->prepareCache(0, name, false);
+    // In this case we cannot really look up due to the limitation of
+    // the mock implementation.  We only check reload fails.
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED, this->doReload(name));
 }
 
 // Test several cases when the zone does not exist
@@ -1076,7 +959,7 @@ TYPED_TEST(ReloadTest, reloadNoSuchZone) {
 // Check we gracefuly throw an exception when a zone disappeared in
 // the underlying data source when we want to reload it
 TYPED_TEST(ReloadTest, reloadZoneGone) {
-    this->list_->configure(this->config_elem_, true);
+    this->list_->configure(this->config_elem_zones_, true);
     const Name name("example.org");
     // We put in a cache for non-existent zone. This emulates being loaded
     // and then the zone disappearing. We prefill the cache, so we can check
@@ -1086,6 +969,10 @@ TYPED_TEST(ReloadTest, reloadZoneGone) {
     EXPECT_EQ(ZoneFinder::SUCCESS,
               this->list_->find(name).finder_->find(name,
                                                     RRType::SOA())->code);
+    // Remove the zone from the data source.
+    static_cast<MockDataSourceClient*>(
+        this->list_->getDataSources()[0].data_src_client_)->eraseZone(name);
+
     // The zone is not there, so abort the reload.
     EXPECT_THROW(this->doReload(name), DataSourceError);
     // The (cached) zone is not hurt.

@@ -135,7 +135,7 @@ installListenAddresses(const AddressList& new_addresses,
          * set successuflly or none of them will be used. whether this
          * behavior is user desired, maybe we need revisited it later. And
          * if address setting is more smarter, it should check whether some
-         * part of the new address already in used to avoid interuption the
+         * part of the new address already in used to avoid interrupting the
          * service.
          *
          * If the address setting still failed, we can live with it, since
