@@ -1,3 +1,16 @@
+607.	[bug]		jinmei
+	Worked around some unit test regressions on FreeBSD 9.1 due to
+	a binary compatibility issue between standard and system
+	libraries (http://www.freebsd.org/cgi/query-pr.cgi?pr=175453).
+	While not all tests still pass, main BIND 10 programs should
+	generally work correctly.  Still, there can be odd run time
+	behavior such as abrupt crash instead of graceful shutdown
+	when some fatal event happens, so it's generally discouraged to
+	use BIND 10 on FreeBSD 9.1 RELEASE.  According to the above
+	bug report for FreeBSD, it seems upgrading or downgrading the
+	FreeBSD version will solve this problem.
+	(Trac #2887, git 69dfb4544d9ded3c10cffbbfd573ae05fdeb771f)
+
 606.	[bug]		jinmei
 	b10-xfrout now correctly stops sending notify requests once it
 	receives a valid response.  It previously handled it as if the
