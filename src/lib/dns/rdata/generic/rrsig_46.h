@@ -32,6 +32,12 @@
 
 struct RRSIGImpl;
 
+/// \brief \c rdata::RRSIG class represents the RRSIG RDATA as defined %in
+/// RFC4034.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// RRSIG RDATA.
 class RRSIG : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
