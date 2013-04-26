@@ -39,6 +39,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown when it is not allowed to set new Packet Filter.
+class PacketFilterChangeDenied : public Exception {
+public:
+    PacketFilterChangeDenied(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief IfaceMgr exception thrown thrown when socket opening
 /// or configuration failed.
 class SocketConfigError : public Exception {
@@ -602,18 +609,16 @@ public:
     /// Packet Filters expose low-level functions handling sockets opening
     /// and sending/receiving packets through those sockets. This function
     /// sets custom Packet Filter (represented by a class derived from PktFilter)
-    /// to be used by IfaceMgr.
+    /// to be used by IfaceMgr. Note that, there must be no IPv4 sockets
+    /// when this function is called. Call closeSockets(AF_INET) to close
+    /// all hanging IPv4 sockets opened by the current packet filter object.
     ///
     /// @param packet_filter new packet filter to be used by IfaceMgr to send/receive
     /// packets and open sockets.
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is NULL.
-    void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
-        if (!packet_filter) {
-            isc_throw(InvalidPacketFilter, "NULL packet filter object specified");
-        }
-        packet_filter_ = packet_filter;
-    }
+    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets
+    void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter);
 
     /// @brief Set Packet Filter object to handle send/receive packets.
     ///
