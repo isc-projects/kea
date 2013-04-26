@@ -17,6 +17,7 @@
 #if defined(OS_BSD)
 
 #include <dhcp/iface_mgr.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 
 using namespace std;
