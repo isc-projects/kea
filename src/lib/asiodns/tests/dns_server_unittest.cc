@@ -503,6 +503,11 @@ typedef ::testing::Types<FdInit<UDPServer>, FdInit<SyncUDPServer> >
     ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
 
+// Some tests work only for SyncUDPServer, some others work only for
+// (non Sync)UDPServer.  We specialize these tests.
+typedef FdInit<UDPServer> AsyncServerTest;
+typedef FdInit<SyncUDPServer> SyncServerTest;
+
 typedef ::testing::Types<UDPServer, SyncUDPServer> UDPServerTypes;
 TYPED_TEST_CASE(DNSServerTestBase, UDPServerTypes);
 
@@ -532,8 +537,10 @@ TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
 }
 
 
-// Test whether udp server stopped successfully during message check
-TYPED_TEST(DNSServerTest, stopUDPServerDuringMessageCheck) {
+// Test whether udp server stopped successfully during message check.
+// This only works for non-sync server; SyncUDPServer doesn't use checkin
+// callback.
+TEST_F(AsyncServerTest, stopUDPServerDuringMessageCheck) {
     this->testStopServerByStopper(this->udp_server_, this->udp_client_,
                                   this->checker_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
@@ -706,9 +713,6 @@ TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
                            this->lookup_, this->answer_),
                  isc::asiolink::IOError);
 }
-
-// A specialized test type for SyncUDPServer.
-typedef FdInit<SyncUDPServer> SyncServerTest;
 
 // Check it rejects some of the unsupported operations
 TEST_F(SyncServerTest, unsupportedOps) {

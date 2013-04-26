@@ -51,7 +51,7 @@ public:
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
     /// \param af address family, either AF_INET or AF_INET6
-    /// \param checkin the callbackprovider for non-DNS events
+    /// \param checkin the callbackprovider for non-DNS events (unused)
     /// \param lookup the callbackprovider for DNS lookup events (must not be
     ///        NULL)
     /// \param answer the callbackprovider for DNS answer events
@@ -129,7 +129,6 @@ private:
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
     // Callbacks
-    const asiolink::SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
     // Answers from the lookup callback (not sent directly, but signalled
