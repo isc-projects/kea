@@ -58,11 +58,44 @@ Iface::Iface(const std::string& name, int ifindex)
 
 void
 Iface::closeSockets() {
-    for (SocketCollection::iterator sock = sockets_.begin();
-         sock != sockets_.end(); ++sock) {
-        close(sock->sockfd_);
+    // Close IPv4 sockets.
+    closeSockets(AF_INET);
+    // Close IPv6 sockets.
+    closeSockets(AF_INET6);
+}
+
+void
+Iface::closeSockets(const uint16_t family) {
+    // Check that the correect 'family' value has been specified.
+    // The possible values are AF_INET or AF_INET6. Note that, in
+    // the current code they are used to differentiate that the
+    // socket is used to transmit IPv4 or IPv6 traffic. However,
+    // the actual family types of the sockets may be different,
+    // e.g. for LPF we are using raw sockets of AF_PACKET family.
+    //
+    // @todo Consider replacing the AF_INET and AF_INET6 with some
+    // enum which will not be confused with the actual socket type.
+    if ((family != AF_INET) && (family != AF_INET6)) {
+        isc_throw(BadValue, "Invalid socket family " << family
+                  << " specified when requested to close all sockets"
+                  << " which belong to this family");
     }
-    sockets_.clear();
+    // Search for the socket of the specific type.
+    SocketCollection::iterator sock = sockets_.begin();
+    while (sock != sockets_.end()) {
+        if (sock->family_ == family) {
+            // Close and delete the socket and move to the
+            // next one.
+            close(sock->sockfd_);
+            sockets_.erase(sock++);
+
+        } else {
+            // Different type of socket. Let's move
+            // to the next one.
+            ++sock;
+
+        }
+    }
 }
 
 std::string
@@ -147,6 +180,14 @@ void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
         iface->closeSockets();
+    }
+}
+
+void
+IfaceMgr::closeSockets(const uint16_t family) {
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        iface->closeSockets(family);
     }
 }
 
