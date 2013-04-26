@@ -39,13 +39,12 @@ namespace isc {
 namespace asiodns {
 
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
-                             const int af, asiolink::SimpleCallback* checkin,
+                             const int af, asiolink::SimpleCallback*,
                              DNSLookup* lookup, DNSAnswer* answer) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
     answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer), stopped_(false)
+    lookup_callback_(lookup), answer_callback_(answer), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -107,12 +106,6 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     UDPSocket<DummyIOCallback> socket(*socket_);
     UDPEndpoint endpoint(sender_);
     IOMessage message(data_, length, socket, endpoint);
-    if (checkin_callback_ != NULL) {
-        (*checkin_callback_)(message);
-        if (stopped_) {
-            return;
-        }
-    }
 
     // Make sure the buffers are fresh.  Note that we don't touch query_
     // because it's supposed to be cleared in lookup_callback_.  We should
