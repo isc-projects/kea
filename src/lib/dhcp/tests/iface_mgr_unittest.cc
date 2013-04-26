@@ -122,6 +122,24 @@ public:
     ~IfaceMgrTest() {
     }
 
+    // Get ther number of IPv4 or IPv6 sockets on the loopback interface
+    int getOpenSocketsCount(const Iface& iface, uint16_t family) const {
+        // Get all sockets.
+        Iface::SocketCollection sockets = iface.getSockets();
+
+        // Loop through sockets and try to find the ones which match the
+        // specified type.
+        int sockets_count = 0;
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            // Match found, increase the counter.
+            if (sock->family_ == family) {
+                ++sockets_count;
+            }
+        }
+        return (sockets_count);
+    }
+
 };
 
 // We need some known interface to work reliably. Loopback interface
@@ -214,6 +232,66 @@ TEST_F(IfaceMgrTest, basic) {
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
+}
+
+
+// This test verifies that sockets can be closed selectively, i.e. all
+// IPv4 sockets can be closed first and all IPv6 sockets remain open.
+TEST_F(IfaceMgrTest, closeSockets) {
+    // Will be using local loopback addresses for this test.
+    IOAddress loaddr("127.0.0.1");
+    IOAddress loaddr6("::1");
+
+    // Create instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Out constructor does not detect interfaces by itself. We need
+    // to create one and add.
+    int ifindex = if_nametoindex(LOOPBACK);
+    ASSERT_GT(ifindex, 0);
+    Iface lo_iface(LOOPBACK, ifindex);
+    iface_mgr->getIfacesLst().push_back(lo_iface);
+
+    // Create set of V4 and V6 sockets on the loopback interface.
+    // They must differ by a port they are bound to.
+    for (int i = 0; i < 6; ++i) {
+        // Every other socket will be IPv4.
+        if (i % 2) {
+            ASSERT_NO_THROW(
+                iface_mgr->openSocket(LOOPBACK, loaddr, 10000 + i)
+            );
+        } else {
+            ASSERT_NO_THROW(
+                iface_mgr->openSocket(LOOPBACK, loaddr6, 10000 + i)
+            );
+        }
+    }
+
+    // At the end we should have 3 IPv4 and 3 IPv6 sockets open.
+    Iface* iface = iface_mgr->getIface(LOOPBACK);
+    ASSERT_TRUE(iface != NULL);
+
+    int v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    ASSERT_EQ(3, v4_sockets_count);
+    int v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    ASSERT_EQ(3, v6_sockets_count);
+
+    // Let's try to close only IPv4 sockets.
+    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET));
+    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    EXPECT_EQ(0, v4_sockets_count);
+    // The IPv6 sockets should remain open.
+    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    EXPECT_EQ(3, v6_sockets_count);
+
+    // Let's try to close IPv6 sockets.
+    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET6));
+    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    EXPECT_EQ(0, v4_sockets_count);
+    // They should have been closed now.
+    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    EXPECT_EQ(0, v6_sockets_count);
 }
 
 TEST_F(IfaceMgrTest, ifaceClass) {
