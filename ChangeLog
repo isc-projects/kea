@@ -1,3 +1,11 @@
+608.	[bug]		jinmei
+	b10-cmdctl: fixed a hangup problem on receiving the shutdown
+	command from bindctl.  Note, however, that cmdctl is defined as
+	a "needed" module by default, so shutting down cmdctl would cause
+	shutdown of the entire BIND 10 system anyway, and is therefore
+	still not very useful in practice.
+	(Trac #2712, git fa392e8eb391a17d30550d4b290c975710651d98)
+
 607.	[bug]		jinmei
 	Worked around some unit test regressions on FreeBSD 9.1 due to
 	a binary compatibility issue between standard and system
