@@ -93,13 +93,6 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     }
     // OK, we have a real packet of data. Let's dig into it!
 
-    // The UDP socket class has been extended with asynchronous functions
-    // and takes as a template parameter a completion callback class.  As
-    // UDPServer does not use these extended functions (only those defined
-    // in the IOSocket base class) - but needs a UDPSocket to get hold of
-    // the underlying Boost UDP socket - DummyIOCallback is used.  This
-    // provides the appropriate operator() but is otherwise functionless.
-
     // Make sure the buffers are fresh.  Note that we don't touch query_
     // because it's supposed to be cleared in lookup_callback_.  We should
     // eventually even remove this member variable (and remove it from
