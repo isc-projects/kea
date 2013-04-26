@@ -39,12 +39,11 @@ namespace isc {
 namespace asiodns {
 
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
-                             const int af, asiolink::SimpleCallback*,
-                             DNSLookup* lookup, DNSAnswer* answer) :
+                             const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
     answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    lookup_callback_(lookup), answer_callback_(answer), stopped_(false)
+    lookup_callback_(lookup), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -130,8 +129,6 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
 
     if (done_) {
         // Good, there's an answer.
-        // Call the answer callback to render it.
-        (*answer_callback_)(message, query_, answer_, output_buffer_);
 
         asio::error_code ec;
         socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),
