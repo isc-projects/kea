@@ -42,7 +42,8 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
-    udp_endpoint_(sender_), lookup_callback_(lookup), stopped_(false)
+    udp_endpoint_(sender_), lookup_callback_(lookup), stopped_(false),
+    recv_callback_(boost::bind(&SyncUDPServer::handleRead, this, _1, _2))
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -67,9 +68,8 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
 
 void
 SyncUDPServer::scheduleRead() {
-    socket_->async_receive_from(asio::buffer(data_, MAX_LENGTH), sender_,
-                                boost::bind(&SyncUDPServer::handleRead, this,
-                                            _1, _2));
+    socket_->async_receive_from(asio::mutable_buffers_1(data_, MAX_LENGTH),
+                                sender_, recv_callback_);
 }
 
 void
@@ -116,14 +116,12 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
 
     if (done_) {
         // Good, there's an answer.
-
-        asio::error_code ec;
         socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),
                                                output_buffer_->getLength()),
-                         sender_, 0, ec);
-        if (ec) {
+                         sender_, 0, ecode_);
+        if (ecode_) {
             LOG_ERROR(logger, ASIODNS_UDP_SYNC_SEND_FAIL).
-                      arg(sender_.address().to_string()).arg(ec.message());
+                      arg(sender_.address().to_string()).arg(ecode_.message());
         }
     }
 
@@ -141,10 +139,6 @@ SyncUDPServer::operator()(asio::error_code, size_t) {
 /// Stop the UDPServer
 void
 SyncUDPServer::stop() {
-    // passing error_code to avoid getting exception; we simply ignore any
-    // error on close().
-    asio::error_code ec;
-
     /// Using close instead of cancel, because cancel
     /// will only cancel the asynchronized event already submitted
     /// to io service, the events post to io service after
@@ -153,7 +147,7 @@ SyncUDPServer::stop() {
     /// for it won't be scheduled by io service not matter it is
     /// submit to io service before or after close call. And we will
     /// get bad_descriptor error.
-    socket_->close(ec);
+    socket_->close(ecode_); // pass error_code just to avoid getting exception.
     stopped_ = true;
 }
 
