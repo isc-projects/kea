@@ -15,6 +15,8 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 
+#include <string>
+
 using namespace isc::dns;
 
 namespace isc {
@@ -22,13 +24,15 @@ namespace datasrc {
 namespace memory {
 
 ZoneTableSegment*
-ZoneTableSegment::create(const isc::data::Element&, const RRClass& rrclass) {
-    /// FIXME: For now, we always return ZoneTableSegmentLocal. This
-    /// should be updated eventually to parse the passed Element
-    /// argument and construct a corresponding ZoneTableSegment
-    /// implementation.
-
-    return (new ZoneTableSegmentLocal(rrclass));
+ZoneTableSegment::create(const RRClass& rrclass, const std::string& type) {
+    // This will be a few sequences of if-else and hardcoded.  Not really
+    // sophisticated, but we don't expect to have too many types at the moment.
+    // Until that it becomes a real issue we won't be too smart.
+    if (type == "local") {
+        return (new ZoneTableSegmentLocal(rrclass));
+    }
+    isc_throw(UnknownSegmentType, "Zone table segment type not supported: "
+              << type);
 }
 
 void

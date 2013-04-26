@@ -167,7 +167,7 @@ public:
     ///
     /// This constructor sets the name of the option space that is
     /// encapsulated by this option. The encapsulated option space
-    /// indentifies sub-options that are carried within this option.
+    /// identifies sub-options that are carried within this option.
     /// This constructor does not allow to set array indicator
     /// because options comprising an array of data fields must
     /// not be used with sub-options.
@@ -186,7 +186,7 @@ public:
     ///
     /// This constructor sets the name of the option space that is
     /// encapsulated by this option. The encapsulated option space
-    /// indentifies sub-options that are carried within this option.
+    /// identifies sub-options that are carried within this option.
     /// This constructor does not allow to set array indicator
     /// because options comprising an array of data fields must
     /// not be used with sub-options.

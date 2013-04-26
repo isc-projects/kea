@@ -72,12 +72,21 @@ class MsgqRunTest(unittest.TestCase):
         # Start msgq
         self.__msgq = subprocess.Popen([MSGQ_PATH, '-s', SOCKET_PATH],
                                        close_fds=True)
-        # Wait for it to become ready (up to the alarm-set timeout)
-        while not os.path.exists(SOCKET_PATH):
-            # Just a short wait, so we don't hog CPU, but don't wait too long
-            time.sleep(0.01)
         # Some testing data
         self.__no_recpt = {"result": [-1, "No such recipient"]}
+        # Wait for it to become ready (up to the alarm-set timeout)
+        connection = None
+        while not connection:
+            try:
+                # If the msgq is ready, this'll succeed. If not, it'll throw
+                # session error.
+                connection = isc.cc.session.Session(SOCKET_PATH)
+            except isc.cc.session.SessionError:
+                time.sleep(0.1) # Retry after a short time
+        # We have the connection now, that means it works. Close this
+        # connection, we won't use it. Each test gets enough new connections
+        # of its own.
+        connection.close()
 
     def __message(self, data):
         """

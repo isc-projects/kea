@@ -14,9 +14,11 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcp/dhcp4.h>
+#include <exceptions/exceptions.h>
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <string.h>
 
 namespace isc {
 namespace dhcp {
@@ -27,10 +29,17 @@ HWAddr::HWAddr()
 
 HWAddr::HWAddr(const uint8_t* hwaddr, size_t len, uint8_t htype)
     :hwaddr_(hwaddr, hwaddr + len), htype_(htype) {
+    if (len > MAX_HWADDR_LEN) {
+        isc_throw(InvalidParameter, "hwaddr length exceeds MAX_HWADDR_LEN");
+    }
 }
 
 HWAddr::HWAddr(const std::vector<uint8_t>& hwaddr, uint8_t htype)
     :hwaddr_(hwaddr), htype_(htype) {
+    if (hwaddr.size() > MAX_HWADDR_LEN) {
+        isc_throw(InvalidParameter,
+            "address vector size exceeds MAX_HWADDR_LEN");
+    }
 }
 
 std::string HWAddr::toText() const {
@@ -50,7 +59,7 @@ std::string HWAddr::toText() const {
 }
 
 bool HWAddr::operator==(const HWAddr& other) const {
-    return ((this->htype_  == other.htype_) && 
+    return ((this->htype_  == other.htype_) &&
             (this->hwaddr_ == other.hwaddr_));
 }
 

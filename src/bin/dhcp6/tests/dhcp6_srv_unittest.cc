@@ -79,20 +79,12 @@ public:
 
 static const char* DUID_FILE = "server-id-test.txt";
 
-class Dhcpv6SrvTest : public ::testing::Test {
+// test fixture for any tests requiring blank/empty configuration
+// serves as base class for additional tests 
+class NakedDhcpv6SrvTest : public ::testing::Test {
 public:
-    /// Name of the server-id file (used in server-id tests)
 
-    // these are empty for now, but let's keep them around
-    Dhcpv6SrvTest() : rcode_(-1) {
-        subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
-                                         2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-        subnet_->addPool(pool_);
-
-        CfgMgr::instance().deleteSubnets6();
-        CfgMgr::instance().addSubnet6(subnet_);
-
+    NakedDhcpv6SrvTest() : rcode_(-1) {
         // it's ok if that fails. There should not be such a file anyway
         unlink(DUID_FILE);
     }
@@ -142,25 +134,22 @@ public:
         EXPECT_TRUE(expected_clientid->getData() == tmp->getData());
     }
 
-    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
-    // It returns IAADDR option for each chaining with checkIAAddr method.
-    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
-                                         uint32_t expected_t1, uint32_t expected_t2) {
-        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
-        // Can't use ASSERT_TRUE() in method that returns something
-        if (!tmp) {
-            ADD_FAILURE() << "IA_NA option not present in response";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
+    // Checks if server response is a NAK
+    void checkNakResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
+                          uint32_t expected_transid, 
+                          uint16_t expected_status_code) {
+        // Check if we get response at all
+        checkResponse(rsp, expected_message_type, expected_transid);
 
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-        EXPECT_EQ(expected_iaid, ia->getIAID() );
-        EXPECT_EQ(expected_t1, ia->getT1());
-        EXPECT_EQ(expected_t2, ia->getT2());
+        // Check that IA_NA was returned 
+        OptionPtr option_ia_na = rsp->getOption(D6O_IA_NA);
+        ASSERT_TRUE(option_ia_na);
 
-        tmp = ia->getOption(D6O_IAADDR);
-        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
-        return (addr);
+        // check that the status is no address available
+        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(option_ia_na);
+        ASSERT_TRUE(ia);
+
+        checkIA_NAStatusCode(ia, expected_status_code);
     }
 
     // Checks that server rejected IA_NA, i.e. that it has no addresses and
@@ -199,7 +188,6 @@ public:
         }
     }
 
-
     void checkMsgStatusCode(const Pkt6Ptr& msg, uint16_t expected_status) {
         boost::shared_ptr<OptionCustom> status =
             boost::dynamic_pointer_cast<OptionCustom>(msg->getOption(D6O_STATUS_CODE));
@@ -219,7 +207,71 @@ public:
         }
     }
 
-    // Check that generated IAADDR option contains expected address.
+    // Basic checks for generated response (message type and transaction-id).
+    void checkResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
+                       uint32_t expected_transid) {
+        ASSERT_TRUE(rsp);
+        EXPECT_EQ(expected_message_type, rsp->getType());
+        EXPECT_EQ(expected_transid, rsp->getTransid());
+    }
+
+    virtual ~NakedDhcpv6SrvTest() {
+        // Let's clean up if there is such a file.
+        unlink(DUID_FILE);
+    };
+
+    // A DUID used in most tests (typically as client-id)
+    DuidPtr duid_;
+
+    int rcode_;
+    ConstElementPtr comment_;
+};
+
+// Provides suport for tests against a preconfigured subnet6                       
+// extends upon NakedDhcp6SrvTest
+class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
+public:
+    /// Name of the server-id file (used in server-id tests)
+
+    // these are empty for now, but let's keep them around
+    Dhcpv6SrvTest() {
+        subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
+                                         2000, 3000, 4000));
+        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+        subnet_->addPool(pool_);
+
+        CfgMgr::instance().deleteSubnets6();
+        CfgMgr::instance().addSubnet6(subnet_);
+    }
+
+    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
+    // It returns IAADDR option for each chaining with checkIAAddr method.
+    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+                                            uint32_t expected_t1, uint32_t expected_t2) {
+        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
+        // Can't use ASSERT_TRUE() in method that returns something
+        if (!tmp) {
+            ADD_FAILURE() << "IA_NA option not present in response";
+            return (boost::shared_ptr<Option6IAAddr>());
+        }
+ 
+        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+        if (!ia) {
+            ADD_FAILURE() << "IA_NA cannot convert option ptr to Option6";
+            return (boost::shared_ptr<Option6IAAddr>());
+        }
+
+        EXPECT_EQ(expected_iaid, ia->getIAID());
+        EXPECT_EQ(expected_t1, ia->getT1());
+        EXPECT_EQ(expected_t2, ia->getT2());
+ 
+        tmp = ia->getOption(D6O_IAADDR);
+        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
+        return (addr);
+    }
+
+    // Check that generated IAADDR option contains expected address
+    // and lifetime values match the configured subnet
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
                      uint32_t /* expected_preferred */,
@@ -235,15 +287,8 @@ public:
         EXPECT_EQ(addr->getValid(), subnet_->getValid());
     }
 
-    // Basic checks for generated response (message type and transaction-id).
-    void checkResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
-                       uint32_t expected_transid) {
-        ASSERT_TRUE(rsp);
-        EXPECT_EQ(expected_message_type, rsp->getType());
-        EXPECT_EQ(expected_transid, rsp->getTransid());
-    }
-
     // Checks if the lease sent to client is present in the database
+    // and is valid when checked agasint the configured subnet
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
                          boost::shared_ptr<Option6IAAddr> addr) {
         boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
@@ -265,9 +310,6 @@ public:
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
-
-        // Let's clean up if there is such a file.
-        unlink(DUID_FILE);
     };
 
     // A subnet used in most tests
@@ -275,13 +317,132 @@ public:
 
     // A pool used in most tests
     Pool6Ptr pool_;
-
-    // A DUID used in most tests (typically as client-id)
-    DuidPtr duid_;
-
-    int rcode_;
-    ConstElementPtr comment_;
 };
+
+// This test verifies that incoming SOLICIT can be handled properly when
+// there are no subnets configured. 
+//
+// This test sends a SOLICIT and the expected response 
+// is an ADVERTISE with STATUS_NoAddrsAvail and no address provided in the 
+// response
+TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
+    NakedDhcpv6Srv srv(0);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->addOption(generateIA(234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr reply = srv.processSolicit(sol);
+
+    // check that we get the right NAK
+    checkNakResponse (reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail);
+}
+
+// This test verifies that incoming REQUEST can be handled properly when
+// there are no subnets configured. 
+//
+// This test sends a REQUEST and the expected response 
+// is an REPLY with STATUS_NoAddrsAvail and no address provided in the 
+// response
+TEST_F(NakedDhcpv6SrvTest, RequestNoSubnet) {
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a REQUEST
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+
+    // with a hint
+    IOAddress hint("2001:db8:1:1::dead:beef");
+    OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
+    ia->addOption(hint_opt);
+    req->addOption(ia);
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+
+    // server-id is mandatory in REQUEST
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRequest(req);
+
+    // check that we get the right NAK
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail);
+}
+
+// This test verifies that incoming RENEW can be handled properly, even when
+// no subnets are configured.
+//
+// This test sends a RENEW and the expected response 
+// is an REPLY with STATUS_NoBinding and no address provided in the 
+// response
+TEST_F(NakedDhcpv6SrvTest, RenewNoSubnet) {
+    NakedDhcpv6Srv srv(0);
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Let's create a RENEW
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+
+    OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(renewed_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Server-id is mandatory in RENEW
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRenew(req);
+
+    // check that we get the right NAK
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+}
+
+// This test verifies that incoming RELEASE can be handled properly, even when
+// no subnets are configured.
+//
+// This test sends a RELEASE and the expected response 
+// is an REPLY with STATUS_NoBinding and no address provided in the 
+// response
+TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
+    NakedDhcpv6Srv srv(0);
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Let's create a RELEASE
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+
+    OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(released_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Server-id is mandatory in RELEASE
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(req);
+
+    // check that we get the right NAK
+    checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
+}
+
 
 // Test verifies that the Dhcpv6_srv class can be instantiated. It checks a mode
 // without open sockets and with sockets opened on a high port (to not require

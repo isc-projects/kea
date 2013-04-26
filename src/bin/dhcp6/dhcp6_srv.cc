@@ -329,7 +329,7 @@ Dhcpv6Srv::generateServerID() {
         // we will grow knobs to selectively turn them on or off. Also,
         // this code is used only *once* during first start on a new machine
         // and then server-id is stored. (or at least it will be once
-        // DUID storage is implemente
+        // DUID storage is implemented)
 
         // I wish there was a this_is_a_real_physical_interface flag...
 

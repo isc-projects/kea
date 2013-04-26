@@ -47,7 +47,7 @@ namespace dhcp {
 /// @todo: Implement support for options here
 
 
-/// @brief Unique indentifier for a subnet (both v4 and v6)
+/// @brief Unique identifier for a subnet (both v4 and v6)
 typedef uint32_t SubnetID;
 
 class Subnet {

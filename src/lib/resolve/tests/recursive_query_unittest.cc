@@ -971,7 +971,7 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     // point and ask NSAS for it. NSAS will in turn ask resolver for NS record
     // of the delegation point. We then pick it up from the fake resolver
     // and check it is the correct one. This checks the delegation point
-    // travels safely trough the whole path there (it would be enough to check
+    // travels safely through the whole path there (it would be enough to check
     // it up to NSAS, but replacing NSAS is more complicated, so we just
     // include in the test as well for simplicity).
 

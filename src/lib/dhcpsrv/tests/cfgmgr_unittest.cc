@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -35,6 +36,126 @@ using namespace isc;
 using boost::scoped_ptr;
 
 namespace {
+
+// This test verifies that BooleanStorage functions properly. 
+TEST(ValueStorageTest, BooleanTesting) {
+    BooleanStorage testStore;
+
+    // Verify that we can add and retrieve parameters.
+    testStore.setParam("firstBool", false);
+    testStore.setParam("secondBool", true);
+
+    EXPECT_FALSE(testStore.getParam("firstBool"));
+    EXPECT_TRUE(testStore.getParam("secondBool"));
+
+    // Verify that we can update paramaters. 
+    testStore.setParam("firstBool", true);
+    testStore.setParam("secondBool", false);
+
+    EXPECT_TRUE(testStore.getParam("firstBool"));
+    EXPECT_FALSE(testStore.getParam("secondBool"));
+
+    // Verify that we can delete a parameter and it will no longer be found.
+    testStore.delParam("firstBool");
+    EXPECT_THROW(testStore.getParam("firstBool"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the delete was safe and the store still operates.
+    EXPECT_FALSE(testStore.getParam("secondBool"));
+
+    // Verify that looking for a parameter that never existed throws.
+    ASSERT_THROW(testStore.getParam("bogusBool"), isc::dhcp::DhcpConfigError);
+
+    // Verify that attempting to delete a parameter that never existed does not throw. 
+    EXPECT_NO_THROW(testStore.delParam("bogusBool"));
+
+    // Verify that we can empty the list.
+    testStore.clear();
+    EXPECT_THROW(testStore.getParam("secondBool"), isc::dhcp::DhcpConfigError);
+
+}
+
+// This test verifies that Uint32Storage functions properly. 
+TEST(ValueStorageTest, Uint32Testing) {
+    Uint32Storage testStore;
+
+    uint32_t intOne = 77;
+    uint32_t intTwo = 33;
+
+    // Verify that we can add and retrieve parameters. 
+    testStore.setParam("firstInt", intOne);
+    testStore.setParam("secondInt", intTwo);
+
+    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // Verify that we can update parameters. 
+    testStore.setParam("firstInt", --intOne);
+    testStore.setParam("secondInt", ++intTwo);
+
+    EXPECT_EQ(testStore.getParam("firstInt"), intOne);
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // Verify that we can delete a parameter and it will no longer be found.
+    testStore.delParam("firstInt");
+    EXPECT_THROW(testStore.getParam("firstInt"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the delete was safe and the store still operates.
+    EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
+
+    // Verify that looking for a parameter that never existed throws.
+    ASSERT_THROW(testStore.getParam("bogusInt"), isc::dhcp::DhcpConfigError);
+
+    // Verify that attempting to delete a parameter that never existed does not throw. 
+    EXPECT_NO_THROW(testStore.delParam("bogusInt"));
+
+    // Verify that we can empty the list.
+    testStore.clear();
+    EXPECT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
+}
+
+// This test verifies that StringStorage functions properly. 
+TEST(ValueStorageTest, StringTesting) {
+    StringStorage testStore;
+
+    std::string stringOne = "seventy-seven";
+    std::string stringTwo = "thirty-three";
+
+    // Verify that we can add and retrieve parameters.
+    testStore.setParam("firstString", stringOne);
+    testStore.setParam("secondString", stringTwo);
+
+    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // Verify that we can update parameters. 
+    stringOne.append("-boo");
+    stringTwo.append("-boo");
+
+    testStore.setParam("firstString", stringOne);
+    testStore.setParam("secondString", stringTwo);
+
+    EXPECT_EQ(testStore.getParam("firstString"), stringOne);
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // Verify that we can delete a parameter and it will no longer be found.
+    testStore.delParam("firstString");
+    EXPECT_THROW(testStore.getParam("firstString"), isc::dhcp::DhcpConfigError);
+
+    // Verify that the delete was safe and the store still operates.
+    EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
+
+    // Verify that looking for a parameter that never existed throws.
+    ASSERT_THROW(testStore.getParam("bogusString"), isc::dhcp::DhcpConfigError);
+
+    // Verify that attempting to delete a parameter that never existed does not throw. 
+    EXPECT_NO_THROW(testStore.delParam("bogusString"));
+
+    // Verify that we can empty the list.
+    testStore.clear();
+    EXPECT_THROW(testStore.getParam("secondString"), isc::dhcp::DhcpConfigError);
+}
+
+
 
 class CfgMgrTest : public ::testing::Test {
 public:

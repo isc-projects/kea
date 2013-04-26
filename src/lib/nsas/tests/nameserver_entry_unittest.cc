@@ -59,10 +59,10 @@ protected:
     };
 private:
     /**
-     * \short Fills an rrset into the NameserverEntry trough resolver.
+     * \short Fills an rrset into the NameserverEntry through resolver.
      *
      * This function is used when we want to pass data to a NameserverEntry
-     * trough the resolver.
+     * through the resolver.
      * \param resolver The resolver used by the NameserverEntry
      * \param index Index of the query in the resolver.
      * \param set The answer. If the pointer is empty, it is taken
@@ -79,7 +79,7 @@ private:
         }
     }
 protected:
-    /// Fills the nameserver entry with data trough ask IP
+    /// Fills the nameserver entry with data through ask IP
     void fillNSEntry(boost::shared_ptr<NameserverEntry> entry,
         RRsetPtr rrv4, RRsetPtr rrv6)
     {

@@ -15,15 +15,20 @@
 #ifndef ZONE_TABLE_SEGMENT_H
 #define ZONE_TABLE_SEGMENT_H
 
+#include <exceptions/exceptions.h>
+
 #include <dns/rrclass.h>
+
 #include <datasrc/memory/zone_table.h>
-#include "load_action.h"
+#include <datasrc/memory/load_action.h>
+
 #include <cc/data.h>
 #include <util/memory_segment.h>
 
 #include <boost/interprocess/offset_ptr.hpp>
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <string>
 
 namespace isc {
 // Some forward declarations
@@ -34,6 +39,15 @@ class RRClass;
 namespace datasrc {
 namespace memory {
 class ZoneWriter;
+
+/// \brief Exception thrown when unknown or unsupported type of zone table
+/// segment is specified.
+class UnknownSegmentType : public Exception {
+public:
+    UnknownSegmentType(const char* file, size_t line, const char* what) :
+        Exception(file, line, what)
+    {}
+};
 
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
@@ -97,26 +111,14 @@ public:
     /// dynamically-allocated object. The caller is responsible for
     /// destroying it with \c ZoneTableSegment::destroy().
     ///
-    /// FIXME: For now, we always return ZoneTableSegmentLocal
-    /// regardless of the passed \c config.
+    /// \throw UnknownSegmentType The memory segment type specified in
+    /// \c config is not known or not supported in this implementation.
     ///
-    /// \param config The configuration based on which a derived object
-    ///               is returned.
-    /// \return Returns a ZoneTableSegment object
-    static ZoneTableSegment* create(const isc::data::Element& config,
-                                    const isc::dns::RRClass& rrclass);
-
-    /// \brief Temporary/Testing version of create.
-    ///
-    /// This exists as a temporary solution during the migration phase
-    /// towards using the ZoneTableSegment. It doesn't take a config,
-    /// but a memory segment instead. If you can, you should use the
-    /// other version, this one will be gone soon.
-    ///
-    /// \param segment The memory segment to use.
-    /// \return Returns a new ZoneTableSegment object.
-    /// \todo Remove this method.
-    static ZoneTableSegment* create(isc::util::MemorySegment& segment);
+    /// \param rrclass The RR class of the zones to be maintained in the table.
+    /// \param type The memory segment type used for the zone table segment.
+    /// \return Returns a ZoneTableSegment object of the specified type.
+    static ZoneTableSegment* create(const isc::dns::RRClass& rrclass,
+                                    const std::string& type);
 
     /// \brief Destroy a ZoneTableSegment
     ///
@@ -147,3 +149,7 @@ public:
 } // namespace isc
 
 #endif // ZONE_TABLE_SEGMENT_H
+
+// Local Variables:
+// mode: c++
+// End:

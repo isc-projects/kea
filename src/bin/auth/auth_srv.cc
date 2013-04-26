@@ -22,6 +22,7 @@
 #include <config/ccsession.h>
 
 #include <cc/data.h>
+#include <cc/proto_defs.h>
 
 #include <exceptions/exceptions.h>
 
@@ -41,7 +42,7 @@
 
 #include <asiodns/dns_service.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>
@@ -789,17 +790,14 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         return (true);
     }
 
-    // In the code that follows, we simply ignore the notify if any internal
-    // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
-    // silent about such cases, but there doesn't seem to be anything we can
-    // improve at the primary server side by sending an error anyway.
-    if (xfrin_session_ == NULL) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NO_XFRIN);
-        return (false);
-    }
-
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
         .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
+
+    // xfrin_session_ should have been set and never be replaced except in
+    // tests; otherwise it's an internal bug.  assert() may be too strong,
+    // but processMessage() will catch all exceptions, so there's no better
+    // way.
+    assert(xfrin_session_);
 
     const string remote_ip_address = remote_ep.getAddress().toText();
     static const string command_template_start =
@@ -816,12 +814,24 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 command_template_end);
         const unsigned int seq =
             xfrin_session_->group_sendmsg(notify_command, "Zonemgr",
-                                          "*", "*");
+                                          CC_INSTANCE_WILDCARD,
+                                          CC_INSTANCE_WILDCARD, true);
         ConstElementPtr env, answer, parsed_answer;
         xfrin_session_->group_recvmsg(env, answer, false, seq);
         int rcode;
         parsed_answer = parseAnswer(rcode, answer);
-        if (rcode != 0) {
+        if (rcode == CC_REPLY_NO_RECPT) {
+            // This can happen when Zonemgr is not running.  When we support
+            // notification-based membership framework, we should check if it's
+            // supposed to be running and shouldn't even send the command if
+            // not.  Until then, we log this event at the debug level as we
+            // don't know whether it's a real trouble or intentional
+            // configuration.  (Also, when it's done, maybe we should simply
+            // propagate the exception and return SERVFAIL to suppress further
+            // NOTIFY).
+            LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_ZONEMGR_NOTEXIST);
+            return (false);
+        } else if (rcode != CC_REPLY_SUCCESS) {
             LOG_ERROR(auth_logger, AUTH_ZONEMGR_ERROR)
                       .arg(parsed_answer->str());
             return (false);
