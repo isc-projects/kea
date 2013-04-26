@@ -59,10 +59,10 @@ protected:
         txt_rdata_(createRdata(RRType::TXT(), rrclass_, "test")),
         sig_rdata1_(createRdata(RRType::RRSIG(), rrclass_,
                                 "A 5 3 3600 20000101000000 20000201000000 "
-                                "12345 example.com. FAKE ")),
+                                "12345 example.com. FAKE")),
         sig_rdata2_(createRdata(RRType::RRSIG(), rrclass_,
                                 "NS 5 3 3600 20000101000000 20000201000000 "
-                                "12345 example.com. FAKE "))
+                                "12345 example.com. FAKE"))
     {}
 
     void checkRRset(const Name& expected_name, const RRClass& expected_class,
