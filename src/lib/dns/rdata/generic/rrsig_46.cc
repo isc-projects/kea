@@ -26,7 +26,6 @@
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrtype.h>
-#include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata/generic/detail/lexer_util.h>
@@ -89,7 +88,7 @@ RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
     const uint32_t originalttl =
-        RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     const uint32_t timeexpire =
         timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t timeinception =
@@ -135,7 +134,7 @@ RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
 ///
 /// See the construction that takes \c MasterLexer for other fields.
 ///
-/// \throw Others Exception from the Name and RRTTL constructors.
+/// \throw Others Exception from the Name constructor.
 /// \throw InvalidRdataText Other general syntax errors.
 RRSIG::RRSIG(const std::string& rrsig_str) :
     impl_(NULL)
@@ -164,13 +163,12 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 /// origin is non NULL, in which case \c origin is used to make it absolute.
 /// This must not be represented as a quoted string.
 ///
-/// The Original TTL field can be either a valid decimal representation of an
-/// unsigned 32-bit integer or other valid textual representation of \c RRTTL
-/// such as "1H" (which means 3600). Note that this differs from BIND 9,
-/// which only allows the Original TTL field to be expressed in seconds.
+/// The Original TTL field is a valid decimal representation of an
+/// unsigned 32-bit integer. Note that RFC4034 does not allow alternate
+/// textual representations of \c RRTTL such as "1H" for 3600 seconds.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
+/// \throw Other Exceptions from the Name constructor if
 /// construction of textual fields as these objects fail.
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
