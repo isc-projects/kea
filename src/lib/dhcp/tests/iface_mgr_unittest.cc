@@ -689,19 +689,23 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     // open sockets on the same ports.
     ifacemgr->closeSockets();
 
-    // The following test is currently disabled for OSes other than
-    // Linux because interface detection is not implemented on them.
-    // @todo enable this test for all OSes once interface detection
-    // is implemented.
-#if defined(OS_LINUX)
+    // The check below has been commented out. It verified the ability
+    // to open suitable socket for sending broadcast request. However,
+    // there is no guarantee for such test to work on all systems
+    // because some systems may have no broadcast capable interfaces at all.
+
+/* #if defined(OS_LINUX)
     // Open v4 socket to connect to broadcast address.
     int socket3  = 0;
     IOAddress bcastAddr("255.255.255.255");
-    EXPECT_NO_THROW(
+    try {
         socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
-    );
+    } catch (const Exception& ex) {
+        std::cout << ex.what() << std::endl;
+        FAIL();
+    }
     EXPECT_GT(socket3, 0);
-#endif
+#endif */
 
     // Do not call closeSockets() because it is called by IfaceMgr's
     // virtual destructor.
@@ -919,6 +923,15 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     EXPECT_TRUE(custom_packet_filter->open_socket_called_);
     // This function always returns fake socket descriptor equal to 1024.
     EXPECT_EQ(1024, socket1);
+
+    // Replacing current packet filter object while there are IPv4
+    // sockets open is not allowed!
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 PacketFilterChangeDenied);
+
+    // So, let's close the open IPv4 sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets(AF_INET);
+    EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
 
 #if defined OS_LINUX
