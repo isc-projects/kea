@@ -61,11 +61,6 @@ protected:
             rdata_str, rdata_rrsig, true, true);
     }
 
-    void checkFromText_InvalidTTL(const string& rdata_str) {
-        checkFromText<generic::RRSIG, InvalidRRTTL, InvalidRRTTL>(
-            rdata_str, rdata_rrsig, true, true);
-    }
-
     void checkFromText_InvalidTime(const string& rdata_str) {
         checkFromText<generic::RRSIG, InvalidTime, InvalidTime>(
             rdata_str, rdata_rrsig, true, true);
@@ -118,14 +113,6 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
               "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU\n"
               "f49t+sXKPzbipN9g+s1ZPiIyofc= )");
 
-    // Alternate form of TTL is okay
-    checkFromText_None(
-	      "A 5 4 12H 20100223214617 20100222214617 8496 isc.org. "
-              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
-              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
-              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
-              "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-
     // Trailing garbage. This should cause only the string constructor
     // to fail, but the lexer constructor must be able to continue
     // parsing from it.
@@ -159,14 +146,14 @@ TEST_F(Rdata_RRSIG_Test, badText) {
     // bad algorithm
     checkFromText_InvalidText(
                      "A 555 4 43200 "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     checkFromText_LexerError(
                      "A FIVE 4 43200 "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
@@ -174,44 +161,51 @@ TEST_F(Rdata_RRSIG_Test, badText) {
     // bad labels
     checkFromText_InvalidText(
                      "A 5 4444 43200 "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     checkFromText_LexerError(
                      "A 5 FOUR 43200 "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     // bad original ttl
-    checkFromText_InvalidTTL(
+    checkFromText_LexerError(
                      "A 5 4 999999999999 "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-    checkFromText_InvalidTTL(
+    checkFromText_LexerError(
                      "A 5 4 TTL "
-                     "20100223214617 20100222214617 8496 isc.org."
+                     "20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    // Alternate form of TTL is not okay
+    checkFromText_LexerError(
+	      "A 5 4 12H 20100223214617 20100222214617 8496 isc.org. "
+              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
+              "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     // bad signature expiration
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
-                     "201002232 20100222214617 8496 isc.org."
+                     "201002232 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="); 
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
-                     "EXPIRATION 20100222214617 8496 isc.org."
+                     "EXPIRATION 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
@@ -219,14 +213,14 @@ TEST_F(Rdata_RRSIG_Test, badText) {
    // bad signature inception
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
-                     "20100223214617 20100227 8496 isc.org."
+                     "20100223214617 20100227 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
-                     "20100223214617 INCEPTION 8496 isc.org."
+                     "20100223214617 INCEPTION 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
@@ -234,14 +228,14 @@ TEST_F(Rdata_RRSIG_Test, badText) {
     // bad key tag
     checkFromText_InvalidText(
                      "A 5 4 43200 "
-                     "20100223214617 20100222214617 999999 isc.org."
+                     "20100223214617 20100222214617 999999 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     checkFromText_LexerError(
                      "A 5 4 43200 "
-                     "20100223214617 20100222214617 TAG isc.org."
+                     "20100223214617 20100222214617 TAG isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
