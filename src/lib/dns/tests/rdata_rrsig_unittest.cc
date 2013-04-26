@@ -55,9 +55,43 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
     EXPECT_EQ(isc::dns::RRType::A(), rdata_rrsig.typeCovered());
 }
 
+TEST_F(Rdata_RRSIG_Test, spaceSeparatedBase64) {
+    const generic::RRSIG sig(
+	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
+              "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    EXPECT_EQ(rrsig_txt, sig.toText());
+}
+
+TEST_F(Rdata_RRSIG_Test, multiLineBase64) {
+    const generic::RRSIG sig(
+	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "( evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz\n"
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/\n"
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU\n"
+              "f49t+sXKPzbipN9g+s1ZPiIyofc= )");
+    EXPECT_EQ(rrsig_txt, sig.toText());
+}
+
 TEST_F(Rdata_RRSIG_Test, badText) {
     // missing fields
-    EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRRType);
+    EXPECT_THROW(const generic::RRSIG sig("A"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 20100223214617"),
+                 InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 20100223214617 "
+                                          "20100222214617"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 20100223214617 "
+                                          "20100222214617 8496"),
+                 InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 20100223214617 "
+                                          "20100222214617 8496 isc.org."),
+                 InvalidRdataText);
     // bad algorithm
     EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -79,9 +113,16 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRRTTL);
-    // bad signature expiration, inception
+    // bad signature expiration
     EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
-                     "20100223 20100227 8496 isc.org. "
+                     "20100223 20100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidTime);
+    // bad signature inception
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+                     "20100223214617 20100227 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"

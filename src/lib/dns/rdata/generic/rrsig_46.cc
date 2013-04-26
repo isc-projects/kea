@@ -77,43 +77,48 @@ struct RRSIGImpl {
 // helper function for string and lexer constructors
 void
 RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
-    const string covered_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    const uint32_t algorithm = lexer.getNextToken(MasterToken::NUMBER).
-        getNumber();
-    const uint32_t labels = lexer.getNextToken(MasterToken::NUMBER).
-        getNumber();
-    const uint32_t originalttl =
-        RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
-    const string expire_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    const string inception_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    const uint32_t tag =
+    const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
+    const uint32_t algorithm =
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    const Name signer = createNameFromLexer(lexer, origin);
-    const string signature_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
-
     if (algorithm > 0xff) {
         isc_throw(InvalidRdataText, "RRSIG algorithm out of range");
     }
+    const uint32_t labels =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (labels > 0xff) {
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
+    const uint32_t originalttl =
+        RRTTL(lexer.getNextToken(MasterToken::STRING).getString()).getValue();
+    const uint32_t timeexpire =
+        timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
+    const uint32_t timeinception =
+        timeFromText32(lexer.getNextToken(MasterToken::STRING).getString());
+    const uint32_t tag =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (tag > 0xffff) {
         isc_throw(InvalidRdataText, "RRSIG key tag out of range");
     }
-
-    const uint32_t timeexpire = timeFromText32(expire_txt);
-    const uint32_t timeinception = timeFromText32(inception_txt);
+    const Name signer = createNameFromLexer(lexer, origin);
+    string signature_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    // RFC4034 says "Whitespace is allowed within the Base64 text."
+    // So read to the end of input.
+    while (true) {
+        const MasterToken& token = lexer.getNextToken();
+        if (token.getType() != MasterToken::STRING) {
+            break;
+        }
+        signature_txt.append(token.getString());
+    }
+    lexer.ungetToken();
 
     vector<uint8_t> signature;
     decodeBase64(signature_txt, signature);
 
-    impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
-			  originalttl, timeexpire, timeinception,
-			  static_cast<uint16_t>(tag), signer, signature);
+    impl_ = new RRSIGImpl(covered, algorithm, labels,
+                          originalttl, timeexpire, timeinception,
+                          static_cast<uint16_t>(tag), signer, signature);
 }
 
 /// \brief Constructor from string.
@@ -161,7 +166,8 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 ///
 /// The Original TTL field can be either a valid decimal representation of an
 /// unsigned 32-bit integer or other valid textual representation of \c RRTTL
-/// such as "1H" (which means 3600).
+/// such as "1H" (which means 3600). Note that this differs from BIND 9,
+/// which only allows the Original TTL field to be expressed in seconds.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
 /// \throw Other Exceptions from the Name and RRTTL constructors if
