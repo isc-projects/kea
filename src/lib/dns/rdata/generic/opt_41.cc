@@ -20,7 +20,6 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/lexer_util.h>
 
 using namespace std;
 using namespace isc::util;
@@ -30,12 +29,16 @@ using namespace isc::util;
 
 /// \brief Constructor from string.
 ///
+/// This constructor cannot be used, and always throws an exception.
+///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(const std::string&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
 /// \brief Constructor with a context of MasterLexer.
+///
+/// This constructor cannot be used, and always throws an exception.
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
@@ -61,6 +64,7 @@ OPT::OPT(const OPT&) : Rdata() {
 
 std::string
 OPT::toText() const {
+    // OPT records do not have a text format.
     return ("");
 }
 
