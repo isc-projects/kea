@@ -30,6 +30,7 @@
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -150,6 +151,14 @@ private:
     // This turns true when the server stops. Allows for not sending the
     // answer after we closed the socket.
     bool stopped_;
+    // Placeholder for error code object.  It will be passed to ASIO library
+    // to have it set in case of error.
+    asio::error_code ecode_;
+    // The callback functor for internal asynchronous read event.  This is
+    // stateless (and it will be copied in the ASIO library anyway), so
+    // can be const
+    const boost::function<void(const asio::error_code&, size_t)>
+    recv_callback_;
 
     // Auxiliary functions
 
