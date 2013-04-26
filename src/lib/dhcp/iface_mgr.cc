@@ -203,6 +203,36 @@ IfaceMgr::isDirectResponseSupported() const {
     return (packet_filter_->isDirectResponseSupported());
 }
 
+void
+IfaceMgr::setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
+    // Do not allow NULL pointer.
+    if (!packet_filter) {
+        isc_throw(InvalidPacketFilter, "NULL packet filter object specified");
+    }
+    // Different packet filters use different socket types. It does not make
+    // sense to allow the change of packet filter when there are IPv4 sockets
+    // open because they can't be used by the receive/send functions of the
+    // new packet filter. Below, we check that there are no open IPv4 sockets.
+    // If we find at least one, we have to fail. However, caller still has a
+    // chance to replace the packet filter if he closes sockets explicitly.
+    for (IfaceCollection::const_iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        const Iface::SocketCollection& sockets = iface->getSockets();
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            // There is at least one socket open, so we have to fail.
+            if (sock->family_ == AF_INET) {
+                isc_throw(PacketFilterChangeDenied, "it is not allowed to set new packet"
+                          << " filter when there are open IPv4 sockets - need"
+                          << " to close them first");
+            }
+        }
+    }
+    // Everything is fine, so replace packet filter.
+    packet_filter_ = packet_filter;
+}
+
+
 void IfaceMgr::stubDetectIfaces() {
     string ifaceName;
     const string v4addr("127.0.0.1"), v6addr("::1");
