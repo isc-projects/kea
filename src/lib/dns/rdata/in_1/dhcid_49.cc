@@ -74,12 +74,13 @@ DHCID::DHCID(const std::string& dhcid_str) {
         std::istringstream iss(dhcid_str);
         MasterLexer lexer;
         lexer.pushSource(iss);
+
         createFromLexer(lexer);
-        // RFC4701 says we have to support white-space-separated substrings,
-        // so we have to read to the end of input. Therefore, we can't detect
-        // extra input past the end of the digest. OTOH, extra text is likely
-        // to result in a base64 decoding error, so BadValue will be thrown in
-        // that case.
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for DHCID: "
+                      << dhcid_str);
+        }
     } catch (const MasterLexer::LexerError& ex) {
         isc_throw(InvalidRdataText, "Failed to construct DHCID from '" <<
                   dhcid_str << "': " << ex.what());
