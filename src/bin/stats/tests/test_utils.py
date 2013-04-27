@@ -530,24 +530,24 @@ class SimpleStats(stats.Stats):
     def __init_auth_stat(self):
         self._queries_tcp = 3
         self._queries_udp = 2
-        self.__queries_per_zone = [{
+        self._queries_per_zone = [{
                 'zonename': 'test1.example', 'queries.tcp': 5, 'queries.udp': 4
                 }]
-        self.__nds_queries_per_zone = \
+        self._nds_queries_per_zone = \
             { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
         self._auth_sdata = \
             { 'queries.tcp': self._queries_tcp,
               'queries.udp': self._queries_udp,
-              'queries.perzone' : self.__queries_per_zone,
+              'queries.perzone' : self._queries_per_zone,
               'nds_queries.perzone' : {
                 'test10.example': {
                     'queries.tcp': isc.cc.data.find(
-                        self.__nds_queries_per_zone,
+                        self._nds_queries_per_zone,
                         'test10.example/queries.tcp')
                     }
                 },
               'nds_queries.perzone/test10.example/queries.udp' :
-                  isc.cc.data.find(self.__nds_queries_per_zone,
+                  isc.cc.data.find(self._nds_queries_per_zone,
                                    'test10.example/queries.udp')
               }
 
@@ -590,10 +590,6 @@ class SimpleStats(stats.Stats):
         return isc.config.ccsession.parse_answer(answer)[1]
 
 class MyStats(stats.Stats):
-
-    stats._BASETIME = CONST_BASETIME
-    stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
-    stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
 
     def __init__(self):
         self._started = threading.Event()
