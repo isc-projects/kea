@@ -104,6 +104,11 @@ DUMMY_DATA = {
         }
     }
 
+# Bad practice: this should be localized
+stats._BASETIME = CONST_BASETIME
+stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
+stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
+
 def get_availaddr(address='127.0.0.1', port=8001):
     """returns a tuple of address and port which is available to
     listen on the platform. The first argument is a address for
