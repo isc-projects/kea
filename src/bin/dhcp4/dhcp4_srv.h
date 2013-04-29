@@ -61,15 +61,20 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
     /// port on which DHCPv4 server will listen on. That is mostly useful
-    /// for testing purposes.
+    /// for testing purposes. The Last two arguments of the constructor
+    /// should be left at default values for normal server operation.
+    /// They should be disabled when creating an instance of this class
+    /// for unit testing as enabling them requires root privilegs.
     ///
     /// @param port specifies port number to listen on
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     /// @param use_bcast configure sockets to support broadcast messages.
+    /// @param specifies if it is desired to support direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
               const char* dbconfig = "type=memfile",
-              const bool use_bcast = true);
+              const bool use_bcast = true,
+              const bool direct_response_desired = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     ~Dhcpv4Srv();
