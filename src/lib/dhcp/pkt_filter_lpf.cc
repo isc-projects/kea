@@ -13,14 +13,55 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_lpf.h>
 #include <dhcp/protocol_util.h>
 #include <exceptions/exceptions.h>
-
+#include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
+#include <net/ethernet.h>
+
+namespace {
+
+/// Socket filter program, used to filter out all traffic other
+/// then DHCP. In particular, it allows UDP packets on a specific
+/// (customizable) port. It does not allow fragmented packets.
+/// @todo We may want to extend the filter to receive packets sent
+/// to the particular IP address assigned to the interface or
+/// broadcast address.
+struct sock_filter dhcp_sock_filter [] = {
+	// Make sure this is an IP packet...
+	BPF_STMT (BPF_LD + BPF_H + BPF_ABS, 12),
+	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+
+	// Make sure it's a UDP packet...
+	BPF_STMT (BPF_LD + BPF_B + BPF_ABS, 23),
+	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+
+	// Make sure this isn't a fragment...
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+
+	// Get the IP header length...
+	BPF_STMT (BPF_LDX + BPF_B + BPF_MSH, 14),
+
+	// Make sure it's to the right port...
+	BPF_STMT (BPF_LD + BPF_H + BPF_IND, 16),
+    // Use default DHCP server port, but it can be
+    // replaced if neccessary.
+	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
+
+	// If we passed all the tests, ask for the whole packet.
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	// Otherwise, drop it.
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+}
 
 using namespace isc::util;
 
@@ -29,12 +70,30 @@ namespace dhcp {
 
 int
 PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
-                         const uint16_t, const bool,
+                         const uint16_t port, const bool,
                          const bool) {
 
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) {
         isc_throw(SocketConfigError, "Failed to create raw LPF socket");
+    }
+
+    // Create socket filter program. This program will only allow incoming UDP
+    // traffic which arrives on the specific (DHCP) port). It will also filter
+    // out all fragmented packets.
+    struct sock_fprog filter_program;
+    memset(&filter_program, 0, sizeof(filter_program));
+
+    filter_program.filter = dhcp_sock_filter;
+    filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+    // Override the default port value.
+    dhcp_sock_filter[8].k = port;
+    // Apply the filter.
+    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
+                   sizeof(filter_program)) < 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to install packet filtering program"
+                  << " on the socket " << sock);
     }
 
     struct sockaddr_ll sa;
