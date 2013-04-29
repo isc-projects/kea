@@ -153,6 +153,8 @@ PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemoteAddr(dummy_pkt->getRemoteAddr());
     pkt->setLocalPort(dummy_pkt->getLocalPort());
     pkt->setRemotePort(dummy_pkt->getRemotePort());
+    pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
+    pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
     return (pkt);
 }
@@ -163,9 +165,12 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     OutputBuffer buf(14);
 
     // Ethernet frame header
-    std::vector<uint8_t> dest_addr = pkt->getHWAddr()->hwaddr_;
-    if (dest_addr.empty()) {
+    HWAddrPtr hwaddr = pkt->getRemoteHWAddr();
+    std::vector<uint8_t> dest_addr;
+    if (!hwaddr) {
         dest_addr.resize(HWAddr::ETHERNET_HWADDR_LEN);
+    } else {
+        dest_addr = pkt->getRemoteHWAddr()->hwaddr_;
     }
     writeEthernetHeader(iface.getMac(), &dest_addr[0], buf);
 

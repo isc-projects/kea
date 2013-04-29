@@ -173,6 +173,11 @@ public:
         EXPECT_EQ(q->getIface(),  a->getIface());
         EXPECT_EQ(q->getIndex(),  a->getIndex());
         EXPECT_EQ(q->getGiaddr(), a->getGiaddr());
+        // When processing an incoming packet the remote address
+        // is copied as a src address, and the source address is
+        // copied as a remote address to the response.
+        EXPECT_TRUE(q->getLocalHWAddr() == a->getRemoteHWAddr());
+        EXPECT_TRUE(q->getRemoteHWAddr() == a->getLocalHWAddr());
 
         // Check that bare minimum of required options are there.
         // We don't check options requested by a client. Those
@@ -374,12 +379,19 @@ public:
             mac[i] = i*10;
         }
 
+        vector<uint8_t> dst_mac(6);
+        for (int i = 0; i < 6; i++) {
+            dst_mac[i] = i * 20;
+        }
+
         boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
         boost::shared_ptr<Pkt4> rsp;
 
         req->setIface("eth0");
         req->setIndex(17);
+        req->setRemoteHWAddr(1, 6, dst_mac);
         req->setHWAddr(1, 6, mac);
+        req->setLocalHWAddr(1, 6, mac);
         req->setRemoteAddr(IOAddress(client_addr));
         req->setGiaddr(relay_addr);
 
