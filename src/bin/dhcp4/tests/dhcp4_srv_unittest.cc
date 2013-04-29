@@ -50,10 +50,12 @@ public:
     ///
     /// It disables configuration of broadcast options on
     /// sockets that are opened by the Dhcpv4Srv constructor.
-    /// Setting broadcast options requires root privileges
-    /// which is not the case when running unit tests.
+    /// Also, disables the Direct V4 traffic as it requires
+    /// use of raw sockets. Use of broadcast as well as raw
+    /// sockets require root privileges, thus can't be used
+    /// in unit testing.
     NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile", false) {
+        : Dhcpv4Srv(port, "type=memfile", false, false) {
     }
 
     using Dhcpv4Srv::processDiscover;
