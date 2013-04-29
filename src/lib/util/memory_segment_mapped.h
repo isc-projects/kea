@@ -38,9 +38,12 @@ namespace util {
 /// Multiple processes can open multiple segments for the same file in
 /// read-only mode at the same time.  But there shouldn't be more than
 /// one process that opens segments for the same file in read-write mode
-/// at the same time.  Likewise, if one process opens a segment for a file
-/// there shouldn't be any other process that opens a segment for the file
-/// in read-only mode.  This class tries to detect any violation of this
+/// at the same time.  Likewise, if one process opens a segment for a
+/// file in read-write mode, there shouldn't be any other process that
+/// opens a segment for the file in read-only mode. If one or more
+/// processes open segments for a file in read-only mode, there
+/// shouldn't be any other process that opens a segment for the file in
+/// read-write mode. This class tries to detect any violation of this
 /// restriction, but this does not intend to provide 100% safety.  It's
 /// generally the user's responsibility to ensure this condition.
 ///
