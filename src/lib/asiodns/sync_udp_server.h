@@ -52,10 +52,10 @@ public:
     /// callback is NULL.  So the constructor explicitly rejects that case
     /// with an exception.  Likewise, it doesn't take "checkin" or "answer"
     /// callbacks.  In fact, calling "checkin" from receive callback does not
-    /// make sense for any of the DNSServer variants; "answer" callback is
-    /// simply unnecessary for this class because a complete answer is build
-    /// in the lookup callback (it's the user's responsibility to guarantee
-    /// that condition).
+    /// make sense for any of the DNSServer variants (see Trac #2935);
+    /// "answer" callback is simply unnecessary for this class because a
+    /// complete answer is built in the lookup callback (it's the user's
+    /// responsibility to guarantee that condition).
     ///
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
@@ -128,7 +128,9 @@ private:
     // If it was OK to have just a buffer, not the wrapper class,
     // we could reuse the data_
     isc::util::OutputBufferPtr output_buffer_;
-    // Objects to hold the query message and the answer: these are not used
+    // Objects to hold the query message and the answer.  The latter isn't
+    // used and only defined as a placeholder as the callback signature
+    // requires it.
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
