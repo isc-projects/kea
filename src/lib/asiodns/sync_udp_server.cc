@@ -118,10 +118,10 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
         // Good, there's an answer.
         socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),
                                                output_buffer_->getLength()),
-                         sender_, 0, ecode_);
-        if (ecode_) {
+                         sender_, 0, ec_);
+        if (ec_) {
             LOG_ERROR(logger, ASIODNS_UDP_SYNC_SEND_FAIL).
-                      arg(sender_.address().to_string()).arg(ecode_.message());
+                      arg(sender_.address().to_string()).arg(ec_.message());
         }
     }
 
@@ -147,8 +147,12 @@ SyncUDPServer::stop() {
     /// for it won't be scheduled by io service not matter it is
     /// submit to io service before or after close call. And we will
     /// get bad_descriptor error.
-    socket_->close(ecode_); // pass error_code just to avoid getting exception.
+    socket_->close(ec_);
     stopped_ = true;
+    if (ec_) {
+        LOG_ERROR(logger, ASIODNS_SYNC_UDP_CLOSE_SOCKET_FAIL_ON_STOP).
+            arg(ec_.message());
+    }
 }
 
 void

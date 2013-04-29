@@ -153,7 +153,7 @@ private:
     bool stopped_;
     // Placeholder for error code object.  It will be passed to ASIO library
     // to have it set in case of error.
-    asio::error_code ecode_;
+    asio::error_code ec_;
     // The callback functor for internal asynchronous read event.  This is
     // stateless (and it will be copied in the ASIO library anyway), so
     // can be const
