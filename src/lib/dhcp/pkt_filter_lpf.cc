@@ -52,7 +52,7 @@ struct sock_filter dhcp_sock_filter [] = {
 	BPF_STMT (BPF_LD + BPF_H + BPF_IND, 16),
     // Use default DHCP server port, but it can be
     // replaced if neccessary.
-	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
+	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, isc::dhcp::DHCP4_SERVER_PORT, 0, 1),
 
 	// If we passed all the tests, ask for the whole packet.
 	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
