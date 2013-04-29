@@ -53,6 +53,11 @@ The asynchronous I/O code encountered an error when trying to send data to
 the specified address on the given protocol.  The number of the system
 error that caused the problem is given in the message.
 
+% ASIODNS_SYNC_UDP_CLOSE_SOCKET_FAIL_ON_STOP failed to close a
+This is the same to ASIODNS_UDP_CLOSE_SOCKET_FAIL_ON_STOP but happens
+on the "synchronous UDP server", mainly used for the authoritative DNS
+server daemon.
+
 % ASIODNS_TCP_ACCEPT_FAIL failed to accept TCP DNS connection: %1
 Accepting a TCP connection from a DNS client failed due to an error
 that could happen but should be rare.  The reason for the error is
@@ -64,6 +69,44 @@ restrictive on this limitation, so consider adjusing the limit using
 a tool such as ulimit.  If you see other types of errors too often,
 there may be something overlooked; please file a bug report in that case.
 
+% ASIODNS_TCP_CLOSE_ACCEPTOR_FAIL failed to close listening TCP socket: %1
+A TCP DNS server tried to close a listening TCP socket (for accepting
+new connections) as a step of stopping itself, but failed to do that.
+This is generally an unexpected event and so is logged as an error.
+
+% ASIODNS_TCP_CLOSE_FAIL failed to close DNS/TCP socket with a client: %1
+A TCP DNS server tried to close a TCP socket used to communicate with a
+client, but it failed to do that.  This is expected to be very rare but
+we've seen it in real deployment.
+
+% ASIODNS_TCP_CLOSE_SOCKET_FAIL_ON_STOP failed to close a DNS/TCP socket while stopping the server: %1
+A TCP DNS server tried to close a TCP socket (which is either actively
+communicating with a client or is already unused) as a step of
+stopping itself, but failed to do that.  This is generally an
+unexpected event and so is logged as an error.
+
+% ASIODNS_TCP_GETREMOTE_FAIL failed to get remote address of a DNS TCP connection: %1
+A TCP DNS server tried to get the address and port of a remote client
+on a connected socket but failed.  It's expected to be rare but can
+still happen.  See also ASIODNS_TCP_READLEN_FAIL.
+
+% ASIODNS_TCP_READDATA_FAIL failed to get DNS data on a TCP socket: %1
+A TCP DNS server tried to read a DNS message (that follows a 2-byte
+length field) but failed.  It's expected to be rare but can still happen.
+See also ASIODNS_TCP_READLEN_FAIL.
+
+% ASIODNS_TCP_READLEN_FAIL failed to get DNS data length on a TCP socket: %1
+A TCP DNS server tried to get the length field of a DNS message (the first
+2 bytes of a new chunk of data) but failed.  This is generally expected to
+be rare but can still happen, e.g, due to an unexpected reset of the
+connection.  A specific reason for the failure is included in the log
+message.
+
+% ASIODNS_TCP_WRITE_FAIL failed to send DNS message over a TCP socket: %1
+A TCP DNS server tried to send a DNS message to a remote client but
+failed.  It's expected to be rare but can still happen.  See also
+ASIODNS_TCP_READLEN_FAIL.
+
 % ASIODNS_UDP_ASYNC_SEND_FAIL Error sending UDP packet to %1: %2
 The low-level ASIO library reported an error when trying to send a UDP
 packet in asynchronous UDP mode. This can be any error reported by
@@ -74,6 +117,11 @@ normally.
 If you see a single occurrence of this message, it probably does not
 indicate any significant problem, but if it is logged often, it is probably
 a good idea to inspect your network traffic.
+
+% ASIODNS_UDP_CLOSE_SOCKET_FAIL_ON_STOP failed to close a DNS/UDP socket while stopping the server: %1
+A UDP DNS server tried to close its UDP socket as a step of stopping
+itself, but failed to do that.  This is generally an unexpected event
+and so is logged as an error.
 
 % ASIODNS_UDP_RECEIVE_FAIL failed to receive UDP DNS packet: %1
 Receiving a UDP packet from a DNS client failed due to an error that

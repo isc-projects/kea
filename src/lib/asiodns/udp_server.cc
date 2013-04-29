@@ -327,8 +327,6 @@ UDPServer::asyncLookup() {
 /// Stop the UDPServer
 void
 UDPServer::stop() {
-    // passing error_code to avoid getting exception; we simply ignore any
-    // error on close().
     asio::error_code ec;
 
     /// Using close instead of cancel, because cancel
@@ -340,6 +338,10 @@ UDPServer::stop() {
     /// submit to io service before or after close call. And we will
     //  get bad_descriptor error.
     data_->socket_->close(ec);
+    if (ec) {
+        LOG_ERROR(logger, ASIODNS_UDP_CLOSE_SOCKET_FAIL_ON_STOP).
+            arg(ec.message());
+    }
 }
 
 /// Post this coroutine on the ASIO service queue so that it will
