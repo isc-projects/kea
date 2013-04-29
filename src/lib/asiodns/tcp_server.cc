@@ -14,13 +14,6 @@
 
 #include <config.h>
 
-#include <unistd.h>             // for some IPC/network system calls
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <errno.h>
-
-#include <boost/shared_array.hpp>
-
 #include <log/dummylog.h>
 
 #include <util/buffer.h>
@@ -31,6 +24,14 @@
 #include <asiolink/tcp_socket.h>
 #include <asiodns/tcp_server.h>
 #include <asiodns/logger.h>
+
+#include <boost/shared_array.hpp>
+
+#include <cassert>
+#include <unistd.h>             // for some IPC/network system calls
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -220,11 +221,11 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
 
         // Schedule a DNS lookup, and yield.  When the lookup is
         // finished, the coroutine will resume immediately after
-        // this point.
+        // this point.  On resume, this method should be called with its
+        // default parameter values (because of the signature of post()'s
+        // handler), so ec shouldn't indicate any error.
         CORO_YIELD io_.post(AsyncLookup<TCPServer>(*this));
-        if (ec) {
-            return;
-        }
+        assert(!ec);
 
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
