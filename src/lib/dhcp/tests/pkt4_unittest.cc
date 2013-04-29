@@ -670,4 +670,49 @@ TEST(Pkt4Test, hwaddr) {
     EXPECT_TRUE(hwaddr == pkt->getHWAddr());
 }
 
+// This test verifies that the packet remte and local HW address can
+// be set and returned.
+TEST(Pkt4Test, hwaddrSrcRemote) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+    const uint8_t src_hw[] = { 1, 2, 3, 4, 5, 6 };
+    const uint8_t dst_hw[] = { 7, 8, 9, 10, 11, 12 };
+    const uint8_t hw_type = 123;
+
+    HWAddrPtr dst_hwaddr(new HWAddr(dst_hw, sizeof(src_hw), hw_type));
+    HWAddrPtr src_hwaddr(new HWAddr(src_hw, sizeof(src_hw), hw_type));
+
+    // Check that we can set the local address.
+    EXPECT_NO_THROW(pkt->setLocalHWAddr(dst_hwaddr));
+    EXPECT_TRUE(dst_hwaddr == pkt->getLocalHWAddr());
+
+    // Check that we can set the remote address.
+    EXPECT_NO_THROW(pkt->setRemoteHWAddr(dst_hwaddr));
+    EXPECT_TRUE(dst_hwaddr == pkt->getRemoteHWAddr());
+
+    // Can't set the NULL addres.
+    EXPECT_THROW(pkt->setRemoteHWAddr(HWAddrPtr()), BadValue);
+    EXPECT_THROW(pkt->setLocalHWAddr(HWAddrPtr()), BadValue);
+
+    // Test alternative way to set local address.
+    const uint8_t dst_hw2[] = { 19, 20, 21, 22, 23, 24 };
+    std::vector<uint8_t> dst_hw_vec(dst_hw2, dst_hw2 + sizeof(dst_hw2));
+    const uint8_t hw_type2 = 234;
+    EXPECT_NO_THROW(pkt->setLocalHWAddr(hw_type2, sizeof(dst_hw2), dst_hw_vec));
+    HWAddrPtr local_addr = pkt->getLocalHWAddr();
+    ASSERT_TRUE(local_addr);
+    EXPECT_EQ(hw_type2, local_addr->htype_);
+    EXPECT_TRUE(std::equal(dst_hw_vec.begin(), dst_hw_vec.end(),
+                           local_addr->hwaddr_.begin()));
+
+    // Set remote address.
+    const uint8_t src_hw2[] = { 25, 26, 27, 28, 29, 30 };
+    std::vector<uint8_t> src_hw_vec(src_hw2, src_hw2 + sizeof(src_hw2));
+    EXPECT_NO_THROW(pkt->setRemoteHWAddr(hw_type2, sizeof(src_hw2), src_hw_vec));
+    HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
+    ASSERT_TRUE(remote_addr);
+    EXPECT_EQ(hw_type2, remote_addr->htype_);
+    EXPECT_TRUE(std::equal(src_hw_vec.begin(), src_hw_vec.end(),
+                           remote_addr->hwaddr_.begin()));
+}
+
 } // end of anonymous namespace
