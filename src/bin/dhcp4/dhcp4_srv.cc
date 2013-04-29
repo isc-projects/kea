@@ -371,6 +371,17 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     if (client_id) {
         answer->addOption(client_id);
     }
+
+    // If src/dest HW addresses are used by the packet filtering class
+    // we need to copy them as well.
+    HWAddrPtr src_hw_addr = question->getLocalHWAddr();
+    HWAddrPtr dst_hw_addr = question->getRemoteHWAddr();
+    if (src_hw_addr) {
+        answer->setRemoteHWAddr(src_hw_addr);
+    }
+    if (dst_hw_addr) {
+        answer->setLocalHWAddr(dst_hw_addr);
+    }
 }
 
 void
