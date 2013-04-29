@@ -267,10 +267,10 @@ public:
     ///
     /// Note: mac_addr must be a buffer of at least hlen bytes.
     ///
-    /// @param hType hardware type (will be sent in htype field)
+    /// @param htype hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
     /// @param mac_addr pointer to hardware address
-    void setHWAddr(uint8_t hType, uint8_t hlen,
+    void setHWAddr(uint8_t htype, uint8_t hlen,
                    const std::vector<uint8_t>& mac_addr);
 
     /// @brief Sets hardware address
@@ -363,6 +363,72 @@ public:
     /// @return interface index
     uint32_t getIndex() const { return (ifindex_); };
 
+    /// @brief Sets remote HW address.
+    ///
+    /// Sets the destination HW address for the outgoing packet
+    /// or source HW address for the incoming packet. When this
+    /// is an outgoing packet this address will be used to construct
+    /// the link layer header.
+    ///
+    /// @note mac_addr must be a buffer of at least hlen bytes.
+    ///
+    /// @param htype hardware type (will be sent in htype field)
+    /// @param hlen hardware length (will be sent in hlen field)
+    /// @param mac_addr pointer to hardware address
+    void setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
+                         const std::vector<uint8_t>& mac_addr);
+
+    /// @brief Sets remote HW address.
+    ///
+    /// Sets hardware address from an existing HWAddr structure.
+    /// The remote address is a destination address for outgoing
+    /// packet and source address for incoming packet. When this
+    /// is an outgoing packet, this address will be used to
+    /// construct the link layer header.
+    ///
+    /// @param addr structure representing HW address.
+    ///
+    /// @throw BadValue if addr is null
+    void setRemoteHWAddr(const HWAddrPtr& addr);
+
+    /// @brief Returns the remote HW address.
+    ///
+    /// @return remote HW address.
+    HWAddrPtr getRemoteHWAddr() const {
+        return (remote_hwaddr_);
+    }
+
+    /// @brief Sets local HW address.
+    ///
+    /// Sets the source HW address for the outgoing packet or
+    /// destination HW address for the incoming packet.
+    ///
+    /// @note mac_addr must be a buffer of at least hlen bytes.
+    ///
+    /// @param htype hardware type (will be sent in htype field)
+    /// @param hlen hardware length (will be sent in hlen field)
+    /// @param mac_addr pointer to hardware address
+    void setLocalHWAddr(const uint8_t htype, const uint8_t hlen,
+                        const std::vector<uint8_t>& mac_addr);
+
+    /// @brief Sets local HW address.
+    ///
+    /// Sets hardware address from an existing HWAddr structure.
+    /// The local address is a source address for outgoing
+    /// packet and destination address for incoming packet.
+    ///
+    /// @param addr structure representing HW address.
+    ///
+    /// @throw BadValue if addr is null
+    void setLocalHWAddr(const HWAddrPtr& addr);
+
+    /// @brief Returns local HW address.
+    ///
+    /// @return local HW addr.
+    HWAddrPtr getLocalHWAddr() const {
+        return (local_hwaddr_);
+    }
+
     /// @brief Sets remote address.
     ///
     /// @param remote specifies remote address
@@ -419,6 +485,23 @@ public:
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
+private:
+
+    /// @brief Generic method that validates and sets HW address.
+    ///
+    /// This is a generic method used by all modifiers of this class
+    /// which set class members representing HW address.
+    ///
+    /// @param htype hardware type.
+    /// @param hlen hardware length.
+    /// @param mac_addr pointer to actual hardware address.
+    /// @param [out] hw_addr pointer to a class member to be modified.
+    ///
+    /// @trow isc::OutOfRange if invalid HW address specified.
+    void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                         const std::vector<uint8_t>& mac_addr,
+                         HWAddrPtr& hw_addr);
+
 protected:
 
     /// converts DHCP message type to BOOTP op type
@@ -428,6 +511,12 @@ protected:
     /// @return BOOTP type (BOOTREQUEST or BOOTREPLY)
     uint8_t
     DHCPTypeToBootpType(uint8_t dhcpType);
+
+    /// local HW address (dst if receiving packet, src if sending packet)
+    HWAddrPtr local_hwaddr_;
+
+    // remote HW address (src if receiving packet, dst if sending packet)
+    HWAddrPtr remote_hwaddr_;
 
     /// local address (dst if receiving packet, src if sending packet)
     isc::asiolink::IOAddress local_addr_;
@@ -533,6 +622,7 @@ protected:
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
 }; // Pkt4 class
 
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;

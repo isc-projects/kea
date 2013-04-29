@@ -81,7 +81,7 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     // Prepare a buffer holding Ethernet frame header and 4 bytes of
     // dummy data.
     OutputBuffer buf(1);
-    buf.writeData(dest_hw_addr, sizeof(src_hw_addr));
+    buf.writeData(dest_hw_addr, sizeof(dest_hw_addr));
     buf.writeData(src_hw_addr, sizeof(src_hw_addr));
     buf.writeUint16(0x800);
     // Append dummy data. We will later check that this data is not
@@ -108,14 +108,24 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     pkt.reset(new Pkt4(DHCPDISCOVER, 0));
     // It should not throw now.
     ASSERT_NO_THROW(decodeEthernetHeader(in_buf, pkt));
+    // Verify that the destination HW address has been initialized...
+    HWAddrPtr checked_dest_hwaddr = pkt->getLocalHWAddr();
+    ASSERT_TRUE(checked_dest_hwaddr);
+    // and is correct.
+    EXPECT_EQ(HWTYPE_ETHERNET, checked_dest_hwaddr->htype_);
+    ASSERT_EQ(sizeof(dest_hw_addr), checked_dest_hwaddr->hwaddr_.size());
+    EXPECT_TRUE(std::equal(dest_hw_addr, dest_hw_addr + sizeof(dest_hw_addr),
+                           checked_dest_hwaddr->hwaddr_.begin()));
+
     // Verify that the HW address of the source has been initialized.
-    HWAddrPtr hwaddr = pkt->getHWAddr();
-    ASSERT_TRUE(hwaddr);
+    HWAddrPtr checked_src_hwaddr = pkt->getRemoteHWAddr();
+    ASSERT_TRUE(checked_src_hwaddr);
     // And that it is correct.
-    EXPECT_EQ(HWTYPE_ETHERNET, hwaddr->htype_);
-    ASSERT_EQ(sizeof(dest_hw_addr), hwaddr->hwaddr_.size());
+    EXPECT_EQ(HWTYPE_ETHERNET, checked_src_hwaddr->htype_);
+    ASSERT_EQ(sizeof(src_hw_addr), checked_src_hwaddr->hwaddr_.size());
     EXPECT_TRUE(std::equal(src_hw_addr, src_hw_addr + sizeof(src_hw_addr),
-                           hwaddr->hwaddr_.begin()));
+                           checked_src_hwaddr->hwaddr_.begin()));
+
     // The entire ethernet packet header should have been read. This means
     // that the internal buffer pointer should now point to its tail.
     ASSERT_EQ(ETHERNET_HEADER_LEN, in_buf.getPosition());
