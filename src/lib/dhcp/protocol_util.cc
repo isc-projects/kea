@@ -48,13 +48,14 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // Remember initial position.
     size_t start_pos = buf.getPosition();
 
-    // Skip destination address.
-    buf.setPosition(start_pos + HWAddr::ETHERNET_HWADDR_LEN);
-    // Read the source HW address.
+    // Read the destination HW address.
     std::vector<uint8_t> dest_addr;
     buf.readVector(dest_addr, HWAddr::ETHERNET_HWADDR_LEN);
-    // Set the address we have read.
-    pkt->setHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, dest_addr);
+    pkt->setLocalHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, dest_addr);
+    // Read the source HW address.
+    std::vector<uint8_t> src_addr;
+    buf.readVector(src_addr, HWAddr::ETHERNET_HWADDR_LEN);
+    pkt->setRemoteHWAddr(HWTYPE_ETHERNET, HWAddr::ETHERNET_HWADDR_LEN, src_addr);
     // Move the buffer read pointer to the end of the Ethernet frame header.
     buf.setPosition(start_pos + ETHERNET_HEADER_LEN);
 }

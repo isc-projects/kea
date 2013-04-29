@@ -276,8 +276,23 @@ Pkt4::toText() {
 }
 
 void
-Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
+Pkt4::setHWAddr(uint8_t htype, uint8_t hlen,
                 const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, hwaddr_);
+}
+
+void
+Pkt4::setHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting hw address to NULL is forbidden");
+    }
+    hwaddr_ = addr;
+}
+
+void
+Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr,
+                      HWAddrPtr& hw_addr) {
     /// @todo Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen > MAX_CHADDR_LEN) {
@@ -288,15 +303,35 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
-    hwaddr_.reset(new HWAddr(mac_addr, hType));
+    hw_addr.reset(new HWAddr(mac_addr, htype));
 }
 
 void
-Pkt4::setHWAddr(const HWAddrPtr& addr) {
+Pkt4::setLocalHWAddr(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, local_hwaddr_);
+}
+
+void
+Pkt4::setLocalHWAddr(const HWAddrPtr& addr) {
     if (!addr) {
-        isc_throw(BadValue, "Setting hw address to NULL is forbidden");
+        isc_throw(BadValue, "Setting HW address to NULL is forbidden");
     }
-    hwaddr_ = addr;
+    local_hwaddr_ = addr;
+}
+
+void
+Pkt4::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
+}
+
+void
+Pkt4::setRemoteHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting HW address to NULL is forbidden");
+    }
+    remote_hwaddr_ = addr;
 }
 
 void
