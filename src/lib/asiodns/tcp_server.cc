@@ -288,7 +288,11 @@ void TCPServer::stop() {
 void
 TCPServer::resume(const bool done) {
     done_ = done;
-    io_.post(*this);  // this can throw, but can be considered fatal.
+
+    // post() can throw due to memory allocation failure, but as like other
+    // cases of the entire BIND 10 implementation, we consider it fatal and
+    // let the exception be propagated.
+    io_.post(*this);
 }
 
 } // namespace asiodns
