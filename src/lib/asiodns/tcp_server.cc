@@ -162,6 +162,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
         if (ec) {
+            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_READLEN_FAIL).
+                arg(ec.message());
             return;
         }
 
@@ -169,11 +171,12 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         /// to allow inline variable declarations.)
         CORO_YIELD {
             InputBuffer dnsbuffer(data_.get(), length);
-            uint16_t msglen = dnsbuffer.readUint16();
+            const uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
         }
-
         if (ec) {
+            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_READDATA_FAIL).
+                arg(ec.message());
             return;
         }
 
@@ -184,6 +187,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // all these calls to "new".)
         peer_.reset(new TCPEndpoint(socket_->remote_endpoint(ec)));
         if (ec) {
+            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_GETREMOTE_FAIL).
+                arg(ec.message());
             return;
         }
 
@@ -250,13 +255,23 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
+        if (ec) {
+            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_WRITE_FAIL).
+                arg(ec.message());
+        }
 
         // All done, cancel the timeout timer. if it throws, consider it fatal.
         timeout_->cancel();
 
         // TODO: should we keep the connection open for a short time
         // to see if new requests come in?
-        socket_->close(ec);     // ignore any error on close()
+        socket_->close(ec);
+        if (ec) {
+            // close() should be unlikely to fail, but we've seen it fail once,
+            // so we log the event.
+            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_CLOSE_FAIL).
+                arg(ec.message());
+        }
     }
 }
 
@@ -269,18 +284,24 @@ TCPServer::asyncLookup() {
 }
 
 void TCPServer::stop() {
-    // passing error_code to avoid getting exception; we simply ignore any
-    // error on close().
     asio::error_code ec;
 
     /// we use close instead of cancel, with the same reason
     /// with udp server stop, refer to the udp server code
 
     acceptor_->close(ec);
+    if (ec) {
+        LOG_ERROR(logger, ASIODNS_TCP_CLOSE_ACCEPTOR_FAIL).arg(ec.message());
+    }
+
     // User may stop the server even when it hasn't started to
-    // run, in that that socket_ is empty
+    // run, in that case socket_ is empty
     if (socket_) {
         socket_->close(ec);
+        if (ec) {
+            LOG_ERROR(logger, ASIODNS_TCP_CLOSE_SOCKET_FAIL_ON_STOP).
+                arg(ec.message());
+        }
     }
 }
 /// Post this coroutine on the ASIO service queue so that it will
