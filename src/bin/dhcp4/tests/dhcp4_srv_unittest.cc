@@ -176,8 +176,8 @@ public:
         // When processing an incoming packet the remote address
         // is copied as a src address, and the source address is
         // copied as a remote address to the response.
-        EXPECT_TRUE(q->getLocalHWAddr() == a->getRemoteHWAddr());
-        EXPECT_TRUE(q->getRemoteHWAddr() == a->getLocalHWAddr());
+        EXPECT_TRUE(q->getLocalHWAddr() == a->getLocalHWAddr());
+        EXPECT_TRUE(q->getRemoteHWAddr() == a->getRemoteHWAddr());
 
         // Check that bare minimum of required options are there.
         // We don't check options requested by a client. Those
