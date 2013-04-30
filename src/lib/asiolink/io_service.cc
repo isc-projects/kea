@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011,2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +63,9 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service() { return io_service_; };
+    void post(const boost::function<void ()>& callback) {
+        io_service_.post(callback);
+    }
 private:
     asio::io_service io_service_;
     asio::io_service::work work_;
@@ -94,6 +97,11 @@ IOService::stop() {
 asio::io_service&
 IOService::get_io_service() {
     return (io_impl_->get_io_service());
+}
+
+void
+IOService::post(const boost::function<void ()>& callback) {
+    return (io_impl_->post(callback));
 }
 
 } // namespace asiolink
