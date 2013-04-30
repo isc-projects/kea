@@ -644,11 +644,9 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd)
         stats_httpd.StatsHttpd.open_httpd = orig_open_httpd
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_openclose_mccs(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
-        mccs = MockModuleCCSession()
-        self.stats_httpd.mccs = mccs
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        mccs = self.stats_httpd.mccs
         self.assertFalse(self.stats_httpd.mccs.stopped)
         self.assertFalse(self.stats_httpd.mccs.closed)
         self.stats_httpd.close_mccs()

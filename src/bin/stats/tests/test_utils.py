@@ -469,6 +469,7 @@ class MyModuleCCSession(isc.config.ConfigData):
         isc.config.ConfigData.__init__(self, module_spec)
         self._session = self
         self.stopped = False
+        self.closed = False
         self.lname = 'mock_mod_ccs'
 
     def start(self):
@@ -476,6 +477,9 @@ class MyModuleCCSession(isc.config.ConfigData):
 
     def send_stopping(self):
         self.stopped = True     # just record it's called to inspect it later
+
+    def close(self):
+        self.closed = True
 
 class SimpleStats(stats.Stats):
     """A faked Stats class for unit tests.
@@ -668,9 +672,11 @@ class SimpleStatsHttpd(stats_httpd.StatsHttpd):
         self.mccs.start = self.load_config # force reload
 
     def close_mccs(self):
+        super().close_mccs()
         if self.__dummy_socks is not None:
             self.__dummy_socks[0].close()
             self.__dummy_socks[1].close()
+            self.__dummy_socks = None
 
     def __rpc_call(self, command, group, params={}):
         """Faked ModuleCCSession.rpc_call for tests.
