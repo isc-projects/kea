@@ -756,16 +756,22 @@ class TestStatsHttpd(unittest.TestCase):
 
         # Address already in use
         server_addresses = get_availaddr()
-        self.stats_httpd_server = ThreadingServerManager(SimpleStatsHttpd,
-                                                         server_addresses)
-        self.stats_httpd_server.run()
+        server = SimpleStatsHttpd(server_addresses)
         self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
                           server_addresses)
 
-    def __faked_select(self):
-        """A dedicated subroutine of test_running (see below)"""
+    def __faked_select(self, ex=None):
+        """A helper subroutine for tests using faked select.select.
+
+        See test_running() for basic features.  If ex is not None,
+        it's assumed to be an exception object and will be raised on the
+        first call.
+
+        """
         self.assertTrue(self.stats_httpd.running)
         self.__call_count += 1
+        if ex is not None and self.__call_count == 1:
+            raise ex
         if self.__call_count == 2:
             self.stats_httpd.running  = False
         assert self.__call_count <= 2 # safety net to avoid infinite loop
@@ -779,10 +785,7 @@ class TestStatsHttpd(unittest.TestCase):
         # - as long as 'running' is True, it keeps calling select.select
         # - when running becomes False, it exists from the loop and calls
         #   stop()
-
-        self.stats_httpd_server = ThreadingServerManager(SimpleStatsHttpd,
-                                                         get_availaddr())
-        self.stats_httpd = self.stats_httpd_server.server
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertFalse(self.stats_httpd.running)
 
         # In this test we'll call select.select() 2 times: on the first call
@@ -810,18 +813,16 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertRaises(select.error, self.stats_httpd.start)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_nofailure_with_errno_EINTR(self):
         """checks no exception is raised if errno.EINTR is raised
         while it's selecting"""
-        def raise_select_except(*args):
-            raise select.error(errno.EINTR)
-        orig_select = stats_httpd.select.select
-        stats_httpd.select.select = raise_select_except
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
-        self.stats_httpd_server.run()
-        self.stats_httpd_server.shutdown()
-        stats_httpd.select.select = orig_select
+        self.__call_count = 0
+        select.select = lambda r, w, x, t: self.__faked_select(
+            select.error(errno.EINTR))
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd.start() # shouldn't leak the exception
+        self.assertFalse(self.stats_httpd.running)
+        self.assertEqual(None, self.stats_httpd.mccs)
 
     @unittest.skipIf(True, 'tentatively skipped')
     def test_open_template(self):
