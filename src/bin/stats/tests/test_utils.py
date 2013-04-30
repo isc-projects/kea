@@ -25,6 +25,7 @@ import threading
 import tempfile
 import json
 import signal
+import socket
 
 import msgq
 import isc.config.cfgmgr
@@ -479,7 +480,7 @@ class MyModuleCCSession(isc.config.ConfigData):
 class SimpleStats(stats.Stats):
     """A faked Stats class for unit tests.
 
-    This class inherits most of the real Stats class, but replace the
+    This class inherits most of the real Stats class, but replaces the
     ModuleCCSession with a fake one so we can avoid network I/O in tests,
     and can also inspect or tweak messages via the session more easily.
     This class also maintains some faked module information and statistics
@@ -588,6 +589,129 @@ class SimpleStats(stats.Stats):
         """
         answer, _ = self.__group_recvmsg(None, None)
         return isc.config.ccsession.parse_answer(answer)[1]
+
+class SimpleStatsHttpd(stats_httpd.StatsHttpd):
+    """A faked StatsHttpd class for unit tests.
+
+    This class inherits most of the real StatsHttpd class, but replaces the
+    ModuleCCSession with a fake one so we can avoid network I/O in tests,
+    and can also inspect or tweak messages via the session more easily.
+
+    """
+
+    ORIG_SPECFILE_LOCATION = stats_httpd.SPECFILE_LOCATION
+    def __init__(self, *server_address):
+        self._started = threading.Event()
+
+        # Prepare commonly used statistics schema and data requested in
+        # stats-httpd tests.  For the purpose of these tests, the content of
+        # statistics data is not so important (they don't test whther the
+        # counter values are correct, etc), so hardcoding the common case
+        # should suffice.
+        with open(stats.SPECFILE_LOCATION) as f:
+            stat_spec_str = f.read()
+        self.__default_spec_answer = {
+            'Init': json.loads(MockInit.spec_str)['module_spec']['statistics'],
+            'Auth': json.loads(MockAuth.spec_str)['module_spec']['statistics'],
+            'Stats': json.loads(stat_spec_str)['module_spec']['statistics']
+            }
+        self.__default_data_answer = {
+            'Init': {'boot_time':
+                         time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)},
+            'Stats': {'last_update_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'report_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'lname': 'test-lname',
+                      'boot_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'timestamp': 1308759248.0},
+            'Auth': {'queries.udp': 4, 'queries.tcp': 6,
+                     'queries.perzone': [
+                    {'queries.udp': 8, 'queries.tcp': 10,
+                     'zonename': 'test1.example'},
+                    {'queries.udp': 6, 'queries.tcp': 8,
+                     'zonename': 'test2.example'}],
+                     'nds_queries.perzone': {
+                    'test10.example': {'queries.udp': 8, 'queries.tcp': 10},
+                    'test20.example': {'queries.udp': 6, 'queries.tcp': 8}}}}
+
+        # if set, use them as faked response to rpc_call (see below).
+        # it's a list of answer data of rpc_call.
+        self._rpc_answers = []
+
+        if server_address:
+            stats_httpd.SPECFILE_LOCATION = \
+                self.__create_specfile(*server_address)
+            try:
+                stats_httpd.StatsHttpd.__init__(self)
+            finally:
+                if hasattr(stats_httpd.SPECFILE_LOCATION, "close"):
+                    stats_httpd.SPECFILE_LOCATION.close()
+                stats_httpd.SPECFILE_LOCATION = self.ORIG_SPECFILE_LOCATION
+        else:
+            stats_httpd.StatsHttpd.__init__(self)
+
+        # replace some (faked) ModuleCCSession methods so we can inspect/fake.
+        # in order to satisfy select.select() we need some real socket.  We
+        # use a socketpair(), but won't actually use it for communication.
+        self.cc_session.rpc_call = self.__rpc_call
+        self.__dummy_socks = socket.socketpair()
+        self.mccs.get_socket = lambda: self.__dummy_socks[0]
+
+    def open_mccs(self):
+        self.mccs = MyModuleCCSession(stats_httpd.SPECFILE_LOCATION,
+                                      self.config_handler,
+                                      self.command_handler)
+        self.cc_session = self.mccs._session
+        self.mccs.start = self.load_config # force reload
+
+    def close_mccs(self):
+        self.__dummy_socks[0].close()
+        self.__dummy_socks[1].close()
+
+    def __rpc_call(self, command, group, params={}):
+        """Faked ModuleCCSession.rpc_call for tests.
+
+        The stats httpd module only issues two commands: 'showschema' and
+        'show'.  In most cases we can simply use the prepared default
+        answer.  If customization is needed, the test case can add a
+        faked answer by appending it to _rpc_answers.  If the added object
+        is of Exception type this method raises it instead of return it,
+        emulating the situation where rpc_call() results in an exception.
+
+        """
+        if len(self._rpc_answers) == 0:
+            if command == 'showschema':
+                return self.__default_spec_answer
+            elif command == 'show':
+                return self.__default_data_answer
+            assert False, "unexpected command for faked rpc_call: " + command
+
+        answer = self._rpc_answers.pop(0)
+        if issubclass(type(answer), Exception):
+            raise answer
+        return answer
+
+    def __create_specfile(self, *server_address):
+        spec_io = open(self.ORIG_SPECFILE_LOCATION)
+        try:
+            spec = json.load(spec_io)
+            spec_io.close()
+            config = spec['module_spec']['config_data']
+            for i in range(len(config)):
+                if config[i]['item_name'] == 'listen_on':
+                    config[i]['item_default'] = \
+                        [ dict(address=a[0], port=a[1])
+                          for a in server_address ]
+                    break
+            return io.StringIO(json.dumps(spec))
+        finally:
+            spec_io.close()
+
+    def run(self):
+        self._started.set()
+        self.start()
 
 class MyStats(stats.Stats):
 
