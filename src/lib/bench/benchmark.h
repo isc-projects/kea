@@ -93,7 +93,7 @@ namespace bench {
 ///        vector<int>::const_iterator end_key = keys_.end();
 ///        for (iter = keys_.begin(); iter != end_key; ++iter) {
 ///            data_.find(*iter);
-///        }
+///        }        
 ///        return (keys_.size());
 ///    }
 ///    const set<int>& data_;
