@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/memory/zone_writer_local.h>
+#include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <util/memory_segment_local.h>
 
@@ -92,9 +92,6 @@ TEST_F(ZoneTableSegmentTest, getZoneWriter) {
                                               RRClass::IN()));
     // We have to get something
     EXPECT_NE(static_cast<void*>(NULL), writer.get());
-    // And for now, it should be the local writer
-    EXPECT_NE(static_cast<void*>(NULL),
-              dynamic_cast<ZoneWriterLocal*>(writer.get()));
 }
 
 } // anonymous namespace
