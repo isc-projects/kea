@@ -63,8 +63,9 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// port on which DHCPv4 server will listen on. That is mostly useful
     /// for testing purposes. The Last two arguments of the constructor
     /// should be left at default values for normal server operation.
-    /// They should be disabled when creating an instance of this class
-    /// for unit testing as enabling them requires root privilegs.
+    /// They should be set to 'false' when creating an instance of this
+    /// class for unit testing because features they enable require
+    /// root privileges.
     ///
     /// @param port specifies port number to listen on
     /// @param dbconfig Lease manager configuration string.  The default

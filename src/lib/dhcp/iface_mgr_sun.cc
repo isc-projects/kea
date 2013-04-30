@@ -52,6 +52,8 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
 
 void
 IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
+    // @todo Currently we ignore the preference to use direct traffic
+    // because it hasn't been implemented for Solaris.
     boost::shared_ptr<PktFilter> pkt_filter(new PktFilterInet());
     setPacketFilter(pkt_filter);
 }
