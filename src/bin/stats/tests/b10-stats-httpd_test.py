@@ -643,11 +643,10 @@ class TestStatsHttpd(unittest.TestCase):
                              get_module_spec().get_module_name())
 
     def test_init_hterr(self):
-        orig_open_httpd = stats_httpd.StatsHttpd.open_httpd
-        def err_open_httpd(arg): raise stats_httpd.HttpServerError
-        stats_httpd.StatsHttpd.open_httpd = err_open_httpd
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd)
-        stats_httpd.StatsHttpd.open_httpd = orig_open_httpd
+        class FailingStatsHttpd(SimpleStatsHttpd):
+            def open_httpd(self):
+                raise stats_httpd.HttpServerError
+        self.assertRaises(stats_httpd.HttpServerError, FailingStatsHttpd)
 
     def test_openclose_mccs(self):
         self.stats_httpd = SimpleStatsHttpd(get_availaddr())
@@ -918,10 +917,9 @@ class TestStatsHttpd(unittest.TestCase):
             )
         self.assertEqual(ret, 1)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xml_handler(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         module_name = 'Dummy'
         stats_spec = \
             { module_name :
@@ -1038,10 +1036,9 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertFalse('item_format' in spec)
             self.assertFalse('format' in stats_xml[i].attrib)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsd_handler(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         xsd_string = self.stats_httpd.xsd_handler()
         stats_xsd = xml.etree.ElementTree.fromstring(xsd_string)
         ns = '{%s}' % XMLNS_XSD
@@ -1074,10 +1071,9 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertEqual(attribs[i][1], stats_xsd[i].attrib['type'])
             self.assertEqual(attribs[i][2], stats_xsd[i].attrib['use'])
 
-    @unittest.skipIf(True, 'tentatively skipped')
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsl_handler(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         xsl_string = self.stats_httpd.xsl_handler()
         stats_xsl = xml.etree.ElementTree.fromstring(xsl_string)
         nst = '{%s}' % XMLNS_XSL
@@ -1095,8 +1091,15 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual('@description', stats_xsl[2].find('%sif' % nst).attrib['test'])
         self.assertEqual('@description', stats_xsl[2].find('%sif/%svalue-of' % ((nst,)*2)).attrib['select'])
 
-    @unittest.skipIf(True, 'tentatively skipped')
+class Z_TestStatsHttpdError(unittest.TestCase):
     def test_for_without_B10_FROM_SOURCE(self):
+        # Note: this test is sensitive due to its substantial side effect of
+        # reloading.  For exmaple, it affects tests that tweak module
+        # attributes (such as test_init_hterr).  It also breaks logging
+        # setting for unit tests.  To minimize these effects, we use
+        # workaround: make it very likely to run at the end of the tests
+        # by naming the test class "Z_".
+
         # just lets it go through the code without B10_FROM_SOURCE env
         # variable
         if "B10_FROM_SOURCE" in os.environ:
