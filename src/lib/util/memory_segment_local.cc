@@ -48,7 +48,28 @@ MemorySegmentLocal::deallocate(void* ptr, size_t size) {
 
 bool
 MemorySegmentLocal::allMemoryDeallocated() const {
-    return (allocated_size_ == 0);
+    return (allocated_size_ == 0 && named_addrs_.empty());
+}
+
+void*
+MemorySegmentLocal::getNamedAddressImpl(const char* name) {
+    std::map<std::string, void*>::iterator found = named_addrs_.find(name);
+    if (found != named_addrs_.end()) {
+        return (found->second);
+    }
+    return (0);
+}
+
+bool
+MemorySegmentLocal::setNamedAddressImpl(const char* name, void* addr) {
+    named_addrs_[name] = addr;
+    return (false);
+}
+
+bool
+MemorySegmentLocal::clearNamedAddressImpl(const char* name) {
+    const size_t n_erased = named_addrs_.erase(name);
+    return (n_erased != 0);
 }
 
 } // namespace util
