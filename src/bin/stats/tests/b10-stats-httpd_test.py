@@ -855,9 +855,8 @@ class TestStatsHttpd(unittest.TestCase):
             stats_httpd.StatsHttpdDataError,
             self.stats_httpd.open_template, '/path/to/foo/bar')
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_commands(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertEqual(self.stats_httpd.command_handler("status", None),
                          isc.config.ccsession.create_answer(
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
@@ -870,9 +869,8 @@ class TestStatsHttpd(unittest.TestCase):
             isc.config.ccsession.create_answer(
                 1, "Unknown command: __UNKNOWN_COMMAND__"))
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_config(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertEqual(
             self.stats_httpd.config_handler(dict(_UNKNOWN_KEY_=None)),
             isc.config.ccsession.create_answer(
