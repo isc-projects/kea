@@ -600,9 +600,6 @@ class TestStatsHttpd(unittest.TestCase):
     def setUp(self):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
-        #self.base = BaseModules()
-        #self.stats_server = ThreadingServerManager(MyStats)
-        #self.stats_server.run()
         # checking IPv6 enabled on this platform
         self.ipv6_enabled = is_ipv6_enabled()
         # instantiation of StatsHttpd indirectly calls gethostbyaddr(), which
@@ -617,32 +614,28 @@ class TestStatsHttpd(unittest.TestCase):
         socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
-        #self.stats_server.shutdown()
-        #self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_init(self):
         server_address = get_availaddr()
-        self.stats_httpd = MyStatsHttpd(server_address)
+        self.stats_httpd = SimpleStatsHttpd(server_address)
         self.assertEqual(self.stats_httpd.running, False)
         self.assertEqual(self.stats_httpd.poll_intval, 0.5)
         self.assertNotEqual(len(self.stats_httpd.httpd), 0)
-        self.assertEqual(type(self.stats_httpd.mccs), isc.config.ModuleCCSession)
-        self.assertEqual(type(self.stats_httpd.cc_session), isc.cc.Session)
-        self.assertEqual(len(self.stats_httpd.config), 2)
+        self.assertNotEqual(None, self.stats_httpd.mccs)
+        self.assertNotEqual(None, self.stats_httpd.cc_session)
+        # The real CfgMgr would return 'version', but our test mock omits it,
+        # so the len(config) should be 1
+        self.assertEqual(len(self.stats_httpd.config), 1)
+        print(self.stats_httpd.config)
         self.assertTrue('listen_on' in self.stats_httpd.config)
         self.assertEqual(len(self.stats_httpd.config['listen_on']), 1)
         self.assertTrue('address' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue('port' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue(server_address in set(self.stats_httpd.http_addrs))
-        ans = send_command(
-            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
-            "ConfigManager", {"module_name":"StatsHttpd"})
-        # assert StatsHttpd is added to ConfigManager
-        self.assertNotEqual(ans, (0,{}))
-        self.assertTrue(ans[1]['module_name'], 'StatsHttpd')
+        self.assertEqual('StatsHttpd', self.stats_httpd.mccs.\
+                             get_module_spec().get_module_name())
 
     @unittest.skipIf(True, 'tentatively skipped')
     def test_init_hterr(self):
