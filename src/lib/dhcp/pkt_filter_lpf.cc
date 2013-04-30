@@ -130,7 +130,7 @@ PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     // decode IP stack and find actual offset of the DHCP packet.
     // Once we find the offset we can create another Pkt4 object from
     // the reminder of the input buffer and set the IP addresses and
-    // ports from the dummy packet. We should consider making this
+    // ports from the dummy packet. We should consider doing it
     // in some more elegant way.
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
 
@@ -164,15 +164,10 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     OutputBuffer buf(14);
 
-    // Ethernet frame header
-    HWAddrPtr hwaddr = pkt->getRemoteHWAddr();
-    std::vector<uint8_t> dest_addr;
-    if (!hwaddr) {
-        dest_addr.resize(HWAddr::ETHERNET_HWADDR_LEN);
-    } else {
-        dest_addr = pkt->getRemoteHWAddr()->hwaddr_;
-    }
-    writeEthernetHeader(iface.getMac(), &dest_addr[0], buf);
+    // Ethernet frame header.
+    // Note that we don't validate whether HW addresses in 'pkt'
+    // are valid because they are validated be the function called.
+    writeEthernetHeader(pkt, buf);
 
     // It is likely that the local address in pkt object is set to
     // broadcast address. This is the case if server received the
@@ -204,7 +199,8 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
                         reinterpret_cast<const struct sockaddr*>(&sa),
                         sizeof(sockaddr_ll));
     if (result < 0) {
-        isc_throw(SocketWriteError, "pkt4 send failed");
+        isc_throw(SocketWriteError, "failed to send DHCPv4 packet, errno="
+                  << errno << " (check errno.h)");
     }
 
     return (0);

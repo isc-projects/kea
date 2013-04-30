@@ -111,11 +111,34 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
 }
 
 void
-writeEthernetHeader(const uint8_t* src_hw_addr, const uint8_t* dest_hw_addr,
-                    OutputBuffer& out_buf) {
+writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
+    HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
+    HWAddrPtr local_addr = pkt->getLocalHWAddr();
+    if (!remote_addr) {
+        isc_throw(BadValue, "remote HW address must be set to construct"
+                  " an ethernet frame header");
+
+    } else if (!local_addr) {
+        isc_throw(BadValue, "local HW address must be set to construct"
+                  " an ethernet frame header");
+
+    } else if (remote_addr->hwaddr_.size() != HWAddr::ETHERNET_HWADDR_LEN) {
+        isc_throw(BadValue, "invalid size of the remote HW address "
+                  << remote_addr->hwaddr_.size() << " when constructing"
+                  << " an ethernet frame header; expected size is"
+                  << " " << HWAddr::ETHERNET_HWADDR_LEN);
+
+    } else if (local_addr->hwaddr_.size() != HWAddr::ETHERNET_HWADDR_LEN) {
+        isc_throw(BadValue, "invalid size of the local HW address "
+                  << local_addr->hwaddr_.size() << " when constructing"
+                  << " an ethernet frame header; expected size is"
+                  << " " << HWAddr::ETHERNET_HWADDR_LEN);
+
+    }
+
     // Write destination and source address.
-    out_buf.writeData(dest_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);
-    out_buf.writeData(src_hw_addr, HWAddr::ETHERNET_HWADDR_LEN);
+    out_buf.writeData(&remote_addr->hwaddr_[0], HWAddr::ETHERNET_HWADDR_LEN);
+    out_buf.writeData(&local_addr->hwaddr_[0], HWAddr::ETHERNET_HWADDR_LEN);
     // Type IP.
     out_buf.writeUint16(0x0800);
 }
