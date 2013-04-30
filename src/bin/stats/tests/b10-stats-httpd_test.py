@@ -46,9 +46,8 @@ import isc
 import isc.log
 import stats_httpd
 import stats
-from test_utils import BaseModules, ThreadingServerManager, MyStats,\
-                       MyStatsHttpd, SignalHandler, SimpleStatsHttpd,\
-                       send_command, CONST_BASETIME
+from test_utils import ThreadingServerManager, SignalHandler, \
+    SimpleStatsHttpd, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.config import RPCRecipientMissing, RPCError
 
