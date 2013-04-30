@@ -71,7 +71,8 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     /// @param use_bcast configure sockets to support broadcast messages.
-    /// @param specifies if it is desired to support direct V4 traffic.
+    /// @param direct_response_desired specifies if it is desired to
+    /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
               const char* dbconfig = "type=memfile",
               const bool use_bcast = true,
