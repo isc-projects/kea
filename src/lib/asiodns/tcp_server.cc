@@ -268,9 +268,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         socket_->close(ec);
         if (ec) {
             // close() should be unlikely to fail, but we've seen it fail once,
-            // so we log the event.
-            LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_TCP_CLOSE_FAIL).
-                arg(ec.message());
+            // so we log the event (at the lowest level of debug).
+            LOG_DEBUG(logger, 0, ASIODNS_TCP_CLOSE_FAIL).arg(ec.message());
         }
     }
 }
@@ -299,8 +298,7 @@ void TCPServer::stop() {
     if (socket_) {
         socket_->close(ec);
         if (ec) {
-            LOG_ERROR(logger, ASIODNS_TCP_CLOSE_SOCKET_FAIL_ON_STOP).
-                arg(ec.message());
+            LOG_ERROR(logger, ASIODNS_TCP_CLEANUP_CLOSE_FAIL).arg(ec.message());
         }
     }
 }
