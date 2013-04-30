@@ -637,17 +637,11 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual('StatsHttpd', self.stats_httpd.mccs.\
                              get_module_spec().get_module_name())
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_init_hterr(self):
         orig_open_httpd = stats_httpd.StatsHttpd.open_httpd
         def err_open_httpd(arg): raise stats_httpd.HttpServerError
         stats_httpd.StatsHttpd.open_httpd = err_open_httpd
-        self.assertRaises(stats_httpd.HttpServerError, stats_httpd.StatsHttpd)
-        ans = send_command(
-            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
-            "ConfigManager", {"module_name":"StatsHttpd"})
-        # assert StatsHttpd is removed from ConfigManager
-        self.assertEqual(ans, (0,{}))
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd)
         stats_httpd.StatsHttpd.open_httpd = orig_open_httpd
 
     @unittest.skipIf(True, 'tentatively skipped')
