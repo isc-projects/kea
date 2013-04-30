@@ -602,6 +602,7 @@ class SimpleStatsHttpd(stats_httpd.StatsHttpd):
     ORIG_SPECFILE_LOCATION = stats_httpd.SPECFILE_LOCATION
     def __init__(self, *server_address):
         self._started = threading.Event()
+        self.__dummy_socks = None # see below
 
         # Prepare commonly used statistics schema and data requested in
         # stats-httpd tests.  For the purpose of these tests, the content of
@@ -667,8 +668,9 @@ class SimpleStatsHttpd(stats_httpd.StatsHttpd):
         self.mccs.start = self.load_config # force reload
 
     def close_mccs(self):
-        self.__dummy_socks[0].close()
-        self.__dummy_socks[1].close()
+        if self.__dummy_socks is not None:
+            self.__dummy_socks[0].close()
+            self.__dummy_socks[1].close()
 
     def __rpc_call(self, command, group, params={}):
         """Faked ModuleCCSession.rpc_call for tests.
