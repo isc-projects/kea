@@ -890,7 +890,7 @@ AC_ARG_WITH(shared-memory,
     [Build with Boost shared memory support; for large scale authoritative DNS servers]),
     [use_shared_memory=$withval])
 if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
-    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it; using a different compiler or a different version of Boost may also help.])
+    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
