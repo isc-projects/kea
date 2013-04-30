@@ -151,8 +151,7 @@ SyncUDPServer::stop() {
     socket_->close(ec_);
     stopped_ = true;
     if (ec_) {
-        LOG_ERROR(logger, ASIODNS_SYNC_UDP_CLOSE_SOCKET_FAIL_ON_STOP).
-            arg(ec_.message());
+        LOG_ERROR(logger, ASIODNS_SYNC_UDP_CLOSE_FAIL).arg(ec_.message());
     }
 }
 

@@ -339,8 +339,7 @@ UDPServer::stop() {
     //  get bad_descriptor error.
     data_->socket_->close(ec);
     if (ec) {
-        LOG_ERROR(logger, ASIODNS_UDP_CLOSE_SOCKET_FAIL_ON_STOP).
-            arg(ec.message());
+        LOG_ERROR(logger, ASIODNS_UDP_CLOSE_FAIL).arg(ec.message());
     }
 }
 
