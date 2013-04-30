@@ -305,7 +305,7 @@ TEST(Pkt4Test, hwAddr) {
 
         // type and transaction doesn't matter in this test
         pkt.reset(new Pkt4(DHCPOFFER, 1234));
-        pkt->setHWAddr(255-macLen*10, // just weird htype
+        pkt->setHWAddr(255 - macLen * 10, // just weird htype
                        macLen,
                        mac);
         EXPECT_EQ(0, memcmp(expectedChaddr, &pkt->getHWAddr()->hwaddr_[0],
@@ -317,7 +317,7 @@ TEST(Pkt4Test, hwAddr) {
 
         // CHADDR starts at offset 28 in DHCP packet
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+28;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 28;
 
         EXPECT_EQ(0, memcmp(ptr, expectedChaddr, Pkt4::MAX_CHADDR_LEN));
 
@@ -391,7 +391,7 @@ TEST(Pkt4Test, sname) {
 
         // SNAME starts at offset 44 in DHCP packet
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+44;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 44;
         EXPECT_EQ(0, memcmp(ptr, sname, Pkt4::MAX_SNAME_LEN));
 
         pkt.reset();
@@ -429,7 +429,7 @@ TEST(Pkt4Test, file) {
 
         // FILE starts at offset 108 in DHCP packet.
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+108;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 108;
         EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
 
         pkt.reset();
@@ -459,9 +459,9 @@ TEST(Pkt4Test, options) {
 
     vector<uint8_t> payload[5];
     for (int i = 0; i < 5; i++) {
-        payload[i].push_back(i*10);
-        payload[i].push_back(i*10+1);
-        payload[i].push_back(i*10+2);
+        payload[i].push_back(i * 10);
+        payload[i].push_back(i * 10 + 1);
+        payload[i].push_back(i * 10 + 2);
     }
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
@@ -552,35 +552,35 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(12, x->getType());  // this should be option 12
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+2, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 2, 3)); // data len=3
 
     x = pkt->getOption(14);
     ASSERT_TRUE(x); // option 13 should exist
     EXPECT_EQ(14, x->getType());  // this should be option 13
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+7, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 7, 3)); // data len=3
 
     x = pkt->getOption(60);
     ASSERT_TRUE(x); // option 60 should exist
     EXPECT_EQ(60, x->getType());  // this should be option 60
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+15, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 15, 3)); // data len=3
 
     x = pkt->getOption(128);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(128, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+20, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 20, 3)); // data len=3
 
     x = pkt->getOption(254);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(254, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+25, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 25, 3)); // data len=3
 }
 
 // This test verifies methods that are used for manipulating meta fields
