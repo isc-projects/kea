@@ -68,7 +68,7 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
-    /// @oaram iface interface to be used to send packet
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
