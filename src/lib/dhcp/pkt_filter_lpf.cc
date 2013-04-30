@@ -27,38 +27,44 @@
 namespace {
 
 /// Socket filter program, used to filter out all traffic other
-/// then DHCP. In particular, it allows UDP packets on a specific
-/// (customizable) port. It does not allow fragmented packets.
+/// then DHCP. In particular, it allows receipt of UDP packets
+/// on a specific (customizable) port. It does not allow fragmented
+/// packets.
+///
+/// Socket filter program is platform independent code which is
+/// executed on the kernel level when new packet arrives. This concept
+/// origins from the Berkeley Packet Filtering supported on BSD systems.
+///
 /// @todo We may want to extend the filter to receive packets sent
 /// to the particular IP address assigned to the interface or
 /// broadcast address.
 struct sock_filter dhcp_sock_filter [] = {
-	// Make sure this is an IP packet...
-	BPF_STMT (BPF_LD + BPF_H + BPF_ABS, 12),
-	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+    // Make sure this is an IP packet...
+    BPF_STMT (BPF_LD + BPF_H + BPF_ABS, 12),
+    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
 
-	// Make sure it's a UDP packet...
-	BPF_STMT (BPF_LD + BPF_B + BPF_ABS, 23),
-	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    // Make sure it's a UDP packet...
+    BPF_STMT (BPF_LD + BPF_B + BPF_ABS, 23),
+    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
 
-	// Make sure this isn't a fragment...
-	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
-	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+    // Make sure this isn't a fragment...
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
 
-	// Get the IP header length...
-	BPF_STMT (BPF_LDX + BPF_B + BPF_MSH, 14),
+    // Get the IP header length...
+    BPF_STMT (BPF_LDX + BPF_B + BPF_MSH, 14),
 
-	// Make sure it's to the right port...
-	BPF_STMT (BPF_LD + BPF_H + BPF_IND, 16),
+    // Make sure it's to the right port...
+    BPF_STMT (BPF_LD + BPF_H + BPF_IND, 16),
     // Use default DHCP server port, but it can be
     // replaced if neccessary.
-	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, isc::dhcp::DHCP4_SERVER_PORT, 0, 1),
+    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, isc::dhcp::DHCP4_SERVER_PORT, 0, 1),
 
-	// If we passed all the tests, ask for the whole packet.
-	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+    // If we passed all the tests, ask for the whole packet.
+    BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
 
-	// Otherwise, drop it.
-	BPF_STMT(BPF_RET+BPF_K, 0),
+    // Otherwise, drop it.
+    BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
 }
@@ -171,7 +177,7 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     // Ethernet frame header.
     // Note that we don't validate whether HW addresses in 'pkt'
-    // are valid because they are validated be the function called.
+    // are valid because they are checked by the function called.
     writeEthernetHeader(pkt, buf);
 
     // It is likely that the local address in pkt object is set to

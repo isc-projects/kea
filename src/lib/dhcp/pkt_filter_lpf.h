@@ -77,20 +77,6 @@ public:
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt);
 
-protected:
-
-    static void assembleEthernetHeader(const Iface& iface,
-                                       const Pkt4Ptr& pkt,
-                                       util::OutputBuffer& out_buf);
-
-    static void assembleIpUdpHeader(const Pkt4Ptr& pkt,
-                                    util::OutputBuffer& out_buf);
-
-    static uint16_t checksum(const char* buf, const uint32_t buf_size,
-                             uint32_t sum = 0);
-
-    static uint16_t checksumFinish(uint16_t sum);
-    
 };
 
 } // namespace isc::dhcp
