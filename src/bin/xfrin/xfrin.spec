@@ -178,7 +178,7 @@
               "item_optional": false,
               "item_default": 0,
               "item_title": "XfrSuccess",
-              "item_description": "Number of zone transfer requests succeeded"
+              "item_description": "Number of zone transfer requests succeeded. These include the case where the zone turns out to be the latest as a result of an initial SOA query (and there is actually no AXFR or IXFR transaction)."
             },
             {
               "item_name": "xfrfail",
