@@ -14,6 +14,7 @@
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <string>
 
@@ -38,6 +39,14 @@ ZoneTableSegment::create(const RRClass& rrclass, const std::string& type) {
 void
 ZoneTableSegment::destroy(ZoneTableSegment *segment) {
     delete segment;
+}
+
+ZoneWriter*
+ZoneTableSegment::getZoneWriter(const LoadAction& load_action,
+                                const dns::Name& name,
+                                const dns::RRClass& rrclass)
+{
+    return (new ZoneWriter(this, load_action, name, rrclass));
 }
 
 } // namespace memory

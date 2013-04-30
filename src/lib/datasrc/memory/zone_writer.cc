@@ -12,9 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "zone_writer_local.h"
+#include "zone_writer.h"
 #include "zone_data.h"
-#include "zone_table_segment_local.h"
 
 #include <memory>
 
@@ -24,10 +23,10 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegmentLocal* segment,
-                                 const LoadAction& load_action,
-                                 const dns::Name& origin,
-                                 const dns::RRClass& rrclass) :
+ZoneWriter::ZoneWriter(ZoneTableSegment* segment,
+                       const LoadAction& load_action,
+                       const dns::Name& origin,
+                       const dns::RRClass& rrclass) :
     segment_(segment),
     load_action_(load_action),
     origin_(origin),
@@ -36,14 +35,14 @@ ZoneWriterLocal::ZoneWriterLocal(ZoneTableSegmentLocal* segment,
     state_(ZW_UNUSED)
 {}
 
-ZoneWriterLocal::~ZoneWriterLocal() {
+ZoneWriter::~ZoneWriter() {
     // Clean up everything there might be left if someone forgot, just
     // in case.
     cleanup();
 }
 
 void
-ZoneWriterLocal::load() {
+ZoneWriter::load() {
     if (state_ != ZW_UNUSED) {
         isc_throw(isc::InvalidOperation, "Trying to load twice");
     }
@@ -59,7 +58,7 @@ ZoneWriterLocal::load() {
 }
 
 void
-ZoneWriterLocal::install() {
+ZoneWriter::install() {
     if (state_ != ZW_LOADED) {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
@@ -78,7 +77,7 @@ ZoneWriterLocal::install() {
 }
 
 void
-ZoneWriterLocal::cleanup() {
+ZoneWriter::cleanup() {
     // We eat the data (if any) now.
 
     if (zone_data_ != NULL) {
