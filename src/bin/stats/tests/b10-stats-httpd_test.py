@@ -801,17 +801,14 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.mccs.get_socket().close()
         self.assertRaises(ValueError, self.stats_httpd.start)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_failure_with_a_select_error (self):
         """checks select.error is raised if the exception except
         errno.EINTR is raised while it's selecting"""
         def raise_select_except(*args):
             raise select.error('dummy error')
-        orig_select = stats_httpd.select.select
-        stats_httpd.select.select = raise_select_except
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        select.select = raise_select_except
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertRaises(select.error, self.stats_httpd.start)
-        stats_httpd.select.select = orig_select
 
     @unittest.skipIf(True, 'tentatively skipped')
     def test_nofailure_with_errno_EINTR(self):
