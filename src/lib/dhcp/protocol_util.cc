@@ -13,9 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
-#include <dhcp/dhcp6.h> // defines HWTYPE_ETHERNET
+#include <dhcp/dhcp6.h>
 #include <dhcp/protocol_util.h>
 #include <boost/static_assert.hpp>
+// in_systm.h is required on some some BSD systems
+// complaining that n_time is undefined but used
+// in ip.h.
+#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
 using namespace isc::asiolink;
