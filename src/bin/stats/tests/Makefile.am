@@ -1,7 +1,7 @@
 SUBDIRS = testdata .
 
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = b10-stats_test.py b10-stats-httpd_test.py
+PYTESTS = stats_test.py stats-httpd_test.py
 EXTRA_DIST = $(PYTESTS) test_utils.py
 CLEANFILES = test_utils.pyc
 
