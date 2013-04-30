@@ -824,11 +824,11 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertFalse(self.stats_httpd.running)
         self.assertEqual(None, self.stats_httpd.mccs)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_open_template(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         # successful conditions
-        tmpl = self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XML_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(
             xml_string="<dummy></dummy>",
@@ -836,13 +836,15 @@ class TestStatsHttpd(unittest.TestCase):
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertGreater(lines.find(opts[n]), 0)
-        tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertGreater(lines.find(opts[n]), 0)
-        tmpl = self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XSL_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
