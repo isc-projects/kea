@@ -128,9 +128,9 @@ public:
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
 
-    /// \brief Create a zone write corresponding to this segment
+    /// \brief Create a zone writer
     ///
-    /// This creates a new write that can be used to update zones
+    /// This creates a new writer that can be used to update zones
     /// inside this zone table segment.
     ///
     /// \param loadAction Callback to provide the actual data.
@@ -139,9 +139,9 @@ public:
     /// \return New instance of a zone writer. The ownership is passed
     ///     onto the caller and the caller needs to \c delete it when
     ///     it's done with the writer.
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& origin,
-                                      const dns::RRClass& rrclass) = 0;
+    ZoneWriter* getZoneWriter(const LoadAction& load_action,
+                              const dns::Name& origin,
+                              const dns::RRClass& rrclass);
 };
 
 } // namespace memory
