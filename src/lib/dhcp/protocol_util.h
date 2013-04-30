@@ -50,6 +50,10 @@ static const size_t IP_SRC_ADDR_OFFSET = 12;
 /// a pkt object. The buffer read pointer is set to the end
 /// of the Ethernet frame header if read was successful.
 ///
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
+///
 /// @param buf input buffer holding header to be parsed.
 /// @param [out] pkt packet object receiving HW source address read from header.
 ///
@@ -64,6 +68,10 @@ void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 /// addresses and ports and read from these headers and stored in
 /// the appropriate members of pkt object.
 ///
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
+///
 /// @param buf input buffer holding headers to be parsed.
 /// @param [out] pkt packet object where IP addresses and ports
 /// are stored.
@@ -74,11 +82,13 @@ void decodeIpUdpHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 
 /// @brief Writes ethernet frame header into a buffer.
 ///
-/// @param src_hw_addr source HW address.
-/// @param dst_hw_addr destination HW address.
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
+///
+/// @param pkt packet object holding source and destination HW address.
 /// @param [out] out_buf buffer where a header is written.
-void writeEthernetHeader(const uint8_t* src_hw_addr,
-                         const uint8_t* dest_hw_addr,
+void writeEthernetHeader(const Pkt4Ptr& pkt,
                          util::OutputBuffer& out_buf);
 
 /// @brief Writes both IP and UDP header into output buffer
@@ -87,6 +97,10 @@ void writeEthernetHeader(const uint8_t* src_hw_addr,
 /// provided DHCPv4 message. The source and destination addreses and
 /// ports stored in the Pkt4 object are copied as source and destination
 /// addresses and ports into IP/UDP headers.
+///
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
 ///
 /// @param pkt DHCPv4 packet to be sent in IP packet
 /// @param [out] out_buf buffer where an IP header is written
