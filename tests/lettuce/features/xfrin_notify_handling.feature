@@ -27,7 +27,10 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_value |
+      | socket.unixdomain.open   |          1 |
 
     #
     # Test2 for Xfrin statistics
@@ -126,7 +129,10 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_value |
+      | socket.unixdomain.open   |          1 |
     #
     # Test2 for Xfrin statistics
     #
@@ -224,7 +230,10 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_value |
+      | socket.unixdomain.open   |          1 |
 
     #
     # Test2 for Xfrin statistics
@@ -327,7 +336,10 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804
+    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_value |
+      | socket.unixdomain.open   |          1 |
 
     #
     # Test2 for Xfrin statistics
