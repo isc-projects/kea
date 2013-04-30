@@ -210,11 +210,33 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
     const uint8_t dest_hw_addr[6] = {
         0x20, 0x31, 0x42, 0x53, 0x64, 0x75
     };
+
     // Create output buffer.
     OutputBuffer buf(1);
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 0));
 
-    // Construct the ethernet header using HW addresses.
-    writeEthernetHeader(src_hw_addr, dest_hw_addr, buf);
+    // HW addresses not set yet. It should fail.
+    EXPECT_THROW(writeEthernetHeader(pkt, buf), BadValue);
+
+    HWAddrPtr local_hw_addr(new HWAddr(src_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setLocalHWAddr(local_hw_addr));
+
+    // Remote address still not set. It should fail again.
+    EXPECT_THROW(writeEthernetHeader(pkt, buf), BadValue);
+
+    // Set invalid length (7) of the hw address.
+    HWAddrPtr remote_hw_addr(new HWAddr(&std::vector<uint8_t>(1, 7)[0], 7, 1));
+    ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
+    // HW address is too long, so it should fail again.
+    EXPECT_THROW(writeEthernetHeader(pkt, buf), BadValue);
+
+    // Finally, set a valid HW address.
+    remote_hw_addr.reset(new HWAddr(dest_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
+
+    // Construct the ethernet header using HW addresses stored
+    // in the pkt object.
+    writeEthernetHeader(pkt, buf);
 
     // The resulting ethernet header consists of destination
     // and src HW address (each 6 bytes long) and two bytes
