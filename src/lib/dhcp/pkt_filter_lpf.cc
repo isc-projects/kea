@@ -164,6 +164,11 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     OutputBuffer buf(14);
 
+    HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
+                                iface.getHWType()));
+    pkt->setLocalHWAddr(hwaddr);
+
+
     // Ethernet frame header.
     // Note that we don't validate whether HW addresses in 'pkt'
     // are valid because they are validated be the function called.
