@@ -17,6 +17,9 @@
 
 #include <util/memory_segment.h>
 
+#include <string>
+#include <map>
+
 namespace isc {
 namespace util {
 
@@ -63,14 +66,43 @@ public:
     /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const;
 
+    /// \brief Local segment version of getNamedAddress.
+    ///
+    /// There's a small chance this method could throw std::bad_alloc.
+    /// It should be considered a fatal error.
+    virtual void* getNamedAddressImpl(const char* name);
+
+    /// \brief Local segment version of setNamedAddress.
+    ///
+    /// This version does not validate the given address to see whether it
+    /// belongs to this segment.
+    ///
+    /// This implementation of this method always returns \c false (but the
+    /// application should expect a return value of \c true unless it knows
+    /// the memory segment class is \c MemorySegmentLocal and needs to
+    /// exploit the fact).
+    virtual bool setNamedAddressImpl(const char* name, void* addr);
+
+    /// \brief Local segment version of clearNamedAddress.
+    ///
+    /// There's a small chance this method could throw std::bad_alloc.
+    /// It should be considered a fatal error.
+    virtual bool clearNamedAddressImpl(const char* name);
+
 private:
     // allocated_size_ can underflow, wrap around to max size_t (which
     // is unsigned). But because we only do a check against 0 and not a
     // relation comparison, this is okay.
     size_t allocated_size_;
+
+    std::map<std::string, void*> named_addrs_;
 };
 
 } // namespace util
 } // namespace isc
 
 #endif // MEMORY_SEGMENT_LOCAL_H
+
+// Local Variables:
+// mode: c++
+// End:
