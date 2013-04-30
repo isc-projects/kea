@@ -18,9 +18,11 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/protocol_util.h>
 #include <util/buffer.h>
-
 #include <gtest/gtest.h>
-
+// in_systm.h is required on some some BSD systems
+// complaining that n_time is undefined but used
+// in ip.h.
+#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
 using namespace isc;
