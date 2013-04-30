@@ -609,7 +609,7 @@ public:
     /// Packet Filters expose low-level functions handling sockets opening
     /// and sending/receiving packets through those sockets. This function
     /// sets custom Packet Filter (represented by a class derived from PktFilter)
-    /// to be used by IfaceMgr. Note that, there must be no IPv4 sockets
+    /// to be used by IfaceMgr. Note that there must be no IPv4 sockets open
     /// when this function is called. Call closeSockets(AF_INET) to close
     /// all hanging IPv4 sockets opened by the current packet filter object.
     ///
@@ -623,16 +623,18 @@ public:
     /// @brief Set Packet Filter object to handle send/receive packets.
     ///
     /// This function sets Packet Filter object to be used by IfaceMgr,
-    /// appropriate for the current OS. They will vary depending on the
-    /// OS being used if the function argument is set 'true'. There is
-    /// no guarantee that there is an implementation that supports this
-    /// feature on a particular OS. If there isn't the PktFilterInet
-    /// object will be set. If the argument is set to 'false' then
-    /// PktFilterInet object instance will be set as the Packet Filter
-    /// regrdaless of the OS.
+    /// appropriate for the current OS. Setting the argument to 'true'
+    /// indicates that function should set a packet filter class
+    /// which supports direct responses to clients having no address
+    /// assigned yet. Filters picked by this function will vary, depending
+    /// on the OS being used. There is no guarantee that there is an
+    /// implementation that supports this feature on a particular OS.
+    /// If there isn't, the PktFilterInet object will be set. If the
+    /// argument is set to 'false', PktFilterInet object instance will
+    /// be set as the Packet Filter regrdaless of the OS type.
     ///
     /// @param direct_response_desired specifies whether the Packet Filter
-    /// object being set should support direct responses to the host
+    /// object being set should support direct traffic to the host
     /// not having address assigned.
     void setMatchingPacketFilter(const bool direct_response_desired = false);
 
