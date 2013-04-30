@@ -628,7 +628,6 @@ class TestStatsHttpd(unittest.TestCase):
         # The real CfgMgr would return 'version', but our test mock omits it,
         # so the len(config) should be 1
         self.assertEqual(len(self.stats_httpd.config), 1)
-        print(self.stats_httpd.config)
         self.assertTrue('listen_on' in self.stats_httpd.config)
         self.assertEqual(len(self.stats_httpd.config['listen_on']), 1)
         self.assertTrue('address' in self.stats_httpd.config['listen_on'][0])
@@ -659,14 +658,12 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(self.stats_httpd.mccs, None)
         self.assertEqual(self.stats_httpd.close_mccs(), None)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_mccs(self):
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
         self.assertIsNotNone(self.stats_httpd.mccs.get_socket())
         self.assertTrue(
             isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
-        self.assertTrue(
-            isinstance(self.stats_httpd.cc_session, isc.cc.session.Session))
+        self.assertNotEqual(None, self.stats_httpd.cc_session)
         statistics_spec = self.stats_httpd.get_stats_spec()
         for mod in DUMMY_DATA:
             self.assertTrue(mod in statistics_spec)
