@@ -252,7 +252,6 @@ class TestHttpHandler(unittest.TestCase):
         # reset the signal handler
         self.sig_handler.reset()
 
-    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
@@ -674,79 +673,87 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.close_mccs()
         self.assertIsNone(self.stats_httpd.mccs)
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_httpd(self):
         # dual stack (addresses is ipv4 and ipv6)
         if self.ipv6_enabled:
             server_addresses = (get_availaddr('::1'), get_availaddr())
-            self.stats_httpd = MyStatsHttpd(*server_addresses)
+            self.stats_httpd = SimpleStatsHttpd(*server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
-                self.assertTrue(ht.address_family in set([socket.AF_INET, socket.AF_INET6]))
+                self.assertTrue(ht.address_family in set([socket.AF_INET,
+                                                          socket.AF_INET6]))
                 self.assertTrue(isinstance(ht.socket, socket.socket))
+                ht.socket.close() # to silence warning about resource leak
+            self.stats_httpd.close_mccs() # ditto
 
         # dual stack (address is ipv6)
         if self.ipv6_enabled:
             server_addresses = get_availaddr('::1')
-            self.stats_httpd = MyStatsHttpd(server_addresses)
+            self.stats_httpd = SimpleStatsHttpd(server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertEqual(ht.address_family, socket.AF_INET6)
                 self.assertTrue(isinstance(ht.socket, socket.socket))
+                ht.socket.close()
+            self.stats_httpd.close_mccs() # ditto
 
         # dual/single stack (address is ipv4)
         server_addresses = get_availaddr()
-        self.stats_httpd = MyStatsHttpd(server_addresses)
+        self.stats_httpd = SimpleStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
             self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
             self.assertEqual(ht.address_family, socket.AF_INET)
             self.assertTrue(isinstance(ht.socket, socket.socket))
+            ht.socket.close()
+        self.stats_httpd.close_mccs()
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_httpd_anyIPv4(self):
         # any address (IPv4)
         server_addresses = get_availaddr(address='0.0.0.0')
-        self.stats_httpd = MyStatsHttpd(server_addresses)
+        self.stats_httpd = SimpleStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
             self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
             self.assertEqual(ht.address_family,socket.AF_INET)
             self.assertTrue(isinstance(ht.socket, socket.socket))
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_httpd_anyIPv6(self):
         # any address (IPv6)
         if self.ipv6_enabled:
             server_addresses = get_availaddr(address='::')
-            self.stats_httpd = MyStatsHttpd(server_addresses)
+            self.stats_httpd = SimpleStatsHttpd(server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertEqual(ht.address_family,socket.AF_INET6)
                 self.assertTrue(isinstance(ht.socket, socket.socket))
 
-    @unittest.skipIf(True, 'tentatively skipped')
     def test_httpd_failed(self):
         # existent hostname
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
                           get_availaddr(address='localhost'))
 
         # nonexistent hostname
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('my.host.domain', 8000))
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+                          ('my.host.domain', 8000))
 
         # over flow of port number
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 80000))
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+                          ('127.0.0.1', 80000))
 
         # negative
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', -8000))
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+                          ('127.0.0.1', -8000))
 
         # alphabet
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 'ABCDE'))
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+                          ('127.0.0.1', 'ABCDE'))
 
         # Address already in use
         server_addresses = get_availaddr()
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, server_addresses)
+        self.stats_httpd_server = ThreadingServerManager(SimpleStatsHttpd,
+                                                         server_addresses)
         self.stats_httpd_server.run()
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, server_addresses)
-        send_command("shutdown", "StatsHttpd")
+        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+                          server_addresses)
 
     @unittest.skipIf(True, 'tentatively skipped')
     def test_running(self):
