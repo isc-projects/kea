@@ -1050,6 +1050,10 @@ if test "x$HAVE_PKG_CONFIG" = "xno" ; then
 fi
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
+# Check for sqlite3 program
+AC_PATH_PROG(SQLITE3_PROGRAM, sqlite3, no)
+AM_CONDITIONAL(HAVE_SQLITE3_PROGRAM, test "x$SQLITE3_PROGRAM" != "xno")
+
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
