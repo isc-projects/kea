@@ -609,12 +609,19 @@ class TestStatsHttpd(unittest.TestCase):
         self.__gethostbyaddr_orig = socket.gethostbyaddr
         socket.gethostbyaddr = lambda x: ('test.example.', [], None)
 
+        # Some tests replace this library function.  Keep the original for
+        # restor
+        self.__orig_select_select = select.select
+
     def tearDown(self):
         socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
         # reset the signal handler
         self.sig_handler.reset()
+
+        # restore original of replaced library
+        select.select = self.__orig_select_select
 
     def test_init(self):
         server_address = get_availaddr()
@@ -755,22 +762,43 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
                           server_addresses)
 
-    @unittest.skipIf(True, 'tentatively skipped')
+    def __faked_select(self):
+        """A dedicated subroutine of test_running (see below)"""
+        self.assertTrue(self.stats_httpd.running)
+        self.__call_count += 1
+        if self.__call_count == 2:
+            self.stats_httpd.running  = False
+        assert self.__call_count <= 2 # safety net to avoid infinite loop
+        return ([], [], [])
+
     def test_running(self):
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
+        # Previous version of this test checks the result of "status" and
+        # "shutdown" commands; however, they are more explicitly tested
+        # in specific tests.  In this test we only have to check:
+        # - start() will set 'running' to True
+        # - as long as 'running' is True, it keeps calling select.select
+        # - when running becomes False, it exists from the loop and calls
+        #   stop()
+
+        self.stats_httpd_server = ThreadingServerManager(SimpleStatsHttpd,
+                                                         get_availaddr())
         self.stats_httpd = self.stats_httpd_server.server
         self.assertFalse(self.stats_httpd.running)
-        self.stats_httpd_server.run()
-        self.assertEqual(send_command("status", "StatsHttpd"),
-                         (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
-        self.assertTrue(self.stats_httpd.running)
-        self.assertEqual(send_command("shutdown", "StatsHttpd"), (0, None))
-        self.assertFalse(self.stats_httpd.running)
-        self.stats_httpd_server.shutdown()
 
-        # failure case
-        self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.cc_session.close()
+        # In this test we'll call select.select() 2 times: on the first call
+        # stats_httpd.running should be True; on the second call the faked
+        # select() will set it to False.
+        self.__call_count = 0
+        select.select = lambda r, w, x, t: self.__faked_select()
+        self.stats_httpd.start()
+        self.assertFalse(self.stats_httpd.running)
+        self.assertEqual(None, self.stats_httpd.mccs) # stop() clears .mccs
+
+    def test_running_fail(self):
+        # A failure case of start(): we close the (real but dummy) socket for
+        # the CC session.  This breaks the select-loop due to exception
+        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd.mccs.get_socket().close()
         self.assertRaises(ValueError, self.stats_httpd.start)
 
     @unittest.skipIf(True, 'tentatively skipped')
