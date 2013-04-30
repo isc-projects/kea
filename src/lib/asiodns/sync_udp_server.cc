@@ -42,7 +42,8 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
-    udp_endpoint_(sender_), lookup_callback_(lookup), stopped_(false),
+    udp_endpoint_(sender_), lookup_callback_(lookup),
+    resume_called_(false), done_(false), stopped_(false),
     recv_callback_(boost::bind(&SyncUDPServer::handleRead, this, _1, _2))
 {
     if (af != AF_INET && af != AF_INET6) {
