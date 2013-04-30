@@ -317,7 +317,7 @@ class MyModuleCCSession(isc.config.ConfigData):
     def close(self):
         self.closed = True
 
-class SimpleStats(stats.Stats):
+class MyStats(stats.Stats):
     """A faked Stats class for unit tests.
 
     This class inherits most of the real Stats class, but replaces the
@@ -430,7 +430,7 @@ class SimpleStats(stats.Stats):
         answer, _ = self.__group_recvmsg(None, None)
         return isc.config.ccsession.parse_answer(answer)[1]
 
-class SimpleStatsHttpd(stats_httpd.StatsHttpd):
+class MyStatsHttpd(stats_httpd.StatsHttpd):
     """A faked StatsHttpd class for unit tests.
 
     This class inherits most of the real StatsHttpd class, but replaces the
