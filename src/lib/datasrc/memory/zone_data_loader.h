@@ -57,7 +57,7 @@ ZoneData* loadZoneData(util::MemorySegment& mem_sgmt,
 /// \c iterator.
 ///
 /// Throws \c ZoneDataUpdater::AddError if invalid or inconsistent data
-/// is present in the \c zone_file. Throws \c isc::Unexpected if empty
+/// is present in the \c iterator. Throws \c isc::Unexpected if empty
 /// RRsets are passed by the zone iterator. Throws \c EmptyZone if an
 /// empty zone would be created due to the \c loadZoneData().
 ///

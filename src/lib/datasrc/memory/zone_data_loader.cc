@@ -131,7 +131,7 @@ ZoneDataLoader::flushNodeRRsets() {
     }
 
     // Normally rrsigsets map should be empty at this point, but it's still
-    // possible that an RRSIG that don't has covered RRset is added; they
+    // possible that an RRSIG that doesn't have covered RRset is added; they
     // still remain in the map.  We add them to the zone separately.
     BOOST_FOREACH(NodeRRsetsVal val, node_rrsigsets_) {
         updater_.add(ConstRRsetPtr(), val.second);
