@@ -47,7 +47,7 @@ import isc.log
 import stats_httpd
 import stats
 from test_utils import ThreadingServerManager, SignalHandler, \
-    SimpleStatsHttpd, CONST_BASETIME
+    MyStatsHttpd, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.config import RPCRecipientMissing, RPCError
 
@@ -237,7 +237,7 @@ class TestHttpHandler(unittest.TestCase):
         self.sig_handler = SignalHandler(self.fail)
         DUMMY_DATA['Stats']['lname'] = 'test-lname'
         (self.address, self.port) = get_availaddr()
-        self.stats_httpd_server = ThreadingServerManager(SimpleStatsHttpd,
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd,
                                                          (self.address,
                                                           self.port))
         self.stats_httpd = self.stats_httpd_server.server
@@ -571,7 +571,7 @@ class TestHttpServer(unittest.TestCase):
         self.sig_handler.reset()
 
     def test_httpserver(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertEqual(type(self.stats_httpd.httpd), list)
         self.assertEqual(len(self.stats_httpd.httpd), 1)
         for httpd in self.stats_httpd.httpd:
@@ -624,7 +624,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_init(self):
         server_address = get_availaddr()
-        self.stats_httpd = SimpleStatsHttpd(server_address)
+        self.stats_httpd = MyStatsHttpd(server_address)
         self.assertEqual(self.stats_httpd.running, False)
         self.assertEqual(self.stats_httpd.poll_intval, 0.5)
         self.assertNotEqual(len(self.stats_httpd.httpd), 0)
@@ -642,13 +642,13 @@ class TestStatsHttpd(unittest.TestCase):
                              get_module_spec().get_module_name())
 
     def test_init_hterr(self):
-        class FailingStatsHttpd(SimpleStatsHttpd):
+        class FailingStatsHttpd(MyStatsHttpd):
             def open_httpd(self):
                 raise stats_httpd.HttpServerError
         self.assertRaises(stats_httpd.HttpServerError, FailingStatsHttpd)
 
     def test_openclose_mccs(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         mccs = self.stats_httpd.mccs
         self.assertFalse(self.stats_httpd.mccs.stopped)
         self.assertFalse(self.stats_httpd.mccs.closed)
@@ -663,7 +663,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(self.stats_httpd.close_mccs(), None)
 
     def test_mccs(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertIsNotNone(self.stats_httpd.mccs.get_socket())
         self.assertTrue(
             isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
@@ -682,7 +682,7 @@ class TestStatsHttpd(unittest.TestCase):
         # dual stack (addresses is ipv4 and ipv6)
         if self.ipv6_enabled:
             server_addresses = (get_availaddr('::1'), get_availaddr())
-            self.stats_httpd = SimpleStatsHttpd(*server_addresses)
+            self.stats_httpd = MyStatsHttpd(*server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertTrue(ht.address_family in set([socket.AF_INET,
@@ -694,7 +694,7 @@ class TestStatsHttpd(unittest.TestCase):
         # dual stack (address is ipv6)
         if self.ipv6_enabled:
             server_addresses = get_availaddr('::1')
-            self.stats_httpd = SimpleStatsHttpd(server_addresses)
+            self.stats_httpd = MyStatsHttpd(server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertEqual(ht.address_family, socket.AF_INET6)
@@ -704,7 +704,7 @@ class TestStatsHttpd(unittest.TestCase):
 
         # dual/single stack (address is ipv4)
         server_addresses = get_availaddr()
-        self.stats_httpd = SimpleStatsHttpd(server_addresses)
+        self.stats_httpd = MyStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
             self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
             self.assertEqual(ht.address_family, socket.AF_INET)
@@ -715,7 +715,7 @@ class TestStatsHttpd(unittest.TestCase):
     def test_httpd_anyIPv4(self):
         # any address (IPv4)
         server_addresses = get_availaddr(address='0.0.0.0')
-        self.stats_httpd = SimpleStatsHttpd(server_addresses)
+        self.stats_httpd = MyStatsHttpd(server_addresses)
         for ht in self.stats_httpd.httpd:
             self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
             self.assertEqual(ht.address_family,socket.AF_INET)
@@ -725,7 +725,7 @@ class TestStatsHttpd(unittest.TestCase):
         # any address (IPv6)
         if self.ipv6_enabled:
             server_addresses = get_availaddr(address='::')
-            self.stats_httpd = SimpleStatsHttpd(server_addresses)
+            self.stats_httpd = MyStatsHttpd(server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertEqual(ht.address_family,socket.AF_INET6)
@@ -733,29 +733,29 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_httpd_failed(self):
         # existent hostname
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           get_availaddr(address='localhost'))
 
         # nonexistent hostname
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           ('my.host.domain', 8000))
 
         # over flow of port number
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           ('127.0.0.1', 80000))
 
         # negative
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           ('127.0.0.1', -8000))
 
         # alphabet
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           ('127.0.0.1', 'ABCDE'))
 
         # Address already in use
         server_addresses = get_availaddr()
-        server = SimpleStatsHttpd(server_addresses)
-        self.assertRaises(stats_httpd.HttpServerError, SimpleStatsHttpd,
+        server = MyStatsHttpd(server_addresses)
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
                           server_addresses)
 
     def __faked_select(self, ex=None):
@@ -783,7 +783,7 @@ class TestStatsHttpd(unittest.TestCase):
         # - as long as 'running' is True, it keeps calling select.select
         # - when running becomes False, it exists from the loop and calls
         #   stop()
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertFalse(self.stats_httpd.running)
 
         # In this test we'll call select.select() 2 times: on the first call
@@ -798,7 +798,7 @@ class TestStatsHttpd(unittest.TestCase):
     def test_running_fail(self):
         # A failure case of start(): we close the (real but dummy) socket for
         # the CC session.  This breaks the select-loop due to exception
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.stats_httpd.mccs.get_socket().close()
         self.assertRaises(ValueError, self.stats_httpd.start)
 
@@ -808,7 +808,7 @@ class TestStatsHttpd(unittest.TestCase):
         def raise_select_except(*args):
             raise select.error('dummy error')
         select.select = raise_select_except
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertRaises(select.error, self.stats_httpd.start)
 
     def test_nofailure_with_errno_EINTR(self):
@@ -817,13 +817,13 @@ class TestStatsHttpd(unittest.TestCase):
         self.__call_count = 0
         select.select = lambda r, w, x, t: self.__faked_select(
             select.error(errno.EINTR))
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.stats_httpd.start() # shouldn't leak the exception
         self.assertFalse(self.stats_httpd.running)
         self.assertEqual(None, self.stats_httpd.mccs)
 
     def test_open_template(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         # successful conditions
         tmpl = self.stats_httpd.open_template(
             stats_httpd.XML_TEMPLATE_LOCATION)
@@ -854,7 +854,7 @@ class TestStatsHttpd(unittest.TestCase):
             self.stats_httpd.open_template, '/path/to/foo/bar')
 
     def test_commands(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertEqual(self.stats_httpd.command_handler("status", None),
                          isc.config.ccsession.create_answer(
                 0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
@@ -868,7 +868,7 @@ class TestStatsHttpd(unittest.TestCase):
                 1, "Unknown command: __UNKNOWN_COMMAND__"))
 
     def test_config(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertEqual(
             self.stats_httpd.config_handler(dict(_UNKNOWN_KEY_=None)),
             isc.config.ccsession.create_answer(
@@ -918,7 +918,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xml_handler(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         module_name = 'Dummy'
         stats_spec = \
             { module_name :
@@ -1037,7 +1037,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsd_handler(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsd_string = self.stats_httpd.xsd_handler()
         stats_xsd = xml.etree.ElementTree.fromstring(xsd_string)
         ns = '{%s}' % XMLNS_XSD
@@ -1072,7 +1072,7 @@ class TestStatsHttpd(unittest.TestCase):
 
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_xsl_handler(self):
-        self.stats_httpd = SimpleStatsHttpd(get_availaddr())
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
         xsl_string = self.stats_httpd.xsl_handler()
         stats_xsl = xml.etree.ElementTree.fromstring(xsl_string)
         nst = '{%s}' % XMLNS_XSL
