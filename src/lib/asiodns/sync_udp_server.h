@@ -43,7 +43,7 @@ namespace asiodns {
 ///
 /// That means, the lookup handler must provide the answer right away.
 /// This allows for implementation with less overhead, compared with
-/// the UDPClass.
+/// the \c UDPServer class.
 class SyncUDPServer : public DNSServer, public boost::noncopyable {
 public:
     /// \brief Constructor
