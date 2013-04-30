@@ -1201,6 +1201,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/resolver/bench/Makefile
                  src/bin/sysinfo/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
