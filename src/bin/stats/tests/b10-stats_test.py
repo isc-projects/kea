@@ -30,7 +30,7 @@ import sys
 
 import stats
 import isc.log
-from test_utils import SimpleStats
+from test_utils import MyStats
 
 class TestUtilties(unittest.TestCase):
     items = [
@@ -258,7 +258,7 @@ class TestStats(unittest.TestCase):
         stats.get_datetime = self.__orig_get_datetime
 
     def test_init(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.assertEqual(self.stats.module_name, 'Stats')
         self.assertFalse(self.stats.running)
         self.assertTrue('command_show' in self.stats.callbacks)
@@ -288,7 +288,7 @@ class TestStats(unittest.TestCase):
 """
         orig_spec_location = stats.SPECFILE_LOCATION
         stats.SPECFILE_LOCATION = io.StringIO(spec_str)
-        self.assertRaises(stats.StatsError, SimpleStats)
+        self.assertRaises(stats.StatsError, MyStats)
         stats.SPECFILE_LOCATION = orig_spec_location
 
     def __send_command(self, stats, command_name, params=None):
@@ -307,7 +307,7 @@ class TestStats(unittest.TestCase):
             raise CheckException # terminate the loop
 
         # start without err
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.assertFalse(self.stats.running)
         self.stats._check_command = lambda: __check_start(self.stats)
         # We are going to confirm start() will set running to True, avoiding
@@ -325,7 +325,7 @@ class TestStats(unittest.TestCase):
             # override get_interval() so it won't go poll statistics
             tested_stats.get_interval = lambda : 0
 
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.stats._check_command = lambda: __check_shutdown(self.stats)
         self.stats.start()
         self.assertTrue(self.stats.mccs.stopped)
@@ -333,7 +333,7 @@ class TestStats(unittest.TestCase):
     def test_handlers(self):
         """Test command_handler"""
 
-        __stats = SimpleStats()
+        __stats = MyStats()
 
         # 'show' command.  We're going to check the expected methods are
         # called in the expected order, and check the resulting response.
@@ -430,7 +430,7 @@ class TestStats(unittest.TestCase):
                         }]}
             return answer_value
 
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.stats.cc_session.rpc_call = __check_rpc_call
 
         self.stats.update_modules()
@@ -477,7 +477,7 @@ class TestStats(unittest.TestCase):
         where we set the expected data in statistics_data.
 
         """
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         def __faked_update_modules():
             self.stats.statistics_data = { \
                 'Stats': {
@@ -536,7 +536,7 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data(self):
         """test for list-type statistics"""
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         _test_exp1 = {
               'zonename': 'test1.example',
               'queries.tcp': 5,
@@ -613,7 +613,7 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data_pt2(self):
         """test for named_set-type statistics"""
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         _test_exp1 = \
             { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
         _test_exp2 = \
@@ -683,7 +683,7 @@ class TestStats(unittest.TestCase):
                 'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
     def test_update_statistics_data_withmid(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
 
         # This test relies on existing statistics data at the Stats object.
         # This version of test prepares the data using the do_polling() method;
@@ -789,7 +789,7 @@ class TestStats(unittest.TestCase):
     def test_config(self):
         orig_get_timestamp = stats.get_timestamp
         stats.get_timestamp = lambda : self.const_timestamp
-        stat = SimpleStats()
+        stat = MyStats()
 
         # test updating poll-interval
         self.assertEqual(stat.config['poll-interval'], 60)
@@ -835,7 +835,7 @@ class TestStats(unittest.TestCase):
             (0, {'Init': {'boot_time': self.const_datetime}}))
 
     def test_commands(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
 
         # status
         self.assertEqual(self.stats.command_status(),
@@ -849,7 +849,7 @@ class TestStats(unittest.TestCase):
         self.assertFalse(self.stats.running)
 
     def test_command_show_error(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
                 1,
@@ -864,7 +864,7 @@ class TestStats(unittest.TestCase):
                 "specified arguments are incorrect: owner: Foo, name: bar"))
 
     def test_command_show_auth(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         self.stats.update_modules = lambda: None
 
         # Test data borrowed from test_update_statistics_data_withmid
@@ -941,7 +941,7 @@ class TestStats(unittest.TestCase):
                                 'queries.tcp': sum_qtcp_nds_perzone20 }}}}))
 
     def test_command_show_stats(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         orig_get_datetime = stats.get_datetime
         orig_get_timestamp = stats.get_timestamp
         stats.get_datetime = lambda x=None: self.const_datetime
@@ -965,7 +965,7 @@ class TestStats(unittest.TestCase):
             owner=self.stats.module_name, name='bar')
 
     def test_command_showchema(self):
-        self.stats = SimpleStats()
+        self.stats = MyStats()
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_showschema())
         self.assertEqual(rcode, 0)
@@ -1284,7 +1284,7 @@ class TestStats(unittest.TestCase):
     def test_polling_init(self):
         """check statistics data of 'Init'."""
 
-        stat = SimpleStats()
+        stat = MyStats()
         stat.update_modules = lambda: None
         create_answer = isc.config.ccsession.create_answer # shortcut
 
@@ -1303,7 +1303,7 @@ class TestStats(unittest.TestCase):
 
     def test_polling_consolidate(self):
         """check statistics data of multiple instances of same module."""
-        stat = SimpleStats()
+        stat = MyStats()
         stat.update_modules = lambda: None
         create_answer = isc.config.ccsession.create_answer # shortcut
 
@@ -1362,7 +1362,7 @@ class TestStats(unittest.TestCase):
         compatibility of older tests.
 
         """
-        stat = SimpleStats()
+        stat = MyStats()
         self.assertEqual(len(stat.statistics_data['Stats']), 5)
         self.assertTrue('boot_time' in stat.statistics_data['Stats'])
         self.assertTrue('last_update_time' in stat.statistics_data['Stats'])
@@ -1378,7 +1378,7 @@ class TestStats(unittest.TestCase):
         fixing that is a subject of different ticket.
 
         """
-        stat = SimpleStats()
+        stat = MyStats()
         # check default statistics data of 'Init'
         self.assertEqual(
              stat.statistics_data['Init'],
