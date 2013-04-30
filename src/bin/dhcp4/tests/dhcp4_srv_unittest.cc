@@ -134,8 +134,7 @@ public:
 
         // domain-name
         OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
-        boost::shared_ptr<OptionCustom>
-            option_domain_name(new OptionCustom(def, Option::V4));
+        OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V4));
         option_domain_name->writeFqdn("example.com");
         subnet_->addOption(option_domain_name, false, "dhcp4");
 
@@ -154,8 +153,7 @@ public:
     /// @brief checks that the response matches request
     /// @param q query (client's message)
     /// @param a answer (server's message)
-    void messageCheck(const boost::shared_ptr<Pkt4>& q,
-                      const boost::shared_ptr<Pkt4>& a) {
+    void messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
         ASSERT_TRUE(q);
         ASSERT_TRUE(a);
 
@@ -398,8 +396,8 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
         mac[i] = 255 - i;
     }
 
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDISCOVER, 1234));
-    boost::shared_ptr<Pkt4> offer;
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+    Pkt4Ptr offer;
 
     pkt->setIface("eth0");
     pkt->setIndex(17);
@@ -502,8 +500,8 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
         mac[i] = i * 10;
     }
 
-    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPREQUEST, 1234));
-    boost::shared_ptr<Pkt4> ack;
+    Pkt4Ptr req(new Pkt4(DHCPREQUEST, 1234));
+    Pkt4Ptr ack;
 
     req->setIface("eth0");
     req->setIndex(17);
@@ -588,7 +586,7 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
 
 TEST_F(Dhcpv4SrvTest, processRelease) {
     NakedDhcpv4Srv srv;
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPRELEASE, 1234));
+    Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
     // Should not throw
     EXPECT_NO_THROW(srv.processRelease(pkt));
@@ -596,7 +594,7 @@ TEST_F(Dhcpv4SrvTest, processRelease) {
 
 TEST_F(Dhcpv4SrvTest, processDecline) {
     NakedDhcpv4Srv srv;
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDECLINE, 1234));
+    Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
     // Should not throw
     EXPECT_NO_THROW(srv.processDecline(pkt));
@@ -604,7 +602,7 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
 
 TEST_F(Dhcpv4SrvTest, processInform) {
     NakedDhcpv4Srv srv;
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPINFORM, 1234));
+    Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
     // Should not throw
     EXPECT_NO_THROW(srv.processInform(pkt));

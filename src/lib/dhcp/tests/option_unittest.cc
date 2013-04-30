@@ -46,7 +46,7 @@ public:
     OutputBuffer outBuf_;
 };
 
-// V4 is not really implemented yet. A simple test will do for now.
+// Basic tests for V4 functionality
 TEST_F(OptionTest, v4_basic) {
 
     scoped_ptr<Option> opt;

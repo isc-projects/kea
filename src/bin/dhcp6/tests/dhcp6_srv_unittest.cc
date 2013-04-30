@@ -169,7 +169,7 @@ public:
         EXPECT_EQ(0, ia->getT1());
         EXPECT_EQ(0, ia->getT2());
 
-        boost::shared_ptr<OptionCustom> status =
+        OptionCustomPtr status =
             boost::dynamic_pointer_cast<OptionCustom>(ia->getOption(D6O_STATUS_CODE));
 
         // It is ok to not include status success as this is the default behavior
@@ -189,7 +189,7 @@ public:
     }
 
     void checkMsgStatusCode(const Pkt6Ptr& msg, uint16_t expected_status) {
-        boost::shared_ptr<OptionCustom> status =
+        OptionCustomPtr status =
             boost::dynamic_pointer_cast<OptionCustom>(msg->getOption(D6O_STATUS_CODE));
 
         // It is ok to not include status success as this is the default behavior
@@ -586,7 +586,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    boost::shared_ptr<Pkt6> adv = srv.processSolicit(sol);
+    Pkt6Ptr adv = srv.processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
