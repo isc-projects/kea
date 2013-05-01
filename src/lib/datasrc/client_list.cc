@@ -309,23 +309,6 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
-// We still provide this method for backward compatibility. But to not have
-// duplicate code, it is a thin wrapper around getCachedZoneWriter only.
-ConfigurableClientList::ReloadResult
-ConfigurableClientList::reload(const Name& name) {
-    const ZoneWriterPair result(getCachedZoneWriter(name));
-    if (result.first != ZONE_SUCCESS) {
-        return (result.first);
-    }
-
-    assert(result.second);
-    result.second->load();
-    result.second->install();
-    result.second->cleanup();
-
-    return (ZONE_SUCCESS);
-}
-
 ConfigurableClientList::ZoneWriterPair
 ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     if (!allow_cache_) {
