@@ -27,9 +27,8 @@ namespace {
 class ZoneTableIteratorCache : public ZoneTableIterator {
 public:
     ZoneTableIteratorCache(const CacheConfig& config) :
-        it_begin_(config.begin()),
-        it_end_(config.end()),
-        it_(it_begin_)
+        it_(config.begin()),
+        it_end_(config.end())
     {}
 
     virtual void nextImpl() {
@@ -45,9 +44,8 @@ public:
     }
 
 private:
-    CacheConfig::ConstZoneIterator const it_begin_;
-    CacheConfig::ConstZoneIterator const it_end_;
     CacheConfig::ConstZoneIterator it_;
+    CacheConfig::ConstZoneIterator const it_end_;
 };
 }
 
