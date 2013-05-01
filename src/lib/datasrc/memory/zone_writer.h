@@ -98,10 +98,10 @@ public:
     void cleanup();
 
 private:
-    ZoneTableSegment* segment_;
-    LoadAction load_action_;
-    dns::Name origin_;
-    dns::RRClass rrclass_;
+    ZoneTableSegment* const segment_;
+    const LoadAction load_action_;
+    const dns::Name origin_;
+    const dns::RRClass rrclass_;
     ZoneData* zone_data_;
     enum State {
         ZW_UNUSED,
