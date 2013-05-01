@@ -46,25 +46,74 @@ public:
 
     /// \brief Return the ZoneTableHeader for the mapped zone table
     /// segment implementation.
+    ///
+    /// \throws isc::Unexpected if this method is called without a
+    /// successful \c reset() call first.
     virtual ZoneTableHeader& getHeader();
 
     /// \brief const version of \c getHeader().
+    ///
+    /// \throws isc::Unexpected if this method is called without a
+    /// successful \c reset() call first.
     virtual const ZoneTableHeader& getHeader() const;
 
     /// \brief Return the MemorySegment for the memory-mapped zone table
     /// segment implementation (a MemorySegmentMapped instance).
+    ///
+    /// \throws isc::Unexpected if this method is called without a
+    /// successful \c reset() call first.
     virtual isc::util::MemorySegment& getMemorySegment();
 
     /// \brief Return true if the segment is writable. For read-only
     /// segments, false is returned.
+    ///
+    /// \throws isc::Unexpected if this method is called without a
+    /// successful \c reset() call first.
     virtual bool isWritable() const;
 
+    /// \brief The mode using which to open a ZoneTableSegment around a
+    /// mapped file.
+    ///
+    /// - CREATE: If the mapped file doesn't exist, create it. If it
+    ///           exists, overwrite it with a newly created mapped
+    ///           file. In both cases, open the newly created mapped
+    ///           file in read+write mode.
+    ///
+    /// - READ_WRITE: If the mapped file doesn't exist, create it. If it
+    ///               exists, use the existing mapped file. In both
+    ///               cases, open the mapped file in read+write mode.
+    ///
+    /// - READ_ONLY: If the mapped file doesn't exist, throw an
+    ///              exception. If it exists, open the existing mapped
+    ///              file in read-only mode.
     enum MemorySegmentOpenMode {
         CREATE,
         READ_WRITE,
         READ_ONLY
     };
 
+    /// \brief Unmap the current file (if mapped) and map the specified
+    /// one.
+    ///
+    /// See the \c MemorySegmentOpenMode documentation above for the
+    /// various modes in which a ZoneTableSegment can be created.
+    ///
+    /// \c params should be a map containing a "mapped-file" key that
+    /// points to a string value containing the filename of a mapped
+    /// file. E.g.,
+    ///
+    ///  {"mapped-file": "/var/bind10/mapped-files/zone-sqlite3.mapped.0"}
+    ///
+    /// \throws isc::InvalidParameter if the configuration in \c params
+    /// has incorrect syntax.
+    /// \throws isc::Unexpected for a variety of cases where an
+    /// unexpected condition occurs. These should not occur normally in
+    /// correctly written code.
+    ///
+    /// \param mode The open mode (see the MemorySegmentOpenMode
+    /// documentation).
+    /// \param params An element containing config for the mapped file
+    /// (see the description).
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params);
 
