@@ -104,6 +104,14 @@ public:
     /// \brief Return the MemorySegment for the zone table segment.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
+    /// \brief Return true if the segment is writable.
+    ///
+    /// The user of the zone table segment will load or update zones
+    /// into the segment only for writable ones.  "local" segments will
+    /// always be writable.  a "mapped" segment will be writable if a
+    /// mapped memory segment in read-write mode has been set.
+    virtual bool isWritable() const = 0;
+
     /// \brief Create an instance depending on the memory segment model
     ///
     /// This is a factory method to create a derived ZoneTableSegment

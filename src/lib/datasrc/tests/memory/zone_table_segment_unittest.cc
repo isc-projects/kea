@@ -94,4 +94,9 @@ TEST_F(ZoneTableSegmentTest, getZoneWriter) {
     EXPECT_NE(static_cast<void*>(NULL), writer.get());
 }
 
+TEST_F(ZoneTableSegmentTest, isWritable) {
+    // Local segments are always writable.
+    EXPECT_TRUE(ztable_segment_->isWritable());
+}
+
 } // anonymous namespace
