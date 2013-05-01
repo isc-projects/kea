@@ -37,7 +37,7 @@ public:
     }
 
     virtual ZoneSpec getCurrentImpl() const {
-        return (ZoneSpec(0, it_->first));
+        return (ZoneSpec(0, it_->first)); // index is always 0 in this version.
     }
 
     virtual bool isLast() const {

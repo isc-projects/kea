@@ -54,6 +54,9 @@ public:
 
     /// \brief in-memmory cache version of getIterator().
     ///
+    /// From this version of iterator, `ZoneSpec::index` will always be set
+    /// to 0 at the moment.
+    ///
     /// \throw None except std::bad_alloc in case of memory allocation failure
     virtual IteratorPtr getIterator() const;
 
