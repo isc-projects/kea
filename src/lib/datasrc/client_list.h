@@ -339,8 +339,14 @@ public:
         return (configuration_);
     }
 
-    /// \brief Result of the getCachedZoneWriter() method.
-    enum ReloadResult {
+private:
+    /// \brief Convenience type shortcut
+    typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
+public:
+    /// \brief Codes indicating in-memory cache status for a given zone name.
+    ///
+    /// This is used as a result of the getCachedZoneWriter() method.
+    enum CacheStatus {
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
         ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
                             ///  (including the case cache is disabled for
@@ -350,16 +356,11 @@ public:
                             ///  the writer provided.
     };
 
-private:
-    /// \brief Convenience type shortcut
-    typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
-public:
-
     /// \brief Return value of getCachedZoneWriter()
     ///
     /// A pair containing status and the zone writer, for the
     /// getCachedZoneWriter() method.
-    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
+    typedef std::pair<CacheStatus, ZoneWriterPtr> ZoneWriterPair;
 
     /// \brief Return a zone writer that can be used to reload a zone.
     ///

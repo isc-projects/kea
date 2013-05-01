@@ -250,7 +250,7 @@ public:
         EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
                   shared_ptr<InMemoryClient>());
     }
-    ConfigurableClientList::ReloadResult doReload(const Name& origin);
+    ConfigurableClientList::CacheStatus doReload(const Name& origin);
     const RRClass rrclass_;
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
@@ -830,7 +830,7 @@ TEST_F(ListTest, BadMasterFile) {
                    true);
 }
 
-ConfigurableClientList::ReloadResult
+ConfigurableClientList::CacheStatus
 ListTest::doReload(const Name& origin) {
     ConfigurableClientList::ZoneWriterPair
         result(list_->getCachedZoneWriter(origin));
