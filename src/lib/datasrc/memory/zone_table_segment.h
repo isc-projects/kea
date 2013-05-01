@@ -138,7 +138,7 @@ public:
 
     /// \brief Create a zone writer
     ///
-    /// This creates a new writer that can be used to update zones
+    /// This creates a new writer that can be used to update a zone
     /// inside this zone table segment.
     ///
     /// \param loadAction Callback to provide the actual data.
