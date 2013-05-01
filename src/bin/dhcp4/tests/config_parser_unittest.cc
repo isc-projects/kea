@@ -52,9 +52,10 @@ public:
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        const Uint32Storage& uint32_defaults = getUint32Defaults();
+        const Uint32StoragePtr uint32_defaults = 
+                                        getGlobalParserContext().uint32_values_;
         try {
-            uint32_t actual_value = uint32_defaults.getParam(name);
+            uint32_t actual_value = uint32_defaults->getParam(name);
             EXPECT_EQ(expected_value, actual_value);
         } catch (DhcpConfigError) {
             ADD_FAILURE() << "Expected uint32 with name " << name
