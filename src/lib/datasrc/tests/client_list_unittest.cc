@@ -250,6 +250,7 @@ public:
         EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
                   shared_ptr<InMemoryClient>());
     }
+    ConfigurableClientList::ReloadResult doReload(const Name& origin);
     const RRClass rrclass_;
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
@@ -829,29 +830,8 @@ TEST_F(ListTest, BadMasterFile) {
                    true);
 }
 
-// This allows us to test two versions of the reloading code
-// (One by calling reload(), one by obtaining a ZoneWriter and
-// playing with that). Once we deprecate reload(), we should revert this
-// change and not use typed tests any more.
-template<class UpdateType>
-class ReloadTest : public ListTest {
-public:
-    ConfigurableClientList::ReloadResult doReload(const Name& origin);
-};
-
-// Version with calling reload()
-class ReloadUpdateType {};
-template<>
 ConfigurableClientList::ReloadResult
-ReloadTest<ReloadUpdateType>::doReload(const Name& origin) {
-    return (list_->reload(origin));
-};
-
-// Version with the ZoneWriter
-class WriterUpdateType {};
-template<>
-ConfigurableClientList::ReloadResult
-ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
+ListTest::doReload(const Name& origin) {
     ConfigurableClientList::ZoneWriterPair
         result(list_->getCachedZoneWriter(origin));
     if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
@@ -872,151 +852,141 @@ ReloadTest<WriterUpdateType>::doReload(const Name& origin) {
     return (result.first);
 }
 
-// Typedefs for the GTEST guts to make it work
-typedef ::testing::Types<ReloadUpdateType, WriterUpdateType> UpdateTypes;
-TYPED_TEST_CASE(ReloadTest, UpdateTypes);
-
 // Test we can reload a zone
-TYPED_TEST(ReloadTest, reloadSuccess) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadSuccess) {
+    list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     this->prepareCache(0, name);
     // The cache currently contains a tweaked version of zone, which
     // doesn't have "tstzonedata" A record.  So the lookup should result
     // in NXDOMAIN.
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              this->list_->find(name).finder_->
+              list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
     // Now reload the full zone. It should be there now.
-    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, this->doReload(name));
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, doReload(name));
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->
+              list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
 }
 
 // The cache is not enabled. The load should be rejected.
-TYPED_TEST(ReloadTest, reloadNotAllowed) {
-    this->list_->configure(this->config_elem_zones_, false);
+TEST_F(ListTest, reloadNotAllowed) {
+    list_->configure(config_elem_zones_, false);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
-    this->prepareCache(0, name);
+    prepareCache(0, name);
     // See the reloadSuccess test.  This should result in NXDOMAIN.
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              this->list_->find(name).finder_->
+              list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
     // Now reload. It should reject it.
-    EXPECT_EQ(ConfigurableClientList::CACHE_DISABLED, this->doReload(name));
+    EXPECT_EQ(ConfigurableClientList::CACHE_DISABLED, doReload(name));
     // Nothing changed here
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              this->list_->find(name).finder_->
+              list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
 }
 
 // Similar to the previous case, but the cache is disabled in config.
-TYPED_TEST(ReloadTest, reloadNotEnabled) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadNotEnabled) {
+    list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put the cache, actually disabling it.
-    this->prepareCache(0, name, false);
+    prepareCache(0, name, false);
     // In this case we cannot really look up due to the limitation of
     // the mock implementation.  We only check reload fails.
-    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED, this->doReload(name));
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED, doReload(name));
 }
 
 // Test several cases when the zone does not exist
-TYPED_TEST(ReloadTest, reloadNoSuchZone) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadNoSuchZone) {
+    list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the
     // reload method, as that one looks at the real state of things, not
     // at the configuration.
-    this->prepareCache(0, Name("example.com"));
+    prepareCache(0, Name("example.com"));
     // Not in the data sources
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
-              this->doReload(Name("exmaple.cz")));
+              doReload(Name("exmaple.cz")));
     // Not cached
-    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND, this->doReload(name));
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND, doReload(name));
     // Partial match
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
-              this->doReload(Name("sub.example.com")));
+              doReload(Name("sub.example.com")));
     // Nothing changed here - these zones don't exist
     EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
-              this->list_->find(name).dsrc_client_);
+              list_->find(name).dsrc_client_);
     EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
-              this->list_->find(Name("example.cz")).dsrc_client_);
+              list_->find(Name("example.cz")).dsrc_client_);
     EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
-              this->list_->find(Name("sub.example.com"), true).dsrc_client_);
+              list_->find(Name("sub.example.com"), true).dsrc_client_);
     // Not reloaded, so A record shouldn't be visible yet.
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              this->list_->find(Name("example.com")).finder_->
+              list_->find(Name("example.com")).finder_->
                   find(Name("tstzonedata.example.com"),
                        RRType::A())->code);
 }
 
 // Check we gracefuly throw an exception when a zone disappeared in
 // the underlying data source when we want to reload it
-TYPED_TEST(ReloadTest, reloadZoneGone) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadZoneGone) {
+    list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put in a cache for non-existent zone. This emulates being loaded
     // and then the zone disappearing. We prefill the cache, so we can check
     // it.
-    this->prepareCache(0, name);
+    prepareCache(0, name);
     // The (cached) zone contains zone's SOA
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
     // Remove the zone from the data source.
     static_cast<MockDataSourceClient*>(
-        this->list_->getDataSources()[0].data_src_client_)->eraseZone(name);
+        list_->getDataSources()[0].data_src_client_)->eraseZone(name);
 
     // The zone is not there, so abort the reload.
-    EXPECT_THROW(this->doReload(name), DataSourceError);
+    EXPECT_THROW(doReload(name), DataSourceError);
     // The (cached) zone is not hurt.
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
 // The underlying data source throws. Check we don't modify the state.
-TYPED_TEST(ReloadTest, reloadZoneThrow) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadZoneThrow) {
+    list_->configure(config_elem_zones_, true);
     const Name name("noiter.org");
-    this->prepareCache(0, name);
+    prepareCache(0, name);
     // The zone contains stuff now
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
     // The iterator throws, so abort the reload.
-    EXPECT_THROW(this->doReload(name), isc::NotImplemented);
+    EXPECT_THROW(doReload(name), isc::NotImplemented);
     // The zone is not hurt.
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
-TYPED_TEST(ReloadTest, reloadNullIterator) {
-    this->list_->configure(this->config_elem_zones_, true);
+TEST_F(ListTest, reloadNullIterator) {
+    list_->configure(config_elem_zones_, true);
     const Name name("null.org");
-    this->prepareCache(0, name);
+    prepareCache(0, name);
     // The zone contains stuff now
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
     // The iterator throws, so abort the reload.
-    EXPECT_THROW(this->doReload(name), isc::Unexpected);
+    EXPECT_THROW(doReload(name), isc::Unexpected);
     // The zone is not hurt.
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(name).finder_->find(name,
-                                                    RRType::SOA())->code);
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
 // Test we can reload the master files too (special-cased)
-TYPED_TEST(ReloadTest, reloadMasterFile) {
+TEST_F(ListTest, reloadMasterFile) {
     const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
         "/root.zone " TEST_DATA_BUILDDIR "/root.zone.copied";
     if (system(install_cmd) != 0) {
@@ -1034,21 +1004,21 @@ TYPED_TEST(ReloadTest, reloadMasterFile) {
         "       \".\": \"" TEST_DATA_BUILDDIR "/root.zone.copied\""
         "   }"
         "}]"));
-    this->list_->configure(elem, true);
+    list_->configure(elem, true);
     // Add a record that is not in the zone
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
-              this->list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
-                                                         RRType::TXT())->code);
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
     ofstream f;
     f.open(TEST_DATA_BUILDDIR "/root.zone.copied", ios::out | ios::app);
     f << "nosuchdomain.\t\t3600\tIN\tTXT\ttest" << std::endl;
     f.close();
     // Do the reload.
-    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, this->doReload(Name(".")));
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS, doReload(Name(".")));
     // It is here now.
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              this->list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
-                                                         RRType::TXT())->code);
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
 }
 
 // Check the status holds data
