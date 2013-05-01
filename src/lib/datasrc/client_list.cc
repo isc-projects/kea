@@ -153,13 +153,13 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                               << zname << "/" << rrclass_);
                 }
                 assert(load_action); // in this loop this should be always true
-                boost::scoped_ptr<memory::ZoneWriter> writer;
                 try {
-                    writer.reset(new_data_sources.back().ztable_segment_->
-                                 getZoneWriter(load_action, zname, rrclass_));
-                    writer->load();
-                    writer->install();
-                    writer->cleanup();
+                    memory::ZoneWriter writer(
+                        new_data_sources.back().ztable_segment_.get(),
+                        load_action, zname, rrclass_);
+                    writer.load();
+                    writer.install();
+                    writer.cleanup();
                 } catch (const ZoneLoaderException& e) {
                     LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR)
                         .arg(zname).arg(rrclass_).arg(name).arg(e.what());
@@ -348,8 +348,9 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     }
     return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
-                               result.info->ztable_segment_->
-                               getZoneWriter(load_action, name, rrclass_))));
+                               new memory::ZoneWriter(
+                                   result.info->ztable_segment_.get(),
+                                   load_action, name, rrclass_))));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
