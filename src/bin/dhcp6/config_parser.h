@@ -31,9 +31,9 @@ class Dhcpv6Srv;
 
 /// @brief Configures DHCPv6 server
 ///
-/// This function is called every time a new configuration is received. The extra
-/// parameter is a reference to DHCPv6 server component. It is currently not used
-/// and CfgMgr::instance() is accessed instead.
+/// This function is called every time a new configuration is received. The 
+/// extra parameter is a reference to DHCPv6 server component. It is currently 
+/// not used and CfgMgr::instance() is accessed instead.
 ///
 /// This method does not throw. It catches all exceptions and returns them as
 /// reconfiguration statuses. It may return the following response codes:
@@ -49,48 +49,14 @@ class Dhcpv6Srv;
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
-/// @brief Parser for DHCP6 option data value.
+/// @brief Returns the global context
 ///
-/// This parser parses configuration entries that specify value of
-/// a single option specific to DHCP6.  It provides the DHCP6-specific
-/// implementation of the abstract class OptionDataParser.
-class Dhcp6OptionDataParser : public OptionDataParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// Class constructor.
-    Dhcp6OptionDataParser(const std::string&, OptionStorage *options,
-        OptionDefStorage *option_defs);
-
-    /// @brief static factory method for instantiating Dhcp4OptionDataParsers
-    ///
-    /// @param param_name name fo the parameter to be parsed.
-    /// @param options storage where the parameter value is to be stored.
-    /// @param global_option_defs global option definitions storage 
-    static OptionDataParser* factory(const std::string& param_name, OptionStorage *options,
-        OptionDefStorage *global_option_defs);
-
-protected:
-    /// @brief Finds an option definition within the server's option space
-    /// 
-    /// Given an option space and an option code, find the correpsonding 
-    /// option defintion within the server's option defintion storage.
-    ///
-    /// @param option_space name of the parameter option space 
-    /// @param option_code numeric value of the parameter to find 
-    /// @return OptionDefintionPtr of the option defintion or an 
-    /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid 
-    /// for this server. 
-    virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
-        std::string& option_space, uint32_t option_code);
-
-private:
-    // Private default Constructor declared for safety.
-    Dhcp6OptionDataParser() :OptionDataParser("",NULL,NULL,Option::V6) {}
-};
-
-
+/// This function must be only used by unit tests that need
+/// to access global context.
+///
+/// @returns a const reference to the global context
+const ParserContext& getGlobalParserContext();
+ 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

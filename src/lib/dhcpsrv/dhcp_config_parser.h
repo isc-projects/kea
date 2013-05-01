@@ -147,7 +147,7 @@ class ValueStorage {
         ///
         /// @param name is the name of the paramater to store.
         /// @param value is the data value to store.
-        void setParam(const std::string name, const ValueType& value) {
+        void setParam(const std::string& name, const ValueType& value) {
             values_[name] = value;
         }
 
@@ -196,12 +196,15 @@ class ValueStorage {
 
 /// @brief a collection of elements that store uint32 values (e.g. renew-timer = 900)
 typedef ValueStorage<uint32_t> Uint32Storage;
+typedef boost::shared_ptr<Uint32Storage> Uint32StoragePtr;
 
 /// @brief a collection of elements that store string values
 typedef ValueStorage<std::string> StringStorage;
+typedef boost::shared_ptr<StringStorage> StringStoragePtr;
 
 /// @brief Storage for parsed boolean values.
 typedef ValueStorage<bool> BooleanStorage;
+typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
