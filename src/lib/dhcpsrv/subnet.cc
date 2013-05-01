@@ -135,6 +135,15 @@ PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
     return (candidate);
 }
 
+void Subnet::setIface(const std::string& iface_name) {
+    iface_ = iface_name;
+}
+
+std::string Subnet::getIface() const {
+    return (iface_);
+}
+
+
 
 void
 Subnet4::validateOption(const OptionPtr& option) const {
@@ -183,7 +192,7 @@ Subnet6::validateOption(const OptionPtr& option) const {
     }
 }
 
-
+#if 0
 void Subnet6::setIface(const std::string& iface_name) {
     iface_ = iface_name;
 }
@@ -191,7 +200,7 @@ void Subnet6::setIface(const std::string& iface_name) {
 std::string Subnet6::getIface() const {
     return (iface_);
 }
-
+#endif
 
 } // end of isc::dhcp namespace
 } // end of isc namespace
