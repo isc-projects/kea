@@ -142,8 +142,8 @@ public:
     /// inside this zone table segment.
     ///
     /// \param loadAction Callback to provide the actual data.
-    /// \param origin The origin of the zone to reload.
-    /// \param rrclass The class of the zone to reload.
+    /// \param origin The origin of the zone to update.
+    /// \param rrclass The class of the zone to update.
     /// \return New instance of a zone writer. The ownership is passed
     ///     onto the caller and the caller needs to \c delete it when
     ///     it's done with the writer.
