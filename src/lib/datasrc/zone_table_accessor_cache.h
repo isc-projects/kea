@@ -39,7 +39,7 @@ class CacheConfig;
 /// \c ConfigurableClientList.  Normal applications shouldn't instantiate
 /// it directly.  It's still defined publicly visibly for testing purpose,
 /// but to clarify the intent it's hidden in the "internal" namespace.
-class ZoneTableAccessorCache : boost::noncopyable, public ZoneTableAccessor {
+class ZoneTableAccessorCache : public ZoneTableAccessor {
 public:
     /// \brief Constructor.
     ///
