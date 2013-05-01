@@ -80,10 +80,10 @@ struct ZoneSpec {
 /// A concrete object of this class is created by specific derived
 /// implementation for the corresponding data source.  The implementation
 /// must ensure the iterator is located at the "beginning" of the zone table,
-/// and that subsequent calls to \c getCurrent() go through all the zones
-/// one by one, until \c isLast() returns false.  The implementation must
+/// and that subsequent calls to \c next() go through all the zones
+/// one by one, until \c isLast() returns \c true.  The implementation must
 /// support the concept of "empty table"; in that case \c isLast() will
-/// return \c false from the beginning.
+/// return \c true from the beginning.
 class ZoneTableIterator : boost::noncopyable {
 protected:
     /// \brief The constructor.

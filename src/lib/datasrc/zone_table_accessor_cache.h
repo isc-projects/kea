@@ -55,7 +55,7 @@ public:
 
     /// \brief In-memory cache version of \c getIterator().
     ///
-    /// As returned from this version of iterator, `ZoneSpec::index`
+    /// As returned from this version of iterator, \c ZoneSpec::index
     /// will always be set to 0 at the moment.
     ///
     /// \throw None except std::bad_alloc in case of memory allocation failure
