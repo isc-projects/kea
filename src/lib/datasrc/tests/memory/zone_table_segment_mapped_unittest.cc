@@ -167,6 +167,12 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
     EXPECT_THROW(ztable_segment_->isWritable(), isc::Unexpected);
+
+    // READ_WRITE with an existing map file ought to work too. This
+    // would use existing named addresses.
+    ztable_segment_->reset(ZoneTableSegmentMapped::READ_WRITE,
+                           config_params_);
+    EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
 } // anonymous namespace
