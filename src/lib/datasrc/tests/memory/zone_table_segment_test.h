@@ -53,6 +53,10 @@ public:
         return (mem_sgmt_);
     }
 
+    virtual bool isWritable() const {
+        return (true);
+    }
+
     virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
                                       const dns::Name& name,
                                       const dns::RRClass& rrclass)

@@ -53,6 +53,13 @@ public:
     /// implementation (a MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
+    /// \brief Return true if the segment is writable.
+    ///
+    /// This implementation always returns true.
+    virtual bool isWritable() const {
+        return (true);
+    }
+
 private:
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;
