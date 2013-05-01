@@ -36,7 +36,7 @@ namespace datasrc {
 /// \c ZoneTableAccessor, and once created it will be immutable.
 ///
 /// \note Once Trac #2144 is completed, this struct must be defined as
-/// non assignable because it has a const member variable.
+/// non-assignable because it has a const member variable.
 struct ZoneSpec {
     /// \brief Constructor.
     ZoneSpec(uint32_t index_param, const dns::Name& origin_param) :
@@ -46,9 +46,9 @@ struct ZoneSpec {
     /// \brief Numeric zone index.
     ///
     /// In the current initial version, this field is just a placeholder.
-    /// In future, we'll probably define it as a unique index in the table
+    /// In the future, we'll probably define it as a unique index in the table
     /// for that particular zone so that applications can distinguish
-    /// and specify different zones efficiently.  Until it's fixed this field
+    /// and specify different zones efficiently. Until it's fixed, this field
     /// shouldn't be used by applications.
     const uint32_t index;
 
@@ -60,7 +60,7 @@ struct ZoneSpec {
 ///
 /// This is an abstract base class providing simple iteration operation
 /// over zones stored in a data source.  A concrete object of this class
-/// is expected to be created by \c ZoneTableAccessor::getIterator().
+/// is expected to be returned by \c ZoneTableAccessor::getIterator().
 ///
 /// The interface is intentionally simplified and limited: it works
 /// "forward-only", i.e, only goes from begin to end one time; it's not
@@ -75,13 +75,13 @@ struct ZoneSpec {
 /// Likewise, this iterator does not guarantee the ordering of the zones
 /// returned by \c getCurrent().  It's probably possible to ensure some
 /// sorted order, but until we can be sure it's the case for many cases
-/// in practice we'll not rely on it.
+/// in practice, we'll not rely on it.
 ///
 /// A concrete object of this class is created by specific derived
 /// implementation for the corresponding data source.  The implementation
 /// must ensure the iterator is located at the "beginning" of the zone table,
-/// and that subsequent calls to getCurrent() goes through all the zones
-/// one by one, until isLast() returns false.  The implementation must
+/// and that subsequent calls to \c getCurrent() go through all the zones
+/// one by one, until \c isLast() returns false.  The implementation must
 /// support the concept of "empty table"; in that case \c isLast() will
 /// return \c false from the beginning.
 class ZoneTableIterator : boost::noncopyable {
@@ -110,7 +110,7 @@ public:
         // method.
         if (isLast()) {
             isc_throw(InvalidOperation,
-                      "next() called beyond end of zone table iterator");
+                      "next() called on iterator beyond end of zone table");
         }
         nextImpl();
     }
@@ -119,7 +119,7 @@ public:
     /// currently located in the form of \c ZoneSpec.
     ///
     /// This method must not be called once the iterator reaches the end
-    /// of the table.
+    /// of the zone table.
     ///
     /// \throw InvalidOperation called after reaching the end of table.
     ///
@@ -129,24 +129,25 @@ public:
         // method.
         if (isLast()) {
             isc_throw(InvalidOperation,
-                      "getCurrent() called beyond end of zone table iterator");
+                      "getCurrent() called on iterator beyond "
+                      "end of zone table");
         }
         return (getCurrentImpl());
     }
 
 protected:
-    /// \brief Actual implementation of next().
+    /// \brief Actual implementation of \c next().
     ///
-    /// Each derived class must provide the implementation of next() in
-    /// its data source specific form, except for the common validation
-    /// check.
+    /// Each derived class must provide the implementation of \c next()
+    /// in its data source specific form, except for the common
+    /// validation check.
     virtual void nextImpl() = 0;
 
-    /// \brief Actual implementation of getCurrent().
+    /// \brief Actual implementation of \c getCurrent().
     ///
-    /// Each derived class must provide the implementation of getCurrent() in
-    /// its data source specific form, except for the common validation
-    /// check.
+    /// Each derived class must provide the implementation of
+    /// \c getCurrent() in its data source specific form, except for the
+    /// common validation check.
     virtual ZoneSpec getCurrentImpl() const = 0;
 };
 
@@ -154,16 +155,17 @@ protected:
 ///
 /// This is an abstract base class providing common interfaces to get access
 /// to a conceptual "zone table" corresponding to a specific data source.
-/// A zone table would contain a set of information of DNS zones stored in
+/// A zone table would contain a set of information about DNS zones stored in
 /// the data source.  It's "conceptual" in that the actual form of the
 /// information is specific to the data source implementation.
 ///
-/// The initial version of this class only provides one simply feature:
-/// iterating over the table so an application can get a list of all zones
-/// of a specific data source (of a specific class).  In future, this class
-/// will be extended so that, e.g., applications can add or remove zones.
+/// The initial version of this class only provides one simple feature:
+/// iterating over the table so that an application can get a list of
+/// all zones of a specific data source (of a specific RR class).  In
+/// future, this class will be extended so that, e.g., applications can
+/// add or remove zones.
 ///
-/// \note It may make sense to move the \c DataSourceClient::createZone()
+/// \note It may make sense to move \c DataSourceClient::createZone()
 /// and \c DataSourceClient::deleteZone() to this class.
 class ZoneTableAccessor : boost::noncopyable {
 protected:
@@ -185,18 +187,18 @@ public:
     /// In general, the specific implementation of the iterator object would
     /// contain some form of reference to the underlying data source
     /// (e.g., a database connection or a pointer to memory region), which
-    /// would be only valid until the object that created the instance of
+    /// would be valid only until the object that created the instance of
     /// the accessor is destroyed.  The iterator must not be used beyond
-    /// the lifetime of such creator object, and normally it's expected to
+    /// the lifetime of such a creator object, and normally it's expected to
     /// be even more ephemeral: it would be created by this method in a
     /// single method or function and only used in that limited scope.
     ///
     /// \throw std::bad_alloc Memory allocation for the iterator object failed.
     /// \throw Others There will be other cases as more implementations
-    /// are added (in this initial version it's not really fixed yet).
+    /// are added (in this initial version, it's not really decided yet).
     ///
     /// \return A smart pointer to a newly created iterator object.  Once
-    /// returned, the \c ZoneTableAccessor effectively releases the ownership.
+    /// returned, the \c ZoneTableAccessor effectively releases its ownership.
     virtual IteratorPtr getIterator() const = 0;
 };
 
