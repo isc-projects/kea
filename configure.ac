@@ -388,8 +388,6 @@ In this case we will continue, but naming of python processes will not work.])
     fi
 fi
 
-# TODO: check for _sqlite3.py module
-
 # (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
@@ -1043,16 +1041,16 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
-dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
+dnl check for pkg-config itself
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
 if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
-PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
-# Check for sqlite3 program
-AC_PATH_PROG(SQLITE3_PROGRAM, sqlite3, no)
-AM_CONDITIONAL(HAVE_SQLITE3_PROGRAM, test "x$SQLITE3_PROGRAM" != "xno")
+AX_SQLITE3_FOR_BIND10
+if test "x$have_sqlite" = "xyes" ; then
+  enable_features="$enable_features SQLite3"
+fi
 
 #
 # ASIO: we extensively use it as the C++ event management module.
