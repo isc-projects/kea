@@ -37,7 +37,10 @@ protected:
             ZoneTableSegment::create(RRClass::IN(), "mapped"))),
         config_params_(
             Element::fromJSON("{\"mapped-file\": \"" + mapped_file + "\"}"))
-    {}
+    {
+        // Verify that a ZoneTableSegmentMapped is created.
+        EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
+    }
 
     ~ZoneTableSegmentMappedTest() {
         boost::interprocess::file_mapping::remove(mapped_file.c_str());
@@ -51,12 +54,6 @@ protected:
     ZoneTableSegmentMapped* ztable_segment_;
     const ConstElementPtr config_params_;
 };
-
-
-TEST_F(ZoneTableSegmentMappedTest, create) {
-    // Verify that a mapped segment is created.
-    EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
-}
 
 TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
