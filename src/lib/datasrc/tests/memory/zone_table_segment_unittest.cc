@@ -14,7 +14,6 @@
 
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
-#include <util/memory_segment_local.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>

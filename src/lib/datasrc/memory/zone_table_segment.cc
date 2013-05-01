@@ -14,6 +14,7 @@
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
+#include <datasrc/memory/zone_table_segment_mapped.h>
 #include <datasrc/memory/zone_writer.h>
 
 #include <string>
@@ -31,6 +32,8 @@ ZoneTableSegment::create(const RRClass& rrclass, const std::string& type) {
     // Until that it becomes a real issue we won't be too smart.
     if (type == "local") {
         return (new ZoneTableSegmentLocal(rrclass));
+    } else if (type == "mapped") {
+        return (new ZoneTableSegmentMapped(rrclass));
     }
     isc_throw(UnknownSegmentType, "Zone table segment type not supported: "
               << type);
@@ -46,6 +49,11 @@ ZoneTableSegment::getZoneWriter(const LoadAction& load_action,
                                 const dns::Name& name,
                                 const dns::RRClass& rrclass)
 {
+    if (!isWritable()) {
+        isc_throw(isc::Unexpected,
+                  "getZoneWriter() called on a read-only segment");
+    }
+
     return (new ZoneWriter(this, load_action, name, rrclass));
 }
 
