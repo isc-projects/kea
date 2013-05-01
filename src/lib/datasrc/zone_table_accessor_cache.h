@@ -30,32 +30,33 @@ class CacheConfig;
 /// cache.  Its conceptual table consists of the zones that are specified
 /// to be loaded into memory in configuration.  Note that these zones
 /// may or may not actually be loaded in memory.  In fact, this class object
-/// is intended to be used by applications that load these zones into memory
-/// so the application can get a list of zones to be loaded.  Also, even
+/// is intended to be used by applications that load these zones into memory,
+/// so that the application can get a list of zones to be loaded.  Also, even
 /// after loading, some zone may still not be loaded, e.g., due to an error
-/// of the corresponding zone file.
+/// in the corresponding zone file.
 ///
 /// An object of this class is expected to be returned by
 /// \c ConfigurableClientList.  Normal applications shouldn't instantiate
-/// it directly.  It's still defined publicly visibly for testing purpose,
-/// but to clarify the intent it's hidden in the "internal" namespace.
+/// this class directly.  It's still defined to be publicly visible for
+/// testing purposes but, to clarify the intent, it's hidden in the
+/// "internal" namespace.
 class ZoneTableAccessorCache : public ZoneTableAccessor {
 public:
     /// \brief Constructor.
     ///
     /// This class takes a \c CacheConfig object and holds it throughout
-    /// its lifetime.  The caller must ensure the configuration is valid
-    /// throughout the lifetime of this accessor object.
+    /// its lifetime.  The caller must ensure that the configuration is
+    /// valid throughout the lifetime of this accessor object.
     ///
     /// \throw None
     ///
     /// \param config The cache configuration that the accessor refers to.
     ZoneTableAccessorCache(const CacheConfig& config) : config_(config) {}
 
-    /// \brief in-memmory cache version of getIterator().
+    /// \brief In-memory cache version of \c getIterator().
     ///
-    /// From this version of iterator, `ZoneSpec::index` will always be set
-    /// to 0 at the moment.
+    /// As returned from this version of iterator, `ZoneSpec::index`
+    /// will always be set to 0 at the moment.
     ///
     /// \throw None except std::bad_alloc in case of memory allocation failure
     virtual IteratorPtr getIterator() const;

@@ -40,7 +40,7 @@ namespace {
 class ZoneTableAccessorTest : public ::testing::Test {
 protected:
     ZoneTableAccessorTest() :
-        // The paths of the zone files are dummy and wouldn't even exist,
+        // The paths of the zone files are dummy and don't even exist,
         // but it doesn't matter in this test.
         config_spec_(Element::fromJSON(
                          "{\"cache-enable\": true,"
