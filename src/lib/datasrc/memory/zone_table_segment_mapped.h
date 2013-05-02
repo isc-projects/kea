@@ -71,32 +71,12 @@ public:
     /// writable.
     virtual bool isWritable() const;
 
-    /// \brief The mode using which to open a ZoneTableSegment around a
-    /// mapped file.
-    ///
-    /// - CREATE: If the mapped file doesn't exist, create it. If it
-    ///           exists, overwrite it with a newly created mapped
-    ///           file. In both cases, open the newly created mapped
-    ///           file in read+write mode.
-    ///
-    /// - READ_WRITE: If the mapped file doesn't exist, create it. If it
-    ///               exists, use the existing mapped file. In both
-    ///               cases, open the mapped file in read+write mode.
-    ///
-    /// - READ_ONLY: If the mapped file doesn't exist, throw an
-    ///              exception. If it exists, open the existing mapped
-    ///              file in read-only mode.
-    enum MemorySegmentOpenMode {
-        CREATE,
-        READ_WRITE,
-        READ_ONLY
-    };
-
     /// \brief Unmap the current file (if mapped) and map the specified
     /// one.
     ///
-    /// See the \c MemorySegmentOpenMode documentation above for the
-    /// various modes in which a ZoneTableSegment can be created.
+    /// See the \c MemorySegmentOpenMode documentation (in
+    /// \c ZoneTableSegment class) for the various modes in which a
+    /// \c ZoneTableSegmentMapped can be created.
     ///
     /// \c params should be a map containing a "mapped-file" key that
     /// points to a string value containing the filename of a mapped
@@ -110,8 +90,8 @@ public:
     /// unexpected condition occurs. These should not occur normally in
     /// correctly written code.
     ///
-    /// \param mode The open mode (see the MemorySegmentOpenMode
-    /// documentation).
+    /// \param mode The open mode (see the \c MemorySegmentOpenMode
+    /// documentation in \c ZoneTableSegment class).
     /// \param params An element containing config for the mapped file
     /// (see the description).
     virtual void reset(MemorySegmentOpenMode mode,

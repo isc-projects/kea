@@ -51,6 +51,13 @@ TEST_F(ZoneTableSegmentTest, create) {
                  UnknownSegmentType);
 }
 
+TEST_F(ZoneTableSegmentTest, reset) {
+    // reset() currently doesn't do anything in a local segment. But
+    // test the API.
+    ztable_segment_->reset(ZoneTableSegment::CREATE,
+                           Element::fromJSON("{}"));
+}
+
 // Helper function to check const and non-const methods.
 template <typename TS, typename TH, typename TT>
 void
