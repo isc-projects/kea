@@ -281,7 +281,7 @@ TEST_F(CacheConfigTest, getLoadActionWithMock) {
     // Zone configured for the cache but doesn't exist in the underling data
     // source.
     EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("example.net")),
-                 DataSourceError);
+                 NoSuchZone);
 
     // buggy data source client: it returns a null pointer from getIterator.
     EXPECT_THROW(cache_conf.getLoadAction(RRClass::IN(), Name("null.org")),
