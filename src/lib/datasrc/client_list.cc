@@ -155,7 +155,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 assert(load_action); // in this loop this should be always true
                 try {
                     memory::ZoneWriter writer(
-                        new_data_sources.back().ztable_segment_.get(),
+                        *new_data_sources.back().ztable_segment_,
                         load_action, zname, rrclass_);
                     writer.load();
                     writer.install();
@@ -349,7 +349,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     return (ZoneWriterPair(ZONE_SUCCESS,
                            ZoneWriterPtr(
                                new memory::ZoneWriter(
-                                   result.info->ztable_segment_.get(),
+                                   *result.info->ztable_segment_,
                                    load_action, name, rrclass_))));
 }
 
