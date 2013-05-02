@@ -107,9 +107,11 @@ public:
     /// \brief Return true if the segment is writable.
     ///
     /// The user of the zone table segment will load or update zones
-    /// into the segment only for writable ones.  "local" segments will
-    /// always be writable.  a "mapped" segment will be writable if a
-    /// mapped memory segment in read-write mode has been set.
+    /// into the segment only for writable ones.  The precise definition
+    /// of "writability" differs in different derived classes (see
+    /// derived class documentation).  In general, however, the user
+    /// should only rely on this interface rather than assume a specific
+    /// definition for a specific type of segment.
     virtual bool isWritable() const = 0;
 
     /// \brief Create an instance depending on the memory segment model
