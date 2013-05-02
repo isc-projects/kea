@@ -89,7 +89,7 @@ protected:
     /// An instance implementing this interface is expected to be
     /// created by the factory method (\c create()), so this constructor
     /// is protected.
-    ZoneTableSegment(isc::dns::RRClass)
+    ZoneTableSegment(const isc::dns::RRClass&)
     {}
 public:
     /// \brief Destructor
@@ -135,21 +135,6 @@ public:
     ///
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
-
-    /// \brief Create a zone writer
-    ///
-    /// This creates a new writer that can be used to update a zone
-    /// inside this zone table segment.
-    ///
-    /// \param loadAction Callback to provide the actual data.
-    /// \param origin The origin of the zone to update.
-    /// \param rrclass The class of the zone to update.
-    /// \return New instance of a zone writer. The ownership is passed
-    ///     onto the caller and the caller needs to \c delete it when
-    ///     it's done with the writer.
-    ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                              const dns::Name& origin,
-                              const dns::RRClass& rrclass);
 };
 
 } // namespace memory

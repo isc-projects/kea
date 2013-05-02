@@ -33,7 +33,12 @@ ZoneWriter::ZoneWriter(ZoneTableSegment* segment,
     rrclass_(rrclass),
     zone_data_(NULL),
     state_(ZW_UNUSED)
-{}
+{
+    if (!segment->isWritable()) {
+        isc_throw(isc::Unexpected,
+                  "Attempt to construct ZoneWriter for a read-only segment");
+    }
+}
 
 ZoneWriter::~ZoneWriter() {
     // Clean up everything there might be left if someone forgot, just

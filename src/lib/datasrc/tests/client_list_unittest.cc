@@ -166,9 +166,9 @@ public:
         // Load the data into the zone table.
         if (enabled) {
             boost::scoped_ptr<memory::ZoneWriter> writer(
-                dsrc_info.ztable_segment_->getZoneWriter(
-                    cache_conf->getLoadAction(rrclass_, zone),
-                    zone, rrclass_));
+                new memory::ZoneWriter(&(*dsrc_info.ztable_segment_),
+                                       cache_conf->getLoadAction(rrclass_, zone),
+                                       zone, rrclass_));
             writer->load();
             writer->install();
             writer->cleanup(); // not absolutely necessary, but just in case

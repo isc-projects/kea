@@ -19,6 +19,9 @@
 #include <dns/rrclass.h>
 #include <dns/name.h>
 
+#include <datasrc/tests/memory/memory_segment_test.h>
+#include <datasrc/tests/memory/zone_table_segment_test.h>
+
 #include <gtest/gtest.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -29,6 +32,7 @@ using boost::bind;
 using isc::dns::RRClass;
 using isc::dns::Name;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::memory::test;
 
 namespace {
 
@@ -58,7 +62,7 @@ protected:
     bool load_throw_;
     bool load_null_;
     bool load_data_;
-private:
+public:
     ZoneData* loadAction(isc::util::MemorySegment& segment) {
         // Make sure it is the correct segment passed. We know the
         // exact instance, can compare pointers to them.
@@ -84,6 +88,29 @@ private:
         return (data);
     }
 };
+
+class ReadOnlySegment : public ZoneTableSegmentTest {
+public:
+    ReadOnlySegment(const isc::dns::RRClass& rrclass,
+                    isc::util::MemorySegment& mem_sgmt) :
+        ZoneTableSegmentTest(rrclass, mem_sgmt)
+    {}
+
+    // Returns false indicating it is a read-only segment. It is used in
+    // the ZoneWriter tests.
+    virtual bool isWritable() const {
+        return (false);
+    }
+};
+
+TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
+    MemorySegmentTest mem_sgmt;
+    ReadOnlySegment ztable_segment(RRClass::IN(), mem_sgmt);
+    EXPECT_THROW(ZoneWriter(&ztable_segment,
+                            bind(&ZoneWriterTest::loadAction, this, _1),
+                            Name("example.org"), RRClass::IN()),
+                 isc::Unexpected);
+}
 
 // We call it the way we are supposed to, check every callback is called in the
 // right moment.
