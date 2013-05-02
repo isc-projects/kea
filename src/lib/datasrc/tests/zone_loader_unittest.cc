@@ -319,9 +319,9 @@ protected:
                                   rrclass_, cache_conf.getSegmentType()));
         if (filename) {
             boost::scoped_ptr<memory::ZoneWriter> writer(
-                ztable_segment_->getZoneWriter(cache_conf.getLoadAction(
-                                                   rrclass_, zone),
-                                               zone, rrclass_));
+                new memory::ZoneWriter(&(*ztable_segment_),
+                                       cache_conf.getLoadAction(rrclass_, zone),
+                                       zone, rrclass_));
             writer->load();
             writer->install();
             writer->cleanup();
