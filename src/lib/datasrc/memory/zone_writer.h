@@ -42,6 +42,8 @@ class ZoneWriter {
 public:
     /// \brief Constructor
     ///
+    /// \throw isc::InvalidOperation if \c segment is read-only.
+    ///
     /// \param segment The zone table segment to store the zone into.
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
