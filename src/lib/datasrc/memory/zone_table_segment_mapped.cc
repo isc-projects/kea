@@ -222,9 +222,12 @@ ZoneTableSegmentMapped::getMemorySegment() {
 bool
 ZoneTableSegmentMapped::isWritable() const {
     if (!mem_sgmt_) {
-        isc_throw(isc::Unexpected,
-                  "isWritable() called without calling reset() first");
+        // If reset() was never performed for this segment, or if the
+        // most recent reset() had failed, then the segment is not
+        // writable.
+        return (false);
     }
+
     return ((current_mode_ == CREATE) || (current_mode_ == READ_WRITE));
 }
 
