@@ -66,8 +66,9 @@ TEST_F(ZoneTableSegmentMappedTest, getMemorySegmentUninitialized) {
 }
 
 TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
-    // This should throw as we haven't called reset() yet.
-    EXPECT_THROW(ztable_segment_->isWritable(), isc::Unexpected);
+    // isWritable() must return false by default, when the segment has
+    // not been reset() yet.
+    EXPECT_FALSE(ztable_segment_->isWritable());
 }
 
 ZoneData*
@@ -104,7 +105,10 @@ TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     // The following should still throw, unaffected by the failed opens.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->isWritable(), isc::Unexpected);
+
+    // isWritable() must still return false, because the segment has not
+    // been successfully reset() yet.
+    EXPECT_FALSE(ztable_segment_->isWritable());
 }
 
 TEST_F(ZoneTableSegmentMappedTest, reset) {
@@ -118,7 +122,10 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // The following should still throw, unaffected by the failed open.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->isWritable(), isc::Unexpected);
+
+    // isWritable() must still return false, because the segment has not
+    // been successfully reset() yet.
+    EXPECT_FALSE(ztable_segment_->isWritable());
 
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
@@ -130,7 +137,6 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // The following method calls should no longer throw:
     EXPECT_NO_THROW(ztable_segment_->getHeader());
     EXPECT_NO_THROW(ztable_segment_->getMemorySegment());
-    EXPECT_NO_THROW(ztable_segment_->isWritable());
 
     // Let's try to re-open the mapped file in READ_ONLY mode. It should
     // not fail now.
@@ -154,7 +160,9 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // The following should throw now.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->isWritable(), isc::Unexpected);
+
+    // isWritable() must return false, because the last reset() failed.
+    EXPECT_FALSE(ztable_segment_->isWritable());
 
     // READ_WRITE with an existing map file ought to work too. This
     // would use existing named addresses.
