@@ -140,6 +140,51 @@ public:
     ///
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
+
+    /// \brief The mode using which to open a ZoneTableSegment.
+    ///
+    /// - CREATE: If the backing memory store doesn't exist, create
+    ///           it. If it exists, overwrite it with a newly created
+    ///           memory store. In both cases, open the newly created
+    ///           memory store in read+write mode.
+    ///
+    /// - READ_WRITE: If the backing memory store doesn't exist, create
+    ///               it. If it exists, use the existing memory store
+    ///               as-is. In both cases, open the memory store in
+    ///               read+write mode.
+    ///
+    /// - READ_ONLY: If the backing memory store doesn't exist, throw an
+    ///              exception. If it exists, open the existing memory
+    ///              store in read-only mode.
+    enum MemorySegmentOpenMode {
+        CREATE,
+        READ_WRITE,
+        READ_ONLY
+    };
+
+    /// \brief Unload the current memory store (if loaded) and load the
+    /// specified one.
+    ///
+    /// See the \c MemorySegmentOpenMode documentation above for the
+    /// various modes in which a ZoneTableSegment can be created.
+    ///
+    /// \c params should contain an implementation-defined
+    /// configuration. See the specific \c ZoneTableSegment
+    /// implementation class for details of what to pass in this
+    /// argument.
+    ///
+    /// \throws isc::InvalidParameter if the configuration in \c params
+    /// has incorrect syntax.
+    /// \throws isc::Unexpected for a variety of cases where an
+    /// unexpected condition occurs. These should not occur normally in
+    /// correctly written code.
+    ///
+    /// \param mode The open mode (see the MemorySegmentOpenMode
+    /// documentation).
+    /// \param params An element containing implementation-specific
+    /// config (see the description).
+    virtual void reset(MemorySegmentOpenMode mode,
+                       isc::data::ConstElementPtr params) = 0;
 };
 
 } // namespace memory

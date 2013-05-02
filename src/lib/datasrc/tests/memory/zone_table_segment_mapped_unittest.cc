@@ -33,13 +33,16 @@ const std::string mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 class ZoneTableSegmentMappedTest : public ::testing::Test {
 protected:
     ZoneTableSegmentMappedTest() :
-        ztable_segment_(dynamic_cast<ZoneTableSegmentMapped*>(
-            ZoneTableSegment::create(RRClass::IN(), "mapped"))),
+        ztable_segment_(
+            ZoneTableSegment::create(RRClass::IN(), "mapped")),
         config_params_(
             Element::fromJSON("{\"mapped-file\": \"" + mapped_file + "\"}"))
     {
-        // Verify that a ZoneTableSegmentMapped is created.
         EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
+        // Verify that a ZoneTableSegmentMapped is created.
+        ZoneTableSegmentMapped* mapped_segment =
+            dynamic_cast<ZoneTableSegmentMapped*>(ztable_segment_);
+        EXPECT_NE(static_cast<void*>(NULL), mapped_segment);
     }
 
     ~ZoneTableSegmentMappedTest() {
@@ -51,7 +54,7 @@ protected:
         ztable_segment_ = NULL;
     }
 
-    ZoneTableSegmentMapped* ztable_segment_;
+    ZoneTableSegment* ztable_segment_;
     const ConstElementPtr config_params_;
 };
 
@@ -80,25 +83,25 @@ loadAction(MemorySegment&) {
 TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     // Not a map
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("42"));
     }, isc::InvalidParameter);
 
     // Empty map
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
 
     // No "mapped-file" key
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{\"foo\": \"bar\"}"));
     }, isc::InvalidParameter);
 
     // Value of "mapped-file" key is not a string
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{\"mapped-file\": 42}"));
     }, isc::InvalidParameter);
 
@@ -115,7 +118,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // By default, the mapped file doesn't exist, so we cannot open it
     // in READ_ONLY mode (which does not create the file).
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::READ_ONLY,
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
                                config_params_);
     }, MemorySegmentOpenError);
 
@@ -129,7 +132,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
 
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
-    ztable_segment_->reset(ZoneTableSegmentMapped::READ_WRITE,
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
                            config_params_);
     // This must not throw now.
     EXPECT_TRUE(ztable_segment_->isWritable());
@@ -140,21 +143,21 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
 
     // Let's try to re-open the mapped file in READ_ONLY mode. It should
     // not fail now.
-    ztable_segment_->reset(ZoneTableSegmentMapped::READ_ONLY,
+    ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
                            config_params_);
     EXPECT_FALSE(ztable_segment_->isWritable());
 
     // Re-creating the mapped file should erase old data and should not
     // trigger any exceptions inside reset() due to old data (such as
     // named addresses).
-    ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+    ztable_segment_->reset(ZoneTableSegment::CREATE,
                            config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
 
     // When we reset() and it fails, then the segment should be
     // unusable.
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegmentMapped::CREATE,
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
     // The following should throw now.
@@ -166,7 +169,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
 
     // READ_WRITE with an existing map file ought to work too. This
     // would use existing named addresses.
-    ztable_segment_->reset(ZoneTableSegmentMapped::READ_WRITE,
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
                            config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
 }

@@ -37,6 +37,13 @@ ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
     assert(mem_sgmt_.allMemoryDeallocated());
 }
 
+void
+ZoneTableSegmentLocal::reset(MemorySegmentOpenMode,
+                             isc::data::ConstElementPtr)
+{
+    // This method doesn't do anything in this implementation.
+}
+
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the
 // header file.
