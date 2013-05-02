@@ -33,6 +33,7 @@ class ZoneTableSegmentMapped : public ZoneTableSegment {
     // This is so that ZoneTableSegmentMapped can be instantiated from
     // ZoneTableSegment::create().
     friend class ZoneTableSegment;
+
 protected:
     /// \brief Protected constructor
     ///
@@ -40,10 +41,8 @@ protected:
     /// (\c ZoneTableSegment::create()), so this constructor is
     /// protected.
     ZoneTableSegmentMapped(const isc::dns::RRClass& rrclass);
-public:
-    /// \brief Destructor
-    virtual ~ZoneTableSegmentMapped();
 
+public:
     /// \brief Return the ZoneTableHeader for the mapped zone table
     /// segment implementation.
     ///
