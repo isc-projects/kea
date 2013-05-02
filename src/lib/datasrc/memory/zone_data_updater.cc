@@ -49,14 +49,14 @@ ZoneDataUpdater::addWildcards(const Name& name) {
             // Ensure a separate level exists for the "wildcarding"
             // name, and mark the node as "wild".
             ZoneNode* node;
-            zone_data_.insertName(mem_sgmt_, wname.split(1), &node);
+            zone_data_->insertName(mem_sgmt_, wname.split(1), &node);
             node->setFlag(ZoneData::WILDCARD_NODE);
 
             // Ensure a separate level exists for the wildcard name.
             // Note: for 'name' itself we do this later anyway, but the
             // overhead should be marginal because wildcard names should
             // be rare.
-            zone_data_.insertName(mem_sgmt_, wname, &node);
+            zone_data_->insertName(mem_sgmt_, wname, &node);
         }
     }
 }
@@ -210,7 +210,7 @@ ZoneDataUpdater::validate(const isc::dns::ConstRRsetPtr rrset) const {
 const NSEC3Hash*
 ZoneDataUpdater::getNSEC3Hash() {
     if (hash_ == NULL) {
-        NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+        NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
         // This should never be NULL in this codepath.
         assert(nsec3_data != NULL);
 
@@ -231,11 +231,11 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
         dynamic_cast<const T&>(
             rrset->getRdataIterator()->getCurrent());
 
-    NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
     if (nsec3_data == NULL) {
         nsec3_data = NSEC3Data::create(mem_sgmt_, zone_name_, nsec3_rdata);
-        zone_data_.setNSEC3Data(nsec3_data);
-        zone_data_.setSigned(true);
+        zone_data_->setNSEC3Data(nsec3_data);
+        zone_data_->setSigned(true);
     } else {
         const NSEC3Hash* hash = getNSEC3Hash();
         if (!hash->match(nsec3_rdata)) {
@@ -254,7 +254,7 @@ ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr& rrset,
         setupNSEC3<generic::NSEC3>(rrset);
     }
 
-    NSEC3Data* nsec3_data = zone_data_.getNSEC3Data();
+    NSEC3Data* nsec3_data = zone_data_->getNSEC3Data();
     if (nsec3_data == NULL) {
         // This is some tricky case: an RRSIG for NSEC3 is given without the
         // covered NSEC3, and we don't even know any NSEC3 related data.
@@ -290,7 +290,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         addNSEC3(name, rrset, rrsig);
     } else {
         ZoneNode* node;
-        zone_data_.insertName(mem_sgmt_, name, &node);
+        zone_data_->insertName(mem_sgmt_, name, &node);
 
         RdataSet* rdataset_head = node->getData();
 
@@ -334,7 +334,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         // Ok, we just put it in.
 
         // Convenient (and more efficient) shortcut to check RRsets at origin
-        const bool is_origin = (node == zone_data_.getOriginNode());
+        const bool is_origin = (node == zone_data_->getOriginNode());
 
         // If this RRset creates a zone cut at this node, mark the node
         // indicating the need for callback in find().  Note that we do this
@@ -356,7 +356,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
             // (conceptually "signed" is a broader notion but our
             // current zone finder implementation regards "signed" as
             // "NSEC signed")
-            zone_data_.setSigned(true);
+            zone_data_->setSigned(true);
         }
 
         // If we are adding a new SOA at the origin, update zone's min TTL.
@@ -365,7 +365,7 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
         // this should be only once in normal cases) update the TTL.
         if (rrset && rrtype == RRType::SOA() && is_origin) {
             // Our own validation ensures the RRset is not empty.
-            zone_data_.setMinTTL(
+            zone_data_->setMinTTL(
                 dynamic_cast<const generic::SOA&>(
                     rrset->getRdataIterator()->getCurrent()).getMinimum());
         }
