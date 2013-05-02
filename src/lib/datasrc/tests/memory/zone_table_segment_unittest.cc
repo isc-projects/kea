@@ -84,15 +84,6 @@ loadAction(MemorySegment&) {
     return (NULL);
 }
 
-// Test we can get a writer.
-TEST_F(ZoneTableSegmentTest, getZoneWriter) {
-    scoped_ptr<ZoneWriter>
-        writer(ztable_segment_->getZoneWriter(loadAction, Name("example.org"),
-                                              RRClass::IN()));
-    // We have to get something
-    EXPECT_NE(static_cast<void*>(NULL), writer.get());
-}
-
 TEST_F(ZoneTableSegmentTest, isWritable) {
     // Local segments are always writable.
     EXPECT_TRUE(ztable_segment_->isWritable());

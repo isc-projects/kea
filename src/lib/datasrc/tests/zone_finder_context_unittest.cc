@@ -80,8 +80,9 @@ createInMemoryClient(RRClass zclass, const Name& zname) {
     shared_ptr<ZoneTableSegment> ztable_segment(
         ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
     scoped_ptr<memory::ZoneWriter> writer(
-        ztable_segment->getZoneWriter(cache_conf.getLoadAction(zclass, zname),
-                                      zname, zclass));
+        new memory::ZoneWriter(&(*ztable_segment),
+                               cache_conf.getLoadAction(zclass, zname),
+                               zname, zclass));
     writer->load();
     writer->install();
     writer->cleanup();

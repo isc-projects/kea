@@ -44,19 +44,6 @@ ZoneTableSegment::destroy(ZoneTableSegment *segment) {
     delete segment;
 }
 
-ZoneWriter*
-ZoneTableSegment::getZoneWriter(const LoadAction& load_action,
-                                const dns::Name& name,
-                                const dns::RRClass& rrclass)
-{
-    if (!isWritable()) {
-        isc_throw(isc::Unexpected,
-                  "getZoneWriter() called on a read-only segment");
-    }
-
-    return (new ZoneWriter(this, load_action, name, rrclass));
-}
-
 } // namespace memory
 } // namespace datasrc
 } // namespace isc

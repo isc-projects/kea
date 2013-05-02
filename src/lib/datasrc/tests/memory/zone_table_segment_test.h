@@ -30,7 +30,7 @@ namespace test {
 // was de-allocated on it.
 class ZoneTableSegmentTest : public ZoneTableSegment {
 public:
-    ZoneTableSegmentTest(isc::dns::RRClass rrclass,
+    ZoneTableSegmentTest(const isc::dns::RRClass& rrclass,
                          isc::util::MemorySegment& mem_sgmt) :
         ZoneTableSegment(rrclass),
         mem_sgmt_(mem_sgmt),
@@ -55,13 +55,6 @@ public:
 
     virtual bool isWritable() const {
         return (true);
-    }
-
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& name,
-                                      const dns::RRClass& rrclass)
-    {
-        return (new ZoneWriter(this, load_action, name, rrclass));
     }
 
 private:

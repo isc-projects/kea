@@ -76,15 +76,6 @@ loadAction(MemorySegment&) {
     return (NULL);
 }
 
-// Test we can get a writer.
-TEST_F(ZoneTableSegmentMappedTest, getZoneWriterUninitialized) {
-    // This should throw as we haven't called reset() yet.
-    EXPECT_THROW({
-        ztable_segment_->getZoneWriter(loadAction, Name("example.org"),
-                                       RRClass::IN());
-    }, isc::Unexpected);
-}
-
 TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     // Not a map
     EXPECT_THROW({
