@@ -25,6 +25,9 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 
+#include <util/memory_segment_local.h>
+#include <util/memory_segment_mapped.h>
+
 #include "memory_segment_test.h"
 
 #include <gtest/gtest.h>
@@ -39,10 +42,18 @@ using namespace isc::datasrc::memory;
 
 namespace {
 
+const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+
+// An abstract factory class for the segments. We want fresh segment for each
+// test, so we have different factories for them.
 class SegmentCreator {
 public:
     typedef boost::shared_ptr<isc::util::MemorySegment> SegmentPtr;
+    // Create the segment.
     virtual SegmentPtr create() const = 0;
+    // Clean-up after the test. Most of them will be just NOP (the default),
+    // but the file-mapped one needs to remove the file.
+    virtual void cleanup() const {};
 };
 
 class ZoneDataUpdaterTest : public ::testing::TestWithParam<SegmentCreator*> {
@@ -61,6 +72,7 @@ protected:
         if (!mem_sgmt_->allMemoryDeallocated()) {
             ADD_FAILURE() << "Memory leak detected";
         }
+        GetParam()->cleanup();
     }
 
     void clearZoneData() {
@@ -90,6 +102,46 @@ TestSegmentCreator test_segment_creator;
 INSTANTIATE_TEST_CASE_P(TestSegment, ZoneDataUpdaterTest,
                         ::testing::Values(static_cast<SegmentCreator*>(
                             &test_segment_creator)));
+
+class MemorySegmentCreator : public SegmentCreator {
+public:
+    virtual SegmentPtr create() const {
+        // We are not really supposed to create the segment directly in real
+        // code, but it should be OK inside tests.
+        return SegmentPtr(new isc::util::MemorySegmentLocal);
+    }
+};
+
+MemorySegmentCreator memory_segment_creator;
+
+INSTANTIATE_TEST_CASE_P(LocalSegment, ZoneDataUpdaterTest,
+                        ::testing::Values(static_cast<SegmentCreator*>(
+                            &memory_segment_creator)));
+
+class MappedSegmentCreator : public SegmentCreator {
+public:
+    MappedSegmentCreator(size_t initial_size =
+                         isc::util::MemorySegmentMapped::INITIAL_SIZE) :
+        initial_size_(initial_size)
+    {}
+    virtual SegmentPtr create() const {
+        return SegmentPtr(new isc::util::MemorySegmentMapped(mapped_file,
+            isc::util::MemorySegmentMapped::CREATE_ONLY, initial_size_));
+    }
+    virtual void cleanup() const {
+        EXPECT_EQ(0, unlink(mapped_file));
+    }
+private:
+    size_t initial_size_;
+};
+
+// There should be no initialization fiasco there. We only set int value inside
+// and don't use it until the create() is called.
+MappedSegmentCreator small_creator(4092), default_creator;
+
+INSTANTIATE_TEST_CASE_P(MappedSegment, ZoneDataUpdaterTest, ::testing::Values(
+                            static_cast<SegmentCreator*>(&small_creator),
+                            static_cast<SegmentCreator*>(&default_creator)));
 
 TEST_P(ZoneDataUpdaterTest, bothNull) {
     // At least either covered RRset or RRSIG must be non NULL.
