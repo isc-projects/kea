@@ -669,17 +669,20 @@ TEST_F(ListTest, cacheZones) {
 TEST_F(ListTest, badCache) {
     list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
-    // First, the zone is not in the data source
+    // First, the zone is not in the data source. configure() should still
+    // succeed, and the existence zone should be cached.
     const ConstElementPtr elem1(Element::fromJSON("["
         "{"
-        "   \"type\": \"type1\","
+        "   \"type\": \"test_type\","
         "   \"cache-enable\": true,"
-        "   \"cache-zones\": [\"example.org\"],"
-        "   \"params\": []"
+        "   \"cache-zones\": [\"example.org\", \"example.com\"],"
+        "   \"params\": [\"example.org\"]"
         "}]"));
-    EXPECT_THROW(list_->configure(elem1, true),
-                 ConfigurableClientList::ConfigurationError);
-    checkDS(0, "test_type", "{}", false);
+    list_->configure(elem1, true); // shouldn't cause disruption
+    checkDS(0, "test_type", "[\"example.org\"]", true);
+    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    EXPECT_EQ(1, cache->getZoneCount());
+    EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
     // Now, the zone doesn't give an iterator
     const ConstElementPtr elem2(Element::fromJSON("["
         "{"
@@ -689,7 +692,7 @@ TEST_F(ListTest, badCache) {
         "   \"params\": [\"noiter.org\"]"
         "}]"));
     EXPECT_THROW(list_->configure(elem2, true), isc::NotImplemented);
-    checkDS(0, "test_type", "{}", false);
+    checkDS(0, "test_type", "[\"example.org\"]", true);
     // Now, the zone returns NULL iterator
     const ConstElementPtr elem3(Element::fromJSON("["
         "{"
@@ -699,7 +702,7 @@ TEST_F(ListTest, badCache) {
         "   \"params\": [\"null.org\"]"
         "}]"));
     EXPECT_THROW(list_->configure(elem3, true), isc::Unexpected);
-    checkDS(0, "test_type", "{}", false);
+    checkDS(0, "test_type", "[\"example.org\"]", true);
     // The autodetection of zones is not enabled
     const ConstElementPtr elem4(Element::fromJSON("["
         "{"
@@ -708,7 +711,7 @@ TEST_F(ListTest, badCache) {
         "   \"params\": [\"example.org\"]"
         "}]"));
     EXPECT_THROW(list_->configure(elem4, true), isc::NotImplemented);
-    checkDS(0, "test_type", "{}", false);
+    checkDS(0, "test_type", "[\"example.org\"]", true);
 }
 
 TEST_F(ListTest, masterFiles) {
