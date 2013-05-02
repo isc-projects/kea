@@ -207,7 +207,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc="); 
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
                      "EXPIRATION 20100222214617 8496 isc.org. "
