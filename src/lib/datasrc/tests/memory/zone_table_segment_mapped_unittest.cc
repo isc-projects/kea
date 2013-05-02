@@ -74,12 +74,6 @@ TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
     EXPECT_FALSE(ztable_segment_->isWritable());
 }
 
-ZoneData*
-loadAction(MemorySegment&) {
-    // The function won't be called, so this is OK
-    return (NULL);
-}
-
 TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     // Not a map
     EXPECT_THROW({
