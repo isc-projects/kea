@@ -406,6 +406,22 @@ TEST_F(DataSrcClientsBuilderTest,
     EXPECT_EQ(orig_lock_count + 1, map_mutex.lock_count);
     EXPECT_EQ(orig_unlock_count + 1, map_mutex.unlock_count);
 
+    // zone doesn't exist in the data source
+    const ConstElementPtr config_nozone(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": {\"database_file\": \"" + test_db + "\"},"
+        "    \"cache-enable\": true,"
+        "    \"cache-zones\": [\"nosuchzone.example\"]"
+        "}]}"));
+    clients_map = configureDataSource(config_nozone);
+    EXPECT_THROW(
+        builder.handleCommand(
+            Command(LOADZONE, Element::fromJSON(
+                        "{\"class\": \"IN\","
+                        " \"origin\": \"nosuchzone.example\"}"))),
+        TestDataSrcClientsBuilder::InternalCommandError);
+
     // basically impossible case: in-memory cache is completely disabled.
     // In this implementation of manager-builder, this should never happen,
     // but it catches it like other configuration error and keeps going.
@@ -502,14 +518,6 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                                                   "{\"class\": \"IN\"}")));
             }, "");
     }
-
-    // zone doesn't exist in the data source
-    EXPECT_THROW(
-        builder.handleCommand(
-            Command(LOADZONE,
-                    Element::fromJSON(
-                        "{\"class\": \"IN\", \"origin\": \"xx\"}"))),
-        TestDataSrcClientsBuilder::InternalCommandError);
 
     // origin is bogus
     EXPECT_THROW(builder.handleCommand(
