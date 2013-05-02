@@ -1325,6 +1325,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
                  tests/tools/perfdhcp/tests/testdata/Makefile
+                 m4macros/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
