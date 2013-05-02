@@ -109,7 +109,7 @@ TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
     EXPECT_THROW(ZoneWriter(&ztable_segment,
                             bind(&ZoneWriterTest::loadAction, this, _1),
                             Name("example.org"), RRClass::IN()),
-                 isc::Unexpected);
+                 isc::InvalidOperation);
 }
 
 // We call it the way we are supposed to, check every callback is called in the
