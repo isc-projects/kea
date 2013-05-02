@@ -121,7 +121,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
             // closed. Check that its checksum is consistent.
             uint32_t* checksum = static_cast<uint32_t*>
                 (segment->getNamedAddress("zone_table_checksum"));
-            uint32_t saved_checksum = *checksum;
+            const uint32_t saved_checksum = *checksum;
             // First, clear the checksum so that getCheckSum() returns
             // a consistent value.
             *checksum = 0;
