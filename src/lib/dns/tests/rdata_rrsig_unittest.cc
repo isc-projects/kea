@@ -133,9 +133,7 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
               "f49t+sXKPzbipN9g+s1ZPiIyofc=");
 }
 
-TEST_F(Rdata_RRSIG_Test, badText) {
-    // missing fields
-    checkFromText_InvalidType("SPORK");
+TEST_F(Rdata_RRSIG_Test, badText_missingFields) {
     checkFromText_LexerError("A");
     checkFromText_LexerError("A 5");
     checkFromText_LexerError("A 5 4");
@@ -144,7 +142,13 @@ TEST_F(Rdata_RRSIG_Test, badText) {
     checkFromText_LexerError("A 5 4 43200 20100223214617 20100222214617");
     checkFromText_LexerError("A 5 4 43200 20100223214617 20100222214617 "
                               "8496");
-    // bad algorithm
+}
+
+TEST_F(Rdata_RRSIG_Test, badText_coveredType) {
+    checkFromText_InvalidType("SPORK");
+}
+
+TEST_F(Rdata_RRSIG_Test, badText_algorithm) {
     checkFromText_InvalidText(
                      "A 555 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -159,8 +163,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad labels
+TEST_F(Rdata_RRSIG_Test, badText_labels) {
     checkFromText_InvalidText(
                      "A 5 4444 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -175,8 +180,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad original ttl
+TEST_F(Rdata_RRSIG_Test, badText_ttl) {
     checkFromText_LexerError(
                      "A 5 4 999999999999 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -199,8 +205,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
               "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
               "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
               "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad signature expiration
+TEST_F(Rdata_RRSIG_Test, badText_expiration) {
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
                      "201002232 20100222214617 8496 isc.org. "
@@ -215,8 +222,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-   // bad signature inception
+TEST_F(Rdata_RRSIG_Test, badText_inception) {
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
                      "20100223214617 20100227 8496 isc.org. "
@@ -231,8 +239,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad key tag
+TEST_F(Rdata_RRSIG_Test, badText_keytag) {
     checkFromText_InvalidText(
                      "A 5 4 43200 "
                      "20100223214617 20100222214617 999999 isc.org. "
@@ -247,8 +256,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad signer name
+TEST_F(Rdata_RRSIG_Test, badText_signer) {
     checkFromText_MissingOrigin(
                      "A 5 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org "
@@ -256,8 +266,9 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+}
 
-    // bad signature
+TEST_F(Rdata_RRSIG_Test, badText_signature) {
     checkFromText_BadValue(
                      "A 5 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
