@@ -15,8 +15,8 @@
 #ifndef MEM_ZONE_WRITER_H
 #define MEM_ZONE_WRITER_H
 
-#include "zone_table_segment.h"
-#include "load_action.h"
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/load_action.h>
 
 #include <dns/rrclass.h>
 #include <dns/name.h>
@@ -27,7 +27,7 @@ namespace memory {
 
 /// \brief Does an update to a zone.
 ///
-/// This represents the work of a reload of a zone.  The work is divided
+/// This represents the work of a (re)load of a zone.  The work is divided
 /// into three stages -- load(), install() and cleanup().  They should
 /// be called in this order for the effect to take place.
 ///
