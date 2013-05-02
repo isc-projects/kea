@@ -373,6 +373,24 @@ ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
 }
 
 void
+ZoneDataUpdater::addInternal(const isc::dns::Name& name,
+                     const isc::dns::RRType& rrtype,
+                     const isc::dns::ConstRRsetPtr& rrset,
+                     const isc::dns::ConstRRsetPtr& rrsig)
+{
+    // Add wildcards possibly contained in the owner name to the domain
+    // tree.  This can only happen for the normal (non-NSEC3) tree.
+    // Note: this can throw an exception, breaking strong exception
+    // guarantee.  (see also the note for the call to contextCheck()
+    // above).
+    if (rrtype != RRType::NSEC3()) {
+        addWildcards(name);
+    }
+
+    addRdataSet(name, rrtype, rrset, rrsig);
+}
+
+void
 ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
                      const ConstRRsetPtr& sig_rrset)
 {
@@ -397,16 +415,7 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
         arg(rrset ? rrtype.toText() : "RRSIG(" + rrtype.toText() + ")").
         arg(zone_name_);
 
-    // Add wildcards possibly contained in the owner name to the domain
-    // tree.  This can only happen for the normal (non-NSEC3) tree.
-    // Note: this can throw an exception, breaking strong exception
-    // guarantee.  (see also the note for the call to contextCheck()
-    // above).
-    if (rrtype != RRType::NSEC3()) {
-        addWildcards(name);
-    }
-
-    addRdataSet(name, rrtype, rrset, sig_rrset);
+    addInternal(name, rrtype, rrset, sig_rrset);
 }
 
 } // namespace memory
