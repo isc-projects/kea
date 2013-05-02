@@ -48,7 +48,7 @@ public:
     /// \param load_action The callback used to load data.
     /// \param install_action The callback used to install the loaded zone.
     /// \param rrclass The class of the zone.
-    ZoneWriter(ZoneTableSegment* segment,
+    ZoneWriter(ZoneTableSegment& segment,
                const LoadAction& load_action, const dns::Name& name,
                const dns::RRClass& rrclass);
 
@@ -100,7 +100,7 @@ public:
     void cleanup();
 
 private:
-    ZoneTableSegment* const segment_;
+    ZoneTableSegment& segment_;
     const LoadAction load_action_;
     const dns::Name origin_;
     const dns::RRClass rrclass_;
