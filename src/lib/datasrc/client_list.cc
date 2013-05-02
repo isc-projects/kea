@@ -102,10 +102,11 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             }
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
-            const string name(name_elem ? name_elem->stringValue() : type);
-            if (!used_names.insert(name).second) {
+            const string datasrc_name =
+                name_elem ? name_elem->stringValue() : type;
+            if (!used_names.insert(datasrc_name).second) {
                 isc_throw(ConfigurationError, "Duplicate name in client list: "
-                          << name);
+                          << datasrc_name);
             }
 
             // Create a client for the underling data source via factory.
@@ -116,7 +117,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                                                  paramConf);
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                    arg(name).arg(rrclass_);
+                    arg(datasrc_name).arg(rrclass_);
                 continue;
             }
 
@@ -129,7 +130,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
                                                       cache_conf, rrclass_,
-                                                      name));
+                                                      datasrc_name));
 
             // If cache is disabled we are done for this data source.
             // Otherwise load zones into the in-memory cache.
@@ -144,25 +145,24 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                  ++zone_it)
             {
                 const Name& zname = zone_it->first;
-                memory::LoadAction load_action;
                 try {
-                    load_action = cache_conf->getLoadAction(rrclass_, zname);
-                } catch (const NoSuchZone&) {
-                    isc_throw(ConfigurationError, "Unable to cache "
-                              "non-existent zone: "
-                              << zname << "/" << rrclass_);
-                }
-                assert(load_action); // in this loop this should be always true
-                try {
+                    const memory::LoadAction load_action =
+                        cache_conf->getLoadAction(rrclass_, zname);
+                    // in this loop this should be always true
+                    assert(load_action);
                     memory::ZoneWriter writer(
                         *new_data_sources.back().ztable_segment_,
                         load_action, zname, rrclass_);
                     writer.load();
                     writer.install();
                     writer.cleanup();
+                } catch (const NoSuchZone&) {
+                    LOG_ERROR(logger, DATASRC_CACHE_ZONE_NOTFOUND).
+                        arg(zname).arg(rrclass_).arg(datasrc_name);
                 } catch (const ZoneLoaderException& e) {
-                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR)
-                        .arg(zname).arg(rrclass_).arg(name).arg(e.what());
+                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).
+                        arg(zname).arg(rrclass_).arg(datasrc_name).
+                        arg(e.what());
                 }
             }
         }

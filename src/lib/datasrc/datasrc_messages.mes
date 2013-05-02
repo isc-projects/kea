@@ -70,6 +70,15 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_CACHE_ZONE_NOTFOUND Zone %1/%2 not found on data source '%3' to cache
+During data source configuration, a zone is to be loaded (cached) in
+to memory from the underlying data source, but the zone is not found
+in the data source.  This particular zone was not loaded, but data
+source configuration continues, possibly loading other zones into
+memory. This is basically some kind of configuration or operation
+error: either the name is incorrect in the configuration, or the zone
+has been removed from the data source without updating the configuration.
+
 % DATASRC_CHECK_ERROR post-load check of zone %1/%2 failed: %3
 The zone was loaded into the data source successfully, but the content fails
 basic sanity checks. See the message if you want to know what exactly is wrong
@@ -354,7 +363,7 @@ Therefore, the entire data source will not be available for this process. If
 this is a problem, you should configure the zones of that data source to some
 database backend (sqlite3, for example) and use it from there.
 
-% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source %3: %4
+% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source '%3': %4
 During data source configuration, an error was found in the zone data
 when it was being loaded in to memory on the shown data source.  This
 particular zone was not loaded, but data source configuration
