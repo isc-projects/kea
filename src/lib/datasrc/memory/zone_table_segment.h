@@ -112,6 +112,9 @@ public:
     /// derived class documentation).  In general, however, the user
     /// should only rely on this interface rather than assume a specific
     /// definition for a specific type of segment.
+    ///
+    /// \throw None This method's implementations must be
+    /// exception-free.
     virtual bool isWritable() const = 0;
 
     /// \brief Create an instance depending on the memory segment model
