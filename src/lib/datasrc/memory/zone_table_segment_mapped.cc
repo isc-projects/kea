@@ -31,9 +31,6 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 {
 }
 
-ZoneTableSegmentMapped::~ZoneTableSegmentMapped() {
-}
-
 void
 ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                               isc::data::ConstElementPtr params)
