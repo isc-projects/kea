@@ -76,8 +76,8 @@ void DebugParser::commit() {
 // **************************** BooleanParser  *************************
 
 BooleanParser::BooleanParser(const std::string& param_name, 
-                            BooleanStoragePtr storage_)
-    : storage_(storage_), param_name_(param_name), value_(false) {
+                            BooleanStoragePtr storage)
+    : storage_(storage), param_name_(param_name), value_(false) {
     // Empty parameter name is invalid.
     if (param_name_.empty()) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
@@ -94,9 +94,13 @@ BooleanParser::BooleanParser(const std::string& param_name,
 void BooleanParser::build(ConstElementPtr value) {
     // The Config Manager checks if user specified a
     // valid value for a boolean parameter: True or False.
-    // It is then ok to assume that if str() does not return
-    // 'true' the value is 'false'.
-    value_ = (value->str() == "true") ? true : false;
+    // We should have a boolean Element, use value directly
+    try {
+        value_ = value->boolValue();
+    } catch (const isc::data::TypeError &) {
+        isc_throw(BadValue, " Wrong value type for " << param_name_ 
+                  << " : build called with a non-boolean element.");
+    }
 }
 
 void BooleanParser::commit() {
@@ -137,7 +141,7 @@ void Uint32Parser::build(ConstElementPtr value) {
     }
     if (check < 0) {
         isc_throw(BadValue, "Value " << value->str() << "is negative."
-                  << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+               << " Only 0 or larger are allowed for unsigned 32-bit integer.");
     }
 
     // value is small enough to fit
@@ -152,7 +156,8 @@ void Uint32Parser::commit() {
 
 // **************************** StringParser  *************************
 
-StringParser::StringParser(const std::string& param_name, StringStoragePtr storage)
+StringParser::StringParser(const std::string& param_name, 
+                           StringStoragePtr storage)
     :storage_(storage), param_name_(param_name) {
     // Empty parameter name is invalid.
     if (param_name_.empty()) {
@@ -168,8 +173,18 @@ StringParser::StringParser(const std::string& param_name, StringStoragePtr stora
 }
 
 void StringParser::build(ConstElementPtr value) {
+#if 0
     value_ = value->str();
     boost::erase_all(value_, "\"");
+#else
+    try {
+        value_ = value->stringValue();
+        boost::erase_all(value_, "\"");
+    } catch (const isc::data::TypeError &) {
+        isc_throw(BadValue, " Wrong value type for " << param_name_ 
+                  << " : build called with a non-boolean element.");
+    }
+#endif
 }
 
 void StringParser::commit() {
@@ -178,9 +193,10 @@ void StringParser::commit() {
     storage_->setParam(param_name_, value_);
 }
 
-// **************************** InterfaceListConfigParser *************************
+// ******************** InterfaceListConfigParser *************************
 
-InterfaceListConfigParser::InterfaceListConfigParser(const std::string& param_name) {
+InterfaceListConfigParser::InterfaceListConfigParser(const std::string& 
+                                                     param_name) {
     if (param_name != "interface") {
         isc_throw(BadValue, "Internal error. Interface configuration "
             "parser called for the wrong parameter: " << param_name);
