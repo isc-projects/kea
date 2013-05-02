@@ -39,39 +39,59 @@ using namespace isc::datasrc::memory;
 
 namespace {
 
-class ZoneDataUpdaterTest : public ::testing::Test {
+class SegmentCreator {
+public:
+    typedef boost::shared_ptr<isc::util::MemorySegment> SegmentPtr;
+    virtual SegmentPtr create() const = 0;
+};
+
+class ZoneDataUpdaterTest : public ::testing::TestWithParam<SegmentCreator*> {
 protected:
     ZoneDataUpdaterTest() :
         zname_("example.org"), zclass_(RRClass::IN()),
-        zone_data_(ZoneData::create(mem_sgmt_, zname_)),
-        updater_(new ZoneDataUpdater(mem_sgmt_, zclass_, zname_, *zone_data_))
+        mem_sgmt_(GetParam()->create()),
+        zone_data_(ZoneData::create(*mem_sgmt_, zname_)),
+        updater_(new ZoneDataUpdater(*mem_sgmt_, zclass_, zname_, *zone_data_))
     {}
 
     ~ZoneDataUpdaterTest() {
         if (zone_data_ != NULL) {
-            ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
+            ZoneData::destroy(*mem_sgmt_, zone_data_, zclass_);
         }
-        if (!mem_sgmt_.allMemoryDeallocated()) {
+        if (!mem_sgmt_->allMemoryDeallocated()) {
             ADD_FAILURE() << "Memory leak detected";
         }
     }
 
     void clearZoneData() {
         assert(zone_data_ != NULL);
-        ZoneData::destroy(mem_sgmt_, zone_data_, zclass_);
-        zone_data_ = ZoneData::create(mem_sgmt_, zname_);
-        updater_.reset(new ZoneDataUpdater(mem_sgmt_, zclass_, zname_,
+        ZoneData::destroy(*mem_sgmt_, zone_data_, zclass_);
+        zone_data_ = ZoneData::create(*mem_sgmt_, zname_);
+        updater_.reset(new ZoneDataUpdater(*mem_sgmt_, zclass_, zname_,
                                            *zone_data_));
     }
 
     const Name zname_;
     const RRClass zclass_;
-    test::MemorySegmentTest mem_sgmt_;
+    boost::shared_ptr<isc::util::MemorySegment> mem_sgmt_;
     ZoneData* zone_data_;
     boost::scoped_ptr<ZoneDataUpdater> updater_;
 };
 
-TEST_F(ZoneDataUpdaterTest, bothNull) {
+class TestSegmentCreator : public SegmentCreator {
+public:
+    virtual SegmentPtr create() const {
+        return SegmentPtr(new test::MemorySegmentTest);
+    }
+};
+
+TestSegmentCreator test_segment_creator;
+
+INSTANTIATE_TEST_CASE_P(TestSegment, ZoneDataUpdaterTest,
+                        ::testing::Values(static_cast<SegmentCreator*>(
+                            &test_segment_creator)));
+
+TEST_P(ZoneDataUpdaterTest, bothNull) {
     // At least either covered RRset or RRSIG must be non NULL.
     EXPECT_THROW(updater_->add(ConstRRsetPtr(), ConstRRsetPtr()),
                  ZoneDataUpdater::NullRRset);
@@ -87,7 +107,7 @@ getNode(isc::util::MemorySegment& mem_sgmt, const Name& name,
     return (node);
 }
 
-TEST_F(ZoneDataUpdaterTest, zoneMinTTL) {
+TEST_P(ZoneDataUpdaterTest, zoneMinTTL) {
     // If we add SOA, zone's min TTL will be updated.
     updater_->add(textToRRset(
                       "example.org. 3600 IN SOA . . 0 0 0 0 1200",
@@ -97,13 +117,13 @@ TEST_F(ZoneDataUpdaterTest, zoneMinTTL) {
     EXPECT_EQ(RRTTL(1200), RRTTL(b));
 }
 
-TEST_F(ZoneDataUpdaterTest, rrsigOnly) {
+TEST_P(ZoneDataUpdaterTest, rrsigOnly) {
     // RRSIG that doesn't have covered RRset can be added.  The resulting
     // rdataset won't have "normal" RDATA but sig RDATA.
     updater_->add(ConstRRsetPtr(), textToRRset(
                       "www.example.org. 3600 IN RRSIG A 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    ZoneNode* node = getNode(mem_sgmt_, Name("www.example.org"), zone_data_);
+    ZoneNode* node = getNode(*mem_sgmt_, Name("www.example.org"), zone_data_);
     const RdataSet* rdset = node->getData();
     ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
     rdset = RdataSet::find(rdset, RRType::A(), true);
@@ -121,7 +141,7 @@ TEST_F(ZoneDataUpdaterTest, rrsigOnly) {
     updater_->add(ConstRRsetPtr(), textToRRset(
                       "*.wild.example.org. 3600 IN RRSIG A 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    node = getNode(mem_sgmt_, Name("wild.example.org"), zone_data_);
+    node = getNode(*mem_sgmt_, Name("wild.example.org"), zone_data_);
     EXPECT_TRUE(node->getFlag(ZoneData::WILDCARD_NODE));
 
     // Simply adding RRSIG covering (delegating NS) shouldn't enable callback
@@ -129,14 +149,14 @@ TEST_F(ZoneDataUpdaterTest, rrsigOnly) {
     updater_->add(ConstRRsetPtr(), textToRRset(
                       "child.example.org. 3600 IN RRSIG NS 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    node = getNode(mem_sgmt_, Name("child.example.org"), zone_data_);
+    node = getNode(*mem_sgmt_, Name("child.example.org"), zone_data_);
     EXPECT_FALSE(node->getFlag(ZoneNode::FLAG_CALLBACK));
 
     // Same for DNAME
     updater_->add(ConstRRsetPtr(), textToRRset(
                       "dname.example.org. 3600 IN RRSIG DNAME 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    node = getNode(mem_sgmt_, Name("dname.example.org"), zone_data_);
+    node = getNode(*mem_sgmt_, Name("dname.example.org"), zone_data_);
     EXPECT_FALSE(node->getFlag(ZoneNode::FLAG_CALLBACK));
 
     // Likewise, RRSIG for NSEC3PARAM alone shouldn't make the zone
@@ -168,7 +188,7 @@ checkNSEC3Rdata(isc::util::MemorySegment& mem_sgmt, const Name& name,
     EXPECT_EQ(1, rdset->getSigRdataCount());
 }
 
-TEST_F(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
+TEST_P(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
     // Adding only RRSIG covering NSEC3 is tricky.  It should go to the
     // separate NSEC3 tree, but the separate space is only created when
     // NSEC3 or NSEC3PARAM is added.  So, in many cases RRSIG-only is allowed,
@@ -188,7 +208,7 @@ TEST_F(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
                   textToRRset(
                       "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    checkNSEC3Rdata(mem_sgmt_, Name("09GM.example.org"), zone_data_);
+    checkNSEC3Rdata(*mem_sgmt_, Name("09GM.example.org"), zone_data_);
 
     // Clear the current content of zone, then add NSEC3
     clearZoneData();
@@ -201,7 +221,7 @@ TEST_F(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
                   textToRRset(
                       "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
                       "20150420235959 20051021000000 1 example.org. FAKE"));
-    checkNSEC3Rdata(mem_sgmt_, Name("09GM.example.org"), zone_data_);
+    checkNSEC3Rdata(*mem_sgmt_, Name("09GM.example.org"), zone_data_);
 
     // If we add only RRSIG without any NSEC3 related data beforehand,
     // it will be rejected; it's a limitation of the current implementation.
