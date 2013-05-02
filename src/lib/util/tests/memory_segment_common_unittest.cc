@@ -30,9 +30,8 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     // NULL name is not allowed.
     EXPECT_THROW(segment.getNamedAddress(NULL), InvalidParameter);
 
-    // If the name does not exist, NULL should be returned.
-    EXPECT_EQ(static_cast<void*>(NULL),
-              segment.getNamedAddress("test address"));
+    // If the name does not exist, false should be returned.
+    EXPECT_FALSE(segment.getNamedAddress("test address").first);
 
     // Now set it
     void* ptr32 = segment.allocate(sizeof(uint32_t));
@@ -44,7 +43,8 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_THROW(segment.setNamedAddress(NULL, ptr32), InvalidParameter);
 
     // we can now get it; the stored value should be intact.
-    EXPECT_EQ(ptr32, segment.getNamedAddress("test address"));
+    EXPECT_EQ(MemorySegment::NamedAddressResult(true, ptr32),
+              segment.getNamedAddress("test address"));
     EXPECT_EQ(test_val, *static_cast<const uint32_t*>(ptr32));
 
     // Override it.
@@ -52,20 +52,20 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     const uint16_t test_val16 = 4200;
     *static_cast<uint16_t*>(ptr16) = test_val16;
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr16));
-    EXPECT_EQ(ptr16, segment.getNamedAddress("test address"));
+    EXPECT_EQ(MemorySegment::NamedAddressResult(true, ptr16),
+              segment.getNamedAddress("test address"));
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(ptr16));
 
     // Clear it.  Then we won't be able to find it any more.
     EXPECT_TRUE(segment.clearNamedAddress("test address"));
-    EXPECT_EQ(static_cast<void*>(NULL),
-              segment.getNamedAddress("test address"));
+    EXPECT_FALSE(segment.getNamedAddress("test address").first);
 
     // duplicate attempt of clear will result in false as it doesn't exist.
     EXPECT_FALSE(segment.clearNamedAddress("test address"));
 
     // Setting NULL is okay.
     EXPECT_FALSE(segment.setNamedAddress("null address", NULL));
-    EXPECT_EQ(static_cast<void*>(NULL),
+    EXPECT_EQ(MemorySegment::NamedAddressResult(true, NULL),
               segment.getNamedAddress("null address"));
 
     // If the underlying implementation performs explicit check against

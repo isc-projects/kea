@@ -51,13 +51,13 @@ MemorySegmentLocal::allMemoryDeallocated() const {
     return (allocated_size_ == 0 && named_addrs_.empty());
 }
 
-void*
+MemorySegment::NamedAddressResult
 MemorySegmentLocal::getNamedAddressImpl(const char* name) {
     std::map<std::string, void*>::iterator found = named_addrs_.find(name);
     if (found != named_addrs_.end()) {
-        return (found->second);
+        return (NamedAddressResult(true, found->second));
     }
-    return (0);
+    return (NamedAddressResult(false, NULL));
 }
 
 bool
