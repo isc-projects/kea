@@ -85,12 +85,6 @@ TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     mem_sgmt.allMemoryDeallocated(); // use mem_sgmt
 }
 
-ZoneData*
-loadAction(MemorySegment&) {
-    // The function won't be called, so this is OK
-    return (NULL);
-}
-
 TEST_F(ZoneTableSegmentTest, isWritable) {
     // Local segments are always writable.
     EXPECT_TRUE(ztable_segment_->isWritable());
