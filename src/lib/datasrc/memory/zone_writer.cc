@@ -35,7 +35,7 @@ ZoneWriter::ZoneWriter(ZoneTableSegment* segment,
     state_(ZW_UNUSED)
 {
     if (!segment->isWritable()) {
-        isc_throw(isc::Unexpected,
+        isc_throw(isc::InvalidOperation,
                   "Attempt to construct ZoneWriter for a read-only segment");
     }
 }
