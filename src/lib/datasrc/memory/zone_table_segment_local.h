@@ -55,7 +55,8 @@ public:
 
     /// \brief Return true if the segment is writable.
     ///
-    /// This implementation always returns true.
+    /// Local segments are always writable. This implementation always
+    /// returns true.
     virtual bool isWritable() const {
         return (true);
     }
