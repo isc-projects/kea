@@ -33,6 +33,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <cassert>
 
@@ -55,6 +56,16 @@ public:
     // but the file-mapped one needs to remove the file.
     virtual void cleanup() const {};
 };
+
+ZoneNode*
+getNode(isc::util::MemorySegment& mem_sgmt, const Name& name,
+        ZoneData* zone_data)
+{
+    ZoneNode* node = NULL;
+    zone_data->insertName(mem_sgmt, name, &node);
+    EXPECT_NE(static_cast<ZoneNode*>(NULL), node);
+    return (node);
+}
 
 class ZoneDataUpdaterTest : public ::testing::TestWithParam<SegmentCreator*> {
 protected:
@@ -147,16 +158,6 @@ TEST_P(ZoneDataUpdaterTest, bothNull) {
     // At least either covered RRset or RRSIG must be non NULL.
     EXPECT_THROW(updater_->add(ConstRRsetPtr(), ConstRRsetPtr()),
                  ZoneDataUpdater::NullRRset);
-}
-
-ZoneNode*
-getNode(isc::util::MemorySegment& mem_sgmt, const Name& name,
-        ZoneData* zone_data)
-{
-    ZoneNode* node = NULL;
-    zone_data->insertName(mem_sgmt, name, &node);
-    EXPECT_NE(static_cast<ZoneNode*>(NULL), node);
-    return (node);
 }
 
 TEST_P(ZoneDataUpdaterTest, zoneMinTTL) {
@@ -284,6 +285,31 @@ TEST_P(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
                          "09GM.example.org. 3600 IN RRSIG NSEC3 5 3 3600 "
                          "20150420235959 20051021000000 1 example.org. FAKE")),
                  isc::NotImplemented);
+}
+
+// Generate many small RRsets. This tests that the underlying memory segment
+// can grow during the execution and that the updater handles that well.
+//
+// Some of the grows will happen inserting the RRSIG, some with the TXT.
+TEST_P(ZoneDataUpdaterTest, manySmallRRsets) {
+    for (size_t i = 0; i < 32768; ++i) {
+        const std::string name(boost::lexical_cast<std::string>(i) +
+                               ".example.org.");
+        updater_->add(textToRRset(name + " 3600 IN TXT " +
+                                  std::string(30, 'X')),
+                      textToRRset(name + " 3600 IN RRSIG TXT 5 3 3600 "
+                                  "20150420235959 20051021000000 1 "
+                                  "example.org. FAKE"));
+        ZoneNode* node = getNode(*mem_sgmt_,
+                                 Name(boost::lexical_cast<std::string>(i) +
+                                      ".example.org"), zone_data_);
+        const RdataSet* rdset = node->getData();
+        ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
+        rdset = RdataSet::find(rdset, RRType::TXT(), true);
+        ASSERT_NE(static_cast<RdataSet*>(NULL), rdset);
+        EXPECT_EQ(1, rdset->getRdataCount());
+        EXPECT_EQ(1, rdset->getSigRdataCount());
+    }
 }
 
 }
