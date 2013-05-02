@@ -167,10 +167,10 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                       "There is no previously saved checksum in a "
                       "mapped segment opened in read-only mode.");
         }
-        // The segment was already shrunk when it was last closed. Check
-        // that its checksum is consistent.
-        // FIXME: We can't really do this as we can't set the checksum
-        // to 0 for checksum calculation in a read-only segment.
+
+        // We can't verify the checksum here as we can't set the
+        // checksum to 0 for checksum calculation in a read-only
+        // segment. So we continue without verifying the checksum.
 
         // There must be a previously saved ZoneTableHeader.
         result = segment->getNamedAddress("zone_table_header");
