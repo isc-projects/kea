@@ -107,8 +107,8 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     resume_called_ = false;
 
     // Call the actual lookup
-    (*lookup_callback_)(IOMessage(data_, length, *udp_socket_, udp_endpoint_),
-                        query_, answer_, output_buffer_, this);
+    const IOMessage message(data_, length, *udp_socket_, udp_endpoint_);
+    (*lookup_callback_)(message, query_, answer_, output_buffer_, this);
 
     if (!resume_called_) {
         isc_throw(isc::Unexpected,
