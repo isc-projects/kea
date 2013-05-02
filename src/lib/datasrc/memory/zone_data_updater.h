@@ -159,6 +159,11 @@ private:
     // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
     void addWildcards(const isc::dns::Name& name);
 
+    void addInternal(const isc::dns::Name& name,
+                     const isc::dns::RRType& rrtype,
+                     const isc::dns::ConstRRsetPtr& rrset,
+                     const isc::dns::ConstRRsetPtr& rrsig);
+
     // Does some checks in context of the data that are already in the
     // zone.  Currently checks for forbidden combinations of RRsets in
     // the same domain (CNAME+anything, DNAME+NS).  If such condition is
