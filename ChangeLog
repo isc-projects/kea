@@ -1,3 +1,12 @@
+609.	[bug]		jinmei
+	Handled some rare error cases in DNS server classes correctly.
+	This fix specifically solves occasional crash of b10-auth due to
+	errors caused by TCP DNS clients.  Also, as a result of cleanups
+	with the fix, b10-auth should now be a little bit faster in
+	handling UDP queries: in some local experiments it ran about 5%
+	faster.
+	(Trac #2903, git 6d3e0f4b36a754248f8a03a29e2c36aef644cdcc)
+
 608.	[bug]		jinmei
 	b10-cmdctl: fixed a hangup problem on receiving the shutdown
 	command from bindctl.  Note, however, that cmdctl is defined as
