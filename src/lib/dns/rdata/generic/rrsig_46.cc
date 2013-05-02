@@ -74,8 +74,8 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-void
-RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
+RRSIGImpl *
+RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t algorithm =
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
@@ -99,25 +99,31 @@ RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
         isc_throw(InvalidRdataText, "RRSIG key tag out of range");
     }
     const Name signer = createNameFromLexer(lexer, origin);
-    string signature_txt =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    // RFC4034 says "Whitespace is allowed within the Base64 text."
-    // So read to the end of input.
+
+    string signature_txt;
+    string signature_part;
+    // Whitespace is allowed within base64 text, so read to the end of input.
     while (true) {
-        const MasterToken& token = lexer.getNextToken();
-        if (token.getType() != MasterToken::STRING) {
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
             break;
         }
-        signature_txt.append(token.getString());
+        token.getString(signature_part);
+        signature_txt.append(signature_part);
     }
     lexer.ungetToken();
 
     vector<uint8_t> signature;
-    decodeBase64(signature_txt, signature);
+    // missing signature is okay
+    if (signature_txt.size() > 0) {
+        decodeBase64(signature_txt, signature);
+    }
 
-    impl_ = new RRSIGImpl(covered, algorithm, labels,
+    return (new RRSIGImpl(covered, algorithm, labels,
                           originalttl, timeexpire, timeinception,
-                          static_cast<uint16_t>(tag), signer, signature);
+                          static_cast<uint16_t>(tag), signer, signature));
 }
 
 /// \brief Constructor from string.
@@ -139,12 +145,17 @@ RRSIG::createFromLexer(MasterLexer& lexer, const Name* origin) {
 RRSIG::RRSIG(const std::string& rrsig_str) :
     impl_(NULL)
 {
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the RRSIGImpl that constructFromLexer() returns.
+    std::auto_ptr<RRSIGImpl> impl_ptr(NULL);
+
     try {
-        istringstream iss(rrsig_str);
+        std::istringstream iss(rrsig_str);
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        createFromLexer(lexer, NULL);
+        impl_ptr.reset(constructFromLexer(lexer, NULL));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RRSIG: "
@@ -154,6 +165,8 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
         isc_throw(InvalidRdataText, "Failed to construct RRSIG from '" <<
                   rrsig_str << "': " << ex.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -163,9 +176,9 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 /// origin is non NULL, in which case \c origin is used to make it absolute.
 /// This must not be represented as a quoted string.
 ///
-/// The Original TTL field is a valid decimal representation of an
-/// unsigned 32-bit integer. Note that RFC4034 does not allow alternate
-/// textual representations of \c RRTTL such as "1H" for 3600 seconds.
+/// The Original TTL field is a valid decimal representation of an unsigned
+/// 32-bit integer. Note that alternate textual representations of \c RRTTL,
+/// such as "1H" for 3600 seconds, are not allowed here.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
 /// \throw Other Exceptions from the Name constructor if
@@ -179,7 +192,7 @@ RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
              MasterLoader::Options, MasterLoaderCallbacks&) :
     impl_(NULL)
 {
-    createFromLexer(lexer, origin);
+    impl_ = constructFromLexer(lexer, origin);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {

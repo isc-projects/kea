@@ -97,9 +97,13 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
     EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
     EXPECT_EQ(isc::dns::RRType::A(), rdata_rrsig.typeCovered());
 
+    // Missing signature is OK
+    EXPECT_NO_THROW(const generic::RRSIG sig(
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org."));
+
     // Space in signature data is OK
     checkFromText_None(
-	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
               "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
               "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
               "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
@@ -107,7 +111,7 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
 
     // Multi-line signature data is OK, if enclosed in parentheses
     checkFromText_None(
-	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
               "( evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz\n"
               "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/\n"
               "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU\n"
@@ -117,15 +121,15 @@ TEST_F(Rdata_RRSIG_Test, fromText) {
     // to fail, but the lexer constructor must be able to continue
     // parsing from it.
     checkFromText_BadString(
-	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
-              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
-              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
-              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
               "f49t+sXKPzbipN9g+s1ZPiIyofc= ; comment\n"
-	      "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
-              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
-              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
-              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
               "f49t+sXKPzbipN9g+s1ZPiIyofc=");
 }
 
@@ -139,10 +143,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
     checkFromText_LexerError("A 5 4 43200 20100223214617");
     checkFromText_LexerError("A 5 4 43200 20100223214617 20100222214617");
     checkFromText_LexerError("A 5 4 43200 20100223214617 20100222214617 "
-			      "8496");
-    checkFromText_LexerError("A 5 4 43200 20100223214617 20100222214617 "
-			      "8496 isc.org.");
-
+                              "8496");
     // bad algorithm
     checkFromText_InvalidText(
                      "A 555 4 43200 "
@@ -158,6 +159,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad labels
     checkFromText_InvalidText(
                      "A 5 4444 43200 "
@@ -173,6 +175,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad original ttl
     checkFromText_LexerError(
                      "A 5 4 999999999999 "
@@ -188,13 +191,15 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
-    // Alternate form of TTL is not okay
+
+    // alternate form of TTL is not okay
     checkFromText_LexerError(
-	      "A 5 4 12H 20100223214617 20100222214617 8496 isc.org. "
+              "A 5 4 12H 20100223214617 20100222214617 8496 isc.org. "
               "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz "
               "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/ "
               "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU "
               "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad signature expiration
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
@@ -202,7 +207,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
-                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="); 
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
                      "EXPIRATION 20100222214617 8496 isc.org. "
@@ -210,6 +215,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
    // bad signature inception
     checkFromText_InvalidTime(
                      "A 5 4 43200 "
@@ -225,6 +231,7 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad key tag
     checkFromText_InvalidText(
                      "A 5 4 43200 "
@@ -240,23 +247,34 @@ TEST_F(Rdata_RRSIG_Test, badText) {
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad signer name
     checkFromText_MissingOrigin(
                      "A 5 4 43200 "
-                     "20100223214617 20100222214617 8496 isc.org"
+                     "20100223214617 20100222214617 8496 isc.org "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+
     // bad signature
     checkFromText_BadValue(
                      "A 5 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!=");
+
     // no space between the tag and signer
     checkFromText_LexerError(
                      "A 5 4 43200 20100223214617 20100222214617 "
                      "8496isc.org. ofc=");
+
+    // unterminated multi-line base64
+    checkFromText_LexerError(
+              "A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+              "( evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz\n"
+              "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/\n"
+              "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU\n"
+              "f49t+sXKPzbipN9g+s1ZPiIyofc=");
 }
 
 TEST_F(Rdata_RRSIG_Test, createFromLexer) {

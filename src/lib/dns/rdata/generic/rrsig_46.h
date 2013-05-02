@@ -48,7 +48,7 @@ public:
     const RRType& typeCovered() const;
 private:
     // helper function for string and lexer constructors
-    void createFromLexer(MasterLexer& lexer, const Name* origin);
+    RRSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
 
     RRSIGImpl* impl_;
 };
