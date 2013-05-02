@@ -136,6 +136,8 @@ public:
     /// @param param_name name of the parameter.
     /// @param storage is a pointer to the storage container where the parsed
     /// value be stored upon commit.
+    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
+    /// name is empty.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
     BooleanParser(const std::string& param_name, BooleanStoragePtr storage);
 
@@ -143,10 +145,7 @@ public:
     ///
     /// @param value a value to be parsed.
     ///
-    /// @throw isc::InvalidOperation if a storage has not been set
-    ///        prior to calling this function
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    ///        name is empty.
+    /// @throw isc::BadValue if value is not a boolean type Element.
     virtual void build(isc::data::ConstElementPtr value);
 
     /// @brief Put a parsed value to the storage.
@@ -180,6 +179,8 @@ public:
     /// @param param_name name of the configuration parameter being parsed
     /// @param storage is a pointer to the storage container where the parsed
     /// value be stored upon commit.
+    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
+    /// name is empty.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
     Uint32Parser(const std::string& param_name, Uint32StoragePtr storage);
 
@@ -222,6 +223,8 @@ public:
     /// @param param_name name of the configuration parameter being parsed
     /// @param storage is a pointer to the storage container where the parsed
     /// value be stored upon commit.
+    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
+    /// name is empty.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
     StringParser(const std::string& param_name, StringStoragePtr storage);
 
@@ -231,6 +234,7 @@ public:
     /// @ref setStorage() for details.
     ///
     /// @param value pointer to the content of parsed values
+    /// @throw isc::BadValue if value is not a string type Element.
     virtual void build(isc::data::ConstElementPtr value);
 
     /// @brief Stores the parsed value in a storage.
