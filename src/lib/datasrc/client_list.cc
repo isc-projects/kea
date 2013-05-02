@@ -314,26 +314,31 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     if (!allow_cache_) {
         return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
     }
-    // Try to find the correct zone.
-    MutableResult result;
-    findInternal(result, name, true, true);
-    if (!result.finder) {
-        return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
-    }
 
+    // Find the data source from which the zone to be loaded into memory.
     // Then get the appropriate load action and create a zone writer.
-    // Note that getCacheConfig() must return non NULL in this module (only
-    // tests could set it to a bogus value).
-    const memory::LoadAction load_action =
-        result.info->getCacheConfig()->getLoadAction(rrclass_, name);
-    if (!load_action) {
-        return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        // If there's a underlying "real" data source and it doesn't contain
+        // the given name, obviously we cannot load it.
+        if (info.data_src_client_ &&
+            info.data_src_client_->findZone(name).code != result::SUCCESS) {
+            continue;
+        }
+
+        // Note that getCacheConfig() must return non NULL in this module
+        // (only tests could set it to a bogus value).
+        const memory::LoadAction load_action =
+            info.getCacheConfig()->getLoadAction(rrclass_, name);
+        if (!load_action) {
+            return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+        }
+        return (ZoneWriterPair(ZONE_SUCCESS,
+                               ZoneWriterPtr(
+                                   new memory::ZoneWriter(
+                                       *info.ztable_segment_,
+                                       load_action, name, rrclass_))));
     }
-    return (ZoneWriterPair(ZONE_SUCCESS,
-                           ZoneWriterPtr(
-                               new memory::ZoneWriter(
-                                   *result.info->ztable_segment_,
-                                   load_action, name, rrclass_))));
+    return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
