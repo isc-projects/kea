@@ -63,8 +63,10 @@ public:
     /// successful \c reset() call first.
     virtual isc::util::MemorySegment& getMemorySegment();
 
-    /// \brief Return true if the segment is writable. For read-only
-    /// segments, false is returned.
+    /// \brief Returns if the segment is writable.
+    ///
+    /// Segments successfully opened in CREATE or READ_WRITE modes are
+    /// writable. Segments opened in READ_ONLY mode are not writable.
     ///
     /// \throws isc::Unexpected if this method is called without a
     /// successful \c reset() call first.
