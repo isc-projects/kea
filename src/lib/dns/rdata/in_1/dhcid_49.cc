@@ -32,50 +32,47 @@ using namespace isc::util::encode;
 // BEGIN_RDATA_NAMESPACE
 
 void
-DHCID::createFromLexer(MasterLexer& lexer) {
-    string digest_txt = lexer.getNextToken(MasterToken::STRING).getString();
+DHCID::constructFromLexer(MasterLexer& lexer) {
+    string digest_txt;
+    string digest_part;
+    // Whitespace is allowed within base64 text, so read to the end of input.
     while (true) {
-        const MasterToken& token = lexer.getNextToken();
-        if (token.getType() != MasterToken::STRING) {
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
             break;
         }
-        digest_txt.append(token.getString());
+        token.getString(digest_part);
+        digest_txt.append(digest_part);
     }
     lexer.ungetToken();
-    decodeBase64(digest_txt, digest_);
 
-    // RFC4701 states DNS software should consider the RDATA section to
-    // be opaque, but there must be at least three bytes in the data:
-    // < 2 octets >    Identifier type code
-    // < 1 octet >     Digest type code
-    if (digest_.size() < 3) {
-        isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
-                  " too short, need at least 3 bytes");
+    // missing digest data is okay
+    if (digest_txt.size() > 0) {
+        decodeBase64(digest_txt, digest_);
     }
 }
 
 /// \brief Constructor from string.
 ///
 /// \param dhcid_str A base-64 representation of the DHCID binary data.
-/// The data is considered to be opaque, but a sanity check is performed.
+/// RFC4701 says "DNS software should consider the RDATA section to be opaque."
 ///
-/// <b>Exceptions</b>
+/// It is okay for the key data to be missing.  Note: BIND 9 also accepts
+/// DHCID missing key data.  While the RFC is silent in this case, and it
+/// may be debatable what an implementation should do, but since this field
+/// is algorithm dependent and this implementations doesn't reject unknown
+/// algorithms, it's lenient here.
 ///
-/// \c dhcid_str must be a valid  BASE-64 string, otherwise an exception
-/// of class \c isc::BadValue will be thrown;
-/// the binary data should consist of at leat of 3 octets as per RFC4701:
-///           < 2 octets >    Identifier type code
-///           < 1 octet >     Digest type code
-///           < n octets >    Digest (length depends on digest type)
-/// If the data is less than 3 octets (i.e. it cannot contain id type code and
-/// digest type code), an exception of class \c InvalidRdataLength is thrown.
+/// \throw InvalidRdataText if the string could not be parsed correctly.
 DHCID::DHCID(const std::string& dhcid_str) {
     try {
         std::istringstream iss(dhcid_str);
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        createFromLexer(lexer);
+        constructFromLexer(lexer);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for DHCID: "
@@ -98,22 +95,14 @@ DHCID::DHCID(const std::string& dhcid_str) {
 /// RDATA to be created
 DHCID::DHCID(MasterLexer& lexer, const Name*,
              MasterLoader::Options, MasterLoaderCallbacks&) {
-    createFromLexer(lexer);
+    constructFromLexer(lexer);
 }
 
 /// \brief Constructor from wire-format data.
 ///
 /// \param buffer A buffer storing the wire format data.
 /// \param rdata_len The length of the RDATA in bytes
-///
-/// <b>Exceptions</b>
-/// \c InvalidRdataLength is thrown if \c rdata_len is than minimum of 3 octets
 DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 3) {
-        isc_throw(InvalidRdataLength, "DHCID length " << rdata_len <<
-                  " too short, need at least 3 bytes");
-    }
-
     digest_.resize(rdata_len);
     buffer.readData(&digest_[0], rdata_len);
 }
