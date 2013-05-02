@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "zone_writer.h"
-#include "zone_data.h"
+#include <datasrc/memory/zone_writer.h>
+#include <datasrc/memory/zone_data.h>
 
 #include <memory>
 
@@ -49,7 +49,7 @@ ZoneWriter::load() {
 
     zone_data_ = load_action_(segment_->getMemorySegment());
 
-    if (zone_data_ == NULL) {
+    if (!zone_data_) {
         // Bug inside load_action_.
         isc_throw(isc::InvalidOperation, "No data returned from load action");
     }
@@ -63,9 +63,8 @@ ZoneWriter::install() {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
 
-
     ZoneTable* table(segment_->getHeader().getTable());
-    if (table == NULL) {
+    if (!table) {
         isc_throw(isc::Unexpected, "No zone table present");
     }
     const ZoneTable::AddResult result(table->addZone(
