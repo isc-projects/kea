@@ -16,9 +16,6 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9,
     have_sqlite="yes",
     have_sqlite="no (sqlite3 not detected)")
 
-AC_SUBST(SQLITE_CFLAGS)
-AC_SUBST(SQLITE_LIBS)
-
 # Check for sqlite3 program
 AC_PATH_PROG(SQLITE3_PROGRAM, sqlite3, no)
 AM_CONDITIONAL(HAVE_SQLITE3_PROGRAM, test "x$SQLITE3_PROGRAM" != "xno")
