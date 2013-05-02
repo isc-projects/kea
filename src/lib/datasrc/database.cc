@@ -1233,7 +1233,7 @@ public:
         const pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
         if (!zone.first) {
             // No such zone, can't continue
-            isc_throw(DataSourceError, "Zone " + zone_name.toText() +
+            isc_throw(NoSuchZone, "Zone " + zone_name.toText() +
                       " can not be iterated, because it doesn't exist "
                       "in this data source");
         }
