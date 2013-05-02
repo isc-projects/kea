@@ -43,7 +43,7 @@ public:
     ZoneWriterTest() :
         segment_(ZoneTableSegment::create(RRClass::IN(), "local")),
         writer_(new
-            ZoneWriter(segment_.get(),
+            ZoneWriter(*segment_,
                        bind(&ZoneWriterTest::loadAction, this, _1),
                        Name("example.org"), RRClass::IN())),
         load_called_(false),
@@ -106,7 +106,7 @@ public:
 TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
     MemorySegmentTest mem_sgmt;
     ReadOnlySegment ztable_segment(RRClass::IN(), mem_sgmt);
-    EXPECT_THROW(ZoneWriter(&ztable_segment,
+    EXPECT_THROW(ZoneWriter(ztable_segment,
                             bind(&ZoneWriterTest::loadAction, this, _1),
                             Name("example.org"), RRClass::IN()),
                  isc::InvalidOperation);

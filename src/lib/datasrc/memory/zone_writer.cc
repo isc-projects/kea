@@ -23,7 +23,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-ZoneWriter::ZoneWriter(ZoneTableSegment* segment,
+ZoneWriter::ZoneWriter(ZoneTableSegment& segment,
                        const LoadAction& load_action,
                        const dns::Name& origin,
                        const dns::RRClass& rrclass) :
@@ -34,7 +34,7 @@ ZoneWriter::ZoneWriter(ZoneTableSegment* segment,
     zone_data_(NULL),
     state_(ZW_UNUSED)
 {
-    if (!segment->isWritable()) {
+    if (!segment.isWritable()) {
         isc_throw(isc::InvalidOperation,
                   "Attempt to construct ZoneWriter for a read-only segment");
     }
@@ -52,7 +52,7 @@ ZoneWriter::load() {
         isc_throw(isc::InvalidOperation, "Trying to load twice");
     }
 
-    zone_data_ = load_action_(segment_->getMemorySegment());
+    zone_data_ = load_action_(segment_.getMemorySegment());
 
     if (!zone_data_) {
         // Bug inside load_action_.
@@ -68,12 +68,12 @@ ZoneWriter::install() {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
 
-    ZoneTable* table(segment_->getHeader().getTable());
+    ZoneTable* table(segment_.getHeader().getTable());
     if (!table) {
         isc_throw(isc::Unexpected, "No zone table present");
     }
     const ZoneTable::AddResult result(table->addZone(
-                                          segment_->getMemorySegment(),
+                                          segment_.getMemorySegment(),
                                           rrclass_, origin_, zone_data_));
 
     state_ = ZW_INSTALLED;
@@ -85,7 +85,7 @@ ZoneWriter::cleanup() {
     // We eat the data (if any) now.
 
     if (zone_data_ != NULL) {
-        ZoneData::destroy(segment_->getMemorySegment(), zone_data_, rrclass_);
+        ZoneData::destroy(segment_.getMemorySegment(), zone_data_, rrclass_);
         zone_data_ = NULL;
         state_ = ZW_CLEANED;
     }
