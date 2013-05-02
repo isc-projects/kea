@@ -43,8 +43,11 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
             // If there is a previously opened segment, and it was
             // opened in read-write mode, update its checksum.
             mem_sgmt_->shrinkToFit();
-            uint32_t* checksum = static_cast<uint32_t*>
-                (mem_sgmt_->getNamedAddress("zone_table_checksum"));
+            const MemorySegment::NamedAddressResult result =
+                mem_sgmt_->getNamedAddress("zone_table_checksum");
+            assert(result.first);
+            assert(result.second);
+            uint32_t* checksum = static_cast<uint32_t*>(result.second);
             // First, clear the checksum so that getCheckSum() returns
             // a consistent value.
             *checksum = 0;
@@ -86,7 +89,9 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                       (filename,
                        MemorySegmentMapped::CREATE_ONLY));
         // There must be no previously saved checksum.
-        if (segment->getNamedAddress("zone_table_checksum")) {
+        MemorySegment::NamedAddressResult result =
+            segment->getNamedAddress("zone_table_checksum");
+        if (result.first) {
             isc_throw(isc::Unexpected,
                       "There is already a saved checksum in a mapped segment "
                       "opened in create mode.");
@@ -97,7 +102,8 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         segment->setNamedAddress("zone_table_checksum", checksum);
 
         // There must be no previously saved ZoneTableHeader.
-        if (segment->getNamedAddress("zone_table_header")) {
+        result = segment->getNamedAddress("zone_table_header");
+        if (result.first) {
             isc_throw(isc::Unexpected,
                       "There is already a saved ZoneTableHeader in a "
                       "mapped segment opened in create mode.");
@@ -116,11 +122,13 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // If there is a previously saved checksum, verify that it is
         // consistent. Otherwise, allocate space for a checksum (which
         // is saved during close).
-        if (segment->getNamedAddress("zone_table_checksum")) {
+        MemorySegment::NamedAddressResult result =
+            segment->getNamedAddress("zone_table_checksum");
+        if (result.first) {
             // The segment was already shrunk when it was last
             // closed. Check that its checksum is consistent.
-            uint32_t* checksum = static_cast<uint32_t*>
-                (segment->getNamedAddress("zone_table_checksum"));
+            assert(result.second);
+            uint32_t* checksum = static_cast<uint32_t*>(result.second);
             const uint32_t saved_checksum = *checksum;
             // First, clear the checksum so that getCheckSum() returns
             // a consistent value.
@@ -138,9 +146,11 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 
         // If there is a previously saved ZoneTableHeader, use
         // it. Otherwise, allocate a new header.
-        header_ = static_cast<ZoneTableHeader*>
-            (segment->getNamedAddress("zone_table_header"));
-        if (!header_) {
+        result = segment->getNamedAddress("zone_table_header");
+        if (result.first) {
+            assert(result.second);
+            header_ = static_cast<ZoneTableHeader*>(result.second);
+        } else {
             void* ptr = segment->allocate(sizeof(ZoneTableHeader));
             ZoneTableHeader* new_header = new(ptr)
                 ZoneTableHeader(ZoneTable::create(*segment, rrclass_));
@@ -153,7 +163,9 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     case READ_ONLY: {
         segment.reset(new MemorySegmentMapped(filename));
         // There must be a previously saved checksum.
-        if (!segment->getNamedAddress("zone_table_checksum")) {
+        MemorySegment::NamedAddressResult result =
+            segment->getNamedAddress("zone_table_checksum");
+        if (!result.first) {
             isc_throw(isc::Unexpected,
                       "There is no previously saved checksum in a "
                       "mapped segment opened in read-only mode.");
@@ -164,9 +176,11 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // to 0 for checksum calculation in a read-only segment.
 
         // There must be a previously saved ZoneTableHeader.
-        header_ = static_cast<ZoneTableHeader*>
-            (segment->getNamedAddress("zone_table_header"));
-        if (!header_) {
+        result = segment->getNamedAddress("zone_table_header");
+        if (result.first) {
+            assert(result.second);
+            header_ = static_cast<ZoneTableHeader*>(result.second);
+        } else {
             isc_throw(isc::Unexpected,
                       "There is no previously saved ZoneTableHeader in a "
                       "mapped segment opened in read-only mode.");
