@@ -175,12 +175,12 @@ private:
     template <typename T>
     void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
     void addNSEC3(const isc::dns::Name& name,
-                  const isc::dns::ConstRRsetPtr rrset,
-                  const isc::dns::ConstRRsetPtr rrsig);
+                  const isc::dns::ConstRRsetPtr& rrset,
+                  const isc::dns::ConstRRsetPtr& rrsig);
     void addRdataSet(const isc::dns::Name& name,
                      const isc::dns::RRType& rrtype,
-                     const isc::dns::ConstRRsetPtr rrset,
-                     const isc::dns::ConstRRsetPtr rrsig);
+                     const isc::dns::ConstRRsetPtr& rrset,
+                     const isc::dns::ConstRRsetPtr& rrsig);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;

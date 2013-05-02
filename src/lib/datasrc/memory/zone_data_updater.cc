@@ -247,8 +247,8 @@ ZoneDataUpdater::setupNSEC3(const ConstRRsetPtr rrset) {
 }
 
 void
-ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
-                          const ConstRRsetPtr rrsig)
+ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr& rrset,
+                          const ConstRRsetPtr& rrsig)
 {
     if (rrset) {
         setupNSEC3<generic::NSEC3>(rrset);
@@ -283,8 +283,8 @@ ZoneDataUpdater::addNSEC3(const Name& name, const ConstRRsetPtr rrset,
 
 void
 ZoneDataUpdater::addRdataSet(const Name& name, const RRType& rrtype,
-                             const ConstRRsetPtr rrset,
-                             const ConstRRsetPtr rrsig)
+                             const ConstRRsetPtr& rrset,
+                             const ConstRRsetPtr& rrsig)
 {
     if (rrtype == RRType::NSEC3()) {
         addNSEC3(name, rrset, rrsig);
