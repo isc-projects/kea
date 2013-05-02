@@ -55,6 +55,12 @@ protected:
             rdata_str, rdata_dhcid, true, true);
     }
 
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <in::DHCID, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_dhcid, true, true);
+    }
+
     void checkFromText_BadString(const string& rdata_str) {
         checkFromText
             <in::DHCID, InvalidRdataText, isc::Exception>(
@@ -68,6 +74,9 @@ protected:
 TEST_F(Rdata_DHCID_Test, fromText) {
     EXPECT_EQ(dhcid_txt, rdata_dhcid.toText());
 
+    // missing digest data is okay
+    EXPECT_NO_THROW(const in::DHCID digest(""));
+
     // Space in digest data is OK
     checkFromText_None(
             "0LIg0LvQtdGB0YMg 0YDQvtC00LjQu9Cw 0YHRjCDRkdC70L7R h9C60LA=");
@@ -80,15 +89,17 @@ TEST_F(Rdata_DHCID_Test, fromText) {
     // to fail, but the lexer constructor must be able to continue
     // parsing from it.
     checkFromText_BadString(
-	    "0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw0YHRjCDRkdC70L7Rh9C60LA="
-	    " ; comment\n"
-	    "AAIBY2/AuCccgoJbsaxcQc9TUapptP69lOjxfNuVAA2kjEA=");
+            "0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw0YHRjCDRkdC70L7Rh9C60LA="
+            " ; comment\n"
+            "AAIBY2/AuCccgoJbsaxcQc9TUapptP69lOjxfNuVAA2kjEA=");
 }
 
 TEST_F(Rdata_DHCID_Test, badText) {
-    checkFromText_BadValue("00");
-    checkFromText_InvalidLength("MDA=");
     checkFromText_BadValue("EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!=");
+
+    // unterminated multi-line base64
+    checkFromText_LexerError(
+            "( 0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw\n0YHRjCDRkdC70L7R h9C60LA=");
 }
 
 TEST_F(Rdata_DHCID_Test, copy) {
@@ -107,10 +118,6 @@ TEST_F(Rdata_DHCID_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_dhcid.compare(
         *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
                                      dhcid_txt)));
-
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
-                                             "00"));
 }
 
 TEST_F(Rdata_DHCID_Test, toWireRenderer) {

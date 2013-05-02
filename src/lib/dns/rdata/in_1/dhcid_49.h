@@ -44,7 +44,7 @@ public:
 
 private:
     // helper for string and lexer constructors
-    void createFromLexer(MasterLexer& lexer);
+    void constructFromLexer(MasterLexer& lexer);
 
     /// \brief Private data representation
     ///
