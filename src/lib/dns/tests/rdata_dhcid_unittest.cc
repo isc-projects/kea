@@ -164,6 +164,6 @@ TEST_F(Rdata_DHCID_Test, compare) {
     EXPECT_GT(rdata_dhcid3.compare(rdata_dhcid2), 0);
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_dhcid.compare(*rdata_nomatch), bad_cast); 
+    EXPECT_THROW(rdata_dhcid.compare(*rdata_nomatch), bad_cast);
 }
 }
