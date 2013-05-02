@@ -61,6 +61,12 @@ public:
         return (true);
     }
 
+    /// \brief This method currently doesn't do anything.
+    ///
+    /// \c mode and \c params args are currently ignored.
+    virtual void reset(MemorySegmentOpenMode mode,
+                       isc::data::ConstElementPtr params);
+
 private:
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;

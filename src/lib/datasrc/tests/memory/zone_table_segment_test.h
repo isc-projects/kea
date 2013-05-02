@@ -41,6 +41,10 @@ public:
         ZoneTable::destroy(mem_sgmt_, header_.getTable());
     }
 
+    virtual void reset(MemorySegmentOpenMode, isc::data::ConstElementPtr) {
+        // This method doesn't do anything.
+    }
+
     virtual ZoneTableHeader& getHeader() {
         return (header_);
     }
