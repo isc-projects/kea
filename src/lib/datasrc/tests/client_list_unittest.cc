@@ -859,7 +859,7 @@ ListTest::doReload(const Name& origin) {
 TEST_F(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
-    this->prepareCache(0, name);
+    prepareCache(0, name);
     // The cache currently contains a tweaked version of zone, which
     // doesn't have "tstzonedata" A record.  So the lookup should result
     // in NXDOMAIN.
@@ -917,8 +917,8 @@ TEST_F(ListTest, reloadNoSuchZone) {
     // Not in the data sources
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
               doReload(Name("exmaple.cz")));
-    // Not cached
-    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND, doReload(name));
+    // If it's not configured to be cached, it won't be reloaded.
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED, doReload(name));
     // Partial match
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
               doReload(Name("sub.example.com")));
@@ -952,8 +952,8 @@ TEST_F(ListTest, reloadZoneGone) {
     static_cast<MockDataSourceClient*>(
         list_->getDataSources()[0].data_src_client_)->eraseZone(name);
 
-    // The zone is not there, so abort the reload.
-    EXPECT_THROW(doReload(name), DataSourceError);
+    // The zone is not there, so reload doesn't take place.
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND, doReload(name));
     // The (cached) zone is not hurt.
     EXPECT_EQ(ZoneFinder::SUCCESS,
               list_->find(name).finder_->find(name, RRType::SOA())->code);

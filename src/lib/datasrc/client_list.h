@@ -348,12 +348,12 @@ public:
     /// This is used as a result of the getCachedZoneWriter() method.
     enum CacheStatus {
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
-                            ///  (including the case cache is disabled for
-                            ///  the specific data source).
+        ZONE_NOT_CACHED,    ///< Zone is not to be cached (including the case
+                            ///  where caching is disabled for the specific
+                            ///  data source).
         ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
-        ZONE_SUCCESS        ///< The zone was successfully reloaded or
-                            ///  the writer provided.
+        ZONE_SUCCESS        ///< Zone to be cached is successfully found and
+                            ///  is ready to be loaded
     };
 
     /// \brief Return value of getCachedZoneWriter()
@@ -408,12 +408,12 @@ public:
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
 
+        // cache_conf_ can be accessed only from this read-only getter,
+	// to protect its integrity as much as possible.
         const internal::CacheConfig* getCacheConfig() const {
             return (cache_conf_.get());
         }
     private:
-        // this is kept private for now.  When it needs to be accessed,
-        // we'll add a read-only getter method.
         boost::shared_ptr<internal::CacheConfig> cache_conf_;
     };
 
