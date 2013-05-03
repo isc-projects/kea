@@ -46,12 +46,8 @@ protected:
     }
 
     ~ZoneTableSegmentMappedTest() {
-        boost::interprocess::file_mapping::remove(mapped_file.c_str());
-    }
-
-    void TearDown() {
         ZoneTableSegment::destroy(ztable_segment_);
-        ztable_segment_ = NULL;
+        boost::interprocess::file_mapping::remove(mapped_file.c_str());
     }
 
     ZoneTableSegment* ztable_segment_;
