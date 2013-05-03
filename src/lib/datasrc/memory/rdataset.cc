@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include <algorithm>
 #include <cstring>
-#include <typeinfo>             // for bad_cast
 #include <new>                  // for the placement new
 
 using namespace isc::dns;
@@ -41,13 +40,12 @@ namespace memory {
 namespace {
 RRType
 getCoveredType(const Rdata& rdata) {
-    try {
-        const generic::RRSIG& rrsig_rdata =
-            dynamic_cast<const generic::RRSIG&>(rdata);
-        return (rrsig_rdata.typeCovered());
-    } catch (const std::bad_cast&) {
+    const generic::RRSIG* rrsig_rdata =
+        dynamic_cast<const generic::RRSIG*>(&rdata);
+    if (!rrsig_rdata) {
         isc_throw(BadValue, "Non RRSIG is given where it's expected");
     }
+    return (rrsig_rdata->typeCovered());
 }
 
 // A helper for lowestTTL: restore RRTTL object from wire-format 32-bit data.

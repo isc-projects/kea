@@ -262,7 +262,8 @@ public:
         /// In this mode all packets are stored throughout the test execution.
         ExchangeStats(const ExchangeType xchg_type,
                       const double drop_time,
-                      const bool archive_enabled)
+                      const bool archive_enabled,
+                      const boost::posix_time::ptime boot_time)
             : xchg_type_(xchg_type),
               sent_packets_(),
               rcvd_packets_(),
@@ -279,7 +280,8 @@ public:
               unordered_lookups_(0),
               ordered_lookups_(0),
               sent_packets_num_(0),
-              rcvd_packets_num_(0)
+              rcvd_packets_num_(0),
+              boot_time_(boot_time)
         {
             next_sent_ = sent_packets_.begin();
         }
@@ -699,9 +701,8 @@ public:
                                       "packet time is not set");
                         }
                         // Calculate durations of packets from beginning of epoch.
-                        ptime epoch_time(min_date_time);
-                        time_period sent_period(epoch_time, sent_time);
-                        time_period rcvd_period(epoch_time, rcvd_time);
+                        time_period sent_period(boot_time_, sent_time);
+                        time_period rcvd_period(boot_time_, rcvd_time);
                         // Print timestamps for sent and received packet.
                         std::cout << "sent / received: "
                                   << to_iso_string(sent_period.length())
@@ -719,7 +720,7 @@ public:
         /// \brief Private default constructor.
         ///
         /// Default constructor is private because we want the client
-        /// class to specify exchange type explicitely.
+        /// class to specify exchange type explicitly.
         ExchangeStats();
 
         /// \brief Erase packet from the list of sent packets.
@@ -803,6 +804,7 @@ public:
 
         uint64_t sent_packets_num_;    ///< Total number of sent packets.
         uint64_t rcvd_packets_num_;    ///< Total number of received packets.
+        boost::posix_time::ptime boot_time_; ///< Time when test is started.
     };
 
     /// Pointer to ExchangeStats.
@@ -853,7 +855,8 @@ public:
         exchanges_[xchg_type] =
             ExchangeStatsPtr(new ExchangeStats(xchg_type,
                                                drop_time,
-                                               archive_enabled_));
+                                               archive_enabled_,
+                                               boot_time_));
     }
 
     /// \brief Add named custom uint64 counter.
@@ -905,7 +908,7 @@ public:
 
     /// \brief Increment specified counter.
     ///
-    /// Increement counter value by one.
+    /// Increment counter value by one.
     ///
     /// \param counter_key key poiting to the counter in the counters map.
     /// \param value value to increment counter by.

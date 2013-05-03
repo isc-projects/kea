@@ -35,6 +35,8 @@
 #include <dns/rdata/generic/detail/nsec_bitmap.h>
 #include <dns/rdata/generic/detail/nsec3param_common.h>
 
+#include <memory>
+
 #include <stdio.h>
 #include <time.h>
 
@@ -64,24 +66,86 @@ struct NSEC3Impl {
     const vector<uint8_t> typebits_;
 };
 
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid NSEC3 RDATA.  There
+/// can be extra space characters at the beginning or end of the
+/// text (which are simply ignored), but other extra text, including
+/// a new line, will make the construction fail with an exception.
+///
+/// The Hash Algorithm, Flags and Iterations fields must be within their
+/// valid ranges. The Salt field may contain "-" to indicate that the
+/// salt is of length 0. The Salt field must not contain any whitespace.
+/// The type mnemonics must be valid, and separated by whitespace. If
+/// any invalid mnemonics are found, InvalidRdataText exception is
+/// thrown.
+///
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param nsec3_str A string containing the RDATA to be created
 NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
-    istringstream iss(nsec3_str);
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the NSEC3Impl that constructFromLexer() returns.
+    std::auto_ptr<NSEC3Impl> impl_ptr(NULL);
+
+    try {
+        std::istringstream ss(nsec3_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        impl_ptr.reset(constructFromLexer(lexer));
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for NSEC3: " << nsec3_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct NSEC3 from '" << nsec3_str << "': "
+                  << ex.what());
+    }
+
+    impl_ = impl_ptr.release();
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an NSEC3 RDATA.
+///
+/// See \c NSEC3::NSEC3(const std::string&) for description of the
+/// expected RDATA fields.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
+             MasterLoaderCallbacks&) :
+    impl_(NULL)
+{
+    impl_ = constructFromLexer(lexer);
+}
+
+NSEC3Impl*
+NSEC3::constructFromLexer(MasterLexer& lexer) {
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
-        parseNSEC3ParamText("NSEC3", nsec3_str, iss, salt);
+        parseNSEC3ParamFromLexer("NSEC3", lexer, salt);
 
-    // Extract Next hash.  It must be an unpadded base32hex string.
-    string nexthash;
-    iss >> nexthash;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid NSEC3 text: " << nsec3_str);
-    }
-    assert(!nexthash.empty());
+    const string& nexthash =
+        lexer.getNextToken(MasterToken::STRING).getString();
     if (*nexthash.rbegin() == '=') {
-        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nsec3_str);
+        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nexthash);
     }
+
     vector<uint8_t> next;
     decodeBase32Hex(nexthash, next);
     if (next.size() > 255) {
@@ -89,22 +153,16 @@ NSEC3::NSEC3(const std::string& nsec3_str) :
                   << next.size() << " bytes");
     }
 
-    // For NSEC3 empty bitmap is possible and allowed.
-    if (iss.eof()) {
-        impl_ = new NSEC3Impl(params.algorithm, params.flags,
-                              params.iterations, salt, next,
-                              vector<uint8_t>());
-        return;
-    }
-
     vector<uint8_t> typebits;
-    buildBitmapsFromText("NSEC3", iss, typebits);
-
-    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
-                          salt, next, typebits);
+    // For NSEC3 empty bitmap is possible and allowed.
+    buildBitmapsFromLexer("NSEC3", lexer, typebits, true);
+    return (new NSEC3Impl(params.algorithm, params.flags, params.iterations,
+                          salt, next, typebits));
 }
 
-NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
+NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) :
+    impl_(NULL)
+{
     vector<uint8_t> salt;
     const ParseNSEC3ParamResult params =
         parseNSEC3ParamWire("NSEC3", buffer, rdata_len, salt);

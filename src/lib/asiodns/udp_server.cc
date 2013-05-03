@@ -82,8 +82,8 @@ struct UDPServer::Data {
          answer_callback_(answer)
     {
         if (af != AF_INET && af != AF_INET6) {
-            isc_throw(InvalidParameter, "Address family must be either AF_INET "
-                      "or AF_INET6, not " << af);
+            isc_throw(InvalidParameter, "Address family must be either AF_INET"
+                      " or AF_INET6, not " << af);
         }
         LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
         try {
@@ -212,13 +212,18 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
                     buffer(data_->data_.get(), MAX_LENGTH), *data_->sender_,
                     *this);
 
-                // Abort on fatal errors
-                // TODO: add log
+                // See TCPServer::operator() for details on error handling.
                 if (ec) {
                     using namespace asio::error;
-                    if (ec.value() != would_block && ec.value() != try_again &&
-                        ec.value() != interrupted) {
+                    const error_code::value_type err_val = ec.value();
+                    if (err_val == operation_aborted ||
+                        err_val == bad_descriptor) {
                         return;
+                    }
+                    if (err_val != would_block && err_val != try_again &&
+                        err_val != interrupted) {
+                        LOG_ERROR(logger, ASIODNS_UDP_RECEIVE_FAIL).
+                            arg(ec.message());
                     }
                 }
 
@@ -270,7 +275,7 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (data_->lookup_callback_ == NULL) {
-            CORO_YIELD return;
+            return;
         }
 
         // Instantiate objects that will be needed by the
@@ -287,7 +292,7 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!data_->done_) {
-            CORO_YIELD return;
+            return;
         }
 
         // Call the DNS answer provider to render the answer into
@@ -322,6 +327,8 @@ UDPServer::asyncLookup() {
 /// Stop the UDPServer
 void
 UDPServer::stop() {
+    asio::error_code ec;
+
     /// Using close instead of cancel, because cancel
     /// will only cancel the asynchronized event already submitted
     /// to io service, the events post to io service after
@@ -330,7 +337,10 @@ UDPServer::stop() {
     /// for it won't be scheduled by io service not matter it is
     /// submit to io service before or after close call. And we will
     //  get bad_descriptor error.
-    data_->socket_->close();
+    data_->socket_->close(ec);
+    if (ec) {
+        LOG_ERROR(logger, ASIODNS_UDP_CLOSE_FAIL).arg(ec.message());
+    }
 }
 
 /// Post this coroutine on the ASIO service queue so that it will
@@ -339,7 +349,7 @@ UDPServer::stop() {
 void
 UDPServer::resume(const bool done) {
     data_->done_ = done;
-    data_->io_.post(*this);
+    data_->io_.post(*this);  // this can throw, but can be considered fatal.
 }
 
 } // namespace asiodns

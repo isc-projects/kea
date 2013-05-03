@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@ public:
 /// interfaces) uses memory aliasing. Linux kernel returns a memory
 /// blob that should be interpreted as series of nlmessages. There
 /// are different nlmsg structures defined with varying size. They
-/// have one thing common - inital fields are laid out in the same
+/// have one thing common - initial fields are laid out in the same
 /// way as nlmsghdr. Therefore different messages can be represented
 /// as nlmsghdr with followed variable number of bytes that are
 /// message-specific. The only reasonable way to represent this in
@@ -103,7 +103,7 @@ public:
     void rtnl_send_request(int family, int type);
     void rtnl_store_reply(NetlinkMessages& storage, const nlmsghdr* msg);
     void parse_rtattr(RTattribPtrs& table, rtattr* rta, int len);
-    void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info);
+    void ipaddrs_get(Iface& iface, NetlinkMessages& addr_info);
     void rtnl_process_reply(NetlinkMessages& info);
     void release_list(NetlinkMessages& messages);
     void rtnl_close_socket();
@@ -277,7 +277,7 @@ void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr* rta, int len)
 ///
 /// @param iface interface representation (addresses will be added here)
 /// @param addr_info collection of parsed netlink messages
-void Netlink::ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
+void Netlink::ipaddrs_get(Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[V6ADDRESS_LEN];
     RTattribPtrs rta_tb;
 
@@ -476,7 +476,7 @@ void IfaceMgr::detectIfaces() {
         iface.setHWType(interface_info->ifi_type);
         iface.setFlags(interface_info->ifi_flags);
 
-        // Does inetface have LL_ADDR?
+        // Does interface have LL_ADDR?
         if (attribs_table[IFLA_ADDRESS]) {
             iface.setMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_ADDRESS])),
                          RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]));
@@ -494,13 +494,18 @@ void IfaceMgr::detectIfaces() {
     nl.release_list(addr_info);
 }
 
+bool
+IfaceMgr::isDirectResponseSupported() {
+    return (false);
+}
+
 /// @brief sets flag_*_ fields.
 ///
 /// This implementation is OS-specific as bits have different meaning
 /// on different OSes.
 ///
 /// @param flags flags bitfield read from OS
-void IfaceMgr::Iface::setFlags(uint32_t flags) {
+void Iface::setFlags(uint32_t flags) {
     flags_ = flags;
 
     flag_loopback_ = flags & IFF_LOOPBACK;
@@ -510,56 +515,15 @@ void IfaceMgr::Iface::setFlags(uint32_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
-void IfaceMgr::os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
-                        size_t control_buf_len, const Pkt4Ptr& pkt) {
 
-    // Setting the interface is a bit more involved.
-    //
-    // We have to create a "control message", and set that to
-    // define the IPv4 packet information. We could set the
-    // source address if we wanted, but we can safely let the
-    // kernel decide what that should be.
-    m.msg_control = &control_buf[0];
-    m.msg_controllen = control_buf_len;
-    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
-    cmsg->cmsg_level = IPPROTO_IP;
-    cmsg->cmsg_type = IP_PKTINFO;
-    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
-    struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
-    memset(pktinfo, 0, sizeof(struct in_pktinfo));
-    pktinfo->ipi_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
+void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
+                        size_t, const Pkt4Ptr&) {
+    return;
+
 }
 
-bool IfaceMgr::os_receive4(struct msghdr& m, Pkt4Ptr& pkt) {
-    struct cmsghdr* cmsg;
-    struct in_pktinfo* pktinfo;
-    struct in_addr to_addr;
-
-    memset(&to_addr, 0, sizeof(to_addr));
-
-    cmsg = CMSG_FIRSTHDR(&m);
-    while (cmsg != NULL) {
-        if ((cmsg->cmsg_level == IPPROTO_IP) &&
-            (cmsg->cmsg_type == IP_PKTINFO)) {
-            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
-
-            pkt->setIndex(pktinfo->ipi_ifindex);
-            pkt->setLocalAddr(IOAddress(htonl(pktinfo->ipi_addr.s_addr)));
-            return (true);
-
-            // This field is useful, when we are bound to unicast
-            // address e.g. 192.0.2.1 and the packet was sent to
-            // broadcast. This will return broadcast address, not
-            // the address we are bound to.
-
-            // XXX: Perhaps we should uncomment this:
-            // to_addr = pktinfo->ipi_spec_dst;
-        }
-        cmsg = CMSG_NXTHDR(&m, cmsg);
-    }
-
-    return (false);
+bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
+    return (true);
 }
 
 } // end of isc::dhcp namespace

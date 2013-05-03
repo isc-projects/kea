@@ -1,3 +1,106 @@
+bind10-1.0.0beta2 released on May 3, 2013
+
+610.	[bug]		muks
+	When the sqlite3 program is not available on the system (in
+	PATH), we no longer attempt to run some tests which depend
+	on it.
+	(Trac #1909, git f85b274b85b57a094d33ca06dfbe12ae67bb47df)
+
+609.	[bug]		jinmei
+	Handled some rare error cases in DNS server classes correctly.
+	This fix specifically solves occasional crash of b10-auth due to
+	errors caused by TCP DNS clients.  Also, as a result of cleanups
+	with the fix, b10-auth should now be a little bit faster in
+	handling UDP queries: in some local experiments it ran about 5%
+	faster.
+	(Trac #2903, git 6d3e0f4b36a754248f8a03a29e2c36aef644cdcc)
+
+608.	[bug]		jinmei
+	b10-cmdctl: fixed a hangup problem on receiving the shutdown
+	command from bindctl.  Note, however, that cmdctl is defined as
+	a "needed" module by default, so shutting down cmdctl would cause
+	shutdown of the entire BIND 10 system anyway, and is therefore
+	still not very useful in practice.
+	(Trac #2712, git fa392e8eb391a17d30550d4b290c975710651d98)
+
+607.	[bug]		jinmei
+	Worked around some unit test regressions on FreeBSD 9.1 due to
+	a binary compatibility issue between standard and system
+	libraries (http://www.freebsd.org/cgi/query-pr.cgi?pr=175453).
+	While not all tests still pass, main BIND 10 programs should
+	generally work correctly.  Still, there can be odd run time
+	behavior such as abrupt crash instead of graceful shutdown
+	when some fatal event happens, so it's generally discouraged to
+	use BIND 10 on FreeBSD 9.1 RELEASE.  According to the above
+	bug report for FreeBSD, it seems upgrading or downgrading the
+	FreeBSD version will solve this problem.
+	(Trac #2887, git 69dfb4544d9ded3c10cffbbfd573ae05fdeb771f)
+
+606.	[bug]		jinmei
+	b10-xfrout now correctly stops sending notify requests once it
+	receives a valid response.  It previously handled it as if the
+	requests are timed out and resent it a few times in a short
+	period.
+	(Trac #2879, git 4c45f29f28ae766a9f7dc3142859f1d0000284e1)
+
+605.	[bug]		tmark
+	Modified perfdhcp to calculate the times displayed for packet sent 
+	and received as time elapsed since perfdhcp process start time.  
+	Previously these were times since the start of the epoch.
+	However the large numbers involved caused loss of precision
+	in the calculation of the test statistics.
+	(Trac #2785, git e9556924dcd1cf285dc358c47d65ed7c413e02cf)
+
+604.	[func]		marcin
+	libdhcp++: abstracted methods which open sockets and send/receive
+	DHCP4 packets to a separate class. Other classes will be derived
+	from it to implement OS-specific methods of DHCPv4 packets filtering.
+	The primary purpose for this change is to add support for Direct
+	DHCPv4 response to a client which doesn't have an address yet on
+	different OSes.
+	(Trac #991, git 33ffc9a750cd3fb34158ef676aab6b05df0302e2)
+
+603.	[func]		tmark
+	The directory in which the b10-dchp4 and b10-dhcp6 server id files has
+	been changed from the local state directory (set by the "configure"
+	--localstatedir switch) to the "bind10" subdirectory of it. After an
+	upgrade, server id files in the former location will be orphaned and
+	should be manually removed.
+	(Trac #2770, git a622140d411b3f07a68a1451e19df36118a80650)
+
+602.	[bug]		tmark
+	Perfdhcp will now exit gracefully if the command line argument for
+	IP version (-4 or -6) does not match the command line argument
+	given for the server. Prior to this perfdhcp would core when given
+	an IP version of -6 but a valid IPv4 address for server.
+	(Trac #2784, git 96b66c0c79dccf9a0206a45916b9b23fe9b94f74)
+
+601.	[bug]*		jinmei, vorner
+	The "delete record" interface of the database based data source
+	was extended so that the parameter includes reversed name in
+	addition to the actual name.  This may help the underlying
+	accessor implementation if reversed names are more convenient
+	for the delete operation.  This was the case for the SQLite3
+	accessor implementation, and it now performs delete operations
+	much faster.  At a higher level, this means IXFR and DDNS Updates
+	to the sqlite3 database are no longer so slow on large zones as
+	they were before.
+	(Trac #2877, git 33bd949ac7288c61ed0a664b7329b50b36d180e5)
+
+600.	[bug]		tmark
+	Changed mysql_lease_mgr to set the SQL mode option to STRICT. This
+	causes mysql it to treat invalid input data as an error. Rather than
+	"successfully" inserting a too large value by truncating it, the
+	insert will fail, and the lease manager will throw an exception.
+	Also, attempts to create a HWAddr (hardware address) object with
+	too long an array of data now throw an exception.
+	(Trac #2387, git cac02e9290600407bd6f3071c6654c1216278616)
+
+599.	[func]		tomek
+	libdhcp++: Pkt6 class is now able to parse and build relayed DHCPv6
+	messages.
+	(Trac #2827, git 29c3f7f4e82d7e85f0f5fb692345fd55092796b4)
+
 bind10-1.0.0beta1 released on April 4, 2013
 
 598.	[func]*		jinmei

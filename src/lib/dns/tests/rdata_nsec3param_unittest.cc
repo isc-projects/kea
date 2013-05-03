@@ -16,8 +16,6 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/encode/base32hex.h>
-#include <util/encode/hex.h>
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -35,39 +33,107 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
-using namespace isc::util::encode;
 using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_NSEC3PARAM_Test : public RdataTest {
-public:
-    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 1 1 D399EAAB") {}
+protected:
+    Rdata_NSEC3PARAM_Test() :
+        nsec3param_txt("1 1 1 D399EAAB"),
+        nsec3param_nosalt_txt("1 1 1 -"),
+        rdata_nsec3param(nsec3param_txt)
+    {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<generic::NSEC3PARAM, isc::Exception, isc::Exception>(
+            rdata_str, rdata_nsec3param, false, false);
+    }
+
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<generic::NSEC3PARAM, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_nsec3param, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<generic::NSEC3PARAM, BadValue, BadValue>(
+            rdata_str, rdata_nsec3param, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <generic::NSEC3PARAM, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_nsec3param, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str,
+                                 const generic::NSEC3PARAM& rdata)
+    {
+        checkFromText
+            <generic::NSEC3PARAM, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata, true, false);
+    }
+
     const string nsec3param_txt;
+    const string nsec3param_nosalt_txt;
+    const generic::NSEC3PARAM rdata_nsec3param;
 };
 
 TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
-    // With a salt
-    EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getHashalg());
-    EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getFlags());
-    // (salt is checked in the toText test)
+    // Empty salt is okay.
+    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_nosalt_txt).getSalt().size());
 
-    // With an empty salt
-    EXPECT_EQ(0, generic::NSEC3PARAM("1 0 0 -").getSalt().size());
+    // Salt is missing.
+    checkFromText_LexerError("1 1 1");
+
+    // Salt has whitespace within. This only fails in the string
+    // constructor, as the lexer constructor stops reading at the end of
+    // its RDATA.
+    const generic::NSEC3PARAM rdata_nsec3param2("1 1 1 D399");
+    checkFromText_BadString("1 1 1 D399 EAAB", rdata_nsec3param2);
+
+    // Hash algorithm out of range.
+    checkFromText_InvalidText("256 1 1 D399EAAB");
+
+    // Flags out of range.
+    checkFromText_InvalidText("1 256 1 D399EAAB");
+
+    // Iterations out of range.
+    checkFromText_InvalidText("1 1 65536 D399EAAB");
+
+    // Bad hex sequence
+    checkFromText_BadValue("1 1 256 D399EAABZOO");
+
+    // String instead of number
+    checkFromText_LexerError("foo 1 256 D399EAAB");
+    checkFromText_LexerError("1 foo 256 D399EAAB");
+    checkFromText_LexerError("1 1 foo D399EAAB");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString("1 1 1 D399EAAB ; comment\n"
+                            "1 1 1 D399EAAB", rdata_nsec3param);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toText) {
-    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(nsec3param_txt, rdata_nsec3param.toText());
-}
 
-TEST_F(Rdata_NSEC3PARAM_Test, badText) {
-    // garbage space at the end
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "),
-                 InvalidRdataText);
+    // Garbage space at the end should be ok. RFC5155 only forbids
+    // whitespace within the salt field, but any whitespace afterwards
+    // should be fine.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "));
+
+    // Hash algorithm in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("255 1 1 D399EAAB"));
+
+    // Flags in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 255 1 D399EAAB"));
+
+    // Iterations in range.
+    EXPECT_NO_THROW(generic::NSEC3PARAM("1 1 65535 D399EAAB"));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
-    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(0, rdata_nsec3param.compare(
                   *rdataFactoryFromFile(RRType::NSEC3PARAM(), RRClass::IN(),
                                        "rdata_nsec3param_fromWire1")));
@@ -87,15 +153,19 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromLexer) {
-    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(0, rdata_nsec3param.compare(
         *test::createRdataUsingLexer(RRType::NSEC3PARAM(), RRClass::IN(),
                                      nsec3param_txt)));
+
+    // empty salt is also okay.
+    const generic::NSEC3PARAM rdata_nosalt_nsec3param(nsec3param_nosalt_txt);
+    EXPECT_EQ(0, rdata_nosalt_nsec3param.compare(
+        *test::createRdataUsingLexer(RRType::NSEC3PARAM(), RRClass::IN(),
+                                     nsec3param_nosalt_txt)));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
     renderer.skip(2);
-    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     rdata_nsec3param.toWire(renderer);
 
     vector<unsigned char> data;
@@ -106,13 +176,26 @@ TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireBuffer) {
-    const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     rdata_nsec3param.toWire(obuffer);
+
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        &data[2], data.size() - 2);
+}
+
+TEST_F(Rdata_NSEC3PARAM_Test, getHashAlg) {
+    EXPECT_EQ(1, rdata_nsec3param.getHashalg());
+}
+
+TEST_F(Rdata_NSEC3PARAM_Test, getFlags) {
+    EXPECT_EQ(1, rdata_nsec3param.getFlags());
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, assign) {
-    generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
-    generic::NSEC3PARAM other_nsec3param = rdata_nsec3param;
+    generic::NSEC3PARAM other_nsec3param("1 1 1 -");
+    other_nsec3param = rdata_nsec3param;
     EXPECT_EQ(0, rdata_nsec3param.compare(other_nsec3param));
 }
 

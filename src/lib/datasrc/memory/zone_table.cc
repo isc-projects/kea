@@ -12,14 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/zone_data.h>
+#include <datasrc/memory/domaintree.h>
+#include <datasrc/memory/segment_object_holder.h>
+#include <datasrc/memory/logger.h>
+
 #include <util/memory_segment.h>
 
 #include <dns/name.h>
-
-#include <datasrc/memory/zone_data.h>
-#include <datasrc/memory/zone_table.h>
-#include <datasrc/memory/domaintree.h>
-#include <datasrc/memory/segment_object_holder.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -70,6 +71,9 @@ ZoneTable::AddResult
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
                    const Name& zone_name, ZoneData* content)
 {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
+        arg(zone_name).arg(rrclass_);
+
     if (content == NULL) {
         isc_throw(isc::BadValue, "Zone content must not be NULL");
     }
@@ -94,6 +98,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     if (old != NULL) {
         return (AddResult(result::EXIST, old));
     } else {
+        ++zone_count_;
         return (AddResult(result::SUCCESS, NULL));
     }
 }

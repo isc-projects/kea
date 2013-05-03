@@ -83,10 +83,36 @@ with the content. The problem does not stop the new version from being used
 but it should still be checked and fixed. See the message to know what exactly
 is wrong with the data.
 
+% DATASRC_DATABASE_ADDDIFF updated diff table for add: %1 %2 %3
+Debug message. A difference record for adding a record to the zone is being
+appended to the difference table. The name, type and rdata of the record is
+logged.
+
+% DATASRC_DATABASE_ADDNSEC3 added NSEC3 RR: %1 %2
+Debug message. A new NSEC3 record is added to the table. The hash and the rdata
+is logged.
+
+% DATASRC_DATABASE_ADDRR added RR: %1 %2 %3
+Debug message. A new resource record is added to the table. The name, type and
+rdata is logged.
+
 % DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
+
+% DATASRC_DATABASE_DELETEDIFF updated diff table for delete: %1 %2 %3
+Debug message. A difference record for removing a record from the zone is being
+appended to the difference table. The name, type and rdata of the record is
+logged.
+
+% DATASRC_DATABASE_DELETENSEC3 deleted NSEC3 RR: %1 %2
+Debug message. An NSEC3 record is removed from the table. The name, type and
+rdata is logged.
+
+% DATASRC_DATABASE_DELETERR deleted RR: %1 %2 %3
+Debug message. A resource record is removed from the table. The name, type and
+rdata is logged.
 
 % DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode
 Debug information. A search in an database data source for NSEC3 that
@@ -328,15 +354,12 @@ Therefore, the entire data source will not be available for this process. If
 this is a problem, you should configure the zones of that data source to some
 database backend (sqlite3, for example) and use it from there.
 
-% DATASRC_LOAD_FROM_FILE_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from a
-file. The zone was not loaded. The specific error is shown in the
-message, and should be addressed.
-
-% DATASRC_LOAD_FROM_ITERATOR_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from
-another data source. The zone was not loaded. The specific error is
-shown in the message, and should be addressed.
+% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source %3: %4
+During data source configuration, an error was found in the zone data
+when it was being loaded in to memory on the shown data source.  This
+particular zone was not loaded, but data source configuration
+continues, possibly loading other zones into memory. The specific
+error is shown in the message, and should be addressed.
 
 % DATASRC_MASTER_LOAD_ERROR %1:%2: Zone '%3/%4' contains error: %5
 There's an error in the given master file. The zone won't be loaded for

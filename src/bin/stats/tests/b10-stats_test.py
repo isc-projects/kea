@@ -376,7 +376,7 @@ class TestStats(unittest.TestCase):
                              'report_time': 42})),
                           ('update_module', ())], call_log)
 
-        # Then update faked timestamp so the intial polling will happen, and
+        # Then update faked timestamp so the initial polling will happen, and
         # confirm that.
         call_log = []
         stats.get_timestamp = lambda: 10

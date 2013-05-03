@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 1.1.0beta1, bind10-dev@isc.org)
+AC_INIT(bind10, 1.1.0beta2, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 # serial-tests is not available in automake version before 1.13. In
 # automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
@@ -387,8 +387,6 @@ Use --disable-setproctitle-check to skip this check.
 In this case we will continue, but naming of python processes will not work.])
     fi
 fi
-
-# TODO: check for _sqlite3.py module
 
 # (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
@@ -884,6 +882,17 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
+use_shared_memory=yes
+AC_ARG_WITH(shared-memory,
+    AC_HELP_STRING([--with-shared-memory],
+    [Build with Boost shared memory support; for large scale authoritative DNS servers]),
+    [use_shared_memory=$withval])
+if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
+    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
+fi
+AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
+AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
+
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
@@ -1032,12 +1041,16 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
-dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
+dnl check for pkg-config itself
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
 if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
-PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
+
+AX_SQLITE3_FOR_BIND10
+if test "x$have_sqlite" = "xyes" ; then
+  enable_features="$enable_features SQLite3"
+fi
 
 #
 # ASIO: we extensively use it as the C++ event management module.
@@ -1190,6 +1203,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/resolver/bench/Makefile
                  src/bin/sysinfo/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
@@ -1311,6 +1325,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
                  tests/tools/perfdhcp/tests/testdata/Makefile
+                 m4macros/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent

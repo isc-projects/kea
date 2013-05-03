@@ -151,7 +151,7 @@ public:
     /// \param index A valid index (one of the values in the 'Index' enum).
     ///
     /// \return Maximum allowed value for this option.  If the option is a bit
-    ///         in the flags field of the DNS message hearder, this will be 1.
+    ///         in the flags field of the DNS message header, this will be 1.
     static uint32_t maxval(int index);
 
     /// \brief Check Array Index

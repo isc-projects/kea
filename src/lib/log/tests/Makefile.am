@@ -25,6 +25,7 @@ logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
 logger_example_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 logger_example_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -34,6 +35,7 @@ init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
 init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -43,6 +45,7 @@ buffer_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 buffer_logger_test_LDFLAGS = $(AM_LDFLAGS)
 buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -53,6 +56,7 @@ logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
 logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 

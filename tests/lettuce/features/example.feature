@@ -26,7 +26,7 @@ Feature: Example feature
 
     Scenario: New database
         # This test checks whether a database file is automatically created
-        # Underwater, we take advantage of our intialization routines so
+        # Underwater, we take advantage of our initialization routines so
         # that we are sure this file does not exist, see
         # features/terrain/terrain.py
 

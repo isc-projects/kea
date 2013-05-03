@@ -306,7 +306,7 @@ class WrapTests(unittest.TestCase):
         p1.close()
         p1 = socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM)
 
-        # Now, pass some data trough the socket
+        # Now, pass some data through the socket
         p1.send(b'A')
         data = p2.recv(1)
         self.assertEqual(b'A', data)
