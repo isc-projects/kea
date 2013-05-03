@@ -98,6 +98,9 @@ public:
                        isc::data::ConstElementPtr params);
 
 private:
+    void processChecksum(isc::util::MemorySegmentMapped& segment, bool create);
+    void processHeader(isc::util::MemorySegmentMapped& segment, bool create);
+
     void openCreate(const std::string& filename);
     void openReadWrite(const std::string& filename);
     void openReadOnly(const std::string& filename);
