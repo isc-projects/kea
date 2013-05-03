@@ -75,23 +75,7 @@ void DebugParser::commit() {
 
 // **************************** BooleanParser  *************************
 
-BooleanParser::BooleanParser(const std::string& param_name, 
-                            BooleanStoragePtr storage)
-    : storage_(storage), param_name_(param_name), value_(false) {
-    // Empty parameter name is invalid.
-    if (param_name_.empty()) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-        << "empty parameter name provided");
-    }
-
-    // NUll storage is invalid.
-    if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-            << "storage may not be NULL");
-    }
-}
-
-void BooleanParser::build(ConstElementPtr value) {
+template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
     // The Config Manager checks if user specified a
     // valid value for a boolean parameter: True or False.
     // We should have a boolean Element, use value directly
@@ -103,30 +87,9 @@ void BooleanParser::build(ConstElementPtr value) {
     }
 }
 
-void BooleanParser::commit() {
-    // If a given parameter already exists in the storage we override
-    // its value. If it doesn't we insert a new element.
-    storage_->setParam(param_name_, value_);
-}
-
 // **************************** Uin32Parser  *************************
 
-Uint32Parser::Uint32Parser(const std::string& param_name, Uint32StoragePtr storage)
-    : storage_(storage), param_name_(param_name) {
-    // Empty parameter name is invalid.
-    if (param_name_.empty()) {
-        isc_throw(DhcpConfigError, "parser logic error:"
-            << "empty parameter name provided");
-    }
-
-    // NULL storage is invalid.
-    if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-            << "storage may not be NULL");
-    }
-}
-
-void Uint32Parser::build(ConstElementPtr value) {
+template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
     int64_t check;
     string x = value->str();
     try {
@@ -148,39 +111,11 @@ void Uint32Parser::build(ConstElementPtr value) {
     value_ = static_cast<uint32_t>(check);
 }
 
-void Uint32Parser::commit() {
-    // If a given parameter already exists in the storage we override
-    // its value. If it doesn't we insert a new element.
-    storage_->setParam(param_name_, value_);
-}
-
 // **************************** StringParser  *************************
 
-StringParser::StringParser(const std::string& param_name, 
-                           StringStoragePtr storage)
-    :storage_(storage), param_name_(param_name) {
-    // Empty parameter name is invalid.
-    if (param_name_.empty()) {
-        isc_throw(DhcpConfigError, "parser logic error:"
-                  << "empty parameter name provided");
-    }
-
-    // NULL storage is invalid.
-    if (!storage_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-            << "storage may not be NULL");
-    }
-}
-
-void StringParser::build(ConstElementPtr value) {
+template <> void ValueParser<std::string>::build(ConstElementPtr value) {
     value_ = value->str();
     boost::erase_all(value_, "\"");
-}
-
-void StringParser::commit() {
-    // If a given parameter already exists in the storage we override
-    // its value. If it doesn't we insert a new element.
-    storage_->setParam(param_name_, value_);
 }
 
 // ******************** InterfaceListConfigParser *************************
