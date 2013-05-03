@@ -1,3 +1,9 @@
+610.	[bug]		muks
+	When the sqlite3 program is not available on the system (in
+	PATH), we no longer attempt to run some tests which depend
+	on it.
+	(Trac #1909, git f85b274b85b57a094d33ca06dfbe12ae67bb47df)
+
 609.	[bug]		jinmei
 	Handled some rare error cases in DNS server classes correctly.
 	This fix specifically solves occasional crash of b10-auth due to
