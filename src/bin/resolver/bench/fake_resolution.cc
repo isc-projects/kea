@@ -20,7 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <algorithm>
-#include <cstdlib>
+#include <stdlib.h> // not cstdlib, which doesn't officially have random()
 
 namespace isc {
 namespace resolver {
