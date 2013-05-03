@@ -195,7 +195,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() {
     if (!mem_sgmt_) {
-        isc_throw(isc::Unexpected,
+        isc_throw(isc::InvalidOperation,
                   "getHeader() called without calling reset() first");
     }
     return (*header_);
@@ -204,7 +204,7 @@ ZoneTableSegmentMapped::getHeader() {
 const ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() const {
     if (!mem_sgmt_) {
-        isc_throw(isc::Unexpected,
+        isc_throw(isc::InvalidOperation,
                   "getHeader() called without calling reset() first");
     }
     return (*header_);
@@ -213,7 +213,7 @@ ZoneTableSegmentMapped::getHeader() const {
 MemorySegment&
 ZoneTableSegmentMapped::getMemorySegment() {
     if (!mem_sgmt_) {
-        isc_throw(isc::Unexpected,
+        isc_throw(isc::InvalidOperation,
                   "getMemorySegment() called without calling reset() first");
     }
     return (*mem_sgmt_);

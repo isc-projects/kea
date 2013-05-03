@@ -60,12 +60,12 @@ protected:
 
 TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
 }
 
 TEST_F(ZoneTableSegmentMappedTest, getMemorySegmentUninitialized) {
     // This should throw as we haven't called reset() yet.
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
 }
 
 TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
@@ -100,8 +100,8 @@ TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     }, isc::InvalidParameter);
 
     // The following should still throw, unaffected by the failed opens.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
 
     // isWritable() must still return false, because the segment has not
     // been successfully reset() yet.
@@ -117,8 +117,8 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     }, MemorySegmentOpenError);
 
     // The following should still throw, unaffected by the failed open.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
 
     // isWritable() must still return false, because the segment has not
     // been successfully reset() yet.
@@ -155,8 +155,8 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
     // The following should throw now.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::Unexpected);
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::Unexpected);
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
 
     // isWritable() must return false, because the last reset() failed.
     EXPECT_FALSE(ztable_segment_->isWritable());
