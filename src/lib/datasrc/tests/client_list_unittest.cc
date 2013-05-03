@@ -714,6 +714,26 @@ TEST_F(ListTest, badCache) {
     checkDS(0, "test_type", "[\"example.org\"]", true);
 }
 
+TEST_F(ListTest, cacheInReadOnlySegment) {
+    // Initializing data source with read-only zone table memory segment
+    // is possible.  Loading is just postponed
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"test_type\","
+        "   \"cache-enable\": true,"
+        "   \"cache-type\": \"mapped\","
+        "   \"cache-zones\": [\"example.org\"],"
+        "   \"params\": [\"example.org\"]"
+        "}]"));
+    list_->configure(elem, true); // no disruption
+    checkDS(0, "test_type", "[\"example.org\"]", true);
+    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+
+    // Likewise, reload attempt will fail.
+    EXPECT_EQ(ConfigurableClientList::CACHE_NOT_WRITABLE,
+              doReload(Name("example.org")));
+}
+
 TEST_F(ListTest, masterFiles) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
