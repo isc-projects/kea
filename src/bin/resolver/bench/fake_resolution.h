@@ -142,6 +142,13 @@ public:
         }
         interface_ = &dst_interface;
     }
+    /// \brief The answer for upstream query was received
+    ///
+    /// This should be called from within the FakeInterface only.
+    /// It marks that the query from upstream was answered.
+    void answerReceived() {
+        outstanding_ = false;
+    }
 private:
     // The scheduled steps for this task.
     typedef std::pair<Task, size_t> Step;
