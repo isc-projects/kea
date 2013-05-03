@@ -639,6 +639,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE)
             .arg(origin).arg(rrclass);
         break;                  // return NULL below
+    case datasrc::ConfigurableClientList::CACHE_NOT_WRITABLE:
+        // This is an internal error. Auth server should skip reloading zones
+        // on non writable caches.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is not writable");
     case datasrc::ConfigurableClientList::CACHE_DISABLED:
         // This is an internal error. Auth server must have the cache
         // enabled.

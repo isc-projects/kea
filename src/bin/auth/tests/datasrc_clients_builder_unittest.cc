@@ -532,4 +532,28 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                  isc::data::TypeError);
 }
 
+// This works only if mapped memory segment is compiled.
+// Note also that this test case may fail as we make b10-auth more aware
+// of shared-memory cache.
+TEST_F(DataSrcClientsBuilderTest, loadInNonWritableCache) {
+    const ConstElementPtr config = Element::fromJSON(
+        "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"test1.example\": \"" +
+        std::string(TEST_DATA_BUILDDIR "/test1.zone.copied") + "\"},"
+        "   \"cache-enable\": true,"
+        "   \"cache-type\": \"mapped\""
+        "}]}");
+    clients_map = configureDataSource(config);
+
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"origin\": \"test1.example\","
+                                 " \"class\": \"IN\"}"))),
+                 TestDataSrcClientsBuilder::InternalCommandError);
+}
+
 } // unnamed namespace
