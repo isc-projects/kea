@@ -73,19 +73,6 @@ public:
     {}
 };
 
-/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
-/// fails because it was determined that the backing memory store is
-/// corrupted. This is typically an unexpected condition that may arise
-/// in rare cases. When this exception is thrown, there is a strong
-/// guarantee that the previously existing backing memory store was
-/// cleared.
-class BrokenSegment : public ResetFailedAndSegmentCleared {
-public:
-    BrokenSegment(const char* file, size_t line, const char* what) :
-        ResetFailedAndSegmentCleared(file, line, what)
-    {}
-};
-
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
 ///
@@ -214,6 +201,26 @@ public:
     /// \brief Unload the current memory store (if loaded) and load the
     /// specified one.
     ///
+    /// In case opening/loading the new memory store fails for some
+    /// reason, one of the following documented (further below)
+    /// exceptions may be thrown. In case failures occur,
+    /// implementations of this method must strictly provide the
+    /// associated behavior as follows, and in the exception
+    /// documentation below.  Code that uses \c ZoneTableSegment would
+    /// depend on such assurances.
+    ///
+    /// In case an existing memory store is in use, and an attempt to
+    /// load a different memory store fails, the existing memory store
+    /// must still be available and the \c ResetFailed exception must be
+    /// thrown. In this case, the segment is still usable.
+    ///
+    /// In case an existing memory store is in use, and an attempt is
+    /// made to reload the same memory store which results in a failure,
+    /// the existing memory store must no longer be available and the
+    /// \c ResetFailedAndSegmentCleared exception must be thrown. In
+    /// this case, the segment is no longer usable without a further
+    /// successful call to \c reset().
+    ///
     /// See the \c MemorySegmentOpenMode documentation above for the
     /// various modes in which a ZoneTableSegment can be created.
     ///
@@ -223,10 +230,17 @@ public:
     /// argument.
     ///
     /// \throws isc::InvalidParameter if the configuration in \c params
-    /// has incorrect syntax.
-    /// \throws isc::Unexpected for a variety of cases where an
-    /// unexpected condition occurs. These should not occur normally in
-    /// correctly written code.
+    /// has incorrect syntax, but the segment is still usable due to the
+    /// old memory store still being in use.
+    ///
+    /// \throw ResetFailed if there was a problem in loading the new
+    /// memory store, but the segment is still usable due to the old
+    /// memory store still being in use.
+    ///
+    /// \throw ResetFailedAndSegmentCleared if there was a problem in
+    /// loading the new memory store, but the old memory store was also
+    /// unloaded and is no longer in use. The segment is not usable
+    /// without a further successful \c reset().
     ///
     /// \param mode The open mode (see the MemorySegmentOpenMode
     /// documentation).
