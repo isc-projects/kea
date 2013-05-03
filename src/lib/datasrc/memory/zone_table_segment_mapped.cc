@@ -43,16 +43,17 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 
 bool
 ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
-                                        bool createMode)
+                                        bool create,
+                                        std::string& error_msg)
 {
     MemorySegment::NamedAddressResult result =
         segment.getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
     if (result.first) {
-        if (createMode) {
+        if (create) {
             // There must be no previously saved checksum.
-            isc_throw(isc::Unexpected,
-                      "There is already a saved checksum in a mapped segment "
-                      "opened in create mode.");
+            error_msg = "There is already a saved checksum in the segment "
+                 "opened in create mode";
+            return (false);
         } else {
             // The segment was already shrunk when it was last
             // closed. Check that its checksum is consistent.
@@ -64,11 +65,10 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             *checksum = 0;
             const uint32_t new_checksum = segment.getCheckSum();
             if (saved_checksum != new_checksum) {
-                isc_throw(isc::Unexpected,
-                          "Saved checksum doesn't match mapped segment data");
+                error_msg = "Saved checksum doesn't match segment data";
+                return (false);
             }
         }
-        return (true);
     } else {
         // Allocate space for a checksum (which is saved during close).
 
@@ -87,27 +87,34 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
         *static_cast<uint32_t*>(checksum) = 0;
         const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
                                                   checksum);
-        // If the segment grew here, we have a problem as the checksum
-        // address may no longer be valid. In this case, we cannot
-        // recover. This case is extremely unlikely as we reserved
-        // memory for the ZONE_TABLE_CHECKSUM_NAME above. It indicates a
-        // very restrictive MemorySegment which we should not use.
-        return (!grew);
+        if (grew) {
+            // If the segment grew here, we have a problem as the
+            // checksum address may no longer be valid. In this case, we
+            // cannot recover. This case is extremely unlikely as we
+            // reserved memory for the ZONE_TABLE_CHECKSUM_NAME
+            // above. It indicates a very restrictive MemorySegment
+            // which we should not use.
+            error_msg = "Segment grew unexpectedly in setNamedAddress()";
+            return (false);
+        }
     }
+
+    return (true);
 }
 
 bool
 ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
-                                      bool createMode)
+                                      bool create,
+                                      std::string& error_msg)
 {
     MemorySegment::NamedAddressResult result =
         segment.getNamedAddress(ZONE_TABLE_HEADER_NAME);
     if (result.first) {
-        if (createMode) {
+        if (create) {
             // There must be no previously saved checksum.
-            isc_throw(isc::Unexpected,
-                      "There is already a saved ZoneTableHeader in a "
-                      "mapped segment opened in create mode.");
+            error_msg = "There is already a saved ZoneTableHeader in the "
+                 "segment opened in create mode";
+            return (false);
         } else {
             assert(result.second);
             header_ = static_cast<ZoneTableHeader*>(result.second);
@@ -127,42 +134,57 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
         const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
                                                   new_header);
         if (grew) {
-             // If the segment grew here, we have a problem as the table
-             // header address may no longer be valid. In this case, we
-             // cannot recover. This case is extremely unlikely as we
-             // reserved memory for the ZONE_TABLE_HEADER_NAME above. It
-             // indicates a very restrictive MemorySegment which we
-             // should not use.
-             return (false);
+            // If the segment grew here, we have a problem as the table
+            // header address may no longer be valid. In this case, we
+            // cannot recover. This case is extremely unlikely as we
+            // reserved memory for the ZONE_TABLE_HEADER_NAME above. It
+            // indicates a very restrictive MemorySegment which we
+            // should not use.
+            error_msg = "Segment grew unexpectedly in setNamedAddress()";
+            return (false);
         }
         header_ = new_header;
     }
+
     return (true);
 }
 
 void
-ZoneTableSegmentMapped::openCreate(const std::string& filename) {
-    // In case there is a checksum mismatch, we throw. We want the
-    // segment to be automatically destroyed then.
+ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
+                                      bool create)
+{
+    const MemorySegmentMapped::OpenMode mode = create ?
+         MemorySegmentMapped::CREATE_ONLY :
+         MemorySegmentMapped::OPEN_OR_CREATE;
+    // In case there is a problem, we throw. We want the segment to be
+    // automatically destroyed then.
     std::auto_ptr<MemorySegmentMapped> segment
-        (new MemorySegmentMapped(filename, MemorySegmentMapped::CREATE_ONLY));
+        (new MemorySegmentMapped(filename, mode));
 
-    processChecksum(*segment, true);
-    processHeader(*segment, true);
+    std::string error_msg;
+    if (!processChecksum(*segment, create, error_msg)) {
+         if (mem_sgmt_) {
+              isc_throw(ResetFailed,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         } else {
+              isc_throw(ResetFailedAndSegmentCleared,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         }
+    }
 
-    mem_sgmt_.reset(segment.release());
-}
-
-void
-ZoneTableSegmentMapped::openReadWrite(const std::string& filename) {
-    // In case there is a checksum mismatch, we throw. We want the
-    // segment to be automatically destroyed then.
-    std::auto_ptr<MemorySegmentMapped> segment
-        (new MemorySegmentMapped(filename,
-                                 MemorySegmentMapped::OPEN_OR_CREATE));
-
-    processChecksum(*segment, false);
-    processHeader(*segment, false);
+    if (!processHeader(*segment, create, error_msg)) {
+         if (mem_sgmt_) {
+              isc_throw(ResetFailed,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         } else {
+              isc_throw(ResetFailedAndSegmentCleared,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         }
+    }
 
     mem_sgmt_.reset(segment.release());
 }
@@ -177,9 +199,18 @@ ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
     MemorySegment::NamedAddressResult result =
         segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
     if (!result.first) {
-        isc_throw(isc::Unexpected,
-                  "There is no previously saved checksum in a "
-                  "mapped segment opened in read-only mode.");
+         const std::string error_msg =
+             "There is no previously saved checksum in a "
+             "mapped segment opened in read-only mode";
+         if (mem_sgmt_) {
+              isc_throw(ResetFailed,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         } else {
+              isc_throw(ResetFailedAndSegmentCleared,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         }
     }
 
     // We can't verify the checksum here as we can't set the checksum to
@@ -192,9 +223,18 @@ ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
         assert(result.second);
         header_ = static_cast<ZoneTableHeader*>(result.second);
     } else {
-        isc_throw(isc::Unexpected,
-                  "There is no previously saved ZoneTableHeader in a "
-                  "mapped segment opened in read-only mode.");
+         const std::string error_msg =
+             "There is no previously saved ZoneTableHeader in a "
+             "mapped segment opened in read-only mode.";
+         if (mem_sgmt_) {
+              isc_throw(ResetFailed,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         } else {
+              isc_throw(ResetFailedAndSegmentCleared,
+                        "Error in resetting zone table segment to use "
+                        << filename << ": " << error_msg);
+         }
     }
 
     mem_sgmt_.reset(segment.release());
@@ -204,8 +244,6 @@ void
 ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                               isc::data::ConstElementPtr params)
 {
-    clear();
-
     if (!params || params->getType() != Element::map) {
         isc_throw(isc::InvalidParameter,
                   "Configuration does not contain a map");
@@ -224,13 +262,20 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 
     const std::string filename = mapped_file->stringValue();
 
+    if (mem_sgmt_ && (filename == current_filename_)) {
+        // This reset() is an attempt to re-open the currently open
+        // mapped file. We cannot do this in many mode combinations
+        // unless we close the existing mapped file. So just close it.
+        clear();
+    }
+
     switch (mode) {
     case CREATE:
-        openCreate(filename);
+        openReadWrite(filename, true);
         break;
 
     case READ_WRITE:
-        openReadWrite(filename);
+        openReadWrite(filename, false);
         break;
 
     case READ_ONLY:
@@ -238,6 +283,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     }
 
     current_mode_ = mode;
+    current_filename_ = filename;
 }
 
 void

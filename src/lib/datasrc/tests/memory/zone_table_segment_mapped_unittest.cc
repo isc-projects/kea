@@ -151,21 +151,20 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
                            config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
 
-    // When we reset() and it fails, then the segment should be
-    // unusable.
+    // When we reset() with an invalid paramter and it fails, then the
+    // segment should still be usable.
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
-    // The following should throw now.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
-
-    // isWritable() must return false, because the last reset() failed.
-    EXPECT_FALSE(ztable_segment_->isWritable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
+    // The following should not throw.
+    EXPECT_NO_THROW(ztable_segment_->getHeader());
+    EXPECT_NO_THROW(ztable_segment_->getMemorySegment());
 
     // READ_WRITE with an existing map file ought to work too. This
-    // would use existing named addresses.
+    // would use existing named addresses. This actually re-opens the
+    // currently open map.
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
                            config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
