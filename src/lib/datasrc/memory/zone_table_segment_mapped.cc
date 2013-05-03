@@ -213,7 +213,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         break;
 
     case READ_ONLY:
-         openReadOnly(filename);
+        openReadOnly(filename);
     }
 
     current_mode_ = mode;
