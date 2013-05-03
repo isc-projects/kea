@@ -46,7 +46,7 @@ endif
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
-		rm -rf coverage/; \
+		rm -rf $(abs_top_srcdir)/coverage-cpp-html/; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
 		echo "Use: ./configure --with-lcov" ; \
