@@ -98,10 +98,15 @@ public:
                        isc::data::ConstElementPtr params);
 
 private:
-    // Internally holds a MemorySegmentMapped. This is NULL on
-    // construction, and is set by the \c reset() method.
+    void openCreate(const std::string& filename);
+    void openReadWrite(const std::string& filename);
+    void openReadOnly(const std::string& filename);
+
+private:
     isc::dns::RRClass rrclass_;
     MemorySegmentOpenMode current_mode_;
+    // Internally holds a MemorySegmentMapped. This is NULL on
+    // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
     ZoneTableHeader* header_;
 };
