@@ -61,9 +61,9 @@ public:
         return (true);
     }
 
-    /// \brief This method currently doesn't do anything.
+    /// \brief This method is not implemented.
     ///
-    /// \c mode and \c params args are currently ignored.
+    /// \throw isc::NotImplemented
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params);
 

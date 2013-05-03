@@ -41,7 +41,9 @@ void
 ZoneTableSegmentLocal::reset(MemorySegmentOpenMode,
                              isc::data::ConstElementPtr)
 {
-    // This method doesn't do anything in this implementation.
+    isc_throw(isc::NotImplemented,
+              "ZoneTableSegmentLocal::reset() is not implemented and "
+              "should not be used.");
 }
 
 // After more methods' definitions are added here, it would be a good
