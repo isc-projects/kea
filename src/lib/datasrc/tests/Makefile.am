@@ -60,6 +60,7 @@ run_unittests_SOURCES += client_list_unittest.cc
 run_unittests_SOURCES += master_loader_callbacks_test.cc
 run_unittests_SOURCES += zone_loader_unittest.cc
 run_unittests_SOURCES += cache_config_unittest.cc
+run_unittests_SOURCES += zone_table_accessor_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)

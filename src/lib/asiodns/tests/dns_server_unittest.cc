@@ -117,7 +117,7 @@ public:
     DummyLookup() :
         allow_resume_(true)
     { }
-    void operator()(const IOMessage& io_message,
+    virtual void operator()(const IOMessage& io_message,
             isc::dns::MessagePtr message,
             isc::dns::MessagePtr answer_message,
             isc::util::OutputBufferPtr buffer,
@@ -145,6 +145,24 @@ class SimpleAnswer : public DNSAnswer, public ServerStopper {
             stopServer();
         }
 
+};
+
+/// \brief Mixture of DummyLookup and SimpleAnswer: build the answer in the
+/// lookup callback.  Used with SyncUDPServer.
+class SyncDummyLookup : public DummyLookup {
+public:
+    virtual void operator()(const IOMessage& io_message,
+                            isc::dns::MessagePtr message,
+                            isc::dns::MessagePtr answer_message,
+                            isc::util::OutputBufferPtr buffer,
+                            DNSServer* server) const
+    {
+        buffer->writeData(io_message.getData(), io_message.getDataSize());
+        stopServer();
+        if (allow_resume_) {
+            server->resume(true);
+        }
+    }
 };
 
 // \brief simple client, send one string to server and wait for response
@@ -353,6 +371,7 @@ class DNSServerTestBase : public::testing::Test {
             server_address_(ip::address::from_string(server_ip)),
             checker_(new DummyChecker()),
             lookup_(new DummyLookup()),
+            sync_lookup_(new SyncDummyLookup()),
             answer_(new SimpleAnswer()),
             udp_client_(new UDPClient(service,
                                       ip::udp::endpoint(server_address_,
@@ -375,6 +394,7 @@ class DNSServerTestBase : public::testing::Test {
             }
             delete checker_;
             delete lookup_;
+            delete sync_lookup_;
             delete answer_;
             delete udp_server_;
             delete udp_client_;
@@ -421,7 +441,8 @@ class DNSServerTestBase : public::testing::Test {
         asio::io_service service;
         const ip::address server_address_;
         DummyChecker* const checker_;
-        DummyLookup*  const lookup_;
+        DummyLookup* lookup_;     // we need to replace it in some cases
+        SyncDummyLookup*  const sync_lookup_;
         SimpleAnswer* const answer_;
         UDPClient*    const udp_client_;
         TCPClient*    const tcp_client_;
@@ -482,18 +503,33 @@ private:
 protected:
     // Using SetUp here so we can ASSERT_*
     void SetUp() {
-        const int fdUDP(getFd(SOCK_DGRAM));
-        ASSERT_NE(-1, fdUDP) << strerror(errno);
-        this->udp_server_ = new UDPServerClass(this->service, fdUDP, AF_INET6,
-                                               this->checker_, this->lookup_,
-                                               this->answer_);
-        const int fdTCP(getFd(SOCK_STREAM));
-        ASSERT_NE(-1, fdTCP) << strerror(errno);
-        this->tcp_server_ = new TCPServer(this->service, fdTCP, AF_INET6,
+        const int fd_udp(getFd(SOCK_DGRAM));
+        ASSERT_NE(-1, fd_udp) << strerror(errno);
+        this->udp_server_ = createServer(fd_udp, AF_INET6);
+        const int fd_tcp(getFd(SOCK_STREAM));
+        ASSERT_NE(-1, fd_tcp) << strerror(errno);
+        this->tcp_server_ = new TCPServer(this->service, fd_tcp, AF_INET6,
                                           this->checker_, this->lookup_,
                                           this->answer_);
     }
+
+    // A helper factory of the tested UDP server class: allow customization
+    // by template specialization.
+    UDPServerClass* createServer(int fd, int af) {
+        return (new UDPServerClass(this->service, fd, af,
+                                   this->checker_, this->lookup_,
+                                   this->answer_));
+    }
 };
+
+// Specialization for SyncUDPServer.  It needs to use SyncDummyLookup.
+template<>
+SyncUDPServer*
+FdInit<SyncUDPServer>::createServer(int fd, int af) {
+    delete this->lookup_;
+    this->lookup_ = new SyncDummyLookup;
+    return (new SyncUDPServer(this->service, fd, af, this->lookup_));
+}
 
 // This makes it the template as gtest wants it.
 template<class Parent>
@@ -502,6 +538,11 @@ class DNSServerTest : public Parent { };
 typedef ::testing::Types<FdInit<UDPServer>, FdInit<SyncUDPServer> >
     ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
+
+// Some tests work only for SyncUDPServer, some others work only for
+// (non Sync)UDPServer.  We specialize these tests.
+typedef FdInit<UDPServer> AsyncServerTest;
+typedef FdInit<SyncUDPServer> SyncServerTest;
 
 typedef ::testing::Types<UDPServer, SyncUDPServer> UDPServerTypes;
 TYPED_TEST_CASE(DNSServerTestBase, UDPServerTypes);
@@ -513,7 +554,7 @@ asio::io_service* DNSServerTestBase<UDPServerClass>::current_service(NULL);
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
-// get response, udp server will be stopped, the io service won't quit
+// get response, UDP server will be stopped, the io service won't quit
 // if udp server doesn't stop successfully.
 TYPED_TEST(DNSServerTest, stopUDPServerAfterOneQuery) {
     this->testStopServerByStopper(this->udp_server_, this->udp_client_,
@@ -532,8 +573,10 @@ TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
 }
 
 
-// Test whether udp server stopped successfully during message check
-TYPED_TEST(DNSServerTest, stopUDPServerDuringMessageCheck) {
+// Test whether udp server stopped successfully during message check.
+// This only works for non-sync server; SyncUDPServer doesn't use checkin
+// callback.
+TEST_F(AsyncServerTest, stopUDPServerDuringMessageCheck) {
     this->testStopServerByStopper(this->udp_server_, this->udp_client_,
                                   this->checker_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
@@ -548,12 +591,13 @@ TYPED_TEST(DNSServerTest, stopUDPServerDuringQueryLookup) {
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
-// Test whether udp server stopped successfully during composing answer
-TYPED_TEST(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
-    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
-                                  this->answer_);
-    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
-    EXPECT_TRUE(this->serverStopSucceed());
+// Test whether UDP server stopped successfully during composing answer.
+// Only works for (non-sync) server because SyncUDPServer doesn't use answer
+// callback.
+TEST_F(AsyncServerTest, stopUDPServerDuringPrepareAnswer) {
+    testStopServerByStopper(udp_server_, udp_client_, answer_);
+    EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
+    EXPECT_TRUE(serverStopSucceed());
 }
 
 void
@@ -565,7 +609,7 @@ stopServerManyTimes(DNSServer *server, unsigned int times) {
 
 // Test whether udp server stop interface can be invoked several times without
 // throw any exception
-TYPED_TEST(DNSServerTest, stopUDPServeMoreThanOnce) {
+TYPED_TEST(DNSServerTest, stopUDPServerMoreThanOnce) {
     ASSERT_NO_THROW({
         boost::function<void()> stop_server_3_times
             = boost::bind(stopServerManyTimes, this->udp_server_, 3);
@@ -668,12 +712,13 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 TYPED_TEST(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    EXPECT_THROW(TypeParam(this->service, 0, AF_UNIX, this->checker_,
-                           this->lookup_, this->answer_),
-                 isc::InvalidParameter);
     EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX, this->checker_,
                            this->lookup_, this->answer_),
                  isc::InvalidParameter);
+}
+
+TYPED_TEST(DNSServerTest, invalidFamilyUDP) {
+    EXPECT_THROW(this->createServer(0, AF_UNIX), isc::InvalidParameter);
 }
 
 // It raises an exception when invalid address family is passed
@@ -694,7 +739,7 @@ TYPED_TEST(DNSServerTestBase, invalidTCPFD) {
                  isc::asiolink::IOError);
 }
 
-TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
+TYPED_TEST(DNSServerTest, DISABLED_invalidUDPFD) {
     /*
      FIXME: The UDP server doesn't fail reliably with an invalid FD.
      We need to find a way to trigger it reliably (it seems epoll
@@ -702,13 +747,8 @@ TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
      not the others, maybe we could make it run this at least on epoll-based
      systems).
     */
-    EXPECT_THROW(TypeParam(this->service, -1, AF_INET, this->checker_,
-                           this->lookup_, this->answer_),
-                 isc::asiolink::IOError);
+    EXPECT_THROW(this->createServer(-1, AF_INET), isc::asiolink::IOError);
 }
-
-// A specialized test type for SyncUDPServer.
-typedef FdInit<SyncUDPServer> SyncServerTest;
 
 // Check it rejects some of the unsupported operations
 TEST_F(SyncServerTest, unsupportedOps) {
@@ -721,6 +761,12 @@ TEST_F(SyncServerTest, mustResume) {
     lookup_->allow_resume_ = false;
     ASSERT_THROW(testStopServerByStopper(udp_server_, udp_client_, lookup_),
                  isc::Unexpected);
+}
+
+// SyncUDPServer doesn't allow NULL lookup callback.
+TEST_F(SyncServerTest, nullLookupCallback) {
+    EXPECT_THROW(SyncUDPServer(service, 0, AF_INET, NULL),
+                 isc::InvalidParameter);
 }
 
 }

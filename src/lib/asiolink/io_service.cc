@@ -24,6 +24,23 @@
 namespace isc {
 namespace asiolink {
 
+namespace {
+// A trivial wrapper for boost::function.  SunStudio doesn't seem to be capable
+// of handling a boost::function object if directly passed to
+// io_service::post().
+class CallbackWrapper {
+public:
+    CallbackWrapper(const boost::function<void()>& callback) :
+        callback_(callback)
+    {}
+    void operator()() {
+        callback_();
+    }
+private:
+    boost::function<void()> callback_;
+};
+}
+
 class IOServiceImpl {
 private:
     IOServiceImpl(const IOService& source);
@@ -64,7 +81,8 @@ public:
     /// generalized.
     asio::io_service& get_io_service() { return io_service_; };
     void post(const boost::function<void ()>& callback) {
-        io_service_.post(callback);
+        const CallbackWrapper wrapper(callback);
+        io_service_.post(wrapper);
     }
 private:
     asio::io_service io_service_;
