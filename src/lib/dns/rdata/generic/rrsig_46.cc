@@ -74,7 +74,7 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-RRSIGImpl *
+RRSIGImpl*
 RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t algorithm =
