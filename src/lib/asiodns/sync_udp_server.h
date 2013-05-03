@@ -25,10 +25,14 @@
 
 #include <dns/message.h>
 #include <asiolink/simple_callback.h>
+#include <asiolink/dummy_io_cb.h>
+#include <asiolink/udp_socket.h>
 #include <util/buffer.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <stdint.h>
 
@@ -39,29 +43,39 @@ namespace asiodns {
 ///
 /// That means, the lookup handler must provide the answer right away.
 /// This allows for implementation with less overhead, compared with
-/// the UDPClass.
+/// the \c UDPServer class.
 class SyncUDPServer : public DNSServer, public boost::noncopyable {
 public:
     /// \brief Constructor
+    ///
+    /// Due to the nature of this server, it's meaningless if the lookup
+    /// callback is NULL.  So the constructor explicitly rejects that case
+    /// with an exception.  Likewise, it doesn't take "checkin" or "answer"
+    /// callbacks.  In fact, calling "checkin" from receive callback does not
+    /// make sense for any of the DNSServer variants (see Trac #2935);
+    /// "answer" callback is simply unnecessary for this class because a
+    /// complete answer is built in the lookup callback (it's the user's
+    /// responsibility to guarantee that condition).
+    ///
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
     /// \param af address family, either AF_INET or AF_INET6
-    /// \param checkin the callbackprovider for non-DNS events
-    /// \param lookup the callbackprovider for DNS lookup events
-    /// \param answer the callbackprovider for DNS answer events
+    /// \param lookup the callbackprovider for DNS lookup events (must not be
+    ///        NULL)
+    ///
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6
+    /// \throw isc::InvalidParameter lookup is NULL
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
     SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
-                  isc::asiolink::SimpleCallback* checkin = NULL,
-                  DNSLookup* lookup = NULL, DNSAnswer* answer = NULL);
+                  DNSLookup* lookup);
 
     /// \brief Start the SyncUDPServer.
     ///
     /// This is the function operator to keep interface with other server
     /// classes. They need that because they're coroutines.
     virtual void operator()(asio::error_code ec = asio::error_code(),
-                    size_t length = 0);
+                            size_t length = 0);
 
     /// \brief Calls the lookup callback
     virtual void asyncLookup() {
@@ -114,22 +128,39 @@ private:
     // If it was OK to have just a buffer, not the wrapper class,
     // we could reuse the data_
     isc::util::OutputBufferPtr output_buffer_;
-    // Objects to hold the query message and the answer
+    // Objects to hold the query message and the answer.  The latter isn't
+    // used and only defined as a placeholder as the callback signature
+    // requires it.
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
     std::auto_ptr<asio::ip::udp::socket> socket_;
+    // Wrapper of socket_ in the form of asiolink::IOSocket.
+    // "DummyIOCallback" is not necessary for this class, but using the
+    // template is the easiest way to create a UDP instance of IOSocket.
+    boost::scoped_ptr<asiolink::UDPSocket<asiolink::DummyIOCallback> >
+    udp_socket_;
     // Place the socket puts the sender of a packet when it is received
     asio::ip::udp::endpoint sender_;
-    // Callbacks
-    const asiolink::SimpleCallback* checkin_callback_;
+    // Wrapper of sender_ in the form of asiolink::IOEndpoint.  It's set to
+    // refer to sender_ on initialization, and keeps the reference throughout
+    // this server class.
+    asiolink::UDPEndpoint udp_endpoint_;
+    // Callback
     const DNSLookup* lookup_callback_;
-    const DNSAnswer* answer_callback_;
     // Answers from the lookup callback (not sent directly, but signalled
     // through resume()
     bool resume_called_, done_;
     // This turns true when the server stops. Allows for not sending the
     // answer after we closed the socket.
     bool stopped_;
+    // Placeholder for error code object.  It will be passed to ASIO library
+    // to have it set in case of error.
+    asio::error_code ec_;
+    // The callback functor for internal asynchronous read event.  This is
+    // stateless (and it will be copied in the ASIO library anyway), so
+    // can be const
+    const boost::function<void(const asio::error_code&, size_t)>
+    recv_callback_;
 
     // Auxiliary functions
 
@@ -144,3 +175,7 @@ private:
 } // namespace asiodns
 } // namespace isc
 #endif // SYNC_UDP_SERVER_H
+
+// Local Variables:
+// mode: c++
+// End:
