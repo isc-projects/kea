@@ -893,6 +893,9 @@ if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; th
     AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
+if test "x$use_shared_memory" = "xyes"; then
+    AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
+fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
