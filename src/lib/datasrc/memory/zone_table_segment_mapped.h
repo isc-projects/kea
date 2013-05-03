@@ -101,8 +101,8 @@ public:
     virtual void clear();
 
 private:
-    void processChecksum(isc::util::MemorySegmentMapped& segment, bool create);
-    void processHeader(isc::util::MemorySegmentMapped& segment, bool create);
+    bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create);
+    bool processHeader(isc::util::MemorySegmentMapped& segment, bool create);
 
     void openCreate(const std::string& filename);
     void openReadWrite(const std::string& filename);

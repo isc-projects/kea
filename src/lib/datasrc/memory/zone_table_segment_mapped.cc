@@ -41,7 +41,7 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 {
 }
 
-void
+bool
 ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
                                         bool createMode)
 {
@@ -68,15 +68,35 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
                           "Saved checksum doesn't match mapped segment data");
             }
         }
+        return (true);
     } else {
         // Allocate space for a checksum (which is saved during close).
-        void* checksum = segment.allocate(sizeof(uint32_t));
+
+        // First allocate a ZONE_TABLE_CHECKSUM_NAME, so that we can set
+        // it without growing the segment (and changing the checksum's
+        // address).
+        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, NULL);
+        void* checksum = NULL;
+        while (!checksum) {
+            try {
+                checksum = segment.allocate(sizeof(uint32_t));
+            } catch (const MemorySegmentGrown&) {
+                // Do nothing and try again.
+            }
+        }
         *static_cast<uint32_t*>(checksum) = 0;
-        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
+        const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
+                                                  checksum);
+        // If the segment grew here, we have a problem as the checksum
+        // address may no longer be valid. In this case, we cannot
+        // recover. This case is extremely unlikely as we reserved
+        // memory for the ZONE_TABLE_CHECKSUM_NAME above. It indicates a
+        // very restrictive MemorySegment which we should not use.
+        return (!grew);
     }
 }
 
-void
+bool
 ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
                                       bool createMode)
 {
@@ -93,12 +113,31 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             header_ = static_cast<ZoneTableHeader*>(result.second);
         }
     } else {
-        void* ptr = segment.allocate(sizeof(ZoneTableHeader));
+        segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, NULL);
+        void* ptr = NULL;
+        while (!ptr) {
+            try {
+                ptr = segment.allocate(sizeof(ZoneTableHeader));
+            } catch (const MemorySegmentGrown&) {
+                // Do nothing and try again.
+            }
+        }
         ZoneTableHeader* new_header = new(ptr)
             ZoneTableHeader(ZoneTable::create(segment, rrclass_));
-        segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
+        const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
+                                                  new_header);
+        if (grew) {
+             // If the segment grew here, we have a problem as the table
+             // header address may no longer be valid. In this case, we
+             // cannot recover. This case is extremely unlikely as we
+             // reserved memory for the ZONE_TABLE_HEADER_NAME above. It
+             // indicates a very restrictive MemorySegment which we
+             // should not use.
+             return (false);
+        }
         header_ = new_header;
     }
+    return (true);
 }
 
 void
