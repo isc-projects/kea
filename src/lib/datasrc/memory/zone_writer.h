@@ -96,7 +96,7 @@ public:
     /// one loaded by load() in case install() was not called or was not
     /// successful, or the one replaced in install().
     ///
-    /// Generally, this should never throw.
+    /// \throw none
     void cleanup();
 
 private:
