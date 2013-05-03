@@ -96,12 +96,24 @@ public:
     virtual ~ZoneTableSegment() {}
 
     /// \brief Return the ZoneTableHeader for the zone table segment.
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual ZoneTableHeader& getHeader() = 0;
 
     /// \brief const version of \c getHeader().
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual const ZoneTableHeader& getHeader() const = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
 
     /// \brief Return true if the segment is writable.
