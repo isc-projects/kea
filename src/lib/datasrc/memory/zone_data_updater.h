@@ -72,8 +72,8 @@ public:
        mem_sgmt_(mem_sgmt),
        rrclass_(rrclass),
        zone_name_(zone_name),
-       zone_data_(&zone_data),
-       hash_(NULL)
+       hash_(NULL),
+       zone_data_(&zone_data)
     {}
 
     /// The destructor.
@@ -190,9 +190,14 @@ private:
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
     const isc::dns::Name& zone_name_;
-    ZoneData* zone_data_;
     RdataEncoder encoder_;
     const isc::dns::NSEC3Hash* hash_;
+protected:
+    /// \brief The zone data
+    ///
+    /// Protected, so the tests can get in. But it should not be accessed
+    /// in general code.
+    ZoneData* zone_data_;
 };
 
 } // namespace memory
