@@ -1,3 +1,20 @@
+bind10-1.0.0beta2 released on May 3, 2013
+
+610.	[bug]		muks
+	When the sqlite3 program is not available on the system (in
+	PATH), we no longer attempt to run some tests which depend
+	on it.
+	(Trac #1909, git f85b274b85b57a094d33ca06dfbe12ae67bb47df)
+
+609.	[bug]		jinmei
+	Handled some rare error cases in DNS server classes correctly.
+	This fix specifically solves occasional crash of b10-auth due to
+	errors caused by TCP DNS clients.  Also, as a result of cleanups
+	with the fix, b10-auth should now be a little bit faster in
+	handling UDP queries: in some local experiments it ran about 5%
+	faster.
+	(Trac #2903, git 6d3e0f4b36a754248f8a03a29e2c36aef644cdcc)
+
 608.	[bug]		jinmei
 	b10-cmdctl: fixed a hangup problem on receiving the shutdown
 	command from bindctl.  Note, however, that cmdctl is defined as
@@ -52,7 +69,7 @@
 	(Trac #2770, git a622140d411b3f07a68a1451e19df36118a80650)
 
 602.	[bug]		tmark
-	Perdhcp will now exit gracefully if the command line argument for
+	Perfdhcp will now exit gracefully if the command line argument for
 	IP version (-4 or -6) does not match the command line argument
 	given for the server. Prior to this perfdhcp would core when given
 	an IP version of -6 but a valid IPv4 address for server.
