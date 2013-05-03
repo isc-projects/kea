@@ -42,36 +42,74 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 }
 
 void
+ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
+                                        bool createMode)
+{
+    MemorySegment::NamedAddressResult result =
+        segment.getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
+    if (result.first) {
+        if (createMode) {
+            // There must be no previously saved checksum.
+            isc_throw(isc::Unexpected,
+                      "There is already a saved checksum in a mapped segment "
+                      "opened in create mode.");
+        } else {
+            // The segment was already shrunk when it was last
+            // closed. Check that its checksum is consistent.
+            assert(result.second);
+            uint32_t* checksum = static_cast<uint32_t*>(result.second);
+            const uint32_t saved_checksum = *checksum;
+            // First, clear the checksum so that getCheckSum() returns a
+            // consistent value.
+            *checksum = 0;
+            const uint32_t new_checksum = segment.getCheckSum();
+            if (saved_checksum != new_checksum) {
+                isc_throw(isc::Unexpected,
+                          "Saved checksum doesn't match mapped segment data");
+            }
+        }
+    } else {
+        // Allocate space for a checksum (which is saved during close).
+        void* checksum = segment.allocate(sizeof(uint32_t));
+        *static_cast<uint32_t*>(checksum) = 0;
+        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
+    }
+}
+
+void
+ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
+                                      bool createMode)
+{
+    MemorySegment::NamedAddressResult result =
+        segment.getNamedAddress(ZONE_TABLE_HEADER_NAME);
+    if (result.first) {
+        if (createMode) {
+            // There must be no previously saved checksum.
+            isc_throw(isc::Unexpected,
+                      "There is already a saved ZoneTableHeader in a "
+                      "mapped segment opened in create mode.");
+        } else {
+            assert(result.second);
+            header_ = static_cast<ZoneTableHeader*>(result.second);
+        }
+    } else {
+        void* ptr = segment.allocate(sizeof(ZoneTableHeader));
+        ZoneTableHeader* new_header = new(ptr)
+            ZoneTableHeader(ZoneTable::create(segment, rrclass_));
+        segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
+        header_ = new_header;
+    }
+}
+
+void
 ZoneTableSegmentMapped::openCreate(const std::string& filename) {
     // In case there is a checksum mismatch, we throw. We want the
     // segment to be automatically destroyed then.
     std::auto_ptr<MemorySegmentMapped> segment
         (new MemorySegmentMapped(filename, MemorySegmentMapped::CREATE_ONLY));
-    // There must be no previously saved checksum.
-    MemorySegment::NamedAddressResult result =
-        segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
-    if (result.first) {
-        isc_throw(isc::Unexpected,
-                  "There is already a saved checksum in a mapped segment "
-                  "opened in create mode.");
-    }
-    // Allocate space for a checksum (which is saved during close).
-    void* checksum = segment->allocate(sizeof(uint32_t));
-    *static_cast<uint32_t*>(checksum) = 0;
-    segment->setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
 
-    // There must be no previously saved ZoneTableHeader.
-    result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
-    if (result.first) {
-        isc_throw(isc::Unexpected,
-                  "There is already a saved ZoneTableHeader in a "
-                  "mapped segment opened in create mode.");
-    }
-    void* ptr = segment->allocate(sizeof(ZoneTableHeader));
-    ZoneTableHeader* new_header = new(ptr)
-        ZoneTableHeader(ZoneTable::create(*segment, rrclass_));
-    segment->setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
-    header_ = new_header;
+    processChecksum(*segment, true);
+    processHeader(*segment, true);
 
     mem_sgmt_.reset(segment.release());
 }
@@ -83,44 +121,9 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename) {
     std::auto_ptr<MemorySegmentMapped> segment
         (new MemorySegmentMapped(filename,
                                  MemorySegmentMapped::OPEN_OR_CREATE));
-    // If there is a previously saved checksum, verify that it is
-    // consistent. Otherwise, allocate space for a checksum (which is
-    // saved during close).
-    MemorySegment::NamedAddressResult result =
-        segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
-    if (result.first) {
-        // The segment was already shrunk when it was last closed. Check
-        // that its checksum is consistent.
-        assert(result.second);
-        uint32_t* checksum = static_cast<uint32_t*>(result.second);
-        const uint32_t saved_checksum = *checksum;
-        // First, clear the checksum so that getCheckSum() returns a
-        // consistent value.
-        *checksum = 0;
-        const uint32_t new_checksum = segment->getCheckSum();
-        if (saved_checksum != new_checksum) {
-            isc_throw(isc::Unexpected,
-                      "Saved checksum doesn't match mapped segment data");
-        }
-    } else {
-        void* checksum = segment->allocate(sizeof(uint32_t));
-        *static_cast<uint32_t*>(checksum) = 0;
-        segment->setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
-    }
 
-    // If there is a previously saved ZoneTableHeader, use
-    // it. Otherwise, allocate a new header.
-    result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
-    if (result.first) {
-        assert(result.second);
-        header_ = static_cast<ZoneTableHeader*>(result.second);
-    } else {
-        void* ptr = segment->allocate(sizeof(ZoneTableHeader));
-        ZoneTableHeader* new_header = new(ptr)
-            ZoneTableHeader(ZoneTable::create(*segment, rrclass_));
-        segment->setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
-        header_ = new_header;
-    }
+    processChecksum(*segment, false);
+    processHeader(*segment, false);
 
     mem_sgmt_.reset(segment.release());
 }
