@@ -49,6 +49,43 @@ public:
     {}
 };
 
+/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
+/// fails (due to various reasons). When this exception is thrown, there
+/// is still a strong guarantee that the previously existing backing
+/// memory store was not unloaded.
+class ResetFailed : public isc::Exception {
+public:
+    ResetFailed(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
+/// fails (due to various reasons), and it was not able to preserve any
+/// existing backing memory store. When this exception is thrown, there
+/// is a strong guarantee that the previously existing backing memory
+/// store was cleared.
+class ResetFailedAndSegmentCleared : public isc::Exception {
+public:
+    ResetFailedAndSegmentCleared(const char* file, size_t line,
+				 const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
+/// fails because it was determined that the backing memory store is
+/// corrupted. This is typically an unexpected condition that may arise
+/// in rare cases. When this exception is thrown, there is a strong
+/// guarantee that the previously existing backing memory store was
+/// cleared.
+class BrokenSegment : public ResetFailedAndSegmentCleared {
+public:
+    BrokenSegment(const char* file, size_t line, const char* what) :
+        ResetFailedAndSegmentCleared(file, line, what)
+    {}
+};
+
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
 ///
