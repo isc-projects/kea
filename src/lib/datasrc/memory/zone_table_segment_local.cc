@@ -46,6 +46,14 @@ ZoneTableSegmentLocal::reset(MemorySegmentOpenMode,
               "should not be used.");
 }
 
+void
+ZoneTableSegmentLocal::clear()
+{
+    isc_throw(isc::NotImplemented,
+              "ZoneTableSegmentLocal::clear() is not implemented and "
+              "should not be used.");
+}
+
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the
 // header file.

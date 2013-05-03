@@ -42,7 +42,11 @@ public:
     }
 
     virtual void reset(MemorySegmentOpenMode, isc::data::ConstElementPtr) {
-        // This method doesn't do anything.
+        isc_throw(isc::NotImplemented, "reset() is not implemented");
+    }
+
+    virtual void clear() {
+        isc_throw(isc::NotImplemented, "clear() is not implemented");
     }
 
     virtual ZoneTableHeader& getHeader() {

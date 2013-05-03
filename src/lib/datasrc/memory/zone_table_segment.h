@@ -197,6 +197,15 @@ public:
     /// config (see the description).
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params) = 0;
+
+    /// \brief Unload the current memory store (if loaded).
+    ///
+    /// Implementations of this method should unload any current memory
+    /// store and reset the `ZoneTableSegment` to a freshly constructed
+    /// state.
+    ///
+    /// \throw none
+    virtual void clear() = 0;
 };
 
 } // namespace memory
