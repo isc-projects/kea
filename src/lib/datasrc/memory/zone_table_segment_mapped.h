@@ -74,6 +74,10 @@ public:
     /// \brief Unmap the current file (if mapped) and map the specified
     /// one.
     ///
+    /// In case of exceptions, the current existing mapped file may be
+    /// left open, or may be cleared. Please see the \c ZoneTableSegment
+    /// API documentation for the behavior.
+    ///
     /// See the \c MemorySegmentOpenMode documentation (in
     /// \c ZoneTableSegment class) for the various modes in which a
     /// \c ZoneTableSegmentMapped can be created.
@@ -101,16 +105,18 @@ public:
     virtual void clear();
 
 private:
-    bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create);
-    bool processHeader(isc::util::MemorySegmentMapped& segment, bool create);
+    bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create,
+                         std::string& error_msg);
+    bool processHeader(isc::util::MemorySegmentMapped& segment, bool create,
+                       std::string& error_msg);
 
-    void openCreate(const std::string& filename);
-    void openReadWrite(const std::string& filename);
+    void openReadWrite(const std::string& filename, bool create);
     void openReadOnly(const std::string& filename);
 
 private:
     isc::dns::RRClass rrclass_;
     MemorySegmentOpenMode current_mode_;
+    std::string current_filename_;
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
