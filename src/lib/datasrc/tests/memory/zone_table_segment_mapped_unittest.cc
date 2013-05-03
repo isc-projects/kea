@@ -28,7 +28,7 @@ using boost::scoped_ptr;
 
 namespace {
 
-const std::string mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+const char* mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 
 class ZoneTableSegmentMappedTest : public ::testing::Test {
 protected:
@@ -36,7 +36,8 @@ protected:
         ztable_segment_(
             ZoneTableSegment::create(RRClass::IN(), "mapped")),
         config_params_(
-            Element::fromJSON("{\"mapped-file\": \"" + mapped_file + "\"}"))
+            Element::fromJSON(
+                "{\"mapped-file\": \"" + std::string(mapped_file) + "\"}"))
     {
         EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
         // Verify that a ZoneTableSegmentMapped is created.
@@ -47,7 +48,7 @@ protected:
 
     ~ZoneTableSegmentMappedTest() {
         ZoneTableSegment::destroy(ztable_segment_);
-        boost::interprocess::file_mapping::remove(mapped_file.c_str());
+        boost::interprocess::file_mapping::remove(mapped_file);
     }
 
     ZoneTableSegment* ztable_segment_;
