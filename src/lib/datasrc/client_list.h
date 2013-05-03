@@ -364,14 +364,14 @@ public:
     /// getCachedZoneWriter() method.
     typedef std::pair<CacheStatus, ZoneWriterPtr> ZoneWriterPair;
 
-    /// \brief Return a zone writer that can be used to reload a zone.
+    /// \brief Return a zone writer that can be used to (re)load a zone.
     ///
-    /// This looks up a cached copy of zone and returns the ZoneWriter
-    /// that can be used to reload the content of the zone. This can
-    /// be used instead of reload() -- reload() works synchronously, which
-    /// is not what is needed every time.
+    /// This method identifies the first data source in the list that should
+    /// serve the zone of the given name, and returns a ZoneWriter object
+    /// that can be used to load the content of the zone, in a specific way
+    /// for that data source.
     ///
-    /// \param zone The origin of the zone to reload.
+    /// \param zone The origin of the zone to load.
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
@@ -379,8 +379,6 @@ public:
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
     ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
 
     /// \brief Implementation of the ClientList::find.
