@@ -61,7 +61,7 @@
 	(Trac #2770, git a622140d411b3f07a68a1451e19df36118a80650)
 
 602.	[bug]		tmark
-	Perdhcp will now exit gracefully if the command line argument for
+	Perfdhcp will now exit gracefully if the command line argument for
 	IP version (-4 or -6) does not match the command line argument
 	given for the server. Prior to this perfdhcp would core when given
 	an IP version of -6 but a valid IPv4 address for server.
