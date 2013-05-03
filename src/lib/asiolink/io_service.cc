@@ -81,7 +81,8 @@ public:
     /// generalized.
     asio::io_service& get_io_service() { return io_service_; };
     void post(const boost::function<void ()>& callback) {
-        io_service_.post(CallbackWrapper(callback));
+        const CallbackWrapper wrapper(callback);
+        io_service_.post(wrapper);
     }
 private:
     asio::io_service io_service_;
