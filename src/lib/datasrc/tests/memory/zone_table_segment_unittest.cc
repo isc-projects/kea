@@ -52,10 +52,12 @@ TEST_F(ZoneTableSegmentTest, create) {
 }
 
 TEST_F(ZoneTableSegmentTest, reset) {
-    // reset() currently doesn't do anything in a local segment. But
-    // test the API.
-    ztable_segment_->reset(ZoneTableSegment::CREATE,
-                           Element::fromJSON("{}"));
+    // reset() should throw that it's not implemented so that any
+    // accidental calls are found out.
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
+                               Element::fromJSON("{}"));
+    }, isc::NotImplemented);
 }
 
 // Helper function to check const and non-const methods.
