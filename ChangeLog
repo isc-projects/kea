@@ -1,3 +1,5 @@
+bind10-1.0.0beta2 released on May 3, 2013
+
 609.	[bug]		jinmei
 	Handled some rare error cases in DNS server classes correctly.
 	This fix specifically solves occasional crash of b10-auth due to
