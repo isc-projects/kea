@@ -26,7 +26,10 @@ namespace memory {
 
 namespace { // unnamed namespace
 
+// The name with which the zone table checksum is associated in the segment.
 const char* const ZONE_TABLE_CHECKSUM_NAME = "zone_table_checksum";
+
+// The name with which the zone table header is associated in the segment.
 const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
 
 } // end of unnamed namespace
