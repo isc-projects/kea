@@ -24,6 +24,13 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+namespace { // unnamed namespace
+
+const char* const ZONE_TABLE_CHECKSUM_NAME = "zone_table_checksum";
+const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
+
+} // end of unnamed namespace
+
 ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
     rrclass_(rrclass),
@@ -41,7 +48,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
             // opened in read-write mode, update its checksum.
             mem_sgmt_->shrinkToFit();
             const MemorySegment::NamedAddressResult result =
-                mem_sgmt_->getNamedAddress("zone_table_checksum");
+                mem_sgmt_->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
             assert(result.first);
             assert(result.second);
             uint32_t* checksum = static_cast<uint32_t*>(result.second);
@@ -87,7 +94,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                        MemorySegmentMapped::CREATE_ONLY));
         // There must be no previously saved checksum.
         MemorySegment::NamedAddressResult result =
-            segment->getNamedAddress("zone_table_checksum");
+            segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
         if (result.first) {
             isc_throw(isc::Unexpected,
                       "There is already a saved checksum in a mapped segment "
@@ -96,10 +103,10 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // Allocate space for a checksum (which is saved during close).
         void* checksum = segment->allocate(sizeof(uint32_t));
         *static_cast<uint32_t*>(checksum) = 0;
-        segment->setNamedAddress("zone_table_checksum", checksum);
+        segment->setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
 
         // There must be no previously saved ZoneTableHeader.
-        result = segment->getNamedAddress("zone_table_header");
+        result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
         if (result.first) {
             isc_throw(isc::Unexpected,
                       "There is already a saved ZoneTableHeader in a "
@@ -108,7 +115,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         void* ptr = segment->allocate(sizeof(ZoneTableHeader));
         ZoneTableHeader* new_header = new(ptr)
              ZoneTableHeader(ZoneTable::create(*segment, rrclass_));
-        segment->setNamedAddress("zone_table_header", new_header);
+        segment->setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
         header_ = new_header;
 
         break;
@@ -120,7 +127,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // consistent. Otherwise, allocate space for a checksum (which
         // is saved during close).
         MemorySegment::NamedAddressResult result =
-            segment->getNamedAddress("zone_table_checksum");
+            segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
         if (result.first) {
             // The segment was already shrunk when it was last
             // closed. Check that its checksum is consistent.
@@ -138,12 +145,12 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         } else {
             void* checksum = segment->allocate(sizeof(uint32_t));
             *static_cast<uint32_t*>(checksum) = 0;
-            segment->setNamedAddress("zone_table_checksum", checksum);
+            segment->setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
         }
 
         // If there is a previously saved ZoneTableHeader, use
         // it. Otherwise, allocate a new header.
-        result = segment->getNamedAddress("zone_table_header");
+        result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
         if (result.first) {
             assert(result.second);
             header_ = static_cast<ZoneTableHeader*>(result.second);
@@ -151,7 +158,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
             void* ptr = segment->allocate(sizeof(ZoneTableHeader));
             ZoneTableHeader* new_header = new(ptr)
                 ZoneTableHeader(ZoneTable::create(*segment, rrclass_));
-            segment->setNamedAddress("zone_table_header", new_header);
+            segment->setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
             header_ = new_header;
         }
 
@@ -161,7 +168,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         segment.reset(new MemorySegmentMapped(filename));
         // There must be a previously saved checksum.
         MemorySegment::NamedAddressResult result =
-            segment->getNamedAddress("zone_table_checksum");
+            segment->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
         if (!result.first) {
             isc_throw(isc::Unexpected,
                       "There is no previously saved checksum in a "
@@ -173,7 +180,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // segment. So we continue without verifying the checksum.
 
         // There must be a previously saved ZoneTableHeader.
-        result = segment->getNamedAddress("zone_table_header");
+        result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
         if (result.first) {
             assert(result.second);
             header_ = static_cast<ZoneTableHeader*>(result.second);
