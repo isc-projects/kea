@@ -171,4 +171,23 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
+TEST_F(ZoneTableSegmentMappedTest, clear) {
+    // First, load an underlying mapped file
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
+                           config_params_);
+
+    EXPECT_TRUE(ztable_segment_->isWritable());
+    // The following method calls should no longer throw:
+    EXPECT_NO_THROW(ztable_segment_->getHeader());
+    EXPECT_NO_THROW(ztable_segment_->getMemorySegment());
+
+    // Now, clear the segment.
+    ztable_segment_->clear();
+
+    EXPECT_FALSE(ztable_segment_->isWritable());
+    // The following method calls should now throw.
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
+}
+
 } // anonymous namespace

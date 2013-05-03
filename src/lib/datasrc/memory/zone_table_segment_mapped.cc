@@ -165,28 +165,7 @@ void
 ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
                               isc::data::ConstElementPtr params)
 {
-    if (mem_sgmt_) {
-        if (isWritable()) {
-            // If there is a previously opened segment, and it was
-            // opened in read-write mode, update its checksum.
-            mem_sgmt_->shrinkToFit();
-            const MemorySegment::NamedAddressResult result =
-                mem_sgmt_->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
-            assert(result.first);
-            assert(result.second);
-            uint32_t* checksum = static_cast<uint32_t*>(result.second);
-            // First, clear the checksum so that getCheckSum() returns
-            // a consistent value.
-            *checksum = 0;
-            const uint32_t new_checksum = mem_sgmt_->getCheckSum();
-            // Now, update it into place.
-            *checksum = new_checksum;
-        }
-        // Close the segment here in case the code further below
-        // doesn't complete successfully.
-        header_ = NULL;
-        mem_sgmt_.reset();
-    }
+    clear();
 
     if (!params || params->getType() != Element::map) {
         isc_throw(isc::InvalidParameter,
@@ -220,6 +199,33 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     }
 
     current_mode_ = mode;
+}
+
+void
+ZoneTableSegmentMapped::clear()
+{
+    if (mem_sgmt_) {
+        if (isWritable()) {
+            // If there is a previously opened segment, and it was
+            // opened in read-write mode, update its checksum.
+            mem_sgmt_->shrinkToFit();
+            const MemorySegment::NamedAddressResult result =
+                mem_sgmt_->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
+            assert(result.first);
+            assert(result.second);
+            uint32_t* checksum = static_cast<uint32_t*>(result.second);
+            // First, clear the checksum so that getCheckSum() returns
+            // a consistent value.
+            *checksum = 0;
+            const uint32_t new_checksum = mem_sgmt_->getCheckSum();
+            // Now, update it into place.
+            *checksum = new_checksum;
+        }
+        // Close the segment here in case the code further below
+        // doesn't complete successfully.
+        header_ = NULL;
+        mem_sgmt_.reset();
+    }
 }
 
 // After more methods' definitions are added here, it would be a good
