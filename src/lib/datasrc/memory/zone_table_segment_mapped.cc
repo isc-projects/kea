@@ -120,6 +120,9 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             header_ = static_cast<ZoneTableHeader*>(result.second);
         }
     } else {
+        // First allocate a ZONE_TABLE_HEADER_NAME, so that we can set
+        // it without growing the segment (and changing the header's
+        // address).
         segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, NULL);
         void* ptr = NULL;
         while (!ptr) {
