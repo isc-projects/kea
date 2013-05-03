@@ -158,9 +158,22 @@ private:
     asio::error_code ec_;
     // The callback functor for internal asynchronous read event.  This is
     // stateless (and it will be copied in the ASIO library anyway), so
-    // can be const
-    const boost::function<void(const asio::error_code&, size_t)>
-    recv_callback_;
+    // can be const.
+    // SunStudio doesn't like a boost::function object to be passed, so
+    // we use the wrapper class as a workaround.
+    class CallbackWrapper {
+    public:
+        CallbackWrapper(boost::function<void(const asio::error_code&, size_t)>
+                        callback) :
+            callback_(callback)
+        {}
+        void operator()(const asio::error_code& error, size_t len) {
+            callback_(error, len);
+        }
+    private:
+        boost::function<void(const asio::error_code&, size_t)> callback_;
+    };
+    const CallbackWrapper recv_callback_;
 
     // Auxiliary functions
 
