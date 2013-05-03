@@ -190,9 +190,8 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 /// it is non absolute.
 RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
              MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
+    impl_(constructFromLexer(lexer, origin))
 {
-    impl_ = constructFromLexer(lexer, origin);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
