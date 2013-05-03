@@ -97,7 +97,7 @@ TEST_F(DhcpParserTest, booleanParserTest) {
 /// 
 /// Verifies that the parser:
 /// 1. Does not allow empty for storage.
-/// 2. Rejects a non-string element.
+/// 2. Builds with a nont string value.
 /// 3. Builds with a string value.
 /// 4. Updates storage upon commit.
 TEST_F(DhcpParserTest, stringParserTest) {
@@ -112,13 +112,13 @@ TEST_F(DhcpParserTest, stringParserTest) {
     StringStoragePtr storage(new StringStorage());
     StringParser parser(name, storage);
 
-    // Verify that parser with rejects a non-string element.
-    ElementPtr wrong_element = Element::create(9999);
-    EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
+    // Verify that parser with accepts a non-string element.
+    ElementPtr element = Element::create(9999);
+    EXPECT_NO_THROW(parser.build(element));
 
     // Verify that parser will build with a string value.
     const std::string test_value = "test value";
-    ElementPtr element = Element::create(test_value);
+    element = Element::create(test_value);
     ASSERT_NO_THROW(parser.build(element));
 
     // Verify that commit updates storage.
