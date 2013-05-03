@@ -126,12 +126,12 @@ RRset is split into multiple locations is not supported yet.
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
 
-% DATASRC_MEMORY_MEM_LOAD_FROM_FILE loading zone '%1/%2' from file '%3'
-Debug information. The content of master file is being loaded into the memory.
-
 % DATASRC_MEMORY_MEM_LOAD_FROM_DATASRC loading zone '%1/%2' from other data source
 Debug information. The content of another  data source is being loaded
 into the memory.
+
+% DATASRC_MEMORY_MEM_LOAD_FROM_FILE loading zone '%1/%2' from file '%3'
+Debug information. The content of master file is being loaded into the memory.
 
 % DATASRC_MEMORY_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
 The in-memory data source has loaded a zone signed with NSEC3 RRs,
