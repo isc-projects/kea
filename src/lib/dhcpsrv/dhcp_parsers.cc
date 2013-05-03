@@ -173,18 +173,8 @@ StringParser::StringParser(const std::string& param_name,
 }
 
 void StringParser::build(ConstElementPtr value) {
-#if 0
     value_ = value->str();
     boost::erase_all(value_, "\"");
-#else
-    try {
-        value_ = value->stringValue();
-        boost::erase_all(value_, "\"");
-    } catch (const isc::data::TypeError &) {
-        isc_throw(BadValue, " Wrong value type for " << param_name_ 
-                  << " : build called with a non-boolean element.");
-    }
-#endif
 }
 
 void StringParser::commit() {
