@@ -144,7 +144,7 @@ public:
         timer_(timer)
     {}
     void trigger() {
-        query_->outstanding_ = false;
+        query_->answerReceived();
         callback_();
         // We are not needed any more.
         delete this;
