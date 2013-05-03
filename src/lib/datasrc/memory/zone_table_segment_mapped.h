@@ -46,20 +46,20 @@ public:
     /// \brief Return the ZoneTableHeader for the mapped zone table
     /// segment implementation.
     ///
-    /// \throws isc::Unexpected if this method is called without a
+    /// \throws isc::InvalidOperation if this method is called without a
     /// successful \c reset() call first.
     virtual ZoneTableHeader& getHeader();
 
     /// \brief const version of \c getHeader().
     ///
-    /// \throws isc::Unexpected if this method is called without a
+    /// \throws isc::InvalidOperation if this method is called without a
     /// successful \c reset() call first.
     virtual const ZoneTableHeader& getHeader() const;
 
     /// \brief Return the MemorySegment for the memory-mapped zone table
     /// segment implementation (a MemorySegmentMapped instance).
     ///
-    /// \throws isc::Unexpected if this method is called without a
+    /// \throws isc::InvalidOperation if this method is called without a
     /// successful \c reset() call first.
     virtual isc::util::MemorySegment& getMemorySegment();
 
