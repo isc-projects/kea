@@ -39,7 +39,11 @@ run_unittests_SOURCES += zone_data_loader_unittest.cc
 run_unittests_SOURCES += zone_data_updater_unittest.cc
 run_unittests_SOURCES += zone_table_segment_test.h
 run_unittests_SOURCES += zone_table_segment_unittest.cc
+
+if USE_SHARED_MEMORY
 run_unittests_SOURCES += zone_table_segment_mapped_unittest.cc
+endif
+
 run_unittests_SOURCES += zone_writer_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
