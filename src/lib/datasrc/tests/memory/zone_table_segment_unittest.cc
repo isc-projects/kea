@@ -60,6 +60,12 @@ TEST_F(ZoneTableSegmentTest, reset) {
     }, isc::NotImplemented);
 }
 
+TEST_F(ZoneTableSegmentTest, clear) {
+    // clear() should throw that it's not implemented so that any
+    // accidental calls are found out.
+    EXPECT_THROW(ztable_segment_->clear(), isc::NotImplemented);
+}
+
 // Helper function to check const and non-const methods.
 template <typename TS, typename TH, typename TT>
 void

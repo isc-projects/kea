@@ -67,6 +67,11 @@ public:
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params);
 
+    /// \brief This method is not implemented.
+    ///
+    /// \throw isc::NotImplemented
+    virtual void clear();
+
 private:
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;

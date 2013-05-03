@@ -97,6 +97,9 @@ public:
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params);
 
+    /// \brief Unmap the current file (if mapped).
+    virtual void clear();
+
 private:
     void processChecksum(isc::util::MemorySegmentMapped& segment, bool create);
     void processHeader(isc::util::MemorySegmentMapped& segment, bool create);
