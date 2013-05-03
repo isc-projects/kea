@@ -72,6 +72,12 @@ TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
 }
 
 TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
+    // NULL is passed in config params
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
+                               ConstElementPtr());
+    }, isc::InvalidParameter);
+
     // Not a map
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::CREATE,
