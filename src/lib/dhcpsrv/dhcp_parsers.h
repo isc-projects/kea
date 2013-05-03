@@ -80,10 +80,74 @@ public:
     Option::Universe universe_;
 };
 
-// Pointers to various parser objects.
+/// @brief Pointer to various parser context.
 typedef boost::shared_ptr<ParserContext> ParserContextPtr;
 
-//brief a dummy configuration parser
+/// @brief - TKM  - simple type parser template class 
+///
+/// This parser handles configuration values of the boolean type.
+/// Parsed values are stored in a provided storage. If no storage
+/// is provided then the build function throws an exception.
+template<typename ValueType>
+class ValueParser : public DhcpConfigParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param param_name name of the parameter.
+    /// @param storage is a pointer to the storage container where the parsed
+    /// value be stored upon commit.
+    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
+    /// name is empty.
+    /// @throw isc::dhcp::DhcpConfigError if storage is null.
+    ValueParser(const std::string& param_name, 
+        boost::shared_ptr<ValueStorage<ValueType> > storage)
+        : storage_(storage), param_name_(param_name), value_() {
+        // Empty parameter name is invalid.
+        if (param_name_.empty()) {
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                << "empty parameter name provided");
+        }
+
+        // NUll storage is invalid.
+        if (!storage_) {
+            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                << "storage may not be NULL");
+        }
+    }
+
+
+    /// @brief Parse a boolean value.
+    ///
+    /// @param value a value to be parsed.
+    ///
+    /// @throw isc::BadValue if value is not a boolean type Element.
+    void build(isc::data::ConstElementPtr value);
+
+    /// @brief Put a parsed value to the storage.
+    void commit() {
+        // If a given parameter already exists in the storage we override
+        // its value. If it doesn't we insert a new element.
+        storage_->setParam(param_name_, value_);
+    }
+    
+private:
+    /// Pointer to the storage where parsed value is stored.
+    boost::shared_ptr<ValueStorage<ValueType> > storage_;
+
+    /// Name of the parameter which value is parsed with this parser.
+    std::string param_name_;
+
+    /// Parsed value.
+    ValueType value_;
+};
+
+/// @brief typedefs for simple data type parsers
+typedef ValueParser<bool> BooleanParser;
+typedef ValueParser<uint32_t> Uint32Parser;
+typedef ValueParser<std::string> StringParser;
+
+/// @brief a dummy configuration parser
 ///
 /// It is a debugging parser. It does not configure anything,
 /// will accept any configuration and will just print it out
@@ -121,134 +185,6 @@ private:
     /// pointer to the actual value of the parameter
     isc::data::ConstElementPtr value_;
 
-};
-
-/// @brief A boolean value parser.
-///
-/// This parser handles configuration values of the boolean type.
-/// Parsed values are stored in a provided storage. If no storage
-/// is provided then the build function throws an exception.
-class BooleanParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter.
-    /// @param storage is a pointer to the storage container where the parsed
-    /// value be stored upon commit.
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    /// name is empty.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    BooleanParser(const std::string& param_name, BooleanStoragePtr storage);
-
-    /// @brief Parse a boolean value.
-    ///
-    /// @param value a value to be parsed.
-    ///
-    /// @throw isc::BadValue if value is not a boolean type Element.
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Put a parsed value to the storage.
-    virtual void commit();
-
-private:
-    /// Pointer to the storage where parsed value is stored.
-    BooleanStoragePtr storage_;
-
-    /// Name of the parameter which value is parsed with this parser.
-    std::string param_name_;
-    /// Parsed value.
-    bool value_;
-};
-
-/// @brief Configuration parser for uint32 parameters
-///
-/// This class is a generic parser that is able to handle any uint32 integer
-/// type. 
-/// Upon commit it stores the value in the external storage passed in
-/// during construction.  
-/// This class follows the parser interface, laid out
-/// in its base class, @ref DhcpConfigParser.
-///
-/// For overview of usability of this generic purpose parser, see
-/// @ref dhcpv4ConfigInherit page.
-class Uint32Parser : public DhcpConfigParser {
-public:
-
-    /// @brief constructor for Uint32Parser
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param storage is a pointer to the storage container where the parsed
-    /// value be stored upon commit.
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    /// name is empty.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    Uint32Parser(const std::string& param_name, Uint32StoragePtr storage);
-
-    /// @brief Parses configuration configuration parameter as uint32_t.
-    ///
-    /// @param value pointer to the content of parsed values
-    /// @throw BadValue if supplied value could not be base to uint32_t
-    ///        or the parameter name is empty.
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Stores the parsed uint32_t value in a storage.
-    virtual void commit();
-
-private:
-    /// pointer to the storage, where parsed value will be stored
-    Uint32StoragePtr storage_;
-
-    /// name of the parameter to be parsed
-    std::string param_name_;
-
-    /// the actual parsed value
-    uint32_t value_;
-};
-
-/// @brief Configuration parser for string parameters
-///
-/// This class is a generic parser that is able to handle any string
-/// parameter.  
-/// Upon commit it stores the value in the external storage passed in
-/// during construction.  
-///
-/// This class follows the parser interface, laid out
-/// in its base class, @ref DhcpConfigParser.
-///
-/// For overview of usability of this generic purpose parser, see
-/// @ref dhcpv4ConfigInherit page.
-class StringParser : public DhcpConfigParser {
-public:
-    /// @brief constructor for StringParser
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param storage is a pointer to the storage container where the parsed
-    /// value be stored upon commit.
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    /// name is empty.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    StringParser(const std::string& param_name, StringStoragePtr storage);
-
-    /// @brief parses parameter value
-    ///
-    /// Parses configuration entry and stores it in storage. See
-    /// @ref setStorage() for details.
-    ///
-    /// @param value pointer to the content of parsed values
-    /// @throw isc::BadValue if value is not a string type Element.
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Stores the parsed value in a storage.
-    virtual void commit();
-
-private:
-    /// pointer to the storage, where parsed value will be stored
-    StringStoragePtr storage_;
-
-    /// name of the parameter to be parsed
-    std::string param_name_;
-
-    /// the actual parsed value
-    std::string value_;
 };
 
 /// @brief parser for interface list definition
