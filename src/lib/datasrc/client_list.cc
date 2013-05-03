@@ -132,11 +132,20 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                                       cache_conf, rrclass_,
                                                       datasrc_name));
 
-            // If cache is disabled we are done for this data source.
+            // If cache is disabled, or the zone table segment is not (yet)
+            // writable,  we are done for this data source.
             // Otherwise load zones into the in-memory cache.
             if (!cache_conf->isEnabled()) {
                 continue;
             }
+            memory::ZoneTableSegment& zt_segment =
+                *new_data_sources.back().ztable_segment_;
+            if (!zt_segment.isWritable()) {
+                LOG_DEBUG(logger, DBGLVL_TRACE_BASIC,
+                          DATASRC_LIST_CACHE_PENDING).arg(datasrc_name);
+                continue;
+            }
+
             internal::CacheConfig::ConstZoneIterator end_of_zones =
                 cache_conf->end();
             for (internal::CacheConfig::ConstZoneIterator zone_it =
@@ -150,8 +159,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         cache_conf->getLoadAction(rrclass_, zname);
                     // in this loop this should be always true
                     assert(load_action);
-                    memory::ZoneWriter writer(
-                        *new_data_sources.back().ztable_segment_,
+                    memory::ZoneWriter writer(zt_segment,
                         load_action, zname, rrclass_);
                     writer.load();
                     writer.install();
@@ -318,13 +326,17 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     // Find the data source from which the zone to be loaded into memory.
     // Then get the appropriate load action and create a zone writer.
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // If there's a underlying "real" data source and it doesn't contain
+        // If there's an underlying "real" data source and it doesn't contain
         // the given name, obviously we cannot load it.
         if (info.data_src_client_ &&
             info.data_src_client_->findZone(name).code != result::SUCCESS) {
             continue;
         }
-
+        // If the corresponding zone table segment is not (yet) writable,
+        // we cannot load at this time.
+        if (info.ztable_segment_ && !info.ztable_segment_->isWritable()) {
+            return (ZoneWriterPair(CACHE_NOT_WRITABLE, ZoneWriterPtr()));
+        }
         // Note that getCacheConfig() must return non NULL in this module
         // (only tests could set it to a bogus value).
         const memory::LoadAction load_action =
