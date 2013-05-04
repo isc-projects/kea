@@ -714,7 +714,15 @@ TEST_F(ListTest, badCache) {
     checkDS(0, "test_type", "[\"example.org\"]", true);
 }
 
-TEST_F(ListTest, cacheInReadOnlySegment) {
+// This test relies on the property of mapped type of cache.
+TEST_F(ListTest,
+#ifdef USE_SHARED_MEMORY
+       cacheInReadOnlySegment
+#else
+       DISABLED_cacheInReadOnlySegment
+#endif
+    )
+{
     // Initializing data source with read-only zone table memory segment
     // is possible.  Loading is just postponed
     const ConstElementPtr elem(Element::fromJSON("["
