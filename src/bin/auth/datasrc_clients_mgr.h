@@ -651,6 +651,9 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
         isc_throw(InternalCommandError, "failed to load zone " << origin
                   << "/" << rrclass << ": internal failure, in-memory cache "
                   "is somehow disabled");
+    default:                    // other cases can really never happen
+        isc_throw(Unexpected, "Impossible result in getting data source "
+                  "ZoneWriter: " << writerpair.first);
     }
 
     return (boost::shared_ptr<datasrc::memory::ZoneWriter>());

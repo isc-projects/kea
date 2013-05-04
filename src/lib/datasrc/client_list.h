@@ -354,6 +354,8 @@ public:
         ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
         CACHE_NOT_WRITABLE, ///< The cache is not (yet) writable (and zones
                             ///  zones can't be loaded)
+        DATASRC_NOT_FOUND,  ///< Specific data source for load is specified
+                            ///  but it's not in the list
         ZONE_SUCCESS        ///< Zone to be cached is successfully found and
                             ///  is ready to be loaded
     };
@@ -366,12 +368,21 @@ public:
 
     /// \brief Return a zone writer that can be used to (re)load a zone.
     ///
-    /// This method identifies the first data source in the list that should
-    /// serve the zone of the given name, and returns a ZoneWriter object
-    /// that can be used to load the content of the zone, in a specific way
-    /// for that data source.
+    /// By default this method identifies the first data source in the list
+    /// that should serve the zone of the given name, and returns a ZoneWriter
+    /// object that can be used to load the content of the zone, in a specific
+    /// way for that data source.
+    ///
+    /// If the optional \c datasrc_name parameter is provided with a non empty
+    /// string, this method only tries to load the specified zone into or with
+    /// the data source which has the given name, regardless where in the list
+    /// that data source is placed.  Even if the given name of zone doesn't
+    /// exist in the data source, other data sources are not searched and
+    /// this method simply returns DATASRC_NOT_FOUND in the first element
+    /// of the pair.
     ///
     /// \param zone The origin of the zone to load.
+    /// \param datasrc_name
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
@@ -379,7 +390,8 @@ public:
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
-    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
+				       const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,

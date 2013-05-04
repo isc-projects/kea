@@ -250,7 +250,9 @@ public:
         EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
                   shared_ptr<InMemoryClient>());
     }
-    ConfigurableClientList::CacheStatus doReload(const Name& origin);
+    ConfigurableClientList::CacheStatus doReload(
+        const Name& origin, const string& datasrc_name = "");
+
     const RRClass rrclass_;
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
@@ -862,9 +864,9 @@ TEST_F(ListTest, BadMasterFile) {
 }
 
 ConfigurableClientList::CacheStatus
-ListTest::doReload(const Name& origin) {
+ListTest::doReload(const Name& origin, const string& datasrc_name) {
     ConfigurableClientList::ZoneWriterPair
-        result(list_->getCachedZoneWriter(origin));
+        result(list_->getCachedZoneWriter(origin, datasrc_name));
     if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
         // Can't use ASSERT_NE here, it would want to return(), which
         // it can't in non-void function.
@@ -877,8 +879,7 @@ ListTest::doReload(const Name& origin) {
                 "but the writer is NULL";
         }
     } else {
-        EXPECT_EQ(static_cast<memory::ZoneWriter*>(NULL),
-                  result.second.get());
+        EXPECT_EQ(static_cast<memory::ZoneWriter*>(NULL), result.second.get());
     }
     return (result.first);
 }
@@ -1050,6 +1051,53 @@ TEST_F(ListTest, reloadMasterFile) {
     EXPECT_EQ(ZoneFinder::SUCCESS,
               list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
                                                    RRType::TXT())->code);
+}
+
+TEST_F(ListTest, reloadByDataSourceName) {
+    // We use three data sources (and their clients).  2nd and 3rd have
+    // the same name of the zones.
+    const ConstElementPtr config_elem = Element::fromJSON(
+        "[{\"type\": \"test_type1\", \"params\": [\"example.org\"]},"
+        " {\"type\": \"test_type2\", \"params\": [\"example.com\"]},"
+        " {\"type\": \"test_type3\", \"params\": [\"example.com\"]}]");
+    list_->configure(config_elem, true);
+    // Prepare in-memory cache for the 1st and 2nd data sources.
+    prepareCache(0, Name("example.org"));
+    prepareCache(1, Name("example.com"));
+
+    // Normal case: both zone name and data source name matches.
+    // See the reloadSuccess test about the NXDOMAIN/SUCCESS checks.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name("tstzonedata.example.com")).finder_->
+              find(Name("tstzonedata.example.com"), RRType::A())->code);
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS,
+              doReload(Name("example.com"), "test_type2"));
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(Name("tstzonedata.example.com")).finder_->
+              find(Name("tstzonedata.example.com"), RRType::A())->code);
+
+    // The specified zone exists in the first entry of the list, but a
+    // different data source name is specified (in which the specified zone
+    // doesn't exist), so reloading should fail, and the cache status of the
+    // first data source shouldn't change.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name("tstzonedata.example.org")).finder_->
+              find(Name("tstzonedata.example.org"), RRType::A())->code);
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
+              doReload(Name("example.org"), "test_type2"));
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name("tstzonedata.example.org")).finder_->
+              find(Name("tstzonedata.example.org"), RRType::A())->code);
+
+    // Likewise, if a specific data source is given, normal name matching
+    // isn't suppressed and the 3rd data source will be used.  There cache
+    // is disabled, so reload should fail due to "not cached".
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_CACHED,
+              doReload(Name("example.com"), "test_type3"));
+
+    // specified name of data source doesn't exist.
+    EXPECT_EQ(ConfigurableClientList::DATASRC_NOT_FOUND,
+              doReload(Name("example.org"), "test_type4"));
 }
 
 // Check the status holds data
