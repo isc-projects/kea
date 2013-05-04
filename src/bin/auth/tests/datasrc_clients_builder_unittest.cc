@@ -535,7 +535,14 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
 // This works only if mapped memory segment is compiled.
 // Note also that this test case may fail as we make b10-auth more aware
 // of shared-memory cache.
-TEST_F(DataSrcClientsBuilderTest, loadInNonWritableCache) {
+TEST_F(DataSrcClientsBuilderTest,
+#ifdef USE_SHARED_MEMORY
+       loadInNonWritableCache
+#else
+       DISABLED_loadInNonWritableCache
+#endif
+    )
+{
     const ConstElementPtr config = Element::fromJSON(
         "{"
         "\"IN\": [{"
