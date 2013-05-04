@@ -15,7 +15,11 @@
 #ifndef MEM_ZONE_WRITER_H
 #define MEM_ZONE_WRITER_H
 
-#include "load_action.h"
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/load_action.h>
+
+#include <dns/rrclass.h>
+#include <dns/name.h>
 
 namespace isc {
 namespace datasrc {
@@ -23,22 +27,33 @@ namespace memory {
 
 /// \brief Does an update to a zone.
 ///
-/// This abstract base class represents the work of a reload of a zone.
-/// The work is divided into three stages -- load(), install() and cleanup().
-/// They should be called in this order for the effect to take place.
+/// This represents the work of a (re)load of a zone.  The work is divided
+/// into three stages -- load(), install() and cleanup().  They should
+/// be called in this order for the effect to take place.
 ///
 /// We divide them so the update of zone data can be done asynchronously,
 /// in a different thread. The install() operation is the only one that needs
 /// to be done in a critical section.
 ///
-/// Each derived class implementation must provide the strong exception
-/// guarantee for each public method. That is, when any of the methods
-/// throws, the entire state should stay the same as before the call
-/// (how to achieve that may be implementation dependant).
+/// This class provides strong exception guarantee for each public
+/// method. That is, when any of the methods throws, the entire state
+/// stays the same as before the call.
 class ZoneWriter {
 public:
-    /// \brief Virtual destructor.
-    virtual ~ZoneWriter() {};
+    /// \brief Constructor
+    ///
+    /// \throw isc::InvalidOperation if \c segment is read-only.
+    ///
+    /// \param segment The zone table segment to store the zone into.
+    /// \param load_action The callback used to load data.
+    /// \param name The name of the zone.
+    /// \param rrclass The class of the zone.
+    ZoneWriter(ZoneTableSegment& segment,
+               const LoadAction& load_action, const dns::Name& name,
+               const dns::RRClass& rrclass);
+
+    /// \brief Destructor.
+    ~ZoneWriter();
 
     /// \brief Get the zone data into memory.
     ///
@@ -56,7 +71,7 @@ public:
     /// \note After successful load(), you have to call cleanup() some time
     ///     later.
     /// \throw isc::InvalidOperation if called second time.
-    virtual void load() = 0;
+    void load();
 
     /// \brief Put the changes to effect.
     ///
@@ -68,12 +83,12 @@ public:
     /// The operation is expected to be fast and is meant to be used inside
     /// a critical section.
     ///
-    /// This may throw in rare cases, depending on the concrete implementation.
-    /// If it throws, you still need to call cleanup().
+    /// This may throw in rare cases.  If it throws, you still need to
+    /// call cleanup().
     ///
     /// \throw isc::InvalidOperation if called without previous load() or for
     ///     the second time or cleanup() was called already.
-    virtual void install() = 0;
+    void install();
 
     /// \brief Clean up resources.
     ///
@@ -81,8 +96,22 @@ public:
     /// one loaded by load() in case install() was not called or was not
     /// successful, or the one replaced in install().
     ///
-    /// Generally, this should never throw.
-    virtual void cleanup() = 0;
+    /// \throw none
+    void cleanup();
+
+private:
+    ZoneTableSegment& segment_;
+    const LoadAction load_action_;
+    const dns::Name origin_;
+    const dns::RRClass rrclass_;
+    ZoneData* zone_data_;
+    enum State {
+        ZW_UNUSED,
+        ZW_LOADED,
+        ZW_INSTALLED,
+        ZW_CLEANED
+    };
+    State state_;
 };
 
 }

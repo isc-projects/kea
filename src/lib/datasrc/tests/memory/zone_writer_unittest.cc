@@ -12,12 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/memory/zone_writer_local.h>
+#include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
 
 #include <dns/rrclass.h>
 #include <dns/name.h>
+
+#include <datasrc/tests/memory/memory_segment_test.h>
+#include <datasrc/tests/memory/zone_table_segment_test.h>
 
 #include <gtest/gtest.h>
 
@@ -29,20 +32,20 @@ using boost::bind;
 using isc::dns::RRClass;
 using isc::dns::Name;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::memory::test;
 
 namespace {
 
 class TestException {};
 
-class ZoneWriterLocalTest : public ::testing::Test {
+class ZoneWriterTest : public ::testing::Test {
 public:
-    ZoneWriterLocalTest() :
+    ZoneWriterTest() :
         segment_(ZoneTableSegment::create(RRClass::IN(), "local")),
         writer_(new
-            ZoneWriterLocal(dynamic_cast<ZoneTableSegmentLocal*>(segment_.
-                                                                 get()),
-                            bind(&ZoneWriterLocalTest::loadAction, this, _1),
-                            Name("example.org"), RRClass::IN())),
+            ZoneWriter(*segment_,
+                       bind(&ZoneWriterTest::loadAction, this, _1),
+                       Name("example.org"), RRClass::IN())),
         load_called_(false),
         load_throw_(false),
         load_null_(false),
@@ -54,12 +57,12 @@ public:
     }
 protected:
     scoped_ptr<ZoneTableSegment> segment_;
-    scoped_ptr<ZoneWriterLocal> writer_;
+    scoped_ptr<ZoneWriter> writer_;
     bool load_called_;
     bool load_throw_;
     bool load_null_;
     bool load_data_;
-private:
+public:
     ZoneData* loadAction(isc::util::MemorySegment& segment) {
         // Make sure it is the correct segment passed. We know the
         // exact instance, can compare pointers to them.
@@ -86,9 +89,32 @@ private:
     }
 };
 
+class ReadOnlySegment : public ZoneTableSegmentTest {
+public:
+    ReadOnlySegment(const isc::dns::RRClass& rrclass,
+                    isc::util::MemorySegment& mem_sgmt) :
+        ZoneTableSegmentTest(rrclass, mem_sgmt)
+    {}
+
+    // Returns false indicating it is a read-only segment. It is used in
+    // the ZoneWriter tests.
+    virtual bool isWritable() const {
+        return (false);
+    }
+};
+
+TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
+    MemorySegmentTest mem_sgmt;
+    ReadOnlySegment ztable_segment(RRClass::IN(), mem_sgmt);
+    EXPECT_THROW(ZoneWriter(ztable_segment,
+                            bind(&ZoneWriterTest::loadAction, this, _1),
+                            Name("example.org"), RRClass::IN()),
+                 isc::InvalidOperation);
+}
+
 // We call it the way we are supposed to, check every callback is called in the
 // right moment.
-TEST_F(ZoneWriterLocalTest, correctCall) {
+TEST_F(ZoneWriterTest, correctCall) {
     // Nothing called before we call it
     EXPECT_FALSE(load_called_);
 
@@ -105,7 +131,7 @@ TEST_F(ZoneWriterLocalTest, correctCall) {
     EXPECT_NO_THROW(writer_->cleanup());
 }
 
-TEST_F(ZoneWriterLocalTest, loadTwice) {
+TEST_F(ZoneWriterTest, loadTwice) {
     // Load it the first time
     EXPECT_NO_THROW(writer_->load());
     EXPECT_TRUE(load_called_);
@@ -126,7 +152,7 @@ TEST_F(ZoneWriterLocalTest, loadTwice) {
 
 // Try loading after call to install and call to cleanup. Both is
 // forbidden.
-TEST_F(ZoneWriterLocalTest, loadLater) {
+TEST_F(ZoneWriterTest, loadLater) {
     // Load first, so we can install
     EXPECT_NO_THROW(writer_->load());
     EXPECT_NO_THROW(writer_->install());
@@ -144,7 +170,7 @@ TEST_F(ZoneWriterLocalTest, loadLater) {
 }
 
 // Try calling install at various bad times
-TEST_F(ZoneWriterLocalTest, invalidInstall) {
+TEST_F(ZoneWriterTest, invalidInstall) {
     // Nothing loaded yet
     EXPECT_THROW(writer_->install(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
@@ -161,7 +187,7 @@ TEST_F(ZoneWriterLocalTest, invalidInstall) {
 // We check we can clean without installing first and nothing bad
 // happens. We also misuse the testcase to check we can't install
 // after cleanup.
-TEST_F(ZoneWriterLocalTest, cleanWithoutInstall) {
+TEST_F(ZoneWriterTest, cleanWithoutInstall) {
     EXPECT_NO_THROW(writer_->load());
     EXPECT_NO_THROW(writer_->cleanup());
 
@@ -172,7 +198,7 @@ TEST_F(ZoneWriterLocalTest, cleanWithoutInstall) {
 }
 
 // Test the case when load callback throws
-TEST_F(ZoneWriterLocalTest, loadThrows) {
+TEST_F(ZoneWriterTest, loadThrows) {
     load_throw_ = true;
     EXPECT_THROW(writer_->load(), TestException);
 
@@ -186,7 +212,7 @@ TEST_F(ZoneWriterLocalTest, loadThrows) {
 
 // Check the strong exception guarantee - if it throws, nothing happened
 // to the content.
-TEST_F(ZoneWriterLocalTest, retry) {
+TEST_F(ZoneWriterTest, retry) {
     // First attempt fails due to some exception.
     load_throw_ = true;
     EXPECT_THROW(writer_->load(), TestException);
@@ -214,7 +240,7 @@ TEST_F(ZoneWriterLocalTest, retry) {
 }
 
 // Check the writer defends itsefl when load action returns NULL
-TEST_F(ZoneWriterLocalTest, loadNull) {
+TEST_F(ZoneWriterTest, loadNull) {
     load_null_ = true;
     EXPECT_THROW(writer_->load(), isc::InvalidOperation);
 
@@ -226,7 +252,7 @@ TEST_F(ZoneWriterLocalTest, loadNull) {
 }
 
 // Check the object cleans up in case we forget it.
-TEST_F(ZoneWriterLocalTest, autoCleanUp) {
+TEST_F(ZoneWriterTest, autoCleanUp) {
     // Load data and forget about it. It should get released
     // when the writer itself is destroyed.
     EXPECT_NO_THROW(writer_->load());

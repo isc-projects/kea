@@ -53,10 +53,25 @@ public:
     /// implementation (a MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
-    /// \brief Concrete implementation of ZoneTableSegment::getZoneWriter
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& origin,
-                                      const dns::RRClass& rrclass);
+    /// \brief Return true if the segment is writable.
+    ///
+    /// Local segments are always writable. This implementation always
+    /// returns true.
+    virtual bool isWritable() const {
+        return (true);
+    }
+
+    /// \brief This method is not implemented.
+    ///
+    /// \throw isc::NotImplemented
+    virtual void reset(MemorySegmentOpenMode mode,
+                       isc::data::ConstElementPtr params);
+
+    /// \brief This method is not implemented.
+    ///
+    /// \throw isc::NotImplemented
+    virtual void clear();
+
 private:
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;

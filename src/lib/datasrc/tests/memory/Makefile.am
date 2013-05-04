@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/lib/dns
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -38,6 +39,11 @@ run_unittests_SOURCES += zone_data_loader_unittest.cc
 run_unittests_SOURCES += zone_data_updater_unittest.cc
 run_unittests_SOURCES += zone_table_segment_test.h
 run_unittests_SOURCES += zone_table_segment_unittest.cc
+
+if USE_SHARED_MEMORY
+run_unittests_SOURCES += zone_table_segment_mapped_unittest.cc
+endif
+
 run_unittests_SOURCES += zone_writer_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
