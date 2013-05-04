@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_local.h>
-#include "zone_writer_local.h"
 
 using namespace isc::dns;
 using namespace isc::util;
@@ -38,6 +37,23 @@ ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
     assert(mem_sgmt_.allMemoryDeallocated());
 }
 
+void
+ZoneTableSegmentLocal::reset(MemorySegmentOpenMode,
+                             isc::data::ConstElementPtr)
+{
+    isc_throw(isc::NotImplemented,
+              "ZoneTableSegmentLocal::reset() is not implemented and "
+              "should not be used.");
+}
+
+void
+ZoneTableSegmentLocal::clear()
+{
+    isc_throw(isc::NotImplemented,
+              "ZoneTableSegmentLocal::clear() is not implemented and "
+              "should not be used.");
+}
+
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the
 // header file.
@@ -54,14 +70,6 @@ ZoneTableSegmentLocal::getHeader() const {
 MemorySegment&
 ZoneTableSegmentLocal::getMemorySegment() {
      return (mem_sgmt_);
-}
-
-ZoneWriter*
-ZoneTableSegmentLocal::getZoneWriter(const LoadAction& load_action,
-                                     const dns::Name& name,
-                                     const dns::RRClass& rrclass)
-{
-    return (new ZoneWriterLocal(this, load_action, name, rrclass));
 }
 
 } // namespace memory

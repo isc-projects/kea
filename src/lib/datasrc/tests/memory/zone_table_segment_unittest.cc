@@ -12,9 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/memory/zone_writer_local.h>
+#include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
-#include <util/memory_segment_local.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -52,6 +51,21 @@ TEST_F(ZoneTableSegmentTest, create) {
                  UnknownSegmentType);
 }
 
+TEST_F(ZoneTableSegmentTest, reset) {
+    // reset() should throw that it's not implemented so that any
+    // accidental calls are found out.
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::CREATE,
+                               Element::fromJSON("{}"));
+    }, isc::NotImplemented);
+}
+
+TEST_F(ZoneTableSegmentTest, clear) {
+    // clear() should throw that it's not implemented so that any
+    // accidental calls are found out.
+    EXPECT_THROW(ztable_segment_->clear(), isc::NotImplemented);
+}
+
 // Helper function to check const and non-const methods.
 template <typename TS, typename TH, typename TT>
 void
@@ -79,22 +93,9 @@ TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     mem_sgmt.allMemoryDeallocated(); // use mem_sgmt
 }
 
-ZoneData*
-loadAction(MemorySegment&) {
-    // The function won't be called, so this is OK
-    return (NULL);
-}
-
-// Test we can get a writer.
-TEST_F(ZoneTableSegmentTest, getZoneWriter) {
-    scoped_ptr<ZoneWriter>
-        writer(ztable_segment_->getZoneWriter(loadAction, Name("example.org"),
-                                              RRClass::IN()));
-    // We have to get something
-    EXPECT_NE(static_cast<void*>(NULL), writer.get());
-    // And for now, it should be the local writer
-    EXPECT_NE(static_cast<void*>(NULL),
-              dynamic_cast<ZoneWriterLocal*>(writer.get()));
+TEST_F(ZoneTableSegmentTest, isWritable) {
+    // Local segments are always writable.
+    EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
 } // anonymous namespace

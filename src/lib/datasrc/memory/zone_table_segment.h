@@ -49,6 +49,30 @@ public:
     {}
 };
 
+/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
+/// fails (due to various reasons). When this exception is thrown, there
+/// is still a strong guarantee that the previously existing backing
+/// memory store was not unloaded.
+class ResetFailed : public isc::Exception {
+public:
+    ResetFailed(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Exception thrown when a \c reset() on a ZoneTableSegment
+/// fails (due to various reasons), and it was not able to preserve any
+/// existing backing memory store. When this exception is thrown, there
+/// is a strong guarantee that the previously existing backing memory
+/// store was cleared.
+class ResetFailedAndSegmentCleared : public isc::Exception {
+public:
+    ResetFailedAndSegmentCleared(const char* file, size_t line,
+				 const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
 /// \brief Memory-management independent entry point that contains a
 /// pointer to a zone table in memory.
 ///
@@ -89,20 +113,45 @@ protected:
     /// An instance implementing this interface is expected to be
     /// created by the factory method (\c create()), so this constructor
     /// is protected.
-    ZoneTableSegment(isc::dns::RRClass)
+    ZoneTableSegment(const isc::dns::RRClass&)
     {}
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegment() {}
 
     /// \brief Return the ZoneTableHeader for the zone table segment.
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual ZoneTableHeader& getHeader() = 0;
 
     /// \brief const version of \c getHeader().
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual const ZoneTableHeader& getHeader() const = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
+    ///
+    /// \throw isc::InvalidOperation may be thrown by some
+    /// implementations if this method is called without calling
+    /// \c reset() successfully first.
     virtual isc::util::MemorySegment& getMemorySegment() = 0;
+
+    /// \brief Return true if the segment is writable.
+    ///
+    /// The user of the zone table segment will load or update zones
+    /// into the segment only for writable ones.  The precise definition
+    /// of "writability" differs in different derived classes (see
+    /// derived class documentation).  In general, however, the user
+    /// should only rely on this interface rather than assume a specific
+    /// definition for a specific type of segment.
+    ///
+    /// \throw None This method's implementations must be
+    /// exception-free.
+    virtual bool isWritable() const = 0;
 
     /// \brief Create an instance depending on the memory segment model
     ///
@@ -128,20 +177,86 @@ public:
     /// \param segment The segment to destroy.
     static void destroy(ZoneTableSegment* segment);
 
-    /// \brief Create a zone write corresponding to this segment
+    /// \brief The mode using which to open a ZoneTableSegment.
     ///
-    /// This creates a new write that can be used to update zones
-    /// inside this zone table segment.
+    /// - CREATE: If the backing memory store doesn't exist, create
+    ///           it. If it exists, overwrite it with a newly created
+    ///           memory store. In both cases, open the newly created
+    ///           memory store in read+write mode.
     ///
-    /// \param loadAction Callback to provide the actual data.
-    /// \param origin The origin of the zone to reload.
-    /// \param rrclass The class of the zone to reload.
-    /// \return New instance of a zone writer. The ownership is passed
-    ///     onto the caller and the caller needs to \c delete it when
-    ///     it's done with the writer.
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& origin,
-                                      const dns::RRClass& rrclass) = 0;
+    /// - READ_WRITE: If the backing memory store doesn't exist, create
+    ///               it. If it exists, use the existing memory store
+    ///               as-is. In both cases, open the memory store in
+    ///               read+write mode.
+    ///
+    /// - READ_ONLY: If the backing memory store doesn't exist, throw an
+    ///              exception. If it exists, open the existing memory
+    ///              store in read-only mode.
+    enum MemorySegmentOpenMode {
+        CREATE,
+        READ_WRITE,
+        READ_ONLY
+    };
+
+    /// \brief Unload the current memory store (if loaded) and load the
+    /// specified one.
+    ///
+    /// In case opening/loading the new memory store fails for some
+    /// reason, one of the following documented (further below)
+    /// exceptions may be thrown. In case failures occur,
+    /// implementations of this method must strictly provide the
+    /// associated behavior as follows, and in the exception
+    /// documentation below.  Code that uses \c ZoneTableSegment would
+    /// depend on such assurances.
+    ///
+    /// In case an existing memory store is in use, and an attempt to
+    /// load a different memory store fails, the existing memory store
+    /// must still be available and the \c ResetFailed exception must be
+    /// thrown. In this case, the segment is still usable.
+    ///
+    /// In case an existing memory store is in use, and an attempt is
+    /// made to reload the same memory store which results in a failure,
+    /// the existing memory store must no longer be available and the
+    /// \c ResetFailedAndSegmentCleared exception must be thrown. In
+    /// this case, the segment is no longer usable without a further
+    /// successful call to \c reset().
+    ///
+    /// See the \c MemorySegmentOpenMode documentation above for the
+    /// various modes in which a ZoneTableSegment can be created.
+    ///
+    /// \c params should contain an implementation-defined
+    /// configuration. See the specific \c ZoneTableSegment
+    /// implementation class for details of what to pass in this
+    /// argument.
+    ///
+    /// \throws isc::InvalidParameter if the configuration in \c params
+    /// has incorrect syntax, but the segment is still usable due to the
+    /// old memory store still being in use.
+    ///
+    /// \throw ResetFailed if there was a problem in loading the new
+    /// memory store, but the segment is still usable due to the old
+    /// memory store still being in use.
+    ///
+    /// \throw ResetFailedAndSegmentCleared if there was a problem in
+    /// loading the new memory store, but the old memory store was also
+    /// unloaded and is no longer in use. The segment is not usable
+    /// without a further successful \c reset().
+    ///
+    /// \param mode The open mode (see the MemorySegmentOpenMode
+    /// documentation).
+    /// \param params An element containing implementation-specific
+    /// config (see the description).
+    virtual void reset(MemorySegmentOpenMode mode,
+                       isc::data::ConstElementPtr params) = 0;
+
+    /// \brief Unload the current memory store (if loaded).
+    ///
+    /// Implementations of this method should unload any current memory
+    /// store and reset the `ZoneTableSegment` to a freshly constructed
+    /// state.
+    ///
+    /// \throw none
+    virtual void clear() = 0;
 };
 
 } // namespace memory
