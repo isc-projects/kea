@@ -318,7 +318,9 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
 }
 
 ConfigurableClientList::ZoneWriterPair
-ConfigurableClientList::getCachedZoneWriter(const Name& name) {
+ConfigurableClientList::getCachedZoneWriter(const Name& name,
+                                            const std::string& datasrc_name)
+{
     if (!allow_cache_) {
         return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
     }
@@ -326,10 +328,17 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
     // Find the data source from which the zone to be loaded into memory.
     // Then get the appropriate load action and create a zone writer.
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        if (!datasrc_name.empty() && datasrc_name != info.name_) {
+            continue;
+        }
         // If there's an underlying "real" data source and it doesn't contain
-        // the given name, obviously we cannot load it.
+        // the given name, obviously we cannot load it.  If a specific data
+        // source is given by the name, search should stop here.
         if (info.data_src_client_ &&
             info.data_src_client_->findZone(name).code != result::SUCCESS) {
+            if (!datasrc_name.empty()) {
+                return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+            }
             continue;
         }
         // If the corresponding zone table segment is not (yet) writable,
@@ -349,6 +358,13 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name) {
                                    new memory::ZoneWriter(
                                        *info.ztable_segment_,
                                        load_action, name, rrclass_))));
+    }
+
+    // We can't find the specified zone.  If a specific data source was
+    // given, this means the given name of data source doesn't exist, so
+    // we report it so.
+    if (!datasrc_name.empty()) {
+        return (ZoneWriterPair(DATASRC_NOT_FOUND, ZoneWriterPtr()));
     }
     return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
 }
