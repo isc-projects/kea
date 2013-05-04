@@ -195,7 +195,7 @@ public:
     /// \brief Mapped segment version of getNamedAddress.
     ///
     /// This version never throws.
-    virtual void* getNamedAddressImpl(const char* name);
+    virtual NamedAddressResult getNamedAddressImpl(const char* name);
 
     /// \brief Mapped segment version of clearNamedAddress.
     ///

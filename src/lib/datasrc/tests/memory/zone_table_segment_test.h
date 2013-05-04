@@ -18,7 +18,7 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/zone_data.h>
-#include <datasrc/memory/zone_writer_local.h>
+#include <datasrc/memory/zone_writer.h>
 
 namespace isc {
 namespace datasrc {
@@ -30,7 +30,7 @@ namespace test {
 // was de-allocated on it.
 class ZoneTableSegmentTest : public ZoneTableSegment {
 public:
-    ZoneTableSegmentTest(isc::dns::RRClass rrclass,
+    ZoneTableSegmentTest(const isc::dns::RRClass& rrclass,
                          isc::util::MemorySegment& mem_sgmt) :
         ZoneTableSegment(rrclass),
         mem_sgmt_(mem_sgmt),
@@ -39,6 +39,14 @@ public:
 
     virtual ~ZoneTableSegmentTest() {
         ZoneTable::destroy(mem_sgmt_, header_.getTable());
+    }
+
+    virtual void reset(MemorySegmentOpenMode, isc::data::ConstElementPtr) {
+        isc_throw(isc::NotImplemented, "reset() is not implemented");
+    }
+
+    virtual void clear() {
+        isc_throw(isc::NotImplemented, "clear() is not implemented");
     }
 
     virtual ZoneTableHeader& getHeader() {
@@ -53,55 +61,13 @@ public:
         return (mem_sgmt_);
     }
 
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& name,
-                                      const dns::RRClass& rrclass)
-    {
-        return (new Writer(this, load_action, name, rrclass));
+    virtual bool isWritable() const {
+        return (true);
     }
 
 private:
     isc::util::MemorySegment& mem_sgmt_;
     ZoneTableHeader header_;
-
-    // A writer for this segment. The implementation is similar
-    // to ZoneWriterLocal, but all the error handling is stripped
-    // for simplicity. Also, we do everything inside the
-    // install(), for the same reason. We just need something
-    // inside the tests, not a full-blown implementation
-    // for background loading.
-    class Writer : public ZoneWriter {
-    public:
-        Writer(ZoneTableSegmentTest* segment, const LoadAction& load_action,
-               const dns::Name& name, const dns::RRClass& rrclass) :
-            segment_(segment),
-            load_action_(load_action),
-            name_(name),
-            rrclass_(rrclass)
-        {}
-
-        void load() {}
-
-        void install() {
-            ZoneTable* table(segment_->getHeader().getTable());
-            const ZoneTable::AddResult
-                result(table->addZone(segment_->getMemorySegment(), rrclass_,
-                                      name_,
-                                      load_action_(segment_->
-                                                   getMemorySegment())));
-            if (result.zone_data != NULL) {
-                ZoneData::destroy(segment_->getMemorySegment(),
-                                  result.zone_data, rrclass_);
-            }
-        }
-
-        virtual void cleanup() {}
-    private:
-        ZoneTableSegmentTest* segment_;
-        LoadAction load_action_;
-        dns::Name name_;
-        dns::RRClass rrclass_;
-    };
 };
 
 } // namespace test
