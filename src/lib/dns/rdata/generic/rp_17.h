@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -75,6 +75,9 @@ public:
     Name getText() const { return (text_); }
 
 private:
+    // helper function for string and lexer constructors
+    void constructFromLexer(MasterLexer& lexer, const Name* origin);
+
     Name mailbox_;
     Name text_;
 };
