@@ -13,11 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-
 #include <config/ccsession.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
@@ -246,6 +246,10 @@ public:
         reset_context();
     }
 
+    ~ParseConfigTest() {
+        reset_context();
+    }
+
     /// @brief Parses a configuration.   
     ///
     /// Parse the given configuration, populating the context storage with
@@ -418,6 +422,9 @@ public:
     /// during a given test if needed.
     void reset_context(){
         // Note set context universe to V6 as it has to be something.
+        CfgMgr::instance().deleteSubnets4();
+        CfgMgr::instance().deleteSubnets6();
+        CfgMgr::instance().deleteOptionDefs();
         parser_context_.reset(new ParserContext(Option::V6));
     }
 
