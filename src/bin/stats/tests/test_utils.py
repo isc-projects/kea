@@ -466,7 +466,7 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
                       'lname': 'test-lname',
                       'boot_time':
                           time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
-                      'timestamp': 1308759248.0},
+                      'timestamp': time.mktime(CONST_BASETIME)},
             'Auth': {'queries.udp': 4, 'queries.tcp': 6,
                      'queries.perzone': [
                     {'queries.udp': 8, 'queries.tcp': 10,
