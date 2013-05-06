@@ -169,6 +169,10 @@ INIT_SPEC_STR = """\
 }
 """
 
+# Note: this is derived of the spec for the DNS authoritative server, but
+# for the purpose of this test, it's completely irrelevant to DNS.
+# Some statisittics specs do not make sense for practical sense but used
+# just cover various types of statistics data (list, map/dict, etc).
 AUTH_SPEC_STR = """\
 {
   "module_spec": {
@@ -448,7 +452,9 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
         # stats-httpd tests.  For the purpose of these tests, the content of
         # statistics data is not so important (they don't test whther the
         # counter values are correct, etc), so hardcoding the common case
-        # should suffice.
+        # should suffice.  Note also that some of the statistics values and
+        # specs don't make sense in practice (see also comments on
+        # AUTH_SPEC_STR).
         with open(stats.SPECFILE_LOCATION) as f:
             stat_spec_str = f.read()
         self.__default_spec_answer = {
