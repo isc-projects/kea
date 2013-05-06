@@ -642,10 +642,24 @@ class TestStatsHttpd(unittest.TestCase):
                              get_module_spec().get_module_name())
 
     def test_init_hterr(self):
+        """Test the behavior of StatsHttpd constructor when open_httpd fails.
+
+        We specifically check the following two:
+        - close_mccs() is called (so stats-httpd tells ConfigMgr it's shutting
+          down)
+        - the constructor results in HttpServerError exception.
+
+        """
+        self.__mccs_closed = False
+        def __call_checker():
+            self.__mccs_closed = True
         class FailingStatsHttpd(MyStatsHttpd):
             def open_httpd(self):
                 raise stats_httpd.HttpServerError
+            def close_mccs(self):
+                __call_checker()
         self.assertRaises(stats_httpd.HttpServerError, FailingStatsHttpd)
+        self.assertTrue(self.__mccs_closed)
 
     def test_openclose_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
