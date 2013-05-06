@@ -46,9 +46,9 @@ void RP::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 ///
 /// \throw InvalidRdataText The number of RDATA fields (must be 2) is
 /// incorrect.
+/// \throw std::bad_alloc Memory allocation for names fails.
 /// \throw Other The constructor of the \c Name class will throw if the
 /// given name is invalid.
-/// \throw std::bad_alloc Memory allocation for names fails.
 RP::RP(const std::string& rp_str) :
     // We cannot construct both names in the initialization list due to the
     // necessary text processing, so we have to initialize them with a dummy
@@ -126,20 +126,36 @@ RP::toText() const {
     return (mailbox_.toText() + " " + text_.toText());
 }
 
+/// \brief Render the \c RP in the wire format without name compression.
+///
+/// \throw std::bad_alloc Internal resource allocation fails.
+///
+/// \param buffer An output buffer to store the wire data.
 void
 RP::toWire(OutputBuffer& buffer) const {
     mailbox_.toWire(buffer);
     text_.toWire(buffer);
 }
 
+/// \brief Render the \c RP in the wire format with taking into account
+/// compression.
+///
+// Type RP is not "well-known", and name compression must be disabled
+// per RFC3597.
+///
+/// \throw std::bad_alloc Internal resource allocation fails.
+///
+/// \param renderer DNS message rendering context that encapsulates the
+/// output buffer and name compression information.
 void
 RP::toWire(AbstractMessageRenderer& renderer) const {
-    // Type RP is not "well-known", and name compression must be disabled
-    // per RFC3597.
     renderer.writeName(mailbox_, false);
     renderer.writeName(text_, false);
 }
 
+/// \brief Compare two instances of \c RP RDATA.
+///
+/// See documentation in \c Rdata.
 int
 RP::compare(const Rdata& other) const {
     const RP& other_rp = dynamic_cast<const RP&>(other);
