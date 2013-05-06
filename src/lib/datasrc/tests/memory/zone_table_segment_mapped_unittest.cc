@@ -34,6 +34,7 @@ using boost::scoped_ptr;
 namespace {
 
 const char* mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+const char* mapped_file2 = TEST_DATA_BUILDDIR "/test2.mapped";
 
 class ZoneTableSegmentMappedTest : public ::testing::Test {
 protected:
@@ -42,7 +43,10 @@ protected:
             ZoneTableSegment::create(RRClass::IN(), "mapped")),
         config_params_(
             Element::fromJSON(
-                "{\"mapped-file\": \"" + std::string(mapped_file) + "\"}"))
+                "{\"mapped-file\": \"" + std::string(mapped_file) + "\"}")),
+        config_params2_(
+            Element::fromJSON(
+                "{\"mapped-file\": \"" + std::string(mapped_file2) + "\"}"))
     {
         EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
         // Verify that a ZoneTableSegmentMapped is created.
@@ -54,10 +58,14 @@ protected:
     ~ZoneTableSegmentMappedTest() {
         ZoneTableSegment::destroy(ztable_segment_);
         boost::interprocess::file_mapping::remove(mapped_file);
+        boost::interprocess::file_mapping::remove(mapped_file2);
     }
+
+    void setupMappedFiles();
 
     ZoneTableSegment* ztable_segment_;
     const ConstElementPtr config_params_;
+    const ConstElementPtr config_params2_;
 };
 
 bool
@@ -109,6 +117,40 @@ verifyData(const MemorySegment& segment) {
     return (true);
 }
 
+void
+deleteChecksum(MemorySegment& segment) {
+    segment.clearNamedAddress("zone_table_checksum");
+}
+
+void
+corruptChecksum(MemorySegment& segment) {
+    const MemorySegment::NamedAddressResult result =
+        segment.getNamedAddress("zone_table_checksum");
+    ASSERT_TRUE(result.first);
+
+    size_t checksum = *static_cast<size_t*>(result.second);
+    checksum ^= 0x55555555;
+    *static_cast<size_t*>(result.second) = checksum;
+}
+
+void
+deleteHeader(MemorySegment& segment) {
+    segment.clearNamedAddress("zone_table_header");
+}
+
+void
+ZoneTableSegmentMappedTest::setupMappedFiles() {
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params2_);
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // Now, clear the segment, closing the underlying mapped file.
+    ztable_segment_->clear();
+}
 
 TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
@@ -339,6 +381,69 @@ TEST_F(ZoneTableSegmentMappedTest, clear) {
     // The following method calls should now throw.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
+}
+
+TEST_F(ZoneTableSegmentMappedTest, resetFailedCorruptedChecksum) {
+    setupMappedFiles();
+
+    // Open mapped file 1 in read-write mode
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    // Corrupt mapped file 2.
+    scoped_ptr<MemorySegmentMapped> segment
+        (new MemorySegmentMapped(mapped_file2,
+                                 MemorySegmentMapped::OPEN_OR_CREATE));
+    EXPECT_TRUE(verifyData(*segment));
+    corruptChecksum(*segment);
+    segment.reset();
+
+    // Opening mapped file 2 in read-write mode should fail
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
+                               config_params2_);
+    }, ResetFailed);
+}
+
+TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingChecksum) {
+    setupMappedFiles();
+
+    // Open mapped file 1 in read-write mode
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    // Corrupt mapped file 2.
+    scoped_ptr<MemorySegmentMapped> segment
+        (new MemorySegmentMapped(mapped_file2,
+                                 MemorySegmentMapped::OPEN_OR_CREATE));
+    EXPECT_TRUE(verifyData(*segment));
+    deleteChecksum(*segment);
+    segment.reset();
+
+    // Opening mapped file 2 in read-only mode should fail
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
+                               config_params2_);
+    }, ResetFailed);
+}
+
+TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
+    setupMappedFiles();
+
+    // Open mapped file 1 in read-write mode
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    // Corrupt mapped file 2.
+    scoped_ptr<MemorySegmentMapped> segment
+        (new MemorySegmentMapped(mapped_file2,
+                                 MemorySegmentMapped::OPEN_OR_CREATE));
+    EXPECT_TRUE(verifyData(*segment));
+    deleteHeader(*segment);
+    segment.reset();
+
+    // Opening mapped file 2 in read-only mode should fail
+    EXPECT_THROW({
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
+                               config_params2_);
+    }, ResetFailed);
 }
 
 } // anonymous namespace
