@@ -45,11 +45,6 @@ protected:
             rdata_str, rdata_dhcid, false, false);
     }
 
-    void checkFromText_InvalidText(const string& rdata_str) {
-        checkFromText<in::DHCID, InvalidRdataText, InvalidRdataText>(
-            rdata_str, rdata_dhcid, true, true);
-    }
-
     void checkFromText_BadValue(const string& rdata_str) {
         checkFromText<in::DHCID, BadValue, BadValue>(
             rdata_str, rdata_dhcid, true, true);
