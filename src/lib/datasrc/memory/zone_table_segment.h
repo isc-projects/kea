@@ -198,24 +198,23 @@ public:
         READ_ONLY
     };
 
-    /// \brief Unload the current memory store (if loaded) and load the
+    /// \brief Close the current memory store (if open) and open the
     /// specified one.
     ///
-    /// In case opening/loading the new memory store fails for some
-    /// reason, one of the following documented (further below)
-    /// exceptions may be thrown. In case failures occur,
-    /// implementations of this method must strictly provide the
-    /// associated behavior as follows, and in the exception
-    /// documentation below.  Code that uses \c ZoneTableSegment would
-    /// depend on such assurances.
+    /// In case opening the new memory store fails for some reason, one
+    /// of the following documented (further below) exceptions may be
+    /// thrown. In case failures occur, implementations of this method
+    /// must strictly provide the associated behavior as follows, and in
+    /// the exception documentation below.  Code that uses
+    /// \c ZoneTableSegment would depend on such assurances.
     ///
     /// In case an existing memory store is in use, and an attempt to
-    /// load a different memory store fails, the existing memory store
+    /// open a different memory store fails, the existing memory store
     /// must still be available and the \c ResetFailed exception must be
     /// thrown. In this case, the segment is still usable.
     ///
     /// In case an existing memory store is in use, and an attempt is
-    /// made to reload the same memory store which results in a failure,
+    /// made to reopen the same memory store which results in a failure,
     /// the existing memory store must no longer be available and the
     /// \c ResetFailedAndSegmentCleared exception must be thrown. In
     /// this case, the segment is no longer usable without a further
@@ -233,13 +232,13 @@ public:
     /// has incorrect syntax, but the segment is still usable due to the
     /// old memory store still being in use.
     ///
-    /// \throw ResetFailed if there was a problem in loading the new
+    /// \throw ResetFailed if there was a problem in opening the new
     /// memory store, but the segment is still usable due to the old
     /// memory store still being in use.
     ///
     /// \throw ResetFailedAndSegmentCleared if there was a problem in
-    /// loading the new memory store, but the old memory store was also
-    /// unloaded and is no longer in use. The segment is not usable
+    /// opening the new memory store, but the old memory store was also
+    /// closed and is no longer in use. The segment is not usable
     /// without a further successful \c reset().
     ///
     /// \param mode The open mode (see the MemorySegmentOpenMode
@@ -249,9 +248,9 @@ public:
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params) = 0;
 
-    /// \brief Unload the current memory store (if loaded).
+    /// \brief Close the current memory store (if open).
     ///
-    /// Implementations of this method should unload any current memory
+    /// Implementations of this method should close any current memory
     /// store and reset the `ZoneTableSegment` to a freshly constructed
     /// state.
     ///
