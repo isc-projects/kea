@@ -43,6 +43,9 @@ protected:
     ZoneTableSegmentMapped(const isc::dns::RRClass& rrclass);
 
 public:
+    /// \brief Destructor
+    virtual ~ZoneTableSegmentMapped();
+
     /// \brief Return the ZoneTableHeader for the mapped zone table
     /// segment implementation.
     ///
@@ -105,6 +108,8 @@ public:
     virtual void clear();
 
 private:
+    void sync();
+
     bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create,
                          std::string& error_msg);
     bool processHeader(isc::util::MemorySegmentMapped& segment, bool create,
