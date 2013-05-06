@@ -41,6 +41,10 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 {
 }
 
+ZoneTableSegmentMapped::~ZoneTableSegmentMapped() {
+    sync();
+}
+
 bool
 ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
                                         bool create,
@@ -259,6 +263,8 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         // mapped file. We cannot do this in many mode combinations
         // unless we close the existing mapped file. So just close it.
         clear();
+    } else {
+        sync();
     }
 
     switch (mode) {
@@ -279,27 +285,32 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 }
 
 void
+ZoneTableSegmentMapped::sync()
+{
+    // Synchronize checksum, etc.
+    if (mem_sgmt_ && isWritable()) {
+        // If there is a previously opened segment, and it was opened in
+        // read-write mode, update its checksum.
+        mem_sgmt_->shrinkToFit();
+        const MemorySegment::NamedAddressResult result =
+            mem_sgmt_->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
+        assert(result.first);
+        assert(result.second);
+        size_t* checksum = static_cast<size_t*>(result.second);
+        // First, clear the checksum so that getCheckSum() returns a
+        // consistent value.
+        *checksum = 0;
+        const size_t new_checksum = mem_sgmt_->getCheckSum();
+        // Now, update it into place.
+        *checksum = new_checksum;
+    }
+}
+
+void
 ZoneTableSegmentMapped::clear()
 {
     if (mem_sgmt_) {
-        if (isWritable()) {
-            // If there is a previously opened segment, and it was
-            // opened in read-write mode, update its checksum.
-            mem_sgmt_->shrinkToFit();
-            const MemorySegment::NamedAddressResult result =
-                mem_sgmt_->getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
-            assert(result.first);
-            assert(result.second);
-            uint32_t* checksum = static_cast<uint32_t*>(result.second);
-            // First, clear the checksum so that getCheckSum() returns
-            // a consistent value.
-            *checksum = 0;
-            const uint32_t new_checksum = mem_sgmt_->getCheckSum();
-            // Now, update it into place.
-            *checksum = new_checksum;
-        }
-        // Close the segment here in case the code further below
-        // doesn't complete successfully.
+        sync();
         header_ = NULL;
         mem_sgmt_.reset();
     }
