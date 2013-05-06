@@ -98,7 +98,7 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     if (tag > 0xffff) {
         isc_throw(InvalidRdataText, "RRSIG key tag out of range");
     }
-    const Name signer = createNameFromLexer(lexer, origin);
+    const Name& signer = createNameFromLexer(lexer, origin);
 
     string signature_txt;
     string signature_part;
