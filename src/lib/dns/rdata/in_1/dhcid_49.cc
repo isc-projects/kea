@@ -48,10 +48,11 @@ DHCID::constructFromLexer(MasterLexer& lexer) {
     }
     lexer.ungetToken();
 
-    // missing digest data is okay
-    if (digest_txt.size() > 0) {
-        decodeBase64(digest_txt, digest_);
+    if (digest_txt.size() == 0) {
+        isc_throw(InvalidRdataText, "Missing DHCID RDATA");
     }
+
+    decodeBase64(digest_txt, digest_);
 }
 
 /// \brief Constructor from string.
@@ -89,7 +90,9 @@ DHCID::DHCID(const std::string& dhcid_str) {
 /// The \c lexer should point to the beginning of valid textual representation
 /// of a DHCID RDATA.
 ///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw InvalidRdataText on empty string.
+/// \throw BadValue if the text is not valid base-64.
+/// \throw MasterLexer::LexerError General parsing error.
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
