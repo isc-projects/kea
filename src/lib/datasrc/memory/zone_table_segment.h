@@ -208,6 +208,12 @@ public:
     /// the exception documentation below.  Code that uses
     /// \c ZoneTableSegment would depend on such assurances.
     ///
+    /// First, in case an existing memory segment is in use, and an
+    /// invalid config is passed to \c reset(), the existing memory
+    /// store must still be available and the \c isc::InvalidParameter
+    /// exception must be thrown. In this case, the segment is still
+    /// usable.
+    ///
     /// In case an existing memory store is in use, and an attempt to
     /// open a different memory store fails, the existing memory store
     /// must still be available and the \c ResetFailed exception must be
