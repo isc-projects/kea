@@ -51,11 +51,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
 /// @brief Returns the global context
 ///
-/// This function must be only used by unit tests that need
-/// to access global context.
-///
 /// @returns a const reference to the global context
-const ParserContext& getGlobalParserContext();
+ParserContextPtr globalContext();
  
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

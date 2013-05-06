@@ -55,9 +55,6 @@ typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
 typedef boost::shared_ptr<StringParser> StringParserPtr;
 typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 
-// TKM - declare a global parser context
-ParserContextPtr global_context_ptr(new ParserContext(Option::V6));
-
 /// @brief Parser for DHCP6 option data value.
 ///
 /// This parser parses configuration entries that specify value of
@@ -182,15 +179,21 @@ public:
     /// @param ignored first parameter
     /// @param global_context is a pointer to the global context which 
     /// stores global scope parameters, options, option defintions.
-    Subnet6ConfigParser(const std::string&, ParserContextPtr global_context) 
-        :SubnetConfigParser("", global_context) {
+    Subnet6ConfigParser(const std::string&) 
+        :SubnetConfigParser("", globalContext()) {
     }
 
     /// @brief Adds the created subnet to a server's configuration.
+    /// @throw throws Unexpected if dynamic cast fails.
     void commit() {
         if (subnet_) {
-            Subnet6Ptr bs = boost::dynamic_pointer_cast<Subnet6>(subnet_);
-            isc::dhcp::CfgMgr::instance().addSubnet6(bs);
+            Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
+            if (!sub6ptr) {
+                // If we hit this, it is a programming error.
+                isc_throw(Unexpected,
+                          "Invalid cast in Subnet4ConfigParser::commit");
+            }
+            isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
         }
     }
 
@@ -212,7 +215,7 @@ protected:
             (config_id.compare("rebind-timer") == 0))  {
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
-                 (config_id.compare("interface") == 0)) {
+                   (config_id.compare("interface") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool6Parser(config_id, pools_);
@@ -303,7 +306,7 @@ public:
 
     /// @brief constructor
     ///
-    /// @param dummy first argument, always ingored. All parsers accept a
+    /// @param dummy first argument, always ignored. All parsers accept a
     /// string parameter "name" as their first argument.
     Subnets6ListConfigParser(const std::string&) {
     }
@@ -316,8 +319,7 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet6ConfigParser("subnet", 
-                                                    global_context_ptr));
+            ParserPtr parser(new Subnet6ConfigParser("subnet" ));
             parser->build(subnet);
             subnets_.push_back(parser);
         }
@@ -373,22 +375,22 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
         (config_id.compare("renew-timer") == 0)  ||
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id, 
-                                 global_context_ptr->uint32_values_);
+                                 globalContext()->uint32_values_);
     } else if (config_id.compare("interface") == 0) {
         parser = new InterfaceListConfigParser(config_id);
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
         parser = new OptionDataListParser(config_id, 
-                                          global_context_ptr->options_, 
-                                          global_context_ptr,
+                                          globalContext()->options_, 
+                                          globalContext(),
                                           Dhcp6OptionDataParser::factory);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, 
-                                          global_context_ptr->option_defs_);
+                                          globalContext()->option_defs_);
     } else if (config_id.compare("version") == 0) {
         parser  = new StringParser(config_id, 
-                                   global_context_ptr->string_values_);
+                                   globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
         parser = new DbAccessParser(config_id);
     } else {
@@ -432,7 +434,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // parsing operation fails after the global storage has been
     // modified. We need to preserve the original global data here
     // so as we can rollback changes when an error occurs.
-    ParserContext original_context(*global_context_ptr);
+    ParserContext original_context(*globalContext());
 
     // answer will hold the result.
     ConstElementPtr answer;
@@ -528,7 +530,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
-        global_context_ptr.reset(new ParserContext(original_context));
+        globalContext().reset(new ParserContext(original_context));
         return (answer);
     }
 
@@ -539,9 +541,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     return (answer);
 }
 
-// Makes global context accessible for unit tests.
-const ParserContext& getGlobalParserContext() {
-    return (*global_context_ptr);
+ParserContextPtr globalContext() {
+    static ParserContextPtr global_context_ptr(new ParserContext(Option::V6));
+    return (global_context_ptr);
 }
 
 }; // end of isc::dhcp namespace
