@@ -14,14 +14,13 @@
 
 #include <config.h>
 
+#include <util/random/random_number_generator.h>
+
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 
-#include <algorithm>
 #include <iostream>
-#include <vector>
 
-#include <util/random/random_number_generator.h>
 
 namespace isc {
 namespace util {
