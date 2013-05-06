@@ -49,9 +49,8 @@ public:
 
     /// \brief Return the value of the mailbox field.
     ///
-    /// This method normally does not throw an exception, but if resource
-    /// allocation for the returned \c Name object fails, a corresponding
-    /// standard exception will be thrown.
+    /// \throw std::bad_alloc If resource allocation for the returned
+    /// \c Name fails.
     ///
     /// \note
     /// Unlike the case of some other RDATA classes (such as
@@ -69,9 +68,8 @@ public:
 
     /// \brief Return the value of the text field.
     ///
-    /// This method normally does not throw an exception, but if resource
-    /// allocation for the returned \c Name object fails, a corresponding
-    /// standard exception will be thrown.
+    /// \throw std::bad_alloc If resource allocation for the returned
+    /// \c Name fails.
     Name getText() const { return (text_); }
 
 private:
