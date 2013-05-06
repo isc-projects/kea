@@ -165,19 +165,8 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
         (new MemorySegmentMapped(filename, mode));
 
     std::string error_msg;
-    if (!processChecksum(*segment, create, error_msg)) {
-         if (mem_sgmt_) {
-              isc_throw(ResetFailed,
-                        "Error in resetting zone table segment to use "
-                        << filename << ": " << error_msg);
-         } else {
-              isc_throw(ResetFailedAndSegmentCleared,
-                        "Error in resetting zone table segment to use "
-                        << filename << ": " << error_msg);
-         }
-    }
-
-    if (!processHeader(*segment, create, error_msg)) {
+    if ((!processChecksum(*segment, create, error_msg)) ||
+        (!processHeader(*segment, create, error_msg))) {
          if (mem_sgmt_) {
               isc_throw(ResetFailed,
                         "Error in resetting zone table segment to use "
