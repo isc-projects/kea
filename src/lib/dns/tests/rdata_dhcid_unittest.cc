@@ -45,8 +45,8 @@ protected:
             rdata_str, rdata_dhcid, false, false);
     }
 
-    void checkFromText_InvalidLength(const string& rdata_str) {
-        checkFromText<in::DHCID, InvalidRdataLength, InvalidRdataLength>(
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<in::DHCID, InvalidRdataText, InvalidRdataText>(
             rdata_str, rdata_dhcid, true, true);
     }
 
@@ -74,9 +74,6 @@ protected:
 TEST_F(Rdata_DHCID_Test, fromText) {
     EXPECT_EQ(dhcid_txt, rdata_dhcid.toText());
 
-    // missing digest data is okay
-    EXPECT_NO_THROW(const in::DHCID digest(""));
-
     // Space in digest data is OK
     checkFromText_None(
             "0LIg0LvQtdGB0YMg 0YDQvtC00LjQu9Cw 0YHRjCDRkdC70L7R h9C60LA=");
@@ -95,6 +92,10 @@ TEST_F(Rdata_DHCID_Test, fromText) {
 }
 
 TEST_F(Rdata_DHCID_Test, badText) {
+    // missing digest data
+    checkFromText_InvalidText("");
+
+    // invalid base64
     checkFromText_BadValue("EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!=");
 
     // unterminated multi-line base64
