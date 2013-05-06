@@ -1407,7 +1407,6 @@ class TestOSEnv(unittest.TestCase):
         test for the environ variable "B10_FROM_SOURCE"
         "B10_FROM_SOURCE" is set in Makefile
         """
-        return
         # test case having B10_FROM_SOURCE
         self.assertTrue("B10_FROM_SOURCE" in os.environ)
         self.assertEqual(stats.SPECFILE_LOCATION, \
