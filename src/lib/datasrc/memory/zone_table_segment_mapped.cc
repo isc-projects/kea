@@ -58,12 +58,12 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             // The segment was already shrunk when it was last
             // closed. Check that its checksum is consistent.
             assert(result.second);
-            uint32_t* checksum = static_cast<uint32_t*>(result.second);
-            const uint32_t saved_checksum = *checksum;
+            size_t* checksum = static_cast<size_t*>(result.second);
+            const size_t saved_checksum = *checksum;
             // First, clear the checksum so that getCheckSum() returns a
             // consistent value.
             *checksum = 0;
-            const uint32_t new_checksum = segment.getCheckSum();
+            const size_t new_checksum = segment.getCheckSum();
             if (saved_checksum != new_checksum) {
                 error_msg = "Saved checksum doesn't match segment data";
                 return (false);
@@ -79,12 +79,12 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
         void* checksum = NULL;
         while (!checksum) {
             try {
-                checksum = segment.allocate(sizeof(uint32_t));
+                checksum = segment.allocate(sizeof(size_t));
             } catch (const MemorySegmentGrown&) {
                 // Do nothing and try again.
             }
         }
-        *static_cast<uint32_t*>(checksum) = 0;
+        *static_cast<size_t*>(checksum) = 0;
         const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
                                                   checksum);
         if (grew) {
