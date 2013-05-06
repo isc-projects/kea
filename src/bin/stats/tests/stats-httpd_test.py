@@ -628,8 +628,8 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(self.stats_httpd.running, False)
         self.assertEqual(self.stats_httpd.poll_intval, 0.5)
         self.assertNotEqual(len(self.stats_httpd.httpd), 0)
-        self.assertNotEqual(None, self.stats_httpd.mccs)
-        self.assertNotEqual(None, self.stats_httpd.cc_session)
+        self.assertIsNotNone(self.stats_httpd.mccs)
+        self.assertIsNotNone(self.stats_httpd.cc_session)
         # The real CfgMgr would return 'version', but our test mock omits it,
         # so the len(config) should be 1
         self.assertEqual(len(self.stats_httpd.config), 1)
@@ -655,19 +655,19 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd.close_mccs()
         self.assertTrue(mccs.stopped)
         self.assertTrue(mccs.closed)
-        self.assertEqual(self.stats_httpd.mccs, None)
+        self.assertIsNone(self.stats_httpd.mccs)
         self.stats_httpd.open_mccs()
         self.assertIsNotNone(self.stats_httpd.mccs)
         self.stats_httpd.mccs = None
-        self.assertEqual(self.stats_httpd.mccs, None)
-        self.assertEqual(self.stats_httpd.close_mccs(), None)
+        self.assertIsNone(self.stats_httpd.mccs)
+        self.assertIsNone(self.stats_httpd.close_mccs())
 
     def test_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertIsNotNone(self.stats_httpd.mccs.get_socket())
         self.assertTrue(
             isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
-        self.assertNotEqual(None, self.stats_httpd.cc_session)
+        self.assertIsNotNone(self.stats_httpd.cc_session)
         statistics_spec = self.stats_httpd.get_stats_spec()
         for mod in DUMMY_DATA:
             self.assertTrue(mod in statistics_spec)
@@ -793,7 +793,7 @@ class TestStatsHttpd(unittest.TestCase):
         select.select = lambda r, w, x, t: self.__faked_select()
         self.stats_httpd.start()
         self.assertFalse(self.stats_httpd.running)
-        self.assertEqual(None, self.stats_httpd.mccs) # stop() clears .mccs
+        self.assertIsNone(self.stats_httpd.mccs) # stop() clears .mccs
 
     def test_running_fail(self):
         # A failure case of start(): we close the (real but dummy) socket for
@@ -820,7 +820,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.stats_httpd.start() # shouldn't leak the exception
         self.assertFalse(self.stats_httpd.running)
-        self.assertEqual(None, self.stats_httpd.mccs)
+        self.assertIsNone(self.stats_httpd.mccs)
 
     def test_open_template(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
