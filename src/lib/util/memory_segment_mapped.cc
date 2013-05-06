@@ -280,7 +280,7 @@ MemorySegmentMapped::allMemoryDeallocated() const {
 }
 
 MemorySegment::NamedAddressResult
-MemorySegmentMapped::getNamedAddressImpl(const char* name) {
+MemorySegmentMapped::getNamedAddressImpl(const char* name) const {
     offset_ptr<void>* storage =
         impl_->base_sgmt_->find<offset_ptr<void> >(name).first;
     if (storage) {

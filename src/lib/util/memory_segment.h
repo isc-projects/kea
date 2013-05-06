@@ -254,7 +254,7 @@ public:
     /// \return An std::pair containing a bool (set to true if the name
     /// was found, or false otherwise) and the address associated with
     /// the name (which is undefined if the name was not found).
-    NamedAddressResult getNamedAddress(const char* name) {
+    NamedAddressResult getNamedAddress(const char* name) const {
         // This public method implements common validation.  The actual
         // work specific to the derived segment is delegated to the
         // corresponding protected method.
@@ -296,7 +296,7 @@ protected:
     virtual bool setNamedAddressImpl(const char* name, void* addr) = 0;
 
     /// \brief Implementation of getNamedAddress beyond common validation.
-    virtual NamedAddressResult getNamedAddressImpl(const char* name) = 0;
+    virtual NamedAddressResult getNamedAddressImpl(const char* name) const = 0;
 
     /// \brief Implementation of clearNamedAddress beyond common validation.
     virtual bool clearNamedAddressImpl(const char* name) = 0;
