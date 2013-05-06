@@ -1,6 +1,6 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
-// Permission to use, copy, modify, and/or distribute this software for generic
+// Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice appear in all copies.
 //
@@ -27,15 +27,15 @@
 
 using isc::UnitTestUtil;
 using namespace std;
-using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 // minfo text
 const char* const minfo_txt = "rmailbox.example.com. emailbox.example.com.";
 const char* const minfo_txt2 = "root.example.com. emailbox.example.com.";
 const char* const too_long_label = "01234567890123456789012345678901234567"
-                                   "89012345678901234567890123";
+                                   "89012345678901234567890123.";
 
 namespace {
 class Rdata_MINFO_Test : public RdataTest {
@@ -61,7 +61,7 @@ TEST_F(Rdata_MINFO_Test, badText) {
     EXPECT_THROW(generic::MINFO("root.example.com."),
                  InvalidRdataText);
     // number of fields (must be 2) is incorrect
-    EXPECT_THROW(generic::MINFO("root.example.com emailbox.example.com. "
+    EXPECT_THROW(generic::MINFO("root.example.com. emailbox.example.com. "
                                 "example.com."),
                  InvalidRdataText);
     // bad rmailbox name
