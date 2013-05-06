@@ -63,11 +63,8 @@ configureDhcp4Server(Dhcpv4Srv&,
 
 /// @brief Returns the global context
 ///
-/// This function must be only used by unit tests that need
-/// to access global context.
-///
-/// @returns a const reference to the global context
-const ParserContext& getGlobalParserContext();
+/// @return a const reference to the global context
+ParserContextPtr globalContext();
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

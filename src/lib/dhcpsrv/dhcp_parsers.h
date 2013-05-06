@@ -34,19 +34,94 @@ namespace dhcp {
 typedef OptionSpaceContainer<OptionDefContainer,
                              OptionDefinitionPtr> OptionDefStorage;
 
-/// @brief Shared pointer to  option definitions storage.
+/// @brief Shared pointer to option definitions storage.
 typedef boost::shared_ptr<OptionDefStorage> OptionDefStoragePtr;
 
 /// Collection of containers holding option spaces. Each container within
 /// a particular option space holds so-called option descriptors.
 typedef OptionSpaceContainer<Subnet::OptionContainer,
                              Subnet::OptionDescriptor> OptionStorage;
-/// @brief Shared pointer to  option storage.
+/// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 
+/// @brief A template class that stores named elements of a given data type.
+///
+/// This template class is provides data value storage for configuration parameters
+/// of a given data type.  The values are stored by parameter name and as instances 
+/// of type "ValueType". 
+///
+/// @param ValueType is the data type of the elements to store.
+template<typename ValueType>
+class ValueStorage {
+    public:
+        /// @brief  Stores the the parameter and its value in the store.
+        ///
+        /// If the parameter does not exist in the store, then it will be added,
+        /// otherwise its data value will be updated with the given value. 
+        ///
+        /// @param name is the name of the paramater to store.
+        /// @param value is the data value to store.
+        void setParam(const std::string& name, const ValueType& value) {
+            values_[name] = value;
+        }
+
+        /// @brief Returns the data value for the given parameter.
+        ///
+        /// Finds and returns the data value for the given parameter.
+        /// @param name is the name of the parameter for which the data
+        /// value is desired.
+        ///
+        /// @return The paramater's data value of type <ValueType>.
+        /// @throw DhcpConfigError if the parameter is not found.
+        ValueType getParam(const std::string& name) const {
+            typename std::map<std::string, ValueType>::const_iterator param 
+                = values_.find(name);
+
+            if (param == values_.end()) {
+                isc_throw(DhcpConfigError, "Missing parameter '"
+                       << name << "'");
+            }
+
+            return (param->second);
+        }
+
+        /// @brief  Remove the parameter from the store.
+        ///
+        /// Deletes the entry for the given parameter from the store if it 
+        /// exists. 
+        ///
+        /// @param name is the name of the paramater to delete.
+        void delParam(const std::string& name) {
+            values_.erase(name);
+        }
+
+        /// @brief Deletes all of the entries from the store.
+        ///
+        void clear() {
+            values_.clear();
+        }
+
+
+    private:
+        /// @brief An std::map of the data values, keyed by parameter names.
+        std::map<std::string, ValueType> values_;
+};
+
+
+/// @brief a collection of elements that store uint32 values 
+typedef ValueStorage<uint32_t> Uint32Storage;
+typedef boost::shared_ptr<Uint32Storage> Uint32StoragePtr;
+
+/// @brief a collection of elements that store string values
+typedef ValueStorage<std::string> StringStorage;
+typedef boost::shared_ptr<StringStorage> StringStoragePtr;
+
+/// @brief Storage for parsed boolean values.
+typedef ValueStorage<bool> BooleanStorage;
+typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 
 /// @brief Container for the current parsing context. It provides a
-/// single enclosure for the storage of configuration paramaters,
+/// single enclosure for the storage of configuration parameters,
 /// options, option definitions, and other context specific information
 /// that needs to be accessible throughout the parsing and parsing
 /// constructs.
@@ -59,7 +134,7 @@ public:
     ParserContext(Option::Universe universe);
 
     /// @brief Copy constructor
-    ParserContext(ParserContext& rhs);
+    ParserContext(const ParserContext& rhs);
 
     /// @brief Storage for boolean parameters.
     BooleanStoragePtr boolean_values_;
@@ -78,16 +153,23 @@ public:
 
     /// @brief The parsing universe of this context.
     Option::Universe universe_;
+
+    /// @brief Assignment operator
+    ParserContext& operator=(const ParserContext& rhs);
 };
 
 /// @brief Pointer to various parser context.
 typedef boost::shared_ptr<ParserContext> ParserContextPtr;
 
-/// @brief - TKM  - simple type parser template class 
+/// @brief Simple data-type parser template class 
 ///
-/// This parser handles configuration values of the boolean type.
-/// Parsed values are stored in a provided storage. If no storage
-/// is provided then the build function throws an exception.
+/// This is the template class for simple data-type parsers. It supports
+/// parsing a configuration parameter with specific data-type for its 
+/// possible values. It provides a common constructor, commit, and templated 
+/// data storage.  The "build" method implementation must be provided by a 
+/// declaring type.
+/// @param ValueType is the data type of the configuration paramater value
+/// the parser should handle.
 template<typename ValueType>
 class ValueParser : public DhcpConfigParser {
 public:
@@ -117,11 +199,12 @@ public:
     }
 
 
-    /// @brief Parse a boolean value.
+    /// @brief Parse a given element into a value of type <ValueType>
     ///
     /// @param value a value to be parsed.
     ///
-    /// @throw isc::BadValue if value is not a boolean type Element.
+    /// @throw isc::BadValue Typically the implementing type will throw
+    /// a BadValue exception when given an invalid Element to parse. 
     void build(isc::data::ConstElementPtr value);
 
     /// @brief Put a parsed value to the storage.
@@ -132,7 +215,7 @@ public:
     }
     
 private:
-    /// Pointer to the storage where parsed value is stored.
+    /// Pointer to the storage where committed value is stored.
     boost::shared_ptr<ValueStorage<ValueType> > storage_;
 
     /// Name of the parameter which value is parsed with this parser.
@@ -498,9 +581,6 @@ typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 /// This abstract parser handles pool definitions, i.e. a list of entries of one
 /// of two syntaxes: min-max and prefix/len. Pool objects are created
 /// and stored in chosen PoolStorage container.
-///
-/// As there are no default values for pool, setStorage() must be called
-/// before build(). Otherwise exception will be thrown.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[X]/pool parameters.
 class PoolParser : public DhcpConfigParser {

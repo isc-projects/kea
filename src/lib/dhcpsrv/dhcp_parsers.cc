@@ -44,7 +44,7 @@ ParserContext::ParserContext(Option::Universe universe):
         universe_(universe) {
     }
 
-ParserContext::ParserContext(ParserContext& rhs):
+ParserContext::ParserContext(const ParserContext& rhs):
         boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
         uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
         string_values_(new StringStorage(*(rhs.string_values_))),
@@ -53,19 +53,38 @@ ParserContext::ParserContext(ParserContext& rhs):
         universe_(rhs.universe_) {
     }
 
+ParserContext& 
+ParserContext::operator=(const ParserContext& rhs) {
+        ParserContext tmp(rhs);
+        boolean_values_ = 
+            BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
+        uint32_values_ = 
+            Uint32StoragePtr(new Uint32Storage(*(tmp.uint32_values_)));
+        string_values_ = 
+            StringStoragePtr(new StringStorage(*(tmp.string_values_)));
+        options_ = OptionStoragePtr(new OptionStorage(*(tmp.options_)));
+        option_defs_ = 
+            OptionDefStoragePtr(new OptionDefStorage(*(tmp.option_defs_)));
+        universe_ = rhs.universe_;
+        return (*this);
+    }
+
+
 // **************************** DebugParser *************************
 
 DebugParser::DebugParser(const std::string& param_name)
     :param_name_(param_name) {
 }
 
-void DebugParser::build(ConstElementPtr new_config) {
+void 
+DebugParser::build(ConstElementPtr new_config) {
     std::cout << "Build for token: [" << param_name_ << "] = ["
         << value_->str() << "]" << std::endl; 
     value_ = new_config;
 }
 
-void DebugParser::commit() {
+void 
+DebugParser::commit() {
     // Debug message. The whole DebugParser class is used only for parser
     // debugging, and is not used in production code. It is very convenient
     // to keep it around. Please do not turn this cout into logger calls.
@@ -128,13 +147,15 @@ InterfaceListConfigParser::InterfaceListConfigParser(const std::string&
     }
 }
 
-void InterfaceListConfigParser::build(ConstElementPtr value) {
+void 
+InterfaceListConfigParser::build(ConstElementPtr value) {
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
         interfaces_.push_back(iface->str());
     }
 }
 
-void InterfaceListConfigParser::commit() {
+void 
+InterfaceListConfigParser::commit() {
     /// @todo: Implement per interface listening. Currently always listening
     /// on all interfaces.
 }
@@ -157,7 +178,8 @@ OptionDataParser::OptionDataParser(const std::string&, OptionStoragePtr options,
     }
 }
 
-void OptionDataParser::build(ConstElementPtr option_data_entries) {
+void 
+OptionDataParser::build(ConstElementPtr option_data_entries) {
     BOOST_FOREACH(ConfigPair param, option_data_entries->mapValue()) {
         ParserPtr parser;
         if (param.first == "name" || param.first == "data" ||
@@ -193,7 +215,8 @@ void OptionDataParser::build(ConstElementPtr option_data_entries) {
     createOption();
 }
 
-void OptionDataParser::commit() {
+void 
+OptionDataParser::commit() {
     if (!option_descriptor_.option) {
         // Before we can commit the new option should be configured. If it is 
         // not than somebody must have called commit() before build().
@@ -221,7 +244,8 @@ void OptionDataParser::commit() {
     options_->addItem(option_descriptor_, option_space_);
 }
 
-void OptionDataParser::createOption() {
+void 
+OptionDataParser::createOption() {
     // Option code is held in the uint32_t storage but is supposed to
     // be uint16_t value. We need to check that value in the configuration
     // does not exceed range of uint8_t and is not zero.
@@ -389,7 +413,8 @@ OptionDataListParser::OptionDataListParser(const std::string&,
     }
 }
 
-void OptionDataListParser::build(ConstElementPtr option_data_list) {
+void 
+OptionDataListParser::build(ConstElementPtr option_data_list) {
     BOOST_FOREACH(ConstElementPtr option_value, option_data_list->listValue()) {
         boost::shared_ptr<OptionDataParser> 
             parser((*optionDataParserFactory_)("option-data", 
@@ -404,7 +429,8 @@ void OptionDataListParser::build(ConstElementPtr option_data_list) {
     }
 }
 
-void OptionDataListParser::commit() {
+void 
+OptionDataListParser::commit() {
     BOOST_FOREACH(ParserPtr parser, parsers_) {
         parser->commit();
     }
@@ -426,7 +452,8 @@ OptionDefParser::OptionDefParser(const std::string&,
     }
 }
 
-void OptionDefParser::build(ConstElementPtr option_def) {
+void 
+OptionDefParser::build(ConstElementPtr option_def) {
     // Parse the elements that make up the option definition.
      BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
         std::string entry(param.first);
@@ -473,14 +500,16 @@ void OptionDefParser::build(ConstElementPtr option_def) {
     }
 }
 
-void OptionDefParser::commit() {
+void 
+OptionDefParser::commit() {
     if (storage_ && option_definition_ &&
         OptionSpace::validateName(option_space_name_)) {
             storage_->addItem(option_definition_, option_space_name_);
     }
 }
 
-void OptionDefParser::createOptionDef() {
+void 
+OptionDefParser::createOptionDef() {
     // Get the option space name and validate it.
     std::string space = string_values_->getParam("space");
     if (!OptionSpace::validateName(space)) {
@@ -567,7 +596,8 @@ OptionDefListParser::OptionDefListParser(const std::string&,
     }
 }
 
-void OptionDefListParser::build(ConstElementPtr option_def_list) {
+void 
+OptionDefListParser::build(ConstElementPtr option_def_list) {
     // Clear existing items in the storage.
     // We are going to replace all of them.
     storage_->clearItems();
@@ -585,7 +615,8 @@ void OptionDefListParser::build(ConstElementPtr option_def_list) {
     }
 }
 
-void OptionDefListParser::commit() {
+void 
+OptionDefListParser::commit() {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.deleteOptionDefs();
 
@@ -616,7 +647,8 @@ PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
     }
 }
 
-void PoolParser::build(ConstElementPtr pools_list) {
+void 
+PoolParser::build(ConstElementPtr pools_list) {
     BOOST_FOREACH(ConstElementPtr text_pool, pools_list->listValue()) {
         // That should be a single pool representation. It should contain
         // text is form prefix/len or first - last. Note that spaces
@@ -673,9 +705,10 @@ void PoolParser::build(ConstElementPtr pools_list) {
                   << text_pool->stringValue() <<
                   ". Does not contain - (for min-max) nor / (prefix/len)");
         }
-    }
+}
 
-void PoolParser::commit() {
+void 
+PoolParser::commit() {
     if (pools_) {
         // local_pools_ holds the values produced by the build function.
         // At this point parsing should have completed successfuly so
@@ -699,7 +732,8 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
     }
 }
 
-void SubnetConfigParser::build(ConstElementPtr subnet) {
+void 
+SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
         ParserPtr parser(createSubnetConfigParser(param.first));
         parser->build(param.second);
@@ -722,8 +756,9 @@ void SubnetConfigParser::build(ConstElementPtr subnet) {
     createSubnet();
 }
 
-void SubnetConfigParser::appendSubOptions(const std::string& option_space, 
-                                         OptionPtr& option) {
+void 
+SubnetConfigParser::appendSubOptions(const std::string& option_space, 
+                                     OptionPtr& option) {
     // Only non-NULL options are stored in option container.
     // If this option pointer is NULL this is a serious error.
     assert(option);
@@ -776,7 +811,8 @@ void SubnetConfigParser::appendSubOptions(const std::string& option_space,
     }
 }
 
-void SubnetConfigParser::createSubnet() {
+void 
+SubnetConfigParser::createSubnet() {
     std::string subnet_txt;
     try {
         subnet_txt = string_values_->getParam("subnet");
@@ -896,8 +932,8 @@ void SubnetConfigParser::createSubnet() {
     }
 }
 
-isc::dhcp::Triplet<uint32_t> SubnetConfigParser::getParam(const 
-                                                          std::string& name) {
+isc::dhcp::Triplet<uint32_t> 
+SubnetConfigParser::getParam(const std::string& name) {
     uint32_t value = 0;
     try {
         // look for local value 
