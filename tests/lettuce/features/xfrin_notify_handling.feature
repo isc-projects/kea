@@ -27,10 +27,16 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_value |
-      | socket.unixdomain.open   |          1 |
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: .Xfrout.socket.unixdomain.open can be either expected to
+    # be 0 or 1 here.  The reason is: if b10-xfrout starts all and is
+    # ready for a request from b10-stats, then b10-stats does request
+    # to b10-xfrout and the value results in 1. Otherwise if
+    # b10-xfrout is starting and isn't yet ready, then b10-stats
+    # doesn't request to b10-xfrout and the value still remains to the
+    # default value(0).
 
     #
     # Test2 for Xfrin statistics
@@ -129,10 +135,17 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_value |
-      | socket.unixdomain.open   |          1 |
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: .Xfrout.socket.unixdomain.open can be either expected to
+    # be 0 or 1 here.  The reason is: if b10-xfrout starts all and is
+    # ready for a request from b10-stats, then b10-stats does request
+    # to b10-xfrout and the value results in 1. Otherwise if
+    # b10-xfrout is starting and isn't yet ready, then b10-stats
+    # doesn't request to b10-xfrout and the value still remains to the
+    # default value(0).
+
     #
     # Test2 for Xfrin statistics
     #
@@ -230,10 +243,16 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_value |
-      | socket.unixdomain.open   |          1 |
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: .Xfrout.socket.unixdomain.open can be either expected to
+    # be 0 or 1 here.  The reason is: if b10-xfrout starts all and is
+    # ready for a request from b10-stats, then b10-stats does request
+    # to b10-xfrout and the value results in 1. Otherwise if
+    # b10-xfrout is starting and isn't yet ready, then b10-stats
+    # doesn't request to b10-xfrout and the value still remains to the
+    # default value(0).
 
     #
     # Test2 for Xfrin statistics
@@ -336,10 +355,16 @@ Feature: Xfrin incoming notify handling
     #
     # Test1 for Xfrout statistics
     #
-    wait for master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_value |
-      | socket.unixdomain.open   |          1 |
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: .Xfrout.socket.unixdomain.open can be either expected to
+    # be 0 or 1 here.  The reason is: if b10-xfrout starts all and is
+    # ready for a request from b10-stats, then b10-stats does request
+    # to b10-xfrout and the value results in 1. Otherwise if
+    # b10-xfrout is starting and isn't yet ready, then b10-stats
+    # doesn't request to b10-xfrout and the value still remains to the
+    # default value(0).
 
     #
     # Test2 for Xfrin statistics
