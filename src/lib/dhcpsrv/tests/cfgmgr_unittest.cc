@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>

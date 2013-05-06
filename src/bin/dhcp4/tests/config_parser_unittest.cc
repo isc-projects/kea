@@ -53,7 +53,11 @@ public:
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
         const Uint32StoragePtr uint32_defaults = 
+#if 0
                                         getGlobalParserContext().uint32_values_;
+#else
+                                        globalContext()->uint32_values_;
+#endif
         try {
             uint32_t actual_value = uint32_defaults->getParam(name);
             EXPECT_EQ(expected_value, actual_value);

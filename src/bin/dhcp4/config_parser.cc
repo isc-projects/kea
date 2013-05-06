@@ -41,10 +41,6 @@ using namespace isc::asiolink;
 
 namespace {
 
-/// @brief Create the global parser context which stores global
-/// parameters, options, and option definitions.
-ParserContextPtr global_context_ptr(new ParserContext(Option::V4));
-
 /// @brief Parser for DHCP4 option data value.
 ///
 /// This parser parses configuration entries that specify value of
@@ -66,7 +62,7 @@ public:
 
     /// @brief static factory method for instantiating Dhcp4OptionDataParsers
     ///
-    /// @param param_name name fo the parameter to be parsed.
+    /// @param param_name name of the parameter to be parsed.
     /// @param options storage where the parameter value is to be stored.
     /// @param global_context is a pointer to the global context which 
     /// stores global scope parameters, options, option defintions.
@@ -130,10 +126,10 @@ protected:
     ///
     /// @param addr is the IPv4 prefix of the pool.
     /// @param len is the prefix length.
-    /// @param ignored dummy parameter to provide symmetry between 
+    /// @param ignored dummy parameter to provide symmetry between the 
+    /// PoolParser derivations. The V6 derivation requires a third value.
     /// @return returns a PoolPtr to the new Pool4 object. 
-    PoolPtr poolMaker (IOAddress &addr, uint32_t len, int32_t)
-    {
+    PoolPtr poolMaker (IOAddress &addr, uint32_t len, int32_t) {
         return (PoolPtr(new Pool4(addr, len)));
     }
 
@@ -144,8 +140,7 @@ protected:
     /// @param ignored dummy parameter to provide symmetry between the 
     /// PoolParser derivations. The V6 derivation requires a third value.
     /// @return returns a PoolPtr to the new Pool4 object. 
-    PoolPtr poolMaker (IOAddress &min, IOAddress &max, int32_t)
-    {
+    PoolPtr poolMaker (IOAddress &min, IOAddress &max, int32_t) {
         return (PoolPtr(new Pool4(min, max)));
     }
 };
@@ -162,15 +157,22 @@ public:
     /// @param ignored first parameter
     /// @param global_context is a pointer to the global context which 
     /// stores global scope parameters, options, option defintions.
-    Subnet4ConfigParser(const std::string&, ParserContextPtr global_context)
-        :SubnetConfigParser("", global_context) {
+    Subnet4ConfigParser(const std::string&)
+        :SubnetConfigParser("", globalContext()) {
     } 
 
     /// @brief Adds the created subnet to a server's configuration.
+    /// @throw throws Unexpected if dynamic cast fails.
     void commit() {
         if (subnet_) {
-            Subnet4Ptr bs = boost::dynamic_pointer_cast<Subnet4>(subnet_);
-            isc::dhcp::CfgMgr::instance().addSubnet4(bs);
+            Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
+            if (!sub4ptr) {
+                // If we hit this, it is a programming error.
+                isc_throw(Unexpected, 
+                          "Invalid cast in Subnet4ConfigParser::commit");
+            }
+
+            isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
         }
     }
 
@@ -191,14 +193,14 @@ protected:
             (config_id.compare("rebind-timer") == 0))  {
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) || 
-                 (config_id.compare("interface") == 0)) {
+                   (config_id.compare("interface") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool4Parser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {
            parser = new OptionDataListParser(config_id, options_, 
-                                            global_context_,
-                                            Dhcp4OptionDataParser::factory);
+                                             global_context_,
+                                             Dhcp4OptionDataParser::factory);
         } else {
             isc_throw(NotImplemented,
                 "parser error: Subnet4 parameter not supported: " << config_id);
@@ -277,7 +279,7 @@ public:
 
     /// @brief constructor
     ///
-    /// @param dummy first argument, always ingored. All parsers accept a
+    /// @param dummy first argument, always ignored. All parsers accept a
     /// string parameter "name" as their first argument.
     Subnets4ListConfigParser(const std::string&) {
     }
@@ -290,8 +292,7 @@ public:
     /// @param subnets_list pointer to a list of IPv4 subnets
     void build(ConstElementPtr subnets_list) {
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet4ConfigParser("subnet", 
-                                                    global_context_ptr));
+            ParserPtr parser(new Subnet4ConfigParser("subnet"));
             parser->build(subnet);
             subnets_.push_back(parser);
         }
@@ -346,22 +347,22 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
         (config_id.compare("renew-timer") == 0)  ||
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id, 
-                                 global_context_ptr->uint32_values_);
+                                 globalContext()->uint32_values_);
     } else if (config_id.compare("interface") == 0) {
         parser = new InterfaceListConfigParser(config_id);
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
     } else if (config_id.compare("option-data") == 0) {
         parser = new OptionDataListParser(config_id, 
-                                          global_context_ptr->options_, 
-                                          global_context_ptr,
+                                          globalContext()->options_, 
+                                          globalContext(),
                                           Dhcp4OptionDataParser::factory);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, 
-                                          global_context_ptr->option_defs_);
+                                          globalContext()->option_defs_);
     } else if (config_id.compare("version") == 0) {
         parser  = new StringParser(config_id, 
-                                    global_context_ptr->string_values_);
+                                    globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
         parser = new DbAccessParser(config_id); 
     } else {
@@ -405,7 +406,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // parsing operation fails after the global storage has been
     // modified. We need to preserve the original global data here
     // so as we can rollback changes when an error occurs.
-    ParserContext original_context(*global_context_ptr);
+    ParserContext original_context(*globalContext());
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -500,7 +501,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
-        global_context_ptr.reset(new ParserContext(original_context));
+        globalContext().reset(new ParserContext(original_context));
         return (answer);
     }
 
@@ -511,10 +512,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     return (answer);
 }
 
-// Makes global context accessible for unit tests.
-const ParserContext& getGlobalParserContext() {
-    return (*global_context_ptr);
+ParserContextPtr globalContext() {
+    static ParserContextPtr global_context_ptr(new ParserContext(Option::V4));
+    return (global_context_ptr);
 }
+
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

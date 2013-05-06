@@ -76,7 +76,7 @@ TEST_F(DhcpParserTest, booleanParserTest) {
     ASSERT_NO_THROW(parser.build(element));
 
     // Verify that commit updates storage.
-    bool actual_value = ~test_value;
+    bool actual_value = !test_value;
     parser.commit();
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
@@ -116,6 +116,12 @@ TEST_F(DhcpParserTest, stringParserTest) {
     ElementPtr element = Element::create(9999);
     EXPECT_NO_THROW(parser.build(element));
 
+    // Verify that commit updates storage.
+    parser.commit();
+    std::string actual_value;
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ("9999", actual_value);
+
     // Verify that parser will build with a string value.
     const std::string test_value = "test value";
     element = Element::create(test_value);
@@ -123,7 +129,6 @@ TEST_F(DhcpParserTest, stringParserTest) {
 
     // Verify that commit updates storage.
     parser.commit();
-    std::string actual_value;
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
 }
@@ -168,6 +173,12 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     int_element->setValue((long)test_value);
     ASSERT_NO_THROW(parser.build(int_element));
 
+    // Verify that commit updates storage.
+    parser.commit();
+    uint32_t actual_value = 0;
+    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
+    EXPECT_EQ(test_value, actual_value);
+
     // Verify that parser will build with a valid positive value.
     test_value = 77;
     int_element->setValue((long)test_value);
@@ -175,7 +186,6 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
 
     // Verify that commit updates storage.
     parser.commit();
-    uint32_t actual_value = 0;
     EXPECT_NO_THROW((actual_value = storage->getParam(name)));
     EXPECT_EQ(test_value, actual_value);
 }
