@@ -194,8 +194,8 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
 
 void
 ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
-    // In case there is a checksum mismatch, we throw. We want the
-    // segment to be automatically destroyed then.
+    // In case the checksum or table header is missing, we throw. We
+    // want the segment to be automatically destroyed then.
     std::auto_ptr<MemorySegmentMapped> segment
         (new MemorySegmentMapped(filename));
     // There must be a previously saved checksum.
