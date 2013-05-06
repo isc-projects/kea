@@ -127,11 +127,24 @@ TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
 }
 
 TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
+    // Open a mapped file in create mode.
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
+
+    // Populate it with some data.
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // All the following resets() with invalid configuration must
+    // provide a strong exception guarantee that the segment is still
+    // usable as before.
+
     // NULL is passed in config params
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::CREATE,
                                ConstElementPtr());
     }, isc::InvalidParameter);
+
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // Not a map
     EXPECT_THROW({
@@ -139,11 +152,15 @@ TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
                                Element::fromJSON("42"));
     }, isc::InvalidParameter);
 
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
     // Empty map
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
+
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // No "mapped-file" key
     EXPECT_THROW({
@@ -151,19 +168,15 @@ TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
                                Element::fromJSON("{\"foo\": \"bar\"}"));
     }, isc::InvalidParameter);
 
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
     // Value of "mapped-file" key is not a string
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{\"mapped-file\": 42}"));
     }, isc::InvalidParameter);
 
-    // The following should still throw, unaffected by the failed opens.
-    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
-    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
-
-    // isWritable() must still return false, because the segment has not
-    // been successfully reset() yet.
-    EXPECT_FALSE(ztable_segment_->isWritable());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
 TEST_F(ZoneTableSegmentMappedTest, reset) {
