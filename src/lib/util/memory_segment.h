@@ -118,6 +118,8 @@ public:
     /// requested storage.
     /// \throw MemorySegmentGrown The memory segment doesn't have sufficient
     /// space for the requested size and has grown internally.
+    /// \throw MemorySegmentError An attempt was made to allocate
+    /// storage on a read-only memory segment.
     ///
     /// \param size The size of the memory requested in bytes.
     /// \return Returns pointer to the memory allocated.

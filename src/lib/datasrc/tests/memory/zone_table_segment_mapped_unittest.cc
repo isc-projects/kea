@@ -14,15 +14,20 @@
 
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_mapped.h>
+#include <util/random/random_number_generator.h>
+#include <util/unittests/check_valgrind.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 
+#include <sys/stat.h>
+
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::data;
 using namespace isc::util;
+using namespace isc::util::random;
 using namespace std;
 using boost::scoped_ptr;
 
@@ -54,6 +59,56 @@ protected:
     ZoneTableSegment* ztable_segment_;
     const ConstElementPtr config_params_;
 };
+
+bool
+fileExists(const char* path) {
+    struct stat sb;
+    const int status = stat(path, &sb);
+    if (status != 0) {
+        EXPECT_EQ(ENOENT, errno);
+        return (false);
+    }
+    return (true);
+}
+
+void
+createData(MemorySegment& segment) {
+    // For purposes of this test, we assume that the following
+    // allocations do not resize the mapped segment. For this, we have
+    // to keep the size of test data reasonably small.
+    UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
+    for (int i = 0; i < 256; ++i) {
+        string name("name");
+        name += i;
+        const int value = gen();
+        void* ptr = segment.allocate(sizeof (int));
+        ASSERT_TRUE(ptr);
+        *static_cast<int*>(ptr) = value;
+        const bool grew = segment.setNamedAddress(name.c_str(), ptr);
+        ASSERT_FALSE(grew);
+    }
+}
+
+bool
+verifyData(const MemorySegment& segment) {
+    UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
+    for (int i = 0; i < 256; ++i) {
+        string name("name");
+        name += i;
+        const int value = gen();
+        const MemorySegment::NamedAddressResult result =
+            segment.getNamedAddress(name.c_str());
+        if (!result.first) {
+             return (false);
+        }
+        if (*static_cast<int*>(result.second) != value) {
+             return (false);
+        }
+    }
+
+    return (true);
+}
+
 
 TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
@@ -170,8 +225,92 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
+TEST_F(ZoneTableSegmentMappedTest, resetCreate) {
+    // At this point, the underlying file must not exist.
+    ASSERT_FALSE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in create mode.
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
+
+    ASSERT_TRUE(ztable_segment_->isWritable());
+
+    // Create the data.
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // Close the segment.
+    ztable_segment_->clear();
+
+    // At this point, the underlying file must still exist.
+    ASSERT_TRUE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in create mode again.
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
+
+    // The old data should be gone.
+    EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
+}
+
+TEST_F(ZoneTableSegmentMappedTest, resetReadWrite) {
+    // At this point, the underlying file must not exist.
+    ASSERT_FALSE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in read+write mode.
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    ASSERT_TRUE(ztable_segment_->isWritable());
+
+    // Create the data.
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // Close the segment.
+    ztable_segment_->clear();
+
+    // At this point, the underlying file must still exist.
+    ASSERT_TRUE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in read+write mode again.
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    // The old data should still be available.
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+}
+
+TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
+    // At this point, the underlying file must not exist.
+    ASSERT_FALSE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in read+write mode.
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+
+    ASSERT_TRUE(ztable_segment_->isWritable());
+
+    // Create the data.
+    createData(ztable_segment_->getMemorySegment());
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // Close the segment.
+    ztable_segment_->clear();
+
+    // At this point, the underlying file must still exist.
+    ASSERT_TRUE(fileExists(mapped_file));
+
+    // Open the underlying mapped file in read-only mode again.
+    ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params_);
+
+    // The old data should still be available.
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // But trying to allocate new data should result in an exception as
+    // the segment is read-only!
+    EXPECT_THROW(createData(ztable_segment_->getMemorySegment()),
+                 MemorySegmentError);
+}
+
 TEST_F(ZoneTableSegmentMappedTest, clear) {
-    // First, load an underlying mapped file
+    // First, open an underlying mapped file in read+write mode (doesn't
+    // exist yet)
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
                            config_params_);
 
