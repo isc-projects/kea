@@ -93,7 +93,7 @@ TEST_F(Rdata_DHCID_Test, fromText) {
 
 TEST_F(Rdata_DHCID_Test, badText) {
     // missing digest data
-    checkFromText_InvalidText("");
+    checkFromText_LexerError("");
 
     // invalid base64
     checkFromText_BadValue("EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!=");
