@@ -178,8 +178,8 @@ public:
     /// as \c addr even if it wouldn't be considered to "belong to" the
     /// segment in its normal sense; it can be used to indicate that memory
     /// has not been allocated for the specified name.  A subsequent call
-    /// to \c getNamedAddress() will return std::pair (true, NULL) for
-    /// that name.
+    /// to \c getNamedAddress() will return NamedAddressResult(true, NULL)
+    /// for that name.
     ///
     /// \note Naming an address is intentionally separated from allocation
     /// so that, for example, one module of a program can name a memory
