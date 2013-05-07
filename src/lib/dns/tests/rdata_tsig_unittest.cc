@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/tsigerror.h>
 
 #include <gtest/gtest.h>
 
@@ -72,7 +73,7 @@ TEST_F(Rdata_TSIG_Test, createFromText) {
 
     any::TSIG tsig2((string(valid_text2)));
     EXPECT_EQ(12, tsig2.getMACSize());
-    EXPECT_EQ(16, tsig2.getError()); // TODO: use constant
+    EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig2.getError());
 
     any::TSIG tsig3((string(valid_text3)));
     EXPECT_EQ(6, tsig3.getOtherLen());
