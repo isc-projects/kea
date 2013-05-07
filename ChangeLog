@@ -1,3 +1,10 @@
+611.	[func]		naokikambe
+	Added Xfrin statistics items such as the number of successful
+	transfers.  These are per-zone type counters.  Their values can be
+	obtained with zone names by invoking "Stats show Xfrin" via bindctl
+	while Xfrin is running.
+	(Trac #2252, git e1a0ea8ef5c51b9b25afa111fbfe9347afbe5413)
+
 bind10-1.0.0beta2 released on May 3, 2013
 
 610.	[bug]		muks
