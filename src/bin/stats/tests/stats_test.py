@@ -1401,7 +1401,10 @@ class TestStats(unittest.TestCase):
              stat.statistics_data['Init'],
              {'boot_time': self.const_default_datetime})
 
-class TestOSEnv(unittest.TestCase):
+class Z_TestOSEnv(unittest.TestCase):
+    # Running this test would break logging setting.  To prevent it from
+    # affecting other tests we use the same workaround as
+    # Z_TestStatsHttpdError.
     def test_osenv(self):
         """
         test for the environ variable "B10_FROM_SOURCE"
