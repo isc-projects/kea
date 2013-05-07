@@ -8,10 +8,10 @@
         } ]
     },
     "Auth": {
-        "database_file": "data/xfrin-notify.sqlite3",
+        "database_file": "data/example.org.sqlite3",
         "listen_on": [ {
-            "address": "::1",
-            "port": 47806
+            "address": "127.0.0.1",
+            "port": 47809
         } ]
     },
     "data_sources": {
@@ -19,28 +19,24 @@
             "IN": [{
                 "type": "sqlite3",
                 "params": {
-                    "database_file": "data/xfrin-notify.sqlite3"
+                    "database_file": "data/example.org.sqlite3"
                 }
             }]
         }
     },
-    "Xfrin": {
-        "zones": [ {
-            "name": "example.org",
-            "master_addr": "::1",
-            "master_port": 47807
-        } ]
-    },
-    "Zonemgr": {
-        "secondary_zones": [ {
-            "name": "example.org",
-            "class": "IN"
+    "Xfrout": {
+        "zone_config": [ {
+            "origin": "example.org"
+        } ],
+        "also_notify": [ {
+            "address": "127.0.0.1",
+            "port": 47806
         } ]
     },
     "Init": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },
-            "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
+            "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
             "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
             "b10-stats": { "address": "Stats", "kind": "dispensable" },
             "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }

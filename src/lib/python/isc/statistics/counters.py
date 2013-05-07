@@ -217,8 +217,8 @@ class Counters():
         zones/example.com./ixfrreqv6
         zones/example.com./xfrsuccess
         zones/example.com./xfrfail
-        zones/example.com./time_to_ixfr
-        zones/example.com./time_to_axfr
+        zones/example.com./last_ixfr_duration
+        zones/example.com./last_axfr_duration
         ixfr_running
         axfr_running
         socket/unixdomain/open
@@ -327,7 +327,9 @@ class Counters():
     def start_timer(self, *args):
         """Starts a timer which is identified by args and keeps it
         running until stop_timer() is called. It acquires a lock to
-        support multi-threaded use."""
+        support multi-threaded use. If the specified timer is already
+        started but not yet stopped, the last start time is
+        overwritten."""
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return

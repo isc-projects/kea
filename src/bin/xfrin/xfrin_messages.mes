@@ -135,6 +135,9 @@ from does not match the master address in the Xfrin configuration. The notify
 is ignored. This may indicate that the configuration for the master is wrong,
 that a wrong machine is sending notifies, or that fake notifies are being sent.
 
+% XFRIN_RECEIVED_COMMAND received command: %1
+The xfrin daemon received a command on the command channel.
+
 % XFRIN_RETRANSFER_UNKNOWN_ZONE got notification to retransfer unknown zone %1
 There was an internal command to retransfer the given zone, but the
 zone is not known to the system. This may indicate that the configuration
