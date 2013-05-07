@@ -50,7 +50,7 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
                                         bool create,
                                         std::string& error_msg)
 {
-    MemorySegment::NamedAddressResult result =
+    const MemorySegment::NamedAddressResult result =
         segment.getNamedAddress(ZONE_TABLE_CHECKSUM_NAME);
     if (result.first) {
         if (create) {
@@ -111,7 +111,7 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
                                       bool create,
                                       std::string& error_msg)
 {
-    MemorySegment::NamedAddressResult result =
+    const MemorySegment::NamedAddressResult result =
         segment.getNamedAddress(ZONE_TABLE_HEADER_NAME);
     if (result.first) {
         if (create) {
@@ -285,8 +285,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 }
 
 void
-ZoneTableSegmentMapped::sync()
-{
+ZoneTableSegmentMapped::sync() {
     // Synchronize checksum, etc.
     if (mem_sgmt_ && isWritable()) {
         // If there is a previously opened segment, and it was opened in
@@ -307,8 +306,7 @@ ZoneTableSegmentMapped::sync()
 }
 
 void
-ZoneTableSegmentMapped::clear()
-{
+ZoneTableSegmentMapped::clear() {
     if (mem_sgmt_) {
         sync();
         header_ = NULL;
