@@ -121,8 +121,7 @@ public:
             "   \"type\": \"test_type\","
             "   \"params\": [\"example.org\", \"example.com\", "
             "                \"noiter.org\", \"null.org\"]"
-            "}]")),
-        ztable_segment_(ZoneTableSegment::create(rrclass_, "local"))
+            "}]"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<MockDataSourceClient>
@@ -261,7 +260,6 @@ public:
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_, config_elem_zones_;
-    shared_ptr<ZoneTableSegment> ztable_segment_;
 };
 
 // Test the test itself
