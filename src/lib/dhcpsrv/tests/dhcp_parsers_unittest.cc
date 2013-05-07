@@ -163,10 +163,13 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     ElementPtr int_element = Element::create(-1);
     EXPECT_THROW(parser.build(int_element), isc::BadValue);
 
-    // Verify that parser with rejects too large a value.
-    long max = (long)(std::numeric_limits<uint32_t>::max()) + 1;
-    int_element->setValue((long)(max));
-    EXPECT_THROW(parser.build(int_element), isc::BadValue);
+    // Verify that parser with rejects too large a value provided we are on 
+    // 64-bit platform. 
+    if (sizeof(long) > sizeof(uint32_t)) {
+        long max = (long)(std::numeric_limits<uint32_t>::max()) + 1;
+        int_element->setValue(max);
+        EXPECT_THROW(parser.build(int_element), isc::BadValue);
+    }
 
     // Verify that parser will build with value of zero.
     int test_value = 0;
