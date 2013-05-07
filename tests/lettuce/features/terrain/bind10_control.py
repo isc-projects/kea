@@ -389,67 +389,6 @@ def query_statistics(step, statistics, name, cmdctl_port):
         % (port_str, name,\
                ' name=%s' % statistics if statistics else ''))
 
-def find_value(dictionary, key):
-    """A helper method. Recursively find a value corresponding to the
-    key of the dictionary and returns it. Returns None if the
-    dictionary is not dict type."""
-    if type(dictionary) is not dict:
-        return
-    if key in dictionary:
-        return dictionary[key]
-    else:
-        for v in dictionary.values():
-            return find_value(v, key)
-
-@step('the statistics counter (\S+)(?: in the category (\S+))?'+ \
-          '(?: for the zone (\S+))? should be' + \
-          '(?:( greater than| less than| between))? (\-?\d+)(?: and (\-?\d+))?')
-def check_statistics(step, counter, category, zone, gtltbt, number, upper):
-    """
-    check the output of bindctl for statistics of specified counter
-    and zone.
-    Parameters:
-    counter ('counter <counter>'): The counter name of statistics.
-    category ('category <category>', optional): The category of counter.
-    zone ('zone <zone>', optional): The zone name.
-    gtltbt (' greater than'|' less than'|' between', optional): greater than
-          <number> or less than <number> or between <number> and <upper>.
-    number ('<number>): The expect counter number. <number> is assumed
-          to be an unsigned integer.
-    upper ('<upper>, optional): The expect upper counter number when
-          using 'between'.
-    """
-    output = parse_bindctl_output_as_data_structure()
-    found = None
-    category_str = ""
-    zone_str = ""
-    depth = []
-    if category:
-        depth.insert(0, category)
-        category_str = " for category %s" % category
-    if zone:
-        depth.insert(0, zone)
-        zone_str = " for zone %s" % zone
-    for level in depth:
-        output = find_value(output, level)
-    found = find_value(output, counter)
-    assert found is not None, \
-        'Not found statistics counter %s%s%s' % \
-            (counter, category_str, zone_str)
-    msg = "Got %s, expected%s %s as counter %s%s" % \
-        (found, gtltbt, number, counter, zone_str)
-    if gtltbt and 'between' in gtltbt and upper:
-        msg = "Got %s, expected%s %s and %s as counter %s%s" % \
-            (found, gtltbt, number, upper, counter, zone_str)
-        assert int(number) <= int(found) \
-            and int(found) <= int(upper), msg
-    elif gtltbt and 'greater' in gtltbt:
-        assert int(found) > int(number), msg
-    elif gtltbt and 'less' in gtltbt:
-        assert int(found) < int(number), msg
-    else:
-        assert int(found) == int(number), msg
-
 @step('statistics counters are 0 in category (\S+)( except for the' + \
           ' following items)?')
 def check_statistics_items(step, category, has_except_for):
@@ -461,9 +400,14 @@ def check_statistics_items(step, category, has_except_for):
         with the multiline part.
 
     Expected values of items are taken from the multiline part of the step in
-    the scenario. The multiline part has two columns: item_name and item_value.
-    item_name is a relative name to category. item_value is an expected value
-    for item_name.
+    the scenario. The multiline part has at most four columns: item_name,
+    item_value, min_value, and max_value. item_name is a relative name
+    to category. item_value is an expected value for
+    item_name. min_value and max_value are expected to be used when
+    item_value cannot be specified to be item_value. min_value is the
+    minimum value in the expected range, and max_value is the maximum
+    value in the expected range. Values would be examined if they are
+    in columns corresponding to these.
     """
 
     def flatten(dictionary, prefix=''):
@@ -480,15 +424,55 @@ def check_statistics_items(step, category, has_except_for):
         # fetch step tables in the scnario as hashes
         for item in step.hashes:
             name = category+'.'+item['item_name']
-            value = item['item_value']
             assert stats.has_key(name), \
                 'Statistics item %s was not found' % (name)
             found = stats[name]
-            assert int(found) == int(value), \
-                'Statistics item %s has unexpected value %s (expect %s)' % \
+            if 'item_value' in item and item['item_value']:
+                value = item['item_value']
+                assert int(found) == int(value), \
+                    'Statistics item %s has unexpected value %s (expect %s)' % \
+                    (name, found, value)
+            if 'min_value' in item and item['min_value']:
+                value = item['min_value']
+                assert float(value) <= float(found), \
+                    'Statistics item %s has unexpected value %s (expect %s or greater than)' % \
+                    (name, found, value)
+            if 'max_value' in item and item['max_value']:
+                value = item['max_value']
+                assert float(found) <= float(value), \
+                    'Statistics item %s has unexpected value %s (expect %s or less than)' % \
                     (name, found, value)
             del(stats[name])
     for name, found in stats.items():
         assert int(found) == 0, \
             'Statistics item %s has unexpected value %s (expect %s)' % \
                 (name, found, 0)
+
+@step('check initial statistics(?:( not)? containing (\S+))? for (\S+)'
+      '( with cmdctl port \d+)?( except for the following items)?')
+def check_init_statistics(step, notv, string, name, cmdctl_port, has_except_for):
+    """Checks the initial statistics for the module. Also checks a
+    string is contained or not contained in them. Statistics counters
+      other than zero can follow below.
+    Parameters:
+    notv ('not'): reverse the check (fail if string is found)
+    string ('containing <string>') string to look for
+    name ('module <name>'): The name of the module (case sensitive!)
+    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
+                the command to.
+    has_except_for ('except for the following items'): checks values of items
+        with the multiline part.
+    """
+    query_str = 'query statistics of bind10 module ' + name
+    if cmdctl_port:
+        query_str = query_str + cmdctl_port
+    notcontain_str = 'last bindctl output should%s contain "%s"'
+    check_str = 'statistics counters are 0 in category .' + name
+    if has_except_for:
+        check_str = check_str + has_except_for + "\n" \
+            + step.represent_hashes()
+    step.given(query_str)
+    step.given(notcontain_str % (' not', 'error'))
+    if string is not None:
+        step.given(notcontain_str % (notv, string))
+    step.given(check_str)
