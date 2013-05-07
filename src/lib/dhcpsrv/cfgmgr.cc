@@ -147,7 +147,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
-    // router that also runs DHCPv6 server. Users specifies a single pool and
+    // router that also runs DHCPv6 server. User specifies a single pool and
     // expects it to just work. Without this, the server would complain that it
     // doesn't have IP address on its interfaces that matches that
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.

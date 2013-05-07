@@ -1490,7 +1490,7 @@ private:
         std::string ifaceid;
         try {
             ifaceid = string_values_.getParam("interface-id");
-        } catch (DhcpConfigError) {
+        } catch (const DhcpConfigError&) {
             // interface-id is not mandatory
         }
 
@@ -1503,7 +1503,7 @@ private:
         }
 
         stringstream tmp;
-        tmp << addr.toText() << "/" << (int)len
+        tmp << addr.toText() << "/" << static_cast<int>(len)
             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
             << pref << ", valid=" << valid;
 

@@ -405,7 +405,7 @@ Dhcpv6Srv::copyDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
     /// @todo: Should throw if there is no client-id (except anonymous INF-REQUEST)
 
-    // if this is a relayed message, we need to copy relay information
+    // If this is a relayed message, we need to copy relay information
     if (!question->relay_info_.empty()) {
         answer->copyRelayInfo(question);
     }
@@ -534,14 +534,11 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // This is a direct (non-relayed) message
 
         // Try to find a subnet if received packet from a directly connected client
-        Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(question->getIface());
-        if (subnet) {
-            return (subnet);
+        subnet = CfgMgr::instance().getSubnet6(question->getIface());
+        if (!subnet) {
+            // If no subnet was found, try to find it based on remote address
+            subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
         }
-
-        // If no subnet was found, try to find it based on remote address
-        subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
-        return (subnet);
     } else {
 
         // This is a relayed message
@@ -551,20 +548,19 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
             subnet = CfgMgr::instance().getSubnet6(interface_id);
         }
 
-        if (subnet) {
-            return (subnet);
-        }
+        if (!subnet) {
+            // If no interface-id was specified (or not configured on server), let's
+            // try address matching
+            IOAddress link_addr = question->relay_info_.back().linkaddr_;
 
-        // If no interface-id was specified (or not configured on server), let's
-        // try address matching
-        IOAddress link_addr = question->relay_info_.back().linkaddr_;
-
-        // if relay filled in link_addr field, then let's use it
-        if (link_addr != IOAddress("::")) {
-            subnet = CfgMgr::instance().getSubnet6(link_addr);
+            // if relay filled in link_addr field, then let's use it
+            if (link_addr != IOAddress("::")) {
+                subnet = CfgMgr::instance().getSubnet6(link_addr);
+            }
         }
-        return (subnet);
     }
+
+    return (subnet);
 }
 
 void
