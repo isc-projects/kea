@@ -39,9 +39,25 @@ const char* const too_long_label = "01234567890123456789012345678901234567"
 
 namespace {
 class Rdata_MINFO_Test : public RdataTest {
-public:
+protected:
     Rdata_MINFO_Test():
         rdata_minfo(string(minfo_txt)), rdata_minfo2(string(minfo_txt2)) {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<generic::MINFO, isc::Exception, isc::Exception>(
+            rdata_str, rdata_minfo, false, false);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <generic::MINFO, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_minfo, true, true);
+    }
+
+    void checkFromText_TooLongLabel(const string& rdata_str) {
+        checkFromText<generic::MINFO, TooLongLabel, TooLongLabel>(
+            rdata_str, rdata_minfo, true, true);
+    }
 
     const generic::MINFO rdata_minfo;
     const generic::MINFO rdata_minfo2;
@@ -54,24 +70,23 @@ TEST_F(Rdata_MINFO_Test, createFromText) {
 
     EXPECT_EQ(Name("root.example.com."), rdata_minfo2.getRmailbox());
     EXPECT_EQ(Name("emailbox.example.com."), rdata_minfo2.getEmailbox());
+
+    checkFromText_None(minfo_txt);
 }
 
 TEST_F(Rdata_MINFO_Test, badText) {
     // incomplete text
-    EXPECT_THROW(generic::MINFO("root.example.com."),
-                 InvalidRdataText);
+    checkFromText_LexerError("root.example.com.");
     // number of fields (must be 2) is incorrect
     EXPECT_THROW(generic::MINFO("root.example.com. emailbox.example.com. "
                                 "example.com."),
                  InvalidRdataText);
     // bad rmailbox name
-    EXPECT_THROW(generic::MINFO("root.example.com. emailbox.example.com." +
-                                string(too_long_label)),
-                 TooLongLabel);
+    checkFromText_TooLongLabel("root.example.com. emailbox.example.com." +
+                               string(too_long_label));
     // bad emailbox name
-    EXPECT_THROW(generic::MINFO("root.example.com."  +
-                          string(too_long_label) + " emailbox.example.com."),
-                 TooLongLabel);
+    checkFromText_TooLongLabel("root.example.com."  + string(too_long_label) +
+                               " emailbox.example.com.");
 }
 
 TEST_F(Rdata_MINFO_Test, createFromWire) {
@@ -107,6 +122,15 @@ TEST_F(Rdata_MINFO_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_minfo.compare(
         *test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(),
                                      minfo_txt)));
+
+    // test::createRdataUsingLexer() constructs relative to
+    // "example.org." origin.
+    EXPECT_EQ(0, generic::MINFO("r.example.org. e.example.org.").compare(
+        *test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(), "r e")));
+
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(),
+             "rmailbox.example.com. emailbox.example.com. extra.example.com."));
 }
 
 TEST_F(Rdata_MINFO_Test, assignment) {
