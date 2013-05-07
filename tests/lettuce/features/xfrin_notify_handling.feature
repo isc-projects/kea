@@ -1,5 +1,10 @@
 Feature: Xfrin incoming notify handling
-    Tests for Xfrin incoming notify handling.
+    Tests for Xfrin incoming notify handling. They also test
+    statistics counters incremented, which are related to notifying
+    and transferring by Xfrout and receiveing by Xfrin. Some cases are
+    considered: Transferring is done via IPv4 or IPv6 transport. A
+    transfer request from Xfrin is rejected by Xfrout. The master
+    server or slave server is unreachable.
 
     Scenario: Handle incoming notify
     Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
@@ -20,33 +25,23 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test for statistics
+    # Test1 for Xfrout statistics
     #
-    # check for initial statistics
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: .Xfrout.socket.unixdomain.open can be either expected to
+    # be 0 or 1 here.  The reason is: if b10-xfrout has started up and is
+    # ready for a request from b10-stats, then b10-stats does request
+    # to b10-xfrout and the value results in 1. Otherwise if
+    # b10-xfrout is starting and isn't yet ready, then b10-stats
+    # doesn't request to b10-xfrout and the value still remains to be the
+    # default value(0).
+
     #
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    last bindctl output should not contain "example.org."
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-
-    When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter ixfr_running should be 0
-
-    When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter axfr_running should be 0
-
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be between 0 and 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    # Test2 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -66,37 +61,157 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
 
     #
-    # Test for statistics
+    # Test3 for Xfrout statistics
     #
-    # check for statistics change
+    # check statistics change
     #
 
     # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     # note that this does not 100% guarantee the stats updated Xfrout
     # statistics.  But there doesn't seem to be a better log message that
     # suggests this event.
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 1
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 1
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone example.org. should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 1
-    Then the statistics counter xfrreqdone for the zone example.org. should be 1
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value |
+      | _SERVER_.notifyoutv6     |          1 |
+      | _SERVER_.xfrreqdone      |          1 |
+      | example.org..notifyoutv6 |          1 |
+      | example.org..xfrreqdone  |          1 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 1
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
+
+    #
+    # Test4 for Xfrin statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name                       | item_value | min_value |
+      | _SERVER_.soaoutv6               |          1 |           |
+      | _SERVER_.axfrreqv6              |          1 |           |
+      | _SERVER_.xfrsuccess             |          1 |           |
+      | _SERVER_.last_axfr_duration     |            |       0.0 |
+      | example.org..soaoutv6           |          1 |           |
+      | example.org..axfrreqv6          |          1 |           |
+      | example.org..xfrsuccess         |          1 |           |
+      | example.org..last_axfr_duration |            |       0.0 |
+
+    #
+    # Test for handling incoming notify only in IPv4
+    #
+    Scenario: Handle incoming notify (IPv4)
+    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify_v4.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+
+    #
+    # Test1 for Xfrout statistics
+    #
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: See above about .Xfrout.socket.unixdomain.open.
+
+    #
+    # Test2 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
+    # From this point we can't reliably 'wait for new' because the ordering
+    # of logs from different processes is unpredictable.  But these
+    # should be okay in this case.
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
+    Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
+
+    A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
+    # Make sure handling statistics command handling checked below is
+    # after this query
+    And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
+
+    #
+    # Test3 for Xfrout statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    # note that this does not 100% guarantee the stats updated Xfrout
+    # statistics.  But there doesn't seem to be a better log message that
+    # suggests this event.
+    wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value |
+      | _SERVER_.notifyoutv4     |          1 |
+      | _SERVER_.xfrreqdone      |          1 |
+      | example.org..notifyoutv4 |          1 |
+      | example.org..xfrreqdone  |          1 |
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
+
+    #
+    # Test4 for Xfrin statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name                       | item_value | min_value |
+      | _SERVER_.soaoutv4               |          1 |           |
+      | _SERVER_.axfrreqv4              |          1 |           |
+      | _SERVER_.xfrsuccess             |          1 |           |
+      | _SERVER_.last_axfr_duration     |            |       0.0 |
+      | example.org..soaoutv4           |          1 |           |
+      | example.org..axfrreqv4          |          1 |           |
+      | example.org..xfrsuccess         |          1 |           |
+      | example.org..last_axfr_duration |            |       0.0 |
 
     #
     # Test for Xfr request rejected
@@ -120,33 +235,17 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test1 for statistics
+    # Test1 for Xfrout statistics
     #
-    # check for initial statistics
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: See above about .Xfrout.socket.unixdomain.open.
+
     #
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    last bindctl output should not contain "example.org."
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-
-    When I query statistics ixfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter ixfr_running should be 0
-
-    When I query statistics axfr_running of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter axfr_running should be 0
-
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be between 0 and 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    # Test2 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
 
     #
     # set transfer_acl rejection
@@ -172,36 +271,159 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test2 for statistics
+    # Test3 for Xfrout statistics
     #
-    # check for statistics change
+    # check statistics change
     #
 
-    # wait until stats request at least after NOTIFY_OUT_REPLY_RECEIVED
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be 1
-    Then the statistics counter notifyoutv6 for the zone example.org. should be 1
-    # The counts of rejection would be between 1 and 2. They are not
-    # fixed. It would depend on timing or the platform.
-    Then the statistics counter xfrrej for the zone _SERVER_ should be greater than 0
-    Then the statistics counter xfrrej for the zone example.org. should be greater than 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone example.org. should be 0
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value | min_value | max_value |
+      | _SERVER_.notifyoutv6     |          1 |           |           |
+      | _SERVER_.xfrrej          |            |         1 |         3 |
+      | example.org..notifyoutv6 |          1 |           |           |
+      | example.org..xfrrej      |            |         1 |         3 |
+    # Note: The above rejection counters might sometimes be increased
+    # up to 3. See this for details
+    # http://git.bind10.isc.org/~tester/builder/BIND10-lettuce/20120918210000-MacOS/logs/lettuce.out
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 1
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
+
+    #
+    # Test4 for Xfrin statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name              | item_value |
+      | _SERVER_.soaoutv6      |          1 |
+      | _SERVER_.axfrreqv6     |          1 |
+      | _SERVER_.xfrfail       |          1 |
+      | example.org..soaoutv6  |          1 |
+      | example.org..axfrreqv6 |          1 |
+      | example.org..xfrfail   |          1 |
+
+    #
+    # Test for Xfr request rejected in IPv4
+    #
+    Scenario: Handle incoming notify (XFR request rejected in IPv4)
+    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 47804 as master
+    And wait for master stderr message BIND10_STARTED_CC
+    And wait for master stderr message CMDCTL_STARTED
+    And wait for master stderr message AUTH_SERVER_STARTED
+    And wait for master stderr message XFROUT_STARTED
+    And wait for master stderr message ZONEMGR_STARTED
+    And wait for master stderr message STATS_STARTING
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify_v4.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+
+    #
+    # Test1 for Xfrout statistics
+    #
+    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+      | item_name                | item_max | item_min |
+      | socket.unixdomain.open   |        1 |        0 |
+    # Note: See above about .Xfrout.socket.unixdomain.open.
+
+    #
+    # Test2 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
+
+    #
+    # set transfer_acl rejection
+    # Local xfr requests from Xfrin module would be rejected here.
+    #
+    When I send bind10 the following commands with cmdctl port 47804
+    """
+    config set Xfrout/zone_config[0]/transfer_acl [{"action":  "REJECT", "from": "127.0.0.1"}]
+    config commit
+    """
+    last bindctl output should not contain Error
+
+    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
+    # can't use 'wait for new' below.
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
+    Then wait for bind10 stderr message XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION not XFRIN_TRANSFER_SUCCESS
+    Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
+    Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
+
+    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+
+    #
+    # Test3 for Xfrout statistics
+    #
+    # check statistics change
+    #
+
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    # wait until stats request at least after NOTIFY_OUT_REPLY_RECEIVED
+    wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | item_value | min_value | max_value |
+      | _SERVER_.notifyoutv4     |          1 |           |           |
+      | _SERVER_.xfrrej          |            |         1 |         3 |
+      | example.org..notifyoutv4 |          1 |           |           |
+      | example.org..xfrrej      |            |         1 |         3 |
+    # Note: The above rejection counters might sometimes be increased
+    # up to 3. See this for details
+    # http://git.bind10.isc.org/~tester/builder/BIND10-lettuce/20120918210000-MacOS/logs/lettuce.out
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
+      | accept    |          1 |
+
+    #
+    # Test4 for Xfrin statistics
+    #
+    # check statistics change
+    #
+
+    # wait until the last stats requesting is finished
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+    last bindctl output should not contain "error"
+
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.zones except for the following items
+      | item_name              | item_value |
+      | _SERVER_.soaoutv4      |          1 |
+      | _SERVER_.axfrreqv4     |          1 |
+      | _SERVER_.xfrfail       |          1 |
+      | example.org..soaoutv4  |          1 |
+      | example.org..axfrreqv4 |          1 |
+      | example.org..xfrfail   |          1 |
 
     #
     # Test for unreachable slave
@@ -226,29 +448,21 @@ Feature: Xfrin incoming notify handling
     # check statistics change
     #
 
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     # wait until stats request at least after NOTIFY_OUT_TIMEOUT
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    last bindctl output should not contain "error"
-    Then the statistics counter notifyoutv4 for the zone _SERVER_ should be 0
-    Then the statistics counter notifyoutv4 for the zone example.org. should be 0
-    Then the statistics counter notifyoutv6 for the zone _SERVER_ should be greater than 0
-    Then the statistics counter notifyoutv6 for the zone example.org. should be greater than 0
-    Then the statistics counter xfrrej for the zone _SERVER_ should be 0
-    Then the statistics counter xfrrej for the zone example.org. should be 0
-    Then the statistics counter xfrreqdone for the zone _SERVER_ should be 0
-    Then the statistics counter xfrreqdone for the zone example.org. should be 0
+    The statistics counters are 0 in category .Xfrout.zones except for the following items
+      | item_name                | min_value | max_value |
+      | _SERVER_.notifyoutv6     |         1 |	       5 |
+      | example.org..notifyoutv6 |         1 |	       5 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
-    Then the statistics counter open should be 1
-    Then the statistics counter openfail should be 0
-    Then the statistics counter close should be 0
-    Then the statistics counter bindfail should be 0
-    Then the statistics counter acceptfail should be 0
-    Then the statistics counter accept should be 0
-    Then the statistics counter senderr should be 0
-    Then the statistics counter recverr should be 0
+    The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
+      | item_name | item_value |
+      | open      |          1 |
 
     #
     # Test for NOTIFY that would result in NOTAUTH
