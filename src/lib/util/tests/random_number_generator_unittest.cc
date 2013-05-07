@@ -44,9 +44,9 @@ public:
     }
     virtual ~UniformRandomIntegerGeneratorTest(){}
 
-    int gen() { return gen_(); }
-    int max() const { return max_; }
-    int min() const { return min_; }
+    int gen() { return (gen_()); }
+    int max() const { return (max_); }
+    int min() const { return (min_); }
 
 private:
     UniformRandomIntegerGenerator gen_;
