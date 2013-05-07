@@ -55,13 +55,6 @@ DHCID::constructFromLexer(MasterLexer& lexer) {
 /// \brief Constructor from string.
 ///
 /// \param dhcid_str A base-64 representation of the DHCID binary data.
-/// RFC4701 says "DNS software should consider the RDATA section to be opaque."
-///
-/// It is okay for the key data to be missing.  Note: BIND 9 also accepts
-/// DHCID missing key data.  While the RFC is silent in this case, and it
-/// may be debatable what an implementation should do, but since this field
-/// is algorithm dependent and this implementations doesn't reject unknown
-/// algorithms, it's lenient here.
 ///
 /// \throw InvalidRdataText if the string could not be parsed correctly.
 DHCID::DHCID(const std::string& dhcid_str) {
@@ -102,6 +95,10 @@ DHCID::DHCID(MasterLexer& lexer, const Name*,
 /// \param buffer A buffer storing the wire format data.
 /// \param rdata_len The length of the RDATA in bytes
 DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
+    if (rdata_len == 0) {
+        isc_throw(InvalidRdataLength, "Missing DHCID rdata");
+    }
+
     digest_.resize(rdata_len);
     buffer.readData(&digest_[0], rdata_len);
 }
