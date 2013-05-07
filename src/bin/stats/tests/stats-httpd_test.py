@@ -651,13 +651,13 @@ class TestStatsHttpd(unittest.TestCase):
 
         """
         self.__mccs_closed = False
-        def __call_checker():
+        def call_checker():
             self.__mccs_closed = True
         class FailingStatsHttpd(MyStatsHttpd):
             def open_httpd(self):
                 raise stats_httpd.HttpServerError
             def close_mccs(self):
-                __call_checker()
+                call_checker()
         self.assertRaises(stats_httpd.HttpServerError, FailingStatsHttpd)
         self.assertTrue(self.__mccs_closed)
 
