@@ -1104,7 +1104,7 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual('@description', stats_xsl[2].find('%sif' % nst).attrib['test'])
         self.assertEqual('@description', stats_xsl[2].find('%sif/%svalue-of' % ((nst,)*2)).attrib['select'])
 
-class Z_TestStatsHttpdError(unittest.TestCase):
+class Z_TestOSEnv(unittest.TestCase):
     def test_for_without_B10_FROM_SOURCE(self):
         # Note: this test is sensitive due to its substantial side effect of
         # reloading.  For exmaple, it affects tests that tweak module
