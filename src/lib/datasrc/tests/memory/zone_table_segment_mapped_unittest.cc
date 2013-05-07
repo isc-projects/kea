@@ -33,8 +33,8 @@ using boost::scoped_ptr;
 
 namespace {
 
-const char* mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
-const char* mapped_file2 = TEST_DATA_BUILDDIR "/test2.mapped";
+const char* const  mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+const char* const mapped_file2 = TEST_DATA_BUILDDIR "/test2.mapped";
 
 class ZoneTableSegmentMappedTest : public ::testing::Test {
 protected:
@@ -89,7 +89,7 @@ createData(MemorySegment& segment) {
         string name("name");
         name += i;
         const int value = gen();
-        void* ptr = segment.allocate(sizeof (int));
+        void* ptr = segment.allocate(sizeof(int));
         ASSERT_TRUE(ptr);
         *static_cast<int*>(ptr) = value;
         const bool grew = segment.setNamedAddress(name.c_str(), ptr);
@@ -225,8 +225,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // By default, the mapped file doesn't exist, so we cannot open it
     // in READ_ONLY mode (which does not create the file).
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
-                               config_params_);
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params_);
     }, MemorySegmentOpenError);
 
     // The following should still throw, unaffected by the failed open.
@@ -239,8 +238,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
 
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
-    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
-                           config_params_);
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
     // This must not throw now.
     EXPECT_TRUE(ztable_segment_->isWritable());
 
@@ -250,15 +248,13 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
 
     // Let's try to re-open the mapped file in READ_ONLY mode. It should
     // not fail now.
-    ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
-                           config_params_);
+    ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params_);
     EXPECT_FALSE(ztable_segment_->isWritable());
 
     // Re-creating the mapped file should erase old data and should not
     // trigger any exceptions inside reset() due to old data (such as
     // named addresses).
-    ztable_segment_->reset(ZoneTableSegment::CREATE,
-                           config_params_);
+    ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
 
     // When we reset() with an invalid paramter and it fails, then the
@@ -275,8 +271,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // READ_WRITE with an existing map file ought to work too. This
     // would use existing named addresses. This actually re-opens the
     // currently open map.
-    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
-                           config_params_);
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
     EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
@@ -366,8 +361,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
 TEST_F(ZoneTableSegmentMappedTest, clear) {
     // First, open an underlying mapped file in read+write mode (doesn't
     // exist yet)
-    ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
-                           config_params_);
+    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
 
     EXPECT_TRUE(ztable_segment_->isWritable());
     // The following method calls should no longer throw:
@@ -399,8 +393,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedCorruptedChecksum) {
 
     // Opening mapped file 2 in read-write mode should fail
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegment::READ_WRITE,
-                               config_params2_);
+        ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params2_);
     }, ResetFailed);
 }
 
@@ -420,8 +413,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingChecksum) {
 
     // Opening mapped file 2 in read-only mode should fail
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
-                               config_params2_);
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
 }
 
@@ -441,8 +433,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
 
     // Opening mapped file 2 in read-only mode should fail
     EXPECT_THROW({
-        ztable_segment_->reset(ZoneTableSegment::READ_ONLY,
-                               config_params2_);
+        ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
 }
 
