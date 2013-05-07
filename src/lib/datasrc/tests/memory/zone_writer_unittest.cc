@@ -39,7 +39,7 @@ namespace {
 class TestException {};
 
 class ZoneWriterTest : public ::testing::Test {
-public:
+protected:
     ZoneWriterTest() :
         segment_(ZoneTableSegment::create(RRClass::IN(), "local")),
         writer_(new
@@ -51,11 +51,10 @@ public:
         load_null_(false),
         load_data_(false)
     {}
-    void TearDown() {
+    virtual void TearDown() {
         // Release the writer
         writer_.reset();
     }
-protected:
     scoped_ptr<ZoneTableSegment> segment_;
     scoped_ptr<ZoneWriter> writer_;
     bool load_called_;
