@@ -46,10 +46,10 @@ import isc
 import isc.log
 import stats_httpd
 import stats
-from test_utils import BaseModules, ThreadingServerManager, MyStats,\
-                       MyStatsHttpd, SignalHandler,\
-                       send_command, CONST_BASETIME
+from test_utils import ThreadingServerManager, SignalHandler, \
+    MyStatsHttpd, CONST_BASETIME
 from isc.testutils.ccsession_mock import MockModuleCCSession
+from isc.config import RPCRecipientMissing, RPCError
 
 # This test suite uses xml.etree.ElementTree.XMLParser via
 # xml.etree.ElementTree.parse. On the platform where expat isn't
@@ -103,6 +103,11 @@ DUMMY_DATA = {
         "timestamp": time.mktime(CONST_BASETIME)
         }
     }
+
+# Bad practice: this should be localized
+stats._BASETIME = CONST_BASETIME
+stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
+stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
 
 def get_availaddr(address='127.0.0.1', port=8001):
     """returns a tuple of address and port which is available to
@@ -230,13 +235,11 @@ class TestHttpHandler(unittest.TestCase):
     def setUp(self):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
-        self.base = BaseModules()
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats = self.stats_server.server
-        DUMMY_DATA['Stats']['lname'] = self.stats.cc_session.lname
-        self.stats_server.run()
+        DUMMY_DATA['Stats']['lname'] = 'test-lname'
         (self.address, self.port) = get_availaddr()
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, (self.address, self.port))
+        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd,
+                                                         (self.address,
+                                                          self.port))
         self.stats_httpd = self.stats_httpd_server.server
         self.stats_httpd_server.run()
         self.client = http.client.HTTPConnection(self.address, self.port)
@@ -245,13 +248,9 @@ class TestHttpHandler(unittest.TestCase):
 
     def tearDown(self):
         self.client.close()
-        self.stats_httpd_server.shutdown()
-        self.stats_server.shutdown()
-        self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
 
-    @unittest.skipIf(sys.version_info >= (3, 3), "Unsupported in Python 3.3 or higher")
     @unittest.skipUnless(xml_parser, "skipping the test using XMLParser")
     def test_do_GET(self):
         self.assertTrue(type(self.stats_httpd.httpd) is list)
@@ -456,15 +455,10 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.status, 404)
 
     def test_do_GET_failed1(self):
-        # checks status
-        self.assertEqual(send_command("status", "Stats"),
-                         (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
-        # failure case(Stats is down)
-        self.assertTrue(self.stats.running)
-        self.assertEqual(send_command("shutdown", "Stats"),
-                         (0, None)) # Stats is down
-        self.assertFalse(self.stats.running)
-        self.stats_httpd.cc_session.set_timeout(milliseconds=100)
+        # failure case (Stats is down, so rpc_call() results in an exception)
+        # Note: this should eventually be RPCRecipientMissing.
+        self.stats_httpd._rpc_answers.append(
+            isc.cc.session.SessionTimeout('timeout'))
 
         # request XML
         self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
@@ -486,10 +480,8 @@ class TestHttpHandler(unittest.TestCase):
 
     def test_do_GET_failed2(self):
         # failure case(Stats replies an error)
-        self.stats.mccs.set_command_handler(
-            lambda cmd, args: \
-                isc.config.ccsession.create_answer(1, "specified arguments are incorrect: I have an error.")
-            )
+        self.stats_httpd._rpc_answers.append(
+            RPCError(1, "specified arguments are incorrect: I have an error."))
 
         # request XML
         self.client.putrequest('GET', stats_httpd.XML_URL_PATH + '/')
@@ -498,12 +490,16 @@ class TestHttpHandler(unittest.TestCase):
         self.assertEqual(response.status, 404)
 
         # request XSD
+        self.stats_httpd._rpc_answers.append(
+            RPCError(1, "specified arguments are incorrect: I have an error."))
         self.client.putrequest('GET', stats_httpd.XSD_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
         self.assertEqual(response.status, 200)
 
         # request XSL
+        self.stats_httpd._rpc_answers.append(
+            RPCError(1, "specified arguments are incorrect: I have an error."))
         self.client.putrequest('GET', stats_httpd.XSL_URL_PATH)
         self.client.endheaders()
         response = self.client.getresponse()
@@ -567,12 +563,10 @@ class TestHttpServer(unittest.TestCase):
     def setUp(self):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
-        self.base = BaseModules()
 
     def tearDown(self):
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
-        self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
 
@@ -604,9 +598,6 @@ class TestStatsHttpd(unittest.TestCase):
     def setUp(self):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
-        self.base = BaseModules()
-        self.stats_server = ThreadingServerManager(MyStats)
-        self.stats_server.run()
         # checking IPv6 enabled on this platform
         self.ipv6_enabled = is_ipv6_enabled()
         # instantiation of StatsHttpd indirectly calls gethostbyaddr(), which
@@ -617,14 +608,19 @@ class TestStatsHttpd(unittest.TestCase):
         self.__gethostbyaddr_orig = socket.gethostbyaddr
         socket.gethostbyaddr = lambda x: ('test.example.', [], None)
 
+        # Some tests replace this library function.  Keep the original for
+        # restor
+        self.__orig_select_select = select.select
+
     def tearDown(self):
         socket.gethostbyaddr = self.__gethostbyaddr_orig
         if hasattr(self, "stats_httpd"):
             self.stats_httpd.stop()
-        self.stats_server.shutdown()
-        self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
+
+        # restore original of replaced library
+        select.select = self.__orig_select_select
 
     def test_init(self):
         server_address = get_availaddr()
@@ -632,56 +628,60 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual(self.stats_httpd.running, False)
         self.assertEqual(self.stats_httpd.poll_intval, 0.5)
         self.assertNotEqual(len(self.stats_httpd.httpd), 0)
-        self.assertEqual(type(self.stats_httpd.mccs), isc.config.ModuleCCSession)
-        self.assertEqual(type(self.stats_httpd.cc_session), isc.cc.Session)
-        self.assertEqual(len(self.stats_httpd.config), 2)
+        self.assertIsNotNone(self.stats_httpd.mccs)
+        self.assertIsNotNone(self.stats_httpd.cc_session)
+        # The real CfgMgr would return 'version', but our test mock omits it,
+        # so the len(config) should be 1
+        self.assertEqual(len(self.stats_httpd.config), 1)
         self.assertTrue('listen_on' in self.stats_httpd.config)
         self.assertEqual(len(self.stats_httpd.config['listen_on']), 1)
         self.assertTrue('address' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue('port' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue(server_address in set(self.stats_httpd.http_addrs))
-        ans = send_command(
-            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
-            "ConfigManager", {"module_name":"StatsHttpd"})
-        # assert StatsHttpd is added to ConfigManager
-        self.assertNotEqual(ans, (0,{}))
-        self.assertTrue(ans[1]['module_name'], 'StatsHttpd')
+        self.assertEqual('StatsHttpd', self.stats_httpd.mccs.\
+                             get_module_spec().get_module_name())
 
     def test_init_hterr(self):
-        orig_open_httpd = stats_httpd.StatsHttpd.open_httpd
-        def err_open_httpd(arg): raise stats_httpd.HttpServerError
-        stats_httpd.StatsHttpd.open_httpd = err_open_httpd
-        self.assertRaises(stats_httpd.HttpServerError, stats_httpd.StatsHttpd)
-        ans = send_command(
-            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
-            "ConfigManager", {"module_name":"StatsHttpd"})
-        # assert StatsHttpd is removed from ConfigManager
-        self.assertEqual(ans, (0,{}))
-        stats_httpd.StatsHttpd.open_httpd = orig_open_httpd
+        """Test the behavior of StatsHttpd constructor when open_httpd fails.
+
+        We specifically check the following two:
+        - close_mccs() is called (so stats-httpd tells ConfigMgr it's shutting
+          down)
+        - the constructor results in HttpServerError exception.
+
+        """
+        self.__mccs_closed = False
+        def call_checker():
+            self.__mccs_closed = True
+        class FailingStatsHttpd(MyStatsHttpd):
+            def open_httpd(self):
+                raise stats_httpd.HttpServerError
+            def close_mccs(self):
+                call_checker()
+        self.assertRaises(stats_httpd.HttpServerError, FailingStatsHttpd)
+        self.assertTrue(self.__mccs_closed)
 
     def test_openclose_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        mccs = MockModuleCCSession()
-        self.stats_httpd.mccs = mccs
+        mccs = self.stats_httpd.mccs
         self.assertFalse(self.stats_httpd.mccs.stopped)
         self.assertFalse(self.stats_httpd.mccs.closed)
         self.stats_httpd.close_mccs()
         self.assertTrue(mccs.stopped)
         self.assertTrue(mccs.closed)
-        self.assertEqual(self.stats_httpd.mccs, None)
+        self.assertIsNone(self.stats_httpd.mccs)
         self.stats_httpd.open_mccs()
         self.assertIsNotNone(self.stats_httpd.mccs)
         self.stats_httpd.mccs = None
-        self.assertEqual(self.stats_httpd.mccs, None)
-        self.assertEqual(self.stats_httpd.close_mccs(), None)
+        self.assertIsNone(self.stats_httpd.mccs)
+        self.assertIsNone(self.stats_httpd.close_mccs())
 
     def test_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertIsNotNone(self.stats_httpd.mccs.get_socket())
         self.assertTrue(
             isinstance(self.stats_httpd.mccs.get_socket(), socket.socket))
-        self.assertTrue(
-            isinstance(self.stats_httpd.cc_session, isc.cc.session.Session))
+        self.assertIsNotNone(self.stats_httpd.cc_session)
         statistics_spec = self.stats_httpd.get_stats_spec()
         for mod in DUMMY_DATA:
             self.assertTrue(mod in statistics_spec)
@@ -699,8 +699,11 @@ class TestStatsHttpd(unittest.TestCase):
             self.stats_httpd = MyStatsHttpd(*server_addresses)
             for ht in self.stats_httpd.httpd:
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
-                self.assertTrue(ht.address_family in set([socket.AF_INET, socket.AF_INET6]))
+                self.assertTrue(ht.address_family in set([socket.AF_INET,
+                                                          socket.AF_INET6]))
                 self.assertTrue(isinstance(ht.socket, socket.socket))
+                ht.socket.close() # to silence warning about resource leak
+            self.stats_httpd.close_mccs() # ditto
 
         # dual stack (address is ipv6)
         if self.ipv6_enabled:
@@ -710,6 +713,8 @@ class TestStatsHttpd(unittest.TestCase):
                 self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
                 self.assertEqual(ht.address_family, socket.AF_INET6)
                 self.assertTrue(isinstance(ht.socket, socket.socket))
+                ht.socket.close()
+            self.stats_httpd.close_mccs() # ditto
 
         # dual/single stack (address is ipv4)
         server_addresses = get_availaddr()
@@ -718,6 +723,8 @@ class TestStatsHttpd(unittest.TestCase):
             self.assertTrue(isinstance(ht, stats_httpd.HttpServer))
             self.assertEqual(ht.address_family, socket.AF_INET)
             self.assertTrue(isinstance(ht.socket, socket.socket))
+            ht.socket.close()
+        self.stats_httpd.close_mccs()
 
     def test_httpd_anyIPv4(self):
         # any address (IPv4)
@@ -744,39 +751,69 @@ class TestStatsHttpd(unittest.TestCase):
                           get_availaddr(address='localhost'))
 
         # nonexistent hostname
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('my.host.domain', 8000))
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          ('my.host.domain', 8000))
 
         # over flow of port number
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 80000))
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          ('127.0.0.1', 80000))
 
         # negative
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', -8000))
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          ('127.0.0.1', -8000))
 
         # alphabet
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, ('127.0.0.1', 'ABCDE'))
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          ('127.0.0.1', 'ABCDE'))
 
         # Address already in use
         server_addresses = get_availaddr()
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, server_addresses)
-        self.stats_httpd_server.run()
-        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd, server_addresses)
-        send_command("shutdown", "StatsHttpd")
+        server = MyStatsHttpd(server_addresses)
+        self.assertRaises(stats_httpd.HttpServerError, MyStatsHttpd,
+                          server_addresses)
+
+    def __faked_select(self, ex=None):
+        """A helper subroutine for tests using faked select.select.
+
+        See test_running() for basic features.  If ex is not None,
+        it's assumed to be an exception object and will be raised on the
+        first call.
+
+        """
+        self.assertTrue(self.stats_httpd.running)
+        self.__call_count += 1
+        if ex is not None and self.__call_count == 1:
+            raise ex
+        if self.__call_count == 2:
+            self.stats_httpd.running  = False
+        assert self.__call_count <= 2 # safety net to avoid infinite loop
+        return ([], [], [])
 
     def test_running(self):
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
-        self.stats_httpd = self.stats_httpd_server.server
-        self.assertFalse(self.stats_httpd.running)
-        self.stats_httpd_server.run()
-        self.assertEqual(send_command("status", "StatsHttpd"),
-                         (0, "Stats Httpd is up. (PID " + str(os.getpid()) + ")"))
-        self.assertTrue(self.stats_httpd.running)
-        self.assertEqual(send_command("shutdown", "StatsHttpd"), (0, None))
-        self.assertFalse(self.stats_httpd.running)
-        self.stats_httpd_server.shutdown()
-
-        # failure case
+        # Previous version of this test checks the result of "status" and
+        # "shutdown" commands; however, they are more explicitly tested
+        # in specific tests.  In this test we only have to check:
+        # - start() will set 'running' to True
+        # - as long as 'running' is True, it keeps calling select.select
+        # - when running becomes False, it exists from the loop and calls
+        #   stop()
         self.stats_httpd = MyStatsHttpd(get_availaddr())
-        self.stats_httpd.cc_session.close()
+        self.assertFalse(self.stats_httpd.running)
+
+        # In this test we'll call select.select() 2 times: on the first call
+        # stats_httpd.running should be True; on the second call the faked
+        # select() will set it to False.
+        self.__call_count = 0
+        select.select = lambda r, w, x, t: self.__faked_select()
+        self.stats_httpd.start()
+        self.assertFalse(self.stats_httpd.running)
+        self.assertIsNone(self.stats_httpd.mccs) # stop() clears .mccs
+
+    def test_running_fail(self):
+        # A failure case of start(): we close the (real but dummy) socket for
+        # the CC session.  This breaks the select-loop due to exception
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.mccs.get_socket().close()
         self.assertRaises(ValueError, self.stats_httpd.start)
 
     def test_failure_with_a_select_error (self):
@@ -784,28 +821,26 @@ class TestStatsHttpd(unittest.TestCase):
         errno.EINTR is raised while it's selecting"""
         def raise_select_except(*args):
             raise select.error('dummy error')
-        orig_select = stats_httpd.select.select
-        stats_httpd.select.select = raise_select_except
+        select.select = raise_select_except
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         self.assertRaises(select.error, self.stats_httpd.start)
-        stats_httpd.select.select = orig_select
 
     def test_nofailure_with_errno_EINTR(self):
         """checks no exception is raised if errno.EINTR is raised
         while it's selecting"""
-        def raise_select_except(*args):
-            raise select.error(errno.EINTR)
-        orig_select = stats_httpd.select.select
-        stats_httpd.select.select = raise_select_except
-        self.stats_httpd_server = ThreadingServerManager(MyStatsHttpd, get_availaddr())
-        self.stats_httpd_server.run()
-        self.stats_httpd_server.shutdown()
-        stats_httpd.select.select = orig_select
+        self.__call_count = 0
+        select.select = lambda r, w, x, t: self.__faked_select(
+            select.error(errno.EINTR))
+        self.stats_httpd = MyStatsHttpd(get_availaddr())
+        self.stats_httpd.start() # shouldn't leak the exception
+        self.assertFalse(self.stats_httpd.running)
+        self.assertIsNone(self.stats_httpd.mccs)
 
     def test_open_template(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
         # successful conditions
-        tmpl = self.stats_httpd.open_template(stats_httpd.XML_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XML_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(
             xml_string="<dummy></dummy>",
@@ -813,13 +848,15 @@ class TestStatsHttpd(unittest.TestCase):
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertGreater(lines.find(opts[n]), 0)
-        tmpl = self.stats_httpd.open_template(stats_httpd.XSD_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XSD_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
         for n in opts:
             self.assertGreater(lines.find(opts[n]), 0)
-        tmpl = self.stats_httpd.open_template(stats_httpd.XSL_TEMPLATE_LOCATION)
+        tmpl = self.stats_httpd.open_template(
+            stats_httpd.XSL_TEMPLATE_LOCATION)
         self.assertTrue(isinstance(tmpl, string.Template))
         opts = dict(xsd_namespace="http://host/path/to/")
         lines = tmpl.substitute(opts)
@@ -1067,7 +1104,15 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertEqual('@description', stats_xsl[2].find('%sif' % nst).attrib['test'])
         self.assertEqual('@description', stats_xsl[2].find('%sif/%svalue-of' % ((nst,)*2)).attrib['select'])
 
+class Z_TestStatsHttpdError(unittest.TestCase):
     def test_for_without_B10_FROM_SOURCE(self):
+        # Note: this test is sensitive due to its substantial side effect of
+        # reloading.  For exmaple, it affects tests that tweak module
+        # attributes (such as test_init_hterr).  It also breaks logging
+        # setting for unit tests.  To minimize these effects, we use
+        # workaround: make it very likely to run at the end of the tests
+        # by naming the test class "Z_".
+
         # just lets it go through the code without B10_FROM_SOURCE env
         # variable
         if "B10_FROM_SOURCE" in os.environ:
