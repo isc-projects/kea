@@ -140,8 +140,8 @@ TEST_F(Rdata_RP_Test, createFromLexer) {
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
                                              "root.example.com."));
 
-    // acceptable??
-    EXPECT_NO_THROW(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
+    // Extra text at end of line
+    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
                                                 "root.example.com. "
                                                 "rp-text.example.com. "
                                                 "redundant.example.com."));
