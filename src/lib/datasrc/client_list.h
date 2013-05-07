@@ -391,7 +391,7 @@ public:
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
     ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
-				       const std::string& datasrc_name = "");
+                                       const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -421,7 +421,7 @@ public:
         std::string name_;
 
         // cache_conf_ can be accessed only from this read-only getter,
-	// to protect its integrity as much as possible.
+        // to protect its integrity as much as possible.
         const internal::CacheConfig* getCacheConfig() const {
             return (cache_conf_.get());
         }
