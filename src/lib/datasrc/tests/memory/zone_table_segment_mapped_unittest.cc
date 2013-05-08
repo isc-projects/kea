@@ -18,6 +18,7 @@
 #include <util/unittests/check_valgrind.h>
 
 #include <gtest/gtest.h>
+#include <boost/format.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 
@@ -33,7 +34,7 @@ using boost::scoped_ptr;
 
 namespace {
 
-const char* const  mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+const char* const mapped_file  = TEST_DATA_BUILDDIR "/test.mapped";
 const char* const mapped_file2 = TEST_DATA_BUILDDIR "/test2.mapped";
 
 class ZoneTableSegmentMappedTest : public ::testing::Test {
@@ -86,8 +87,7 @@ createData(MemorySegment& segment) {
     // to keep the size of test data reasonably small.
     UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
     for (int i = 0; i < 256; ++i) {
-        string name("name");
-        name += i;
+        const string name(boost::str(boost::format("name%d") % i));
         const int value = gen();
         void* ptr = segment.allocate(sizeof(int));
         ASSERT_TRUE(ptr);
@@ -101,8 +101,7 @@ bool
 verifyData(const MemorySegment& segment) {
     UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
     for (int i = 0; i < 256; ++i) {
-        string name("name");
-        name += i;
+        const string name(boost::str(boost::format("name%d") % i));
         const int value = gen();
         const MemorySegment::NamedAddressResult result =
             segment.getNamedAddress(name.c_str());
