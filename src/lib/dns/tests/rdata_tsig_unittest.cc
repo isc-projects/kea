@@ -32,6 +32,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
@@ -56,6 +57,32 @@ const any::TSIG rdata_tsig((string(valid_text1)));
 namespace {
 class Rdata_TSIG_Test : public RdataTest {
 protected:
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<any::TSIG, BadValue, BadValue>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <any::TSIG, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_TooLongLabel(const string& rdata_str) {
+        checkFromText<any::TSIG, TooLongLabel, TooLongLabel>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_EmptyLabel(const string& rdata_str) {
+        checkFromText<any::TSIG, EmptyLabel, EmptyLabel>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
     vector<uint8_t> expect_data;
 };
 
@@ -90,46 +117,42 @@ TEST_F(Rdata_TSIG_Test, badText) {
     // too many fields
     EXPECT_THROW(any::TSIG("foo 0 0 0 0 BADKEY 0 0"), InvalidRdataText);
     // not enough fields
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 BADKEY"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 0 0 0 BADKEY");
     // bad domain name
-    EXPECT_THROW(any::TSIG(string(too_long_label) + "0 0 0 0 BADKEY 0"),
-                 TooLongLabel);
-    EXPECT_THROW(any::TSIG("foo..bar 0 0 0 0 BADKEY"), EmptyLabel);
+    checkFromText_TooLongLabel(string(too_long_label) + "0 0 0 0 BADKEY 0");
+    checkFromText_EmptyLabel("foo..bar 0 0 0 0 BADKEY");
     // time is too large (2814...6 is 2^48)
-    EXPECT_THROW(any::TSIG("foo 281474976710656 0 0 0 BADKEY 0"),
-                 InvalidRdataText);
+    checkFromText_InvalidText("foo 281474976710656 0 0 0 BADKEY 0");
     // invalid time (negative)
-    EXPECT_THROW(any::TSIG("foo -1 0 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo -1 0 0 0 BADKEY 0");
     // invalid time (not a number)
-    EXPECT_THROW(any::TSIG("foo TIME 0 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo TIME 0 0 0 BADKEY 0");
     // fudge is too large
-    EXPECT_THROW(any::TSIG("foo 0 65536 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 65536 0 0 BADKEY 0");
     // invalid fudge (negative)
-    EXPECT_THROW(any::TSIG("foo 0 -1 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 -1 0 0 BADKEY 0");
     // invalid fudge (not a number)
-    EXPECT_THROW(any::TSIG("foo 0 FUDGE 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 FUDGE 0 0 BADKEY 0");
     // MAC size is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 65536 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 65536 0 BADKEY 0");
     // invalide MAC size (negative)
-    EXPECT_THROW(any::TSIG("foo 0 0 -1 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 0 -1 0 BADKEY 0");
     // invalid MAC size (not a number)
-    EXPECT_THROW(any::TSIG("foo 0 0 MACSIZE 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 0 MACSIZE 0 BADKEY 0");
     // MAC size and MAC mismatch
-    EXPECT_THROW(any::TSIG("foo 0 0 9 FAKE 0 BADKEY 0"), InvalidRdataText);
-    EXPECT_THROW(any::TSIG("foo 0 0 0 FAKE 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 9 FAKE 0 BADKEY 0");
     // MAC is bad base64
-    EXPECT_THROW(any::TSIG("foo 0 0 3 FAK= 0 BADKEY 0"), isc::BadValue);
+    checkFromText_BadValue("foo 0 0 3 FAK= 0 BADKEY 0");
     // Unknown error code
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 TEST 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 TEST 0");
     // Numeric error code is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 65536 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 65536 0");
     // Other len is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 65536 FAKE"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 NOERROR 65536 FAKE");
     // invalid Other len
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR LEN FAKE"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 0 0 0 NOERROR LEN FAKE");
     // Other len and data mismatch
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 9 FAKE"), InvalidRdataText);
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 0 FAKE"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 NOERROR 9 FAKE");
 }
 
 void
