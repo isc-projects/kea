@@ -49,7 +49,7 @@ TEST(ValueStorageTest, BooleanTesting) {
     EXPECT_FALSE(testStore.getParam("firstBool"));
     EXPECT_TRUE(testStore.getParam("secondBool"));
 
-    // Verify that we can update paramaters.
+    // Verify that we can update parameters.
     testStore.setParam("firstBool", true);
     testStore.setParam("secondBool", false);
 
@@ -436,6 +436,10 @@ TEST_F(CfgMgrTest, subnet6Interface) {
 
     // Now we have only one subnet, any request will be served from it
     EXPECT_EQ(subnet1, cfg_mgr.getSubnet6("foo"));
+
+    // Check that the interface name is checked even when there is
+    // only one subnet defined.
+    EXPECT_FALSE(cfg_mgr.getSubnet6("bar"));
 
     // If we have only a single subnet and the request came from a local
     // address, let's use that subnet

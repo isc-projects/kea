@@ -609,8 +609,14 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 
     // First check that the getAnyRelayOption does not confuse client options
     // and relay options
-    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     // 300 is a client option, present in the message itself.
+    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
 
     // Option 200 is added in every relay.
@@ -628,12 +634,12 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(opt->equal(relay1_opt1));
 
     // We just want option from the first relay (closest to the client)
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FIRST);
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equal(relay3_opt1));
 
     // We just want option from the last relay (closest to the server)
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_LAST);
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equal(relay1_opt1));
 
@@ -647,12 +653,24 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equal(relay2_opt1));
 
-    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FIRST);
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
     EXPECT_FALSE(opt);
 
-    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_LAST);
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
 
+    // Finally, try to get an option that does not exist
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
 }
 
 }
