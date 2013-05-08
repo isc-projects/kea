@@ -378,7 +378,7 @@ public:
     /// the data source which has the given name, regardless where in the list
     /// that data source is placed.  Even if the given name of zone doesn't
     /// exist in the data source, other data sources are not searched and
-    /// this method simply returns DATASRC_NOT_FOUND in the first element
+    /// this method simply returns ZONE_NOT_FOUND in the first element
     /// of the pair.
     ///
     /// \param zone The origin of the zone to load.
