@@ -314,9 +314,6 @@ ZoneTableSegmentMapped::clear() {
     }
 }
 
-// After more methods' definitions are added here, it would be a good
-// idea to move getHeader() and getMemorySegment() definitions to the
-// header file.
 ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() {
     if (!mem_sgmt_) {
