@@ -54,6 +54,8 @@ protected:
         ZoneTableSegmentMapped* mapped_segment =
             dynamic_cast<ZoneTableSegmentMapped*>(ztable_segment_);
         EXPECT_NE(static_cast<void*>(NULL), mapped_segment);
+
+        createTestData();
     }
 
     ~ZoneTableSegmentMappedTest() {
@@ -62,11 +64,25 @@ protected:
         boost::interprocess::file_mapping::remove(mapped_file2);
     }
 
+    typedef std::pair<std::string, int> TestDataElement;
+
+    void createTestData() {
+        UniformRandomIntegerGenerator gen(0, INT_MAX);
+        for (int i = 0; i < 256; ++i) {
+            const string name(boost::str(boost::format("name%d") % i));
+            const int value = gen();
+            test_data_.push_back(TestDataElement(name, value));
+        }
+    }
+
     void setupMappedFiles();
+    void addData(MemorySegment& segment);
+    bool verifyData(const MemorySegment& segment);
 
     ZoneTableSegment* ztable_segment_;
     const ConstElementPtr config_params_;
     const ConstElementPtr config_params2_;
+    std::vector<TestDataElement> test_data_;
 };
 
 bool
@@ -77,42 +93,6 @@ fileExists(const char* path) {
         EXPECT_EQ(ENOENT, errno);
         return (false);
     }
-    return (true);
-}
-
-void
-createData(MemorySegment& segment) {
-    // For purposes of this test, we assume that the following
-    // allocations do not resize the mapped segment. For this, we have
-    // to keep the size of test data reasonably small.
-    UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
-    for (int i = 0; i < 256; ++i) {
-        const string name(boost::str(boost::format("name%d") % i));
-        const int value = gen();
-        void* ptr = segment.allocate(sizeof(int));
-        ASSERT_TRUE(ptr);
-        *static_cast<int*>(ptr) = value;
-        const bool grew = segment.setNamedAddress(name.c_str(), ptr);
-        ASSERT_FALSE(grew);
-    }
-}
-
-bool
-verifyData(const MemorySegment& segment) {
-    UniformRandomIntegerGenerator gen(0, INT_MAX, getpid());
-    for (int i = 0; i < 256; ++i) {
-        const string name(boost::str(boost::format("name%d") % i));
-        const int value = gen();
-        const MemorySegment::NamedAddressResult result =
-            segment.getNamedAddress(name.c_str());
-        if (!result.first) {
-             return (false);
-        }
-        if (*static_cast<int*>(result.second) != value) {
-             return (false);
-        }
-    }
-
     return (true);
 }
 
@@ -138,13 +118,49 @@ deleteHeader(MemorySegment& segment) {
 }
 
 void
+ZoneTableSegmentMappedTest::addData(MemorySegment& segment) {
+    // For purposes of this test, we assume that the following
+    // allocations do not resize the mapped segment. For this, we have
+    // to keep the size of test data reasonably small in
+    // createTestData().
+
+    // One by one, add all the elements in test_data_.
+    for (int i = 0; i < test_data_.size(); ++i) {
+        void* ptr = segment.allocate(sizeof(int));
+        ASSERT_TRUE(ptr);
+        *static_cast<int*>(ptr) = test_data_[i].second;
+        const bool grew = segment.setNamedAddress(test_data_[i].first.c_str(),
+                                                  ptr);
+        ASSERT_FALSE(grew);
+    }
+}
+
+bool
+ZoneTableSegmentMappedTest::verifyData(const MemorySegment& segment) {
+    // One by one, verify all the elements in test_data_ exist and have
+    // the expected values.
+    for (int i = 0; i < test_data_.size(); ++i) {
+        const MemorySegment::NamedAddressResult result =
+            segment.getNamedAddress(test_data_[i].first.c_str());
+        if (!result.first) {
+            return (false);
+        }
+        if (*static_cast<int*>(result.second) != test_data_[i].second) {
+            return (false);
+        }
+    }
+
+    return (true);
+}
+
+void
 ZoneTableSegmentMappedTest::setupMappedFiles() {
     ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
-    createData(ztable_segment_->getMemorySegment());
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     ztable_segment_->reset(ZoneTableSegment::CREATE, config_params2_);
-    createData(ztable_segment_->getMemorySegment());
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // Now, clear the segment, closing the underlying mapped file.
@@ -172,7 +188,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetBadConfig) {
     ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
 
     // Populate it with some data.
-    createData(ztable_segment_->getMemorySegment());
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // All the following resets() with invalid configuration must
@@ -283,8 +299,8 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreate) {
 
     ASSERT_TRUE(ztable_segment_->isWritable());
 
-    // Create the data.
-    createData(ztable_segment_->getMemorySegment());
+    // Add the data.
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // Close the segment.
@@ -309,8 +325,8 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadWrite) {
 
     ASSERT_TRUE(ztable_segment_->isWritable());
 
-    // Create the data.
-    createData(ztable_segment_->getMemorySegment());
+    // Add the data.
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // Close the segment.
@@ -335,8 +351,8 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
 
     ASSERT_TRUE(ztable_segment_->isWritable());
 
-    // Create the data.
-    createData(ztable_segment_->getMemorySegment());
+    // Add the data.
+    addData(ztable_segment_->getMemorySegment());
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 
     // Close the segment.
@@ -353,7 +369,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
 
     // But trying to allocate new data should result in an exception as
     // the segment is read-only!
-    EXPECT_THROW(createData(ztable_segment_->getMemorySegment()),
+    EXPECT_THROW(addData(ztable_segment_->getMemorySegment()),
                  MemorySegmentError);
 }
 
