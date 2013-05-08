@@ -199,7 +199,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     // We use auto_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
-    // leak of the DNSKEYImpl that constructFromLexer() returns.
+    // leak of the TSIGImpl that constructFromLexer() returns.
     std::auto_ptr<TSIGImpl> impl_ptr(NULL);
 
     try {
