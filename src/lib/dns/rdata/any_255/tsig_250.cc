@@ -88,7 +88,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidRdataText, "Invalid TSIG Time");
     }
-    if (time_signed > 0xffffffffffff) {
+    if ((time_signed >> 48) != 0) {
         isc_throw(InvalidRdataText, "TSIG Time out of range");
     }
 
