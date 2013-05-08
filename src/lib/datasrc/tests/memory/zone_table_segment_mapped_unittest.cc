@@ -22,6 +22,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 
+#include <cerrno>
+
 #include <sys/stat.h>
 
 using namespace isc::dns;
