@@ -965,8 +965,8 @@ TEST_F(ListTest, reloadNoSuchZone) {
                        RRType::A())->code);
 }
 
-// Check we gracefuly throw an exception when a zone disappeared in
-// the underlying data source when we want to reload it
+// Check we gracefully reject reloading (i.e. no exception) when a zone
+// disappeared in the underlying data source when we want to reload it
 TEST_F(ListTest, reloadZoneGone) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
