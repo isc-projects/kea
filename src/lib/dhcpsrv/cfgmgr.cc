@@ -40,8 +40,7 @@ CfgMgr::addOptionSpace4(const OptionSpacePtr& space) {
         isc_throw(InvalidOptionSpace, "option space " << space->getName()
                   << " already added.");
     }
-    spaces4_.insert(std::pair<std::string,
-                              OptionSpacePtr>(space->getName(), space));
+    spaces4_.insert(make_pair(space->getName(), space));
 }
 
 void
@@ -55,8 +54,7 @@ CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
         isc_throw(InvalidOptionSpace, "option space " << space->getName()
                   << " already added.");
     }
-    spaces6_.insert(std::pair<std::string,
-                              OptionSpacePtr>(space->getName(), space));
+    spaces6_.insert(make_pair(space->getName(), space));
 }
 
 void

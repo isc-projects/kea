@@ -265,11 +265,11 @@ TEST_F(LibDhcpTest, packOptions6) {
     OptionPtr opt4(new Option(Option::V6, 6, buf.begin() + 8, buf.begin() + 12));
     OptionPtr opt5(new Option(Option::V6, 8, buf.begin() + 12, buf.begin() + 14));
 
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt1));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt2));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt3));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt4));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt5));
+    opts.insert(make_pair(opt1->getType(), opt1));
+    opts.insert(make_pair(opt1->getType(), opt2));
+    opts.insert(make_pair(opt1->getType(), opt3));
+    opts.insert(make_pair(opt1->getType(), opt4));
+    opts.insert(make_pair(opt1->getType(), opt5));
 
     OutputBuffer assembled(512);
 
