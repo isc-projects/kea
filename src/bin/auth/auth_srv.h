@@ -104,6 +104,7 @@ public:
     /// process.  It's normally a reference to an xfr::XfroutClient object,
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
+    /// \param ddns_forwarder TODO
     AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
             isc::util::io::BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrv();

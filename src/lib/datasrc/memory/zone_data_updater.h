@@ -63,8 +63,8 @@ public:
     /// \param rrclass The RRclass of the zone data.
     /// \param zone_name The Name of the zone under which records will be
     ///                  added.
-    //  \param zone_data The ZoneData object which is populated with
-    //                   record data.
+    ///  \param zone_data The ZoneData object which is populated with
+    ///                   record data.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
                     isc::dns::RRClass rrclass,
                     const isc::dns::Name& zone_name,

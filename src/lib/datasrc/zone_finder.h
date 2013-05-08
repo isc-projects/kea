@@ -648,10 +648,10 @@ public:
     /// proofs, wildcard information etc. The options parameter works the
     /// same way and it should conform to the same exception restrictions.
     ///
-    /// \param name \see find, parameter name
+    /// \param name see find(), parameter name
     /// \param target the successfull result is returned through this
-    /// \param options \see find, parameter options
-    /// \return \see find and it's result
+    /// \param options see find(), parameter options
+    /// \return see find() and its result
     virtual boost::shared_ptr<Context> findAll(
         const isc::dns::Name& name,
         std::vector<isc::dns::ConstRRsetPtr> &target,
