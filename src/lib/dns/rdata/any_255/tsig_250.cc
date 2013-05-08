@@ -92,11 +92,11 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "TSIG Time out of range");
     }
 
-    const int32_t fudge = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t fudge = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (fudge > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Fudge out of range");
     }
-    const int32_t macsize = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t macsize = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (macsize > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG MAC Size out of range");
     }
@@ -109,7 +109,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "TSIG MAC Size and data are inconsistent");
     }
 
-    const int32_t orig_id = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t orig_id = lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (orig_id > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Original ID out of range");
     }
