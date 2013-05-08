@@ -507,7 +507,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
 
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(optRelay1->getType(), optRelay1));
+    relay1.options_.insert(make_pair(optRelay1->getType(), optRelay1));
 
     OptionPtr opt1(new Option(Option::V6, 100));
     OptionPtr opt2(new Option(Option::V6, 101));
@@ -581,9 +581,9 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     OptionPtr relay1_opt2(generateRandomOption(201));
     OptionPtr relay1_opt3(generateRandomOption(202));
 
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(200, relay1_opt1));
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(201, relay1_opt2));
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(202, relay1_opt3));
+    relay1.options_.insert(make_pair(200, relay1_opt1));
+    relay1.options_.insert(make_pair(201, relay1_opt2));
+    relay1.options_.insert(make_pair(202, relay1_opt3));
     msg->addRelayInfo(relay1);
 
     // generate options for relay2
@@ -592,16 +592,16 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     OptionPtr relay2_opt2(new Option(Option::V6, 101));
     OptionPtr relay2_opt3(new Option(Option::V6, 102));
     OptionPtr relay2_opt4(new Option(Option::V6, 200)); // the same code as relay1_opt3
-    relay2.options_.insert(pair<int, boost::shared_ptr<Option> >(100, relay2_opt1));
-    relay2.options_.insert(pair<int, boost::shared_ptr<Option> >(101, relay2_opt2));
-    relay2.options_.insert(pair<int, boost::shared_ptr<Option> >(102, relay2_opt3));
-    relay2.options_.insert(pair<int, boost::shared_ptr<Option> >(200, relay2_opt4));
+    relay2.options_.insert(make_pair(100, relay2_opt1));
+    relay2.options_.insert(make_pair(101, relay2_opt2));
+    relay2.options_.insert(make_pair(102, relay2_opt3));
+    relay2.options_.insert(make_pair(200, relay2_opt4));
     msg->addRelayInfo(relay2);
 
     // generate options for relay3
     Pkt6::RelayInfo relay3;
     OptionPtr relay3_opt1(generateRandomOption(200, 7));
-    relay3.options_.insert(pair<int, boost::shared_ptr<Option> >(200, relay3_opt1));
+    relay3.options_.insert(make_pair(200, relay3_opt1));
     msg->addRelayInfo(relay3);
 
     // Ok, so we now have a packet that traversed the following network:

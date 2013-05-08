@@ -1699,7 +1699,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     relay.linkaddr_ = IOAddress("2001:db8:2::1234");
     relay.peeraddr_ = IOAddress("fe80::1");
     OptionPtr opt = generateInterfaceId("relay2");
-    relay.options_.insert(pair<int, OptionPtr>(opt->getType(), opt));
+    relay.options_.insert(make_pair(opt->getType(), opt));
     pkt->relay_info_.push_back(relay);
 
     // There is only one subnet configured and we are outside of that subnet
