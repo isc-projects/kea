@@ -157,7 +157,7 @@ public:
         EXPECT_EQ(0, unlink(mapped_file));
     }
 private:
-    size_t initial_size_;
+    const size_t initial_size_;
 };
 
 // There should be no initialization fiasco there. We only set int value inside
@@ -180,7 +180,8 @@ TEST_P(ZoneDataUpdaterTest, zoneMinTTL) {
                       "example.org. 3600 IN SOA . . 0 0 0 0 1200",
                       zclass_, zname_),
                   ConstRRsetPtr());
-    isc::util::InputBuffer b(updater_->getZoneData()->getMinTTLData(), sizeof(uint32_t));
+    isc::util::InputBuffer b(updater_->getZoneData()->getMinTTLData(),
+                             sizeof(uint32_t));
     EXPECT_EQ(RRTTL(1200), RRTTL(b));
 }
 
