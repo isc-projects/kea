@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,9 +32,11 @@ import sys
 #
 # Example:
 #     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
-new_rdata_factory_users = [('a', 'in'), ('aaaa', 'in'),
+new_rdata_factory_users = [('a', 'in'),
+                           ('aaaa', 'in'),
                            ('afsdb', 'generic'),
                            ('cname', 'generic'),
+                           ('dhcid', 'in'),
                            ('dlv', 'generic'),
                            ('dname', 'generic'),
                            ('dnskey', 'generic'),
@@ -46,7 +48,9 @@ new_rdata_factory_users = [('a', 'in'), ('aaaa', 'in'),
                            ('nsec', 'generic'),
                            ('nsec3', 'generic'),
                            ('nsec3param', 'generic'),
+                           ('opt', 'generic'),
                            ('ptr', 'generic'),
+                           ('rrsig', 'generic'),
                            ('soa', 'generic'),
                            ('spf', 'generic'),
                            ('srv', 'in'),
