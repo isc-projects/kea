@@ -73,56 +73,58 @@ uint16_t Pkt6::len() {
 }
 
 OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
-    int start = 0;
-    int end = 0;
-    int direction = 0;
 
     if (relay_info_.empty()) {
-        // there's no relay info, this is a direct message
+        // There's no relay info, this is a direct message
         return (OptionPtr());
     }
 
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
     switch (order) {
     case RELAY_SEARCH_FROM_CLIENT:
-        // search backwards
+        // Search backwards
         start = relay_info_.size() - 1;
         end = 0;
         direction = -1;
         break;
     case RELAY_SEARCH_FROM_SERVER:
-        // search forward
+        // Search forward
         start = 0;
         end = relay_info_.size() - 1;
         direction = 1;
         break;
-    case RELAY_SEARCH_FIRST:
-        // look at the innermost relay only
+    case RELAY_GET_FIRST:
+        // Look at the innermost relay only
         start = relay_info_.size() - 1;
         end = start;
-        direction = 0;
+        direction = 1;
         break;
-    case RELAY_SEARCH_LAST:
-        // look at the outermost relay only
+    case RELAY_GET_LAST:
+        // Look at the outermost relay only
         start = 0;
         end = 0;
-        direction = 0;
+        direction = 1;
     }
 
-    // this is a tricky loop. It must go from start to end, but it must work in
+    // This is a tricky loop. It must go from start to end, but it must work in
     // both directions (start > end; or start < end). We can't use regular
-    // exit condition, because we don't know whether to use i <= end or i >= end
-    for (int i = start; ; i += direction) {
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    for (int i = start; i != end + direction; i += direction) {
         OptionPtr opt = getRelayOption(opt_type, i);
         if (opt) {
             return (opt);
         }
-
-        if (i == end) {
-            break;
-        }
     }
 
-    return getRelayOption(opt_type, end);
+    // We iterated over specified relays and haven't found what we were
+    // looking for
+    return (OptionPtr());
 }
 
 
@@ -539,27 +541,28 @@ const char* Pkt6::getName() const {
 
 void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
 
-    // we use index rather than iterator, because we need that as a parameter
+    // We use index rather than iterator, because we need that as a parameter
     // passed to getRelayOption()
     for (int i = 0; i < question->relay_info_.size(); ++i) {
-        RelayInfo x;
-        x.msg_type_ = DHCPV6_RELAY_REPL;
-        x.hop_count_ = question->relay_info_[i].hop_count_;
-        x.linkaddr_ = question->relay_info_[i].linkaddr_;
-        x.peeraddr_ = question->relay_info_[i].peeraddr_;
+        RelayInfo info;
+        info.msg_type_ = DHCPV6_RELAY_REPL;
+        info.hop_count_ = question->relay_info_[i].hop_count_;
+        info.linkaddr_ = question->relay_info_[i].linkaddr_;
+        info.peeraddr_ = question->relay_info_[i].peeraddr_;
 
-        // Is there interface-id option in this nesting level if there is,
-        // we need to echo it back
+        // Is there an interface-id option in this nesting level?
+        // If there is, we need to echo it back
         OptionPtr opt = question->getRelayOption(D6O_INTERFACE_ID, i);
         // taken from question->RelayInfo_[i].options_
         if (opt) {
-            x.options_.insert(pair<int, boost::shared_ptr<Option> >(opt->getType(), opt));
+            info.options_.insert(make_pair(opt->getType(), opt));
         }
 
-        /// @todo: implement support for ERO (Echo Request Option, RFC4994)
+        /// @todo: Implement support for ERO (Echo Request Option, RFC4994)
 
-        // add this relay-repl info to our message
-        relay_info_.push_back(x);
+        // Add this relay-forw info (client's message) to our relay-repl
+        // message (server's response)
+        relay_info_.push_back(info);
     }
 }
 

@@ -60,14 +60,14 @@ public:
     /// relay closest to the server (i.e. outermost in the encapsulated
     /// message, which also means it was the last relay that relayed
     /// the received message and will be the first one to process
-    /// server's response). RELAY_SEARCH_FIRST is option from the first
-    /// relay (closest to the client), RELAY_SEARCH_LAST is the
-    /// last relay (closest to the server).
+    /// server's response). RELAY_GET_FIRST will try to get option from
+    /// the first relay only (closest to the client), RELAY_GET_LAST will
+    /// try to get option form the the last relay (closest to the server).
     enum RelaySearchOrder {
         RELAY_SEARCH_FROM_CLIENT = 1,
         RELAY_SEARCH_FROM_SERVER = 2,
-        RELAY_SEARCH_FIRST = 3,
-        RELAY_SEARCH_LAST = 4
+        RELAY_GET_FIRST = 3,
+        RELAY_GET_LAST = 4
     };
 
     /// @brief structure that describes a single relay information
@@ -226,12 +226,12 @@ public:
     /// @return pointer to the option (or NULL if there is no such option)
     OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
 
-    /// @brief returns first instance of a specified option
+    /// @brief Return first instance of a specified option
     ///
-    /// When client's packet traverses multiple relays, each passing relay
-    /// may insert extra options. This method allows getting specific instance
-    /// of a given option (closest to the client, closest to the server, etc.)
-    /// See @ref RelaySearchOrder for detailed description.
+    /// When a client's packet traverses multiple relays, each passing relay may
+    /// insert extra options. This method allows the specific instance of a given
+    /// option to be obtained (e.g. closest to the client, closest to the server,
+    /// etc.) See @ref RelaySearchOrder for a detailed description.
     ///
     /// @param option_code searched option
     /// @param order option search order (see @ref RelaySearchOrder)
