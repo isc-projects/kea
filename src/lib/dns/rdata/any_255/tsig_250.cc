@@ -138,7 +138,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     if (otherlen > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Other Len out of range");
     }
-    const string otherdata_txt = (otherlen > 0) ? 
+    const string otherdata_txt = (otherlen > 0) ?
             lexer.getNextToken(MasterToken::STRING).getString() : "";
     vector<uint8_t> other_data;
     decodeBase64(otherdata_txt, other_data);
@@ -239,9 +239,8 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 /// RDATA to be created
 TSIG::TSIG(MasterLexer& lexer, const Name*,
                MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
+    impl_(constructFromLexer(lexer))
 {
-    impl_ = constructFromLexer(lexer);
 }
 
 /// \brief Constructor from wire-format data.
