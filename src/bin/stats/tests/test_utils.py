@@ -446,7 +446,7 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
     ORIG_SPECFILE_LOCATION = stats_httpd.SPECFILE_LOCATION
     def __init__(self, *server_address):
         self._started = threading.Event()
-        self.__dummy_socks = None # see below
+        self.__dummy_sock = None # see below
 
         # Prepare commonly used statistics schema and data requested in
         # stats-httpd tests.  For the purpose of these tests, the content of
@@ -501,10 +501,11 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
 
         # replace some (faked) ModuleCCSession methods so we can inspect/fake.
         # in order to satisfy select.select() we need some real socket.  We
-        # use a socketpair(), but won't actually use it for communication.
+        # use an unusable AF_UNIX socket; we won't actually use it for
+        # communication.
         self.cc_session.rpc_call = self.__rpc_call
-        self.__dummy_socks = socket.socketpair()
-        self.mccs.get_socket = lambda: self.__dummy_socks[0]
+        self.__dummy_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.mccs.get_socket = lambda: self.__dummy_sock
 
     def open_mccs(self):
         self.mccs = MyModuleCCSession(stats_httpd.SPECFILE_LOCATION,
@@ -515,10 +516,9 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
 
     def close_mccs(self):
         super().close_mccs()
-        if self.__dummy_socks is not None:
-            self.__dummy_socks[0].close()
-            self.__dummy_socks[1].close()
-            self.__dummy_socks = None
+        if self.__dummy_sock is not None:
+            self.__dummy_sock.close()
+            self.__dummy_sock = None
 
     def __rpc_call(self, command, group, params={}):
         """Faked ModuleCCSession.rpc_call for tests.
