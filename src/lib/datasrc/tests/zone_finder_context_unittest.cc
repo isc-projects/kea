@@ -79,13 +79,12 @@ createInMemoryClient(RRClass zclass, const Name& zname) {
             string(TEST_ZONE_FILE) + "\"}}"), true);
     shared_ptr<ZoneTableSegment> ztable_segment(
         ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
-    scoped_ptr<memory::ZoneWriter> writer(
-        new memory::ZoneWriter(*ztable_segment,
-                               cache_conf.getLoadAction(zclass, zname),
-                               zname, zclass));
-    writer->load();
-    writer->install();
-    writer->cleanup();
+    memory::ZoneWriter writer(*ztable_segment,
+                              cache_conf.getLoadAction(zclass, zname),
+                              zname, zclass);
+    writer.load();
+    writer.install();
+    writer.cleanup();
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
 
