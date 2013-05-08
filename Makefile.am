@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros -I examples/m4 ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck doc . src tests
+SUBDIRS = compatcheck doc . src tests m4macros
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -46,7 +46,7 @@ endif
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
-		rm -rf coverage/; \
+		rm -rf $(abs_top_srcdir)/coverage-cpp-html/; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
 		echo "Use: ./configure --with-lcov" ; \

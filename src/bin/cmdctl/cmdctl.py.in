@@ -247,6 +247,7 @@ class CommandControl():
         CommandControl to communicate with other modules. '''
         self._verbose = verbose
         self._httpserver = httpserver
+        self.__msg_handler_thread = None # set in _start_msg_handle_thread
         self._lock = threading.Lock()
         self._setup_session()
         self.modules_spec = self._get_modules_specification()
@@ -326,7 +327,26 @@ class CommandControl():
                     self._cmdctl_config_data[key] = new_config[key]
         return answer
 
+    def _get_current_thread(self):
+        """A simple wrapper of returning the 'current' thread object.
+
+        This is extracted as a 'protected' method so tests can override for
+        their convenience.
+
+        """
+        return threading.currentThread()
+
     def command_handler(self, command, args):
+        """Handle commands from other modules.
+
+        This method must not be called by any other threads than
+        __msg_handler_thread invoked at the intialization of the class;
+        otherwise it would cause critical race or dead locks.
+
+        """
+        # Check the restriction described above.
+        assert self._get_current_thread() == self.__msg_handler_thread
+
         answer = ccsession.create_answer(0)
         if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
             # The 'value' of a specification update can be either
@@ -362,6 +382,7 @@ class CommandControl():
         ''' Start one thread to handle received message from msgq.'''
         td = threading.Thread(target=self._handle_msg_from_msgq)
         td.daemon = True
+        self.__msg_handler_thread = td
         td.start()
 
     def _handle_msg_from_msgq(self):
@@ -402,7 +423,7 @@ class CommandControl():
         rcode, reply = self.send_command('ConfigManager', ccsession.COMMAND_GET_MODULE_SPEC)
         return self._parse_command_result(rcode, reply)
 
-    def send_command_with_check(self, module_name, command_name, params = None):
+    def send_command_with_check(self, module_name, command_name, params=None):
         '''Before send the command to modules, check if module_name, command_name
         parameters are legal according the spec file of the module.
         Return rcode, dict. TODO, the rcode should be defined properly.
@@ -424,31 +445,34 @@ class CommandControl():
 
         return self.send_command(module_name, command_name, params)
 
-    def send_command(self, module_name, command_name, params = None):
-        '''Send the command from bindctl to proper module. '''
+    def send_command(self, module_name, command_name, params=None):
+        """Send the command from bindctl to proper module.
+
+        Note that commands sent to Cmdctl itself are also delivered via the
+        CC session.  Since this method is called from a thread handling a
+        particular HTTP session, it cannot directly call command_handler().
+
+        """
         errstr = 'unknown error'
         answer = None
         logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_SEND_COMMAND,
                      command_name, module_name)
 
-        if module_name == self._module_name:
-            # Process the command sent to cmdctl directly.
-            answer = self.command_handler(command_name, params)
-        else:
-            # FIXME: Due to the fact that we use a separate session
-            # from the module one (due to threads and blocking), and
-            # because the plain cc session does not have the high-level
-            # rpc-call method, we use the low-level way and create the
-            # command ourselves.
-            msg = ccsession.create_command(command_name, params)
-            seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
-            logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
-                         command_name, module_name)
-            #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            try:
-                answer, env = self._cc.group_recvmsg(False, seq)
-            except isc.cc.session.SessionTimeout:
-                errstr = "Module '%s' not responding" % module_name
+        # FIXME: Due to the fact that we use a separate session
+        # from the module one (due to threads and blocking), and
+        # because the plain cc session does not have the high-level
+        # rpc-call method, we use the low-level way and create the
+        # command ourselves.
+        msg = ccsession.create_command(command_name, params)
+        seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
+        logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT, command_name,
+                     module_name)
+        # TODO, it may be blocked, msqg need to add a new interface waiting
+        # in timeout.
+        try:
+            answer, env = self._cc.group_recvmsg(False, seq)
+        except isc.cc.session.SessionTimeout:
+            errstr = "Module '%s' not responding" % module_name
 
         if answer:
             try:
