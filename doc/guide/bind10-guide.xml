@@ -4871,43 +4871,54 @@ should include options from the isc option space:
       <section id="dhcp6-relays">
         <title>DHCPv6 Relays</title>
         <para>
-          DHCPv6 server supports remote clients connected via relays. Server
-          that has many subnets defined and receives a request from client, must
-          select appropriate subnet for it. Remote clients there are two
-          mechanisms that can be used here.  The first one is based on
-          interface-id options. While forwarding client's message, relays may
-          insert interface-id option that identifies the interface on which the
-          client message was received on. Some relays allow configuration of
-          that parameter, but it is sometimes hardcoded. This may range from
-          very simple (e.g. "vlan100") to very cryptic. One example used by real
-          hardware was "ISAM144|299|ipv6|nt:vp:1:110"). This may seem
-          meaningless, but that information is sufficient for its
-          purpose. Server may use it to select appropriate subnet and the relay
-          will know which interface to use for response transmission when it
-          gets that value back. This value must be unique in the whole
-          network. Server configuration must match whatever values are inserted
-          by the relays.
+          A DHCPv6 server with multiple subnets defined must select the
+          appropriate subnet when it receives a request from client.  For clients
+          connected via relays, two mechanisms are used.
         </para>
         <para>
-          The second way in which server may pick the proper subnet is by using
-          linkaddr field in the RELAY_FORW message. Name of this field is somewhat
-          misleading. It does not contain link-layer address, but an address that
-          is used to identify a link. This typically is a global address. Kea
-          server checks if that address belongs to any defined subnet6. If it does,
-          that subnet is selected for client's request.
+          The first uses the linkaddr field in the RELAY_FORW message. The name
+          of this field is somewhat misleading in that it does not contain link-layer
+          address: instead, it holds an address (typically a global address) that is
+          used to identify a link. The DHCPv6 server checks if the address belongs
+          to a defined subnet and, if it does, that subnet is selected for the client's
+          request.
         </para>
         <para>
-          It should be noted that "interface" that defines which local network
-          interface can be used to access a given subnet and "interface-id" that
-          specify the content of the interface-id option used by relays are mutually
-          exclusive. A subnet cannot be both reachable locally (direct traffic) and 
-          via relays (remote traffic). Specifying both is a configuration error and
-          Kea server will refuse such configuration.
+          The second mechanism is based on interface-id options. While forwarding client's
+          message, relays may insert an interface-id option into the message that
+          identifies the interface on the relay that received client message. (Some
+          relays allow configuration of that parameter, but it is sometimes
+          hardcoded and may range from very simple (e.g. "vlan100") to very cryptic:
+          one example seen on real hardware was "ISAM144|299|ipv6|nt:vp:1:110"). The
+          server can use this information to select the appropriate subnet.
+          The information is also returned to the relay which then knows which
+          interface to use to transmit the response to the client. In order to
+          use this successfully, the relay interface IDs must be unique within
+          the network, and the server configuration must match those values.
         </para>
+        <para>
+          When configuring the DHCPv6 server, it should be noted that two
+          similarly-named parameters can be configured for a subnet:
+          <itemizedlist>
+            <listitem><simpara>
+              "interface" defines which local network interface can be used
+              to access a given subnet.
+            </simpara></listitem>
+            <listitem><simpara>
+              "interface-id" specifies the content of the interface-id option
+              used by relays to identify the interface on the relay to which
+              the response packet is sent.
+            </simpara></listitem>
+          </itemizedlist>
+          The two are mutually exclusive: a subnet cannot be both reachable locally
+          (direct traffic) and via relays (remote traffic). Specifying both is a
+          configuration error and the DHCPv6 server will refuse such a configuration.
+        </para>
+
         <para>
           To specify interface-id with value "vlan123", the following commands can
           be used:
-<screen>
+          <screen>
 &gt; <userinput>config add Dhcp6/subnet6</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:beef::/48"</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:beef::/48" ]</userinput>

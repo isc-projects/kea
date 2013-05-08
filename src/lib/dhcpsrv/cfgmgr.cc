@@ -183,7 +183,8 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
         return (Subnet6Ptr());
     }
 
-    // If there is more than one, we need to choose the proper one
+    // Let's iterate over all subnets and for those that have interface-id
+    // defined, check if the interface-id is equal to what we are looking for
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
         if ( (*subnet)->getInterfaceId() &&
