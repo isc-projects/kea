@@ -960,6 +960,7 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c DomainTree is allocated.
+    /// \param return_empty_node TODO
     static DomainTree* create(util::MemorySegment& mem_sgmt,
                               bool return_empty_node = false)
     {
@@ -1332,6 +1333,7 @@ public:
     /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
     /// (which was also used for creating the tree due to the requirement of
     /// \c inert()).
+    /// \param deleter A deleter functor or function to delete node data.
     template <typename DataDeleter>
     void deleteAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
 
