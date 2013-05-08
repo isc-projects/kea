@@ -352,8 +352,8 @@ public:
                             ///  where caching is disabled for the specific
                             ///  data source).
         ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
-        CACHE_NOT_WRITABLE, ///< The cache is not (yet) writable (and zones
-                            ///  zones can't be loaded)
+        CACHE_NOT_WRITABLE, ///< The cache is not writable (and zones can't
+                            ///  be loaded)
         DATASRC_NOT_FOUND,  ///< Specific data source for load is specified
                             ///  but it's not in the list
         ZONE_SUCCESS        ///< Zone to be cached is successfully found and
