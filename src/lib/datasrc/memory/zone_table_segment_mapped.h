@@ -118,6 +118,8 @@ private:
     void openReadWrite(const std::string& filename, bool create);
     void openReadOnly(const std::string& filename);
 
+    template<typename T> T* getHeaderHelper() const;
+
 private:
     isc::dns::RRClass rrclass_;
     MemorySegmentOpenMode current_mode_;
@@ -125,7 +127,6 @@ private:
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
-    ZoneTableHeader* header_;
 };
 
 } // namespace memory
