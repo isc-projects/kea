@@ -1007,9 +1007,9 @@ TEST_F(ListTest, reloadNewZone) {
               doReload(Name("example.com")));
 
     // If we add the zone, we can now reload it
-    static_cast<MockDataSourceClient*>(
-        list_->getDataSources()[0].data_src_client_)->
-        insertZone(Name("example.com"));
+    EXPECT_TRUE(static_cast<MockDataSourceClient*>(
+                    list_->getDataSources()[0].data_src_client_)->
+                insertZone(Name("example.com")));
     EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS,
               doReload(Name("example.com")));
 }
