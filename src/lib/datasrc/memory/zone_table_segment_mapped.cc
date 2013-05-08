@@ -36,8 +36,7 @@ const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
 
 ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
-    rrclass_(rrclass),
-    header_(NULL)
+    rrclass_(rrclass)
 {
 }
 
@@ -121,7 +120,6 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             return (false);
         } else {
             assert(result.second);
-            header_ = static_cast<ZoneTableHeader*>(result.second);
         }
     } else {
         // First allocate a ZONE_TABLE_HEADER_NAME, so that we can set
@@ -150,7 +148,6 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             error_msg = "Segment grew unexpectedly in setNamedAddress()";
             return (false);
         }
-        header_ = new_header;
     }
 
     return (true);
@@ -217,7 +214,6 @@ ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
     result = segment->getNamedAddress(ZONE_TABLE_HEADER_NAME);
     if (result.first) {
         assert(result.second);
-        header_ = static_cast<ZoneTableHeader*>(result.second);
     } else {
          const std::string error_msg =
              "There is no previously saved ZoneTableHeader in a "
@@ -309,27 +305,37 @@ void
 ZoneTableSegmentMapped::clear() {
     if (mem_sgmt_) {
         sync();
-        header_ = NULL;
         mem_sgmt_.reset();
     }
 }
 
-ZoneTableHeader&
-ZoneTableSegmentMapped::getHeader() {
+template<typename T>
+T*
+ZoneTableSegmentMapped::getHeaderHelper() const {
     if (!mem_sgmt_) {
         isc_throw(isc::InvalidOperation,
                   "getHeader() called without calling reset() first");
     }
-    return (*header_);
+
+    const MemorySegment::NamedAddressResult result =
+        mem_sgmt_->getNamedAddress(ZONE_TABLE_HEADER_NAME);
+    if (!result.first) {
+        isc_throw(isc::Unexpected,
+                  "Unable to look up the address of the table header in "
+                  "getHeader()");
+    }
+
+    return (static_cast<T*>(result.second));
+}
+
+ZoneTableHeader&
+ZoneTableSegmentMapped::getHeader() {
+    return (*getHeaderHelper<ZoneTableHeader>());
 }
 
 const ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() const {
-    if (!mem_sgmt_) {
-        isc_throw(isc::InvalidOperation,
-                  "getHeader() called without calling reset() first");
-    }
-    return (*header_);
+    return (*getHeaderHelper<const ZoneTableHeader>());
 }
 
 MemorySegment&
