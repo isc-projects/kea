@@ -382,7 +382,8 @@ public:
     /// of the pair.
     ///
     /// \param zone The origin of the zone to load.
-    /// \param datasrc_name
+    /// \param datasrc_name If not empty, the name of the data source
+    /// to be used for loading the zone (see above).
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
