@@ -719,13 +719,13 @@ TEST_F(ListTest, badCache) {
 // This test relies on the property of mapped type of cache.
 TEST_F(ListTest,
 #ifdef USE_SHARED_MEMORY
-       cacheInReadOnlySegment
+       cacheInNonWritableSegment
 #else
-       DISABLED_cacheInReadOnlySegment
+       DISABLED_cacheInNonWritableSegment
 #endif
     )
 {
-    // Initializing data source with read-only zone table memory segment
+    // Initializing data source with non writable zone table memory segment
     // is possible.  Loading is just postponed
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
