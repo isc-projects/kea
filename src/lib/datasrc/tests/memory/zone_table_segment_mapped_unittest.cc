@@ -108,7 +108,7 @@ corruptChecksum(MemorySegment& segment) {
     ASSERT_TRUE(result.first);
 
     size_t checksum = *static_cast<size_t*>(result.second);
-    checksum ^= 0x55555555;
+    ++checksum;
     *static_cast<size_t*>(result.second) = checksum;
 }
 
