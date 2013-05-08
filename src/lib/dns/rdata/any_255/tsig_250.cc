@@ -79,7 +79,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     // but it's not actually a domain name, so we allow it to be not
     // fully qualified.
     const Name root(".");
-    const Name algorithm = createNameFromLexer(lexer, &root);
+    const Name& algorithm = createNameFromLexer(lexer, &root);
 
     const string time_str = lexer.getNextToken(MasterToken::STRING).getString();
     uint64_t time_signed;
