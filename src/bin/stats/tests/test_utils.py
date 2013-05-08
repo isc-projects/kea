@@ -562,3 +562,6 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
     def run(self):
         self._started.set()
         self.start()
+
+    def shutdown(self):
+        self.command_handler('shutdown', None)
