@@ -514,6 +514,14 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
         self.cc_session = self.mccs._session
         self.mccs.start = self.load_config # force reload
 
+        # check_command could be called from the main select() loop due to
+        # Linux's bug of spurious wakeup.  We don't need the actual behavior
+        # of check_command in our tests, so we can basically replace it with a
+        # no-op mock function.
+        def mock_check_command(nonblock):
+            pass
+        self.mccs.check_command = mock_check_command
+
     def close_mccs(self):
         super().close_mccs()
         if self.__dummy_sock is not None:
