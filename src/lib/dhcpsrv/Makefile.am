@@ -1,6 +1,8 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(localstatedir)\""
+dhcp_data_dir = @localstatedir@/@PACKAGE@
+
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
@@ -74,3 +76,8 @@ EXTRA_DIST = dhcpsrv_messages.mes
 # Distribute MySQL schema creation script and backend documentation
 EXTRA_DIST += dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
 dist_pkgdata_DATA = dhcpdb_create.mysql
+
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
+
+

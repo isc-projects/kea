@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2009-2011  Internet Systems Consortium.
+# Copyright (C) 2009-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@ import time
 from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
+from isc.statistics import Counters
 from isc.notify import notify_out
 import isc.util.process
 from isc.datasrc import DataSourceClient, ZoneFinder
@@ -612,6 +613,7 @@ class XfrinConnection(asyncore.dispatcher):
         # keep a record of this specific transfer to log on success
         # (time, rr/s, etc)
         self._transfer_stats = XfrinTransferStats()
+        self._counters = Counters(SPECFILE_LOCATION)
 
     def init_socket(self):
         '''Initialize the underlyig socket.
@@ -891,6 +893,19 @@ class XfrinConnection(asyncore.dispatcher):
         # All okay, return it
         return soa
 
+    def _get_ipver_str(self):
+        """Returns a 'v4' or 'v6' string representing a IP version
+        depending on the socket family. This is for an internal use
+        only (except for tests). This is supported only for IP sockets.
+        It raises a ValueError exception on other address families.
+
+        """
+        if self.socket.family == socket.AF_INET:
+            return 'v4'
+        elif self.socket.family == socket.AF_INET6:
+            return 'v6'
+        raise ValueError("Invalid address family. "
+                         "This is supported only for IP sockets")
 
     def _check_soa_serial(self):
         '''Send SOA query and compare the local and remote serials.
@@ -902,6 +917,9 @@ class XfrinConnection(asyncore.dispatcher):
         '''
 
         self._send_query(RRType.SOA)
+        # count soaoutv4 or soaoutv6 requests
+        self._counters.inc('zones', self._zone_name.to_text(),
+                           'soaout' + self._get_ipver_str())
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -931,9 +949,7 @@ class XfrinConnection(asyncore.dispatcher):
         try:
             ret = XFRIN_OK
             self._request_type = request_type
-            # Right now RRType.[IA]XFR().to_text() is 'TYPExxx', so we need
-            # to hardcode here.
-            req_str = 'IXFR' if request_type == RRType.IXFR else 'AXFR'
+            req_str = request_type.to_text()
             if check_soa:
                 self._check_soa_serial()
                 self.close()
@@ -941,7 +957,16 @@ class XfrinConnection(asyncore.dispatcher):
                 if not self.connect_to_master():
                     raise XfrinException('Unable to reconnect to master')
 
+            # start statistics timer
+            # Note: If the timer for the zone is already started but
+            # not yet stopped due to some error, the last start time
+            # is overwritten at this point.
+            self._counters.start_timer('zones', self._zone_name.to_text(),
+                                       'last_' + req_str.lower() + '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
+            # An AXFR or IXFR is being requested.
+            self._counters.inc('zones', self._zone_name.to_text(),
+                               req_str.lower() + 'req' + self._get_ipver_str())
             self._send_query(self._request_type)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
@@ -968,7 +993,6 @@ class XfrinConnection(asyncore.dispatcher):
                             "%.3f" % self._transfer_stats.get_running_time(),
                             "%.f" % self._transfer_stats.get_bytes_per_second()
                            )
-
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger
             # of trying another primary server, etc, but for now we treat it
@@ -1004,11 +1028,21 @@ class XfrinConnection(asyncore.dispatcher):
                          self.zone_str(), str(e))
             ret = XFRIN_FAIL
         finally:
+            # A xfrsuccess or xfrfail counter is incremented depending on
+            # the result.
+            result = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}[ret]
+            self._counters.inc('zones', self._zone_name.to_text(), result)
+            # The started statistics timer is finally stopped only in
+            # a successful case.
+            if ret == XFRIN_OK:
+                self._counters.stop_timer('zones',
+                                          self._zone_name.to_text(),
+                                          'last_' + req_str.lower() +
+                                          '_duration')
             # Make sure any remaining transaction in the diff is closed
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
             self._diff = None
-
         return ret
 
     def _check_response_header(self, msg):
@@ -1339,6 +1373,7 @@ class Xfrin:
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
+        self._counters = Counters(SPECFILE_LOCATION)
 
     def _cc_setup(self):
         '''This method is used only as part of initialization, but is
@@ -1484,6 +1519,7 @@ class Xfrin:
             th.join()
 
     def command_handler(self, command, args):
+        logger.debug(DBG_XFRIN_TRACE, XFRIN_RECEIVED_COMMAND, command)
         answer = create_answer(0)
         try:
             if command == 'shutdown':
@@ -1551,6 +1587,14 @@ class Xfrin:
                                        tsig_key, request_type,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
+
+            # return statistics data to the stats daemon
+            elif command == "getstats":
+                # The log level is here set to debug in order to avoid
+                # that a log becomes too verbose. Because the
+                # b10-stats daemon is periodically asking to the
+                # b10-xfrin daemon.
+                answer = create_answer(0, self._counters.get_statistics())
 
             else:
                 answer = create_answer(1, 'unknown command: ' + command)

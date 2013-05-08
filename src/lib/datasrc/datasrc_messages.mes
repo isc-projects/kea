@@ -354,15 +354,12 @@ Therefore, the entire data source will not be available for this process. If
 this is a problem, you should configure the zones of that data source to some
 database backend (sqlite3, for example) and use it from there.
 
-% DATASRC_LOAD_FROM_FILE_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from a
-file. The zone was not loaded. The specific error is shown in the
-message, and should be addressed.
-
-% DATASRC_LOAD_FROM_ITERATOR_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from
-another data source. The zone was not loaded. The specific error is
-shown in the message, and should be addressed.
+% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source %3: %4
+During data source configuration, an error was found in the zone data
+when it was being loaded in to memory on the shown data source.  This
+particular zone was not loaded, but data source configuration
+continues, possibly loading other zones into memory. The specific
+error is shown in the message, and should be addressed.
 
 % DATASRC_MASTER_LOAD_ERROR %1:%2: Zone '%3/%4' contains error: %5
 There's an error in the given master file. The zone won't be loaded for

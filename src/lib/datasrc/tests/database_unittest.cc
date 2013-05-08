@@ -25,7 +25,7 @@
 #include <datasrc/database.h>
 #include <datasrc/zone.h>
 #include <datasrc/zone_finder.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -167,7 +167,8 @@ public:
     virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
     {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
-    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string
+                                         (&)[DEL_NSEC3_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -634,9 +635,8 @@ private:
     };
 
     // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
-    void deleteRecord(Domains& domains,
-                      const string (&params)[DEL_PARAM_COUNT])
-    {
+    template<size_t param_count>
+    void deleteRecord(Domains& domains, const string (&params)[param_count]) {
         vector<vector<string> >& records =
             domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
@@ -655,7 +655,7 @@ public:
     }
 
     virtual void deleteNSEC3RecordInZone(
-        const string (&params)[DEL_PARAM_COUNT])
+        const string (&params)[DEL_NSEC3_PARAM_COUNT])
     {
         deleteRecord(*update_nsec3_namespace_, params);
     }

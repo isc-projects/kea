@@ -24,7 +24,7 @@
 
 #include <datasrc/client.h>
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/zone.h>
 
