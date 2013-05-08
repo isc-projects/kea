@@ -143,7 +143,7 @@ public:
     /// when exception occurs). This structure extends parent
     /// structure with new field ifindex_ that holds interface
     /// index where socket is bound to.
-    struct TestControlSocket : public dhcp::IfaceMgr::SocketInfo {
+    struct TestControlSocket : public dhcp::SocketInfo {
         /// Interface index.
         uint16_t ifindex_;
         /// Is socket valid. It will not be valid if the provided socket

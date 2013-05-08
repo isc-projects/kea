@@ -16,7 +16,7 @@
 
 #include <datasrc/sqlite3_accessor.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <dns/rrclass.h>
 
@@ -823,8 +823,7 @@ const char* const nsec3_sig_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
 const char* const nsec3_deleted_data[] = {
     // Delete parameters for nsec3_data
     apex_hash, nsec3_data[DatabaseAccessor::ADD_NSEC3_TYPE],
-    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA],
-    apex_hash
+    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA]
 };
 
 class SQLite3Update : public SQLite3AccessorTest {
@@ -854,6 +853,7 @@ protected:
     std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
     std::string add_nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT];
     std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
+    std::string del_nsec3_params[DatabaseAccessor::DEL_NSEC3_PARAM_COUNT];
     std::string diff_params[DatabaseAccessor::DIFF_PARAM_COUNT];
 
     vector<const char* const*> expected_stored; // placeholder for checkRecords
@@ -1193,8 +1193,9 @@ TEST_F(SQLite3Update, deleteNSEC3Record) {
 
     // Delete it, and confirm that.
     copy(nsec3_deleted_data,
-         nsec3_deleted_data + DatabaseAccessor::DEL_PARAM_COUNT, del_params);
-    accessor->deleteNSEC3RecordInZone(del_params);
+         nsec3_deleted_data + DatabaseAccessor::DEL_NSEC3_PARAM_COUNT,
+         del_nsec3_params);
+    accessor->deleteNSEC3RecordInZone(del_nsec3_params);
     checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 
     // Commit the change, and confirm the deleted data still isn't there.
@@ -1251,7 +1252,7 @@ TEST_F(SQLite3Update, invalidDelete) {
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
 
     // Same for NSEC3.
-    EXPECT_THROW(accessor->deleteNSEC3RecordInZone(del_params),
+    EXPECT_THROW(accessor->deleteNSEC3RecordInZone(del_nsec3_params),
                  DataSourceError);
 }
 

@@ -12,7 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "util/memory_segment_local.h"
+#include <util/tests/memory_segment_common_unittest.h>
+
+#include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -104,6 +106,11 @@ TEST(MemorySegmentLocal, TestNullDeallocate) {
 
     // This should still return true.
     EXPECT_TRUE(segment->allMemoryDeallocated());
+}
+
+TEST(MemorySegmentLocal, namedAddress) {
+    MemorySegmentLocal segment;
+    isc::util::test::checkSegmentNamedAddress(segment, true);
 }
 
 } // anonymous namespace

@@ -342,8 +342,10 @@ public:
     /// \brief Result of the reload() method.
     enum ReloadResult {
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
-        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
+        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
+                            ///  (including the case cache is disabled for
+                            ///  the specific data source).
+        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
         ZONE_SUCCESS        ///< The zone was successfully reloaded or
                             ///  the writer provided.
     };
@@ -418,6 +420,10 @@ public:
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
+
+        const internal::CacheConfig* getCacheConfig() const {
+            return (cache_conf_.get());
+        }
     private:
         // this is kept private for now.  When it needs to be accessed,
         // we'll add a read-only getter method.

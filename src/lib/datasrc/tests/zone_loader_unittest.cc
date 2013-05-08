@@ -13,11 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/zone_loader.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/rrset_collection_base.h>
+#include <datasrc/cache_config.h>
 
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/zone_writer.h>
 
 #include <dns/rrclass.h>
 #include <dns/name.h>
@@ -25,6 +27,8 @@
 #include <dns/rdataclass.h>
 #include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
+
+#include <cc/data.h>
 
 #include <gtest/gtest.h>
 
@@ -37,6 +41,7 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc;
+using isc::data::Element;
 using boost::shared_ptr;
 using std::string;
 using std::vector;
@@ -301,13 +306,28 @@ protected:
 
         // (re)configure zone table, then (re)construct the in-memory client
         // with it.
-        ztable_segment_.reset(memory::ZoneTableSegment::create(rrclass_,
-                                                               "local"));
+        string param_data;
+        if (filename) {
+            param_data = "\"" + zone.toText() + "\": \"" +
+                string(TEST_DATA_DIR) + "/" + filename + "\"";
+        }
+        const internal::CacheConfig cache_conf(
+            "MasterFiles", NULL, *Element::fromJSON(
+                "{\"cache-enable\": true,"
+                " \"params\": {" + param_data + "}}"), true);
+        ztable_segment_.reset(memory::ZoneTableSegment::create(
+                                  rrclass_, cache_conf.getSegmentType()));
+        if (filename) {
+            boost::scoped_ptr<memory::ZoneWriter> writer(
+                ztable_segment_->getZoneWriter(cache_conf.getLoadAction(
+                                                   rrclass_, zone),
+                                               zone, rrclass_));
+            writer->load();
+            writer->install();
+            writer->cleanup();
+        }
         source_client_.reset(new memory::InMemoryClient(ztable_segment_,
                                                         rrclass_));
-        if (filename) {
-            source_client_->load(zone, string(TEST_DATA_DIR) + "/" + filename);
-        }
     }
 private:
     const RRClass rrclass_;

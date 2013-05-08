@@ -58,9 +58,15 @@ public:
     template<class Ptr, class Server> void addServerFromFD(int fd, int af) {
         Ptr server(new Server(io_service_.get_io_service(), fd, af, checkin_,
                               lookup_, answer_));
-        server->setTCPRecvTimeout(tcp_recv_timeout_);
-        (*server)();
-        servers_.push_back(server);
+        startServer(server);
+    }
+
+    // SyncUDPServer has different constructor signature so it cannot be
+    // templated.
+    void addSyncUDPServerFromFD(int fd, int af) {
+        SyncUDPServerPtr server(new SyncUDPServer(io_service_.get_io_service(),
+                                                  fd, af, lookup_));
+        startServer(server);
     }
 
     void setTCPRecvTimeout(size_t timeout) {
@@ -71,6 +77,13 @@ public:
         for (; it != servers_.end(); ++it) {
             (*it)->setTCPRecvTimeout(timeout);
         }
+    }
+
+private:
+    void startServer(DNSServerPtr server) {
+        server->setTCPRecvTimeout(tcp_recv_timeout_);
+        (*server)();
+        servers_.push_back(server);
     }
 };
 
@@ -95,8 +108,7 @@ void DNSService::addServerUDPFromFD(int fd, int af, ServerFlag options) {
                   << options);
     }
     if ((options & SERVER_SYNC_OK) != 0) {
-        impl_->addServerFromFD<DNSServiceImpl::SyncUDPServerPtr,
-            SyncUDPServer>(fd, af);
+        impl_->addSyncUDPServerFromFD(fd, af);
     } else {
         impl_->addServerFromFD<DNSServiceImpl::UDPServerPtr, UDPServer>(
             fd, af);

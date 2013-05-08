@@ -21,6 +21,7 @@ if HAVE_GTEST
 TESTS += run_unittests
 
 run_unittests_SOURCES = run_unittests.cc
+run_unittests_SOURCES += zone_loader_util.h zone_loader_util.cc
 run_unittests_SOURCES += rdata_serialization_unittest.cc
 run_unittests_SOURCES += rdataset_unittest.cc
 run_unittests_SOURCES += domaintree_unittest.cc
