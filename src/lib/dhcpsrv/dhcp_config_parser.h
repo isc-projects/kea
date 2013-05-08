@@ -157,7 +157,7 @@ class ValueStorage {
         /// @param name is the name of the parameter for which the data
         /// value is desired.
         ///
-        /// @return The paramater's data value of type <ValueType>.
+        /// @return The parameter's data value of type \<ValueType\>.
         /// @throw DhcpConfigError if the parameter is not found.
         ValueType getParam(const std::string& name) const {
             typename std::map<std::string, ValueType>::const_iterator param 

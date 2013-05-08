@@ -299,6 +299,7 @@ public:
     ///
     /// \param server The DNSServer as passed to processMessage()
     /// \param message The response as constructed by processMessage()
+    /// \param stats_attrs TODO
     /// \param done If true, it indicates there is a response.
     ///             this value will be passed to server->resume(bool)
     void resumeServer(isc::asiodns::DNSServer* server,

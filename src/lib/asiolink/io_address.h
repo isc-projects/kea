@@ -196,7 +196,7 @@ public:
     ///
     /// \param other Address to compare against.
     ///
-    /// See \ref smaller_than method for details.
+    /// See \ref lessThan method for details.
     bool operator<(const IOAddress& other) const {
         return (lessThan(other));
     }
@@ -205,7 +205,7 @@ public:
     ///
     /// \param other Address to compare against.
     ///
-    /// See \ref smaller_equal method for details.
+    /// See \ref smallerEqual method for details.
     bool operator<=(const IOAddress& other) const {
         return (smallerEqual(other));
     }

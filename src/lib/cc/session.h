@@ -163,7 +163,7 @@ namespace isc {
 
             /// @brief returns socket descriptor from underlying socket connection
             ///
-            /// @param returns socket descriptor used for session connection
+            /// @return socket descriptor used for session connection
             virtual int getSocketDesc() const;
     private:
             // The following two methods are virtual to allow tests steal and

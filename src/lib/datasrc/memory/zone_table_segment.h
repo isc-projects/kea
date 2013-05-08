@@ -133,7 +133,7 @@ public:
     /// This creates a new write that can be used to update zones
     /// inside this zone table segment.
     ///
-    /// \param loadAction Callback to provide the actual data.
+    /// \param load_action Callback to provide the actual data.
     /// \param origin The origin of the zone to reload.
     /// \param rrclass The class of the zone to reload.
     /// \return New instance of a zone writer. The ownership is passed
