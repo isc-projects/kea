@@ -988,6 +988,32 @@ TEST_F(ListTest, reloadZoneGone) {
               list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
+TEST_F(ListTest, reloadNewZone) {
+    // Test the case where a zone to be cached originally doesn't exist
+    // in the underlying data source and is added later.  reload() will
+    // succeed once it's available in the data source.
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"test_type\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.org\", \"example.com\"],"
+        "   \"params\": [\"example.org\"]"
+        "}]"));
+    list_->configure(elem, true);
+    checkDS(0, "test_type", "[\"example.org\"]", true); // no example.com
+
+    // We can't reload it either
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
+              doReload(Name("example.com")));
+
+    // If we add the zone, we can now reload it
+    static_cast<MockDataSourceClient*>(
+        list_->getDataSources()[0].data_src_client_)->
+        insertZone(Name("example.com"));
+    EXPECT_EQ(ConfigurableClientList::ZONE_SUCCESS,
+              doReload(Name("example.com")));
+}
+
 // The underlying data source throws. Check we don't modify the state.
 TEST_F(ListTest, reloadZoneThrow) {
     list_->configure(config_elem_zones_, true);
