@@ -543,7 +543,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
         // This is a relayed message
         OptionPtr interface_id = question->getAnyRelayOption(D6O_INTERFACE_ID,
-                                                             Pkt6::RELAY_SEARCH_FIRST);
+                                                             Pkt6::RELAY_GET_FIRST);
         if (interface_id) {
             subnet = CfgMgr::instance().getSubnet6(interface_id);
         }
