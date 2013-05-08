@@ -54,7 +54,7 @@ public:
     virtual SegmentPtr create() const = 0;
     // Clean-up after the test. Most of them will be just NOP (the default),
     // but the file-mapped one needs to remove the file.
-    virtual void cleanup() const {};
+    virtual void cleanup() const {}
 };
 
 ZoneNode*
