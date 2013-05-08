@@ -115,8 +115,9 @@ private:
     bool processHeader(isc::util::MemorySegmentMapped& segment, bool create,
                        std::string& error_msg);
 
-    void openReadWrite(const std::string& filename, bool create);
-    void openReadOnly(const std::string& filename);
+    isc::util::MemorySegmentMapped* openReadWrite(const std::string& filename,
+                                                  bool create);
+    isc::util::MemorySegmentMapped* openReadOnly(const std::string& filename);
 
     template<typename T> T* getHeaderHelper() const;
 

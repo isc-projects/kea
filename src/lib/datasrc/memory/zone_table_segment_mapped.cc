@@ -153,7 +153,7 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
     return (true);
 }
 
-void
+MemorySegmentMapped*
 ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
                                       bool create)
 {
@@ -179,10 +179,10 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
          }
     }
 
-    mem_sgmt_.reset(segment.release());
+    return (segment.release());
 }
 
-void
+MemorySegmentMapped*
 ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
     // In case the checksum or table header is missing, we throw. We
     // want the segment to be automatically destroyed then.
@@ -229,7 +229,7 @@ ZoneTableSegmentMapped::openReadOnly(const std::string& filename) {
          }
     }
 
-    mem_sgmt_.reset(segment.release());
+    return (segment.release());
 }
 
 void
@@ -263,21 +263,26 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         sync();
     }
 
+    // In case current_filename_ below fails, we want the segment to be
+    // automatically destroyed.
+    std::auto_ptr<MemorySegmentMapped> segment;
+
     switch (mode) {
     case CREATE:
-        openReadWrite(filename, true);
+        segment.reset(openReadWrite(filename, true));
         break;
 
     case READ_WRITE:
-        openReadWrite(filename, false);
+        segment.reset(openReadWrite(filename, false));
         break;
 
     case READ_ONLY:
-        openReadOnly(filename);
+        segment.reset(openReadOnly(filename));
     }
 
-    current_mode_ = mode;
     current_filename_ = filename;
+    current_mode_ = mode;
+    mem_sgmt_.reset(segment.release());
 }
 
 void
