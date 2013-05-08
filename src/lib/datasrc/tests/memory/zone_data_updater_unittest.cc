@@ -116,7 +116,7 @@ protected:
 class TestSegmentCreator : public SegmentCreator {
 public:
     virtual SegmentPtr create() const {
-        return SegmentPtr(new test::MemorySegmentTest);
+        return (SegmentPtr(new test::MemorySegmentTest));
     }
 };
 
@@ -131,7 +131,7 @@ public:
     virtual SegmentPtr create() const {
         // We are not really supposed to create the segment directly in real
         // code, but it should be OK inside tests.
-        return SegmentPtr(new isc::util::MemorySegmentLocal);
+        return (SegmentPtr(new isc::util::MemorySegmentLocal));
     }
 };
 
@@ -148,8 +148,10 @@ public:
         initial_size_(initial_size)
     {}
     virtual SegmentPtr create() const {
-        return SegmentPtr(new isc::util::MemorySegmentMapped(mapped_file,
-            isc::util::MemorySegmentMapped::CREATE_ONLY, initial_size_));
+        return (SegmentPtr(new isc::util::MemorySegmentMapped(
+                               mapped_file,
+                               isc::util::MemorySegmentMapped::CREATE_ONLY,
+                               initial_size_)));
     }
     virtual void cleanup() const {
         EXPECT_EQ(0, unlink(mapped_file));
