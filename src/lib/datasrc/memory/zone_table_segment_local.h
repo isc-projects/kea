@@ -18,6 +18,8 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <util/memory_segment_local.h>
 
+#include <string>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
@@ -41,6 +43,9 @@ protected:
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentLocal();
+
+    /// \brief Returns "local" as the implementation type.
+    virtual const std::string& getImplType() const;
 
     /// \brief This method has an empty definition.
     virtual void resetHeader();
@@ -75,7 +80,16 @@ public:
     /// \throw isc::NotImplemented
     virtual void clear();
 
+    /// \brief Return true if the segment is usable.
+    ///
+    /// Local segments are always usable. This implementation always
+    /// returns true.
+    virtual bool isUsable() const {
+        return (true);
+    }
+
 private:
+    std::string impl_type_;
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;
 };

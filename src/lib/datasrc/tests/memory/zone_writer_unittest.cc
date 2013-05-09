@@ -95,6 +95,13 @@ public:
         ZoneTableSegmentMock(rrclass, mem_sgmt)
     {}
 
+    // Returns false indicating that the segment is not usable. We
+    // override this too as ZoneTableSegment implementations may use it
+    // internally.
+    virtual bool isUsable() const {
+        return (false);
+    }
+
     // Returns false indicating it is a read-only segment. It is used in
     // the ZoneWriter tests.
     virtual bool isWritable() const {

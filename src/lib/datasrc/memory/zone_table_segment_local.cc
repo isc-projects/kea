@@ -23,6 +23,7 @@ namespace memory {
 
 ZoneTableSegmentLocal::ZoneTableSegmentLocal(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
+    impl_type_("local"),
     header_(ZoneTable::create(mem_sgmt_, rrclass))
 {
 }
@@ -35,6 +36,11 @@ ZoneTableSegmentLocal::~ZoneTableSegmentLocal() {
 
     ZoneTable::destroy(mem_sgmt_, header_.getTable());
     assert(mem_sgmt_.allMemoryDeallocated());
+}
+
+const std::string&
+ZoneTableSegmentLocal::getImplType() const {
+    return (impl_type_);
 }
 
 void
