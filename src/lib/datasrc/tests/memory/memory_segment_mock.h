@@ -33,9 +33,9 @@ namespace test {
 // allocate() will succeed, and the 3rd call will fail with an exception.
 // This segment object can be used after the exception is thrown, and the
 // count is internally reset to 0.
-class MemorySegmentTest : public isc::util::MemorySegmentLocal {
+class MemorySegmentMock : public isc::util::MemorySegmentLocal {
 public:
-    MemorySegmentTest() : throw_count_(0) {}
+    MemorySegmentMock() : throw_count_(0) {}
     virtual void* allocate(std::size_t size) {
         if (throw_count_ > 0) {
             if (--throw_count_ == 0) {

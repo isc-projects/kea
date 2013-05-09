@@ -19,7 +19,7 @@
 #include <dns/rrclass.h>
 #include <dns/name.h>
 
-#include <datasrc/tests/memory/memory_segment_test.h>
+#include <datasrc/tests/memory/memory_segment_mock.h>
 #include <datasrc/tests/memory/zone_table_segment_mock.h>
 
 #include <gtest/gtest.h>
@@ -103,7 +103,7 @@ public:
 };
 
 TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
-    MemorySegmentTest mem_sgmt;
+    MemorySegmentMock mem_sgmt;
     ReadOnlySegment ztable_segment(RRClass::IN(), mem_sgmt);
     EXPECT_THROW(ZoneWriter(ztable_segment,
                             bind(&ZoneWriterTest::loadAction, this, _1),

@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/tests/memory/memory_segment_test.h>
+#include <datasrc/tests/memory/memory_segment_mock.h>
 #include <datasrc/tests/memory/zone_table_segment_mock.h>
 #include <datasrc/tests/memory/zone_loader_util.h>
 
@@ -221,7 +221,7 @@ protected:
     const RRClass class_;
     const Name origin_;
     // The zone finder to torture by tests
-    MemorySegmentTest mem_sgmt_;
+    MemorySegmentMock mem_sgmt_;
     memory::ZoneData* zone_data_;
     memory::InMemoryZoneFinder zone_finder_;
     ZoneDataUpdater updater_;

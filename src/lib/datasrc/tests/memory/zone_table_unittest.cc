@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "memory_segment_test.h"
-
 #include <exceptions/exceptions.h>
 
 #include <util/memory_segment_local.h>
@@ -25,6 +23,8 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/segment_object_holder.h>
+
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -56,7 +56,7 @@ protected:
     }
     const RRClass zclass_;
     const Name zname1, zname2, zname3;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     ZoneTable* zone_table;
 };
 
