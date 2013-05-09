@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/tests/memory/memory_segment_test.h>
-#include <datasrc/tests/memory/zone_table_segment_test.h>
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
 #include <datasrc/tests/memory/zone_loader_util.h>
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
@@ -1613,7 +1613,7 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
 TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
     const Name name("example.com.");
     shared_ptr<ZoneTableSegment> ztable_segment(
-         new ZoneTableSegmentTest(class_, mem_sgmt_));
+         new ZoneTableSegmentMock(class_, mem_sgmt_));
     loadZoneIntoTable(*ztable_segment, name, class_,
                       TEST_DATA_DIR "/2504-test.zone");
     InMemoryClient client(ztable_segment, class_);
@@ -1775,7 +1775,7 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
 
      const Name name("example.com.");
      shared_ptr<ZoneTableSegment> ztable_segment(
-          new ZoneTableSegmentTest(class_, mem_sgmt_));
+          new ZoneTableSegmentMock(class_, mem_sgmt_));
      loadZoneIntoTable(*ztable_segment, name, class_,
                        TEST_DATA_DIR "/2503-test.zone");
      InMemoryClient client(ztable_segment, class_);
