@@ -248,6 +248,7 @@ class TestHttpHandler(unittest.TestCase):
 
     def tearDown(self):
         self.client.close()
+        self.stats_httpd_server.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
 
