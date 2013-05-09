@@ -30,6 +30,9 @@ namespace isc {
 
 namespace dhcp {
 
+class Pkt6;
+typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
+
 class Pkt6 {
 public:
     /// specifies non-relayed DHCPv6 packet header length (over UDP)
@@ -44,6 +47,28 @@ public:
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
 
+    /// @brief defines relay search pattern
+    ///
+    /// Defines order in which options are searched in a message that
+    /// passed through mulitple relays. RELAY_SEACH_FROM_CLIENT will
+    /// start search from the relay that was the closest to the client
+    /// (i.e. innermost in the encapsulated message, which also means
+    /// this was the first relay that forwarded packet received by the
+    /// server and this will be the last relay that will handle the
+    /// response that server sent towards the client.).
+    /// RELAY_SEARCH_FROM_SERVER is the opposite. This will be the
+    /// relay closest to the server (i.e. outermost in the encapsulated
+    /// message, which also means it was the last relay that relayed
+    /// the received message and will be the first one to process
+    /// server's response). RELAY_GET_FIRST will try to get option from
+    /// the first relay only (closest to the client), RELAY_GET_LAST will
+    /// try to get option form the the last relay (closest to the server).
+    enum RelaySearchOrder {
+        RELAY_SEARCH_FROM_CLIENT = 1,
+        RELAY_SEARCH_FROM_SERVER = 2,
+        RELAY_GET_FIRST = 3,
+        RELAY_GET_LAST = 4
+    };
 
     /// @brief structure that describes a single relay information
     ///
@@ -201,6 +226,18 @@ public:
     /// @return pointer to the option (or NULL if there is no such option)
     OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
 
+    /// @brief Return first instance of a specified option
+    ///
+    /// When a client's packet traverses multiple relays, each passing relay may
+    /// insert extra options. This method allows the specific instance of a given
+    /// option to be obtained (e.g. closest to the client, closest to the server,
+    /// etc.) See @ref RelaySearchOrder for a detailed description.
+    ///
+    /// @param option_code searched option
+    /// @param order option search order (see @ref RelaySearchOrder)
+    /// @return option pointer (or NULL if no option matches specified criteria)
+    OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
+
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
@@ -356,6 +393,14 @@ public:
     ///         be freed by the caller.
     const char* getName() const;
 
+    /// @brief copies relay information from client's packet to server's response
+    ///
+    /// This information is not simply copied over. Some parameter are
+    /// removed, msg_type_is updated (RELAY-FORW => RELAY-REPL), etc.
+    ///
+    /// @param question client's packet
+    void copyRelayInfo(const Pkt6Ptr& question);
+
     /// relay information
     ///
     /// this is a public field. Otherwise we hit one of the two problems:
@@ -493,8 +538,6 @@ protected:
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
 }; // Pkt6 class
-
-typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
 } // isc::dhcp namespace
 
