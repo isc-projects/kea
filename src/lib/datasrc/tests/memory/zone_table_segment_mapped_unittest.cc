@@ -480,6 +480,46 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
+TEST_F(ZoneTableSegmentMappedTest, resetCreateOverCorruptedFile) {
+    setupMappedFiles();
+
+    // Corrupt mapped file 1.
+    scoped_ptr<MemorySegmentMapped> segment
+        (new MemorySegmentMapped(mapped_file,
+                                 MemorySegmentMapped::OPEN_OR_CREATE));
+    EXPECT_TRUE(verifyData(*segment));
+    corruptChecksum(*segment);
+    segment.reset();
+
+    // Resetting mapped file 1 in CREATE mode over a corrupted file
+    // should pass.
+    EXPECT_NO_THROW(ztable_segment_->reset(ZoneTableSegment::CREATE,
+                                           config_params_));
+
+    // Check for the old data in the segment. It should not be present
+    // (as we opened the segment in CREATE mode).
+    EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
+
+    // Now try the same with missing checksum.
+    setupMappedFiles();
+
+    // Corrupt mapped file 1.
+    segment.reset(new MemorySegmentMapped(mapped_file,
+                                          MemorySegmentMapped::OPEN_OR_CREATE));
+    EXPECT_TRUE(verifyData(*segment));
+    deleteChecksum(*segment);
+    segment.reset();
+
+    // Resetting mapped file 1 in CREATE mode over a file missing
+    // checksum should pass.
+    EXPECT_NO_THROW(ztable_segment_->reset(ZoneTableSegment::CREATE,
+                                           config_params_));
+
+    // Check for the old data in the segment. It should not be present
+    // (as we opened the segment in CREATE mode).
+    EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
+}
+
 TEST_F(ZoneTableSegmentMappedTest, resetHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
     EXPECT_THROW(ztable_segment_->resetHeader(), isc::InvalidOperation);
