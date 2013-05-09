@@ -28,16 +28,16 @@ namespace test {
 // A special ZoneTableSegment that can be used for tests.  It can be
 // passed a MemorySegment that can be used later to test if all memory
 // was de-allocated on it.
-class ZoneTableSegmentTest : public ZoneTableSegment {
+class ZoneTableSegmentMock : public ZoneTableSegment {
 public:
-    ZoneTableSegmentTest(const isc::dns::RRClass& rrclass,
+    ZoneTableSegmentMock(const isc::dns::RRClass& rrclass,
                          isc::util::MemorySegment& mem_sgmt) :
         ZoneTableSegment(rrclass),
         mem_sgmt_(mem_sgmt),
         header_(ZoneTable::create(mem_sgmt_, rrclass))
     {}
 
-    virtual ~ZoneTableSegmentTest() {
+    virtual ~ZoneTableSegmentMock() {
         ZoneTable::destroy(mem_sgmt_, header_.getTable());
     }
 
