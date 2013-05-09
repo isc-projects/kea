@@ -46,6 +46,10 @@ public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentMapped();
 
+    /// \brief Reset the table header address from the named address in
+    /// the mapped file.
+    virtual void resetHeader();
+
     /// \brief Return the ZoneTableHeader for the mapped zone table
     /// segment implementation.
     ///
@@ -128,6 +132,7 @@ private:
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
+    ZoneTableHeader* cached_header_;
 };
 
 } // namespace memory
