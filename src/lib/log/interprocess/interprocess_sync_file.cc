@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "interprocess_sync_file.h"
+#include <log/interprocess/interprocess_sync_file.h>
 
 #include <string>
 #include <cerrno>
@@ -26,7 +26,8 @@
 #include <sys/stat.h>
 
 namespace isc {
-namespace util {
+namespace log {
+namespace internal {
 
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
@@ -128,5 +129,6 @@ InterprocessSyncFile::unlock() {
     return (false);
 }
 
-} // namespace util
+} // namespace internal
+} // namespace log
 } // namespace isc

@@ -24,8 +24,7 @@
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
-
-#include <util/interprocess_sync.h>
+#include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -258,7 +257,7 @@ public:
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger. If NULL is passed,
     /// a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::internal::InterprocessSync* sync);
 
     /// \brief Equality
     ///

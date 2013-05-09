@@ -12,18 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/interprocess_sync_file.h>
+#include <log/interprocess/interprocess_sync_file.h>
 
 #include <util/unittests/check_valgrind.h>
-#include <util/tests/interprocess_util.h>
+#include <util/unittests/interprocess_util.h>
 #include <gtest/gtest.h>
 #include <unistd.h>
 
 using namespace std;
-using isc::util::test::parentReadState;
-
-namespace isc {
-namespace util {
+using namespace isc::log::internal;
+using isc::util::unittests::parentReadState;
 
 namespace {
 TEST(InterprocessSyncFileTest, TestLock) {
@@ -150,6 +148,4 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
     EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test1_lockfile"));
 }
 
-} // anonymous namespace
-} // namespace util
-} // namespace isc
+} // unnamed namespace

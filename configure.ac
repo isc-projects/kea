@@ -1294,6 +1294,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/xfr/Makefile
                  src/lib/xfr/tests/Makefile
                  src/lib/log/Makefile
+                 src/lib/log/interprocess/Makefile
+                 src/lib/log/interprocess/tests/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/tests/Makefile
                  src/lib/resolve/Makefile
