@@ -41,6 +41,9 @@ protected:
     ZoneTableSegment* ztable_segment_;
 };
 
+TEST_F(ZoneTableSegmentTest, getImplType) {
+    EXPECT_EQ("local", ztable_segment_->getImplType());
+}
 
 TEST_F(ZoneTableSegmentTest, create) {
     // By default, a local zone table segment is created.
@@ -104,6 +107,11 @@ TEST_F(ZoneTableSegmentTest, getMemorySegment) {
     // This doesn't do anything fun except test the API.
     MemorySegment& mem_sgmt = ztable_segment_->getMemorySegment();
     mem_sgmt.allMemoryDeallocated(); // use mem_sgmt
+}
+
+TEST_F(ZoneTableSegmentTest, isUsable) {
+    // Local segments are always usable.
+    EXPECT_TRUE(ztable_segment_->isUsable());
 }
 
 TEST_F(ZoneTableSegmentTest, isWritable) {

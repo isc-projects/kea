@@ -36,6 +36,7 @@ const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
 
 ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
+    impl_type_("mapped"),
     rrclass_(rrclass),
     cached_header_(NULL)
 {
@@ -43,6 +44,11 @@ ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
 
 ZoneTableSegmentMapped::~ZoneTableSegmentMapped() {
     sync();
+}
+
+const std::string&
+ZoneTableSegmentMapped::getImplType() const {
+    return (impl_type_);
 }
 
 bool
@@ -325,7 +331,7 @@ ZoneTableSegmentMapped::resetHeader() {
     // getHeader() has to work on const objects too. So we do it here
     // now.
 
-    if (!mem_sgmt_) {
+    if (!isUsable()) {
         isc_throw(isc::InvalidOperation,
                   "resetHeader() called without calling reset() first");
     }
@@ -344,7 +350,7 @@ ZoneTableSegmentMapped::resetHeader() {
 template<typename T>
 T*
 ZoneTableSegmentMapped::getHeaderHelper() const {
-    if (!mem_sgmt_) {
+    if (!isUsable()) {
         isc_throw(isc::InvalidOperation,
                   "getHeader() called without calling reset() first");
     }
@@ -365,7 +371,7 @@ ZoneTableSegmentMapped::getHeader() const {
 
 MemorySegment&
 ZoneTableSegmentMapped::getMemorySegment() {
-    if (!mem_sgmt_) {
+    if (!isUsable()) {
         isc_throw(isc::InvalidOperation,
                   "getMemorySegment() called without calling reset() first");
     }
@@ -373,8 +379,14 @@ ZoneTableSegmentMapped::getMemorySegment() {
 }
 
 bool
+ZoneTableSegmentMapped::isUsable() const {
+    // If mem_sgmt_ is not empty, then it is usable.
+    return (mem_sgmt_);
+}
+
+bool
 ZoneTableSegmentMapped::isWritable() const {
-    if (!mem_sgmt_) {
+    if (!isUsable()) {
         // If reset() was never performed for this segment, or if the
         // most recent reset() had failed, then the segment is not
         // writable.

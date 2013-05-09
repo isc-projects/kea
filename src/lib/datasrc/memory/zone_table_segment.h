@@ -68,7 +68,7 @@ public:
 class ResetFailedAndSegmentCleared : public isc::Exception {
 public:
     ResetFailedAndSegmentCleared(const char* file, size_t line,
-				 const char* what) :
+                                 const char* what) :
         isc::Exception(file, line, what)
     {}
 };
@@ -118,6 +118,10 @@ protected:
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegment() {}
+
+    /// \brief Return a string name for the ZoneTableSegment
+    /// implementation.
+    virtual const std::string& getImplType() const = 0;
 
     /// \brief Return the ZoneTableHeader for the zone table segment.
     ///
@@ -262,6 +266,13 @@ public:
     ///
     /// \throw none
     virtual void clear() = 0;
+
+    /// \brief Return true if the memory segment has been successfully
+    /// \c reset().
+    ///
+    /// Note that after calling \c clear(), this method will return
+    /// false until the segment is reset again.
+    virtual bool isUsable() const = 0;
 
     /// \brief Reset the table header address.
     virtual void resetHeader() = 0;

@@ -20,6 +20,8 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_writer.h>
 
+#include <string>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
@@ -33,12 +35,17 @@ public:
     ZoneTableSegmentMock(const isc::dns::RRClass& rrclass,
                          isc::util::MemorySegment& mem_sgmt) :
         ZoneTableSegment(rrclass),
+        impl_type_("mock"),
         mem_sgmt_(mem_sgmt),
         header_(ZoneTable::create(mem_sgmt_, rrclass))
     {}
 
     virtual ~ZoneTableSegmentMock() {
         ZoneTable::destroy(mem_sgmt_, header_.getTable());
+    }
+
+    const std::string& getImplType() const {
+        return (impl_type_);
     }
 
     virtual void reset(MemorySegmentOpenMode, isc::data::ConstElementPtr) {
@@ -66,11 +73,16 @@ public:
         return (mem_sgmt_);
     }
 
+    virtual bool isUsable() const {
+        return (true);
+    }
+
     virtual bool isWritable() const {
         return (true);
     }
 
 private:
+    std::string impl_type_;
     isc::util::MemorySegment& mem_sgmt_;
     ZoneTableHeader header_;
 };

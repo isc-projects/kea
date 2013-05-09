@@ -172,6 +172,10 @@ ZoneTableSegmentMappedTest::setupMappedFiles() {
     ztable_segment_->clear();
 }
 
+TEST_F(ZoneTableSegmentMappedTest, getImplType) {
+    EXPECT_EQ("mapped", ztable_segment_->getImplType());
+}
+
 TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
     // This should throw as we haven't called reset() yet.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
@@ -180,6 +184,12 @@ TEST_F(ZoneTableSegmentMappedTest, getHeaderUninitialized) {
 TEST_F(ZoneTableSegmentMappedTest, getMemorySegmentUninitialized) {
     // This should throw as we haven't called reset() yet.
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
+}
+
+TEST_F(ZoneTableSegmentMappedTest, isUsableUninitialized) {
+    // isUsable() must return false by default, when the segment has not
+    // been reset() yet.
+    EXPECT_FALSE(ztable_segment_->isUsable());
 }
 
 TEST_F(ZoneTableSegmentMappedTest, isWritableUninitialized) {
@@ -252,13 +262,15 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
     EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
 
-    // isWritable() must still return false, because the segment has not
-    // been successfully reset() yet.
+    // isUsable() and isWritable() must still return false, because the
+    // segment has not been successfully reset() yet.
+    EXPECT_FALSE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
 
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_TRUE(ztable_segment_->isWritable());
 
     // The following method calls should no longer throw:
@@ -268,12 +280,14 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // Let's try to re-open the mapped file in READ_ONLY mode. It should
     // not fail now.
     ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params_);
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
 
     // Re-creating the mapped file should erase old data and should not
     // trigger any exceptions inside reset() due to old data (such as
     // named addresses).
     ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_TRUE(ztable_segment_->isWritable());
 
     // When we reset() with an invalid paramter and it fails, then the
@@ -282,6 +296,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
         ztable_segment_->reset(ZoneTableSegment::CREATE,
                                Element::fromJSON("{}"));
     }, isc::InvalidParameter);
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_TRUE(ztable_segment_->isWritable());
     // The following should not throw.
     EXPECT_NO_THROW(ztable_segment_->getHeader());
@@ -291,6 +306,7 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // would use existing named addresses. This actually re-opens the
     // currently open map.
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_TRUE(ztable_segment_->isWritable());
 }
 
@@ -301,6 +317,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreate) {
     // Open the underlying mapped file in create mode.
     ztable_segment_->reset(ZoneTableSegment::CREATE, config_params_);
 
+    ASSERT_TRUE(ztable_segment_->isUsable());
     ASSERT_TRUE(ztable_segment_->isWritable());
 
     // Add the data.
@@ -327,6 +344,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadWrite) {
     // Open the underlying mapped file in read+write mode.
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
 
+    ASSERT_TRUE(ztable_segment_->isUsable());
     ASSERT_TRUE(ztable_segment_->isWritable());
 
     // Add the data.
@@ -353,6 +371,7 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
     // Open the underlying mapped file in read+write mode.
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
 
+    ASSERT_TRUE(ztable_segment_->isUsable());
     ASSERT_TRUE(ztable_segment_->isWritable());
 
     // Add the data.
@@ -389,6 +408,7 @@ TEST_F(ZoneTableSegmentMappedTest, clearUninitialized) {
 
     // isWritable() must still return false, because the segment has not
     // been successfully reset() yet.
+    EXPECT_FALSE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
 }
 
@@ -397,6 +417,7 @@ TEST_F(ZoneTableSegmentMappedTest, clear) {
     // exist yet)
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
     EXPECT_TRUE(ztable_segment_->isWritable());
     // The following method calls should no longer throw:
     EXPECT_NO_THROW(ztable_segment_->getHeader());
@@ -405,6 +426,7 @@ TEST_F(ZoneTableSegmentMappedTest, clear) {
     // Now, clear the segment.
     ztable_segment_->clear();
 
+    EXPECT_FALSE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
     // The following method calls should now throw.
     EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
@@ -425,11 +447,13 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedCorruptedChecksum) {
     corruptChecksum(*segment);
     segment.reset();
 
-    // Opening mapped file 2 in read-write mode should fail
+    // Resetting to mapped file 2 in read-write mode should fail
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params2_);
     }, ResetFailed);
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
     // Check for the old data in the segment to make sure it is still
     // available and correct.
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
@@ -449,11 +473,13 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingChecksum) {
     deleteChecksum(*segment);
     segment.reset();
 
-    // Opening mapped file 2 in read-only mode should fail
+    // Resetting to mapped file 2 in read-only mode should fail
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
     // Check for the old data in the segment to make sure it is still
     // available and correct.
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
@@ -473,11 +499,13 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
     deleteHeader(*segment);
     segment.reset();
 
-    // Opening mapped file 2 in read-only mode should fail
+    // Resetting to mapped file 2 in read-only mode should fail
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
     // Check for the old data in the segment to make sure it is still
     // available and correct.
     EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
@@ -494,11 +522,13 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreateOverCorruptedFile) {
     corruptChecksum(*segment);
     segment.reset();
 
-    // Resetting mapped file 1 in CREATE mode over a corrupted file
+    // Resetting to mapped file 1 in CREATE mode over a corrupted file
     // should pass.
     EXPECT_NO_THROW(ztable_segment_->reset(ZoneTableSegment::CREATE,
                                            config_params_));
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
     // Check for the old data in the segment. It should not be present
     // (as we opened the segment in CREATE mode).
     EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
@@ -513,11 +543,13 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreateOverCorruptedFile) {
     deleteChecksum(*segment);
     segment.reset();
 
-    // Resetting mapped file 1 in CREATE mode over a file missing
+    // Resetting to mapped file 1 in CREATE mode over a file missing
     // checksum should pass.
     EXPECT_NO_THROW(ztable_segment_->reset(ZoneTableSegment::CREATE,
                                            config_params_));
 
+    EXPECT_TRUE(ztable_segment_->isUsable());
+    EXPECT_TRUE(ztable_segment_->isWritable());
     // Check for the old data in the segment. It should not be present
     // (as we opened the segment in CREATE mode).
     EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));

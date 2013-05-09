@@ -19,6 +19,7 @@
 #include <util/memory_segment_mapped.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <string>
 
 namespace isc {
 namespace datasrc {
@@ -45,6 +46,9 @@ protected:
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentMapped();
+
+    /// \brief Returns "mapped" as the implementation type.
+    virtual const std::string& getImplType() const;
 
     /// \brief Reset the table header address from the named address in
     /// the mapped file.
@@ -111,6 +115,11 @@ public:
     /// \brief Unmap the current file (if mapped).
     virtual void clear();
 
+    /// \brief Return true if the segment is usable.
+    ///
+    /// See the base class for the description.
+    virtual bool isUsable() const;
+
 private:
     void sync();
 
@@ -126,6 +135,7 @@ private:
     template<typename T> T* getHeaderHelper() const;
 
 private:
+    std::string impl_type_;
     isc::dns::RRClass rrclass_;
     MemorySegmentOpenMode current_mode_;
     std::string current_filename_;
