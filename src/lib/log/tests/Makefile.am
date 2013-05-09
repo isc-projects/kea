@@ -46,6 +46,8 @@ buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
+# This test directly uses libb10-threads, and on some systems it seems to
+# require explicit LDADD (even if libb10-log has indirect dependencies)
 noinst_PROGRAMS += logger_lock_test
 logger_lock_test_SOURCES = logger_lock_test.cc
 nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
@@ -53,6 +55,7 @@ logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
 logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
