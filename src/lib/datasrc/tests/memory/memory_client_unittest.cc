@@ -38,7 +38,7 @@
 #include <testutils/dnsmessage_test.h>
 
 #include "memory_segment_test.h"
-#include "zone_table_segment_test.h"
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -169,7 +169,7 @@ public:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                         ztable_segment_(new test::ZoneTableSegmentTest(
+                         ztable_segment_(new test::ZoneTableSegmentMock(
                              zclass_, mem_sgmt_)),
                          client_(new InMemoryClient(ztable_segment_, zclass_))
     {}
@@ -305,7 +305,7 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
         mem_sgmt_.setThrowCount(i);
         EXPECT_THROW({
             shared_ptr<ZoneTableSegment> ztable_segment(
-                new test::ZoneTableSegmentTest(
+                new test::ZoneTableSegmentMock(
                     zclass_, mem_sgmt_));
 
             // Include the InMemoryClient construction too here. Now,

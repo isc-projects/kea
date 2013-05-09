@@ -20,7 +20,7 @@
 #include <dns/name.h>
 
 #include <datasrc/tests/memory/memory_segment_test.h>
-#include <datasrc/tests/memory/zone_table_segment_test.h>
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -88,11 +88,11 @@ public:
     }
 };
 
-class ReadOnlySegment : public ZoneTableSegmentTest {
+class ReadOnlySegment : public ZoneTableSegmentMock {
 public:
     ReadOnlySegment(const isc::dns::RRClass& rrclass,
                     isc::util::MemorySegment& mem_sgmt) :
-        ZoneTableSegmentTest(rrclass, mem_sgmt)
+        ZoneTableSegmentMock(rrclass, mem_sgmt)
     {}
 
     // Returns false indicating it is a read-only segment. It is used in
