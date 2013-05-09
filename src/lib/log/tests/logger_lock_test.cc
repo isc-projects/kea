@@ -26,7 +26,7 @@ using namespace std;
 using namespace isc::log;
 using isc::util::thread::Mutex;
 
-class MockLoggingSync : public isc::log::internal::InterprocessSync {
+class MockLoggingSync : public isc::log::interprocess::InterprocessSync {
 public:
     /// \brief Constructor
     MockLoggingSync(const std::string& component_name) :

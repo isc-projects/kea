@@ -27,7 +27,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 // Forward declaration to hide implementation details from normal
 // applications.
 class InterprocessSync;
@@ -266,7 +266,7 @@ public:
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger. If NULL is passed,
     /// a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::log::internal::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
 
     /// \brief Equality
     ///

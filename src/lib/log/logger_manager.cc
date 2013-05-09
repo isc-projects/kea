@@ -158,7 +158,7 @@ LoggerManager::readLocalMessageFile(const char* file) {
     // the local state directory (to create lock files). So we switch to
     // using a null interprocess sync object here.
     logger.setInterprocessSync(
-        new isc::log::internal::InterprocessSyncNull("logger"));
+        new isc::log::interprocess::InterprocessSyncNull("logger"));
 
     try {
 

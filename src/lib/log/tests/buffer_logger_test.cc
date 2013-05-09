@@ -59,7 +59,7 @@ main(int argc, char** argv) {
     Logger logger("log");
     // No need for file interprocess locking in this test
     logger.setInterprocessSync(
-        new isc::log::internal::InterprocessSyncNull("logger"));
+        new isc::log::interprocess::InterprocessSyncNull("logger"));
     LOG_INFO(logger, LOG_BAD_SEVERITY).arg("info");
     LOG_DEBUG(logger, 50, LOG_BAD_DESTINATION).arg("debug-50");
     LOG_INFO(logger, LOG_BAD_SEVERITY).arg("info");
