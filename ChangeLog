@@ -1,4 +1,4 @@
-bind10-1.0.0beta2 released on May 3, 2013
+bind10-1.0.0beta2 released on May 10, 2013
 
 610.	[bug]		muks
 	When the sqlite3 program is not available on the system (in
