@@ -463,6 +463,19 @@ public:
     /// @return network interface name for directly attached subnets or ""
     std::string getIface() const;
 
+    /// @brief sets interface-id option (if defined)
+    ///
+    /// @param ifaceid pointer to interface-id option
+    void setInterfaceId(const OptionPtr& ifaceid) {
+        interface_id_ = ifaceid;
+    }
+
+    /// @brief returns interface-id value (if specified)
+    /// @return interface-id option (if defined)
+    OptionPtr getInterfaceId() const {
+        return interface_id_;
+    }
+
 protected:
 
     /// @brief Check if option is valid and can be added to a subnet.
@@ -477,6 +490,9 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("::"));
     }
+
+    /// @brief specifies optional interface-id
+    OptionPtr interface_id_;
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;
