@@ -17,3 +17,5 @@ libb10_log_interprocess_la_SOURCES += interprocess_sync_null.h
 libb10_log_interprocess_la_SOURCES += interprocess_sync_null.cc
 
 libb10_log_interprocess_la_LIBADD  = $(top_builddir)/src/lib/util/threads/libb10-threads.la
+
+EXTRA_DIST  = README
