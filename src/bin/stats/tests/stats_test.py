@@ -1285,6 +1285,15 @@ class TestStats(unittest.TestCase):
         """check statistics data of 'Init'."""
 
         stat = MyStats()
+        # At this point 'stat' is initialized with statistics for Stats,
+        # Init and Auth modules.  In this test, we only need to check for Init
+        # statistics, while do_polling() can ask for module statistics in an
+        # unpredictable order (if hash randomization is enabled, which is
+        # the case by default for Python 3.3).  To make it predictable and
+        # the prepared answer doesn't cause disruption, we remove the
+        # information for the Auth module for this test.
+        del stat.statistics_data['Auth']
+
         stat.update_modules = lambda: None
         create_answer = isc.config.ccsession.create_answer # shortcut
 
