@@ -375,6 +375,21 @@ TEST_F(ZoneTableSegmentMappedTest, resetReadOnly) {
                  MemorySegmentError);
 }
 
+TEST_F(ZoneTableSegmentMappedTest, clearUninitialized) {
+    // Clearing a segment that has not been reset() is a nop, as clear()
+    // returns it to a fresh uninitialized state anyway.
+    EXPECT_NO_THROW(ztable_segment_->clear());
+
+    // The following should still throw, because the segment has not
+    // been successfully reset() yet.
+    EXPECT_THROW(ztable_segment_->getHeader(), isc::InvalidOperation);
+    EXPECT_THROW(ztable_segment_->getMemorySegment(), isc::InvalidOperation);
+
+    // isWritable() must still return false, because the segment has not
+    // been successfully reset() yet.
+    EXPECT_FALSE(ztable_segment_->isWritable());
+}
+
 TEST_F(ZoneTableSegmentMappedTest, clear) {
     // First, open an underlying mapped file in read+write mode (doesn't
     // exist yet)
