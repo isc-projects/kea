@@ -75,6 +75,15 @@ SyncUDPServer::scheduleRead() {
 
 void
 SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
+    // If the server has been stopped, it could even have been destroyed
+    // by the time of this call.  We'll solve this problem in #2946, but
+    // until then we exit as soon as possible without accessing any other
+    // invalidated fields (note that referencing stopped_ is also incorrect,
+    // but experiments showed it often keeps the original value in practice,
+    // so we live with it until the complete fix).
+    if (stopped_) {
+        return;
+    }
     if (ec) {
         using namespace asio::error;
         const asio::error_code::value_type err_val = ec.value();
