@@ -589,7 +589,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
-    // Returned value should be 0 (configuration success)
+    // Returned value should be 1 (configuration error)
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(1, rcode_);
