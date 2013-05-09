@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <util/unittests/run_all.h>
-#include <stdlib.h>
-
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-
-    return (isc::util::unittests::run_all());
+namespace isc {
+namespace util {
+namespace unittests {
+/// \brief A helper utility for a simple synchronization with another process.
+///
+/// It waits for incoming data on a given file descriptor up to 5 seconds
+/// (arbitrary choice), read one byte data, and return it to the caller.
+/// On any failure it returns 0xff (255), so the sender process should use
+/// a different value to pass.
+unsigned char parentReadState(int fd);
 }
+}
+}
+
+// Local Variables:
+// mode: c++
+// End:
