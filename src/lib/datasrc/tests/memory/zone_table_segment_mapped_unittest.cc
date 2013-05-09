@@ -426,6 +426,10 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedCorruptedChecksum) {
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params2_);
     }, ResetFailed);
+
+    // Check for the old data in the segment to make sure it is still
+    // available and correct.
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
 TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingChecksum) {
@@ -446,6 +450,10 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingChecksum) {
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
+
+    // Check for the old data in the segment to make sure it is still
+    // available and correct.
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
 TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
@@ -466,6 +474,10 @@ TEST_F(ZoneTableSegmentMappedTest, resetFailedMissingHeader) {
     EXPECT_THROW({
         ztable_segment_->reset(ZoneTableSegment::READ_ONLY, config_params2_);
     }, ResetFailed);
+
+    // Check for the old data in the segment to make sure it is still
+    // available and correct.
+    EXPECT_TRUE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
 TEST_F(ZoneTableSegmentMappedTest, resetHeaderUninitialized) {
