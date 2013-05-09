@@ -31,8 +31,7 @@
 // BIND-10 logger files
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
-
-#include <util/interprocess_sync.h>
+#include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -178,7 +177,7 @@ public:
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger implementation.
     /// If NULL is passed, a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::internal::InterprocessSync* sync);
 
     /// \brief Equality
     ///
@@ -193,7 +192,7 @@ public:
 private:
     std::string                  name_;   ///< Full name of this logger
     log4cplus::Logger            logger_; ///< Underlying log4cplus logger
-    isc::util::InterprocessSync* sync_;
+    isc::log::internal::InterprocessSync* sync_;
 };
 
 } // namespace log

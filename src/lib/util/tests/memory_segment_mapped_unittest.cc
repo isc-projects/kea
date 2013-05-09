@@ -14,7 +14,7 @@
 
 #include <util/tests/memory_segment_common_unittest.h>
 #include <util/unittests/check_valgrind.h>
-#include <util/tests/interprocess_util.h>
+#include <util/unittests/interprocess_util.h>
 
 #include <util/memory_segment_mapped.h>
 #include <exceptions/exceptions.h>
@@ -42,7 +42,7 @@
 
 using namespace isc::util;
 using boost::scoped_ptr;
-using isc::util::test::parentReadState;
+using isc::util::unittests::parentReadState;
 
 namespace {
 // Shortcut to keep code shorter

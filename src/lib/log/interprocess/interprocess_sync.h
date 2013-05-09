@@ -18,7 +18,8 @@
 #include <string>
 
 namespace isc {
-namespace util {
+namespace log {
+namespace internal {
 
 class InterprocessSyncLocker; // forward declaration
 
@@ -143,7 +144,8 @@ protected:
     InterprocessSync& sync_; ///< Ref to underlying sync object
 };
 
-} // namespace util
+} // namespace internal
+} // namespace log
 } // namespace isc
 
 #endif // INTERPROCESS_SYNC_H

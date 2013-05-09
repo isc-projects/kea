@@ -15,10 +15,11 @@
 #ifndef INTERPROCESS_SYNC_NULL_H
 #define INTERPROCESS_SYNC_NULL_H
 
-#include <util/interprocess_sync.h>
+#include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
-namespace util {
+namespace log {
+namespace internal {
 
 /// \brief Null Interprocess Sync Class
 ///
@@ -58,7 +59,8 @@ protected:
     bool unlock();
 };
 
-} // namespace util
+} // namespace internal
+} // namespace log
 } // namespace isc
 
 #endif // INTERPROCESS_SYNC_NULL_H
