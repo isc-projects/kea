@@ -19,7 +19,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 
 class InterprocessSyncLocker; // forward declaration
 
@@ -144,7 +144,7 @@ protected:
     InterprocessSync& sync_; ///< Ref to underlying sync object
 };
 
-} // namespace internal
+} // namespace interprocess
 } // namespace log
 } // namespace isc
 

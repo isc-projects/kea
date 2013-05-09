@@ -177,7 +177,7 @@ public:
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger implementation.
     /// If NULL is passed, a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::log::internal::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
 
     /// \brief Equality
     ///
@@ -192,7 +192,7 @@ public:
 private:
     std::string                  name_;   ///< Full name of this logger
     log4cplus::Logger            logger_; ///< Underlying log4cplus logger
-    isc::log::internal::InterprocessSync* sync_;
+    isc::log::interprocess::InterprocessSync* sync_;
 };
 
 } // namespace log

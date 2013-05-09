@@ -53,7 +53,7 @@ namespace log {
 LoggerImpl::LoggerImpl(const string& name) :
     name_(expandLoggerName(name)),
     logger_(log4cplus::Logger::getInstance(name_)),
-    sync_(new internal::InterprocessSyncFile("logger"))
+    sync_(new interprocess::InterprocessSyncFile("logger"))
 {
 }
 
@@ -111,7 +111,8 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
 // Replace the interprocess synchronization object
 
 void
-LoggerImpl::setInterprocessSync(isc::log::internal::InterprocessSync* sync) {
+LoggerImpl::setInterprocessSync(isc::log::interprocess::InterprocessSync* sync)
+{
     if (sync == NULL) {
         isc_throw(BadInterprocessSync,
                   "NULL was passed to setInterprocessSync()");
@@ -129,7 +130,7 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
 
     // Use an interprocess sync locker for mutual exclusion from other
     // processes to avoid log messages getting interspersed.
-    internal::InterprocessSyncLocker locker(*sync_);
+    interprocess::InterprocessSyncLocker locker(*sync_);
 
     if (!locker.lock()) {
         LOG4CPLUS_ERROR(logger_, "Unable to lock logger lockfile");

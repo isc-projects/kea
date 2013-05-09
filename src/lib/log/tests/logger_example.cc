@@ -45,7 +45,7 @@
 
 using namespace isc::log;
 using namespace std;
-using isc::log::internal::InterprocessSyncNull;
+using isc::log::interprocess::InterprocessSyncNull;
 
 // Print usage information
 

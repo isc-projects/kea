@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace isc::log::internal;
+using namespace isc::log::interprocess;
 using isc::util::unittests::parentReadState;
 
 namespace {
