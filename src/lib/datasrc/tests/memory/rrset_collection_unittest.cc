@@ -15,12 +15,12 @@
 
 #include <datasrc/memory/rrset_collection.h>
 
-#include "memory_segment_test.h"
-
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
+
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -52,7 +52,7 @@ public:
     const RRClass rrclass;
     const Name origin;
     std::string zone_file;
-    test::MemorySegmentTest mem_sgmt;
+    test::MemorySegmentMock mem_sgmt;
     SegmentObjectHolder<ZoneData, RRClass> zone_data_holder;
     RRsetCollection collection;
 };

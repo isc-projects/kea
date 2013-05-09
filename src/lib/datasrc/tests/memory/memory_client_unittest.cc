@@ -37,7 +37,7 @@
 
 #include <testutils/dnsmessage_test.h>
 
-#include "memory_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
 #include <datasrc/tests/memory/zone_table_segment_mock.h>
 
 #include <gtest/gtest.h>
@@ -179,7 +179,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     shared_ptr<ZoneTableSegment> ztable_segment_;
     boost::scoped_ptr<InMemoryClient> client_;
 };
@@ -310,7 +310,7 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
 
             // Include the InMemoryClient construction too here. Now,
             // even allocations done from InMemoryClient constructor
-            // fail (due to MemorySegmentTest throwing) and we check for
+            // fail (due to MemorySegmentMock throwing) and we check for
             // leaks when this happens.
             InMemoryClient client2(ztable_segment, zclass_);
             loadZoneIntoTable(*ztable_segment, Name("example.org"), zclass_,

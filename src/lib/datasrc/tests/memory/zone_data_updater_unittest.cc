@@ -25,7 +25,7 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 
-#include "memory_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -66,7 +66,7 @@ protected:
 
     const Name zname_;
     const RRClass zclass_;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     ZoneData* zone_data_;
     boost::scoped_ptr<ZoneDataUpdater> updater_;
 };
