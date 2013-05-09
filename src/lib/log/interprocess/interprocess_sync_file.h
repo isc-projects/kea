@@ -15,11 +15,12 @@
 #ifndef INTERPROCESS_SYNC_FILE_H
 #define INTERPROCESS_SYNC_FILE_H
 
-#include <util/interprocess_sync.h>
+#include <log/interprocess/interprocess_sync.h>
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace util {
+namespace log {
+namespace internal {
 
 /// \brief InterprocessSyncFileError
 ///
@@ -85,7 +86,8 @@ private:
     int fd_; ///< The descriptor for the open file
 };
 
-} // namespace util
+} // namespace internal
+} // namespace log
 } // namespace isc
 
 #endif // INTERPROCESS_SYNC_FILE_H
