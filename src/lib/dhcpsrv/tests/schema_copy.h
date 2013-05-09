@@ -51,6 +51,10 @@ const char* create_statement[] = {
         "subnet_id INT UNSIGNED"
         ") ENGINE = INNODB",
 
+    "CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id)",
+
+    "CREATE INDEX lease4_by_client_id_subnet_id ON lease4 (client_id, subnet_id)",
+
     "CREATE TABLE lease6 ("
         "address VARCHAR(39) PRIMARY KEY NOT NULL,"
         "duid VARBINARY(128),"
@@ -62,6 +66,8 @@ const char* create_statement[] = {
         "iaid INT UNSIGNED,"
         "prefix_len TINYINT UNSIGNED"
         ") ENGINE = INNODB",
+
+    "CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid)",
 
     "CREATE TABLE lease6_types ("
         "lease_type TINYINT PRIMARY KEY NOT NULL,"
