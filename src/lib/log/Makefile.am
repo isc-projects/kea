@@ -1,4 +1,4 @@
-SUBDIRS = . compiler tests
+SUBDIRS = interprocess . compiler tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -49,6 +49,6 @@ libb10_log_la_CXXFLAGS += -Wno-error
 endif
 libb10_log_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_log_la_LIBADD   = $(top_builddir)/src/lib/util/libb10-util.la
-libb10_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libb10-threads.la
+libb10_log_la_LIBADD  += interprocess/libb10-log_interprocess.la
 libb10_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
 libb10_log_la_LDFLAGS = -no-undefined -version-info 1:0:0

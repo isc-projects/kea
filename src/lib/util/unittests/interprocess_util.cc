@@ -19,7 +19,7 @@
 
 namespace isc {
 namespace util {
-namespace test {
+namespace unittests {
 
 unsigned char
 parentReadState(int fd) {
