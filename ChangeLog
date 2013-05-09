@@ -1,3 +1,6 @@
+612.	[func]		tomek
+	b10-dhcp6: Support for relayed DHCPv6 traffic has been added.
+
 611.	[func]		naokikambe
 	Added Xfrin statistics items such as the number of successful
 	transfers.  These are per-zone type counters.  Their values can be
@@ -51,8 +54,8 @@ bind10-1.0.0beta2 released on May 3, 2013
 	(Trac #2879, git 4c45f29f28ae766a9f7dc3142859f1d0000284e1)
 
 605.	[bug]		tmark
-	Modified perfdhcp to calculate the times displayed for packet sent 
-	and received as time elapsed since perfdhcp process start time.  
+	Modified perfdhcp to calculate the times displayed for packet sent
+	and received as time elapsed since perfdhcp process start time.
 	Previously these were times since the start of the epoch.
 	However the large numbers involved caused loss of precision
 	in the calculation of the test statistics.

@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <util/range_utilities.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -44,6 +45,18 @@ namespace {
 class Pkt6Test : public ::testing::Test {
 public:
     Pkt6Test() {
+    }
+
+    /// @brief generates an option with given code (and length) and random content
+    ///
+    /// @param code option code
+    /// @param len data length (data will be randomized)
+    ///
+    /// @return pointer to the new option
+    OptionPtr generateRandomOption(uint16_t code, size_t len = 10) {
+        OptionBuffer data(len);
+        util::fillRandom(data.begin(), data.end());
+        return OptionPtr(new Option(Option::V6, code, data));
     }
 };
 
@@ -487,8 +500,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
 
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(
-                           optRelay1->getType(), optRelay1));
+    relay1.options_.insert(make_pair(optRelay1->getType(), optRelay1));
 
     OptionPtr opt1(new Option(Option::V6, 100));
     OptionPtr opt2(new Option(Option::V6, 101));
@@ -544,6 +556,114 @@ TEST_F(Pkt6Test, relayPack) {
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
     EXPECT_EQ(0, memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+}
+
+
+// This test verified that options added by relays to the message can be
+// accessed and retrieved properly
+TEST_F(Pkt6Test, getAnyRelayOption) {
+
+    boost::scoped_ptr<Pkt6> msg(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+    msg->addOption(generateRandomOption(300));
+
+    // generate options for relay1
+    Pkt6::RelayInfo relay1;
+
+    // generate 3 options with code 200,201,202 and random content
+    OptionPtr relay1_opt1(generateRandomOption(200));
+    OptionPtr relay1_opt2(generateRandomOption(201));
+    OptionPtr relay1_opt3(generateRandomOption(202));
+
+    relay1.options_.insert(make_pair(200, relay1_opt1));
+    relay1.options_.insert(make_pair(201, relay1_opt2));
+    relay1.options_.insert(make_pair(202, relay1_opt3));
+    msg->addRelayInfo(relay1);
+
+    // generate options for relay2
+    Pkt6::RelayInfo relay2;
+    OptionPtr relay2_opt1(new Option(Option::V6, 100));
+    OptionPtr relay2_opt2(new Option(Option::V6, 101));
+    OptionPtr relay2_opt3(new Option(Option::V6, 102));
+    OptionPtr relay2_opt4(new Option(Option::V6, 200)); // the same code as relay1_opt3
+    relay2.options_.insert(make_pair(100, relay2_opt1));
+    relay2.options_.insert(make_pair(101, relay2_opt2));
+    relay2.options_.insert(make_pair(102, relay2_opt3));
+    relay2.options_.insert(make_pair(200, relay2_opt4));
+    msg->addRelayInfo(relay2);
+
+    // generate options for relay3
+    Pkt6::RelayInfo relay3;
+    OptionPtr relay3_opt1(generateRandomOption(200, 7));
+    relay3.options_.insert(make_pair(200, relay3_opt1));
+    msg->addRelayInfo(relay3);
+
+    // Ok, so we now have a packet that traversed the following network:
+    // client---relay3---relay2---relay1---server
+
+    // First check that the getAnyRelayOption does not confuse client options
+    // and relay options
+    // 300 is a client option, present in the message itself.
+    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    // Option 200 is added in every relay.
+
+    // We want to get that one inserted by relay3 (first match, starting from
+    // closest to the client.
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay3_opt1));
+
+    // We want to ge that one inserted by relay1 (first match, starting from
+    // closest to the server.
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay1_opt1));
+
+    // We just want option from the first relay (closest to the client)
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay3_opt1));
+
+    // We just want option from the last relay (closest to the server)
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay1_opt1));
+
+    // Let's try to ask for something that is inserted by the middle relay
+    // only.
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay2_opt1));
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay2_opt1));
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    // Finally, try to get an option that does not exist
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
 }
 
 }
