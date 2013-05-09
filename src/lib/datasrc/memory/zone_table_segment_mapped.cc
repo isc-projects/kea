@@ -36,7 +36,8 @@ const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
 
 ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
-    rrclass_(rrclass)
+    rrclass_(rrclass),
+    cached_header_(NULL)
 {
 }
 
@@ -283,6 +284,10 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     current_filename_ = filename;
     current_mode_ = mode;
     mem_sgmt_.reset(segment.release());
+
+    // Given what we setup above, resetHeader() must not throw at this
+    // point. If it does, all bets are off.
+    resetHeader();
 }
 
 void
@@ -314,12 +319,15 @@ ZoneTableSegmentMapped::clear() {
     }
 }
 
-template<typename T>
-T*
-ZoneTableSegmentMapped::getHeaderHelper() const {
+void
+ZoneTableSegmentMapped::resetHeader() {
+    // We cannot perform resetHeader() lazily during getHeader() as
+    // getHeader() has to work on const objects too. So we do it here
+    // now.
+
     if (!mem_sgmt_) {
         isc_throw(isc::InvalidOperation,
-                  "getHeader() called without calling reset() first");
+                  "resetHeader() called without calling reset() first");
     }
 
     const MemorySegment::NamedAddressResult result =
@@ -330,7 +338,19 @@ ZoneTableSegmentMapped::getHeaderHelper() const {
                   "getHeader()");
     }
 
-    return (static_cast<T*>(result.second));
+    cached_header_ = static_cast<ZoneTableHeader*>(result.second);
+}
+
+template<typename T>
+T*
+ZoneTableSegmentMapped::getHeaderHelper() const {
+    if (!mem_sgmt_) {
+        isc_throw(isc::InvalidOperation,
+                  "getHeader() called without calling reset() first");
+    }
+
+    assert(cached_header_);
+    return (cached_header_);
 }
 
 ZoneTableHeader&

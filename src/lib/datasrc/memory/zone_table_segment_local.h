@@ -42,6 +42,9 @@ public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentLocal();
 
+    /// \brief This method has an empty definition.
+    virtual void resetHeader();
+
     /// \brief Return the ZoneTableHeader for the local zone table
     /// segment implementation.
     virtual ZoneTableHeader& getHeader();

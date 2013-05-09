@@ -85,6 +85,19 @@ TEST_F(ZoneTableSegmentTest, getHeader) {
     // const version.
     testGetHeader<const ZoneTableSegment, const ZoneTableHeader,
                   const ZoneTable>(ztable_segment_);
+
+    // This is a nop for local segments.
+    ztable_segment_->resetHeader();
+
+    // The following still behave as before after resetHeader().
+
+    // non-const version.
+    testGetHeader<ZoneTableSegment, ZoneTableHeader, ZoneTable>
+        (ztable_segment_);
+
+    // const version.
+    testGetHeader<const ZoneTableSegment, const ZoneTableHeader,
+                  const ZoneTable>(ztable_segment_);
 }
 
 TEST_F(ZoneTableSegmentTest, getMemorySegment) {

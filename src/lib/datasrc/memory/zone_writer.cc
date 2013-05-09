@@ -59,6 +59,8 @@ ZoneWriter::load() {
         isc_throw(isc::InvalidOperation, "No data returned from load action");
     }
 
+    segment_.resetHeader();
+
     state_ = ZW_LOADED;
 }
 
@@ -78,6 +80,8 @@ ZoneWriter::install() {
 
     state_ = ZW_INSTALLED;
     zone_data_ = result.zone_data;
+
+    segment_.resetHeader();
 }
 
 void
