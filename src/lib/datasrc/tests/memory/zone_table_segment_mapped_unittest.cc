@@ -256,7 +256,6 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
-    // This must not throw now.
     EXPECT_TRUE(ztable_segment_->isWritable());
 
     // The following method calls should no longer throw:
