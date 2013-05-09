@@ -4873,28 +4873,28 @@ should include options from the isc option space:
         <para>
           A DHCPv6 server with multiple subnets defined must select the
           appropriate subnet when it receives a request from client.  For clients
-          connected via relays, two mechanisms are used.
+          connected via relays, two mechanisms are used:
         </para>
         <para>
           The first uses the linkaddr field in the RELAY_FORW message. The name
-          of this field is somewhat misleading in that it does not contain link-layer
+          of this field is somewhat misleading in that it does not contain a link-layer
           address: instead, it holds an address (typically a global address) that is
           used to identify a link. The DHCPv6 server checks if the address belongs
           to a defined subnet and, if it does, that subnet is selected for the client's
           request.
         </para>
         <para>
-          The second mechanism is based on interface-id options. While forwarding client's
+          The second mechanism is based on interface-id options. While forwarding a client's
           message, relays may insert an interface-id option into the message that
-          identifies the interface on the relay that received client message. (Some
+          identifies the interface on the relay that received the message. (Some
           relays allow configuration of that parameter, but it is sometimes
-          hardcoded and may range from very simple (e.g. "vlan100") to very cryptic:
+          hardcoded and may range from the very simple (e.g. "vlan100") to the very cryptic:
           one example seen on real hardware was "ISAM144|299|ipv6|nt:vp:1:110"). The
           server can use this information to select the appropriate subnet.
-          The information is also returned to the relay which then knows which
-          interface to use to transmit the response to the client. In order to
-          use this successfully, the relay interface IDs must be unique within
-          the network, and the server configuration must match those values.
+          The information is also returned to the relay which then knows the
+          interface to use to transmit the response to the client. In order for
+          this to work successfully, the relay interface IDs must be unique within
+          the network and the server configuration must match those values.
         </para>
         <para>
           When configuring the DHCPv6 server, it should be noted that two
