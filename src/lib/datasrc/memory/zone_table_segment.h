@@ -262,6 +262,9 @@ public:
     ///
     /// \throw none
     virtual void clear() = 0;
+
+    /// \brief Reset the table header address.
+    virtual void resetHeader() = 0;
 };
 
 } // namespace memory
