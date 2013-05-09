@@ -22,6 +22,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/interprocess/file_mapping.hpp>
 
+#include <memory>
 #include <cerrno>
 
 #include <sys/stat.h>
@@ -51,17 +52,17 @@ protected:
             Element::fromJSON(
                 "{\"mapped-file\": \"" + std::string(mapped_file2) + "\"}"))
     {
-        EXPECT_NE(static_cast<void*>(NULL), ztable_segment_);
+        EXPECT_NE(static_cast<void*>(NULL), ztable_segment_.get());
         // Verify that a ZoneTableSegmentMapped is created.
         ZoneTableSegmentMapped* mapped_segment =
-            dynamic_cast<ZoneTableSegmentMapped*>(ztable_segment_);
+            dynamic_cast<ZoneTableSegmentMapped*>(ztable_segment_.get());
         EXPECT_NE(static_cast<void*>(NULL), mapped_segment);
 
         createTestData();
     }
 
     ~ZoneTableSegmentMappedTest() {
-        ZoneTableSegment::destroy(ztable_segment_);
+        ZoneTableSegment::destroy(ztable_segment_.release());
         boost::interprocess::file_mapping::remove(mapped_file);
         boost::interprocess::file_mapping::remove(mapped_file2);
     }
@@ -81,7 +82,9 @@ protected:
     void addData(MemorySegment& segment);
     bool verifyData(const MemorySegment& segment);
 
-    ZoneTableSegment* ztable_segment_;
+    // Ideally, this should be something similar to a
+    // SegmentObjectHolder, not an auto_ptr.
+    std::auto_ptr<ZoneTableSegment> ztable_segment_;
     const ConstElementPtr config_params_;
     const ConstElementPtr config_params2_;
     std::vector<TestDataElement> test_data_;
