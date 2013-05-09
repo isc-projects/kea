@@ -16,7 +16,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 
 InterprocessSyncNull::~InterprocessSyncNull() {
 }
@@ -39,6 +39,6 @@ InterprocessSyncNull::unlock() {
     return (true);
 }
 
-} // namespace internal
+} // namespace interprocess
 } // namespace log
 } // namespace isc

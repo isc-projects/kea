@@ -19,7 +19,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 
 /// \brief Null Interprocess Sync Class
 ///
@@ -59,7 +59,7 @@ protected:
     bool unlock();
 };
 
-} // namespace internal
+} // namespace interprocess
 } // namespace log
 } // namespace isc
 

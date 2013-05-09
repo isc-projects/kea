@@ -20,7 +20,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 
 /// \brief InterprocessSyncFileError
 ///
@@ -86,7 +86,7 @@ private:
     int fd_; ///< The descriptor for the open file
 };
 
-} // namespace internal
+} // namespace interprocess
 } // namespace log
 } // namespace isc
 

@@ -27,7 +27,7 @@
 
 namespace isc {
 namespace log {
-namespace internal {
+namespace interprocess {
 
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
@@ -129,6 +129,6 @@ InterprocessSyncFile::unlock() {
     return (false);
 }
 
-} // namespace internal
+} // namespace interprocess
 } // namespace log
 } // namespace isc

@@ -390,7 +390,7 @@ TEST_F(LoggerTest, setInterprocessSync) {
     EXPECT_THROW(logger.setInterprocessSync(NULL), BadInterprocessSync);
 }
 
-class MockSync : public isc::log::internal::InterprocessSync {
+class MockSync : public isc::log::interprocess::InterprocessSync {
 public:
     /// \brief Constructor
     MockSync(const std::string& component_name) :
