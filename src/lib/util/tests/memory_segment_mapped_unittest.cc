@@ -311,7 +311,7 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     segment_.reset();           // close it before opening another one
 
     segment_.reset(new MemorySegmentMapped(mapped_file));
-    const MemorySegment::NamedAddressResult result =
+    MemorySegment::NamedAddressResult result =
         segment_->getNamedAddress("test address");
     ASSERT_TRUE(result.first);
     EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(result.second));
@@ -325,8 +325,9 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     const std::string long_name(1025, 'x'); // definitely larger than segment
     // setNamedAddress should return true, indicating segment has grown.
     EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), NULL));
-    EXPECT_EQ(MemorySegment::NamedAddressResult(true, NULL),
-              segment_->getNamedAddress(long_name.c_str()));
+    result = segment_->getNamedAddress(long_name.c_str());
+    EXPECT_TRUE(result.first);
+    EXPECT_FALSE(result.second);
 
     // Check contents pointed by named addresses survive growing and
     // shrinking segment.
