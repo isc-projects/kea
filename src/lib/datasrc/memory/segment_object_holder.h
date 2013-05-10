@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +16,21 @@
 #define DATASRC_MEMORY_SEGMENT_OBJECT_HOLDER_H 1
 
 #include <util/memory_segment.h>
+#include <string>
 
 namespace isc {
 namespace datasrc {
 namespace memory {
 namespace detail {
+
+// Internal function to get next yet unused name of segment holder.
+// We need the names of holders to be unique per segment at any given
+// momemnt. This just keeps incrementing number after a prefix with
+// each call, it should be enough (the holder should no longer be
+// alive when the counter wraps around, if that ever happens with
+// presumably 64bit counters).
+std::string
+getNextHolderName();
 
 // A simple holder to create and use some objects in this implementation
 // in an exception safe manner.   It works like std::auto_ptr but much
@@ -32,23 +42,41 @@ template <typename T, typename ARG_T>
 class SegmentObjectHolder {
 public:
     SegmentObjectHolder(util::MemorySegment& mem_sgmt, T* obj, ARG_T arg) :
-        mem_sgmt_(mem_sgmt), obj_(obj), arg_(arg)
-    {}
+        mem_sgmt_(mem_sgmt), arg_(arg),
+        holder_name_(getNextHolderName()), holding_(true)
+    {
+        mem_sgmt_.setNamedAddress(holder_name_.c_str(), obj);
+    }
     ~SegmentObjectHolder() {
-        if (obj_ != NULL) {
-            T::destroy(mem_sgmt_, obj_, arg_);
+        if (holding_) {
+            // Use release, as it removes the stored address from segment
+            T* obj = release();
+            T::destroy(mem_sgmt_, obj, arg_);
         }
     }
-    T* get() { return (obj_); }
+    T* get() {
+        if (holding_) {
+            return (static_cast<T*>(
+                mem_sgmt_.getNamedAddress(holder_name_.c_str())));
+        } else {
+            return (NULL);
+        }
+    }
     T* release() {
-        T* ret = obj_;
-        obj_ = NULL;
-        return (ret);
+        if (holding_) {
+            T* obj = get();
+            mem_sgmt_.clearNamedAddress(holder_name_.c_str());
+            holding_ = false;
+            return (obj);
+        } else {
+            return (NULL);
+        }
     }
 private:
     util::MemorySegment& mem_sgmt_;
-    T* obj_;
     ARG_T arg_;
+    const std::string holder_name_;
+    bool holding_;
 };
 
 } // detail

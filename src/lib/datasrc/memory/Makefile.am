@@ -17,6 +17,7 @@ libdatasrc_memory_la_SOURCES += rdata_serialization.h rdata_serialization.cc
 libdatasrc_memory_la_SOURCES += zone_data.h zone_data.cc
 libdatasrc_memory_la_SOURCES += rrset_collection.h rrset_collection.cc
 libdatasrc_memory_la_SOURCES += segment_object_holder.h
+libdatasrc_memory_la_SOURCES += segment_object_holder.cc
 libdatasrc_memory_la_SOURCES += logger.h logger.cc
 libdatasrc_memory_la_SOURCES += zone_table.h zone_table.cc
 libdatasrc_memory_la_SOURCES += zone_finder.h zone_finder.cc
