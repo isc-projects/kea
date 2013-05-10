@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/memory_segment_local.h>
+#include <util/memory_segment_mapped.h>
 
 #include <datasrc/memory/segment_object_holder.h>
 
@@ -24,6 +25,7 @@ using namespace isc::datasrc::memory::detail;
 
 namespace {
 const int TEST_ARG_VAL = 42;    // arbitrary chosen magic number
+const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 
 class TestObject {
 public:
@@ -64,4 +66,45 @@ TEST(SegmentObjectHolderTest, foo) {
     useHolder(sgmt, obj, false);
     EXPECT_TRUE(sgmt.allMemoryDeallocated());
 }
+
+// Keep allocating bigger and bigger chunks of data until the allocation
+// fails with growing the segment.
+void
+allocateUntilGrows(MemorySegment& segment, size_t& current_size) {
+    // Create an object that will not be explicitly deallocated.
+    // It must be deallocated by the segment holder and even in case
+    // the position moved.
+    void *object_memory = segment.allocate(sizeof(TestObject));
+    TestObject* object = new(object_memory) TestObject;
+    SegmentObjectHolder<TestObject, int> holder(segment, object, TEST_ARG_VAL);
+    while (true) {
+        void* data = segment.allocate(current_size);
+        segment.deallocate(data, current_size);
+        current_size *= 2;
+    }
+}
+
+// Check that the segment thing releases stuff even in case it throws
+// SegmentGrown exception and the thing moves address
+TEST(SegmentObjectHolderTest, grow) {
+    MemorySegmentMapped segment(mapped_file,
+                                isc::util::MemorySegmentMapped::CREATE_ONLY);
+    // Allocate a bit of memory, to get a unique address
+    void* mark = segment.allocate(1);
+    segment.setNamedAddress("mark", mark);
+    // Try allocating bigger and bigger chunks of data until the segment
+    // actually relocates
+    size_t alloc_size = 1024;
+    while (mark == segment.getNamedAddress("mark")) {
+        EXPECT_THROW(allocateUntilGrows(segment, alloc_size),
+                     MemorySegmentGrown);
+    }
+    mark = segment.getNamedAddress("mark");
+    segment.clearNamedAddress("mark");
+    segment.deallocate(mark, 1);
+    EXPECT_TRUE(segment.allMemoryDeallocated());
+    // Remove the file
+    EXPECT_EQ(0, unlink(mapped_file));
+}
+
 }
