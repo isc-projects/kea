@@ -140,16 +140,21 @@ struct MemorySegmentMapped::Impl {
         const size_t new_size = prev_size * 2;
         assert(new_size > prev_size);
 
-        if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size)) {
-            throw std::bad_alloc();
-        }
+        const bool grown = BaseSegment::grow(filename_.c_str(),
+                                             new_size - prev_size);
 
+        // Remap the file, whether or not grow() succeeded.  this should
+        // normally succeed(*), but it's not 100% guaranteed.  We abort
+        // if it fails (see the method description in the header file).
+        // (*) Although it's not formally documented, the implementation
+        // of grow() seems to provide strong guarantee, i.e, if it fails
+        // the underlying file can be used with the previous size.
         try {
-            // Remap the grown file; this should succeed, but it's not 100%
-            // guaranteed.  If it fails we treat it as if we fail to create
-            // the new segment.
             base_sgmt_.reset(new BaseSegment(open_only, filename_.c_str()));
-        } catch (const boost::interprocess::interprocess_exception& ex) {
+        } catch (...) {
+            abort();
+        }
+        if (!grown) {
             throw std::bad_alloc();
         }
     }
@@ -350,7 +355,12 @@ MemorySegmentMapped::shrinkToFit() {
     try {
         // Remap the shrunk file; this should succeed, but it's not 100%
         // guaranteed.  If it fails we treat it as if we fail to create
-        // the new segment.
+        // the new segment.  Note that this is different from the case where
+        // reset() after grow() fails.  While the same argument can apply
+        // in theory, it should be less likely that other methods will be
+        // called after shrinkToFit() (and the destructor can still be called
+        // safely), so we give the application an opportunity to handle the
+        // case as gracefully as possible.
         impl_->base_sgmt_.reset(
             new BaseSegment(open_only, impl_->filename_.c_str()));
     } catch (const boost::interprocess::interprocess_exception& ex) {
