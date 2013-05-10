@@ -288,16 +288,22 @@ public:
     ///
     /// \throw isc::InvalidParameter if the configuration in \c params
     /// has incorrect syntax, but there is a strong exception safety
-    /// guarantee and the \c ZoneTableSegment is usable as before.
+    /// guarantee and the \c ZoneTableSegment is usable or unusable as
+    /// before.
     ///
     /// \throw ResetFailed if there was a problem in opening the new
     /// memory store, but there is a strong exception safety guarantee
-    /// and the \c ZoneTableSegment is usable as before.
+    /// and the \c ZoneTableSegment is usable or unusable as before.
     ///
     /// \throw ResetFailedAndSegmentCleared if there was a problem in
     /// opening the new memory store, but there is only a basic
     /// exception safety guarantee and the \c ZoneTableSegment is not
     /// usable without a further successful \c reset().
+    ///
+    /// \throw isc::NotImplemented Some implementations may choose to
+    /// not implement this method. In this case, there must be a strong
+    /// exception safety guarantee and the \c ZoneTableSegment is usable
+    /// or unusable as before.
     ///
     /// \param mode The open mode (see the MemorySegmentOpenMode
     /// documentation).
@@ -316,7 +322,10 @@ public:
     /// configured \c MemorySegment and clear the `ZoneTableSegment` to
     /// a freshly constructed state.
     ///
-    /// \throw none
+    /// \throw isc::NotImplemented Some implementations may choose to
+    /// not implement this method. In this case, there must be a strong
+    /// exception safety guarantee and the \c ZoneTableSegment is usable
+    /// or unusable as before.
     virtual void clear() = 0;
 
     /// \brief Return true if the \c ZoneTableSegment has been
