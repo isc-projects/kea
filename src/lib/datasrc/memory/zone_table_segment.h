@@ -106,6 +106,12 @@ private:
 /// point into a table of zones regardless of the underlying memory
 /// management implementation. Derived classes would implement the
 /// interface for specific memory-implementation behavior.
+///
+/// Note: At some point in the future, methods such as \c reset(),
+/// \c clear(), \c resetHeader(), \c getHeader(), \c isWritable(),
+/// \c isUsable() may become non-virtual methods. Such a change should
+/// not affect any code that uses this class, but please be aware of
+/// such plans.
 class ZoneTableSegment {
 protected:
     /// \brief Protected constructor
