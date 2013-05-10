@@ -17,6 +17,8 @@
 
 #include <datasrc/memory/segment_object_holder.h>
 
+#include <boost/interprocess/managed_mapped_file.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace isc::util;
@@ -92,13 +94,25 @@ TEST(SegmentObjectHolderTest, grow) {
     // Allocate a bit of memory, to get a unique address
     void* mark = segment.allocate(1);
     segment.setNamedAddress("mark", mark);
+
+    // We'd like to cause 'mark' will be mapped at a different address on
+    // MemorySegmentGrown; there doesn't seem to be a reliable and safe way
+    // to cause this situation, but opening another mapped region seems to
+    // often work in practice.  We use Boost managed_mapped_file directly
+    // to ignore the imposed file lock with MemorySegmentMapped.
+    using boost::interprocess::managed_mapped_file;
+    using boost::interprocess::open_only;
+    managed_mapped_file mapped_sgmt(open_only, mapped_file);
+
     // Try allocating bigger and bigger chunks of data until the segment
     // actually relocates
     size_t alloc_size = 1024;
-    while (mark == segment.getNamedAddress("mark")) {
-        EXPECT_THROW(allocateUntilGrows(segment, alloc_size),
-                     MemorySegmentGrown);
-    }
+    EXPECT_THROW(allocateUntilGrows(segment, alloc_size), MemorySegmentGrown);
+    // Confirm it's now mapped at a different address.
+    EXPECT_NE(mark, segment.getNamedAddress("mark"))
+        << "portability assumption for the test doesn't hold; "
+        "disable the test by setting env variable GTEST_FILTER to "
+        "'-SegmentObjectHolderTest.grow'";
     mark = segment.getNamedAddress("mark");
     segment.clearNamedAddress("mark");
     segment.deallocate(mark, 1);
