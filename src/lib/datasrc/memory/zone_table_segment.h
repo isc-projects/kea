@@ -134,16 +134,22 @@ public:
 
     /// \brief Return the \c ZoneTableHeader for the zone table segment.
     ///
+    /// As long as \c isUsable() returns true, this method must always
+    /// succeed without throwing an exception.  If \c isUsable() returns
+    /// false, a derived class implementation can throw
+    /// \c isc::InvalidOperation depending on its implementation
+    /// details. Applications are generally expected to call this
+    /// method only when \c isUsable() returns true (either by making
+    /// sure explicitly or by some other indirect means).
+    ///
     /// \throw isc::InvalidOperation may be thrown by some
     /// implementations if this method is called without calling
     /// \c reset() successfully first.
     virtual ZoneTableHeader& getHeader() = 0;
 
-    /// \brief const version of \c getHeader().
+    /// \brief \c const version of \c getHeader().
     ///
-    /// \throw isc::InvalidOperation may be thrown by some
-    /// implementations if this method is called without calling
-    /// \c reset() successfully first.
+    /// See the non- \c const version for documentation.
     virtual const ZoneTableHeader& getHeader() const = 0;
 
     /// \brief Return the MemorySegment for the zone table segment.
@@ -249,18 +255,25 @@ public:
     /// the \c ZoneTableSegment must be usable as before.
     ///
     /// In case a \c ZoneTableSegment was reset successfully before and
-    /// is currently usable (\c isUsable() returns true), and an attempt
-    /// to to reset to a different \c MemorySegment storage area fails,
+    /// is currently usable (\c isUsable() returns true), and the attempt
+    /// to reset to a different \c MemorySegment storage area fails,
     /// the \c ResetFailed exception must be thrown. In this
     /// case, a strong exception safety guarantee must be provided, and
     /// the \c ZoneTableSegment must be usable as before.
     ///
     /// In case a \c ZoneTableSegment was reset successfully before and
-    /// is currently usable (\c isUsable() returns true), and an attempt
-    /// to to reset to the same \c MemorySegment storage area fails, the
+    /// is currently usable (\c isUsable() returns true), and the attempt
+    /// to reset to the same \c MemorySegment storage area fails, the
     /// \c ResetFailedAndSegmentCleared exception must be thrown. In
     /// this case, only basic exception safety guarantee is provided and
     /// the \c ZoneTableSegment must be expected as cleared.
+    ///
+    /// In case a \c ZoneTableSegment was not reset successfully before
+    /// and is currently not usable (\c isUsable() returns false), and
+    /// the attempt to reset fails, the \c ResetFailed exception must be
+    /// thrown. In this unique case, a strong exception safety guarantee
+    /// is provided by default, as the \c ZoneTableSegment was clear
+    /// previously, and remains cleared.
     ///
     /// In all other cases, \c ZoneTableSegment contents can be expected
     /// as reset.
