@@ -43,18 +43,19 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
     EXPECT_THROW(segment.setNamedAddress(NULL, ptr32), InvalidParameter);
 
     // we can now get it; the stored value should be intact.
-    EXPECT_EQ(MemorySegment::NamedAddressResult(true, ptr32),
-              segment.getNamedAddress("test address"));
-    EXPECT_EQ(test_val, *static_cast<const uint32_t*>(ptr32));
+    MemorySegment::NamedAddressResult result =
+        segment.getNamedAddress("test address");
+    EXPECT_TRUE(result.first);
+    EXPECT_EQ(test_val, *static_cast<const uint32_t*>(result.second));
 
     // Override it.
     void* ptr16 = segment.allocate(sizeof(uint16_t));
     const uint16_t test_val16 = 4200;
     *static_cast<uint16_t*>(ptr16) = test_val16;
     EXPECT_FALSE(segment.setNamedAddress("test address", ptr16));
-    EXPECT_EQ(MemorySegment::NamedAddressResult(true, ptr16),
-              segment.getNamedAddress("test address"));
-    EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(ptr16));
+    result = segment.getNamedAddress("test address");
+    EXPECT_TRUE(result.first);
+    EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(result.second));
 
     // Clear it.  Then we won't be able to find it any more.
     EXPECT_TRUE(segment.clearNamedAddress("test address"));
@@ -65,8 +66,9 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
 
     // Setting NULL is okay.
     EXPECT_FALSE(segment.setNamedAddress("null address", NULL));
-    EXPECT_EQ(MemorySegment::NamedAddressResult(true, NULL),
-              segment.getNamedAddress("null address"));
+    result = segment.getNamedAddress("null address");
+    EXPECT_TRUE(result.first);
+    EXPECT_FALSE(result.second);
 
     // If the underlying implementation performs explicit check against
     // out-of-segment address, confirm the behavior.
