@@ -31,13 +31,13 @@ run_unittests_SOURCES += zone_table_unittest.cc
 run_unittests_SOURCES += zone_data_unittest.cc
 run_unittests_SOURCES += zone_finder_unittest.cc
 run_unittests_SOURCES += ../../tests/faked_nsec3.h ../../tests/faked_nsec3.cc
-run_unittests_SOURCES += memory_segment_test.h
+run_unittests_SOURCES += memory_segment_mock.h
 run_unittests_SOURCES += segment_object_holder_unittest.cc
 run_unittests_SOURCES += memory_client_unittest.cc
 run_unittests_SOURCES += rrset_collection_unittest.cc
 run_unittests_SOURCES += zone_data_loader_unittest.cc
 run_unittests_SOURCES += zone_data_updater_unittest.cc
-run_unittests_SOURCES += zone_table_segment_test.h
+run_unittests_SOURCES += zone_table_segment_mock.h
 run_unittests_SOURCES += zone_table_segment_unittest.cc
 
 if USE_SHARED_MEMORY
