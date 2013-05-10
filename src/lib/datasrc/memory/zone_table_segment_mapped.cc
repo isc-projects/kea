@@ -285,6 +285,11 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
 
     case READ_ONLY:
         segment.reset(openReadOnly(filename));
+        break;
+
+    default:
+        isc_throw(isc::InvalidOperation,
+                  "Invalid MemorySegmentOpenMode passed to reset()");
     }
 
     current_filename_ = filename;
