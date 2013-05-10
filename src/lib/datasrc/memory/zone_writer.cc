@@ -14,6 +14,7 @@
 
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_data.h>
+#include <datasrc/memory/zone_table_segment.h>
 
 #include <memory>
 
