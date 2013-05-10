@@ -97,16 +97,7 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
         *static_cast<size_t*>(checksum) = 0;
         const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
                                                   checksum);
-        if (grew) {
-            // If the segment grew here, we have a problem as the
-            // checksum address may no longer be valid. In this case, we
-            // cannot recover. This case is extremely unlikely as we
-            // reserved memory for the ZONE_TABLE_CHECKSUM_NAME
-            // above. It indicates a very restrictive MemorySegment
-            // which we should not use.
-            error_msg = "Segment grew unexpectedly in setNamedAddress()";
-            return (false);
-        }
+        assert(!grew);
     }
 
     return (true);
@@ -141,19 +132,17 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
                 // Do nothing and try again.
             }
         }
-        ZoneTableHeader* new_header = new(ptr)
-            ZoneTableHeader(ZoneTable::create(segment, rrclass_));
-        const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
-                                                  new_header);
-        if (grew) {
-            // If the segment grew here, we have a problem as the table
-            // header address may no longer be valid. In this case, we
-            // cannot recover. This case is extremely unlikely as we
-            // reserved memory for the ZONE_TABLE_HEADER_NAME above. It
-            // indicates a very restrictive MemorySegment which we
-            // should not use.
-            error_msg = "Segment grew unexpectedly in setNamedAddress()";
-            return (false);
+        try {
+            ZoneTableHeader* new_header = new(ptr)
+                ZoneTableHeader(ZoneTable::create(segment, rrclass_));
+            const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
+                                                      new_header);
+            assert(!grew);
+        } catch (const MemorySegmentGrown&) {
+            // This is extremely unlikely and we just throw a fatal
+            // exception here without attempting to recover.
+
+            throw std::bad_alloc();
         }
     }
 
