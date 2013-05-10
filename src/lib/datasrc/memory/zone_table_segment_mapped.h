@@ -25,14 +25,14 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-/// \brief Mapped-file based implementation of ZoneTableSegment class
+/// \brief Mapped-file based implementation of \c ZoneTableSegment class
 ///
 /// This class specifies a concrete implementation for a memory-mapped
-/// ZoneTableSegment. Please see the ZoneTableSegment class
+/// \c ZoneTableSegment. Please see the \c ZoneTableSegment class
 /// documentation for usage.
 class ZoneTableSegmentMapped : public ZoneTableSegment {
-    // This is so that ZoneTableSegmentMapped can be instantiated from
-    // ZoneTableSegment::create().
+    // This is so that \c ZoneTableSegmentMapped can be instantiated
+    // from \c ZoneTableSegment::create().
     friend class ZoneTableSegment;
 
 protected:
@@ -50,25 +50,25 @@ public:
     /// \brief Returns "mapped" as the implementation type.
     virtual const std::string& getImplType() const;
 
-    /// \brief Reset the table header address from the named address in
-    /// the mapped file.
+    /// \brief Resets the \c ZoneTableHeader address from the named
+    /// address in the mapped file. This method should be called once
+    /// before calls to \c getHeader() if the mapped \c MemorySegment
+    /// has grown.
     virtual void resetHeader();
 
-    /// \brief Return the ZoneTableHeader for the mapped zone table
-    /// segment implementation.
+    /// \brief Return the \c ZoneTableHeader for this mapped zone table
+    /// segment.
     ///
     /// \throws isc::InvalidOperation if this method is called without a
     /// successful \c reset() call first.
     virtual ZoneTableHeader& getHeader();
 
     /// \brief const version of \c getHeader().
-    ///
-    /// \throws isc::InvalidOperation if this method is called without a
-    /// successful \c reset() call first.
     virtual const ZoneTableHeader& getHeader() const;
 
-    /// \brief Return the MemorySegment for the memory-mapped zone table
-    /// segment implementation (a MemorySegmentMapped instance).
+    /// \brief Return the \c MemorySegment for the memory-mapped zone
+    /// table segment implementation (a \c MemorySegmentMapped
+    /// instance).
     ///
     /// \throws isc::InvalidOperation if this method is called without a
     /// successful \c reset() call first.
@@ -78,20 +78,15 @@ public:
     ///
     /// Segments successfully opened in CREATE or READ_WRITE modes are
     /// writable. Segments opened in READ_ONLY mode are not writable.
-    /// If there was a failure in \c reset(), the segment is not
-    /// writable.
+    /// If the \c ZoneTableSegment was cleared for some reason, it is
+    /// not writable until it is reset successfully.
     virtual bool isWritable() const;
 
-    /// \brief Unmap the current file (if mapped) and map the specified
-    /// one.
+    /// \brief Close the current \c MemorySegment (if open) and open the
+    /// requested one.
     ///
-    /// In case of exceptions, the current existing mapped file may be
-    /// left open, or may be cleared. Please see the \c ZoneTableSegment
-    /// API documentation for the behavior.
-    ///
-    /// See the \c MemorySegmentOpenMode documentation (in
-    /// \c ZoneTableSegment class) for the various modes in which a
-    /// \c ZoneTableSegmentMapped can be created.
+    /// See \c MemorySegmentOpenMode for a definition of "storage area"
+    /// and the various modes in which a \c MemorySegment can be opened.
     ///
     /// \c params should be a map containing a "mapped-file" key that
     /// points to a string value containing the filename of a mapped
@@ -99,11 +94,12 @@ public:
     ///
     ///  {"mapped-file": "/var/bind10/mapped-files/zone-sqlite3.mapped.0"}
     ///
-    /// \throws isc::InvalidParameter if the configuration in \c params
-    /// has incorrect syntax.
-    /// \throws isc::Unexpected for a variety of cases where an
-    /// unexpected condition occurs. These should not occur normally in
-    /// correctly written code.
+    /// Please see the \c ZoneTableSegment API documentation for the
+    /// behavior in case of exceptions.
+    ///
+    /// \throws isc::Unexpected when it's unable to lookup a named
+    /// address that it expected to be present. This is extremely
+    /// unlikely, and it points to corruption.
     ///
     /// \param mode The open mode (see the \c MemorySegmentOpenMode
     /// documentation in \c ZoneTableSegment class).
@@ -112,7 +108,9 @@ public:
     virtual void reset(MemorySegmentOpenMode mode,
                        isc::data::ConstElementPtr params);
 
-    /// \brief Unmap the current file (if mapped).
+    /// \brief Close the currently configured \c MemorySegment (if
+    /// open). See the base class for a definition of "open" and
+    /// "close".
     virtual void clear();
 
     /// \brief Return true if the segment is usable.
