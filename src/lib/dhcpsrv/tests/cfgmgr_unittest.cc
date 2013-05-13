@@ -163,7 +163,7 @@ public:
         // make sure we start with a clean configuration
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
-        //CfgMgr::instance().deleteOptionDefs();
+        CfgMgr::instance().deleteOptionDefs();
     }
 
     ~CfgMgrTest() {
