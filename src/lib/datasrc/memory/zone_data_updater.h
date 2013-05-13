@@ -57,14 +57,15 @@ public:
 
     /// The constructor.
     ///
-    /// \throw none
-    ///
     /// \param mem_sgmt The memory segment used for the zone data.
     /// \param rrclass The RRclass of the zone data.
     /// \param zone_name The Name of the zone under which records will be
     ///                  added.
-    //  \param zone_data The ZoneData object which is populated with
-    //                   record data.
+    /// \param zone_data The ZoneData object which is populated with
+    ///                  record data.
+    /// \throw InvalidOperation if there's already a zone data updater
+    ///    on the given memory segment. Currently, at most one zone data
+    ///    updater may exist on the same memory segment.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
                     isc::dns::RRClass rrclass,
                     const isc::dns::Name& zone_name,
@@ -75,6 +76,10 @@ public:
        hash_(NULL),
        zone_data_(&zone_data)
     {
+        if (mem_sgmt_.getNamedAddress("updater_zone_data")) {
+            isc_throw(isc::InvalidOperation, "A ZoneDataUpdater already exists"
+                      " on this memory segment. Destroy it first.");
+        }
         mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_);
     }
 

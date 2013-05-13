@@ -104,6 +104,7 @@ protected:
     void clearZoneData() {
         assert(updater_);
         ZoneData::destroy(*mem_sgmt_, updater_->getZoneData(), zclass_);
+        updater_.reset();
         updater_.reset(new TestZoneDataUpdater(*mem_sgmt_, zclass_, zname_,
                                                *ZoneData::create(*mem_sgmt_,
                                                                  zname_)));
@@ -334,6 +335,15 @@ TEST_P(ZoneDataUpdaterTest, manySmallRRsets) {
         EXPECT_EQ(1, rdset->getRdataCount());
         EXPECT_EQ(1, rdset->getSigRdataCount());
     }
+}
+
+TEST_P(ZoneDataUpdaterTest, updaterCollision) {
+    ZoneData* zone_data = ZoneData::create(*mem_sgmt_,
+                                           Name("another.example.com."));
+    EXPECT_THROW(ZoneDataUpdater(*mem_sgmt_, RRClass::IN(),
+                                 Name("another.example.com."), *zone_data),
+                 isc::InvalidOperation);
+    ZoneData::destroy(*mem_sgmt_, zone_data, RRClass::IN());
 }
 
 }
