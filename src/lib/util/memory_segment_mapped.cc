@@ -137,10 +137,6 @@ struct MemorySegmentMapped::Impl {
         reserveMemory();
     }
 
-    ~Impl() {
-        freeReservedMemory();
-    }
-
     void reserveMemory() {
         if (!read_only_) {
             // Reserve a named address for use during setNamedAddress().
@@ -261,6 +257,7 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
 
 MemorySegmentMapped::~MemorySegmentMapped() {
     if (impl_->base_sgmt_ && !impl_->read_only_) {
+        impl_->freeReservedMemory();
         impl_->base_sgmt_->flush(); // note: this is exception free
     }
     delete impl_;
