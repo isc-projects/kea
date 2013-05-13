@@ -308,7 +308,8 @@ TEST_P(ZoneDataUpdaterTest, rrsigForNSEC3Only) {
 // Generate many small RRsets. This tests that the underlying memory segment
 // can grow during the execution and that the updater handles that well.
 //
-// Some of the grows will happen inserting the RRSIG, some with the TXT.
+// Some of the grows will happen inserting the RRSIG, some with the TXT. Or,
+// at least we hope so.
 TEST_P(ZoneDataUpdaterTest, manySmallRRsets) {
     for (size_t i = 0; i < 32768; ++i) {
         const std::string name(boost::lexical_cast<std::string>(i) +
