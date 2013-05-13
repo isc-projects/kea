@@ -55,17 +55,18 @@ ParserContext::ParserContext(const ParserContext& rhs):
 
 ParserContext& 
 ParserContext::operator=(const ParserContext& rhs) {
-        ParserContext tmp(rhs);
-        boolean_values_ = 
-            BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
-        uint32_values_ = 
-            Uint32StoragePtr(new Uint32Storage(*(tmp.uint32_values_)));
-        string_values_ = 
-            StringStoragePtr(new StringStorage(*(tmp.string_values_)));
-        options_ = OptionStoragePtr(new OptionStorage(*(tmp.options_)));
-        option_defs_ = 
-            OptionDefStoragePtr(new OptionDefStorage(*(tmp.option_defs_)));
-        universe_ = rhs.universe_;
+        if (this != &rhs) {
+            boolean_values_ = 
+                BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
+            uint32_values_ = 
+                Uint32StoragePtr(new Uint32Storage(*(rhs.uint32_values_)));
+            string_values_ = 
+                StringStoragePtr(new StringStorage(*(rhs.string_values_)));
+            options_ = OptionStoragePtr(new OptionStorage(*(rhs.options_)));
+            option_defs_ = 
+                OptionDefStoragePtr(new OptionDefStorage(*(rhs.option_defs_)));
+            universe_ = rhs.universe_;
+        }
         return (*this);
     }
 

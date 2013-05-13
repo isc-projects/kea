@@ -177,7 +177,6 @@ public:
     /// @brief Constructor
     ///
     /// @param ignored first parameter
-    /// @param global_context is a pointer to the global context which 
     /// stores global scope parameters, options, option defintions.
     Subnet6ConfigParser(const std::string&) 
         :SubnetConfigParser("", globalContext()) {
@@ -319,7 +318,7 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet6ConfigParser("subnet" ));
+            ParserPtr parser(new Subnet6ConfigParser("subnet"));
             parser->build(subnet);
             subnets_.push_back(parser);
         }
@@ -541,7 +540,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     return (answer);
 }
 
-ParserContextPtr globalContext() {
+ParserContextPtr& globalContext() {
     static ParserContextPtr global_context_ptr(new ParserContext(Option::V6));
     return (global_context_ptr);
 }
