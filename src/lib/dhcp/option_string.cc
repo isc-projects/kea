@@ -56,8 +56,13 @@ OptionString::pack(isc::util::OutputBuffer& buf) {
 }
 
 void
-OptionString::unpack(OptionBufferConstIter/* begin */,
-                     OptionBufferConstIter/* end*/) {
+OptionString::unpack(OptionBufferConstIter begin,
+                     OptionBufferConstIter end) {
+    if (std::distance(begin, end) == 0) {
+        isc_throw(isc::OutOfRange, "failed to parse an option holding string value"
+                  << " - empty value is not accepted");
+    }
+    value_.assign(begin, end);
 }
 
 } // end of isc::dhcp namespace
