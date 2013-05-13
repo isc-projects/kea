@@ -49,6 +49,7 @@ const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 // test, so we have different factories for them.
 class SegmentCreator {
 public:
+    virtual ~SegmentCreator() {}
     typedef boost::shared_ptr<isc::util::MemorySegment> SegmentPtr;
     // Create the segment.
     virtual SegmentPtr create() const = 0;
