@@ -200,11 +200,6 @@ private:
     const isc::dns::Name& zone_name_;
     RdataEncoder encoder_;
     const isc::dns::NSEC3Hash* hash_;
-protected:
-    /// \brief The zone data
-    ///
-    /// Protected, so the tests can get in. But it should not be accessed
-    /// in general code.
     ZoneData* zone_data_;
 };
 
