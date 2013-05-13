@@ -81,12 +81,11 @@ protected:
     }
 
     ~ZoneDataUpdaterTest() {
-        if (updater_) {
-            ZoneData::destroy(*mem_sgmt_, getZoneData(), zclass_);
-            // Release the updater, so it frees all memory inside the segment too
-            updater_.reset();
-            mem_sgmt_->clearNamedAddress("Test zone data");
-        }
+        assert(updater_);
+        ZoneData::destroy(*mem_sgmt_, getZoneData(), zclass_);
+        // Release the updater, so it frees all memory inside the segment too
+        updater_.reset();
+        mem_sgmt_->clearNamedAddress("Test zone data");
         if (!mem_sgmt_->allMemoryDeallocated()) {
             ADD_FAILURE() << "Memory leak detected";
         }
