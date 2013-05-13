@@ -139,11 +139,22 @@ struct MemorySegmentMapped::Impl {
 
     void reserveMemory() {
         if (!read_only_) {
-            // Reserve a named address for use during setNamedAddress().
-            const offset_ptr<void>* reserved_storage =
-                base_sgmt_->find_or_construct<offset_ptr<void> >(
-                    RESERVED_NAMED_ADDRESS_STORAGE_NAME, std::nothrow)();
-            assert(reserved_storage);
+            // Reserve a named address for use during
+            // setNamedAddress(). Though this will almost always succeed
+            // during construction, it may fail later during a call from
+            // allMemoryDeallocated() when the segment has been in use
+            // for a while.
+            while (true) {
+                const offset_ptr<void>* reserved_storage =
+                    base_sgmt_->find_or_construct<offset_ptr<void> >(
+                        RESERVED_NAMED_ADDRESS_STORAGE_NAME, std::nothrow)();
+
+                if (reserved_storage) {
+                    break;
+                }
+
+                growSegment();
+            }
         }
     }
 
@@ -306,8 +317,12 @@ MemorySegmentMapped::deallocate(void* ptr, size_t) {
 }
 
 bool
-MemorySegmentMapped::allMemoryDeallocated() const {
-    return (impl_->base_sgmt_->all_memory_deallocated());
+MemorySegmentMapped::allMemoryDeallocated() {
+    impl_->freeReservedMemory();
+    const bool result = impl_->base_sgmt_->all_memory_deallocated();
+    impl_->reserveMemory();
+
+    return (result);
 }
 
 MemorySegment::NamedAddressResult
