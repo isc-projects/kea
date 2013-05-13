@@ -64,17 +64,25 @@ ZoneWriterLocal::install() {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
 
-
-    ZoneTable* table(segment_->getHeader().getTable());
-    if (table == NULL) {
-        isc_throw(isc::Unexpected, "No zone table present");
+    // FIXME: This retry is currently untested, as there seems to be no
+    // reasonable way to create a zone table segment with non-local memory
+    // segment. Once there is, we should provide the test.
+    while (state_ != ZW_INSTALLED) {
+        try {
+            ZoneTable* table(segment_->getHeader().getTable());
+            if (table == NULL) {
+                isc_throw(isc::Unexpected, "No zone table present");
+            }
+            const ZoneTable::AddResult result(table->addZone(
+                                                  segment_->getMemorySegment(),
+                                                  rrclass_, origin_,
+                                                  zone_data_));
+            state_ = ZW_INSTALLED;
+            zone_data_ = result.zone_data;
+        } catch (const isc::util::MemorySegmentGrown&) {
+        }
     }
-    const ZoneTable::AddResult result(table->addZone(
-                                          segment_->getMemorySegment(),
-                                          rrclass_, origin_, zone_data_));
 
-    state_ = ZW_INSTALLED;
-    zone_data_ = result.zone_data;
 }
 
 void
