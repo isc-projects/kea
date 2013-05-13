@@ -60,6 +60,11 @@ public:
     OptionString(const Option::Universe u, const uint16_t type,
                  OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Returns length of the whole option, including header.
+    ///
+    /// @return length of the whole option.
+    virtual uint16_t len();
+
     /// @brief Returns the string value held by the option.
     ///
     /// @return string value held by the option.

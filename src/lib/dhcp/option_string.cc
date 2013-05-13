@@ -31,9 +31,28 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
     unpack(begin, end);
 }
 
+uint16_t
+OptionString::len() {
+    return (getHeaderLen() + value_.size());
+}
 
 void
-OptionString::pack(isc::util::OutputBuffer&/* buf*/) {
+OptionString::pack(isc::util::OutputBuffer& buf) {
+    // Sanity check that the string value is at least one byte long.
+    // This is a requirement for all currently defined options which
+    // carry a string value.
+    if (value_.empty()) {
+        isc_throw(isc::OutOfRange, "string value carried in the option"
+                  << " must not be empty");
+    }
+
+    // Pack option header.
+    packHeader(buf);
+    // Pack data.
+    buf.writeData(value_.c_str(), value_.size());
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void
