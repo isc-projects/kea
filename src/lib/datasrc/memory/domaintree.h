@@ -1311,6 +1311,12 @@ public:
     /// the same.  This method provides the weak exception guarantee in its
     /// normal sense.
     ///
+    /// In particular, this method can propagate the \c MemorySegmentGrown
+    /// exception from the \c MemorySegment object. In such case, some of
+    /// the internal nodes may have been already allocated (but hold no data).
+    /// Retrying the insert (possibly multiple times) would lead to the same
+    /// structure eventually.
+    ///
     /// \param mem_sgmt A \c MemorySegment object for allocating memory of
     /// a new node to be inserted.  Must be the same segment as that used
     /// for creating the tree itself.
