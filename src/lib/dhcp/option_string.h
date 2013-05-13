@@ -29,6 +29,9 @@ namespace dhcp {
 /// This class represents an option carrying a single string value.
 /// Currently this class imposes that the minimal length of the carried
 /// string is 1.
+///
+/// @todo In the future this class may be extended with some more string
+/// content checks and encoding methods if required.
 class OptionString : public Option {
 public:
 
