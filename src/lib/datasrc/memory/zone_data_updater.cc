@@ -417,7 +417,6 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
 
     // Store the address, it may change during growth and the address inside
     // would get updated.
-    mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_);
     bool added = false;
     do {
         try {
@@ -429,18 +428,9 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
             zone_data_ =
                 static_cast<ZoneData*>(
                     mem_sgmt_.getNamedAddress("updater_zone_data"));
-        } catch (...) {
-            // In case of other exceptions, they are propagated. But clean up
-            // the temporary address stored there (this is shorter than
-            // RAII class in this case).
-            mem_sgmt_.clearNamedAddress("updater_zone_data");
-            throw;
         }
         // Retry if it didn't add due to the growth
     } while (!added);
-
-    // Clean up the named address
-    mem_sgmt_.clearNamedAddress("updater_zone_data");
 }
 
 } // namespace memory
