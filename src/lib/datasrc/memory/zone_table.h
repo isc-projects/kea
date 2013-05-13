@@ -144,6 +144,8 @@ public:
     /// This method adds a given zone data to the internal table.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails.
+    /// \throw MemorySegmentGrown when the memory segment grown and
+    ///     possibly relocated.
     ///
     /// \param mem_sgmt The \c MemorySegment to allocate zone data to be
     ///     created.  It must be the same segment that was used to create
