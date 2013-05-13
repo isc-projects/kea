@@ -63,8 +63,8 @@ configureDhcp4Server(Dhcpv4Srv&,
 
 /// @brief Returns the global context
 ///
-/// @return a const reference to the global context
-ParserContextPtr globalContext();
+/// @return a reference to the global context
+ParserContextPtr& globalContext();
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
