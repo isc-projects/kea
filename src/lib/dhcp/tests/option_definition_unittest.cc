@@ -25,6 +25,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
@@ -936,11 +937,10 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, values);
     );
     ASSERT_TRUE(option_v6);
-    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionCustom));
-    std::vector<uint8_t> data = option_v6->getData();
-    std::vector<uint8_t> ref_data(values[0].c_str(), values[0].c_str()
-                                  + values[0].length());
-    EXPECT_TRUE(std::equal(ref_data.begin(), ref_data.end(), data.begin()));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionString));
+    OptionStringPtr option_v6_string =
+        boost::static_pointer_cast<OptionString>(option_v6);
+    EXPECT_TRUE(values[0] == option_v6_string->getValue());
 }
 
 // The purpose of this test is to check that non-integer data type can't

@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -549,17 +550,25 @@ TEST(Pkt4Test, unpackOptions) {
 
     boost::shared_ptr<Option> x = pkt->getOption(12);
     ASSERT_TRUE(x); // option 1 should exist
-    EXPECT_EQ(12, x->getType());  // this should be option 12
-    ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 2, 3)); // data len=3
+    // Option 12 is represented by the OptionString class so let's do
+    // the appropriate conversion.
+    OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
+    ASSERT_TRUE(option12);
+    EXPECT_EQ(12, option12->getType());  // this should be option 12
+    ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option12->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4Opts + 2, 3)); // data len=3
 
     x = pkt->getOption(14);
     ASSERT_TRUE(x); // option 13 should exist
-    EXPECT_EQ(14, x->getType());  // this should be option 13
-    ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 7, 3)); // data len=3
+    // Option 14 is represented by the OptionString class so let's do
+    // the appropriate conversion.
+    OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x);
+    ASSERT_TRUE(option14);
+    EXPECT_EQ(14, option14->getType());  // this should be option 13
+    ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option14->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4Opts + 7, 3)); // data len=3
 
     x = pkt->getOption(60);
     ASSERT_TRUE(x); // option 60 should exist

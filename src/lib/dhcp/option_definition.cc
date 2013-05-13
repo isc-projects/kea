@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -159,6 +160,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 return (factoryAddrList6(type, begin, end));
             }
             break;
+
+        case OPT_STRING_TYPE:
+            return (OptionPtr(new OptionString(u, type, begin, end)));
 
         default:
             if (u == Option::V6) {
