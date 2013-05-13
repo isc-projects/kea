@@ -92,6 +92,8 @@ protected:
     ~ZoneDataUpdaterTest() {
         if (updater_) {
             ZoneData::destroy(*mem_sgmt_, updater_->getZoneData(), zclass_);
+            // Release the updater, so it frees all memory inside the segment too
+            updater_.reset();
         }
         if (!mem_sgmt_->allMemoryDeallocated()) {
             ADD_FAILURE() << "Memory leak detected";

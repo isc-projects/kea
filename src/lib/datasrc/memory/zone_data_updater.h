@@ -74,10 +74,13 @@ public:
        zone_name_(zone_name),
        hash_(NULL),
        zone_data_(&zone_data)
-    {}
+    {
+        mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_);
+    }
 
     /// The destructor.
     ~ZoneDataUpdater() {
+        mem_sgmt_.clearNamedAddress("updater_zone_data");
         delete hash_;
     }
 
