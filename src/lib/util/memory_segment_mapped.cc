@@ -141,7 +141,8 @@ struct MemorySegmentMapped::Impl {
         if (!read_only_) {
             // Reserve a named address for use during
             // setNamedAddress(). Though this will almost always succeed
-            // during construction, it may fail later during a call from
+            // on the first try during construction, it may require
+            // multiple attempts later during a call from
             // allMemoryDeallocated() when the segment has been in use
             // for a while.
             while (true) {
