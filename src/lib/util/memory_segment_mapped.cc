@@ -44,6 +44,15 @@ using boost::interprocess::offset_ptr;
 
 namespace isc {
 namespace util {
+
+namespace { // unnamed namespace
+
+const char* const RESERVED_NAMED_ADDRESS_STORAGE_NAME =
+    "_RESERVED_NAMED_ADDRESS_STORAGE";
+
+} // end of unnamed namespace
+
+
 // Definition of class static constant so it can be referenced by address
 // or reference.
 const size_t MemorySegmentMapped::INITIAL_SIZE;
@@ -98,6 +107,7 @@ struct MemorySegmentMapped::Impl {
         // confirm there's no other user and there won't either.
         lock_.reset(new boost::interprocess::file_lock(filename.c_str()));
         checkWriter();
+        reserveMemory();
     }
 
     // Constructor for open-or-write (and read-write) mode
@@ -108,6 +118,7 @@ struct MemorySegmentMapped::Impl {
         lock_(new boost::interprocess::file_lock(filename.c_str()))
     {
         checkWriter();
+        reserveMemory();
     }
 
     // Constructor for existing segment, either read-only or read-write
@@ -122,6 +133,29 @@ struct MemorySegmentMapped::Impl {
             checkReader();
         } else {
             checkWriter();
+        }
+        reserveMemory();
+    }
+
+    ~Impl() {
+        freeReservedMemory();
+    }
+
+    void reserveMemory() {
+        if (!read_only_) {
+            // Reserve a named address for use during setNamedAddress().
+            const offset_ptr<void>* reserved_storage =
+                base_sgmt_->find_or_construct<offset_ptr<void> >(
+                    RESERVED_NAMED_ADDRESS_STORAGE_NAME, std::nothrow)();
+            assert(reserved_storage);
+        }
+    }
+
+    void freeReservedMemory() {
+        if (!read_only_) {
+            const bool deleted = base_sgmt_->destroy<offset_ptr<void> >
+                (RESERVED_NAMED_ADDRESS_STORAGE_NAME);
+            assert(deleted);
         }
     }
 
@@ -299,13 +333,27 @@ MemorySegmentMapped::setNamedAddressImpl(const char* name, void* addr) {
         isc_throw(MemorySegmentError, "address is out of segment: " << addr);
     }
 
+    // Temporarily save the passed addr into pre-allocated offset_ptr in
+    // case there are any relocations caused by allocations.
+    offset_ptr<void>* reserved_storage =
+        impl_->base_sgmt_->find<offset_ptr<void> >(
+            RESERVED_NAMED_ADDRESS_STORAGE_NAME).first;
+    assert(reserved_storage);
+    *reserved_storage = addr;
+
     bool grown = false;
     while (true) {
         offset_ptr<void>* storage =
             impl_->base_sgmt_->find_or_construct<offset_ptr<void> >(
                 name, std::nothrow)();
         if (storage) {
-            *storage = addr;
+            // Move the address from saved offset_ptr into the
+            // newly-allocated storage.
+            reserved_storage =
+                impl_->base_sgmt_->find<offset_ptr<void> >(
+                    RESERVED_NAMED_ADDRESS_STORAGE_NAME).first;
+            assert(reserved_storage);
+            *storage = *reserved_storage;
             return (grown);
         }
 
