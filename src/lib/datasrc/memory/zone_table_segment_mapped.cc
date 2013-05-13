@@ -81,11 +81,6 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
         }
     } else {
         // Allocate space for a checksum (which is saved during close).
-
-        // First allocate a ZONE_TABLE_CHECKSUM_NAME, so that we can set
-        // it without growing the segment (and changing the checksum's
-        // address).
-        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, NULL);
         void* checksum = NULL;
         while (!checksum) {
             try {
@@ -120,10 +115,6 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             assert(result.second);
         }
     } else {
-        // First allocate a ZONE_TABLE_HEADER_NAME, so that we can set
-        // it without growing the segment (and changing the header's
-        // address).
-        segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, NULL);
         void* ptr = NULL;
         while (!ptr) {
             try {
