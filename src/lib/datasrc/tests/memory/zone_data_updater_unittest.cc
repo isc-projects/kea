@@ -163,6 +163,7 @@ private:
     const size_t initial_size_;
 };
 
+#ifdef USE_SHARED_MEMORY
 // There should be no initialization fiasco there. We only set int value inside
 // and don't use it until the create() is called.
 MappedSegmentCreator small_creator(4092), default_creator;
@@ -170,6 +171,7 @@ MappedSegmentCreator small_creator(4092), default_creator;
 INSTANTIATE_TEST_CASE_P(MappedSegment, ZoneDataUpdaterTest, ::testing::Values(
                             static_cast<SegmentCreator*>(&small_creator),
                             static_cast<SegmentCreator*>(&default_creator)));
+#endif
 
 TEST_P(ZoneDataUpdaterTest, bothNull) {
     // At least either covered RRset or RRSIG must be non NULL.
