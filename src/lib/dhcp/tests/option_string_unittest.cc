@@ -43,18 +43,22 @@ public:
 // This test verifies that the constructor which creates an option instance
 // from a string value will create it properly.
 TEST_F(OptionStringTest, constructorFromString) {
-    OptionString optv4(Option::V4, 123, "some option");
+    const std::string optv4_value = "some option";
+    OptionString optv4(Option::V4, 123, optv4_value);
     EXPECT_EQ(Option::V4, optv4.getUniverse());
     EXPECT_EQ(123, optv4.getType());
-    EXPECT_EQ("some option", optv4.getValue());
+    EXPECT_EQ(optv4_value, optv4.getValue());
+    EXPECT_EQ(Option::OPTION4_HDR_LEN + optv4_value.size(), optv4.len());
 
     // Do another test with the same constructor to make sure that
     // different set of parameters would initialize the class members
     // to different values.
-    OptionString optv6(Option::V6, 234, "other option");
+    const std::string optv6_value = "other option";
+    OptionString optv6(Option::V6, 234, optv6_value);
     EXPECT_EQ(Option::V6, optv6.getUniverse());
     EXPECT_EQ(234, optv6.getType());
     EXPECT_EQ("other option", optv6.getValue());
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + optv6_value.size(), optv6.len());
 }
 
 // This test verifies that the constructor which creates an option instance
@@ -73,17 +77,36 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     // function wide. The initialization (constructor invocation)
     // is pushed to the ASSERT_NO_THROW macro below, as it may
     // throw exception if buffer is truncated.
+    boost::scoped_ptr<OptionString> optv4;
+    ASSERT_NO_THROW(
+        optv4.reset(new OptionString(Option::V4, 234, buf_.begin(), buf_.end()));
+    );
+    // Make sure that it has been initialized to non-NULL value.
+    ASSERT_TRUE(optv4);
+
+    // Test the instance of the created option.
+    const std::string optv4_value = "This is a test string";
+    EXPECT_EQ(Option::V4, optv4->getUniverse());
+    EXPECT_EQ(234, optv4->getType());
+    EXPECT_EQ(Option::OPTION4_HDR_LEN + buf_.size(), optv4->len());
+    EXPECT_EQ(optv4_value, optv4->getValue());
+
+    // Do the same test for V6 option.
     boost::scoped_ptr<OptionString> optv6;
     ASSERT_NO_THROW(
-        optv6.reset(new OptionString(Option::V6, 123, buf_.begin(), buf_.end()));
+        // Let's reduce the size of the buffer by one byte and see if our option
+        // will absorb this little change.
+        optv6.reset(new OptionString(Option::V6, 123, buf_.begin(), buf_.end() - 1));
     );
     // Make sure that it has been initialized to non-NULL value.
     ASSERT_TRUE(optv6);
 
     // Test the instance of the created option.
+    const std::string optv6_value = "This is a test strin";
     EXPECT_EQ(Option::V6, optv6->getUniverse());
     EXPECT_EQ(123, optv6->getType());
-    EXPECT_EQ("This is a test string", optv6->getValue());
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size(), optv6->len());
+    EXPECT_EQ(optv6_value, optv6->getValue());
 }
 
 // This test verifies that the current option value can be overriden
