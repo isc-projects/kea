@@ -105,7 +105,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     const std::string optv6_value = "This is a test strin";
     EXPECT_EQ(Option::V6, optv6->getUniverse());
     EXPECT_EQ(123, optv6->getType());
-    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size(), optv6->len());
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size() - 1, optv6->len());
     EXPECT_EQ(optv6_value, optv6->getValue());
 }
 
