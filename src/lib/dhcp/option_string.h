@@ -18,6 +18,7 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 
+#include <boost/shared_ptr.hpp>
 #include <string>
 
 namespace isc {
@@ -103,7 +104,14 @@ private:
     /// String value being held by the option.
     std::string value_;
 
+    // Change scope of the getData function to private as we want
+    // getValue is called instead.
+    using Option::getData;
+
 };
+
+/// Pointer to the OptionString object.
+typedef boost::shared_ptr<OptionString> OptionStringPtr;
 
 } // namespace isc::dhcp
 } // namespace isc
