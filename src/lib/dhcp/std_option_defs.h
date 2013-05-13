@@ -84,7 +84,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "host-name", DHO_HOST_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "boot-size", DHO_BOOT_SIZE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "merit-dump", DHO_MERIT_DUMP, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "domain-name", DHO_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "swap-server", DHO_SWAP_SERVER, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "root-path", DHO_ROOT_PATH, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "extensions-path", DHO_EXTENSIONS_PATH, OPT_STRING_TYPE,
