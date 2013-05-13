@@ -467,7 +467,14 @@ TEST_F(MemorySegmentMappedTest, shrink) {
     EXPECT_EQ(shrinked_size, segment_->getSize());
 
     // Check that the segment is still usable after shrink.
-    void* p = segment_->allocate(sizeof(uint32_t));
+    void *p = NULL;
+    while (!p) {
+        try {
+            p = segment_->allocate(sizeof(uint32_t));
+        } catch (const MemorySegmentGrown&) {
+            // Do nothing. Just try again.
+        }
+    }
     segment_->deallocate(p, sizeof(uint32_t));
 }
 

@@ -47,7 +47,7 @@ MemorySegmentLocal::deallocate(void* ptr, size_t size) {
 }
 
 bool
-MemorySegmentLocal::allMemoryDeallocated() const {
+MemorySegmentLocal::allMemoryDeallocated() {
     return (allocated_size_ == 0 && named_addrs_.empty());
 }
 

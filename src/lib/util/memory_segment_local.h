@@ -64,7 +64,7 @@ public:
     ///
     /// \return Returns <code>true</code> if all allocated memory was
     /// deallocated, <code>false</code> otherwise.
-    virtual bool allMemoryDeallocated() const;
+    virtual bool allMemoryDeallocated();
 
     /// \brief Local segment version of getNamedAddress.
     ///
