@@ -74,7 +74,7 @@ protected:
         zname_("example.org"), zclass_(RRClass::IN()),
         mem_sgmt_(GetParam()->create())
     {
-        ZoneData *data = ZoneData::create(*mem_sgmt_, zname_);
+        ZoneData* data = ZoneData::create(*mem_sgmt_, zname_);
         mem_sgmt_->setNamedAddress("Test zone data", data);
         updater_.reset(new ZoneDataUpdater(*mem_sgmt_, zclass_, zname_,
                                            *data));
@@ -97,7 +97,7 @@ protected:
         ZoneData::destroy(*mem_sgmt_, getZoneData(), zclass_);
         mem_sgmt_->clearNamedAddress("Test zone data");
         updater_.reset();
-        ZoneData *data = ZoneData::create(*mem_sgmt_, zname_);
+        ZoneData* data = ZoneData::create(*mem_sgmt_, zname_);
         mem_sgmt_->setNamedAddress("Test zone data", data);
         updater_.reset(new ZoneDataUpdater(*mem_sgmt_, zclass_, zname_,
                                            *data));
