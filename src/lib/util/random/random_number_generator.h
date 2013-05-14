@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <vector>
 
 #include <exceptions/exceptions.h>
 
@@ -59,7 +60,9 @@ public:
     ///
     /// \param min The minimum number in the range
     /// \param max The maximum number in the range
-    UniformRandomIntegerGenerator(int min, int max):
+    /// \param seed A seed for the RNG. If 0 is passed, the current time
+    /// is used.
+    UniformRandomIntegerGenerator(int min, int max, unsigned int seed = 0):
         min_(std::min(min, max)), max_(std::max(min, max)),
         dist_(min_, max_), generator_(rng_, dist_)
     {
@@ -72,7 +75,10 @@ public:
         }
 
         // Init with the current time
-        rng_.seed(time(NULL));
+        if (seed == 0) {
+            seed = time(NULL);
+        }
+        rng_.seed(seed);
     }
 
     /// \brief Generate uniformly distributed integer
