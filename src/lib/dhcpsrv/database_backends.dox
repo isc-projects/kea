@@ -26,7 +26,7 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in BIND 10 DHCP by default:
-  the --with-dhcp-mysql switch must be supplied to "configure" for support
+  the \--with-dhcp-mysql switch must be supplied to "configure" for support
   to be compiled into the software.
   - Memfile is an in-memory lease database, with (currently) nothing being
   written to persistent storage.  The long-term plans for the backend do
@@ -119,6 +119,6 @@
   %@endverbatim
 
   The unit tests are run automatically when "make check" is executed (providing
-  that BIND 10 has been build with the --with-dhcp-mysql switch (see the installation
+  that BIND 10 has been build with the \--with-dhcp-mysql switch (see the installation
   section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND 10 Guide</a>).
   */
