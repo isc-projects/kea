@@ -1,3 +1,14 @@
+613.	[func]		jinmei
+	datasrc: Error handling in loading zones into memory is now more
+	consistent and convenient: data source configuration does not fail
+	due to zones configured to be loaded into memory but not available
+	in the data source, just like the case of missing zone file for
+	the MasterFiles type of data source.  Also, zones that aren't
+	loaded into memory due to errors can now be reloaded for b10-auth
+	using the bindctl Auth loadzone command after fixing the error,
+	without reconfiguring the entire data source.
+	(Trac #2851, git a3d4fe8a32003534150ed076ea0bbf80e1fcc43c)
+
 612.	[func]		tomek
 	b10-dhcp6: Support for relayed DHCPv6 traffic has been added.
 
