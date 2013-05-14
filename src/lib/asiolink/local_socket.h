@@ -31,6 +31,10 @@ namespace asiolink {
 /// directly.  Right now it only provides read interface due to the limited
 /// expected usage, but it can be extended as we see need for other operations
 /// on this socket.
+///
+/// Note that in the initial implementation there's even no stop() or cancel()
+/// method; for these cases users are expected to just destroy the socket
+/// object (this may be extended in future, too).
 class LocalSocket : boost::noncopyable, public IOSocket {
 public:
     /// \brief Constructor from a native file descriptor of AF_UNIX stream
