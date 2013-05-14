@@ -81,7 +81,8 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     const Name root(".");
     const Name& algorithm = createNameFromLexer(lexer, &root);
 
-    const string time_str = lexer.getNextToken(MasterToken::STRING).getString();
+    const string time_str =
+        lexer.getNextToken(MasterToken::STRING).getString();
     uint64_t time_signed;
     try {
         time_signed = boost::lexical_cast<uint64_t>(time_str);
@@ -96,7 +97,8 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     if (fudge > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Fudge out of range");
     }
-    const uint32_t macsize = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t macsize =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (macsize > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG MAC Size out of range");
     }
@@ -109,12 +111,14 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "TSIG MAC Size and data are inconsistent");
     }
 
-    const uint32_t orig_id = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const uint32_t orig_id =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (orig_id > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Original ID out of range");
     }
 
-    const string error_txt = lexer.getNextToken(MasterToken::STRING).getString();
+    const string error_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
     uint16_t error = 0;
     // XXX: In the initial implementation we hardcode the mnemonics.
     // We'll soon generalize this.
@@ -134,7 +138,8 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         }
     }
 
-    const int32_t otherlen = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    const int32_t otherlen =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (otherlen > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Other Len out of range");
     }
