@@ -12,8 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "config.h"
+
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/zone_table_segment_local.h>
+#ifdef USE_SHARED_MEMORY
+#include <datasrc/memory/zone_table_segment_mapped.h>
+#endif
+#include <datasrc/memory/zone_writer.h>
 
 #include <string>
 
@@ -30,6 +36,10 @@ ZoneTableSegment::create(const RRClass& rrclass, const std::string& type) {
     // Until that it becomes a real issue we won't be too smart.
     if (type == "local") {
         return (new ZoneTableSegmentLocal(rrclass));
+#ifdef USE_SHARED_MEMORY
+    } else if (type == "mapped") {
+        return (new ZoneTableSegmentMapped(rrclass));
+#endif
     }
     isc_throw(UnknownSegmentType, "Zone table segment type not supported: "
               << type);

@@ -14,14 +14,16 @@
 
 #include <config.h>
 
+#include <util/random/random_number_generator.h>
+
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 
-#include <algorithm>
 #include <iostream>
-#include <vector>
+#include <climits>
 
-#include <util/random/random_number_generator.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace isc {
 namespace util {
@@ -42,9 +44,9 @@ public:
     }
     virtual ~UniformRandomIntegerGeneratorTest(){}
 
-    int gen() { return gen_(); }
-    int max() const { return max_; }
-    int min() const { return min_; }
+    int gen() { return (gen_()); }
+    int max() const { return (max_); }
+    int min() const { return (min_); }
 
 private:
     UniformRandomIntegerGenerator gen_;
@@ -82,7 +84,22 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
     vector<int>::iterator it = unique(numbers.begin(), numbers.end());
 
     // make sure the numbers are in range [min, max]
-    ASSERT_EQ(it - numbers.begin(), max() - min() + 1); 
+    ASSERT_EQ(it - numbers.begin(), max() - min() + 1);
+}
+
+TEST_F(UniformRandomIntegerGeneratorTest, withSeed) {
+    // Test that two generators with the same seed return the same
+    // sequence.
+    UniformRandomIntegerGenerator gen1(0, INT_MAX, getpid());
+    vector<int> numbers;
+    for (int i = 0; i < 1024; ++i) {
+        numbers.push_back(gen1());
+    }
+
+    UniformRandomIntegerGenerator gen2(0, INT_MAX, getpid());
+    for (int i = 0; i < 1024; ++i) {
+        EXPECT_EQ(numbers[i], gen2());
+    }
 }
 
 /// \brief Test Fixture Class for weighted random number generator
@@ -99,7 +116,8 @@ public:
 TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) {
     vector<double> probabilities;
 
-    // If no probabilities is provided, the smallest integer will always be generated
+    // If no probabilities is provided, the smallest integer will always
+    // be generated
     WeightedRandomIntegerGenerator gen(probabilities, 123);
     for (int i = 0; i < 100; ++i) {
         ASSERT_EQ(gen(), 123);

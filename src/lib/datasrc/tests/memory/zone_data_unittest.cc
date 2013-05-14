@@ -16,8 +16,6 @@
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 
-#include "memory_segment_test.h"
-
 #include <dns/rdataclass.h>
 
 #include <exceptions/exceptions.h>
@@ -30,6 +28,7 @@
 #include <dns/rrttl.h>
 
 #include <testutils/dnsmessage_test.h>
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -73,7 +72,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
-    MemorySegmentTest mem_sgmt_;
+    MemorySegmentMock mem_sgmt_;
     NSEC3Data* nsec3_data_;
     const generic::NSEC3PARAM param_rdata_, param_rdata_nosalt_,
         param_rdata_largesalt_;
@@ -88,7 +87,7 @@ protected:
 // Shared by both test cases using NSEC3 and NSEC3PARAM Rdata
 template <typename RdataType>
 void
-checkNSEC3Data(MemorySegmentTest& mem_sgmt,
+checkNSEC3Data(MemorySegmentMock& mem_sgmt,
                const Name& zone_name,
                const RdataType& expect_rdata)
 {
