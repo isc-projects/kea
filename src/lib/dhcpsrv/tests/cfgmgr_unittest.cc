@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
 
@@ -164,6 +164,7 @@ public:
         // make sure we start with a clean configuration
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
+        CfgMgr::instance().deleteOptionDefs();
     }
 
     /// @brief generates interface-id option based on provided text
