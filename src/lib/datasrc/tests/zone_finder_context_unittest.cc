@@ -36,7 +36,6 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -44,7 +43,6 @@
 
 using namespace std;
 using boost::shared_ptr;
-using boost::scoped_ptr;
 
 using namespace isc::data;
 using namespace isc::util;
@@ -79,12 +77,12 @@ createInMemoryClient(RRClass zclass, const Name& zname) {
             string(TEST_ZONE_FILE) + "\"}}"), true);
     shared_ptr<ZoneTableSegment> ztable_segment(
         ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
-    scoped_ptr<memory::ZoneWriter> writer(
-        ztable_segment->getZoneWriter(cache_conf.getLoadAction(zclass, zname),
-                                      zname, zclass));
-    writer->load();
-    writer->install();
-    writer->cleanup();
+    memory::ZoneWriter writer(*ztable_segment,
+                              cache_conf.getLoadAction(zclass, zname),
+                              zname, zclass);
+    writer.load();
+    writer.install();
+    writer.cleanup();
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
 

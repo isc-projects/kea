@@ -175,7 +175,7 @@ public:
     /// read-only mode; in that case MemorySegmentError will be thrown.
     virtual void deallocate(void* ptr, size_t size);
 
-    virtual bool allMemoryDeallocated() const;
+    virtual bool allMemoryDeallocated();
 
     /// \brief Mapped segment version of setNamedAddress.
     ///
@@ -195,7 +195,7 @@ public:
     /// \brief Mapped segment version of getNamedAddress.
     ///
     /// This version never throws.
-    virtual void* getNamedAddressImpl(const char* name);
+    virtual NamedAddressResult getNamedAddressImpl(const char* name) const;
 
     /// \brief Mapped segment version of clearNamedAddress.
     ///
