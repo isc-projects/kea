@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/local_socket.h>
+#include <asiolink/io_error.h>
 
 #include <gtest/gtest.h>
 
@@ -101,6 +102,14 @@ TEST_F(LocalSocketTest, construct) {
     LocalSocket sock(io_service_, fd);
     EXPECT_EQ(fd, sock.getNative());
     EXPECT_EQ(AF_UNIX, sock.getProtocol());
+}
+
+TEST_F(LocalSocketTest, constructError) {
+    // try to construct a LocalSocket object with a closed socket.  It should
+    // fail.
+    const int fd = sock_pair_[0].release();
+    EXPECT_EQ(0, close(fd));
+    EXPECT_THROW(LocalSocket(io_service_, fd), IOError);
 }
 
 TEST_F(LocalSocketTest, autoClose) {
