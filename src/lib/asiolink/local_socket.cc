@@ -14,6 +14,7 @@
 
 #include <asiolink/local_socket.h>
 #include <asiolink/io_service.h>
+#include <asiolink/io_error.h>
 
 #include <asio.hpp>
 
@@ -24,13 +25,21 @@
 
 namespace isc {
 namespace asiolink {
-
 class LocalSocket::Impl {
 public:
     Impl(IOService& io_service, int fd) :
-        asio_sock_(io_service.get_io_service())
+        asio_sock_(io_service.get_io_service(),
+                   asio::local::stream_protocol(), fd)
     {
-        asio_sock_.assign(asio::local::stream_protocol(), fd, ec_);
+        // Depending on the underlying demultiplex API, the constructor may or
+        // may not throw in case fd is invalid.  To catch such cases sooner,
+        // we try to get the local endpoint (we don't need it in the rest of
+        // this implementation).
+        asio_sock_.local_endpoint(ec_);
+        if (ec_) {
+            isc_throw(IOError, "failed to open local socket with FD " << fd
+                      << " (local endpoint unknown): " << ec_.message());
+        }
     }
 
     void readCompleted(const asio::error_code& ec, ReadCallback user_callback);
@@ -51,8 +60,16 @@ LocalSocket::Impl::readCompleted(const asio::error_code& ec,
 }
 
 LocalSocket::LocalSocket(IOService& io_service, int fd) :
-    impl_(new Impl(io_service, fd))
-{}
+    impl_(NULL)
+{
+    try {
+        impl_ = new Impl(io_service, fd);
+    } catch (const asio::error_code& error) {
+        // Catch and convert any exception from asio's constructor
+        isc_throw(IOError, "failed to open local socket with FD " << fd
+                  << ": " << error.message());
+    }
+}
 
 LocalSocket::~LocalSocket() {
     delete impl_;
