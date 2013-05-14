@@ -891,9 +891,6 @@ if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; th
     AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
-if test "x$use_shared_memory" = "xyes"; then
-    AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
-fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
@@ -1204,6 +1201,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/tests/Makefile
+                 src/bin/d2srv/Makefile
+                 src/bin/d2srv/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/resolver/bench/Makefile
@@ -1382,6 +1381,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
+           src/bin/d2srv/spec_config.h.pre
            src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
