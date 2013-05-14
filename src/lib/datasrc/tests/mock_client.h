@@ -58,6 +58,13 @@ public:
     void eraseZone(const dns::Name& zone_name) {
         zones.erase(zone_name);
     }
+
+    /// \brief Dynamically add a zone to the data source.
+    ///
+    /// \return true if the zone is newly added; false if it already exists.
+    bool insertZone(const dns::Name& zone_name) {
+        return (zones.insert(zone_name).second);
+    }
     const std::string type_;
     const data::ConstElementPtr configuration_;
 
