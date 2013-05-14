@@ -33,8 +33,7 @@ public:
         asio_sock_.assign(asio::local::stream_protocol(), fd, ec_);
     }
 
-    void readCompleted(const asio::error_code& ec, size_t read_len,
-                       ReadCallback user_callback);
+    void readCompleted(const asio::error_code& ec, ReadCallback user_callback);
 
     asio::local::stream_protocol::socket asio_sock_;
     asio::error_code ec_;
@@ -42,7 +41,7 @@ public:
 
 void
 LocalSocket::Impl::readCompleted(const asio::error_code& ec,
-                                 size_t, ReadCallback user_callback)
+                                 ReadCallback user_callback)
 {
     // assumption check: we pass non empty string iff ec indicates an error.
     const std::string& err_msg = ec ? ec.message() : std::string();
@@ -74,8 +73,7 @@ LocalSocket::asyncRead(const ReadCallback& callback, void* buf,
                        size_t buflen)
 {
     asio::async_read(impl_->asio_sock_, asio::buffer(buf, buflen),
-                     boost::bind(&Impl::readCompleted, impl_, _1, _2,
-                                 callback));
+                     boost::bind(&Impl::readCompleted, impl_, _1, callback));
 }
 
 } // namespace asiolink
