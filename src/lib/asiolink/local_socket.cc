@@ -42,22 +42,9 @@ public:
         }
     }
 
-    void readCompleted(const asio::error_code& ec, ReadCallback user_callback);
-
     asio::local::stream_protocol::socket asio_sock_;
     asio::error_code ec_;
 };
-
-void
-LocalSocket::Impl::readCompleted(const asio::error_code& ec,
-                                 ReadCallback user_callback)
-{
-    // assumption check: we pass non empty string iff ec indicates an error.
-    const std::string& err_msg = ec ? ec.message() : std::string();
-    assert(ec || err_msg.empty());
-
-    user_callback(err_msg);
-}
 
 LocalSocket::LocalSocket(IOService& io_service, int fd) :
     impl_(NULL)
@@ -85,12 +72,30 @@ LocalSocket::getProtocol() const {
     return (AF_UNIX);
 }
 
+namespace {
+// Wrapper callback for async_read that simply adjusts asio-native parameters
+// for the LocalSocket interface.  Note that this is a free function and
+// doesn't rely on internal member variables of LocalSocket.
+// So it can be called safely even after the LocalSocket object on which
+// asyncRead() was called is destroyed.
+void
+readCompleted(const asio::error_code& ec,
+              LocalSocket::ReadCallback user_callback)
+{
+    // assumption check: we pass non empty string iff ec indicates an error.
+    const std::string err_msg = ec ? ec.message() : std::string();
+    assert(ec || err_msg.empty());
+
+    user_callback(err_msg);
+}
+}
+
 void
 LocalSocket::asyncRead(const ReadCallback& callback, void* buf,
                        size_t buflen)
 {
     asio::async_read(impl_->asio_sock_, asio::buffer(buf, buflen),
-                     boost::bind(&Impl::readCompleted, impl_, _1, callback));
+                     boost::bind(readCompleted, _1, callback));
 }
 
 } // namespace asiolink
