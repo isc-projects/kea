@@ -29,15 +29,29 @@ public:
     /// \brief Constructor from a native file descriptor of AF_UNIX socket.
     ///
     /// \param io_service
+    /// \param fd
     LocalSocket(IOService& io_service, int fd);
 
+    /// \brief Destructor.
     virtual ~LocalSocket();
 
+    /// \brief Local socket version of getNative().
     virtual int getNative() const;
 
+    /// \brief Local socket version of getProtocol().
+    ///
+    /// It always returns \c AF_UNIX.
     virtual int getProtocol() const;
 
     typedef boost::function<void(const std::string& error)> ReadCallback;
+
+    /// \brief Start asynchronous read on the socket.
+    ///
+    /// \throw None
+    ///
+    /// \brief callback
+    /// \brief buf
+    /// \brief buflen
     void asyncRead(const ReadCallback& callback, void* buf, size_t buflen);
 
 private:
