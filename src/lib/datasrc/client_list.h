@@ -339,50 +339,51 @@ public:
         return (configuration_);
     }
 
-    /// \brief Result of the reload() method.
-    enum ReloadResult {
-        CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
-                            ///  (including the case cache is disabled for
-                            ///  the specific data source).
-        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
-        ZONE_SUCCESS        ///< The zone was successfully reloaded or
-                            ///  the writer provided.
-    };
-
-    /// \brief Reloads a cached zone.
-    ///
-    /// This method finds a zone which is loaded into a cache and reloads it.
-    /// This may be used to renew the cache when the underlying data source
-    /// changes.
-    ///
-    /// \param zone The origin of the zone to reload.
-    /// \return A status if the command worked.
-    /// \throw DataSourceError or anything else that the data source
-    ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ReloadResult reload(const dns::Name& zone);
-
 private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
 public:
+    /// \brief Codes indicating in-memory cache status for a given zone name.
+    ///
+    /// This is used as a result of the getCachedZoneWriter() method.
+    enum CacheStatus {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone is not to be cached (including the case
+                            ///  where caching is disabled for the specific
+                            ///  data source).
+        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
+        CACHE_NOT_WRITABLE, ///< The cache is not writable (and zones can't
+                            ///  be loaded)
+        DATASRC_NOT_FOUND,  ///< Specific data source for load is specified
+                            ///  but it's not in the list
+        ZONE_SUCCESS        ///< Zone to be cached is successfully found and
+                            ///  is ready to be loaded
+    };
 
     /// \brief Return value of getCachedZoneWriter()
     ///
     /// A pair containing status and the zone writer, for the
     /// getCachedZoneWriter() method.
-    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
+    typedef std::pair<CacheStatus, ZoneWriterPtr> ZoneWriterPair;
 
-    /// \brief Return a zone writer that can be used to reload a zone.
+    /// \brief Return a zone writer that can be used to (re)load a zone.
     ///
-    /// This looks up a cached copy of zone and returns the ZoneWriter
-    /// that can be used to reload the content of the zone. This can
-    /// be used instead of reload() -- reload() works synchronously, which
-    /// is not what is needed every time.
+    /// By default this method identifies the first data source in the list
+    /// that should serve the zone of the given name, and returns a ZoneWriter
+    /// object that can be used to load the content of the zone, in a specific
+    /// way for that data source.
     ///
-    /// \param zone The origin of the zone to reload.
+    /// If the optional \c datasrc_name parameter is provided with a non empty
+    /// string, this method only tries to load the specified zone into or with
+    /// the data source which has the given name, regardless where in the list
+    /// that data source is placed.  Even if the given name of zone doesn't
+    /// exist in the data source, other data sources are not searched and
+    /// this method simply returns ZONE_NOT_FOUND in the first element
+    /// of the pair.
+    ///
+    /// \param zone The origin of the zone to load.
+    /// \param datasrc_name If not empty, the name of the data source
+    /// to be used for loading the zone (see above).
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
@@ -390,9 +391,8 @@ public:
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
+                                       const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -421,12 +421,12 @@ public:
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
 
+        // cache_conf_ can be accessed only from this read-only getter,
+        // to protect its integrity as much as possible.
         const internal::CacheConfig* getCacheConfig() const {
             return (cache_conf_.get());
         }
     private:
-        // this is kept private for now.  When it needs to be accessed,
-        // we'll add a read-only getter method.
         boost::shared_ptr<internal::CacheConfig> cache_conf_;
     };
 

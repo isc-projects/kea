@@ -669,7 +669,7 @@ TEST_F(MemoryClientTest, getZoneCount) {
 
 TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
     // Zone "." doesn't exist
-    EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
+    EXPECT_THROW(client_->getIterator(Name(".")), NoSuchZone);
 }
 
 TEST_F(MemoryClientTest, getIterator) {

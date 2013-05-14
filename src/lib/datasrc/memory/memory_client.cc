@@ -242,7 +242,7 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
     const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     const ZoneTable::FindResult result(zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
-        isc_throw(DataSourceError, "No such zone: " + name.toText());
+        isc_throw(NoSuchZone, "No such zone: " + name.toText());
     }
 
     return (ZoneIteratorPtr(new MemoryIterator(

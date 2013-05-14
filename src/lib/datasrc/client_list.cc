@@ -102,10 +102,11 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             }
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
-            const string name(name_elem ? name_elem->stringValue() : type);
-            if (!used_names.insert(name).second) {
+            const string datasrc_name =
+                name_elem ? name_elem->stringValue() : type;
+            if (!used_names.insert(datasrc_name).second) {
                 isc_throw(ConfigurationError, "Duplicate name in client list: "
-                          << name);
+                          << datasrc_name);
             }
 
             // Create a client for the underling data source via factory.
@@ -116,7 +117,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                                                                  paramConf);
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                    arg(name).arg(rrclass_);
+                    arg(datasrc_name).arg(rrclass_);
                 continue;
             }
 
@@ -129,13 +130,22 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
                                                       cache_conf, rrclass_,
-                                                      name));
+                                                      datasrc_name));
 
-            // If cache is disabled we are done for this data source.
+            // If cache is disabled, or the zone table segment is not (yet)
+            // writable,  we are done for this data source.
             // Otherwise load zones into the in-memory cache.
             if (!cache_conf->isEnabled()) {
                 continue;
             }
+            memory::ZoneTableSegment& zt_segment =
+                *new_data_sources.back().ztable_segment_;
+            if (!zt_segment.isWritable()) {
+                LOG_DEBUG(logger, DBGLVL_TRACE_BASIC,
+                          DATASRC_LIST_CACHE_PENDING).arg(datasrc_name);
+                continue;
+            }
+
             internal::CacheConfig::ConstZoneIterator end_of_zones =
                 cache_conf->end();
             for (internal::CacheConfig::ConstZoneIterator zone_it =
@@ -144,25 +154,23 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                  ++zone_it)
             {
                 const Name& zname = zone_it->first;
-                memory::LoadAction load_action;
                 try {
-                    load_action = cache_conf->getLoadAction(rrclass_, zname);
-                } catch (const DataSourceError&) {
-                    isc_throw(ConfigurationError, "Data source error for "
-                              "loading a zone (possibly non-existent) "
-                              << zname << "/" << rrclass_);
-                }
-                assert(load_action); // in this loop this should be always true
-                try {
-                    memory::ZoneWriter writer(
-                        *new_data_sources.back().ztable_segment_,
+                    const memory::LoadAction load_action =
+                        cache_conf->getLoadAction(rrclass_, zname);
+                    // in this loop this should be always true
+                    assert(load_action);
+                    memory::ZoneWriter writer(zt_segment,
                         load_action, zname, rrclass_);
                     writer.load();
                     writer.install();
                     writer.cleanup();
+                } catch (const NoSuchZone&) {
+                    LOG_ERROR(logger, DATASRC_CACHE_ZONE_NOTFOUND).
+                        arg(zname).arg(rrclass_).arg(datasrc_name);
                 } catch (const ZoneLoaderException& e) {
-                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR)
-                        .arg(zname).arg(rrclass_).arg(name).arg(e.what());
+                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).
+                        arg(zname).arg(rrclass_).arg(datasrc_name).
+                        arg(e.what());
                 }
             }
         }
@@ -309,48 +317,56 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
-// We still provide this method for backward compatibility. But to not have
-// duplicate code, it is a thin wrapper around getCachedZoneWriter only.
-ConfigurableClientList::ReloadResult
-ConfigurableClientList::reload(const Name& name) {
-    const ZoneWriterPair result(getCachedZoneWriter(name));
-    if (result.first != ZONE_SUCCESS) {
-        return (result.first);
-    }
-
-    assert(result.second);
-    result.second->load();
-    result.second->install();
-    result.second->cleanup();
-
-    return (ZONE_SUCCESS);
-}
-
 ConfigurableClientList::ZoneWriterPair
-ConfigurableClientList::getCachedZoneWriter(const Name& name) {
+ConfigurableClientList::getCachedZoneWriter(const Name& name,
+                                            const std::string& datasrc_name)
+{
     if (!allow_cache_) {
         return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
     }
-    // Try to find the correct zone.
-    MutableResult result;
-    findInternal(result, name, true, true);
-    if (!result.finder) {
-        return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+
+    // Find the data source from which the zone to be loaded into memory.
+    // Then get the appropriate load action and create a zone writer.
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        if (!datasrc_name.empty() && datasrc_name != info.name_) {
+            continue;
+        }
+        // If there's an underlying "real" data source and it doesn't contain
+        // the given name, obviously we cannot load it.  If a specific data
+        // source is given by the name, search should stop here.
+        if (info.data_src_client_ &&
+            info.data_src_client_->findZone(name).code != result::SUCCESS) {
+            if (!datasrc_name.empty()) {
+                return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+            }
+            continue;
+        }
+        // If the corresponding zone table segment is not (yet) writable,
+        // we cannot load at this time.
+        if (info.ztable_segment_ && !info.ztable_segment_->isWritable()) {
+            return (ZoneWriterPair(CACHE_NOT_WRITABLE, ZoneWriterPtr()));
+        }
+        // Note that getCacheConfig() must return non NULL in this module
+        // (only tests could set it to a bogus value).
+        const memory::LoadAction load_action =
+            info.getCacheConfig()->getLoadAction(rrclass_, name);
+        if (!load_action) {
+            return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+        }
+        return (ZoneWriterPair(ZONE_SUCCESS,
+                               ZoneWriterPtr(
+                                   new memory::ZoneWriter(
+                                       *info.ztable_segment_,
+                                       load_action, name, rrclass_))));
     }
 
-    // Then get the appropriate load action and create a zone writer.
-    // Note that getCacheConfig() must return non NULL in this module (only
-    // tests could set it to a bogus value).
-    const memory::LoadAction load_action =
-        result.info->getCacheConfig()->getLoadAction(rrclass_, name);
-    if (!load_action) {
-        return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+    // We can't find the specified zone.  If a specific data source was
+    // given, this means the given name of data source doesn't exist, so
+    // we report it so.
+    if (!datasrc_name.empty()) {
+        return (ZoneWriterPair(DATASRC_NOT_FOUND, ZoneWriterPtr()));
     }
-    return (ZoneWriterPair(ZONE_SUCCESS,
-                           ZoneWriterPtr(
-                               new memory::ZoneWriter(
-                                   *result.info->ztable_segment_,
-                                   load_action, name, rrclass_))));
+    return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
