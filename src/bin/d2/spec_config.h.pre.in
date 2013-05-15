@@ -1,4 +1,4 @@
-// Copyright (C) 2011 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,20 +12,4 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <log/logger_support.h>
-#include <d2srv/d2srv_log.h>
-#include <gtest/gtest.h>
-
-int
-main(int argc, char* argv[]) {
-
-    ::testing::InitGoogleTest(&argc, argv);
-
-    // See the documentation of the B10_* environment variables in
-    // src/lib/log/README for info on how to tweak logging
-    isc::log::initLogger();
-
-    int result = RUN_ALL_TESTS();
-
-    return (result);
-}
+#define D2_SPECFILE_LOCATION "@prefix@/share/@PACKAGE@/d2.spec"

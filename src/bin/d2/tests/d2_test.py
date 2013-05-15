@@ -1,4 +1,4 @@
-# Copyright (C) 2012 Internet Systems Consortium.
+# Copyright (C) 2013 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ import time
 import isc
 import fcntl
 
-class TestD2srvDaemon(unittest.TestCase):
+class TestD2Daemon(unittest.TestCase):
     def setUp(self):
         # Don't redirect stdout/stderr here as we want to print out things
         # during the test
@@ -156,13 +156,12 @@ class TestD2srvDaemon(unittest.TestCase):
         return (rc, output, error)
 
     def test_alive(self):
-        print("Note: Purpose of some of the tests is to check if D2 server can be started,")
-        print("      not that is can bind sockets correctly. Please ignore binding errors.")
-        print("THIS TEST IS A PLACE HOLDER DURING INITIAL D2 SERVER WORK - IT ALWAYS PASSES")
-
-        #(returncode, output, error) = self.runCommand(["../b10-d2srv", "-v"])
-        #output_text = str(output) + str(error)
-        #self.assertEqual(output_text.count("D2SRV_STARTING"), 1)
+        print("Note: Simple test to verify that D2 server can be started.")
+        # note that "-s" for stand alone is necessary in order to flush the log output
+        # soon enough to catch it.
+        (returncode, output, error) = self.runCommand(["../b10-d2", "-s"])
+        output_text = str(output) + str(error)
+        self.assertEqual(output_text.count("D2_STARTING"), 1)
 
 if __name__ == '__main__':
     unittest.main()

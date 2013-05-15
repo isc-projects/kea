@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,30 +20,30 @@
 <refentry>
 
   <refentryinfo>
-    <date>October 27, 2011</date>
+    <date>May 15, 2013</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-d2srv</refentrytitle>
+    <refentrytitle>b10-d2</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-d2srv</refname>
-    <refpurpose>DHCPv4 server in BIND 10 architecture</refpurpose>
+    <refname>b10-d2</refname>
+    <refpurpose>D2 process in BIND 10 architecture</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
-      <year>2011</year>
+      <year>2013</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-d2srv</command>
+      <command>b10-d2</command>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -51,8 +51,8 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-d2srv</command> daemon will provide the
-       D2 server implementation when it becomes functional.
+      The <command>b10-d2</command> daemon processes requests to
+      to update DNS mapping based on DHCP lease change events.
     </para>
 
   </refsect1>
@@ -79,7 +79,7 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-init</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-d2</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
@@ -90,8 +90,8 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-d2srv</command> daemon was first coded in
-      November 2013 by Thomas Markwalder
+      The <command>b10-d2</command> process was first coded in
+      May 2013 by the ISC Kea/Dhcp team.
     </para>
   </refsect1>
 </refentry><!--

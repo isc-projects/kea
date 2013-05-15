@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,4 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#define DHCP4_SPECFILE_LOCATION "@prefix@/share/@PACKAGE@/dhcp4.spec"
+/// Defines the logger used by the top-level component of b10-dhcp4.
+
+#include <d2/d2_log.h>
+
+namespace isc {
+namespace d2 {
+
+isc::log::Logger d2_logger("d2");
+
+} // namespace d2
+} // namespace isc
+

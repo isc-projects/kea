@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,17 +12,17 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-$NAMESPACE isc::d2srv
+$NAMESPACE isc::d2
 
-% D2SRV_STARTING : server starting
-This is a debug message issued during a DController server startup.
+% D2_STARTING : process starting
+This is a debug message issued during a D2 process startup.
 
-% D2SRV_START_INFO pid: %1, verbose: %2, standalone: %3
-This is a debug message issued during the DController server startup.
-It lists some information about the parameters with which the server
-is running.
+% D2_START_INFO pid: %1, verbose: %2, standalone: %3
+This is a debug message issued during the D2 process startup.
+It lists some information about the parameters with which the 
+process is running.
 
-% D2SRV_SHUTDOWN : server is performing a normal shutting down
-This is a debug message issued when a D2Server shuts down 
+% D2_SHUTDOWN : process is performing a normal shutting down
+This is a debug message issued when a D2 process shuts down 
 normally in response to command to stop.
 

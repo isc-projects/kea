@@ -1201,8 +1201,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/tests/Makefile
-                 src/bin/d2srv/Makefile
-                 src/bin/d2srv/tests/Makefile
+                 src/bin/d2/Makefile
+                 src/bin/d2/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/resolver/bench/Makefile
@@ -1381,7 +1381,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
-           src/bin/d2srv/spec_config.h.pre
+           src/bin/d2/spec_config.h.pre
            src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
