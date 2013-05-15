@@ -133,7 +133,7 @@ private:
     // requires it.
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
-    std::auto_ptr<asio::ip::udp::socket> socket_;
+    boost::scoped_ptr<asio::ip::udp::socket> socket_;
     // Wrapper of socket_ in the form of asiolink::IOSocket.
     // "DummyIOCallback" is not necessary for this class, but using the
     // template is the easiest way to create a UDP instance of IOSocket.
