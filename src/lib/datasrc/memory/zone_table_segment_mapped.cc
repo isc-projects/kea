@@ -80,6 +80,14 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             }
         }
     } else {
+        if ((!create) && (!segment.allMemoryDeallocated())) {
+            // If we are resetting in READ_WRITE mode, and some memory
+            // was already allocated but there is no checksum, that
+            // indicates that the segment is corrupted.
+            error_msg = "Existing segment is missing a checksum name";
+            return (false);
+        }
+
         // Allocate space for a checksum (which is saved during close).
         void* checksum = NULL;
         while (!checksum) {
@@ -105,7 +113,7 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
         segment.getNamedAddress(ZONE_TABLE_HEADER_NAME);
     if (result.first) {
         if (create) {
-            // There must be no previously saved checksum.
+            // There must be no previously saved header.
             error_msg = "There is already a saved ZoneTableHeader in the "
                  "segment opened in create mode";
             return (false);
