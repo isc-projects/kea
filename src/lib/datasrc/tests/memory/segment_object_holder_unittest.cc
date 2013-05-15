@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <util/memory_segment_local.h>
 #include <util/memory_segment_mapped.h>
 
@@ -83,6 +85,7 @@ TEST(SegmentObjectHolderTest, destroyNotSet) {
     EXPECT_TRUE(sgmt.allMemoryDeallocated());
 }
 
+#ifdef USE_SHARED_MEMORY
 // Keep allocating bigger and bigger chunks of data until the allocation
 // fails with growing the segment.
 void
@@ -103,7 +106,6 @@ allocateUntilGrows(MemorySegment& segment, size_t& current_size) {
 
 // Check that the segment thing releases stuff even in case it throws
 // SegmentGrown exception and the thing moves address
-#ifdef USE_SHARED_MEMORY
 TEST(SegmentObjectHolderTest, grow) {
     MemorySegmentMapped segment(mapped_file,
                                 isc::util::MemorySegmentMapped::CREATE_ONLY);
