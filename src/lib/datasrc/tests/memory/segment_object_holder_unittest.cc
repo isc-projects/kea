@@ -34,6 +34,7 @@ public:
     static void destroy(MemorySegment& sgmt, TestObject* obj, int arg) {
         sgmt.deallocate(obj, sizeof(*obj));
         EXPECT_EQ(TEST_ARG_VAL, arg);
+        EXPECT_TRUE(obj);
     }
 };
 
@@ -46,7 +47,8 @@ useHolder(MemorySegment& sgmt, TestObject* obj, bool release) {
     // deallocate().
 
     typedef SegmentObjectHolder<TestObject, int> HolderType;
-    HolderType holder(sgmt, obj, TEST_ARG_VAL);
+    HolderType holder(sgmt, TEST_ARG_VAL);
+    holder.set(obj);
     EXPECT_EQ(obj, holder.get());
     if (release) {
         EXPECT_EQ(obj, holder.release());
@@ -69,6 +71,16 @@ TEST(SegmentObjectHolderTest, foo) {
     EXPECT_TRUE(sgmt.allMemoryDeallocated());
 }
 
+// Test nothing bad happens if the holder is not set before it is destroyed
+TEST(SegmentObjectHolderTest, destroyNotSet) {
+    MemorySegmentLocal sgmt;
+    {
+        typedef SegmentObjectHolder<TestObject, int> HolderType;
+        HolderType holder(sgmt, TEST_ARG_VAL);
+    }
+    EXPECT_TRUE(sgmt.allMemoryDeallocated());
+}
+
 // Keep allocating bigger and bigger chunks of data until the allocation
 // fails with growing the segment.
 void
@@ -78,7 +90,8 @@ allocateUntilGrows(MemorySegment& segment, size_t& current_size) {
     // the position moved.
     void *object_memory = segment.allocate(sizeof(TestObject));
     TestObject* object = new(object_memory) TestObject;
-    SegmentObjectHolder<TestObject, int> holder(segment, object, TEST_ARG_VAL);
+    SegmentObjectHolder<TestObject, int> holder(segment, TEST_ARG_VAL);
+    holder.set(object);
     while (true) {
         void* data = segment.allocate(current_size);
         segment.deallocate(data, current_size);

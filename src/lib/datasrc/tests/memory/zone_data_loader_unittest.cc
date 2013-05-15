@@ -99,8 +99,8 @@ TEST(ZoneDataLoaterTest, relocate) {
                                       TEST_DATA_DIR
                                       "/example.org-nsec3-signed.zone");
         // Store it, so it is cleaned up later
-        zones.push_back(HolderPtr(new Holder(segment, data,
-                                             RRClass::IN())));
+        zones.push_back(HolderPtr(new Holder(segment, RRClass::IN())));
+        zones.back()->set(data);
 
     }
     // Deallocate all the zones now.

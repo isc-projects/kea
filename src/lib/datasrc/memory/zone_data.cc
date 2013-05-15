@@ -91,8 +91,8 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt,
     // (with an assertion check for that).
     typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
-        mem_sgmt, ZoneTree::create(mem_sgmt, true),
-        boost::bind(nullDeleter, _1));
+        mem_sgmt, boost::bind(nullDeleter, _1));
+    holder.set(ZoneTree::create(mem_sgmt, true));
 
     ZoneTree* tree = holder.get();
     const ZoneTree::Result result =
@@ -165,8 +165,8 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     // NSEC3Data::create().
     typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
-        mem_sgmt, ZoneTree::create(mem_sgmt, true),
-        boost::bind(nullDeleter, _1));
+        mem_sgmt, boost::bind(nullDeleter, _1));
+    holder.set(ZoneTree::create(mem_sgmt, true));
 
     ZoneTree* tree = holder.get();
     ZoneNode* origin_node = NULL;

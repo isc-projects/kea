@@ -193,18 +193,18 @@ TEST_F(RdataSetTest, mergeCreate) {
             // Create old rdataset
             SegmentObjectHolder<RdataSet, RRClass> holder1(
                 mem_sgmt_,
-                RdataSet::create(mem_sgmt_, encoder_,
-                                 (i & 1) != 0 ? a_rrsets[0] : null_rrset,
-                                 (i & 2) != 0 ? rrsig_rrsets[0] : null_rrset),
                 rrclass);
+            holder1.set(RdataSet::create(mem_sgmt_, encoder_,
+                                 (i & 1) != 0 ? a_rrsets[0] : null_rrset,
+                                 (i & 2) != 0 ? rrsig_rrsets[0] : null_rrset));
             // Create merged rdataset, based on the old one and RRsets
             SegmentObjectHolder<RdataSet, RRClass> holder2(
                 mem_sgmt_,
-                RdataSet::create(mem_sgmt_, encoder_,
+                rrclass);
+            holder2.set(RdataSet::create(mem_sgmt_, encoder_,
                                  (j & 1) != 0 ? a_rrsets[1] : null_rrset,
                                  (j & 2) != 0 ? rrsig_rrsets[1] : null_rrset,
-                                 holder1.get()),
-                rrclass);
+                                 holder1.get()));
 
             // Set up the expected data for the case.
             vector<string> expected_rdata;
@@ -242,15 +242,15 @@ TEST_F(RdataSetTest, duplicate) {
     // After suppressing duplicates, it should be the same as the default
     // RdataSet.  Check that.
     SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, dup_rrset, dup_rrsig), rrclass);
+        mem_sgmt_, rrclass);
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, dup_rrset, dup_rrsig));
     checkRdataSet(*holder1.get(), def_rdata_txt_, def_rrsig_txt_);
 
     // Confirm the same thing for the merge mode.
     SegmentObjectHolder<RdataSet, RRClass> holder2(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_rrset_,
-                         holder1.get()), rrclass);
+        mem_sgmt_, rrclass);
+    holder2.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_rrset_,
+                                 holder1.get()));
     checkRdataSet(*holder2.get(), def_rdata_txt_, def_rrsig_txt_);
 }
 
@@ -276,23 +276,24 @@ TEST_F(RdataSetTest, getNext) {
 TEST_F(RdataSetTest, find) {
     // Create some RdataSets and make a chain of them.
     SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr()),
-        RRClass::IN());
+        mem_sgmt_, RRClass::IN());
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                 ConstRRsetPtr()));
     ConstRRsetPtr aaaa_rrset =
         textToRRset("www.example.com. 1076895760 IN AAAA 2001:db8::1");
     SegmentObjectHolder<RdataSet, RRClass> holder2(
         mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset, ConstRRsetPtr()),
         RRClass::IN());
+    holder2.set(RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset,
+                                 ConstRRsetPtr()));
     ConstRRsetPtr sigonly_rrset =
         textToRRset("www.example.com. 1076895760 IN RRSIG "
                     "TXT 5 2 3600 20120814220826 20120715220826 "
                     "1234 example.com. FAKE");
     SegmentObjectHolder<RdataSet, RRClass> holder3(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), sigonly_rrset),
-        RRClass::IN());
+        mem_sgmt_, RRClass::IN());
+    holder3.set(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
+                                 sigonly_rrset));
 
     RdataSet* rdataset_a = holder1.get();
     RdataSet* rdataset_aaaa = holder2.get();
@@ -377,9 +378,8 @@ TEST_F(RdataSetTest, createManyRRs) {
 TEST_F(RdataSetTest, mergeCreateManyRRs) {
     ConstRRsetPtr rrset = textToRRset("example.com. 3600 IN TXT some-text");
     SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr()),
-        RRClass::IN());
+        mem_sgmt_, RRClass::IN());
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr()));
 
     checkCreateManyRRs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                    holder.get()), rrset->getRdataCount());
@@ -475,9 +475,8 @@ TEST_F(RdataSetTest, mergeCreateManyRRSIGs) {
         "example.com. 3600 IN RRSIG A 5 2 3600 20120814220826 20120715220826 "
         "1234 example.com. FAKEFAKE");
     SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), rrsig),
-        rrclass);
+        mem_sgmt_, rrclass);
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), rrsig));
 
     checkCreateManyRRSIGs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                       holder.get()), rrsig->getRdataCount());
@@ -544,11 +543,10 @@ TEST_F(RdataSetTest, badMergeCreate) {
     // The 'old RdataSet' for merge.  Its content doesn't matter much; the test
     // should trigger exception before examining it except for the last checks.
     SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_,
+        mem_sgmt_, RRClass::IN());
+    holder.set(RdataSet::create(mem_sgmt_, encoder_,
                          textToRRset("www.example.com. 0 IN AAAA 2001:db8::1"),
-                         ConstRRsetPtr()),
-        RRClass::IN());
+                         ConstRRsetPtr()));
 
     checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                holder.get()));
@@ -586,8 +584,8 @@ TEST_F(RdataSetTest, varyingTTL) {
 
     // RRSIG's TTL is smaller
     SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_small), rrclass);
+        mem_sgmt_, rrclass);
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_small));
     EXPECT_EQ(RRTTL(10), restoreTTL(holder1.get()->getTTLData()));
 
     // Merging another RRset (w/o sig) that has larger TTL
