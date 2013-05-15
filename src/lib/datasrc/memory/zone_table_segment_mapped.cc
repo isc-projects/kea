@@ -381,8 +381,8 @@ bool
 ZoneTableSegmentMapped::isWritable() const {
     if (!isUsable()) {
         // If reset() was never performed for this segment, or if the
-        // most recent reset() had failed, then the segment is not
-        // writable.
+        // most recent reset() had failed, or if the segment had been
+        // cleared, then the segment is not writable.
         return (false);
     }
 
