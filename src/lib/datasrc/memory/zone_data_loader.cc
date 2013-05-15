@@ -185,8 +185,7 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
     while (true) { // Try as long as it takes to load and grow the segment
         bool created = false;
         try {
-            SegmentObjectHolder<ZoneData, RRClass> holder(
-                                                          mem_sgmt, rrclass);
+            SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, rrclass);
             holder.set(ZoneData::create(mem_sgmt, zone_name));
 
             // Nothing from this point on should throw MemorySegmentGrown.
