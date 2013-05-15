@@ -183,12 +183,12 @@ FakeSession::unsubscribe(std::string group, std::string instance) {
 
 int
 FakeSession::group_sendmsg(ConstElementPtr msg, std::string group,
-                           std::string to, std::string, bool)
+                           std::string to, std::string, bool want_answer)
 {
     if (throw_on_send_) {
         isc_throw(Exception, "Throw on send is set in FakeSession");
     }
-    addMessage(msg, group, to);
+    addMessage(msg, group, to, -1, want_answer);
     return (1);
 }
 
@@ -231,13 +231,16 @@ FakeSession::getFirstMessage(std::string& group, std::string& to) const {
 
 void
 FakeSession::addMessage(ConstElementPtr msg, const std::string& group,
-                        const std::string& to, int seq)
+                        const std::string& to, int seq, bool want_answer)
 {
     ElementPtr m_el = Element::createList();
     m_el->add(Element::create(group));
     m_el->add(Element::create(to));
     m_el->add(msg);
     m_el->add(Element::create(seq));
+    if (want_answer) {
+        m_el->add(Element::create(want_answer));
+    }
     if (!msg_queue_) {
         msg_queue_ = Element::createList();
     }

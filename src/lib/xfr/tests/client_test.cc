@@ -24,7 +24,7 @@ using namespace isc::xfr;
 
 namespace {
 
-TEST(ClientTest, connetFile) {
+TEST(ClientTest, connectFile) {
     // File path is too long
     struct sockaddr_un s;     // can't be const; some compiler complains
     EXPECT_THROW(XfroutClient(string(sizeof(s.sun_path), 'x')).connect(),

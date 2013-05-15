@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <utility>
+
 #include <stdlib.h>
 
 namespace isc {
@@ -116,6 +118,8 @@ public:
     /// requested storage.
     /// \throw MemorySegmentGrown The memory segment doesn't have sufficient
     /// space for the requested size and has grown internally.
+    /// \throw MemorySegmentError An attempt was made to allocate
+    /// storage on a read-only memory segment.
     ///
     /// \param size The size of the memory requested in bytes.
     /// \return Returns pointer to the memory allocated.
@@ -153,7 +157,7 @@ public:
     /// \return Returns <code>true</code> if all allocated memory (including
     /// names associated by memory addresses by \c setNamedAddress()) was
     /// deallocated, <code>false</code> otherwise.
-    virtual bool allMemoryDeallocated() const = 0;
+    virtual bool allMemoryDeallocated() = 0;
 
     /// \brief Associate specified address in the segment with a given name.
     ///
@@ -176,7 +180,8 @@ public:
     /// as \c addr even if it wouldn't be considered to "belong to" the
     /// segment in its normal sense; it can be used to indicate that memory
     /// has not been allocated for the specified name.  A subsequent call
-    /// to \c getNamedAddress() will return NULL for that name.
+    /// to \c getNamedAddress() will return NamedAddressResult(true, NULL)
+    /// for that name.
     ///
     /// \note Naming an address is intentionally separated from allocation
     /// so that, for example, one module of a program can name a memory
@@ -228,6 +233,9 @@ public:
         return (setNamedAddressImpl(name, addr));
     }
 
+    /// \brief Type definition for result returned by getNamedAddress()
+    typedef std::pair<bool, void*> NamedAddressResult;
+
     /// \brief Return the address in the segment that has the given name.
     ///
     /// This method returns the memory address in the segment corresponding
@@ -245,8 +253,10 @@ public:
     ///
     /// \param name A C string of which the segment memory address is to be
     /// returned.  Must not be NULL.
-    /// \return The address associated with the name, or NULL if not found.
-    void* getNamedAddress(const char* name) {
+    /// \return An std::pair containing a bool (set to true if the name
+    /// was found, or false otherwise) and the address associated with
+    /// the name (which is undefined if the name was not found).
+    NamedAddressResult getNamedAddress(const char* name) const {
         // This public method implements common validation.  The actual
         // work specific to the derived segment is delegated to the
         // corresponding protected method.
@@ -288,7 +298,7 @@ protected:
     virtual bool setNamedAddressImpl(const char* name, void* addr) = 0;
 
     /// \brief Implementation of getNamedAddress beyond common validation.
-    virtual void* getNamedAddressImpl(const char* name) = 0;
+    virtual NamedAddressResult getNamedAddressImpl(const char* name) const = 0;
 
     /// \brief Implementation of clearNamedAddress beyond common validation.
     virtual bool clearNamedAddressImpl(const char* name) = 0;

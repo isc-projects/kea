@@ -119,7 +119,7 @@ public:
     ///
     /// (In the initial implementation) the format of the resulting string
     /// is as follows:
-    /// \code <IP address>#<port>
+    /// \code <IP address>:<port>
     /// \endcode
     /// The IP address is the textual representation of the client's IP
     /// address, which is the source address of the request the client has

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <util/buffer.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -68,12 +69,12 @@ TEST_F(Option6IAAddrTest, basic) {
     buf_[22] = 0x5e;
     buf_[23] = 0x00; // 3,000,000,000
 
-    // create an option (unpack content)
-    Option6IAAddr* opt = new Option6IAAddr(D6O_IAADDR,
-                                           buf_.begin(),
-                                           buf_.begin() + 24);
+    // Create an option (unpack content)
+    boost::scoped_ptr<Option6IAAddr> opt(new Option6IAAddr(D6O_IAADDR,
+                                                           buf_.begin(),
+                                                           buf_.begin() + 24));
 
-    // pack this option
+    // Pack this option
     opt->pack(outBuf_);
 
     EXPECT_EQ(28, outBuf_.getLength());
@@ -90,19 +91,19 @@ TEST_F(Option6IAAddrTest, basic) {
     EXPECT_EQ(Option::OPTION6_HDR_LEN + Option6IAAddr::OPTION6_IAADDR_LEN,
               opt->len());
 
-    // check if pack worked properly:
+    // Check if pack worked properly:
     const uint8_t* out = (const uint8_t*)outBuf_.getData();
 
-    // if option type is correct
+    // - if option type is correct
     EXPECT_EQ(D6O_IAADDR, out[0]*256 + out[1]);
 
-    // if option length is correct
+    // - if option length is correct
     EXPECT_EQ(24, out[2]*256 + out[3]);
 
-    // if option content is correct
+    // - if option content is correct
     EXPECT_EQ(0, memcmp(out + 4, &buf_[0], 24));
 
-    EXPECT_NO_THROW( delete opt );
+    EXPECT_NO_THROW(opt.reset());
 }
 
 }

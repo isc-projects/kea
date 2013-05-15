@@ -142,7 +142,7 @@ class DatasrcTest(unittest.TestCase):
 
     def test_no_such_file_mem(self):
         """
-        We also check the existance of master files. Not the actual content,
+        We also check the existence of master files. Not the actual content,
         though.
         """
         self.reject({"IN": [{
@@ -151,6 +151,101 @@ class DatasrcTest(unittest.TestCase):
             "params": {
                 "example.org.": '/file/does/not/exist'
             }
+        }]})
+
+    def test_names_present(self):
+        """
+        Test we don't choke on configuration with the "name" being present on
+        some items.
+        """
+        self.accept({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {},
+            "name": "Whatever"
+        }]})
+
+    def test_names_default_classes(self):
+        """
+        Test we can have a client of the same type in different classes
+        without specified name. The defaults should be derived both from
+        the type and the class.
+        """
+        self.accept({
+        "IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
+        }],
+        "CH": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
+        }]})
+
+    def test_names_collision(self):
+        """
+        Reject when two names are the same.
+
+        Cases are:
+        - Explicit names.
+        - Two default names turn out to be the same (same type and class).
+        - One explicit is set to the same as the default one.
+        """
+        self.reject({"IN": [
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {},
+            "name": "Whatever"
+        },
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {},
+            "name": "Whatever"
+        }]})
+        # The same, but across different classes is allowed (we would
+        # identify the data source by class+name tuple)
+        self.accept({
+        "IN": [
+            {
+                "type": "MasterFiles",
+                "cache-enable": True,
+                "params": {},
+                "name": "Whatever"
+            }
+        ],
+        "CH": [
+            {
+                "type": "MasterFiles",
+                "cache-enable": True,
+                "params": {},
+                "name": "Whatever"
+            }
+        ]})
+        self.reject({"IN": [
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
+        },
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
+        }]})
+        self.reject({"IN": [
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {},
+            "name": "MasterFiles"
+        },
+        {
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
         }]})
 
 if __name__ == '__main__':

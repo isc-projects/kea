@@ -27,8 +27,7 @@
 
 #include <util/memory_segment_local.h>
 #include <util/memory_segment_mapped.h>
-
-#include "memory_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -105,7 +104,7 @@ protected:
 
     ZoneData* getZoneData() {
         return (static_cast<ZoneData*>(
-            mem_sgmt_->getNamedAddress("Test zone data")));
+            mem_sgmt_->getNamedAddress("Test zone data").second));
     }
 
     const Name zname_;
@@ -117,7 +116,7 @@ protected:
 class TestSegmentCreator : public SegmentCreator {
 public:
     virtual SegmentPtr create() const {
-        return (SegmentPtr(new test::MemorySegmentTest));
+        return (SegmentPtr(new test::MemorySegmentMock));
     }
 };
 

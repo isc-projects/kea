@@ -84,6 +84,6 @@ TEST_F(Rdata_OPT_Test, compare) {
                                         "rdata_opt_fromWire", 2)));
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch), bad_cast); 
+    EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch), bad_cast);
 }
 }

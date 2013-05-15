@@ -17,6 +17,7 @@
 
 #include <util/memory_segment.h>
 #include <string>
+#include <cassert>
 
 namespace isc {
 namespace datasrc {
@@ -56,8 +57,10 @@ public:
     }
     T* get() {
         if (holding_) {
-            return (static_cast<T*>(
-                mem_sgmt_.getNamedAddress(holder_name_.c_str())));
+            const util::MemorySegment::NamedAddressResult result =
+                mem_sgmt_.getNamedAddress(holder_name_.c_str());
+            assert(result.first);
+            return (static_cast<T*>(result.second));
         } else {
             return (NULL);
         }

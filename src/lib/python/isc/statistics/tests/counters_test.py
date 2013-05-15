@@ -197,7 +197,7 @@ class BaseTestCounters():
         # for per-zone counters
         for name in self.counters._zones_item_list:
             args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
-            if name.find('time_to_') == 0:
+            if name.find('last_') == 0 and name.endswith('_duration'):
                 self.counters.start_timer(*args)
                 self.counters.stop_timer(*args)
                 self.assertGreaterEqual(self.counters.get(*args), 0.0)
@@ -278,7 +278,7 @@ class BaseTestCounters():
         # setting all counters to zero
         for name in self.counters._zones_item_list:
             args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
-            if name.find('time_to_') == 0:
+            if name.find('last_') == 0 and name.endswith('_duration'):
                 zero = 0.0
             else:
                 zero = 0

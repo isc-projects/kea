@@ -293,7 +293,7 @@ TEST_F(SessionTest, run_with_handler_timeout) {
     msg = isc::data::Element::fromJSON("{ \"a third\": \"message\" }");
     tds->sendmsg(env, msg);
 
-    // No followup message, should time out.
+    // No follow-up message, should time out.
     ASSERT_THROW(my_io_service.run(), SessionTimeout);
 }
 

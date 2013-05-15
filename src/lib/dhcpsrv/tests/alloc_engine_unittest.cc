@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -149,18 +149,26 @@ public:
     ///
     /// @param lease lease to be checked
     void checkLease4(const Lease4Ptr& lease) {
-        // that is belongs to the right subnet
+        // Check that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
         EXPECT_TRUE(subnet_->inRange(lease->addr_));
         EXPECT_TRUE(subnet_->inPool(lease->addr_));
 
-        // that it have proper parameters
+        // Check that it has proper parameters
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
-        EXPECT_TRUE(*lease->client_id_ == *clientid_);
+        if (lease->client_id_ && !clientid_) {
+            ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
+        } else
+        if (!lease->client_id_ && clientid_) {
+            ADD_FAILURE() << "Lease4 has no client-id, but it was expected to have one.";
+        } else
+        if (lease->client_id_ && clientid_) {
+            EXPECT_TRUE(*lease->client_id_ == *clientid_);
+        }
         EXPECT_TRUE(lease->hwaddr_ == hwaddr_->hwaddr_);
         // @todo: check cltt
      }
@@ -169,11 +177,11 @@ public:
         factory_.destroy();
     }
 
-    ClientIdPtr clientid_;    ///< client-identifier (value used in tests)
-    HWAddrPtr hwaddr_;        ///< hardware address (value used in tests)
-    Subnet4Ptr subnet_;       ///< subnet4 (used in tests)
-    Pool4Ptr pool_;           ///< pool belonging to subnet_
-    LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
+    ClientIdPtr clientid_;    ///< Client-identifier (value used in tests)
+    HWAddrPtr hwaddr_;        ///< Hardware address (value used in tests)
+    Subnet4Ptr subnet_;       ///< Subnet4 (used in tests)
+    Pool4Ptr pool_;           ///< Pool belonging to subnet_
+    LeaseMgrFactory factory_; ///< Pointer to LeaseMgr factory
 };
 
 // This test checks if the Allocation Engine can be instantiated and that it
@@ -197,10 +205,10 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
                                                false);
 
-    // check that we got a lease
+    // Check that we got a lease
     ASSERT_TRUE(lease);
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
@@ -220,10 +228,10 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
                                                true);
 
-    // check that we got a lease
+    // Check that we got a lease
     ASSERT_TRUE(lease);
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is NOT in LeaseMgr
@@ -242,13 +250,13 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
                                                IOAddress("2001:db8:1::15"),
                                                false);
 
-    // check that we got a lease
+    // Check that we got a lease
     ASSERT_TRUE(lease);
 
-    // we should get what we asked for
+    // We should get what we asked for
     EXPECT_EQ(lease->addr_.toText(), "2001:db8:1::15");
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
@@ -266,29 +274,29 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
-    // let's create a lease and put it in the LeaseMgr
+    // Let's create a lease and put it in the LeaseMgr
     DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
     time_t now = time(NULL);
     Lease6Ptr used(new Lease6(Lease6::LEASE_IA_NA, IOAddress("2001:db8:1::1f"),
                               duid2, 1, 2, 3, 4, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
-    // another client comes in and request an address that is in pool, but
+    // Another client comes in and request an address that is in pool, but
     // unfortunately it is used already. The same address must not be allocated
     // twice.
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
                                                IOAddress("2001:db8:1::1f"),
                                                false);
-    // check that we got a lease
+    // Check that we got a lease
     ASSERT_TRUE(lease);
 
-    // allocated address must be different
+    // Allocated address must be different
     EXPECT_TRUE(used->addr_.toText() != lease->addr_.toText());
 
-    // we should NOT get what we asked for, because it is used already
+    // We should NOT get what we asked for, because it is used already
     EXPECT_TRUE(lease->addr_.toText() != "2001:db8:1::1f");
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
@@ -312,13 +320,13 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
                                                IOAddress("3000::abc"),
                                                false);
-    // check that we got a lease
+    // Check that we got a lease
     ASSERT_TRUE(lease);
 
-    // we should NOT get what we asked for, because it is used already
+    // We should NOT get what we asked for, because it is used already
     EXPECT_TRUE(lease->addr_.toText() != "3000::abc");
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
@@ -328,6 +336,24 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 }
+
+// This test checks that NULL values are handled properly
+TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Allocations without subnet are not allowed
+    Lease6Ptr lease = engine->allocateAddress6(Subnet6Ptr(), duid_, iaid_,
+                                               IOAddress("::"), false);
+    ASSERT_FALSE(lease);
+
+    // Allocations without DUID are not allowed either
+    lease = engine->allocateAddress6(subnet_, DuidPtr(), iaid_,
+                                     IOAddress("::"), false);
+    ASSERT_FALSE(lease);
+}
+
 
 // This test verifies that the allocator picks addresses that belong to the
 // pool
@@ -346,7 +372,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
-    NakedAllocEngine::IterativeAllocator* alloc = new NakedAllocEngine::IterativeAllocator();
+    NakedAllocEngine::IterativeAllocator alloc;
 
     // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {
@@ -357,18 +383,17 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
 
         Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, IOAddress(min.str()),
                                 IOAddress(max.str())));
-        // cout << "Adding pool: " << min.str() << "-" << max.str() << endl;
         subnet_->addPool(pool);
     }
 
-    int total = 17 + 8*9; // first pool (::10 - ::20) has 17 addresses in it,
-                          // there are 8 extra pools with 9 addresses in each.
+    int total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
+                            // there are 8 extra pools with 9 addresses in each.
 
     // Let's keep picked addresses here and check their uniqueness.
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
+        IOAddress candidate = alloc.pickAddress(subnet_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(candidate));
 
         // One way to easily verify that the iterative allocator really works is
@@ -377,13 +402,13 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
         // cout << candidate.toText() << endl;
 
         if (generated_addrs.find(candidate) == generated_addrs.end()) {
-            // we haven't had this
+            // We haven't had this.
             generated_addrs.insert(candidate);
         } else {
-            // we have seen this address before. That should mean that we
+            // We have seen this address before. That should mean that we
             // iterated over all addresses.
             if (generated_addrs.size() == total) {
-                // we have exactly the number of address in all pools
+                // We have exactly the number of address in all pools.
                 break;
             }
             ADD_FAILURE() << "Too many or not enough unique addresses generated.";
@@ -395,8 +420,6 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
             break;
         }
     }
-
-    delete alloc;
 }
 
 // This test checks if really small pools are working
@@ -423,7 +446,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
 
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
-    // do all checks on the lease
+    // Do all checks on the lease
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
@@ -702,6 +725,42 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
 }
 
 
+// This test checks that NULL values are handled properly
+TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Allocations without subnet are not allowed
+    Lease4Ptr lease = engine->allocateAddress4(SubnetPtr(), clientid_, hwaddr_,
+                                               IOAddress("0.0.0.0"), false);
+    EXPECT_FALSE(lease);
+
+    // Allocations without HW address are not allowed
+    lease = engine->allocateAddress4(subnet_, clientid_, HWAddrPtr(),
+                                     IOAddress("0.0.0.0"), false);
+    EXPECT_FALSE(lease);
+
+    // Allocations without client-id are allowed
+    clientid_ = ClientIdPtr();
+    lease = engine->allocateAddress4(subnet_, ClientIdPtr(), hwaddr_,
+                                     IOAddress("0.0.0.0"), false);
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+
+
 // This test verifies that the allocator picks addresses that belong to the
 // pool
 TEST_F(AllocEngine4Test, IterativeAllocator) {
@@ -720,7 +779,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
-    NakedAllocEngine::IterativeAllocator* alloc = new NakedAllocEngine::IterativeAllocator();
+    NakedAllocEngine::IterativeAllocator alloc;
 
     // Let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {
@@ -742,7 +801,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc->pickAddress(subnet_, clientid_, IOAddress("0.0.0.0"));
+        IOAddress candidate = alloc.pickAddress(subnet_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(candidate));
 
         // One way to easily verify that the iterative allocator really works is
@@ -754,10 +813,10 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
             // We haven't had this
             generated_addrs.insert(candidate);
         } else {
-            // we have seen this address before. That should mean that we
+            // We have seen this address before. That should mean that we
             // iterated over all addresses.
             if (generated_addrs.size() == total) {
-                // we have exactly the number of address in all pools
+                // We have exactly the number of address in all pools
                 break;
             }
             ADD_FAILURE() << "Too many or not enough unique addresses generated.";
@@ -769,8 +828,6 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
             break;
         }
     }
-
-    delete alloc;
 }
 
 
@@ -902,7 +959,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
     Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2, sizeof(hwaddr2),
                                495, 100, 200, now, subnet_->getID()));
-    // lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
+    // Lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
     // is expired already
     ASSERT_TRUE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -963,4 +1020,4 @@ TEST_F(AllocEngine4Test, renewLease4) {
     detailCompareLease(lease, from_mgr);
 }
 
-}; // end of anonymous namespace
+}; // End of anonymous namespace

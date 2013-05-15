@@ -201,18 +201,20 @@ public:
     /// This allows for traversing the whole zone. The returned object can
     /// provide the RRsets one by one.
     ///
-    /// This throws DataSourceError when the zone does not exist in the
-    /// datasource.
-    ///
     /// The default implementation throws isc::NotImplemented. This allows
     /// for easy and fast deployment of minimal custom data sources, where
-    /// the user/implementator doesn't have to care about anything else but
+    /// the user/implementer doesn't have to care about anything else but
     /// the actual queries. Also, in some cases, it isn't possible to traverse
     /// the zone from logic point of view (eg. dynamically generated zone
     /// data).
     ///
     /// It is not fixed if a concrete implementation of this method can throw
     /// anything else.
+    ///
+    /// \throw NoSuchZone the zone does not exist in the datasource.
+    /// \throw Others Possibly implementation specific exceptions (it is
+    /// not fixed if a concrete implementation of this method can throw
+    /// anything else.)
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.

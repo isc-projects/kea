@@ -97,7 +97,7 @@ protected:
     /// @brief A dummy configuration handler that always returns success.
     ///
     /// This configuration handler does not perform configuration
-    /// parsing and always returns success. A dummy hanlder should
+    /// parsing and always returns success. A dummy handler should
     /// be installed using \ref isc::config::ModuleCCSession ctor
     /// to get the initial configuration. This initial configuration
     /// comprises values for only those elements that were modified

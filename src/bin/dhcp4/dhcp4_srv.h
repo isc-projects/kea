@@ -66,8 +66,10 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// @param port specifies port number to listen on
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
+    /// @param use_bcast configure sockets to support broadcast messages.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
-              const char* dbconfig = "type=memfile");
+              const char* dbconfig = "type=memfile",
+              const bool use_bcast = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     ~Dhcpv4Srv();
@@ -216,7 +218,7 @@ protected:
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
-    /// @brief Returns server-intentifier option
+    /// @brief Returns server-identifier option
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }

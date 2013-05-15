@@ -1,2 +1,4 @@
 /retransfer_master.conf
+/retransfer_master_nons.conf
 /retransfer_slave.conf
+/retransfer_slave_notify.conf

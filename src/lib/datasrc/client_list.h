@@ -46,6 +46,80 @@ class InMemoryClient;
 class ZoneWriter;
 }
 
+namespace internal {
+class CacheConfig;
+}
+
+/// \brief Segment status of the cache
+///
+/// Describes the status in which the memory segment for the in-memory cache of
+// /given data source is.
+enum MemorySegmentState {
+    /// \brief No segment used for this data source.
+    ///
+    /// This is usually a result of the cache being disabled.
+    SEGMENT_UNUSED,
+
+    /// \brief It is a mapped segment and we wait for information how to map
+    ///     it.
+    SEGMENT_WAITING,
+
+    /// \brief The segment is ready to be used.
+    SEGMENT_INUSE
+};
+
+/// \brief Status of one data source.
+///
+/// This indicates the status a data soure is in. It is used with segment
+/// and cache management, to discover the data sources that need external
+/// mapping or local loading.
+///
+/// In future, it may be extended for other purposes, such as performing an
+/// operation on named data source.
+class DataSourceStatus {
+public:
+    /// \brief Constructor
+    ///
+    /// Sets initial values. It doesn't matter what is provided for the type
+    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    DataSourceStatus(const std::string& name, MemorySegmentState state,
+                     const std::string& type) :
+        name_(name),
+        type_(type),
+        state_(state)
+    {}
+
+    /// \brief Get the segment state
+    MemorySegmentState getSegmentState() const {
+        return (state_);
+    }
+
+    /// \brief Get the segment type
+    ///
+    /// \note Specific values of the type are only meaningful for the
+    ///     corresponding memory segment implementation and modules that
+    ///     directly manage the segments. Other normal applications should
+    ///     treat them as opaque identifiers.
+    ///
+    /// \throw isc::InvalidOperation if called and state is SEGMENT_UNUSED.
+    const std::string& getSegmentType() const {
+        if (getSegmentState() == SEGMENT_UNUSED) {
+            isc_throw(isc::InvalidOperation,
+                      "No segment used, no type therefore.");
+        }
+        return (type_);
+    }
+
+    /// \brief Get the name.
+    const std::string& getName() const {
+        return (name_);
+    }
+private:
+    std::string name_;
+    std::string type_;
+    MemorySegmentState state_;
+};
+
 /// \brief The list of data source clients.
 ///
 /// The purpose of this class is to hold several data source clients and search
@@ -100,7 +174,7 @@ public:
 
         /// \brief Negative answer constructor.
         ///
-        /// This conscructs a result for negative answer. Both pointers are
+        /// This constructs a result for negative answer. Both pointers are
         /// NULL, and exact_match_ is false.
         FindResult() :
             dsrc_client_(NULL),
@@ -265,48 +339,51 @@ public:
         return (configuration_);
     }
 
-    /// \brief Result of the reload() method.
-    enum ReloadResult {
-        CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
-        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
-        ZONE_SUCCESS        ///< The zone was successfully reloaded or
-                            ///  the writer provided.
-    };
-
-    /// \brief Reloads a cached zone.
-    ///
-    /// This method finds a zone which is loaded into a cache and reloads it.
-    /// This may be used to renew the cache when the underlying data source
-    /// changes.
-    ///
-    /// \param zone The origin of the zone to reload.
-    /// \return A status if the command worked.
-    /// \throw DataSourceError or anything else that the data source
-    ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ReloadResult reload(const dns::Name& zone);
-
 private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
 public:
+    /// \brief Codes indicating in-memory cache status for a given zone name.
+    ///
+    /// This is used as a result of the getCachedZoneWriter() method.
+    enum CacheStatus {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone is not to be cached (including the case
+                            ///  where caching is disabled for the specific
+                            ///  data source).
+        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
+        CACHE_NOT_WRITABLE, ///< The cache is not writable (and zones can't
+                            ///  be loaded)
+        DATASRC_NOT_FOUND,  ///< Specific data source for load is specified
+                            ///  but it's not in the list
+        ZONE_SUCCESS        ///< Zone to be cached is successfully found and
+                            ///  is ready to be loaded
+    };
 
     /// \brief Return value of getCachedZoneWriter()
     ///
     /// A pair containing status and the zone writer, for the
     /// getCachedZoneWriter() method.
-    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
+    typedef std::pair<CacheStatus, ZoneWriterPtr> ZoneWriterPair;
 
-    /// \brief Return a zone writer that can be used to reload a zone.
+    /// \brief Return a zone writer that can be used to (re)load a zone.
     ///
-    /// This looks up a cached copy of zone and returns the ZoneWriter
-    /// that can be used to reload the content of the zone. This can
-    /// be used instead of reload() -- reload() works synchronously, which
-    /// is not what is needed every time.
+    /// By default this method identifies the first data source in the list
+    /// that should serve the zone of the given name, and returns a ZoneWriter
+    /// object that can be used to load the content of the zone, in a specific
+    /// way for that data source.
     ///
-    /// \param zone The origin of the zone to reload.
+    /// If the optional \c datasrc_name parameter is provided with a non empty
+    /// string, this method only tries to load the specified zone into or with
+    /// the data source which has the given name, regardless where in the list
+    /// that data source is placed.  Even if the given name of zone doesn't
+    /// exist in the data source, other data sources are not searched and
+    /// this method simply returns ZONE_NOT_FOUND in the first element
+    /// of the pair.
+    ///
+    /// \param zone The origin of the zone to load.
+    /// \param datasrc_name If not empty, the name of the data source
+    /// to be used for loading the zone (see above).
     /// \return The result has two parts. The first one is a status describing
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
@@ -314,9 +391,8 @@ public:
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
+                                       const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -327,18 +403,11 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        // Plays a role of default constructor too (for vector)
-        DataSourceInfo(const dns::RRClass& rrclass,
-                       const boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment,
-                       bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
-                       bool has_cache, const dns::RRClass& rrclass,
-                       const boost::shared_ptr
-                           <isc::datasrc::memory::ZoneTableSegment>&
-                               ztable_segment);
+                       boost::shared_ptr<internal::CacheConfig> cache_conf,
+                       const dns::RRClass& rrclass,
+                       const std::string& name);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
 
@@ -350,6 +419,15 @@ public:
         const DataSourceClient* getCacheClient() const;
         boost::shared_ptr<memory::InMemoryClient> cache_;
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
+        std::string name_;
+
+        // cache_conf_ can be accessed only from this read-only getter,
+        // to protect its integrity as much as possible.
+        const internal::CacheConfig* getCacheConfig() const {
+            return (cache_conf_.get());
+        }
+    private:
+        boost::shared_ptr<internal::CacheConfig> cache_conf_;
     };
 
     /// \brief The collection of data sources.
@@ -369,6 +447,13 @@ public:
     /// Also, derived classes could want to create the data source clients
     /// in a different way, though inheriting this class is not recommended.
     ///
+    /// Some types of data sources can be internal to the \c ClientList
+    /// implementation and do not require a corresponding dynamic module
+    /// loaded via \c DataSourceClientContainer.  In such a case, this method
+    /// simply returns a pair of null pointers.  It will help the caller reduce
+    /// type dependent processing.  Currently, "MasterFiles" is considered to
+    /// be this type of data sources.
+    ///
     /// The parameters are the same as of the constructor.
     /// \return Pair containing both the data source client and the container.
     ///     The container might be NULL in the derived class, it is
@@ -379,6 +464,15 @@ public:
     virtual DataSourcePair getDataSourceClient(const std::string& type,
                                                const data::ConstElementPtr&
                                                configuration);
+
+    /// \brief Get status information of all internal data sources.
+    ///
+    /// Get a DataSourceStatus for current state of each data source client
+    /// in this list.
+    ///
+    /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
+    /// it is exception free.
+    std::vector<DataSourceStatus> getStatus() const;
 public:
     /// \brief Access to the data source clients.
     ///

@@ -95,7 +95,7 @@ host_lookup(const char* const name, const char* const dns_class,
         cout << "Name: " << server << "\n";
         // TODO: I guess I have to do a lookup to get that address and aliases
         // too
-        //cout << "Address: " << address << "\n" ; // "#" << port << "\n";
+        //cout << "Address: " << address << "\n" ;
         //cout << "Aliases: " << server << "\n";
     }
 

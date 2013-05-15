@@ -25,7 +25,7 @@
 #include <datasrc/database.h>
 #include <datasrc/zone.h>
 #include <datasrc/zone_finder.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -167,7 +167,8 @@ public:
     virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
     {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
-    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string
+                                         (&)[DEL_NSEC3_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -634,9 +635,8 @@ private:
     };
 
     // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
-    void deleteRecord(Domains& domains,
-                      const string (&params)[DEL_PARAM_COUNT])
-    {
+    template<size_t param_count>
+    void deleteRecord(Domains& domains, const string (&params)[param_count]) {
         vector<vector<string> >& records =
             domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
@@ -655,7 +655,7 @@ public:
     }
 
     virtual void deleteNSEC3RecordInZone(
-        const string (&params)[DEL_PARAM_COUNT])
+        const string (&params)[DEL_NSEC3_PARAM_COUNT])
     {
         deleteRecord(*update_nsec3_namespace_, params);
     }
@@ -1417,7 +1417,7 @@ TEST(GenericDatabaseClientTest, noAccessorException) {
 
 // If the zone doesn't exist, exception is thrown
 TEST_P(DatabaseClientTest, noZoneIterator) {
-    EXPECT_THROW(client_->getIterator(Name("example.com")), DataSourceError);
+    EXPECT_THROW(client_->getIterator(Name("example.com")), NoSuchZone);
 }
 
 // If the zone doesn't exist and iteration is not implemented, it still throws
@@ -1427,7 +1427,7 @@ TEST(GenericDatabaseClientTest, noZoneNotImplementedIterator) {
                                 boost::shared_ptr<DatabaseAccessor>(
                                     new NopAccessor())).getIterator(
                                         Name("example.com")),
-                 DataSourceError);
+                 NoSuchZone);
 }
 
 TEST(GenericDatabaseClientTest, notImplementedIterator) {
@@ -2566,7 +2566,7 @@ TEST_P(DatabaseClientTest, wildcard) {
     doFindTest(*finder, isc::dns::Name("a.*.wild.example.org"),
                qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
                expected_rdatas_, expected_sig_rdatas_);
-    // These should be canceled, since it is below a domain which exitsts
+    // These should be canceled, since it is below a domain which exists
     doFindTest(*finder, isc::dns::Name("nothing.here.wild.example.org"),
                qtype_, qtype_, rrttl_, ZoneFinder::NXDOMAIN,
                expected_rdatas_, expected_sig_rdatas_);

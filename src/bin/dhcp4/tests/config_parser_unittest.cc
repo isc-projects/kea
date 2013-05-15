@@ -25,7 +25,10 @@
 #include <dhcp/option_int.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -47,20 +50,20 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_ = new Dhcpv4Srv(0);
+        srv_.reset(new Dhcpv4Srv(0));
     }
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        const std::map<std::string, uint32_t>& uint32_defaults = getUint32Defaults();
-        std::map<std::string, uint32_t>::const_iterator it =
-            uint32_defaults.find(name);
-        if (it == uint32_defaults.end()) {
+        const Uint32StoragePtr uint32_defaults = 
+                                        globalContext()->uint32_values_;
+        try {
+            uint32_t actual_value = uint32_defaults->getParam(name);
+            EXPECT_EQ(expected_value, actual_value);
+        } catch (DhcpConfigError) {
             ADD_FAILURE() << "Expected uint32 with name " << name
                           << " not found";
-            return;
         }
-        EXPECT_EQ(expected_value, it->second);
     }
 
     // Checks if the result of DHCP server configuration has
@@ -74,7 +77,6 @@ public:
 
     ~Dhcp4ParserTest() {
         resetConfiguration();
-        delete srv_;
     };
 
     /// @brief Create the simple configuration with single option.
@@ -83,7 +85,7 @@ public:
     /// option value. These parameters are: "name", "code", "data",
     /// "csv-format" and "space".
     ///
-    /// @param param_value string holiding option parameter value to be
+    /// @param param_value string holding option parameter value to be
     /// injected into the configuration string.
     /// @param parameter name of the parameter to be configured with
     /// param value.
@@ -279,7 +281,7 @@ public:
         }
     }
 
-    Dhcpv4Srv* srv_;
+    boost::scoped_ptr<Dhcpv4Srv> srv_;
 
     int rcode_;
     ConstElementPtr comment_;

@@ -1,3 +1,220 @@
+613.	[func]		jinmei
+	datasrc: Error handling in loading zones into memory is now more
+	consistent and convenient: data source configuration does not fail
+	due to zones configured to be loaded into memory but not available
+	in the data source, just like the case of missing zone file for
+	the MasterFiles type of data source.  Also, zones that aren't
+	loaded into memory due to errors can now be reloaded for b10-auth
+	using the bindctl Auth loadzone command after fixing the error,
+	without reconfiguring the entire data source.
+	(Trac #2851, git a3d4fe8a32003534150ed076ea0bbf80e1fcc43c)
+
+612.	[func]		tomek
+	b10-dhcp6: Support for relayed DHCPv6 traffic has been added.
+
+611.	[func]		naokikambe
+	Added Xfrin statistics items such as the number of successful
+	transfers.  These are per-zone type counters.  Their values can be
+	obtained with zone names by invoking "Stats show Xfrin" via bindctl
+	while Xfrin is running.
+	(Trac #2252, git e1a0ea8ef5c51b9b25afa111fbfe9347afbe5413)
+
+bind10-1.0.0beta2 released on May 10, 2013
+
+610.	[bug]		muks
+	When the sqlite3 program is not available on the system (in
+	PATH), we no longer attempt to run some tests which depend
+	on it.
+	(Trac #1909, git f85b274b85b57a094d33ca06dfbe12ae67bb47df)
+
+609.	[bug]		jinmei
+	Handled some rare error cases in DNS server classes correctly.
+	This fix specifically solves occasional crash of b10-auth due to
+	errors caused by TCP DNS clients.  Also, as a result of cleanups
+	with the fix, b10-auth should now be a little bit faster in
+	handling UDP queries: in some local experiments it ran about 5%
+	faster.
+	(Trac #2903, git 6d3e0f4b36a754248f8a03a29e2c36aef644cdcc)
+
+608.	[bug]		jinmei
+	b10-cmdctl: fixed a hangup problem on receiving the shutdown
+	command from bindctl.  Note, however, that cmdctl is defined as
+	a "needed" module by default, so shutting down cmdctl would cause
+	shutdown of the entire BIND 10 system anyway, and is therefore
+	still not very useful in practice.
+	(Trac #2712, git fa392e8eb391a17d30550d4b290c975710651d98)
+
+607.	[bug]		jinmei
+	Worked around some unit test regressions on FreeBSD 9.1 due to
+	a binary compatibility issue between standard and system
+	libraries (http://www.freebsd.org/cgi/query-pr.cgi?pr=175453).
+	While not all tests still pass, main BIND 10 programs should
+	generally work correctly.  Still, there can be odd run time
+	behavior such as abrupt crash instead of graceful shutdown
+	when some fatal event happens, so it's generally discouraged to
+	use BIND 10 on FreeBSD 9.1 RELEASE.  According to the above
+	bug report for FreeBSD, it seems upgrading or downgrading the
+	FreeBSD version will solve this problem.
+	(Trac #2887, git 69dfb4544d9ded3c10cffbbfd573ae05fdeb771f)
+
+606.	[bug]		jinmei
+	b10-xfrout now correctly stops sending notify requests once it
+	receives a valid response.  It previously handled it as if the
+	requests are timed out and resent it a few times in a short
+	period.
+	(Trac #2879, git 4c45f29f28ae766a9f7dc3142859f1d0000284e1)
+
+605.	[bug]		tmark
+	Modified perfdhcp to calculate the times displayed for packet sent
+	and received as time elapsed since perfdhcp process start time.
+	Previously these were times since the start of the epoch.
+	However the large numbers involved caused loss of precision
+	in the calculation of the test statistics.
+	(Trac #2785, git e9556924dcd1cf285dc358c47d65ed7c413e02cf)
+
+604.	[func]		marcin
+	libdhcp++: abstracted methods which open sockets and send/receive
+	DHCP4 packets to a separate class. Other classes will be derived
+	from it to implement OS-specific methods of DHCPv4 packets filtering.
+	The primary purpose for this change is to add support for Direct
+	DHCPv4 response to a client which doesn't have an address yet on
+	different OSes.
+	(Trac #991, git 33ffc9a750cd3fb34158ef676aab6b05df0302e2)
+
+603.	[func]		tmark
+	The directory in which the b10-dchp4 and b10-dhcp6 server id files has
+	been changed from the local state directory (set by the "configure"
+	--localstatedir switch) to the "bind10" subdirectory of it. After an
+	upgrade, server id files in the former location will be orphaned and
+	should be manually removed.
+	(Trac #2770, git a622140d411b3f07a68a1451e19df36118a80650)
+
+602.	[bug]		tmark
+	Perfdhcp will now exit gracefully if the command line argument for
+	IP version (-4 or -6) does not match the command line argument
+	given for the server. Prior to this perfdhcp would core when given
+	an IP version of -6 but a valid IPv4 address for server.
+	(Trac #2784, git 96b66c0c79dccf9a0206a45916b9b23fe9b94f74)
+
+601.	[bug]*		jinmei, vorner
+	The "delete record" interface of the database based data source
+	was extended so that the parameter includes reversed name in
+	addition to the actual name.  This may help the underlying
+	accessor implementation if reversed names are more convenient
+	for the delete operation.  This was the case for the SQLite3
+	accessor implementation, and it now performs delete operations
+	much faster.  At a higher level, this means IXFR and DDNS Updates
+	to the sqlite3 database are no longer so slow on large zones as
+	they were before.
+	(Trac #2877, git 33bd949ac7288c61ed0a664b7329b50b36d180e5)
+
+600.	[bug]		tmark
+	Changed mysql_lease_mgr to set the SQL mode option to STRICT. This
+	causes mysql it to treat invalid input data as an error. Rather than
+	"successfully" inserting a too large value by truncating it, the
+	insert will fail, and the lease manager will throw an exception.
+	Also, attempts to create a HWAddr (hardware address) object with
+	too long an array of data now throw an exception.
+	(Trac #2387, git cac02e9290600407bd6f3071c6654c1216278616)
+
+599.	[func]		tomek
+	libdhcp++: Pkt6 class is now able to parse and build relayed DHCPv6
+	messages.
+	(Trac #2827, git 29c3f7f4e82d7e85f0f5fb692345fd55092796b4)
+
+bind10-1.0.0beta1 released on April 4, 2013
+
+598.	[func]*		jinmei
+	The separate "static" data source is now deprecated as it can be
+	served in the more generic "MasterFiles" type of data source.
+	This means existing configuration may not work after an update.
+	If "config show data_sources/classes/CH[0]" on bindctl contains a
+	"static" type of data source, you'll need to update it as follows:
+	> config set data_sources/classes/CH[0]/type MasterFiles
+	> config set data_sources/classes/CH[0]/params {"BIND": =>
+	  "<the value of current data_sources/classes/CH[0]/params>"}
+	> config set data_sources/classes/CH[0]/cache-enable true
+	> config commit
+	(Same for CH[1], CH[2], IN[0], etc, if applicable, although it
+	should be very unlikely in practice.  Also note: '=>' above
+	indicates the next line is actually part of the command.  Do
+	not type in this "arrow").
+	(Part of Trac #2833, git 0363b4187fe3c1a148ad424af39e12846610d2d7)
+
+597.	[func]		tmark
+	b10-dhcp6: Added unit tests for handling requests when no
+	IPv6 subnets are configured/defined. Testing these conditions
+	was overlooked during implementation of Trac #2719.
+	(Trac #2721, git ce7f53b2de60e2411483b4aa31c714763a36da64)
+
+596.	[bug]		jinmei
+	Added special handling for the case where b10-auth receives a
+	NOTIFY message, but zonemgr isn't running. Previously this was
+	logged as a communications problem at the ERROR level, resulting
+	in increasing noise when zonemgr is intentionally stopped. Other
+	than the log level there is no change in externally visible
+	behavior.
+	(Trac #2562, git 119eed9938b17cbad3a74c823aa9eddb7cd337c2)
+
+595.	[bug]		tomek
+	All DHCP components now gracefully refuse to handle too short
+	DUIDs and client-id.
+	(Trac #2723, git a043d8ecda6aff57922fe98a33c7c3f6155d5d64)
+
+594.	[func]		muks, pselkirk
+	libdns++: the NSEC, DS, DLV, and AFSDB Rdata classes now use the
+	generic lexer in constructors from text.  This means that the name
+	fields in such RRs in a zone file can now be non-absolute (the
+	origin name in that context will be used), e.g., when loaded by
+	b10-loadzone.
+	(Trac #2386, git dc0f34afb1eccc574421a802557198e6cd2363fa)
+	(Trac #2391, git 1450d8d486cba3bee8be46e8001d66898edd370c)
+
+593.	[func]		jelte
+	Address + port output and logs is now consistent according to our
+	coding guidelines, e.g. <address>:<port> in the case of IPv4, and
+	[<address>]:<port> in the case of IPv6, instead of <address>#<port>
+	(Trac #1086, git bcefe1e95cdd61ee4a09b20522c3c56b315a1acc)
+
+592.	[bug]		jinmei
+	b10-auth and zonemgr now handle some uncommon NOTIFY messages more
+	gracefully: auth immediately returns a NOTAUTH response if the
+	server does not have authority for the zone (the behavior
+	compatible with BIND 9) without bothering zonemgr; zonemgr now
+	simply skips retransfer if the specified zone is not in its
+	secondary zone list, instead of producing noisy error logs.
+	(Trac #1938, git 89d7de8e2f809aef2184b450e7dee1bfec98ad14)
+
+591.	[func]		vorner
+	Ported the remaining tests from the old shell/perl based system to
+	lettuce. Make target `systest' is now gone. Currently, the lettuce
+	tests are in git only, not part of the release tarball.
+	(Trac #2624, git df1c5d5232a2ab551cd98b77ae388ad568a683ad)
+
+590.	[bug]		tmark
+	Modified "include" statements in DHCP MySQL lease manager code to
+	fix build problems if MySQL is installed in a non-standard location.
+	(Trac #2825, git 4813e06cf4e0a9d9f453890557b639715e081eca)
+
+589.	[bug]		jelte
+	b10-cmdctl now automatically re-reads the user accounts file when
+	it is updated.
+	(Trac #2710, git 16e8be506f32de668699e6954f5de60ca9d14ddf)
+
+588.	[bug]*		jreed
+	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
+	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
+	(git be41be890f1349ae4c870a887f7acd99ba1eaac5)
+
+587.	[bug]		jelte
+	When used from python, the dynamic datasource factory now
+	explicitely loads the logging messages dictionary, so that correct
+	logging messages does not depend on incidental earlier import
+	statements. Also, the sqlite3-specific log messages have been moved
+	from the general datasource library to the sqlite3 datasource
+	(which also explicitely loads its messages).
+	(Trac #2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
+
 586.	[func]		marcin
 	libdhcp++: Removed unnecesary calls to the function which
 	validates option definitions used to create instances of options

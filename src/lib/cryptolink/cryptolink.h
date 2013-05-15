@@ -101,7 +101,7 @@ class CryptoLinkImpl;
 /// There is only one way to access it, through getCryptoLink(), which
 /// returns a reference to the initialized library. On the first call,
 /// it will be initialized automatically. You can however initialize it
-/// manually through a call to the initalize(), before your first call
+/// manually through a call to initialize(), before your first call
 /// to getCryptoLink. Any subsequent call to initialize() will be a
 /// noop.
 ///

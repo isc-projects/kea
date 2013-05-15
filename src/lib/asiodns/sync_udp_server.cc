@@ -39,17 +39,20 @@ namespace isc {
 namespace asiodns {
 
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
-                             const int af, asiolink::SimpleCallback* checkin,
-                             DNSLookup* lookup, DNSAnswer* answer) :
+                             const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
-    answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer), stopped_(false)
+    udp_endpoint_(sender_), lookup_callback_(lookup),
+    resume_called_(false), done_(false), stopped_(false),
+    recv_callback_(boost::bind(&SyncUDPServer::handleRead, this, _1, _2))
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
                   "or AF_INET6, not " << af);
+    }
+    if (!lookup) {
+        isc_throw(InvalidParameter, "null lookup callback given to "
+                  "SyncUDPServer");
     }
     LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_UDP).arg(fd);
     try {
@@ -61,58 +64,44 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
         // convert it
         isc_throw(IOError, exception.what());
     }
+    udp_socket_.reset(new UDPSocket<DummyIOCallback>(*socket_));
 }
 
 void
 SyncUDPServer::scheduleRead() {
-    socket_->async_receive_from(asio::buffer(data_, MAX_LENGTH), sender_,
-                                boost::bind(&SyncUDPServer::handleRead, this,
-                                            _1, _2));
+    socket_->async_receive_from(asio::mutable_buffers_1(data_, MAX_LENGTH),
+                                sender_, recv_callback_);
 }
 
 void
 SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
-    // Abort on fatal errors
+    // If the server has been stopped, it could even have been destroyed
+    // by the time of this call.  We'll solve this problem in #2946, but
+    // until then we exit as soon as possible without accessing any other
+    // invalidated fields (note that referencing stopped_ is also incorrect,
+    // but experiments showed it often keeps the original value in practice,
+    // so we live with it until the complete fix).
+    if (stopped_) {
+        return;
+    }
     if (ec) {
         using namespace asio::error;
-        if (ec.value() != would_block && ec.value() != try_again &&
-            ec.value() != interrupted) {
+        const asio::error_code::value_type err_val = ec.value();
+
+        // See TCPServer::operator() for details on error handling.
+        if (err_val == operation_aborted || err_val == bad_descriptor) {
             return;
         }
+        if (err_val != would_block && err_val != try_again &&
+            err_val != interrupted) {
+            LOG_ERROR(logger, ASIODNS_UDP_SYNC_RECEIVE_FAIL).arg(ec.message());
+        }
     }
-    // Some kind of interrupt, spurious wakeup, or like that. Just try reading
-    // again.
     if (ec || length == 0) {
         scheduleRead();
         return;
     }
     // OK, we have a real packet of data. Let's dig into it!
-
-    // XXX: This is taken (and ported) from UDPSocket class. What the hell does
-    // it really mean?
-
-    // The UDP socket class has been extended with asynchronous functions
-    // and takes as a template parameter a completion callback class.  As
-    // UDPServer does not use these extended functions (only those defined
-    // in the IOSocket base class) - but needs a UDPSocket to get hold of
-    // the underlying Boost UDP socket - DummyIOCallback is used.  This
-    // provides the appropriate operator() but is otherwise functionless.
-    UDPSocket<DummyIOCallback> socket(*socket_);
-    UDPEndpoint endpoint(sender_);
-    IOMessage message(data_, length, socket, endpoint);
-    if (checkin_callback_ != NULL) {
-        (*checkin_callback_)(message);
-        if (stopped_) {
-            return;
-        }
-    }
-
-    // If we don't have a DNS Lookup provider, there's no point in
-    // continuing; we exit the coroutine permanently.
-    if (lookup_callback_ == NULL) {
-        scheduleRead();
-        return;
-    }
 
     // Make sure the buffers are fresh.  Note that we don't touch query_
     // because it's supposed to be cleared in lookup_callback_.  We should
@@ -121,13 +110,13 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
     // implementation should be careful that it's the responsibility of
     // the callback implementation.  See also #2239).
     output_buffer_->clear();
-    answer_->clear(isc::dns::Message::RENDER);
 
     // Mark that we don't have an answer yet.
     done_ = false;
     resume_called_ = false;
 
     // Call the actual lookup
+    const IOMessage message(data_, length, *udp_socket_, udp_endpoint_);
     (*lookup_callback_)(message, query_, answer_, output_buffer_, this);
 
     if (!resume_called_) {
@@ -135,27 +124,14 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
                   "No resume called from the lookup callback");
     }
 
-    if (stopped_) {
-        return;
-    }
-
     if (done_) {
         // Good, there's an answer.
-        // Call the answer callback to render it.
-        (*answer_callback_)(message, query_, answer_, output_buffer_);
-
-        if (stopped_) {
-            return;
-        }
-
-        asio::error_code ec;
-        socket_->send_to(asio::buffer(output_buffer_->getData(),
-                                      output_buffer_->getLength()),
-                         sender_, 0, ec);
-        if (ec) {
+        socket_->send_to(asio::const_buffers_1(output_buffer_->getData(),
+                                               output_buffer_->getLength()),
+                         sender_, 0, ec_);
+        if (ec_) {
             LOG_ERROR(logger, ASIODNS_UDP_SYNC_SEND_FAIL).
-                      arg(sender_.address().to_string()).
-                      arg(ec.message());
+                      arg(sender_.address().to_string()).arg(ec_.message());
         }
     }
 
@@ -181,13 +157,13 @@ SyncUDPServer::stop() {
     /// for it won't be scheduled by io service not matter it is
     /// submit to io service before or after close call. And we will
     /// get bad_descriptor error.
-    socket_->close();
+    socket_->close(ec_);
     stopped_ = true;
+    if (ec_) {
+        LOG_ERROR(logger, ASIODNS_SYNC_UDP_CLOSE_FAIL).arg(ec_.message());
+    }
 }
 
-/// Post this coroutine on the ASIO service queue so that it will
-/// resume processing where it left off.  The 'done' parameter indicates
-/// whether there is an answer to return to the client.
 void
 SyncUDPServer::resume(const bool done) {
     resume_called_ = true;

@@ -27,7 +27,23 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // thrown for IPv6 addresses.
     EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
     EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
-    EXPECT_TRUE(*first->client_id_ == *second->client_id_);
+    if (first->client_id_ && second->client_id_) {
+        EXPECT_TRUE(*first->client_id_ == *second->client_id_);
+    } else {
+        if (first->client_id_ && !second->client_id_) {
+
+            ADD_FAILURE() << "Client-id present in first lease ("
+                          << first->client_id_->getClientId().size()
+                          << " bytes), but missing in second.";
+        }
+        if (!first->client_id_ && second->client_id_) {
+            ADD_FAILURE() << "Client-id missing in first lease, but present in second ("
+                          << second->client_id_->getClientId().size()
+                          << " bytes).";
+        }
+        // else here would mean that both leases do not have client_id_
+        // which makes them equal in that regard. It is ok.
+    }
     EXPECT_EQ(first->valid_lft_, second->valid_lft_);
     EXPECT_EQ(first->cltt_, second->cltt_);
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);

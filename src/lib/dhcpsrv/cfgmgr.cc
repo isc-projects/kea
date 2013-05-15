@@ -40,8 +40,7 @@ CfgMgr::addOptionSpace4(const OptionSpacePtr& space) {
         isc_throw(InvalidOptionSpace, "option space " << space->getName()
                   << " already added.");
     }
-    spaces4_.insert(std::pair<std::string,
-                              OptionSpacePtr>(space->getName(), space));
+    spaces4_.insert(make_pair(space->getName(), space));
 }
 
 void
@@ -55,8 +54,7 @@ CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
         isc_throw(InvalidOptionSpace, "option space " << space->getName()
                   << " already added.");
     }
-    spaces6_.insert(std::pair<std::string,
-                              OptionSpacePtr>(space->getName(), space));
+    spaces6_.insert(make_pair(space->getName(), space));
 }
 
 void
@@ -147,7 +145,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
-    // router that also runs DHCPv6 server. Users specifies a single pool and
+    // router that also runs DHCPv6 server. User specifies a single pool and
     // expects it to just work. Without this, the server would complain that it
     // doesn't have IP address on its interfaces that matches that
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.
@@ -178,14 +176,30 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     return (Subnet6Ptr());
 }
 
-Subnet6Ptr CfgMgr::getSubnet6(OptionPtr /*interfaceId*/) {
-    /// @todo: Implement get subnet6 by interface-id (for relayed traffic)
-    isc_throw(NotImplemented, "Relayed DHCPv6 traffic is not supported yet.");
+Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
+    if (!iface_id_option) {
+        return (Subnet6Ptr());
+    }
+
+    // Let's iterate over all subnets and for those that have interface-id
+    // defined, check if the interface-id is equal to what we are looking for
+    for (Subnet6Collection::iterator subnet = subnets6_.begin();
+         subnet != subnets6_.end(); ++subnet) {
+        if ( (*subnet)->getInterfaceId() &&
+             ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6_IFACE_ID)
+                .arg((*subnet)->toText());
+            return (*subnet);
+        }
+    }
+    return (Subnet6Ptr());
 }
 
 void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
+    /// @todo: Check that there is no subnet with the same interface-id
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
     subnets6_.push_back(subnet);

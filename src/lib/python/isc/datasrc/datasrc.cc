@@ -23,6 +23,8 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/zone_loader.h>
 
+#include <log/message_initializer.h>
+
 #include "datasrc.h"
 #include "client_python.h"
 #include "finder_python.h"
@@ -276,6 +278,8 @@ PyModuleDef iscDataSrc = {
 
 PyMODINIT_FUNC
 PyInit_datasrc(void) {
+    isc::log::MessageInitializer::loadDictionary();
+
     PyObject* mod = PyModule_Create(&iscDataSrc);
     if (mod == NULL) {
         return (NULL);

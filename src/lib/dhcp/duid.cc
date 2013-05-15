@@ -28,14 +28,19 @@ namespace dhcp {
 DUID::DUID(const std::vector<uint8_t>& duid) {
     if (duid.size() > MAX_DUID_LEN) {
         isc_throw(OutOfRange, "DUID too large");
-    } else {
-        duid_ = duid;
     }
+    if (duid.empty()) {
+        isc_throw(OutOfRange, "Empty DUIDs are not allowed");
+    }
+    duid_ = duid;
 }
 
 DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
         isc_throw(OutOfRange, "DUID too large");
+    }
+    if (len == 0) {
+        isc_throw(OutOfRange, "Empty DUIDs/Client-ids not allowed");
     }
 
     duid_ = std::vector<uint8_t>(data, data + len);
@@ -83,11 +88,19 @@ bool DUID::operator!=(const DUID& other) const {
 // Constructor based on vector<uint8_t>
 ClientId::ClientId(const std::vector<uint8_t>& clientid)
     : DUID(clientid) {
+    if (clientid.size() < MIN_CLIENT_ID_LEN) {
+        isc_throw(OutOfRange, "client-id is too short (" << clientid.size()
+                  << "), at least 2 is required");
+    }
 }
 
 // Constructor based on C-style data
 ClientId::ClientId(const uint8_t *clientid, size_t len)
     : DUID(clientid, len) {
+    if (len < MIN_CLIENT_ID_LEN) {
+        isc_throw(OutOfRange, "client-id is too short (" << len
+                  << "), at least 2 is required");
+    }
 }
 
 // Returns a copy of client-id data

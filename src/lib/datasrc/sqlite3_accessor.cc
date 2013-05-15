@@ -23,8 +23,9 @@
 #include <dns/name.h>
 
 #include <datasrc/sqlite3_accessor.h>
+#include <datasrc/sqlite3_datasrc_messages.h>
 #include <datasrc/logger.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/factory.h>
 #include <datasrc/database.h>
 #include <util/filename.h>
@@ -103,7 +104,9 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO records "      // ADD_RECORD
         "(zone_id, name, rname, ttl, rdtype, sigtype, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-    "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
+    // DEL_RECORD:
+    // Delete based on the reverse name, as that one has an index.
+    "DELETE FROM records WHERE zone_id=?1 AND rname=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
 
     // ITERATE_RECORDS:
@@ -1294,19 +1297,27 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
-        *dbparameters_, DEL_RECORD, params, "delete record from zone");
+    // We don't pass all the parameters to the query, one name (reserve one
+    // in this case) is sufficient. Pass only the needed ones.
+    const size_t SQLITE3_DEL_PARAM_COUNT = DEL_PARAM_COUNT - 1;
+    const string sqlite3_params[SQLITE3_DEL_PARAM_COUNT] = {
+        params[DEL_RNAME],
+        params[DEL_TYPE],
+        params[DEL_RDATA]
+    };
+    doUpdate<const string (&)[SQLITE3_DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_RECORD, sqlite3_params, "delete record from zone");
 }
 
 void
 SQLite3Accessor::deleteNSEC3RecordInZone(
-    const string (&params)[DEL_PARAM_COUNT])
+    const string (&params)[DEL_NSEC3_PARAM_COUNT])
 {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
+    doUpdate<const string (&)[DEL_NSEC3_PARAM_COUNT]>(
         *dbparameters_, DEL_NSEC3_RECORD, params,
         "delete NSEC3 record from zone");
 }

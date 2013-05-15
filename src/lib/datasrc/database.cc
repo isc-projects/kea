@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/rrset_collection_base.h>
 
@@ -30,7 +30,7 @@
 #include <dns/rdataclass.h>
 #include <dns/nsec3hash.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>
@@ -1233,7 +1233,7 @@ public:
         const pair<bool, int> zone(accessor_->getZone(zone_name.toText()));
         if (!zone.first) {
             // No such zone, can't continue
-            isc_throw(DataSourceError, "Zone " + zone_name.toText() +
+            isc_throw(NoSuchZone, "Zone " + zone_name.toText() +
                       " can not be iterated, because it doesn't exist "
                       "in this data source");
         }
@@ -1644,17 +1644,23 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
                 { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDDIFF).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
         if (nsec3_type) {
             const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
                 { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(),
                   rdata_txt };
             accessor_->addNSEC3RecordToZone(nsec3_columns);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDNSEC3).
+                arg(cvtr.getNSEC3Name()).arg(rdata_txt);
         } else {
             const string columns[Accessor::ADD_COLUMN_COUNT] =
                 { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
                   cvtr.getType(), sigtype, rdata_txt };
             accessor_->addRecordToZone(columns);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ADDRR).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
     }
 }
@@ -1698,14 +1704,22 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
                 { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_DELETE, journal);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETEDIFF).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
-        const string params[Accessor::DEL_PARAM_COUNT] =
-            { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
-              cvtr.getType(), rdata_txt };
         if (nsec3_type) {
+            const string params[Accessor::DEL_NSEC3_PARAM_COUNT] =
+                { cvtr.getNSEC3Name(), cvtr.getType(), rdata_txt };
             accessor_->deleteNSEC3RecordInZone(params);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETENSEC3).
+                arg(cvtr.getNSEC3Name()).arg(rdata_txt);
         } else {
+            const string params[Accessor::DEL_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), rdata_txt,
+                  cvtr.getRevName() };
             accessor_->deleteRecordInZone(params);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_DELETERR).
+                arg(cvtr.getName()).arg(cvtr.getType()).arg(rdata_txt);
         }
     }
 }

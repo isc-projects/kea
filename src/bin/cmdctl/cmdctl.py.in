@@ -42,6 +42,7 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.cc.proto_defs
 import isc.util.process
 import isc.net.parse
 from optparse import OptionParser, OptionValueError
@@ -97,6 +98,11 @@ def check_file(file_name):
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.  '''
+    def __init__(self, request, client_address, server):
+        http.server.BaseHTTPRequestHandler.__init__(self, request,
+                                                    client_address, server)
+        self.session_id = None
+
     def do_GET(self):
         '''The client should send its session id in header with
         the name 'cookie'
@@ -121,7 +127,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         return self.server.get_reply_data_for_GET(id, module)
 
     def _is_session_valid(self):
-        return self.session_id
+        return self.session_id is not None
 
     def _is_user_logged_in(self):
         login_time = self.server.user_sessions.get(self.session_id)
@@ -171,7 +177,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         is_user_valid, error_info = self._check_user_name_and_pwd()
         if is_user_valid:
             self.server.save_user_session_id(self.session_id)
-            return http.client.OK, ["login success "]
+            return http.client.OK, ["login success"]
         else:
             return http.client.UNAUTHORIZED, error_info
 
@@ -241,6 +247,7 @@ class CommandControl():
         CommandControl to communicate with other modules. '''
         self._verbose = verbose
         self._httpserver = httpserver
+        self.__msg_handler_thread = None # set in _start_msg_handle_thread
         self._lock = threading.Lock()
         self._setup_session()
         self.modules_spec = self._get_modules_specification()
@@ -320,7 +327,26 @@ class CommandControl():
                     self._cmdctl_config_data[key] = new_config[key]
         return answer
 
+    def _get_current_thread(self):
+        """A simple wrapper of returning the 'current' thread object.
+
+        This is extracted as a 'protected' method so tests can override for
+        their convenience.
+
+        """
+        return threading.currentThread()
+
     def command_handler(self, command, args):
+        """Handle commands from other modules.
+
+        This method must not be called by any other threads than
+        __msg_handler_thread invoked at the intialization of the class;
+        otherwise it would cause critical race or dead locks.
+
+        """
+        # Check the restriction described above.
+        assert self._get_current_thread() == self.__msg_handler_thread
+
         answer = ccsession.create_answer(0)
         if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
             # The 'value' of a specification update can be either
@@ -356,6 +382,7 @@ class CommandControl():
         ''' Start one thread to handle received message from msgq.'''
         td = threading.Thread(target=self._handle_msg_from_msgq)
         td.daemon = True
+        self.__msg_handler_thread = td
         td.start()
 
     def _handle_msg_from_msgq(self):
@@ -396,7 +423,7 @@ class CommandControl():
         rcode, reply = self.send_command('ConfigManager', ccsession.COMMAND_GET_MODULE_SPEC)
         return self._parse_command_result(rcode, reply)
 
-    def send_command_with_check(self, module_name, command_name, params = None):
+    def send_command_with_check(self, module_name, command_name, params=None):
         '''Before send the command to modules, check if module_name, command_name
         parameters are legal according the spec file of the module.
         Return rcode, dict. TODO, the rcode should be defined properly.
@@ -418,31 +445,34 @@ class CommandControl():
 
         return self.send_command(module_name, command_name, params)
 
-    def send_command(self, module_name, command_name, params = None):
-        '''Send the command from bindctl to proper module. '''
+    def send_command(self, module_name, command_name, params=None):
+        """Send the command from bindctl to proper module.
+
+        Note that commands sent to Cmdctl itself are also delivered via the
+        CC session.  Since this method is called from a thread handling a
+        particular HTTP session, it cannot directly call command_handler().
+
+        """
         errstr = 'unknown error'
         answer = None
         logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_SEND_COMMAND,
                      command_name, module_name)
 
-        if module_name == self._module_name:
-            # Process the command sent to cmdctl directly.
-            answer = self.command_handler(command_name, params)
-        else:
-            # FIXME: Due to the fact that we use a separate session
-            # from the module one (due to threads and blocking), and
-            # because the plain cc session does not have the high-level
-            # rpc-call method, we use the low-level way and create the
-            # command ourselves.
-            msg = ccsession.create_command(command_name, params)
-            seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
-            logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT,
-                         command_name, module_name)
-            #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            try:
-                answer, env = self._cc.group_recvmsg(False, seq)
-            except isc.cc.session.SessionTimeout:
-                errstr = "Module '%s' not responding" % module_name
+        # FIXME: Due to the fact that we use a separate session
+        # from the module one (due to threads and blocking), and
+        # because the plain cc session does not have the high-level
+        # rpc-call method, we use the low-level way and create the
+        # command ourselves.
+        msg = ccsession.create_command(command_name, params)
+        seq = self._cc.group_sendmsg(msg, module_name, want_answer=True)
+        logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_COMMAND_SENT, command_name,
+                     module_name)
+        # TODO, it may be blocked, msqg need to add a new interface waiting
+        # in timeout.
+        try:
+            answer, env = self._cc.group_recvmsg(False, seq)
+        except isc.cc.session.SessionTimeout:
+            errstr = "Module '%s' not responding" % module_name
 
         if answer:
             try:
@@ -454,7 +484,8 @@ class CommandControl():
                     else:
                         return rcode, {}
                 else:
-                    errstr = str(answer['result'][1])
+                    errstr = \
+                        str(answer[isc.cc.proto_defs.CC_PAYLOAD_RESULT][1])
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
 
@@ -502,12 +533,25 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
         self._verbose = verbose
         self._lock = threading.Lock()
         self._user_infos = {}
-        self._accounts_file = None
+        self.__accounts_file = None
+        self.__accounts_file_mtime = 0
 
     def _create_user_info(self, accounts_file):
         '''Read all user's name and its' salt, hashed password
         from accounts file.'''
-        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0):
+
+        # If the file does not exist, set accounts to empty, and return
+        if not os.path.exists(accounts_file):
+            self._user_infos = {}
+            self.__accounts_file = None
+            self.__accounts_file_mtime = 0
+            return
+
+        # If the filename hasn't changed, and the file itself
+        # has neither, do nothing
+        accounts_file_mtime = os.stat(accounts_file).st_mtime
+        if self.__accounts_file == accounts_file and\
+           accounts_file_mtime <= self.__accounts_file_mtime:
             return
 
         with self._lock:
@@ -525,7 +569,8 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                 if csvfile:
                     csvfile.close()
 
-        self._accounts_file = accounts_file
+        self.__accounts_file = accounts_file
+        self.__accounts_file_mtime = accounts_file_mtime
         if len(self._user_infos) == 0:
             logger.error(CMDCTL_NO_USER_ENTRIES_READ)
 

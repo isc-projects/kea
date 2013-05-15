@@ -7,6 +7,7 @@ pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
 CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/pycc_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/pycc_messages.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/pycc_messages.pyo
 
 EXTRA_DIST = pycc_messages.mes proto_defs.py
 

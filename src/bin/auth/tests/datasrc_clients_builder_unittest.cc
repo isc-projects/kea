@@ -406,6 +406,22 @@ TEST_F(DataSrcClientsBuilderTest,
     EXPECT_EQ(orig_lock_count + 1, map_mutex.lock_count);
     EXPECT_EQ(orig_unlock_count + 1, map_mutex.unlock_count);
 
+    // zone doesn't exist in the data source
+    const ConstElementPtr config_nozone(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": {\"database_file\": \"" + test_db + "\"},"
+        "    \"cache-enable\": true,"
+        "    \"cache-zones\": [\"nosuchzone.example\"]"
+        "}]}"));
+    clients_map = configureDataSource(config_nozone);
+    EXPECT_THROW(
+        builder.handleCommand(
+            Command(LOADZONE, Element::fromJSON(
+                        "{\"class\": \"IN\","
+                        " \"origin\": \"nosuchzone.example\"}"))),
+        TestDataSrcClientsBuilder::InternalCommandError);
+
     // basically impossible case: in-memory cache is completely disabled.
     // In this implementation of manager-builder, this should never happen,
     // but it catches it like other configuration error and keeps going.
@@ -503,14 +519,6 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
             }, "");
     }
 
-    // zone doesn't exist in the data source
-    EXPECT_THROW(
-        builder.handleCommand(
-            Command(LOADZONE,
-                    Element::fromJSON(
-                        "{\"class\": \"IN\", \"origin\": \"xx\"}"))),
-        TestDataSrcClientsBuilder::InternalCommandError);
-
     // origin is bogus
     EXPECT_THROW(builder.handleCommand(
                      Command(LOADZONE,
@@ -522,6 +530,37 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                              Element::fromJSON(
                                  "{\"origin\": 10, \"class\": 1}"))),
                  isc::data::TypeError);
+}
+
+// This works only if mapped memory segment is compiled.
+// Note also that this test case may fail as we make b10-auth more aware
+// of shared-memory cache.
+TEST_F(DataSrcClientsBuilderTest,
+#ifdef USE_SHARED_MEMORY
+       loadInNonWritableCache
+#else
+       DISABLED_loadInNonWritableCache
+#endif
+    )
+{
+    const ConstElementPtr config = Element::fromJSON(
+        "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"test1.example\": \"" +
+        std::string(TEST_DATA_BUILDDIR "/test1.zone.copied") + "\"},"
+        "   \"cache-enable\": true,"
+        "   \"cache-type\": \"mapped\""
+        "}]}");
+    clients_map = configureDataSource(config);
+
+    EXPECT_THROW(builder.handleCommand(
+                     Command(LOADZONE,
+                             Element::fromJSON(
+                                 "{\"origin\": \"test1.example\","
+                                 " \"class\": \"IN\"}"))),
+                 TestDataSrcClientsBuilder::InternalCommandError);
 }
 
 } // unnamed namespace

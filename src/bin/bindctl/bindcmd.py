@@ -33,6 +33,7 @@ import inspect
 import pprint
 import ssl, socket
 import os, time, random, re
+import os.path
 import getpass
 from hashlib import sha1
 import csv
@@ -147,9 +148,9 @@ class BindCmdInterpreter(Cmd):
         # is processed by a script that expects a specific format.
         if my_readline == sys.stdin.readline and sys.stdin.isatty():
             sys.stdout.write("""\
-WARNING: Python readline module isn't available, so the command line editor
-         (including command history management) does not work.  See BIND 10
-         guide for more details.\n\n""")
+WARNING: The Python readline module isn't available, so some command line
+         editing features (including command history management) will not
+         work.  See the BIND 10 guide for more details.\n\n""")
 
         try:
             if not self.login_to_cmdctl():
@@ -214,22 +215,16 @@ WARNING: Python readline module isn't available, so the command line editor
 
         return True
 
-    def __print_check_ssl_msg(self):
-        self._print("Please check the logs of b10-cmdctl, there may "
-                    "be a problem accepting SSL connections, such "
-                    "as a permission problem on the server "
-                    "certificate file.")
-
     def _try_login(self, username, password):
         '''
-        Attempts to log in to cmdctl by sending a POST with
-        the given username and password.
-        On success of the POST (mind, not the login, only the network
-        operation), returns a tuple (response, data).
-        On failure, raises a FailToLogin exception, and prints some
-        information on the failure.
-        This call is essentially 'private', but made 'protected' for
-        easier testing.
+        Attempts to log into cmdctl by sending a POST with the given
+        username and password. On success of the POST (not the login,
+        but the network operation), it returns a tuple (response, data).
+        We check for some failures such as SSL errors and socket errors
+        which could happen due to the environment in which BIND 10 runs.
+        On failure, it raises a FailToLogin exception and prints some
+        information on the failure.  This call is essentially 'private',
+        but made 'protected' for easier testing.
         '''
         param = {'username': username, 'password' : password}
         try:
@@ -237,16 +232,8 @@ WARNING: Python readline module isn't available, so the command line editor
             data = response.read().decode()
             # return here (will raise error after try block)
             return (response, data)
-        except ssl.SSLError as err:
-            self._print("SSL error while sending login information: ", err)
-            if err.errno == ssl.SSL_ERROR_EOF:
-                self.__print_check_ssl_msg()
-        except socket.error as err:
-            self._print("Socket error while sending login information: ", err)
-            # An SSL setup error can also bubble up as a plain CONNRESET...
-            # (on some systems it usually does)
-            if err.errno == errno.ECONNRESET:
-                self.__print_check_ssl_msg()
+        except (ssl.SSLError, socket.error) as err:
+            self._print('Error while sending login information:', err)
             pass
         raise FailToLogin()
 
@@ -270,9 +257,21 @@ WARNING: Python readline module isn't available, so the command line editor
 
         # No valid logins were found, prompt the user for a username/password
         count = 0
-        self._print('No stored password file found, please see sections '
-              '"Configuration specification for b10-cmdctl" and "bindctl '
-              'command-line options" of the BIND 10 guide.')
+        if not os.path.exists(self.csv_file_dir + CSV_FILE_NAME):
+            self._print('\nNo stored password file found.\n\n'
+                        'When the system is first set up you need to create '
+                        'at least one user account.\n'
+                        'For information on how to set up a BIND 10 system, '
+                        'please check see the\n'
+                        'BIND 10 Guide: \n\n'
+                        'http://bind10.isc.org/docs/bind10-guide.html#quick-start-auth-dns\n\n'
+
+                        'If a user account has been set up, please check the '
+                        'b10-cmdctl log for other\n'
+                        'information.\n')
+        else:
+            self._print('Login failed: either the user name or password is '
+                        'invalid.\n')
         while True:
             count = count + 1
             if count > 3:
@@ -317,14 +316,14 @@ WARNING: Python readline module isn't available, so the command line editor
             return {}
 
 
-    def send_POST(self, url, post_param = None):
+    def send_POST(self, url, post_param=None):
         '''Send POST request to cmdctl, session id is send with the name
         'cookie' in header.
         Format: /module_name/command_name
         parameters of command is encoded as a map
         '''
         param = None
-        if (len(post_param) != 0):
+        if post_param is not None and len(post_param) != 0:
             param = json.dumps(post_param)
 
         headers = {"cookie" : self.session_id}
@@ -938,5 +937,3 @@ WARNING: Python readline module isn't available, so the command line editor
         if data != "" and data != "{}":
             self._print(json.dumps(json.loads(data), sort_keys=True,
                                    indent=4))
-
-

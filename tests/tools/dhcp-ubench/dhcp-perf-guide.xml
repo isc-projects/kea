@@ -316,7 +316,7 @@
         turned to several modes of operation. Its value can be
         modified in SQLite_uBenchmark::connect().  See
         http://www.sqlite.org/pragma.html#pragma_journal_mode for
-        detailed explanantion.</para>
+        a detailed explanation.</para>
 
         <para>sqlite_bench supports precompiled statements. Please use
         '-c no|yes' to define which should be used: basic SQL query (no) or
@@ -898,7 +898,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </para>
 
       <para>
-        It should be emphaisized that obtained measurements indicate
+        It should be emphasized that obtained measurements indicate
         only database performance and they cannot be directly
         translated to expected leases per second or queries per second
         performance by an actual server. The DHCP server must do much
@@ -1384,7 +1384,7 @@ collected packets: 0
           The content in template files is encoded as series of ASCII hexadecimal
           digits (each byte represented by two ASCII chars 00..FF). Data in a
           template file is laid in network byte order and it can be used on the
-          systems with different endianess.
+          systems with different endianness.
           perfdhcp forms the packet by replacing parts of the message buffer read
           from the file with variable data such as elapsed time, hardware address, DUID
           etc. The offsets where such variable data is placed is specific to the

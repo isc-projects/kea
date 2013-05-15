@@ -427,7 +427,7 @@ ZoneDataUpdater::add(const ConstRRsetPtr& rrset,
             // the data may have been remapped somewhere else in the process).
             zone_data_ =
                 static_cast<ZoneData*>(
-                    mem_sgmt_.getNamedAddress("updater_zone_data"));
+                    mem_sgmt_.getNamedAddress("updater_zone_data").second);
         }
         // Retry if it didn't add due to the growth
     } while (!added);

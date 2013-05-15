@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <config/ccsession.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -52,12 +53,12 @@ public:
 
 TEST_F(CtrlDhcpv6SrvTest, commands) {
 
-    ControlledDhcpv6Srv* srv = NULL;
-    ASSERT_NO_THROW({
-        srv = new ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000);
-    });
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000))
+    );
 
-    // use empty parameters list
+    // Use empty parameters list
     ElementPtr params(new isc::data::MapElement());
     int rcode = -1;
 
@@ -78,10 +79,7 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     // case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode); // expect success
-
-
-    delete srv;
+    EXPECT_EQ(0, rcode); // Expect success
 }
 
 } // end of anonymous namespace

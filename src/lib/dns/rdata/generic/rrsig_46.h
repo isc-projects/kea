@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,6 @@
 
 #include <dns/name.h>
 #include <dns/rrtype.h>
-#include <dns/rrttl.h>
 #include <dns/rdata.h>
 
 // BEGIN_HEADER_GUARD
@@ -32,6 +31,12 @@
 
 struct RRSIGImpl;
 
+/// \brief \c rdata::RRSIG class represents the RRSIG RDATA as defined %in
+/// RFC4034.
+///
+/// This class implements the basic interfaces inherited from the abstract
+/// \c rdata::Rdata class, and provides trivial accessors specific to the
+/// RRSIG RDATA.
 class RRSIG : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
@@ -42,6 +47,9 @@ public:
     // specialized methods
     const RRType& typeCovered() const;
 private:
+    // helper function for string and lexer constructors
+    RRSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+
     RRSIGImpl* impl_;
 };
 

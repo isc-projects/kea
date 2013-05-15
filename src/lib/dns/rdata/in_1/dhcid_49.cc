@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <string>
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -28,53 +26,77 @@
 
 using namespace std;
 using namespace isc::util;
+using namespace isc::util::encode;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+void
+DHCID::constructFromLexer(MasterLexer& lexer) {
+    string digest_txt = lexer.getNextToken(MasterToken::STRING).getString();
+
+    // Whitespace is allowed within base64 text, so read to the end of input.
+    string digest_part;
+    while (true) {
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
+            break;
+        }
+        token.getString(digest_part);
+        digest_txt.append(digest_part);
+    }
+    lexer.ungetToken();
+
+    decodeBase64(digest_txt, digest_);
+}
+
 /// \brief Constructor from string.
 ///
 /// \param dhcid_str A base-64 representation of the DHCID binary data.
-/// The data is considered to be opaque, but a sanity check is performed.
 ///
-/// <b>Exceptions</b>
-///
-/// \c dhcid_str must be a valid  BASE-64 string, otherwise an exception
-/// of class \c isc::BadValue will be thrown;
-/// the binary data should consist of at leat of 3 octets as per RFC4701:
-///           < 2 octets >    Identifier type code
-///           < 1 octet >     Digest type code
-///           < n octets >    Digest (length depends on digest type)
-/// If the data is less than 3 octets (i.e. it cannot contain id type code and
-/// digest type code), an exception of class \c InvalidRdataLength is thrown.
+/// \throw InvalidRdataText if the string could not be parsed correctly.
 DHCID::DHCID(const std::string& dhcid_str) {
-    istringstream iss(dhcid_str);
-    stringbuf digestbuf;
+    try {
+        std::istringstream iss(dhcid_str);
+        MasterLexer lexer;
+        lexer.pushSource(iss);
 
-    iss >> &digestbuf;
-    isc::util::encode::decodeBase64(digestbuf.str(), digest_);
+        constructFromLexer(lexer);
 
-    // RFC4701 states DNS software should consider the RDATA section to
-    // be opaque, but there must be at least three bytes in the data:
-    // < 2 octets >    Identifier type code
-    // < 1 octet >     Digest type code
-    if (digest_.size() < 3) {
-        isc_throw(InvalidRdataLength, "DHCID length " << digest_.size() <<
-                  " too short, need at least 3 bytes");
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for DHCID: "
+                      << dhcid_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct DHCID from '" <<
+                  dhcid_str << "': " << ex.what());
     }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of a DHCID RDATA.
+///
+/// \throw BadValue if the text is not valid base-64.
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+DHCID::DHCID(MasterLexer& lexer, const Name*,
+             MasterLoader::Options, MasterLoaderCallbacks&) {
+    constructFromLexer(lexer);
 }
 
 /// \brief Constructor from wire-format data.
 ///
 /// \param buffer A buffer storing the wire format data.
 /// \param rdata_len The length of the RDATA in bytes
-///
-/// <b>Exceptions</b>
-/// \c InvalidRdataLength is thrown if \c rdata_len is than minimum of 3 octets
 DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 3) {
-        isc_throw(InvalidRdataLength, "DHCID length " << rdata_len <<
-                  " too short, need at least 3 bytes");
+    if (rdata_len == 0) {
+        isc_throw(InvalidRdataLength, "Missing DHCID rdata");
     }
 
     digest_.resize(rdata_len);
@@ -112,7 +134,7 @@ DHCID::toWire(AbstractMessageRenderer& renderer) const {
 /// \return A string representation of \c DHCID.
 string
 DHCID::toText() const {
-    return (isc::util::encode::encodeBase64(digest_));
+    return (encodeBase64(digest_));
 }
 
 /// \brief Compare two instances of \c DHCID RDATA.

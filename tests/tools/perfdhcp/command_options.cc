@@ -433,7 +433,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     }
     if (server_name_.empty()) {
         isc_throw(InvalidParameter,
-                  "without an inteface server is required");
+                  "without an interface, server is required");
     }
 
     // If DUID is not specified from command line we need to
@@ -548,7 +548,7 @@ CommandOptions::decodeDuid(const std::string& base) {
         } catch (isc::InvalidParameter&) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided,"
-                      " exepected hex digits");
+                      " expected hex digits");
         }
         duid_template.push_back(static_cast<uint8_t>(ui));
     }

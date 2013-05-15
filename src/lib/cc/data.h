@@ -216,7 +216,7 @@ public:
     //@{
     /// Returns the ElementPtr at the given key
     /// \param name The key of the Element to return
-    /// \return The ElementPtr at the given key
+    /// \return The ElementPtr at the given key, or null if not present
     virtual ConstElementPtr get(const std::string& name) const;
 
     /// Sets the ElementPtr at the given key

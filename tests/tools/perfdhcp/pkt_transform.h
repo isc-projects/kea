@@ -54,7 +54,7 @@ public:
     /// if the option's offset + its size is beyond the packet's size.
     ///
     /// \param universe Universe used, V4 or V6
-    /// \param in_buffer Input buffer holding intial packet
+    /// \param in_buffer Input buffer holding initial packet
     /// data, this can be directly read from template file
     /// \param options Options collection with offsets
     /// \param transid_offset offset of transaction id in a packet,

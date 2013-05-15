@@ -113,11 +113,11 @@ TEST(SegmentObjectHolderTest, DISABLED_grow) {
     size_t alloc_size = 1024;
     EXPECT_THROW(allocateUntilGrows(segment, alloc_size), MemorySegmentGrown);
     // Confirm it's now mapped at a different address.
-    EXPECT_NE(mark, segment.getNamedAddress("mark"))
+    EXPECT_NE(mark, segment.getNamedAddress("mark").second)
         << "portability assumption for the test doesn't hold; "
         "disable the test by setting env variable GTEST_FILTER to "
         "'-SegmentObjectHolderTest.grow'";
-    mark = segment.getNamedAddress("mark");
+    mark = segment.getNamedAddress("mark").second;
     segment.clearNamedAddress("mark");
     segment.deallocate(mark, 1);
     EXPECT_TRUE(segment.allMemoryDeallocated());
