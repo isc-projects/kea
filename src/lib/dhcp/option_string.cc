@@ -19,7 +19,10 @@ namespace dhcp {
 
 OptionString::OptionString(const Option::Universe u, const uint16_t type,
                            const std::string& value)
-    : Option(u, type), value_(value) {
+    : Option(u, type) {
+    // Try to assign the provided string value. This will throw exception
+    // if the provided value is empty.
+    setValue(value);
 }
 
 OptionString::OptionString(const Option::Universe u, const uint16_t type,
@@ -31,25 +34,36 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
     unpack(begin, end);
 }
 
+std::string
+OptionString::getValue() const {
+    return std::string(data_.begin(), data_.end());
+}
+
+void
+OptionString::setValue(const std::string& value) {
+    // Sanity check that the string value is at least one byte long.
+    // This is a requirement for all currently defined options which
+    // carry a string value.
+    if (value.empty()) {
+        isc_throw(isc::OutOfRange, "string value carried by the option '"
+                  << getType() << "' must not be empty");
+    }
+
+    data_.assign(value.begin(), value.end());
+}
+
+
 uint16_t
 OptionString::len() {
-    return (getHeaderLen() + value_.size());
+    return (getHeaderLen() + data_.size());
 }
 
 void
 OptionString::pack(isc::util::OutputBuffer& buf) {
-    // Sanity check that the string value is at least one byte long.
-    // This is a requirement for all currently defined options which
-    // carry a string value.
-    if (value_.empty()) {
-        isc_throw(isc::OutOfRange, "string value carried in the option"
-                  << " must not be empty");
-    }
-
     // Pack option header.
     packHeader(buf);
     // Pack data.
-    buf.writeData(value_.c_str(), value_.size());
+    buf.writeData(&data_[0], data_.size());
 
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.
@@ -62,7 +76,7 @@ OptionString::unpack(OptionBufferConstIter begin,
         isc_throw(isc::OutOfRange, "failed to parse an option holding string value"
                   << " - empty value is not accepted");
     }
-    value_.assign(begin, end);
+    data_.assign(begin, end);
 }
 
 } // end of isc::dhcp namespace

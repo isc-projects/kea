@@ -373,7 +373,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 /// is no restriction on the data length being carried by them.
 /// For simplicity, we assign data of the length 3 for each
 /// of them.
-static uint8_t v4Opts[] = {
+static uint8_t v4_opts[] = {
     12,  3, 0,   1,  2, // Hostname
     60,  3, 10, 11, 12, // Class Id
     14,  3, 20, 21, 22, // Merit Dump File
@@ -404,18 +404,18 @@ TEST_F(LibDhcpTest, packOptions4) {
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
 
-    vector<uint8_t> expVect(v4Opts, v4Opts + sizeof(v4Opts));
+    vector<uint8_t> expVect(v4_opts, v4_opts + sizeof(v4_opts));
 
     OutputBuffer buf(100);
     EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
-    ASSERT_EQ(buf.getLength(), sizeof(v4Opts));
-    EXPECT_EQ(0, memcmp(v4Opts, buf.getData(), sizeof(v4Opts)));
+    ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
+    EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
 
 }
 
 TEST_F(LibDhcpTest, unpackOptions4) {
 
-    vector<uint8_t> v4packed(v4Opts, v4Opts + sizeof(v4Opts));
+    vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::Option::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
@@ -430,14 +430,14 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(12, option12->getType());  // this should be option 12
     ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
     EXPECT_EQ(5, option12->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4Opts+2, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4_opts + 2, 3)); // data len=3
 
     x = options.find(60);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
     EXPECT_EQ(60, x->second->getType());  // this should be option 60
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+7, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 7, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
@@ -446,21 +446,21 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(14, option14->getType());  // this should be option 14
     ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
     EXPECT_EQ(5, option14->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4Opts+12, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 12, 3)); // data len=3
 
     x = options.find(254);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     EXPECT_EQ(254, x->second->getType());  // this should be option 254
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+17, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 17, 3)); // data len=3
 
     x = options.find(128);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     EXPECT_EQ(128, x->second->getType());  // this should be option 254
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+22, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 22, 3)); // data len=3
 
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
