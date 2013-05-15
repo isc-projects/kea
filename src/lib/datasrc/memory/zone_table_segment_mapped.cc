@@ -264,7 +264,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         break;
 
     default:
-        isc_throw(isc::InvalidOperation,
+        isc_throw(isc::InvalidParameter,
                   "Invalid MemorySegmentOpenMode passed to reset()");
     }
 

@@ -267,6 +267,14 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_FALSE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
 
+    // If a Python binding passes an invalid integer as the mode,
+    // reset() should reject it.
+    EXPECT_THROW({
+        ztable_segment_->reset
+            (static_cast<ZoneTableSegment::MemorySegmentOpenMode>(1234),
+             config_params_);
+    }, isc::InvalidParameter);
+
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
