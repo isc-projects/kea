@@ -72,14 +72,14 @@ public:
     /// @brief Returns the string value held by the option.
     ///
     /// @return string value held by the option.
-    std::string getValue() const {
-        return (value_);
-    }
+    std::string getValue() const;
 
     /// @brief Sets the string value to be held by the option.
-    void setValue(const std::string& value) {
-        value_ = value;
-    }
+    ///
+    /// @param value string value to be set.
+    ///
+    /// @throw isc::OutOfRange if a string value to be set is empty.
+    void setValue(const std::string& value);
 
     /// @brief Creates on-wire format of the option.
     ///
@@ -102,14 +102,6 @@ public:
     ///
     /// @throw isc::OutOfRange if provided buffer is truncated.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
-
-private:
-    /// String value being held by the option.
-    std::string value_;
-
-    // Change scope of the getData function to private as we want
-    // getValue is called instead.
-    using Option::getData;
 
 };
 
