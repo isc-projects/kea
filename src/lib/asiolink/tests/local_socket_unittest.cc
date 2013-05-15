@@ -76,6 +76,10 @@ protected:
 
     ~LocalSocketTest() {
         alarm(0);
+        // reset the global to NULL to detect any invalid access to freed
+        // io_service (this shouldn't happen, so we don't change stopIOService
+        // itself)
+        g_io_service_ = NULL;
         std::signal(SIGALRM, prev_handler_);
     }
 
