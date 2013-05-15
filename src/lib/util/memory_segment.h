@@ -171,6 +171,10 @@ public:
     /// corresponding address by that name (in such cases the real address
     /// may be different between these two processes).
     ///
+    /// Note that names beginning with an underscore ("_") are reserved
+    /// for internal use by this class. If such a name is passed to this
+    /// method, an isc::InvalidParameter exception will be thrown.
+    ///
     /// \c addr must be 0 (NULL) or an address that belongs to this segment.
     /// The latter case means it must be the return value of a previous call
     /// to \c allocate().  The actual implementation is encouraged to detect
@@ -229,6 +233,11 @@ public:
         if (!name) {
             isc_throw(InvalidParameter,
                       "NULL name is given to setNamedAddress");
+        }
+        if (*name == '_') {
+            isc_throw(InvalidParameter,
+                      "Names beginning with _ are reserved for "
+                      "internal use only.");
         }
         return (setNamedAddressImpl(name, addr));
     }
