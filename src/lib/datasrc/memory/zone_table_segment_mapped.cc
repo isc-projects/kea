@@ -122,6 +122,18 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             }
         }
         try {
+             // FIXME: in theory this code is not safe:
+             // - ZoneTable::create could throw MemorySegmentGrown, leaking
+             //   ptr
+             // - even on successful return from ZoneTable::create(), ptr
+             //   could be reallocated due to its internal implementation detail
+             // So, to make it 100% safe we should protect both ptr and
+             // zone table in something similar to SegmentObjectHolder, get
+             // their addresses via the holder's get() method, and expect
+             // MemorySegmentGrown and handle it.  However, in this specific
+             // context the segment should have sufficient capacity in practice
+             // and the above cases are extremely unlikely to happen.  So
+             // we go for simpler code for now.
             ZoneTableHeader* new_header = new(ptr)
                 ZoneTableHeader(ZoneTable::create(segment, rrclass_));
             segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
