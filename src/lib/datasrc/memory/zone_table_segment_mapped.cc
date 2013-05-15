@@ -90,9 +90,7 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             }
         }
         *static_cast<size_t*>(checksum) = 0;
-        const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
-                                                  checksum);
-        assert(!grew);
+        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
     }
 
     return (true);
@@ -126,9 +124,7 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
         try {
             ZoneTableHeader* new_header = new(ptr)
                 ZoneTableHeader(ZoneTable::create(segment, rrclass_));
-            const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
-                                                      new_header);
-            assert(!grew);
+            segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
         } catch (const MemorySegmentGrown&) {
             // This is extremely unlikely and we just throw a fatal
             // exception here without attempting to recover.
