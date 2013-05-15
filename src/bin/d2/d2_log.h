@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,23 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef D2SRV_LOG_H
-#define D2SRV_LOG_H
+#ifndef D2_LOG_H
+#define D2_LOG_H
 
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <d2srv/d2srv_messages.h>
+#include <d2/d2_messages.h>
 
 namespace isc {
-namespace d2srv {
+namespace d2 {
 
 /// Define the logger for the "dhcp4" module part of b10-dhcp4.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.
-extern isc::log::Logger d2srv_logger;
+extern isc::log::Logger d2_logger;
 
-} // namespace d2srv
+} // namespace d2
 } // namespace isc
 
-#endif // D2SRV_LOG_H
+#endif // D2_LOG_H

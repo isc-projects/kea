@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 
-PYTESTS = d2srv_test.py
+PYTESTS = d2_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # Explicitly specify paths to dynamic libraries required by loadable python
@@ -28,7 +28,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2srv/tests\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
@@ -49,23 +49,23 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 
-TESTS += d2srv_unittests
+TESTS += d2_unittests
 
-d2srv_unittests_SOURCES = ../d2srv_log.h ../d2srv_log.cc
-d2srv_unittests_SOURCES += d2srv_unittests.cc
-nodist_d2srv_unittests_SOURCES = ../d2srv_messages.h ../d2srv_messages.cc
+d2_unittests_SOURCES = ../d2_log.h ../d2_log.cc
+d2_unittests_SOURCES += d2_unittests.cc
+nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
 
-d2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-d2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-d2srv_unittests_LDADD = $(GTEST_LDADD)
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-d2srv_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+d2_unittests_LDADD = $(GTEST_LDADD)
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// Defines the logger used by the top-level component of b10-dhcp4.
+#include <log/logger_support.h>
+#include <d2/d2_log.h>
+#include <gtest/gtest.h>
 
-#include <d2srv/d2srv_log.h>
+int
+main(int argc, char* argv[]) {
 
-namespace isc {
-namespace d2srv {
+    ::testing::InitGoogleTest(&argc, argv);
 
-isc::log::Logger d2srv_logger("d2srv");
+    // See the documentation of the B10_* environment variables in
+    // src/lib/log/README for info on how to tweak logging
+    isc::log::initLogger();
 
-} // namespace d2srv
-} // namespace isc
+    int result = RUN_ALL_TESTS();
 
+    return (result);
+}
