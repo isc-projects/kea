@@ -27,9 +27,10 @@ namespace detail {
 // Internal function to get next yet unused name of segment holder.
 // We need the names of holders to be unique per segment at any given
 // momemnt. This just keeps incrementing number after a prefix with
-// each call, it should be enough (the holder should no longer be
-// alive when the counter wraps around, if that ever happens with
-// presumably 64bit counters).
+// each call, it should be enough (we assert it does not wrap around,
+// but 64bits should be enough).
+//
+// Also, it is not thread safe.
 std::string
 getNextHolderName();
 
