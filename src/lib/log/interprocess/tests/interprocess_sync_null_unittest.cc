@@ -12,13 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "util/interprocess_sync_null.h"
+#include <log/interprocess/interprocess_sync_null.h>
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace isc::log::interprocess;
 
-namespace isc {
-namespace util {
+namespace {
 
 TEST(InterprocessSyncNullTest, TestNull) {
   InterprocessSyncNull sync("test1");
@@ -72,5 +72,4 @@ TEST(InterprocessSyncNullTest, TestNull) {
   EXPECT_TRUE(locker.unlock());
 }
 
-} // namespace util
-} // namespace isc
+}
