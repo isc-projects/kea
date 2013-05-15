@@ -153,8 +153,8 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
     }
     // also verify Error == BADTIME?
 
-    return new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
-                        error, other_data);
+    return (new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
+                         error, other_data));
 }
 
 /// \brief Constructor from string.
