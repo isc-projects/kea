@@ -572,7 +572,6 @@ TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
-
 // Test whether udp server stopped successfully during message check.
 // This only works for non-sync server; SyncUDPServer doesn't use checkin
 // callback.
@@ -620,7 +619,6 @@ TYPED_TEST(DNSServerTest, stopUDPServerMoreThanOnce) {
     });
     EXPECT_TRUE(this->serverStopSucceed());
 }
-
 
 TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
     this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
@@ -767,6 +765,29 @@ TEST_F(SyncServerTest, mustResume) {
 TEST_F(SyncServerTest, nullLookupCallback) {
     EXPECT_THROW(SyncUDPServer(service, 0, AF_INET, NULL),
                  isc::InvalidParameter);
+}
+
+TEST_F(SyncServerTest, resetUDPServerBeforeEvent) {
+    // Reset the UDP server object after starting and before it would get
+    // an event from io_service (in this case abort event).  The following
+    // sequence confirms it's shut down immediately, and without any
+    // disruption.
+
+    // Since we'll stop the server run() should immediately return, and
+    // it's very unlikely to cause hangup.  But we'll make very sure it
+    // doesn't happen.
+    const unsigned int IO_SERVICE_TIME_OUT = 5;
+    (*udp_server_)();
+    udp_server_->stop();
+    udp_server_.reset();
+    void (*prev_handler)(int) =
+                std::signal(SIGALRM, DNSServerTestBase::stopIOService);
+    current_service = &service;
+    alarm(IO_SERVICE_TIME_OUT);
+    service.run();
+    alarm(0);
+    std::signal(SIGALRM, prev_handler);
+    EXPECT_FALSE(io_service_is_time_out);
 }
 
 }

@@ -26,6 +26,8 @@
 
 #include <boost/bind.hpp>
 
+#include <cassert>
+
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -75,13 +77,11 @@ SyncUDPServer::scheduleRead() {
 
 void
 SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
-    // If the server has been stopped, it could even have been destroyed
-    // by the time of this call.  We'll solve this problem in #2946, but
-    // until then we exit as soon as possible without accessing any other
-    // invalidated fields (note that referencing stopped_ is also incorrect,
-    // but experiments showed it often keeps the original value in practice,
-    // so we live with it until the complete fix).
     if (stopped_) {
+        // stopped_ can be set to true only after the socket object is closed.
+        // checking this would also detect premature destruction of 'this'
+        // object.
+        assert(socket_ && !socket_->is_open());
         return;
     }
     if (ec) {
