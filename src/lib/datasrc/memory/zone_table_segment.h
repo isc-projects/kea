@@ -128,6 +128,10 @@ public:
     /// \brief Return a string name for the \c ZoneTableSegment
     /// implementation.
     ///
+    /// Implementations of this method should ensure that the returned
+    /// string is identical to the corresponding string passed to
+    /// \c ZoneTableSegment::create() for that implementation.
+    ///
     /// \throw None This method's implementations must be
     /// exception-free.
     virtual const std::string& getImplType() const = 0;
