@@ -157,7 +157,7 @@ public:
     /// \return Returns <code>true</code> if all allocated memory (including
     /// names associated by memory addresses by \c setNamedAddress()) was
     /// deallocated, <code>false</code> otherwise.
-    virtual bool allMemoryDeallocated() = 0;
+    virtual bool allMemoryDeallocated() const = 0;
 
     /// \brief Associate specified address in the segment with a given name.
     ///
