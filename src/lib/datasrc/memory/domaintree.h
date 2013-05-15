@@ -1301,7 +1301,7 @@ public:
     /// doesn't exist.
     ///
     /// This method normally involves resource allocation.  If it fails
-    /// \c std::bad_alloc will be thrown.  Also, depending on details the
+    /// \c std::bad_alloc will be thrown.  Also, depending on details of the
     /// specific \c MemorySegment, it can propagate the \c MemorySegmentGrown
     /// exception.
     ///
@@ -1312,7 +1312,7 @@ public:
     /// insert operation is "resumable": if the \c insert() method is called
     /// again with the same argument after resolving the cause of the
     /// exception (possibly multiple times), it should now succeed.  Note,
-    /// however, that i case of \c MemorySegmentGrown the address of the
+    /// however, that in case of \c MemorySegmentGrown the address of the
     /// `DomainTree` object may have been reallocated if it was created with
     /// the same \c MemorySegment (which will often be the case in practice).
     /// So the caller may have to re-get the address before calling \c insert
