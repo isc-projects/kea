@@ -1412,8 +1412,8 @@ class TestStats(unittest.TestCase):
 
 class Z_TestOSEnv(unittest.TestCase):
     # Running this test would break logging setting.  To prevent it from
-    # affecting other tests we use the same workaround as
-    # Z_TestStatsHttpdError.
+    # affecting other tests we use the same workaround as Z_TestOSEnv in
+    # stats-httpd_test.py.
     def test_osenv(self):
         """
         test for the environ variable "B10_FROM_SOURCE"
