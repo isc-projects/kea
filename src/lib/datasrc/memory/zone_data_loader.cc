@@ -183,7 +183,8 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
                      boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt, ZoneData::create(mem_sgmt, zone_name), rrclass);
+        mem_sgmt, rrclass);
+    holder.set(ZoneData::create(mem_sgmt, zone_name));
 
     ZoneDataLoader loader(mem_sgmt, rrclass, zone_name, *holder.get());
     rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader, _1));
