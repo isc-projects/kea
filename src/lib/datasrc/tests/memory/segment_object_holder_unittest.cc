@@ -17,7 +17,9 @@
 
 #include <datasrc/memory/segment_object_holder.h>
 
+#ifdef USE_SHARED_MEMORY
 #include <boost/interprocess/managed_mapped_file.hpp>
+#endif
 
 #include <gtest/gtest.h>
 
@@ -103,9 +105,6 @@ allocateUntilGrows(MemorySegment& segment, size_t& current_size) {
 // SegmentGrown exception and the thing moves address
 #ifdef USE_SHARED_MEMORY
 TEST(SegmentObjectHolderTest, grow) {
-#else
-TEST(SegmentObjectHolderTest, DISABLED_grow) {
-#endif
     MemorySegmentMapped segment(mapped_file,
                                 isc::util::MemorySegmentMapped::CREATE_ONLY);
     // Allocate a bit of memory, to get a unique address
@@ -137,5 +136,6 @@ TEST(SegmentObjectHolderTest, DISABLED_grow) {
     // Remove the file
     EXPECT_EQ(0, unlink(mapped_file));
 }
+#endif
 
 }
