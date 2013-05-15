@@ -16,6 +16,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <cassert>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
@@ -23,9 +25,13 @@ namespace detail {
 
 std::string
 getNextHolderName() {
-    static size_t index = 0;
+    static uint64_t index = 0;
+    ++index;
+    // in practice we should be able to assume this, uint64 is large
+    // and should not overflow
+    assert(index != 0);
     return ("Segment object holder auto name " +
-            boost::lexical_cast<std::string>(index ++));
+            boost::lexical_cast<std::string>(index));
 }
 
 }
