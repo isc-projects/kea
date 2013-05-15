@@ -200,7 +200,8 @@ TEST_F(LocalSocketTest, asyncPartialRead) {
     ScopedSocket aux_sockpair[2];
     aux_sockpair[0].set(socks[0]);
     aux_sockpair[1].set(socks[1]);
-    LocalSocket aux_sock(io_service_, aux_sockpair[0].release());
+    LocalSocket aux_sock(io_service_, aux_sockpair[0].get());
+    aux_sockpair[0].release();  // on successful construction we should release
     bool aux_callback_called = false;
     aux_sock.asyncRead(boost::bind(&callback, _1, &io_service_,
                                    &aux_callback_called, false), &ch, 1);
