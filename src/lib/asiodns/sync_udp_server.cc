@@ -40,13 +40,19 @@ using namespace isc::asiolink;
 namespace isc {
 namespace asiodns {
 
+SyncUDPServerPtr
+SyncUDPServer::create(asio::io_service& io_service, const int fd,
+                      const int af, DNSLookup* lookup)
+{
+    return (SyncUDPServerPtr(new SyncUDPServer(io_service, fd, af, lookup)));
+}
+
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, DNSLookup* lookup) :
     output_buffer_(new isc::util::OutputBuffer(0)),
     query_(new isc::dns::Message(isc::dns::Message::PARSE)),
     udp_endpoint_(sender_), lookup_callback_(lookup),
-    resume_called_(false), done_(false), stopped_(false),
-    recv_callback_(boost::bind(&SyncUDPServer::handleRead, this, _1, _2))
+    resume_called_(false), done_(false), stopped_(false)
 {
     if (af != AF_INET && af != AF_INET6) {
         isc_throw(InvalidParameter, "Address family must be either AF_INET "
@@ -71,8 +77,9 @@ SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
 
 void
 SyncUDPServer::scheduleRead() {
-    socket_->async_receive_from(asio::mutable_buffers_1(data_, MAX_LENGTH),
-                                sender_, recv_callback_);
+    socket_->async_receive_from(
+        asio::mutable_buffers_1(data_, MAX_LENGTH), sender_,
+        boost::bind(&SyncUDPServer::handleRead, shared_from_this(), _1, _2));
 }
 
 void

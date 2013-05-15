@@ -33,19 +33,26 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <stdint.h>
 
 namespace isc {
 namespace asiodns {
 
+class SyncUDPServer;
+typedef boost::shared_ptr<SyncUDPServer> SyncUDPServerPtr;
+
 /// \brief An UDP server that doesn't asynchronous lookup handlers.
 ///
 /// That means, the lookup handler must provide the answer right away.
 /// This allows for implementation with less overhead, compared with
 /// the \c UDPServer class.
-class SyncUDPServer : public DNSServer, public boost::noncopyable {
-public:
+class SyncUDPServer : public DNSServer,
+                      public boost::enable_shared_from_this<SyncUDPServer>,
+                      boost::noncopyable
+{
+private:
     /// \brief Constructor
     ///
     /// Due to the nature of this server, it's meaningless if the lookup
@@ -69,6 +76,10 @@ public:
     ///     fd is not a valid descriptor.
     SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
                   DNSLookup* lookup);
+
+public:
+    static SyncUDPServerPtr create(asio::io_service& io_service, const int fd,
+                                   const int af, DNSLookup* lookup);
 
     /// \brief Start the SyncUDPServer.
     ///
@@ -156,24 +167,6 @@ private:
     // Placeholder for error code object.  It will be passed to ASIO library
     // to have it set in case of error.
     asio::error_code ec_;
-    // The callback functor for internal asynchronous read event.  This is
-    // stateless (and it will be copied in the ASIO library anyway), so
-    // can be const.
-    // SunStudio doesn't like a boost::function object to be passed, so
-    // we use the wrapper class as a workaround.
-    class CallbackWrapper {
-    public:
-        CallbackWrapper(boost::function<void(const asio::error_code&, size_t)>
-                        callback) :
-            callback_(callback)
-        {}
-        void operator()(const asio::error_code& error, size_t len) {
-            callback_(error, len);
-        }
-    private:
-        boost::function<void(const asio::error_code&, size_t)> callback_;
-    };
-    const CallbackWrapper recv_callback_;
 
     // Auxiliary functions
 
