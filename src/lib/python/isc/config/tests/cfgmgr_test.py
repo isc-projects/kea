@@ -201,7 +201,7 @@ class TestConfigManager(unittest.TestCase):
 
     def test_paths(self):
         """
-        Test data_path and database filename is passed trough to
+        Test data_path and database filename is passed through to
         underlying ConfigManagerData.
         """
         cm = ConfigManager("datapath", "filename", self.fake_session)
@@ -527,7 +527,7 @@ class TestConfigManager(unittest.TestCase):
                          self.fake_session.get_message("Cmdctl", None))
 
         # but if the 'stopping' module is either unknown or not running,
-        # no followup message should be sent
+        # no follow-up message should be sent
         self._handle_msg_helper({ "command":
                                   [ "stopping",
                                     { "module_name": "NoSuchModule" } ] },
@@ -541,7 +541,7 @@ class TestConfigManager(unittest.TestCase):
         # We run the same three times, with different return values
         def single_test(value, returnFunc, expectedResult):
             # Because closures can't assign to closed-in variables, we pass
-            # it trough self
+            # it through self
             self.called_with = None
             def check_test(new_data):
                 self.called_with = new_data

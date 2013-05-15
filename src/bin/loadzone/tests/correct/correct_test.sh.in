@@ -53,7 +53,7 @@ echo "I:test master file BIND 8 compatibility TTL and \$TTL semantics"
 echo "I:test master file RFC1035 TTL and \$TTL semantics"
 echo "I:test master file BIND8 compatibility and mixed \$INCLUDE with \$TTL semantics"
 echo "I:test master file RFC1035 TTL and mixed \$INCLUDE with \$TTL semantics"
-echo "I:test master file BIND9 extenstion of TTL"
+echo "I:test master file BIND9 extension of TTL"
 echo "I:test master file RFC1035 missing CLASS, TTL, NAME semantics"
 echo "I:test master file comments"
 

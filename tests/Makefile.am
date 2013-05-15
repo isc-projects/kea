@@ -1,1 +1,1 @@
-SUBDIRS = system tools
+SUBDIRS = tools

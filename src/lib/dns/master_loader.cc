@@ -400,7 +400,7 @@ private:
     const Name zone_origin_;
     Name active_origin_; // The origin used during parsing
                          // (modifiable by $ORIGIN)
-    shared_ptr<Name> last_name_; // Last seen name (for INITAL_WS handling)
+    shared_ptr<Name> last_name_; // Last seen name (for INITIAL_WS handling)
     const RRClass zone_class_;
     MasterLoaderCallbacks callbacks_;
     const AddRRCallback add_callback_;

@@ -772,6 +772,16 @@ as a dependency earlier -->
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>--without-werror</term>
+            <listitem>
+              <simpara>Disable the default use of the
+		<option>-Werror</option> compiler flag so that
+		compiler warnings aren't build failures.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
           </variablelist>
           <note>
             <para>
@@ -2487,8 +2497,8 @@ can use various data source backends.
       <para>
         The configuration is located in data_sources/classes. Each item there
         represents one RR class and a list used to answer queries for that
-        class. The default contains two classes. The CH class contains a static
-        data source &mdash; one that serves things like
+        class. The default contains two classes. The CH class contains a
+        built-in data source &mdash; one that serves things like
         <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
         data source with database file located at
         <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
@@ -2555,7 +2565,7 @@ can use various data source backends.
         </para>
 
         <para>
-          First, let's disable the static data source
+          First, let's disable the built-in data source
           (<quote>VERSION.BIND</quote> and friends). As it is the only
           data source in the CH class, we can remove the whole class.
 
@@ -4100,7 +4110,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this
@@ -4812,7 +4822,7 @@ should include options from the isc option space:
 &gt; <userinput>config commit</userinput>
 </screen>
     Even though the "container" option does not carry any data except
-    sub-options, the "data" field must be explictly set to an empty value.
+    sub-options, the "data" field must be explicitly set to an empty value.
     This is required because in the current version of BIND 10 DHCP, the
     default configuration values are not propagated to the configuration parsers:
     if the "data" is not set the parser will assume that this
@@ -4832,34 +4842,87 @@ should include options from the isc option space:
       <section id="dhcp6-config-subnets">
         <title>Subnet Selection</title>
           <para>
-          The DHCPv6 server may receive requests from local (connected
-          to the same subnet as the server) and remote (connecting via
-          relays) clients.
-          <note>
-          <para>
-          Currently relayed DHCPv6 traffic is not supported.  The server will
-          only respond to local DHCPv6 requests - see <xref linkend="dhcp6-limit"/>
-          </para>
-          </note>
-          As it may have many subnet configurations defined, it
-          must select appropriate subnet for a given request. To do this, the server first
+          The DHCPv6 server may receive requests from local (connected to the
+          same subnet as the server) and remote (connecting via relays) clients.
+          As server may have many subnet configurations defined, it must select
+          appropriate subnet for a given request. To do this, the server first
           checks if there is only one subnet defined and source of the packet is
-          link-local. If this is the case, the server assumes that the only subnet
-          defined is local and client is indeed connected to it. This check
-          simplifies small deployments.
+          link-local. If this is the case, the server assumes that the only
+          subnet defined is local and client is indeed connected to it. This
+          check simplifies small deployments.
           </para>
           <para>
           If there are two or more subnets defined, the server can not assume
           which of those (if any) subnets are local. Therefore an optional
-          "interface" parameter is available within a subnet definition to designate that a given subnet
-          is local, i.e. reachable directly over specified interface. For example
-          the server that is intended to serve a local subnet over eth0 may be configured
-          as follows:
+          "interface" parameter is available within a subnet definition to
+          designate that a given subnet is local, i.e. reachable directly over
+          specified interface. For example the server that is intended to serve
+          a local subnet over eth0 may be configured as follows:
 <screen>
 &gt; <userinput>config add Dhcp6/subnet6</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:beef::/48"</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:beef::/48" ]</userinput>
 &gt; <userinput>config set Dhcp6/subnet6[1]/interface "eth0"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        </para>
+      </section>
+
+      <section id="dhcp6-relays">
+        <title>DHCPv6 Relays</title>
+        <para>
+          A DHCPv6 server with multiple subnets defined must select the
+          appropriate subnet when it receives a request from client.  For clients
+          connected via relays, two mechanisms are used:
+        </para>
+        <para>
+          The first uses the linkaddr field in the RELAY_FORW message. The name
+          of this field is somewhat misleading in that it does not contain a link-layer
+          address: instead, it holds an address (typically a global address) that is
+          used to identify a link. The DHCPv6 server checks if the address belongs
+          to a defined subnet and, if it does, that subnet is selected for the client's
+          request.
+        </para>
+        <para>
+          The second mechanism is based on interface-id options. While forwarding a client's
+          message, relays may insert an interface-id option into the message that
+          identifies the interface on the relay that received the message. (Some
+          relays allow configuration of that parameter, but it is sometimes
+          hardcoded and may range from the very simple (e.g. "vlan100") to the very cryptic:
+          one example seen on real hardware was "ISAM144|299|ipv6|nt:vp:1:110"). The
+          server can use this information to select the appropriate subnet.
+          The information is also returned to the relay which then knows the
+          interface to use to transmit the response to the client. In order for
+          this to work successfully, the relay interface IDs must be unique within
+          the network and the server configuration must match those values.
+        </para>
+        <para>
+          When configuring the DHCPv6 server, it should be noted that two
+          similarly-named parameters can be configured for a subnet:
+          <itemizedlist>
+            <listitem><simpara>
+              "interface" defines which local network interface can be used
+              to access a given subnet.
+            </simpara></listitem>
+            <listitem><simpara>
+              "interface-id" specifies the content of the interface-id option
+              used by relays to identify the interface on the relay to which
+              the response packet is sent.
+            </simpara></listitem>
+          </itemizedlist>
+          The two are mutually exclusive: a subnet cannot be both reachable locally
+          (direct traffic) and via relays (remote traffic). Specifying both is a
+          configuration error and the DHCPv6 server will refuse such a configuration.
+        </para>
+
+        <para>
+          To specify interface-id with value "vlan123", the following commands can
+          be used:
+          <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:beef::/48"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:beef::/48" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/interface-id "vland123"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
         </para>
@@ -4929,9 +4992,6 @@ Dhcp6/renew-timer	1000	integer	(default)
 &gt; <userinput>config set Dhcp6/renew-timer 1001</userinput>
 &gt; <userinput>config commit</userinput></screen>
           </para>
-        </listitem>
-        <listitem>
-          <simpara>Relayed traffic is not supported.</simpara>
         </listitem>
         <listitem>
           <simpara>Temporary addresses are not supported.</simpara>

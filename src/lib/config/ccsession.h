@@ -20,6 +20,7 @@
 
 #include <cc/session.h>
 #include <cc/data.h>
+#include <cc/proto_defs.h>
 
 #include <string>
 #include <list>
@@ -144,6 +145,34 @@ class CCSessionInitError : public isc::Exception {
 public:
     CCSessionInitError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
+};
+
+/// \brief Exception thrown when there's a problem with the remote call.
+///
+/// This usually means either the command couldn't be called or the remote
+/// side sent an error as a response.
+class RPCError: public CCSessionError {
+public:
+    RPCError(const char* file, size_t line, const char* what, int rcode) :
+        CCSessionError(file, line, what),
+        rcode_(rcode)
+    {}
+
+    /// \brief The error code for the error.
+    int rcode() const {
+        return (rcode_);
+    }
+private:
+    const int rcode_;
+};
+
+/// \brief Specific version of RPCError for the case the recipient of command
+///     doesn't exist.
+class RPCRecipientMissing: public RPCError {
+public:
+    RPCRecipientMissing(const char* file, size_t line, const char* what) :
+        RPCError(file, line, what, isc::cc::CC_REPLY_NO_RECPT)
+    {}
 };
 
 ///
@@ -284,12 +313,12 @@ public:
      *                  spec_is_filename is true (the default), then a
      *                  filename is assumed, otherwise a module name.
      * \param handler The handler functor called whenever there's a change.
-     *                Called once initally from this function. May be NULL
+     *                Called once initially from this function. May be NULL
      *                if you don't want any handler to be called and you're
      *                fine with requesting the data through
      *                getRemoteConfigValue() each time.
      *
-     *                The handler should not throw, or it'll fall trough and
+     *                The handler should not throw, or it'll fall through and
      *                the exception will get into strange places, probably
      *                aborting the application.
      * \param spec_is_filename Says if spec_name is filename or module name.
@@ -335,31 +364,81 @@ public:
      * \param group see isc::cc::Session::group_sendmsg()
      * \param instance see isc::cc::Session::group_sendmsg()
      * \param to see isc::cc::Session::group_sendmsg()
+     * \param want_answer see isc::cc::Session::group_sendmsg()
      * \return see isc::cc::Session::group_sendmsg()
      */
     int groupSendMsg(isc::data::ConstElementPtr msg,
                      std::string group,
-                     std::string instance = "*",
-                     std::string to = "*") {
-        return (session_.group_sendmsg(msg, group, instance, to));
+                     std::string instance = isc::cc::CC_INSTANCE_WILDCARD,
+                     std::string to = isc::cc::CC_TO_WILDCARD,
+                     bool want_answer = false) {
+        return (session_.group_sendmsg(msg, group, instance, to, want_answer));
     };
 
-    /**
-     * Receive a message from the underlying CC session.
-     * This has the same interface as isc::cc::Session::group_recvmsg()
-     *
-     * \param envelope see isc::cc::Session::group_recvmsg()
-     * \param msg see isc::cc::Session::group_recvmsg()
-     * \param nonblock see isc::cc::Session::group_recvmsg()
-     * \param seq see isc::cc::Session::group_recvmsg()
-     * \return see isc::cc::Session::group_recvmsg()
-     */
+    /// \brief Receive a message from the underlying CC session.
+    /// This has the same interface as isc::cc::Session::group_recvmsg()
+    ///
+    /// NOTE: until #2804 is resolved this method wouldn't work except in
+    /// very limited cases; don't try to use it until then.
+    ///
+    /// \param envelope see isc::cc::Session::group_recvmsg()
+    /// \param msg see isc::cc::Session::group_recvmsg()
+    /// \param nonblock see isc::cc::Session::group_recvmsg()
+    /// \param seq see isc::cc::Session::group_recvmsg()
+    /// \return see isc::cc::Session::group_recvmsg()
     bool groupRecvMsg(isc::data::ConstElementPtr& envelope,
                       isc::data::ConstElementPtr& msg,
                       bool nonblock = true,
                       int seq = -1) {
         return (session_.group_recvmsg(envelope, msg, nonblock, seq));
-    };
+    }
+
+    /// \brief Send a command message and wait for the answer.
+    ///
+    /// NOTE: until #2804 is resolved this method wouldn't work except in
+    /// very limited cases; don't try to use it until then.
+    ///
+    /// This is mostly a convenience wrapper around groupSendMsg
+    /// and groupRecvMsg, with some error handling.
+    ///
+    /// \param command Name of the command to call.
+    /// \param group Name of the remote module to call the command on.
+    /// \param instance Instance part of recipient address.
+    /// \param to The lname to send it to. Can be used to override the
+    ///     addressing and use a direct recipient.
+    /// \param params Parameters for the command. Can be left NULL if
+    ///     no parameters are needed.
+    /// \return Return value of the successfull remote call. It can be
+    ///     NULL if the remote command is void function (returns nothing).
+    /// \throw RPCError if the call fails (for example when the other
+    ///     side responds with error code).
+    /// \throw RPCRecipientMissing if the recipient doesn't exist.
+    /// \throw CCSessionError if some lower-level error happens (eg.
+    ///     the response was malformed).
+    isc::data::ConstElementPtr rpcCall(const std::string& command,
+                                       const std::string& group,
+                                       const std::string& instance =
+                                           isc::cc::CC_INSTANCE_WILDCARD,
+                                       const std::string& to =
+                                           isc::cc::CC_TO_WILDCARD,
+                                       const isc::data::ConstElementPtr&
+                                           params =
+                                           isc::data::ConstElementPtr());
+
+    /// \brief Convenience version of rpcCall
+    ///
+    /// This is exactly the same as the previous version of rpcCall, except
+    /// that the instance and to parameters are at their default. This
+    /// allows to sending a command with parameters to a named module
+    /// without long typing of the parameters.
+    isc::data::ConstElementPtr rpcCall(const std::string& command,
+                                       const std::string& group,
+                                       const isc::data::ConstElementPtr&
+                                           params)
+    {
+        return rpcCall(command, group, isc::cc::CC_INSTANCE_WILDCARD,
+                       isc::cc::CC_TO_WILDCARD, params);
+    }
 
     /// \brief Forward declaration of internal data structure.
     ///

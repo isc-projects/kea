@@ -70,6 +70,15 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_CACHE_ZONE_NOTFOUND Zone %1/%2 not found on data source '%3' to cache
+During data source configuration, a zone is to be loaded (cached) in
+to memory from the underlying data source, but the zone is not found
+in the data source.  This particular zone was not loaded, but data
+source configuration continues, possibly loading other zones into
+memory. This is basically some kind of configuration or operation
+error: either the name is incorrect in the configuration, or the zone
+has been removed from the data source without updating the configuration.
+
 % DATASRC_CHECK_ERROR post-load check of zone %1/%2 failed: %3
 The zone was loaded into the data source successfully, but the content fails
 basic sanity checks. See the message if you want to know what exactly is wrong
@@ -83,10 +92,36 @@ with the content. The problem does not stop the new version from being used
 but it should still be checked and fixed. See the message to know what exactly
 is wrong with the data.
 
+% DATASRC_DATABASE_ADDDIFF updated diff table for add: %1 %2 %3
+Debug message. A difference record for adding a record to the zone is being
+appended to the difference table. The name, type and rdata of the record is
+logged.
+
+% DATASRC_DATABASE_ADDNSEC3 added NSEC3 RR: %1 %2
+Debug message. A new NSEC3 record is added to the table. The hash and the rdata
+is logged.
+
+% DATASRC_DATABASE_ADDRR added RR: %1 %2 %3
+Debug message. A new resource record is added to the table. The name, type and
+rdata is logged.
+
 % DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
+
+% DATASRC_DATABASE_DELETEDIFF updated diff table for delete: %1 %2 %3
+Debug message. A difference record for removing a record from the zone is being
+appended to the difference table. The name, type and rdata of the record is
+logged.
+
+% DATASRC_DATABASE_DELETENSEC3 deleted NSEC3 RR: %1 %2
+Debug message. An NSEC3 record is removed from the table. The name, type and
+rdata is logged.
+
+% DATASRC_DATABASE_DELETERR deleted RR: %1 %2 %3
+Debug message. A resource record is removed from the table. The name, type and
+rdata is logged.
 
 % DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode
 Debug information. A search in an database data source for NSEC3 that
@@ -321,22 +356,26 @@ not contain RRs the requested type.  AN NXRRSET indication is returned.
 A debug message indicating that a query for the given name and RR type is being
 processed.
 
-% DATASRC_LIST_NOT_CACHED zone %1/%2 not cached, cache disabled globally. Will not be available.
-The process disabled caching of RR data completely. However, the given zone
-is provided as a master file and it can be served from memory cache only.
-Therefore, the zone will not be available for this process. If this is
-a problem, you should move the zone to some database backend (sqlite3, for
-example) and use it from there.
+% DATASRC_LIST_CACHE_PENDING in-memory cache for data source '%1' is not yet writable, pending load
+While (re)configuring data source clients, zone data of the shown data
+source cannot be loaded to in-memory cache at that point because the
+cache is not yet ready for writing.  This can happen for shared-memory
+type of cache, in which case the cache will be reset later, either
+by a higher level application or by a command from other module.
 
-% DATASRC_LOAD_FROM_FILE_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from a
-file. The zone was not loaded. The specific error is shown in the
-message, and should be addressed.
+% DATASRC_LIST_NOT_CACHED zones in data source %1 for class %2 not cached, cache disabled globally. Will not be available.
+The process disabled caching of RR data completely. However, this data source
+is provided from a master file and it can be served from memory cache only.
+Therefore, the entire data source will not be available for this process. If
+this is a problem, you should configure the zones of that data source to some
+database backend (sqlite3, for example) and use it from there.
 
-% DATASRC_LOAD_FROM_ITERATOR_ERROR Error loading zone %1: %2
-An error was found in the zone data when it was being loaded from
-another data source. The zone was not loaded. The specific error is
-shown in the message, and should be addressed.
+% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source '%3': %4
+During data source configuration, an error was found in the zone data
+when it was being loaded in to memory on the shown data source.  This
+particular zone was not loaded, but data source configuration
+continues, possibly loading other zones into memory. The specific
+error is shown in the message, and should be addressed.
 
 % DATASRC_MASTER_LOAD_ERROR %1:%2: Zone '%3/%4' contains error: %5
 There's an error in the given master file. The zone won't be loaded for
@@ -549,131 +588,6 @@ given domain or record.  The code is 1 for error and 2 for not implemented.
 % DATASRC_QUERY_WILDCARD_REFERRAL unable to find referral info for '%1' (%2)
 While processing a wildcard, a referral was met. But it wasn't possible to get
 enough information for it.  The code is 1 for error, 2 for not implemented.
-
-% DATASRC_SQLITE_CLOSE closing SQLite database
-Debug information. The SQLite data source is closing the database file.
-
-% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
-The version of the SQLite3 database schema used to hold the zone data
-is not the latest one - the current version of BIND 10 was written
-with a later schema version in mind.  However, the database is
-compatible with the current version of BIND 10, and BIND 10 will run
-without any problems.
-
-Consult the release notes for your version of BIND 10.  Depending on
-the changes made to the database schema, it is possible that improved
-performance could result if the database were upgraded.
-
-% DATASRC_SQLITE_CONNCLOSE Closing sqlite database
-The database file is no longer needed and is being closed.
-
-% DATASRC_SQLITE_CONNOPEN Opening sqlite database file '%1'
-The database file is being opened so it can start providing data.
-
-% DATASRC_SQLITE_CREATE SQLite data source created
-Debug information. An instance of SQLite data source is being created.
-
-% DATASRC_SQLITE_DESTROY SQLite data source destroyed
-Debug information. An instance of SQLite data source is being destroyed.
-
-% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
-The object around a database connection is being destroyed.
-
-% DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
-Debug information. The SQLite data source is trying to identify which zone
-should hold this domain.
-
-% DATASRC_SQLITE_ENCLOSURE_NOT_FOUND no zone contains '%1'
-Debug information. The last SQLITE_ENCLOSURE query was unsuccessful; there's
-no such zone in our data.
-
-% DATASRC_SQLITE_FIND looking for RRset '%1/%2'
-Debug information. The SQLite data source is looking up a resource record
-set.
-
-% DATASRC_SQLITE_FINDADDRS looking for A/AAAA addresses for '%1'
-Debug information. The data source is looking up the addresses for given
-domain name.
-
-% DATASRC_SQLITE_FINDADDRS_BAD_CLASS class mismatch looking for addresses ('%1' and '%2')
-The SQLite data source was looking up A/AAAA addresses, but the data source
-contains different class than the query was for.
-
-% DATASRC_SQLITE_FINDEXACT looking for exact RRset '%1/%2'
-Debug information. The SQLite data source is looking up an exact resource
-record.
-
-% DATASRC_SQLITE_FINDEXACT_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
-The SQLite data source was looking up an exact RRset, but the data source
-contains different class than the query was for.
-
-% DATASRC_SQLITE_FINDREC looking for record '%1/%2'
-Debug information. The SQLite data source is looking up records of given name
-and type in the database.
-
-% DATASRC_SQLITE_FINDREF looking for referral at '%1'
-Debug information. The SQLite data source is identifying if this domain is
-a referral and where it goes.
-
-% DATASRC_SQLITE_FINDREF_BAD_CLASS class mismatch looking for referral ('%1' and '%2')
-The SQLite data source was trying to identify if there's a referral. But
-it contains different class than the query was for.
-
-% DATASRC_SQLITE_FIND_BAD_CLASS class mismatch looking for an RRset ('%1' and '%2')
-The SQLite data source was looking up an RRset, but the data source contains
-different class than the query was for.
-
-% DATASRC_SQLITE_FIND_NSEC3 looking for NSEC3 in zone '%1' for hash '%2'
-Debug information. We're trying to look up a NSEC3 record in the SQLite data
-source.
-
-% DATASRC_SQLITE_FIND_NSEC3_NO_ZONE no such zone '%1'
-The SQLite data source was asked to provide a NSEC3 record for given zone.
-But it doesn't contain that zone.
-
-% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
-The version of the SQLite3 database schema used to hold the zone data
-is incompatible with the version expected by BIND 10.  As a result,
-BIND 10 is unable to run using the database file as the data source.
-
-The database should be updated using the means described in the BIND
-10 documentation.
-
-% DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
-A wrapper object to hold database connection is being initialized.
-
-% DATASRC_SQLITE_OPEN opening SQLite database '%1'
-Debug information. The SQLite data source is loading an SQLite database in
-the provided file.
-
-% DATASRC_SQLITE_PREVIOUS looking for name previous to '%1'
-This is a debug message.  The name given was not found, so the program
-is searching for the next name higher up the hierarchy (e.g. if
-www.example.com were queried for and not found, the software searches
-for the "previous" name, example.com).
-
-% DATASRC_SQLITE_PREVIOUS_NO_ZONE no zone containing '%1'
-The name given was not found, so the program is searching for the next
-name higher up the hierarchy (e.g. if www.example.com were queried
-for and not found, the software searches for the "previous" name,
-example.com). However, this name is not contained in any zone in the
-data source. This is an error since it indicates a problem in the earlier
-processing of the query.
-
-% DATASRC_SQLITE_SETUP setting up new SQLite3 database in '%1'
-The database for SQLite data source was found empty. It is assumed this is the
-first run and it is being initialized with current schema.  It'll still contain
-no data, but it will be ready for use. If this is indeed the first run of
-BIND 10, it is to be expected and completely harmless. If you just configured
-a data source to point to an existing file and you see this, you may have
-misspelled the file name.
-
-% DATASRC_SQLITE_SETUP_OLD_API setting up new SQLite database
-The database for SQLite data source was found empty. It is assumed this is the
-first run and it is being initialized with current schema.  It'll still contain
-no data, but it will be ready for use. This is similar to DATASRC_SQLITE_SETUP
-message, but it is logged from the old API. You should never see it, since the
-API is deprecated.
 
 % DATASRC_STATIC_CLASS_NOT_CH static data source can handle CH class only
 An error message indicating that a query requesting a RR for a class other

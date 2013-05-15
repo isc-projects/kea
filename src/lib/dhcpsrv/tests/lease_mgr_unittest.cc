@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -312,8 +312,8 @@ TEST(Lease4, OperatorEquals) {
 
     // Check when the leases are equal.
     Lease4 lease1(ADDRESS, HWADDR, sizeof(HWADDR),
-                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
-                  SUBNET_ID);
+                  CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0,
+                  0, SUBNET_ID);
     Lease4 lease2(ADDRESS, HWADDR, sizeof(HWADDR),
                   CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, current_time, 0, 0,
                   SUBNET_ID);
@@ -440,8 +440,8 @@ TEST(Lease6, Lease6Constructor) {
     // Other values
     uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     DuidPtr duid(new DUID(llt, sizeof(llt)));
-    uint32_t iaid = 7; // just a number
-    SubnetID subnet_id = 8; // just another number
+    uint32_t iaid = 7;      // Just a number
+    SubnetID subnet_id = 8; // Just another number
 
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
@@ -462,9 +462,10 @@ TEST(Lease6, Lease6Constructor) {
 
     // Lease6 must be instantiated with a DUID, not with NULL pointer
     IOAddress addr(ADDRESS[0]);
-    EXPECT_THROW(new Lease6(Lease6::LEASE_IA_NA, addr,
-                            DuidPtr(), iaid, 100, 200, 50, 80,
-                            subnet_id), InvalidOperation);
+    Lease6Ptr lease2;
+    EXPECT_THROW(lease2.reset(new Lease6(Lease6::LEASE_IA_NA, addr,
+                                         DuidPtr(), iaid, 100, 200, 50, 80,
+                                         subnet_id)), InvalidOperation);
 }
 
 /// @brief Lease6 Equality Test
@@ -611,21 +612,21 @@ TEST(Lease6, Lease6Expired) {
     const IOAddress addr("2001:db8:1::456");
     const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
-    const uint32_t iaid = 7; // just a number
-    const SubnetID subnet_id = 8; // just another number
+    const uint32_t iaid = 7;        // Just a number
+    const SubnetID subnet_id = 8;   // Just another number
     Lease6 lease(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
 
-    // case 1: a second before expiration
+    // Case 1: a second before expiration
     lease.cltt_ = time(NULL) - 100;
     lease.valid_lft_ = 101;
     EXPECT_FALSE(lease.expired());
 
-    // case 2: the lease will expire after this second is concluded
+    // Case 2: the lease will expire after this second is concluded
     lease.cltt_ = time(NULL) - 101;
     EXPECT_FALSE(lease.expired());
 
-    // case 3: the lease is expired
+    // Case 3: the lease is expired
     lease.cltt_ = time(NULL) - 102;
     EXPECT_TRUE(lease.expired());
 }

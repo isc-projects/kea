@@ -19,7 +19,7 @@ b1fe 8583
 ## Authority
 ##
 # example.org: type SOA, class IN, mname ns1.example.org
-# TTL: 3 Hourse, 1 second (10801seconds)
+# TTL: 3 Hours, 1 second (10801 seconds)
 c0 0e 00 06 00 01 00 00 2a 31 00 22 03 6e 73 31 c0
 0e 05 61 64 6d 69 6e c0 0e 00 00 04 d2 00 00 0e
 10 00 00 07 08 00 24 ea 00 00 00 2a 31

@@ -41,6 +41,8 @@
 /rdata_minfo_toWire2.wire
 /rdata_minfo_toWireUncompressed1.wire
 /rdata_minfo_toWireUncompressed2.wire
+/rdata_dnskey_fromWire.wire
+/rdata_dnskey_empty_keydata_fromWire.wire
 /rdata_nsec3_fromWire10.wire
 /rdata_nsec3_fromWire11.wire
 /rdata_nsec3_fromWire12.wire

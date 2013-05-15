@@ -31,7 +31,7 @@ from isc.log_messages.libxfrin_messages import *
 
 class NoSuchZone(Exception):
     """
-    This is raised if a diff for non-existant zone is being created.
+    This is raised if a diff for non-existent zone is being created.
     """
     pass
 

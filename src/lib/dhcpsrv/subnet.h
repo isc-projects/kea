@@ -47,7 +47,7 @@ namespace dhcp {
 /// @todo: Implement support for options here
 
 
-/// @brief Unique indentifier for a subnet (both v4 and v6)
+/// @brief Unique identifier for a subnet (both v4 and v6)
 typedef uint32_t SubnetID;
 
 class Subnet {
@@ -299,7 +299,18 @@ public:
         return pools_;
     }
 
-    /// @brief returns textual representation of the subnet (e.g. "2001:db8::/64")
+    /// @brief sets name of the network interface for directly attached networks
+    ///
+    /// @param iface_name name of the interface
+    void setIface(const std::string& iface_name);
+
+    /// @brief network interface name used to reach subnet (or "" for remote 
+    /// subnets)
+    /// @return network interface name for directly attached subnets or ""
+    std::string getIface() const;
+
+    /// @brief returns textual representation of the subnet (e.g. 
+    /// "2001:db8::/64")
     ///
     /// @return textual representation
     virtual std::string toText() const;
@@ -451,17 +462,18 @@ public:
         return (preferred_);
     }
 
-    /// @brief sets name of the network interface for directly attached networks
+    /// @brief sets interface-id option (if defined)
     ///
-    /// A subnet may be reachable directly (not via relays). In DHCPv6 it is not
-    /// possible to decide that based on addresses assigned to network interfaces,
-    /// as DHCPv6 operates on link-local (and site local) addresses.
-    /// @param iface_name name of the interface
-    void setIface(const std::string& iface_name);
+    /// @param ifaceid pointer to interface-id option
+    void setInterfaceId(const OptionPtr& ifaceid) {
+        interface_id_ = ifaceid;
+    }
 
-    /// @brief network interface name used to reach subnet (or "" for remote subnets)
-    /// @return network interface name for directly attached subnets or ""
-    std::string getIface() const;
+    /// @brief returns interface-id value (if specified)
+    /// @return interface-id option (if defined)
+    OptionPtr getInterfaceId() const {
+        return interface_id_;
+    }
 
 protected:
 
@@ -477,6 +489,9 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("::"));
     }
+
+    /// @brief specifies optional interface-id
+    OptionPtr interface_id_;
 
     /// @brief collection of pools in that list
     Pool6Collection pools_;

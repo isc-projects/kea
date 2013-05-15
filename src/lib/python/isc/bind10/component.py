@@ -490,7 +490,7 @@ class Component(BaseComponent):
 class Configurator:
     """
     This thing keeps track of configuration changes and starts and stops
-    components as it goes. It also handles the inital startup and final
+    components as it goes. It also handles the initial startup and final
     shutdown.
 
     Note that this will allow you to stop (by invoking reconfigure) a core

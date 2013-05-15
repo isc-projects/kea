@@ -268,7 +268,7 @@ def addToDictionary(msgid, msgtext, desc, filename):
                     name of the message file in the messages manual.
     """
 
-    # If the ID is in the dictionary, append a "(n)" to the name - this wil
+    # If the ID is in the dictionary, append a "(n)" to the name - this will
     # flag that there are multiple instances.  (However, this is an error -
     # each ID should be unique in BIND-10.)
     if msgid in dictionary:

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <util/buffer.h>
 #include <dns/rdataclass.h>
 #include <util/encode/base64.h>
@@ -23,6 +25,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::util::encode;
@@ -30,25 +33,69 @@ using namespace isc::dns::rdata;
 
 namespace {
 
-const string string_dhcid(
-                   "0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw0YHRjCDRkdC70L7Rh9C60LA=");
-
-const in::DHCID rdata_dhcid(string_dhcid);
-
 class Rdata_DHCID_Test : public RdataTest {
+protected:
+    Rdata_DHCID_Test() :
+        dhcid_txt("0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw0YHRjCDRkdC70L7Rh9C60LA="),
+        rdata_dhcid(dhcid_txt)
+    {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<in::DHCID, isc::Exception, isc::Exception>(
+            rdata_str, rdata_dhcid, false, false);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<in::DHCID, BadValue, BadValue>(
+            rdata_str, rdata_dhcid, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <in::DHCID, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_dhcid, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <in::DHCID, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_dhcid, true, false);
+    }
+
+    const string dhcid_txt;
+    const in::DHCID rdata_dhcid;
 };
 
-TEST_F(Rdata_DHCID_Test, createFromString) {
-    const in::DHCID rdata_dhcid2(string_dhcid);
-    EXPECT_EQ(0, rdata_dhcid2.compare(rdata_dhcid));
+TEST_F(Rdata_DHCID_Test, fromText) {
+    EXPECT_EQ(dhcid_txt, rdata_dhcid.toText());
+
+    // Space in digest data is OK
+    checkFromText_None(
+            "0LIg0LvQtdGB0YMg 0YDQvtC00LjQu9Cw 0YHRjCDRkdC70L7R h9C60LA=");
+
+    // Multi-line digest data is OK, if enclosed in parentheses
+    checkFromText_None(
+            "( 0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw\n0YHRjCDRkdC70L7R h9C60LA= )");
+
+    // Trailing garbage. This should cause only the string constructor
+    // to fail, but the lexer constructor must be able to continue
+    // parsing from it.
+    checkFromText_BadString(
+            "0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw0YHRjCDRkdC70L7Rh9C60LA="
+            " ; comment\n"
+            "AAIBY2/AuCccgoJbsaxcQc9TUapptP69lOjxfNuVAA2kjEA=");
 }
 
-TEST_F(Rdata_DHCID_Test, badBase64) {
-    EXPECT_THROW(const in::DHCID rdata_dhcid_bad("00"), isc::BadValue);
-}
+TEST_F(Rdata_DHCID_Test, badText) {
+    // missing digest data
+    checkFromText_LexerError("");
 
-TEST_F(Rdata_DHCID_Test, badLength) {
-    EXPECT_THROW(const in::DHCID rdata_dhcid_bad("MDA="), InvalidRdataLength);
+    // invalid base64
+    checkFromText_BadValue("EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!=");
+
+    // unterminated multi-line base64
+    checkFromText_LexerError(
+            "( 0LIg0LvQtdGB0YMg0YDQvtC00LjQu9Cw\n0YHRjCDRkdC70L7R h9C60LA=");
 }
 
 TEST_F(Rdata_DHCID_Test, copy) {
@@ -60,17 +107,17 @@ TEST_F(Rdata_DHCID_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dhcid.compare(
                   *rdataFactoryFromFile(RRType("DHCID"), RRClass("IN"),
                                         "rdata_dhcid_fromWire")));
+
+    InputBuffer buffer(NULL, 0);
+    EXPECT_THROW(in::DHCID(buffer, 0), InvalidRdataLength);
+
     // TBD: more tests
 }
 
 TEST_F(Rdata_DHCID_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_dhcid.compare(
         *test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
-                                     string_dhcid)));
-
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::DHCID(), RRClass::IN(),
-                                             "00"));
+                                     dhcid_txt)));
 }
 
 TEST_F(Rdata_DHCID_Test, toWireRenderer) {
@@ -92,13 +139,13 @@ TEST_F(Rdata_DHCID_Test, toWireBuffer) {
 }
 
 TEST_F(Rdata_DHCID_Test, toText) {
-    EXPECT_EQ(string_dhcid, rdata_dhcid.toText());
+    EXPECT_EQ(dhcid_txt, rdata_dhcid.toText());
 }
 
 TEST_F(Rdata_DHCID_Test, getDHCIDDigest) {
-    const string string_dhcid1(encodeBase64(rdata_dhcid.getDigest()));
+    const string dhcid_txt1(encodeBase64(rdata_dhcid.getDigest()));
 
-    EXPECT_EQ(string_dhcid, string_dhcid1);
+    EXPECT_EQ(dhcid_txt, dhcid_txt1);
 }
 
 TEST_F(Rdata_DHCID_Test, compare) {
@@ -117,6 +164,6 @@ TEST_F(Rdata_DHCID_Test, compare) {
     EXPECT_GT(rdata_dhcid3.compare(rdata_dhcid2), 0);
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_dhcid.compare(*rdata_nomatch), bad_cast); 
+    EXPECT_THROW(rdata_dhcid.compare(*rdata_nomatch), bad_cast);
 }
 }

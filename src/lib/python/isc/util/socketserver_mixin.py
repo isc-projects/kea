@@ -39,7 +39,7 @@ class NoPollMixIn:
     socketserver.BaseServer or some derived classes of it, and it must
     be placed before the corresponding socketserver class.  In
     addition, the constructor of this mix-in must be called
-    explicitely in the derived class.  For example, a basic TCP server
+    explicitly in the derived class.  For example, a basic TCP server
     without the problem of polling is created as follows:
 
        class MyServer(NoPollMixIn, socketserver.TCPServer):

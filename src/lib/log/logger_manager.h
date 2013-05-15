@@ -16,6 +16,7 @@
 #define LOGGER_MANAGER_H
 
 #include "exceptions/exceptions.h"
+#include <util/threads/sync.h>
 #include <log/logger_specification.h>
 
 // Generated if, when updating the logging specification, an unknown
@@ -100,6 +101,9 @@ public:
     /// an attempt is made to log a message before this is function is called,
     /// the results will be dependent on the underlying logging package.
     ///
+    /// Any duplicate log IDs encountered are reported as warning, after which
+    /// the global duplicates vector is cleared
+    ///
     /// \param root Name of the root logger.  This should be set to the name of
     ///        the program.
     /// \param severity Severity at which to log
@@ -128,6 +132,11 @@ public:
     ///
     /// \param file Name of the local message file
     static void readLocalMessageFile(const char* file);
+
+    /// \brief Return a process-global mutex that's used for mutual
+    /// exclusion among threads of a single process during logging
+    /// calls.
+    static isc::util::thread::Mutex& getMutex();
 
 private:
     /// \brief Initialize Processing

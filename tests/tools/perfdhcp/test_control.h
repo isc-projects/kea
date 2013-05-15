@@ -85,7 +85,7 @@ static const size_t DHCPV6_IA_NA_OFFSET = 40;
 ///   - calculate how many packets must be send to satisfy desired rate,
 ///   - receive incoming packets from the server,
 ///   - check the exit conditions - terminate the program if the exit criteria
-///   are fulfiled, e.g. reached maximum number of packet drops,
+///   are fulfilled, e.g. reached maximum number of packet drops,
 ///   - send the number of packets appropriate to satisfy the desired rate,
 ///   - optionally print intermediate reports,
 /// - print statistics, e.g. achieved rate,
@@ -143,7 +143,7 @@ public:
     /// when exception occurs). This structure extends parent
     /// structure with new field ifindex_ that holds interface
     /// index where socket is bound to.
-    struct TestControlSocket : public dhcp::IfaceMgr::SocketInfo {
+    struct TestControlSocket : public dhcp::SocketInfo {
         /// Interface index.
         uint16_t ifindex_;
         /// Is socket valid. It will not be valid if the provided socket
@@ -282,14 +282,14 @@ protected:
 
     /// \brief Check if test exit condtitions fulfilled.
     ///
-    /// Method checks if the test exit conditions are fulfiled.
+    /// Method checks if the test exit conditions are fulfilled.
     /// Exit conditions are checked periodically from the
     /// main loop. Program should break the main loop when
     /// this method returns true. It is calling function
     /// responsibility to break main loop gracefully and
     /// cleanup after test execution.
     ///
-    /// \return true if any of the exit conditions is fulfiled.
+    /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
@@ -643,7 +643,7 @@ protected:
     /// \brief Send DHCPv4 DISCOVER message from template.
     ///
     /// Method sends DHCPv4 DISCOVER message from template. The
-    /// template data is exepcted to be in binary format. Provided
+    /// template data is expected to be in binary format. Provided
     /// buffer is copied and parts of it are replaced with actual
     /// data (e.g. MAC address, transaction id etc.).
     /// Copy of sent packet is stored in the stats_mgr4_ object to
@@ -909,7 +909,7 @@ private:
     /// \brief Handle interrupt signal.
     ///
     /// Function sets flag indicating that program has been
-    /// interupted.
+    /// interrupted.
     ///
     /// \param sig signal (ignored)
     static void handleInterrupt(int sig);
@@ -970,7 +970,7 @@ private:
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
 
-    /// Buffer holiding server id received in first packet
+    /// Buffer holding server id received in first packet
     dhcp::OptionBuffer first_packet_serverid_;
 
     /// Packet template buffers.

@@ -57,17 +57,19 @@ class Session:
         try:
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self._socket.connect(self.socket_file)
-            self.sendmsg({ "type": "getlname" })
+            self.sendmsg({ CC_HEADER_TYPE: CC_COMMAND_GET_LNAME })
             env, msg = self.recvmsg(False)
             if not env:
                 raise ProtocolError("Could not get local name")
-            self._lname = msg["lname"]
+            self._lname = msg[CC_PAYLOAD_LNAME]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
             logger.debug(logger.DBGLVL_TRACE_BASIC, PYCC_LNAME_RECEIVED,
                          self._lname)
         except socket.error as se:
-                raise SessionError(se)
+            if self._socket:
+                self._socket.close()
+            raise SessionError(se)
 
     @property
     def lname(self):
@@ -125,9 +127,10 @@ class Session:
             if len(self._queue) > 0:
                 i = 0;
                 for env, msg in self._queue:
-                    if seq != None and "reply" in env and seq == env["reply"]:
+                    if seq != None and CC_HEADER_REPLY in env and \
+                        seq == env[CC_HEADER_REPLY]:
                         return self._queue.pop(i)
-                    elif seq == None and "reply" not in env:
+                    elif seq == None and CC_HEADER_REPLY not in env:
                         return self._queue.pop(i)
                     else:
                         i = i + 1
@@ -141,7 +144,9 @@ class Session:
                     if data_length > 0:
                         env = isc.cc.message.from_wire(data[2:header_length+2])
                         msg = isc.cc.message.from_wire(data[header_length + 2:])
-                        if (seq == None and "reply" not in env) or (seq != None and "reply" in env and seq == env["reply"]):
+                        if (seq == None and CC_HEADER_REPLY not in env) or \
+                            (seq != None and CC_HEADER_REPLY in env and
+                             seq == env[CC_HEADER_REPLY]):
                             return env, msg
                         else:
                             self._queue.append((env,msg))
@@ -248,18 +253,18 @@ class Session:
         self._sequence += 1
         return self._sequence
 
-    def group_subscribe(self, group, instance = "*"):
+    def group_subscribe(self, group, instance=CC_INSTANCE_WILDCARD):
         self.sendmsg({
-            "type": "subscribe",
-            "group": group,
-            "instance": instance,
+            CC_HEADER_TYPE: CC_COMMAND_SUBSCRIBE,
+            CC_HEADER_GROUP: group,
+            CC_HEADER_INSTANCE: instance,
         })
 
-    def group_unsubscribe(self, group, instance = "*"):
+    def group_unsubscribe(self, group, instance=CC_INSTANCE_WILDCARD):
         self.sendmsg({
-            "type": "unsubscribe",
-            "group": group,
-            "instance": instance,
+            CC_HEADER_TYPE: CC_COMMAND_UNSUBSCRIBE,
+            CC_HEADER_GROUP: group,
+            CC_HEADER_INSTANCE: instance,
         })
 
     def group_sendmsg(self, msg, group, instance=CC_INSTANCE_WILDCARD,
@@ -308,13 +313,13 @@ class Session:
     def group_reply(self, routing, msg):
         seq = self._next_sequence()
         self.sendmsg({
-            "type": "send",
-            "from": self._lname,
-            "to": routing["from"],
-            "group": routing["group"],
-            "instance": routing["instance"],
-            "seq": seq,
-            "reply": routing["seq"],
+            CC_HEADER_TYPE: CC_COMMAND_SEND,
+            CC_HEADER_FROM: self._lname,
+            CC_HEADER_TO: routing[CC_HEADER_FROM],
+            CC_HEADER_GROUP: routing[CC_HEADER_GROUP],
+            CC_HEADER_INSTANCE: routing[CC_HEADER_INSTANCE],
+            CC_HEADER_SEQ: seq,
+            CC_HEADER_REPLY: routing[CC_HEADER_SEQ],
         }, isc.cc.message.to_wire(msg))
         return seq
 

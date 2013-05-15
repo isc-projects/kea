@@ -6,7 +6,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_srcdir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 
-
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -23,6 +22,7 @@ if HAVE_GTEST
 TESTS += run_unittests
 
 run_unittests_SOURCES = run_unittests.cc
+run_unittests_SOURCES += zone_loader_util.h zone_loader_util.cc
 run_unittests_SOURCES += rdata_serialization_unittest.cc
 run_unittests_SOURCES += rdataset_unittest.cc
 run_unittests_SOURCES += domaintree_unittest.cc
@@ -31,14 +31,19 @@ run_unittests_SOURCES += zone_table_unittest.cc
 run_unittests_SOURCES += zone_data_unittest.cc
 run_unittests_SOURCES += zone_finder_unittest.cc
 run_unittests_SOURCES += ../../tests/faked_nsec3.h ../../tests/faked_nsec3.cc
-run_unittests_SOURCES += memory_segment_test.h
+run_unittests_SOURCES += memory_segment_mock.h
 run_unittests_SOURCES += segment_object_holder_unittest.cc
 run_unittests_SOURCES += memory_client_unittest.cc
 run_unittests_SOURCES += rrset_collection_unittest.cc
 run_unittests_SOURCES += zone_data_loader_unittest.cc
 run_unittests_SOURCES += zone_data_updater_unittest.cc
-run_unittests_SOURCES += zone_table_segment_test.h
+run_unittests_SOURCES += zone_table_segment_mock.h
 run_unittests_SOURCES += zone_table_segment_unittest.cc
+
+if USE_SHARED_MEMORY
+run_unittests_SOURCES += zone_table_segment_mapped_unittest.cc
+endif
+
 run_unittests_SOURCES += zone_writer_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

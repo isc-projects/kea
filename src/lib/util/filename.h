@@ -41,10 +41,10 @@ namespace util {
 /// directory specification.  Unless this class becomes more widely-used on
 /// Windows, there is no point in adding redundant code.
 ///
-/// Name - everthing from the character after the last "/" up to but not
+/// Name - everything from the character after the last "/" up to but not
 /// including the last ".".
 ///
-/// Extension - everthing from the right-most "." (after the right-most "/") to
+/// Extension - everything from the right-most "." (after the right-most "/") to
 /// the end of the string.  If there is no "." after the last "/", there is
 /// no file extension.
 ///

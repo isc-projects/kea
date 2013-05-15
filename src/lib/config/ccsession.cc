@@ -32,7 +32,7 @@
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
-#include <module_spec.h>
+#include <config/module_spec.h>
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
@@ -57,10 +57,10 @@ namespace config {
 /// Creates a standard config/command protocol answer message
 ConstElementPtr
 createAnswer() {
-    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
+    ElementPtr answer = Element::createMap();
     ElementPtr answer_content = Element::createList();
-    answer_content->add(Element::create(0));
-    answer->set("result", answer_content);
+    answer_content->add(Element::create(isc::cc::CC_REPLY_SUCCESS));
+    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
 
     return (answer);
 }
@@ -70,22 +70,22 @@ createAnswer(const int rcode, ConstElementPtr arg) {
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
     }
-    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
+    ElementPtr answer = Element::createMap();
     ElementPtr answer_content = Element::createList();
     answer_content->add(Element::create(rcode));
     answer_content->add(arg);
-    answer->set("result", answer_content);
+    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
 
     return (answer);
 }
 
 ConstElementPtr
 createAnswer(const int rcode, const std::string& arg) {
-    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
+    ElementPtr answer = Element::createMap();
     ElementPtr answer_content = Element::createList();
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
-    answer->set("result", answer_content);
+    answer->set(isc::cc::CC_PAYLOAD_RESULT, answer_content);
 
     return (answer);
 }
@@ -94,8 +94,8 @@ ConstElementPtr
 parseAnswer(int &rcode, ConstElementPtr msg) {
     if (msg &&
         msg->getType() == Element::map &&
-        msg->contains("result")) {
-        ConstElementPtr result = msg->get("result");
+        msg->contains(isc::cc::CC_PAYLOAD_RESULT)) {
+        ConstElementPtr result = msg->get(isc::cc::CC_PAYLOAD_RESULT);
         if (result->getType() != Element::list) {
             isc_throw(CCSessionError, "Result element in answer message is not a list");
         } else if (result->get(0)->getType() != Element::integer) {
@@ -133,7 +133,7 @@ createCommand(const std::string& command, ConstElementPtr arg) {
     if (arg) {
         cmd_parts->add(arg);
     }
-    cmd->set("command", cmd_parts);
+    cmd->set(isc::cc::CC_PAYLOAD_COMMAND, cmd_parts);
     return (cmd);
 }
 
@@ -141,8 +141,8 @@ std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (command &&
         command->getType() == Element::map &&
-        command->contains("command")) {
-        ConstElementPtr cmd = command->get("command");
+        command->contains(isc::cc::CC_PAYLOAD_COMMAND)) {
+        ConstElementPtr cmd = command->get(isc::cc::CC_PAYLOAD_COMMAND);
         if (cmd->getType() == Element::list &&
             cmd->size() > 0 &&
             cmd->get(0)->getType() == Element::string) {
@@ -165,7 +165,7 @@ namespace {
 // getValue() (main problem described in ticket #993)
 // This returns either the value set for the given relative id,
 // or its default value
-// (intentially defined here so this interface does not get
+// (intentionally defined here so this interface does not get
 // included in ConfigData as it is)
 ConstElementPtr getValueOrDefault(ConstElementPtr config_part,
                                   const std::string& relative_id,
@@ -463,10 +463,13 @@ ModuleCCSession::ModuleCCSession(
         isc_throw(CCSessionInitError, answer->str());
     }
 
-    setLocalConfig(Element::fromJSON("{}"));
+    setLocalConfig(Element::createMap());
     // get any stored configuration from the manager
     if (config_handler_) {
-        ConstElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
+        ConstElementPtr cmd =
+            createCommand("get_config",
+                          Element::fromJSON("{\"module_name\":\"" +
+                                            module_name_ + "\"}"));
         seq = session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false, seq);
         ConstElementPtr new_config = parseAnswer(rcode, answer);
@@ -608,14 +611,16 @@ ModuleCCSession::checkCommand() {
 
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
-        if (data->getType() != Element::map || data->contains("result")) {
+        if (data->getType() != Element::map ||
+            data->contains(isc::cc::CC_PAYLOAD_RESULT)) {
             return (0);
         }
         ConstElementPtr arg;
         ConstElementPtr answer;
         try {
             std::string cmd_str = parseCommand(arg, data);
-            std::string target_module = routing->get("group")->stringValue();
+            std::string target_module =
+                routing->get(isc::cc::CC_HEADER_GROUP)->stringValue();
             if (cmd_str == "config_update") {
                 answer = checkConfigUpdateCommand(target_module, arg);
             } else {
@@ -832,19 +837,19 @@ bool
 ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
                               const ConstElementPtr& envelope) const
 {
-    if (request.is_reply != envelope->contains("reply")) {
+    if (request.is_reply != envelope->contains(isc::cc::CC_HEADER_REPLY)) {
         // Wrong type of message
         return (false);
     }
     if (request.is_reply &&
         (request.seq == -1 ||
-         request.seq == envelope->get("reply")->intValue())) {
+         request.seq == envelope->get(isc::cc::CC_HEADER_REPLY)->intValue())) {
         // This is the correct reply
         return (true);
     }
     if (!request.is_reply &&
-        (request.recipient.empty() ||
-         request.recipient == envelope->get("group")->stringValue())) {
+        (request.recipient.empty() || request.recipient ==
+         envelope->get(isc::cc::CC_HEADER_GROUP)->stringValue())) {
         // This is the correct command
         return (true);
     }
@@ -855,6 +860,28 @@ ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
 void
 ModuleCCSession::cancelAsyncRecv(const AsyncRecvRequestID& id) {
     async_recv_requests_.erase(id);
+}
+
+ConstElementPtr
+ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
+                         const std::string &instance, const std::string &to,
+                         const ConstElementPtr &params)
+{
+    ConstElementPtr command_el(createCommand(command, params));
+    const int seq = groupSendMsg(command_el, group, instance, to, true);
+    ConstElementPtr env, answer;
+    LOG_DEBUG(config_logger, DBGLVL_TRACE_DETAIL, CONFIG_RPC_SEQ).arg(command).
+        arg(group).arg(seq);
+    groupRecvMsg(env, answer, true, seq);
+    int rcode;
+    const ConstElementPtr result(parseAnswer(rcode, answer));
+    if (rcode == isc::cc::CC_REPLY_NO_RECPT) {
+        isc_throw(RPCRecipientMissing, result);
+    } else if (rcode != isc::cc::CC_REPLY_SUCCESS) {
+        isc_throw_1(RPCError, result, rcode);
+    } else {
+        return (result);
+    }
 }
 
 }

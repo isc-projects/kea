@@ -199,6 +199,12 @@
                   "item_default": ""
                 },
 
+                { "item_name": "interface-id",
+                  "item_type": "string",
+                  "item_optional": false,
+                  "item_default": ""
+                },
+
                 { "item_name": "renew-timer",
                   "item_type": "integer",
                   "item_optional": false,

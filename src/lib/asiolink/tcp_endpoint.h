@@ -100,7 +100,7 @@ public:
         return (asio_endpoint_.protocol().family());
     }
 
-    // This is not part of the exosed IOEndpoint API but allows
+    // This is not part of the exposed IOEndpoint API but allows
     // direct access to the ASIO implementation of the endpoint
     inline const asio::ip::tcp::endpoint& getASIOEndpoint() const {
         return (asio_endpoint_);

@@ -22,6 +22,7 @@
 #include <config/ccsession.h>
 
 #include <cc/data.h>
+#include <cc/proto_defs.h>
 
 #include <exceptions/exceptions.h>
 
@@ -41,7 +42,7 @@
 
 #include <asiodns/dns_service.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>
@@ -747,6 +748,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                            std::auto_ptr<TSIGContext> tsig_context,
                            MessageAttributes& stats_attrs)
 {
+    const IOEndpoint& remote_ep = io_message.getRemoteEndpoint(); // for logs
+
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
     if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
@@ -769,23 +772,34 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // on, but we don't check these conditions.  This behavior is compatible
     // with BIND 9.
 
-    // TODO check with the conf-mgr whether current server is the auth of the
-    // zone
-
-    // In the code that follows, we simply ignore the notify if any internal
-    // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
-    // silent about such cases, but there doesn't seem to be anything we can
-    // improve at the primary server side by sending an error anyway.
-    if (xfrin_session_ == NULL) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NO_XFRIN);
-        return (false);
+    // See if we have the specified zone in our data sources; if not return
+    // NOTAUTH, following BIND 9 (this is not specified in RFC 1996).
+    bool is_auth = false;
+    {
+        auth::DataSrcClientsMgr::Holder datasrc_holder(datasrc_clients_mgr_);
+        const shared_ptr<datasrc::ClientList> dsrc_clients =
+            datasrc_holder.findClientList(question->getClass());
+        is_auth = dsrc_clients &&
+            dsrc_clients->find(question->getName(), true, false).exact_match_;
+    }
+    if (!is_auth) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY_NOTAUTH)
+            .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
+        makeErrorMessage(renderer_, message, buffer, Rcode::NOTAUTH(),
+                         stats_attrs, tsig_context);
+        return (true);
     }
 
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
-      .arg(question->getName()).arg(question->getClass());
+        .arg(question->getName()).arg(question->getClass()).arg(remote_ep);
 
-    const string remote_ip_address =
-        io_message.getRemoteEndpoint().getAddress().toText();
+    // xfrin_session_ should have been set and never be replaced except in
+    // tests; otherwise it's an internal bug.  assert() may be too strong,
+    // but processMessage() will catch all exceptions, so there's no better
+    // way.
+    assert(xfrin_session_);
+
+    const string remote_ip_address = remote_ep.getAddress().toText();
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_master = "\", \"master\" : \"";
@@ -800,12 +814,24 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 command_template_end);
         const unsigned int seq =
             xfrin_session_->group_sendmsg(notify_command, "Zonemgr",
-                                          "*", "*");
+                                          CC_INSTANCE_WILDCARD,
+                                          CC_INSTANCE_WILDCARD, true);
         ConstElementPtr env, answer, parsed_answer;
         xfrin_session_->group_recvmsg(env, answer, false, seq);
         int rcode;
         parsed_answer = parseAnswer(rcode, answer);
-        if (rcode != 0) {
+        if (rcode == CC_REPLY_NO_RECPT) {
+            // This can happen when Zonemgr is not running.  When we support
+            // notification-based membership framework, we should check if it's
+            // supposed to be running and shouldn't even send the command if
+            // not.  Until then, we log this event at the debug level as we
+            // don't know whether it's a real trouble or intentional
+            // configuration.  (Also, when it's done, maybe we should simply
+            // propagate the exception and return SERVFAIL to suppress further
+            // NOTIFY).
+            LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_ZONEMGR_NOTEXIST);
+            return (false);
+        } else if (rcode != CC_REPLY_SUCCESS) {
             LOG_ERROR(auth_logger, AUTH_ZONEMGR_ERROR)
                       .arg(parsed_answer->str());
             return (false);

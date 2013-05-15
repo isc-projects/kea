@@ -55,7 +55,7 @@ public:
 
     /// \brief Initialize Processing
     ///
-    /// This resets the hierachy of loggers back to their defaults.  This means
+    /// This resets the hierarchy of loggers back to their defaults.  This means
     /// that all non-root loggers (if they exist) are set to NOT_SET, and the
     /// root logger reset to logging informational messages.
     void processInit();

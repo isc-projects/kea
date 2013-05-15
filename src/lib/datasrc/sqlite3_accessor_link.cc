@@ -19,6 +19,8 @@
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/database.h>
 
+#include <log/message_initializer.h>
+
 #include <string>
 
 using namespace std;
@@ -77,6 +79,9 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 
 DataSourceClient *
 createInstance(isc::data::ConstElementPtr config, std::string& error) {
+    // Initialize the logging dictionary
+    isc::log::MessageInitializer::loadDictionary(true);
+
     ElementPtr errors(Element::createList());
     if (!checkConfig(config, errors)) {
         error = "Configuration error: " + errors->str();

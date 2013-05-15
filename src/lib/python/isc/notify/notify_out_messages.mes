@@ -27,7 +27,7 @@ because notify_out first identifies a list of available zones before
 this process.  So this means some critical inconsistency in the data
 source or software bug.
 
-% NOTIFY_OUT_INVALID_ADDRESS invalid address %1#%2: %3
+% NOTIFY_OUT_INVALID_ADDRESS invalid address %1: %2
 The notify_out library tried to send a notify message to the given
 address, but it appears to be an invalid address. The configuration
 for secondary nameservers might contain a typographic error, or a
@@ -35,30 +35,35 @@ different BIND 10 module has forgotten to validate its data before
 sending this module a notify command. As such, this should normally
 not happen, and points to an oversight in a different module.
 
-% NOTIFY_OUT_REPLY_BAD_OPCODE bad opcode in notify reply from %1#%2: %3
+% NOTIFY_OUT_REPLY_BAD_OPCODE bad opcode in notify reply from %1: %2
 The notify_out library sent a notify message to the nameserver at
 the given address, but the response did not have the opcode set to
 NOTIFY. The opcode in the response is printed. Since there was a
 response, no more notifies will be sent to this server for this
 notification event.
 
-% NOTIFY_OUT_REPLY_BAD_QID bad QID in notify reply from %1#%2: got %3, should be %4
+% NOTIFY_OUT_REPLY_BAD_QID bad QID in notify reply from %1: got %2, should be %3
 The notify_out library sent a notify message to the nameserver at
 the given address, but the query id in the response does not match
 the one we sent. Since there was a response, no more notifies will
 be sent to this server for this notification event.
 
-% NOTIFY_OUT_REPLY_BAD_QUERY_NAME bad query name in notify reply from %1#%2: got %3, should be %4
+% NOTIFY_OUT_REPLY_BAD_QUERY_NAME bad query name in notify reply from %1: got %2, should be %3
 The notify_out library sent a notify message to the nameserver at
 the given address, but the query name in the response does not match
 the one we sent. Since there was a response, no more notifies will
 be sent to this server for this notification event.
 
-% NOTIFY_OUT_REPLY_QR_NOT_SET QR flags set to 0 in reply to notify from %1#%2
+% NOTIFY_OUT_REPLY_QR_NOT_SET QR flags set to 0 in reply to notify from %1
 The notify_out library sent a notify message to the namesever at the
 given address, but the reply did not have the QR bit set to one.
 Since there was a response, no more notifies will be sent to this
 server for this notification event.
+
+% NOTIFY_OUT_REPLY_RECEIVED Zone %1/%2: notify response from %3: %4
+The notify_out library sent a notify message to the nameserver at
+the given address, and received a response.  Its Rcode will be shown,
+too.
 
 % NOTIFY_OUT_REPLY_UNCAUGHT_EXCEPTION uncaught exception: %1
 There was an uncaught exception in the handling of a notify reply
@@ -70,27 +75,27 @@ explicitly. Please file a bug report. Since there was a response,
 no more notifies will be sent to this server for this notification
 event.
 
-% NOTIFY_OUT_RETRY_EXCEEDED notify to %1#%2: number of retries (%3) exceeded
+% NOTIFY_OUT_RETRY_EXCEEDED notify to %1: number of retries (%2) exceeded
 The maximum number of retries for the notify target has been exceeded.
 Either the address of the secondary nameserver is wrong, or it is not
 responding.
 
-% NOTIFY_OUT_SENDING_NOTIFY sending notify to %1#%2
+% NOTIFY_OUT_SENDING_NOTIFY sending notify to %1
 A notify message is sent to the secondary nameserver at the given
 address.
 
-% NOTIFY_OUT_SOCKET_ERROR socket error sending notify to %1#%2: %3
+% NOTIFY_OUT_SOCKET_ERROR socket error sending notify to %1: %2
 There was a network error while trying to send a notify message to
 the given address. The address might be unreachable. The socket
 error is printed and should provide more information.
 
-% NOTIFY_OUT_SOCKET_RECV_ERROR socket error reading notify reply from %1#%2: %3
+% NOTIFY_OUT_SOCKET_RECV_ERROR socket error reading notify reply from %1: %2
 There was a network error while trying to read a notify reply
 message from the given address. The socket error is printed and should
 provide more information.
 
-% NOTIFY_OUT_TIMEOUT retry notify to %1#%2
-The notify message to the given address (noted as address#port) has
+% NOTIFY_OUT_TIMEOUT retry notify to %1
+The notify message to the given address (noted as address:port) has
 timed out, and the message will be resent until the max retry limit
 is reached.
 

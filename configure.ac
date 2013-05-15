@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20130221, bind10-dev@isc.org)
+AC_INIT(bind10, 20130510, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 # serial-tests is not available in automake version before 1.13. In
 # automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
@@ -323,9 +323,9 @@ if test -x ${PYTHON}-config; then
 	# so we only go through the flag if it's contained; also, protecting
 	# the output with [] seems necessary for environment to avoid getting
 	# an empty output accidentally.
-	python_config_ldflags=[`${PYTHON}-config --ldflags | sed -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/pg'`]
+	python_config_ldflags=[`${PYTHON}-config --ldflags | ${SED} -ne 's/\([ \t]*-L\)[ ]*\([^ \t]*[ \t]*\)/\1\2/gp'`]
 	for flag in $python_config_ldflags; do
-		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
+		flag=`echo $flag | ${SED} -ne 's/^\(\-L.*\)$/\1/p'`
 		if test "X${flag}" != X; then
 			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
 		fi
@@ -351,7 +351,7 @@ fi
 if test "x$ISC_RPATH_FLAG" != "x"; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
+		python_rpath="${python_rpath} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -387,8 +387,6 @@ Use --disable-setproctitle-check to skip this check.
 In this case we will continue, but naming of python processes will not work.])
     fi
 fi
-
-# TODO: check for _sqlite3.py module
 
 # (g++ only check)
 # Python 3.2 has an unused parameter in one of its headers. This
@@ -536,7 +534,7 @@ if test "$lcov" != "no"; then
 		AC_MSG_ERROR([Cannot find lcov.])
 	fi
 	# is genhtml always in the same directory?
-	GENHTML=`echo "$LCOV" | sed s/lcov$/genhtml/`
+	GENHTML=`echo "$LCOV" | ${SED} s/lcov$/genhtml/`
 	if test ! -x $GENHTML; then
 		AC_MSG_ERROR([genhtml not found, needed for lcov])
 	fi
@@ -712,15 +710,15 @@ fi
 BOTAN_LDFLAGS=
 BOTAN_NEWLIBS=
 for flag in ${BOTAN_LIBS}; do
-    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | sed -ne '/^\(\-L\)/p'`"
-    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | sed -ne '/^\(\-l\)/p'`"
+    BOTAN_LDFLAGS="${BOTAN_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
+    BOTAN_LIBS="${BOTAN_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
 done
 
 # See python_rpath for some info on why we do this
 if test "x$ISC_RPATH_FLAG" != "x"; then
     BOTAN_RPATH=
     for flag in ${BOTAN_LIBS}; do
-            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | sed -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
+            BOTAN_RPATH="${BOTAN_RPATH} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
     done
 AC_SUBST(BOTAN_RPATH)
 
@@ -890,9 +888,12 @@ AC_ARG_WITH(shared-memory,
     [Build with Boost shared memory support; for large scale authoritative DNS servers]),
     [use_shared_memory=$withval])
 if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
-    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it; using a different compiler or a different version of Boost may also help.])
+    AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
+if test "x$use_shared_memory" = "xyes"; then
+    AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
+fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
@@ -1043,12 +1044,16 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
-dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
+dnl check for pkg-config itself
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
 if test "x$HAVE_PKG_CONFIG" = "xno" ; then
   AC_MSG_ERROR(Please install pkg-config)
 fi
-PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
+
+AX_SQLITE3_FOR_BIND10
+if test "x$have_sqlite" = "xyes" ; then
+  enable_features="$enable_features SQLite3"
+fi
 
 #
 # ASIO: we extensively use it as the C++ event management module.
@@ -1201,6 +1206,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/resolver/bench/Makefile
                  src/bin/sysinfo/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
@@ -1316,13 +1322,13 @@ AC_CONFIG_FILES([Makefile
                  src/lib/statistics/Makefile
                  src/lib/statistics/tests/Makefile
                  tests/Makefile
-                 tests/system/Makefile
                  tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
                  tests/tools/perfdhcp/tests/testdata/Makefile
+                 m4macros/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
@@ -1400,23 +1406,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
            tests/lettuce/setup_intree_bind10.sh
-           tests/system/conf.sh
-           tests/system/run.sh
-           tests/system/glue/setup.sh
-           tests/system/glue/nsx1/b10-config.db
-           tests/system/bindctl/nsx1/b10-config.db.template
-           tests/system/ixfr/db.example.n0
-           tests/system/ixfr/db.example.n2
-           tests/system/ixfr/db.example.n2.refresh
-           tests/system/ixfr/db.example.n4
-           tests/system/ixfr/db.example.n6
-           tests/system/ixfr/ixfr_init.sh
-           tests/system/ixfr/b10-config.db
-           tests/system/ixfr/common_tests.sh
-           tests/system/ixfr/in-1/setup.sh
-           tests/system/ixfr/in-2/setup.sh
-           tests/system/ixfr/in-3/setup.sh
-           tests/system/ixfr/in-4/setup.sh
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -1447,14 +1436,6 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
-           chmod +x tests/system/conf.sh
-           chmod +x tests/system/run.sh
-           chmod +x tests/system/ixfr/ixfr_init.sh
-           chmod +x tests/system/ixfr/common_tests.sh
-           chmod +x tests/system/ixfr/in-1/setup.sh
-           chmod +x tests/system/ixfr/in-2/setup.sh
-           chmod +x tests/system/ixfr/in-3/setup.sh
-           chmod +x tests/system/ixfr/in-4/setup.sh
           ])
 AC_OUTPUT
 

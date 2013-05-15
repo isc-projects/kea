@@ -58,7 +58,7 @@ class SocketTest(Test):
 
     def test_init(self):
         """
-        Checks the intrnals of the cache just after the creation.
+        Checks the internals of the cache just after the creation.
         """
         self.assertEqual('UDP', self.__socket.protocol)
         self.assertEqual(self.__address, self.__socket.address)
@@ -357,7 +357,7 @@ class SocketCacheTest(Test):
         }
         self.__cache._live_tokens = set(['t1', 't2', 't3'])
         self.assertEqual([], self._closes)
-        # We cheat here little bit, the t3 doesn't exist enywhere else, but
+        # We cheat here little bit, the t3 doesn't exist anywhere else, but
         # we need to check the app isn't removed too soon and it shouldn't
         # matter anywhere else, so we just avoid the tiresome filling in
         self.__cache._active_apps = {1: set(['t1', 't3']), 2: set(['t2'])}

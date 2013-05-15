@@ -52,8 +52,7 @@ public:
     /// @param buf option-buffer
     static OptionPtr genericOptionFactory(Option::Universe u, uint16_t type,
                                           const OptionBuffer& buf) {
-        Option* option = new Option(u, type, buf);
-        return OptionPtr(option);
+        return (OptionPtr(new Option(u, type, buf)));
     }
 
     /// @brief Test DHCPv4 option definition.
@@ -265,11 +264,11 @@ TEST_F(LibDhcpTest, packOptions6) {
     OptionPtr opt4(new Option(Option::V6, 6, buf.begin() + 8, buf.begin() + 12));
     OptionPtr opt5(new Option(Option::V6, 8, buf.begin() + 12, buf.begin() + 14));
 
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt1));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt2));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt3));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt4));
-    opts.insert(pair<int, OptionPtr >(opt1->getType(), opt5));
+    opts.insert(make_pair(opt1->getType(), opt1));
+    opts.insert(make_pair(opt1->getType(), opt2));
+    opts.insert(make_pair(opt1->getType(), opt3));
+    opts.insert(make_pair(opt1->getType(), opt4));
+    opts.insert(make_pair(opt1->getType(), opt5));
 
     OutputBuffer assembled(512);
 

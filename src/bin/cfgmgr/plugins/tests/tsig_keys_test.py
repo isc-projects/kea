@@ -92,7 +92,7 @@ class TSigKeysTest(unittest.TestCase):
     def test_bad_format(self):
         """
         Test we fail on bad format. We don't really care much how here, though,
-        as this should not get in trough config manager anyway.
+        as this should not get in through config manager anyway.
         """
         self.assertNotEqual(None, tsig_keys.check({'bad_name': {}}))
         self.assertNotEqual(None, tsig_keys.check({'keys': 'not_list'}))

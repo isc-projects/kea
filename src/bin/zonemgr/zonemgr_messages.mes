@@ -138,14 +138,19 @@ zone, or, if this error appears without the administrator giving transfer
 commands, it can indicate an error in the program, as it should not have
 initiated transfers of unknown zones on its own.
 
-% ZONEMGR_UNKNOWN_ZONE_NOTIFIED notified zone %1/%2 from %3 is not known to the zone manager
-A NOTIFY was received but the zone that was the subject of the operation
-is not being managed by the zone manager.  This may indicate an error
-in the program (as the operation should not have been initiated if this
-were the case).  Please submit a bug report.
-
 % ZONEMGR_UNKNOWN_ZONE_SUCCESS zone %1 (class %2) is not known to the zone manager
 An XFRIN operation has succeeded but the zone received is not being
 managed by the zone manager.  This may indicate an error in the program
 (as the operation should not have been initiated if this were the case).
 Please submit a bug report.
+
+% ZONEMGR_ZONE_NOTIFY_NOT_SECONDARY notify for zone %1/%2 from %3 received but not in secondaries
+A NOTIFY was received but the zone is not listed in the configured
+secondary zones of the zone manager.  The most common reason for this
+is that it's simply received by a primary server of the zone.  Another
+possibility is a configuration error that it's not configured as a
+secondary while it should be.  In either case, the zone manager does
+not take action in terms of zone management, and the authoritative
+server will respond to it like in the secondary case.  If this is a
+configuration error, it will be noticed by the fact that the zone
+isn't updated even after a change is made in the primary server.

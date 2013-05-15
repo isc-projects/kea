@@ -314,16 +314,22 @@ class TestZonemgrRefresh(unittest.TestCase):
         sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_zone_handle_notify(self):
-        self.zone_refresh.zone_handle_notify(ZONE_NAME_CLASS1_IN,"127.0.0.1")
-        notify_master = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"]
+        self.assertTrue(self.zone_refresh.zone_handle_notify(
+                ZONE_NAME_CLASS1_IN, "127.0.0.1"))
+        notify_master = self.zone_refresh.\
+            _zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"]
         self.assertEqual("127.0.0.1", notify_master)
-        zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
+        zone_timeout = self.zone_refresh.\
+            _zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
         current_time = time.time()
         self.assertTrue(zone_timeout <= current_time)
-        self.assertRaises(ZonemgrException, self.zone_refresh.zone_handle_notify,\
-                          ZONE_NAME_CLASS3_CH, "127.0.0.1")
-        self.assertRaises(ZonemgrException, self.zone_refresh.zone_handle_notify,\
-                          ZONE_NAME_CLASS3_IN, "127.0.0.1")
+
+        # If the specified zone does not in the configured secondary list,
+        # it should return False.
+        self.assertFalse(self.zone_refresh.zone_handle_notify(
+                ZONE_NAME_CLASS3_CH, "127.0.0.1"))
+        self.assertFalse(self.zone_refresh.zone_handle_notify(
+                ZONE_NAME_CLASS3_IN, "127.0.0.1"))
 
     def test_zone_refresh_success(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
@@ -607,6 +613,19 @@ class TestZonemgrRefresh(unittest.TestCase):
                           config, self.cc_session)
 
 class MyZonemgr(Zonemgr):
+    class DummySocket:
+        """This dummy class simply steal send() to record any transmitted data.
+
+        """
+        def __init__(self):
+            self.sent_data = []
+
+        def send(self, data):
+            self.sent_data.append(data)
+
+    class DummyLock:
+        def __enter__(self): pass
+        def __exit__(self, type, value, traceback): pass
 
     def __init__(self):
         self._db_file = TEST_SQLITE3_DBFILE
@@ -621,6 +640,8 @@ class MyZonemgr(Zonemgr):
                     "reload_jitter" : 0.75,
                     "secondary_zones": []
                     }
+        self._lock = self.DummyLock()
+        self._master_socket = self.DummySocket()
 
     def _start_zone_refresh_timer(self):
         pass
@@ -672,15 +693,21 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(TEST_SQLITE3_DBFILE, self.zonemgr.get_db_file())
 
     def test_parse_cmd_params(self):
-        params1 = {"zone_name" : "example.com.", "zone_class" : "CH", "master" : "127.0.0.1"}
+        params1 = {"zone_name" : "example.com.", "zone_class" : "CH",
+                   "master" : "127.0.0.1"}
         answer1 = (ZONE_NAME_CLASS3_CH, "127.0.0.1")
-        self.assertEqual(answer1, self.zonemgr._parse_cmd_params(params1, ZONE_NOTIFY_COMMAND))
+        self.assertEqual(answer1,
+                         self.zonemgr._parse_cmd_params(params1,
+                                                        ZONE_NOTIFY_COMMAND))
         params2 = {"zone_name" : "example.com.", "zone_class" : "IN"}
         answer2 = ZONE_NAME_CLASS3_IN
-        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(params2, notify_out.ZONE_NEW_DATA_READY_CMD))
-        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(
+                params2, notify_out.ZONE_NEW_DATA_READY_CMD))
+        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params,
+                          params2, ZONE_NOTIFY_COMMAND)
         params1 = {"zone_class" : "CH"}
-        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params,
+                          params2, ZONE_NOTIFY_COMMAND)
 
     def test_config_data_check(self):
         # jitter should not be bigger than half of the original value
@@ -696,6 +723,26 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr._shutdown_event.set()
         self.zonemgr.run()
         self.assertTrue(self.zonemgr._module_cc.stopped)
+
+    def test_command_handler_notify(self):
+        """Check the result of NOTIFY command."""
+        self.zonemgr._zone_refresh = MyZonemgrRefresh()
+
+        # On successful case, the other thread will be notified via
+        # _master_socket.
+        self.zonemgr._zone_refresh.zone_handle_notify = lambda x, y: True
+        self.zonemgr.command_handler("notify", {"zone_name": "example.",
+                                                "zone_class": "IN",
+                                                "master": "192.0.2.1"})
+        self.assertEqual([b" "], self.zonemgr._master_socket.sent_data)
+
+        # If the specified is not found in the secondary list, it doesn't
+        # bother to wake the thread (sent_data shouldn't change)
+        self.zonemgr._zone_refresh.zone_handle_notify = lambda x, y: False
+        self.zonemgr.command_handler("notify", {"zone_name": "example.",
+                                                "zone_class": "IN",
+                                                "master": "192.0.2.1"})
+        self.assertEqual([b" "], self.zonemgr._master_socket.sent_data)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

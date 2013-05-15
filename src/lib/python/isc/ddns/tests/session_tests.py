@@ -209,7 +209,7 @@ class SessionTestBase(unittest.TestCase):
     def tearDown(self):
         # With the Updater created in _get_update_zone, and tests
         # doing all kinds of crazy stuff, one might get database locked
-        # errors if it doesn't clean up explicitely after each test
+        # errors if it doesn't clean up explicitly after each test
         self._session = None
 
     def check_response(self, msg, expected_rcode):

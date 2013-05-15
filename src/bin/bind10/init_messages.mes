@@ -285,9 +285,9 @@ The b10-init module is starting the given process.
 The b10-init module is starting the given process, which will listen on the
 given port number.
 
-% BIND10_STARTING_PROCESS_PORT_ADDRESS starting process %1 (to listen on %2#%3)
+% BIND10_STARTING_PROCESS_PORT_ADDRESS starting process %1 (to listen on %2)
 The b10-init module is starting the given process, which will listen on the
-given address and port number (written as <address>#<port>).
+given address and port number (written as <address>:<port>).
 
 % BIND10_STARTUP_COMPLETE BIND 10 started
 All modules have been successfully started, and BIND 10 is now running.

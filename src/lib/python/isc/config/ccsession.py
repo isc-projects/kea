@@ -82,22 +82,22 @@ def parse_answer(msg):
        containing an error message"""
     if type(msg) != dict:
         raise ModuleCCSessionError("Answer message is not a dict: " + str(msg))
-    if 'result' not in msg:
+    if CC_PAYLOAD_RESULT not in msg:
         raise ModuleCCSessionError("answer message does not contain 'result' element")
-    elif type(msg['result']) != list:
+    elif type(msg[CC_PAYLOAD_RESULT]) != list:
         raise ModuleCCSessionError("wrong result type in answer message")
-    elif len(msg['result']) < 1:
+    elif len(msg[CC_PAYLOAD_RESULT]) < 1:
         raise ModuleCCSessionError("empty result list in answer message")
-    elif type(msg['result'][0]) != int:
+    elif type(msg[CC_PAYLOAD_RESULT][0]) != int:
         raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
-        if len(msg['result']) > 1:
-            if (msg['result'][0] != CC_REPLY_SUCCESS and
-                type(msg['result'][1]) != str):
+        if len(msg[CC_PAYLOAD_RESULT]) > 1:
+            if (msg[CC_PAYLOAD_RESULT][0] != CC_REPLY_SUCCESS and
+                type(msg[CC_PAYLOAD_RESULT][1]) != str):
                 raise ModuleCCSessionError("rcode in answer message is non-zero, value is not a string")
-            return msg['result'][0], msg['result'][1]
+            return msg[CC_PAYLOAD_RESULT][0], msg[CC_PAYLOAD_RESULT][1]
         else:
-            return msg['result'][0], None
+            return msg[CC_PAYLOAD_RESULT][0], None
 
 def create_answer(rcode, arg = None):
     """Creates an answer packet for config&commands. rcode must be an
@@ -109,9 +109,9 @@ def create_answer(rcode, arg = None):
     if rcode != CC_REPLY_SUCCESS and type(arg) != str:
         raise ModuleCCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
     if arg != None:
-        return { 'result': [ rcode, arg ] }
+        return { CC_PAYLOAD_RESULT: [ rcode, arg ] }
     else:
-        return { 'result': [ rcode ] }
+        return { CC_PAYLOAD_RESULT: [ rcode ] }
 
 # 'fixed' commands
 """Fixed names for command and configuration messages"""
@@ -133,7 +133,7 @@ def parse_command(msg):
        string. If it is not, this function returns None, None"""
     if type(msg) == dict and len(msg.items()) == 1:
         cmd, value = msg.popitem()
-        if cmd == "command" and type(value) == list:
+        if cmd == CC_PAYLOAD_COMMAND and type(value) == list:
             if len(value) == 1 and type(value[0]) == str:
                 return value[0], None
             elif len(value) > 1 and type(value[0]) == str:
@@ -150,7 +150,7 @@ def create_command(command_name, params = None):
     cmd = [ command_name ]
     if params:
         cmd.append(params)
-    msg = { 'command': cmd }
+    msg = { CC_PAYLOAD_COMMAND: cmd }
     return msg
 
 def default_logconfig_handler(new_config, config_data):
@@ -194,7 +194,7 @@ class ModuleCCSession(ConfigData):
            it will read the system-wide Logging configuration and call
            the logger manager to apply it. It will also inform the
            logger manager when the logging configuration gets updated.
-           The module does not need to do anything except intializing
+           The module does not need to do anything except initializing
            its loggers, and provide log messages. Defaults to true.
 
            socket_file: If cc_session was none, this optional argument
@@ -215,7 +215,7 @@ class ModuleCCSession(ConfigData):
             self._session = Session(socket_file)
         else:
             self._session = cc_session
-        self._session.group_subscribe(self._module_name, "*")
+        self._session.group_subscribe(self._module_name, CC_INSTANCE_WILDCARD)
 
         self._remote_module_configs = {}
         self._remote_module_callbacks = {}
@@ -228,7 +228,8 @@ class ModuleCCSession(ConfigData):
         # If the CC Session obejct has been closed, it returns
         # immediately.
         if self._session._closed: return
-        self._session.group_unsubscribe(self._module_name, "*")
+        self._session.group_unsubscribe(self._module_name,
+                                        CC_INSTANCE_WILDCARD)
         for module_name in self._remote_module_configs:
             self._session.group_unsubscribe(module_name)
 
@@ -294,10 +295,10 @@ class ModuleCCSession(ConfigData):
            functions if present. Responds on the channel if the
            handler returns a message."""
         # should we default to an answer? success-by-default? unhandled error?
-        if msg is not None and not 'result' in msg:
+        if msg is not None and not CC_PAYLOAD_RESULT in msg:
             answer = None
             try:
-                module_name = env['group']
+                module_name = env[CC_HEADER_GROUP]
                 cmd, arg = isc.config.ccsession.parse_command(msg)
                 if cmd == COMMAND_CONFIG_UPDATE:
                     new_config = arg

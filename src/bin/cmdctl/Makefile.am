@@ -11,12 +11,9 @@ pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
 b10_cmdctldir = $(pkgdatadir)
 
-USERSFILES = cmdctl-accounts.csv
 CERTFILES = cmdctl-keyfile.pem cmdctl-certfile.pem
 
 b10_cmdctl_DATA = cmdctl.spec
-
-EXTRA_DIST = $(USERSFILES)
 
 CLEANFILES= b10-cmdctl cmdctl.pyc cmdctl.spec
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
@@ -24,7 +21,8 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.pyc
 
 man_MANS = b10-cmdctl.8 b10-certgen.1
 DISTCLEANFILES = $(man_MANS) cmdctl-certfile.pem cmdctl-keyfile.pem
-EXTRA_DIST += $(man_MANS) b10-certgen.xml b10-cmdctl.xml cmdctl_messages.mes
+EXTRA_DIST  = $(man_MANS) b10-certgen.xml b10-cmdctl.xml cmdctl_messages.mes
+EXTRA_DIST += cmdctl-accounts.csv
 
 if GENERATE_DOCS
 

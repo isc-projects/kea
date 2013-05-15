@@ -15,6 +15,12 @@
 #ifndef DHCP_CONFIG_PARSER_H
 #define DHCP_CONFIG_PARSER_H
 
+#include <exceptions/exceptions.h>
+#include <cc/data.h>
+#include <stdint.h>
+#include <string>
+#include <map>
+
 namespace isc {
 namespace dhcp {
 
@@ -122,38 +128,10 @@ public:
     /// This method is expected to be called after @c build(), and only once.
     /// The result is undefined otherwise.
     virtual void commit() = 0;
-
-protected:
-
-    /// @brief Return the parsed entry from the provided storage.
-    ///
-    /// This method returns the parsed entry from the provided
-    /// storage. If the entry is not found, then exception is
-    /// thrown.
-    ///
-    /// @param param_id name of the configuration entry.
-    /// @param storage storage where the entry should be searched.
-    /// @tparam ReturnType type of the returned value.
-    /// @tparam StorageType type of the storage.
-    ///
-    /// @throw DhcpConfigError if the entry has not been found
-    /// in the storage.
-    template<typename ReturnType, typename StorageType>
-    static ReturnType getParam(const std::string& param_id,
-                        const StorageType& storage) {
-        typename StorageType::const_iterator param = storage.find(param_id);
-        if (param == storage.end()) {
-            isc_throw(DhcpConfigError, "missing parameter '"
-                      << param_id << "'");
-        }
-        ReturnType value = param->second;
-        return (value);
-    }
-
 };
 
-
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}; // end of isc::dhcp namespace
+}; // end of isc namespace
 
 #endif // DHCP_CONFIG_PARSER_H
+

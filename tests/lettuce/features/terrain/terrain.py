@@ -26,11 +26,15 @@
 
 from lettuce import *
 import subprocess
-import os.path
+import os
 import shutil
 import re
 import sys
 import time
+
+# lettuce cannot directly pass commands to the terrain, so we need to
+# use environment variables to influence behaviour
+KEEP_OUTPUT = 'LETTUCE_KEEP_OUTPUT'
 
 # In order to make sure we start all tests with a 'clean' environment,
 # We perform a number of initialization steps, like restoring configuration
@@ -64,12 +68,18 @@ copylist = [
      "configurations/ddns/noddns.config"],
     ["configurations/xfrin/retransfer_master.conf.orig",
      "configurations/xfrin/retransfer_master.conf"],
+    ["configurations/xfrin/retransfer_master_v4.conf.orig",
+     "configurations/xfrin/retransfer_master_v4.conf"],
     ["configurations/xfrin/retransfer_master_nons.conf.orig",
      "configurations/xfrin/retransfer_master_nons.conf"],
     ["configurations/xfrin/retransfer_slave.conf.orig",
      "configurations/xfrin/retransfer_slave.conf"],
+    ["configurations/xfrin/retransfer_slave_notify.conf.orig",
+     "configurations/xfrin/retransfer_slave_notify.conf"],
     ["data/inmem-xfrin.sqlite3.orig",
      "data/inmem-xfrin.sqlite3"],
+    ["data/xfrin-before-diffs.sqlite3.orig",
+     "data/xfrin-before-diffs.sqlite3"],
     ["data/xfrin-notify.sqlite3.orig",
      "data/xfrin-notify.sqlite3"],
     ["data/ddns/example.org.sqlite3.orig",
@@ -105,10 +115,14 @@ class RunningProcess:
         self.process = None
         self.step = step
         self.process_name = process_name
-        self.remove_files_on_exit = True
+        self.remove_files_on_exit = (os.environ.get(KEEP_OUTPUT) != '1')
         self._check_output_dir()
         self._create_filenames()
         self._start_process(args)
+
+        # used in _wait_for_output_str, map from (filename, (strings))
+        # to a file offset.
+        self.__file_offsets = {}
 
     def _start_process(self, args):
         """
@@ -190,11 +204,29 @@ class RunningProcess:
         os.remove(self.stderr_filename)
         os.remove(self.stdout_filename)
 
-    def _wait_for_output_str(self, filename, running_file, strings, only_new, matches = 1):
+    def _wait_for_output_str(self, filename, running_file, strings, only_new,
+                             matches=1):
         """
-        Wait for a line of output in this process. This will (if only_new is
-        False) first check all previous output from the process, and if not
-        found, check all output since the last time this method was called.
+        Wait for a line of output in this process. This will (if
+        only_new is False) check all output from the process including
+        that may have been checked before.  If only_new is True, it
+        only checks output that has not been covered in previous calls
+        to this method for the file (if there was no such previous call to
+        this method, it works same as the case of only_new=False).
+
+        Care should be taken if only_new is to be set to True, as it may cause
+        counter-intuitive results.  For example, assume the file is expected
+        to contain a line that has XXX and another line has YYY, but the
+        ordering is not predictable.  If this method is called with XXX as
+        the search string, but the line containing YYY appears before the
+        target line, this method remembers the point in the file beyond
+        the line that has XXX.  If a next call to this method specifies
+        YYY as the search string with only_new being True, the search will
+        fail.  If the same string is expected to appear multiple times
+        and you want to catch the latest one, a more reliable way is to
+        specify the match number and set only_new to False, if the number
+        of matches is predictable.
+
         For each line in the output, the given strings array is checked. If
         any output lines checked contains one of the strings in the strings
         array, that string (not the line!) is returned.
@@ -202,33 +234,34 @@ class RunningProcess:
         filename: The filename to read previous output from, if applicable.
         running_file: The open file to read new output from.
         strings: Array of strings to look for.
-        only_new: If true, only check output since last time this method was
-                  called. If false, first check earlier output.
+        only_new: See above.
         matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
+        # Identify the start offset of search.  if only_new=True, start from
+        # the farthest point we've reached in the file; otherwise start from
+        # the beginning.
+        if not filename in self.__file_offsets:
+            self.__file_offsets[filename] = 0
+        offset = self.__file_offsets[filename] if only_new else 0
+        running_file.seek(offset)
+
         match_count = 0
-        if not only_new:
-            full_file = open(filename, "r")
-            for line in full_file:
-                for string in strings:
-                    if line.find(string) != -1:
-                        match_count += 1
-                        if match_count >= matches:
-                            full_file.close()
-                            return (string, line)
         wait_count = 0
         while wait_count < OUTPUT_WAIT_MAX_INTERVALS:
-            where = running_file.tell()
             line = running_file.readline()
+            where = running_file.tell()
             if line:
                 for string in strings:
                     if line.find(string) != -1:
                         match_count += 1
                         if match_count >= matches:
+                            # If we've gone further, update the recorded offset
+                            if where > self.__file_offsets[filename]:
+                                self.__file_offsets[filename] = where
                             return (string, line)
             else:
                 wait_count += 1
@@ -241,8 +274,7 @@ class RunningProcess:
         Wait for one of the given strings in this process's stderr output.
         Parameters:
         strings: Array of strings to look for.
-        only_new: If true, only check output since last time this method was
-                  called. If false, first check earlier output.
+        only_new: See _wait_for_output_str.
         matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
@@ -257,8 +289,7 @@ class RunningProcess:
         Wait for one of the given strings in this process's stdout output.
         Parameters:
         strings: Array of strings to look for.
-        only_new: If true, only check output since last time this method was
-                  called. If false, first check earlier output.
+        only_new: See _wait_for_output_str.
         matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
@@ -338,8 +369,7 @@ class RunningProcesses:
         Parameters:
         process_name: The name of the process to check the stderr output of.
         strings: Array of strings to look for.
-        only_new: If true, only check output since last time this method was
-                  called. If false, first check earlier output.
+        only_new: See _wait_for_output_str.
         matches: Check for the string this many times.
         Returns the matched string.
         Fails if none of the strings was read after 10 seconds
@@ -358,8 +388,7 @@ class RunningProcesses:
         Parameters:
         process_name: The name of the process to check the stdout output of.
         strings: Array of strings to look for.
-        only_new: If true, only check output since last time this method was
-                  called. If false, first check earlier output.
+        only_new: See _wait_for_output_str.
         matches: Check for the string this many times.
         Returns the matched string.
         Fails if none of the strings was read after 10 seconds

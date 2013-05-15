@@ -43,7 +43,7 @@ b10LoggerSeverity(isc::log::Severity defseverity) {
     return (defseverity);
 }
 
-// Get the debug level.  This is defined by the envornment variable
+// Get the debug level.  This is defined by the environment variable
 // B10_LOGGER_DBGLEVEL.  If not defined, a default value passed to the function
 // is returned.
 int

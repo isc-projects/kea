@@ -104,6 +104,7 @@ private:
     /// It never throws an exception otherwise.
     ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones) :
         rrclass_(rrclass),
+        zone_count_(0),
         zones_(zones)
     {}
 
@@ -138,6 +139,11 @@ public:
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
+
+    /// \brief Return the number of zones contained in the zone table.
+    ///
+    /// \throw None.
+    size_t getZoneCount() const { return (zone_count_); }
 
     /// Add a new zone to the \c ZoneTable.
     ///
@@ -189,6 +195,7 @@ public:
 
 private:
     const dns::RRClass rrclass_;
+    size_t zone_count_;
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
 }

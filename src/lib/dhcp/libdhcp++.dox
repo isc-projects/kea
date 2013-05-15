@@ -57,6 +57,53 @@ DHCPv6, but is rarely used in DHCPv4. isc::dhcp::Option::addOption(),
 isc::dhcp::Option::delOption(), isc::dhcp::Option::getOption() can be used
 for that purpose.
 
+@section libdhcpRelay Relay v6 support in Pkt6
+
+DHCPv6 clients that are not connected to the same link as DHCPv6
+servers need relays to reach the server. Each relay receives a message
+on a client facing interface, encapsulates it into RELAY_MSG option
+and sends as RELAY_FORW message towards the server (or the next relay,
+which is closer to the server). This procedure can be repeated up to
+32 times. Kea is able to support up to 32 relays. Each traversed relay
+may add certain options.  The most obvious example is interface-id
+option, but there may be other options as well. Each relay may add such
+an option, regardless of whether other relays added it before. Thanks
+to encapsulation, those options are separated and it is possible to
+differentiate which relay inserted specific instance of an option.
+
+Interface-id is used to identify a subnet (or interface) the original message
+came from and is used for that purpose on two occasions. First, the server
+uses the interface-id included by the first relay (the one closest to
+the client) to select appropriate subnet for a given request. Server includes
+that interface-id in its copy, when sending data back to the client.
+This will be used by the relay to choose proper interface when forwarding
+response towards the client.
+
+Pkt6 class has a public Pkt6::relay_info_ field, which is of type Pkt6::RelayInfo.
+This is a simple structure that represents the information in each RELAY_FORW
+or RELAY_REPL message. It is important to understand the order in which
+the data appear here. Consider the following network:
+
+\verbatim
+client-------relay1-----relay2-----relay3----server
+\endverbatim
+
+Client will transmit SOLICIT message. Relay1 will forward it as
+RELAY_FORW with SOLICIT in it. Relay2 forward it as RELAY_FORW with
+RELAY_FORW with SOLICIT in it. Finally the third relay will add yet
+another RELAY_FORW around it. The server will parse the packet and
+create Pkt6 object for it. Its relay_info_ will have 3
+elements. Packet parsing is done in reverse order, compare to the
+order the packet traversed in the network.  The first element
+(relay_info_[0]) will represent relay3 information (the "last" relay or
+in other words the one closest to the server). The second element
+will represent relay2. The third element (relay_info_[2]) will represent
+the first relay (relay1) or in other words the one closest to the client.
+
+Packets sent by the server must maintain the same encapsulation order.
+This is easy to do - just copy data from client's message object into
+server's response object. See Pkt6::coyRelayInfo for details.
+
 @section libdhcpIfaceMgr Interface Manager
 
 Interface Manager (or IfaceMgr) is an abstraction layer about low-level

@@ -117,8 +117,14 @@ installListenAddresses(const AddressList& new_addresses,
     try {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
         BOOST_FOREACH(const AddressPair& addr, new_addresses) {
+            string addr_str;
+            if (addr.first.find(':') != string::npos) {
+                addr_str = "[" + addr.first + "]";
+            } else {
+                addr_str = addr.first;
+            }
             LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
-                arg(addr.first).arg(addr.second);
+                arg(addr_str).arg(addr.second);
         }
         setAddresses(service, new_addresses, server_options);
         address_store = new_addresses;
@@ -129,7 +135,7 @@ installListenAddresses(const AddressList& new_addresses,
          * set successuflly or none of them will be used. whether this
          * behavior is user desired, maybe we need revisited it later. And
          * if address setting is more smarter, it should check whether some
-         * part of the new address already in used to avoid interuption the
+         * part of the new address already in used to avoid interrupting the
          * service.
          *
          * If the address setting still failed, we can live with it, since

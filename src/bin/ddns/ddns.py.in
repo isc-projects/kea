@@ -354,7 +354,7 @@ class DDNSServer:
                 zname = Name(zone_spec['name'])
                 # class has the default value in case it's unspecified.
                 # ideally this should be merged within the config module, but
-                # the current implementation doesn't esnure that, so we need to
+                # the current implementation doesn't ensure that, so we need to
                 # subsitute it ourselves.
                 if 'class' in zone_spec:
                     zclass = RRClass(zone_spec['class'])
@@ -510,7 +510,7 @@ class DDNSServer:
         '''Send DDNS response to the client.
 
         Right now, this is a straightforward subroutine of handle_request(),
-        but is intended to be extended evetually so that it can handle more
+        but is intended to be extended eventually so that it can handle more
         complicated operations for TCP (which requires asynchronous write).
         Further, when we support multiple requests over a single TCP
         connection, this method may even be shared by multiple methods.
