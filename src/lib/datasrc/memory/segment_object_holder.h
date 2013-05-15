@@ -42,18 +42,29 @@ getNextHolderName();
 template <typename T, typename ARG_T>
 class SegmentObjectHolder {
 public:
-    SegmentObjectHolder(util::MemorySegment& mem_sgmt, T* obj, ARG_T arg) :
+    SegmentObjectHolder(util::MemorySegment& mem_sgmt, ARG_T arg) :
         mem_sgmt_(mem_sgmt), arg_(arg),
         holder_name_(getNextHolderName()), holding_(true)
     {
-        mem_sgmt_.setNamedAddress(holder_name_.c_str(), obj);
+        if (mem_sgmt_.setNamedAddress(holder_name_.c_str(), NULL)) {
+            isc_throw(isc::util::MemorySegmentGrown,
+                      "Segment grown when allocating holder");
+        }
     }
     ~SegmentObjectHolder() {
         if (holding_) {
             // Use release, as it removes the stored address from segment
             T* obj = release();
-            T::destroy(mem_sgmt_, obj, arg_);
+            if (obj) { // May be NULL if set wasn't called
+                T::destroy(mem_sgmt_, obj, arg_);
+            }
         }
+    }
+    void set(T* obj) {
+        const bool grown = mem_sgmt_.setNamedAddress(holder_name_.c_str(),
+                                                     obj);
+        // We reserve the space in the constructor, should not grow now
+        assert(!grown);
     }
     T* get() {
         if (holding_) {
