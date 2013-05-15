@@ -154,7 +154,13 @@ LocalSocketTest::checkAsyncRead(size_t data_len) {
         expected_data[i] = i & 0xff;
     }
     alarm(IO_TIMEOUT);
-    EXPECT_EQ(data_len, write(sock_pair_[1].get(), &expected_data[0],
+    // If write blocks, it will eventually fail due to signal interruption.
+    // Since io_service has been stopped already, run() would immediately
+    // return and test should complete (with failure).  But to make very sure
+    // it never cause hangup we rather return from the test at the point of
+    // failure of write.  In either case it signals a failure and need for
+    // a fix.
+    ASSERT_EQ(data_len, write(sock_pair_[1].get(), &expected_data[0],
                               data_len));
     io_service_.run();
     EXPECT_TRUE(callback_called);
