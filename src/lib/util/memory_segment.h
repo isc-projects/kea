@@ -171,9 +171,14 @@ public:
     /// corresponding address by that name (in such cases the real address
     /// may be different between these two processes).
     ///
-    /// Note that names beginning with an underscore ("_") are reserved
-    /// for internal use by this class. If such a name is passed to this
-    /// method, an isc::InvalidParameter exception will be thrown.
+    /// Note that names beginning with an underscore (such as
+    /// \c "_example") are reserved for internal use by this class. If such
+    /// a name is passed to this method, an \c isc::InvalidParameter
+    /// exception will be thrown.
+    ///
+    /// Note that empty names (\c "") are not allowed too. If an empty name
+    /// is passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
     ///
     /// \c addr must be 0 (NULL) or an address that belongs to this segment.
     /// The latter case means it must be the return value of a previous call
@@ -234,7 +239,10 @@ public:
             isc_throw(InvalidParameter,
                       "NULL name is given to setNamedAddress");
         }
-        if (*name == '_') {
+        if (*name == '\0') {
+            isc_throw(InvalidParameter,
+                      "Empty name was passed to setNamedAddress");
+        } else if (*name == '_') {
             isc_throw(InvalidParameter,
                       "Names beginning with _ are reserved for "
                       "internal use only.");
