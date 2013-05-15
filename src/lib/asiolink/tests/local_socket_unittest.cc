@@ -75,6 +75,7 @@ protected:
     }
 
     ~LocalSocketTest() {
+        alarm(0);
         std::signal(SIGALRM, prev_handler_);
     }
 
