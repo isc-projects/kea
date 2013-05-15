@@ -20,9 +20,8 @@
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 #include <log/log_messages.h>
+#include <log/interprocess/interprocess_sync_file.h>
 #include "log/tests/log_test_messages.h"
-
-#include <util/interprocess_sync_file.h>
 
 #include <iostream>
 #include <string>
@@ -391,7 +390,7 @@ TEST_F(LoggerTest, setInterprocessSync) {
     EXPECT_THROW(logger.setInterprocessSync(NULL), BadInterprocessSync);
 }
 
-class MockSync : public isc::util::InterprocessSync {
+class MockSync : public isc::log::interprocess::InterprocessSync {
 public:
     /// \brief Constructor
     MockSync(const std::string& component_name) :

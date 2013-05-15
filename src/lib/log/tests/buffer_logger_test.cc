@@ -16,7 +16,7 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/log_messages.h>
-#include <util/interprocess_sync_null.h>
+#include <log/interprocess/interprocess_sync_null.h>
 
 using namespace isc::log;
 
@@ -58,7 +58,8 @@ main(int argc, char** argv) {
     initLogger("buffertest", isc::log::INFO, 0, NULL, true);
     Logger logger("log");
     // No need for file interprocess locking in this test
-    logger.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
+    logger.setInterprocessSync(
+        new isc::log::interprocess::InterprocessSyncNull("logger"));
     LOG_INFO(logger, LOG_BAD_SEVERITY).arg("info");
     LOG_DEBUG(logger, 50, LOG_BAD_DESTINATION).arg("debug-50");
     LOG_INFO(logger, LOG_BAD_SEVERITY).arg("info");

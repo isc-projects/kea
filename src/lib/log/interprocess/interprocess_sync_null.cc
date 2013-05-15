@@ -12,10 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "interprocess_sync_null.h"
+#include <log/interprocess/interprocess_sync_null.h>
 
 namespace isc {
-namespace util {
+namespace log {
+namespace interprocess {
 
 InterprocessSyncNull::~InterprocessSyncNull() {
 }
@@ -38,5 +39,6 @@ InterprocessSyncNull::unlock() {
     return (true);
 }
 
-} // namespace util
+} // namespace interprocess
+} // namespace log
 } // namespace isc

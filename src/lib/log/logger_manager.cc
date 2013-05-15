@@ -28,7 +28,7 @@
 #include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
-#include "util/interprocess_sync_null.h"
+#include <log/interprocess/interprocess_sync_null.h>
 
 using namespace std;
 
@@ -157,7 +157,8 @@ LoggerManager::readLocalMessageFile(const char* file) {
     // be used by standalone programs which may not have write access to
     // the local state directory (to create lock files). So we switch to
     // using a null interprocess sync object here.
-    logger.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
+    logger.setInterprocessSync(
+        new isc::log::interprocess::InterprocessSyncNull("logger"));
 
     try {
 
