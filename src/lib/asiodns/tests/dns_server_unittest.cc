@@ -527,8 +527,7 @@ boost::shared_ptr<SyncUDPServer>
 FdInit<SyncUDPServer>::createServer(int fd, int af) {
     delete this->lookup_;
     this->lookup_ = new SyncDummyLookup;
-    return (boost::shared_ptr<SyncUDPServer>(
-                new SyncUDPServer(this->service, fd, af, this->lookup_)));
+    return (SyncUDPServer::create(this->service, fd, af, this->lookup_));
 }
 
 // This makes it the template as gtest wants it.
@@ -763,7 +762,7 @@ TEST_F(SyncServerTest, mustResume) {
 
 // SyncUDPServer doesn't allow NULL lookup callback.
 TEST_F(SyncServerTest, nullLookupCallback) {
-    EXPECT_THROW(SyncUDPServer(service, 0, AF_INET, NULL),
+    EXPECT_THROW(SyncUDPServer::create(service, 0, AF_INET, NULL),
                  isc::InvalidParameter);
 }
 
