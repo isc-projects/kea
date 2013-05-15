@@ -59,6 +59,10 @@ TEST_F(OptionStringTest, constructorFromString) {
     EXPECT_EQ(234, optv6.getType());
     EXPECT_EQ("other option", optv6.getValue());
     EXPECT_EQ(Option::OPTION6_HDR_LEN + optv6_value.size(), optv6.len());
+
+    // Check that an attempt to use empty string in the constructor
+    // will result in an exception.
+    EXPECT_THROW(OptionString(Option::V6, 123, ""), isc::OutOfRange);
 }
 
 // This test verifies that the constructor which creates an option instance
@@ -119,6 +123,8 @@ TEST_F(OptionStringTest, setValue) {
     // been successful.
     EXPECT_NO_THROW(optv4.setValue("new option value"));
     EXPECT_EQ("new option value", optv4.getValue());
+    // Try to set to an empty string. It should throw exception.
+    EXPECT_THROW(optv4.setValue(""), isc::OutOfRange);
 }
 
 // This test verifies that the pack function encodes the option in

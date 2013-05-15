@@ -560,12 +560,12 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4Opts + 2, 3)); // data len=3
 
     x = pkt->getOption(14);
-    ASSERT_TRUE(x); // option 13 should exist
+    ASSERT_TRUE(x); // option 14 should exist
     // Option 14 is represented by the OptionString class so let's do
     // the appropriate conversion.
     OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x);
     ASSERT_TRUE(option14);
-    EXPECT_EQ(14, option14->getType());  // this should be option 13
+    EXPECT_EQ(14, option14->getType());  // this should be option 14
     ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
     EXPECT_EQ(5, option14->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4Opts + 7, 3)); // data len=3
