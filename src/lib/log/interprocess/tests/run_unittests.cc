@@ -12,20 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-namespace isc {
-namespace util {
-namespace test {
-/// \brief A helper utility for a simple synchronization with another process.
-///
-/// It waits for incoming data on a given file descriptor up to 5 seconds
-/// (arbitrary choice), read one byte data, and return it to the caller.
-/// On any failure it returns 0xff (255), so the sender process should use
-/// a different value to pass.
-unsigned char parentReadState(int fd);
-}
-}
-}
+#include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
+#include <stdlib.h>
 
-// Local Variables:
-// mode: c++
-// End:
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", TEST_DATA_TOPBUILDDIR, 1);
+    return (isc::util::unittests::run_all());
+}
