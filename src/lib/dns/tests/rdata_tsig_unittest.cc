@@ -37,6 +37,7 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
+namespace {
 const char* const valid_text1 = "hmac-md5.sig-alg.reg.int. 1286779327 300 "
     "0 16020 BADKEY 0";
 const char* const valid_text2 = "hmac-sha256. 1286779327 300 12 "
@@ -51,12 +52,10 @@ const char* const valid_text5 = "hmac-sha256. 1286779327 300 12 "
 const char* const too_long_label = "012345678901234567890123456789"
     "0123456789012345678901234567890123";
 
-// commonly used test RDATA
-const any::TSIG rdata_tsig((string(valid_text1)));
-
-namespace {
 class Rdata_TSIG_Test : public RdataTest {
 protected:
+    Rdata_TSIG_Test() : rdata_tsig(valid_text1) {}
+
     void checkFromText_InvalidText(const string& rdata_str) {
         checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
             rdata_str, rdata_tsig, true, true);
@@ -83,7 +82,11 @@ protected:
             rdata_str, rdata_tsig, true, true);
     }
 
+    template <typename Output>
+    void toWireCommonChecks(Output& output) const;
+
     vector<uint8_t> expect_data;
+    const any::TSIG rdata_tsig; // commonly used test RDATA
 };
 
 TEST_F(Rdata_TSIG_Test, fromText) {
@@ -310,7 +313,7 @@ TEST_F(Rdata_TSIG_Test, assignment) {
 
 template <typename Output>
 void
-toWireCommonChecks(Output& output) {
+Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
     vector<uint8_t> expect_data;
 
     output.clear();
