@@ -47,6 +47,10 @@ public:
         holder_name_(getNextHolderName()), holding_(true)
     {
         if (mem_sgmt_.setNamedAddress(holder_name_.c_str(), NULL)) {
+            // OK. We've grown. The caller might need to be informed, so
+            // we throw. But then, we don't get our destructor, so we
+            // release the memory right away.
+            mem_sgmt_.clearNamedAddress(holder_name_.c_str());
             isc_throw(isc::util::MemorySegmentGrown,
                       "Segment grown when allocating holder");
         }
