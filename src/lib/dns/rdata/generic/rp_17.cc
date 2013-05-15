@@ -32,7 +32,8 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_RDATA_NAMESPACE
 
 // helper function for string and lexer constructors
-void RP::constructFromLexer(MasterLexer& lexer, const Name* origin) {
+void
+RP::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     mailbox_ = createNameFromLexer(lexer, origin);
     text_ = createNameFromLexer(lexer, origin);
 }
