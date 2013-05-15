@@ -441,7 +441,7 @@ protected:
     /// @brief interface index
     ///
     /// Each network interface has assigned unique ifindex. It is functional
-    /// equvalent of name, but sometimes more useful, e.g. when using crazy
+    /// equivalent of name, but sometimes more useful, e.g. when using crazy
     /// systems that allow spaces in interface names e.g. MS Windows)
     uint32_t ifindex_;
 

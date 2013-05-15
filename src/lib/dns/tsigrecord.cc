@@ -59,13 +59,14 @@ namespace {
 // of the constructor below.
 const any::TSIG&
 castToTSIGRdata(const rdata::Rdata& rdata) {
-    try {
-        return (dynamic_cast<const any::TSIG&>(rdata));
-    } catch (std::bad_cast&) {
+    const any::TSIG* tsig_rdata =
+        dynamic_cast<const any::TSIG*>(&rdata);
+    if (!tsig_rdata) {
         isc_throw(DNSMessageFORMERR,
                   "TSIG record is being constructed from "
                   "incompatible RDATA:" << rdata.toText());
     }
+    return (*tsig_rdata);
 }
 }
 

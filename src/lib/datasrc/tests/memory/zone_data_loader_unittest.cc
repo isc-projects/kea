@@ -27,7 +27,7 @@
 #include <util/memory_segment_mapped.h>
 #include <util/memory_segment_local.h>
 
-#include "memory_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -50,7 +50,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     ZoneData* zone_data_;
 };
 

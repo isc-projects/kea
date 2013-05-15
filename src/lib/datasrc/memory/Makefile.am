@@ -23,11 +23,15 @@ libdatasrc_memory_la_SOURCES += zone_table.h zone_table.cc
 libdatasrc_memory_la_SOURCES += zone_finder.h zone_finder.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment.h zone_table_segment.cc
 libdatasrc_memory_la_SOURCES += zone_table_segment_local.h zone_table_segment_local.cc
+
+if USE_SHARED_MEMORY
+libdatasrc_memory_la_SOURCES += zone_table_segment_mapped.h zone_table_segment_mapped.cc
+endif
+
 libdatasrc_memory_la_SOURCES += zone_data_updater.h zone_data_updater.cc
 libdatasrc_memory_la_SOURCES += zone_data_loader.h zone_data_loader.cc
 libdatasrc_memory_la_SOURCES += memory_client.h memory_client.cc
-libdatasrc_memory_la_SOURCES += zone_writer.h
-libdatasrc_memory_la_SOURCES += zone_writer_local.h zone_writer_local.cc
+libdatasrc_memory_la_SOURCES += zone_writer.h zone_writer.cc
 libdatasrc_memory_la_SOURCES += load_action.h
 libdatasrc_memory_la_SOURCES += util_internal.h
 

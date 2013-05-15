@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,9 @@ public:
     const std::vector<uint8_t>& getDigest() const;
 
 private:
+    // helper for string and lexer constructors
+    void constructFromLexer(MasterLexer& lexer);
+
     /// \brief Private data representation
     ///
     /// Opaque data at least 3 octets long as per RFC4701.

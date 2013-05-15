@@ -18,9 +18,13 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
+#include <cc/data.h>
+
 #include <datasrc/zone_finder.h>
+#include <datasrc/cache_config.h>
 #include <datasrc/memory/memory_client.h>
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/zone_writer.h>
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
 
@@ -44,6 +48,7 @@ using namespace isc::data;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::datasrc;
+using isc::data::Element;
 using isc::datasrc::memory::InMemoryClient;
 using isc::datasrc::memory::ZoneTableSegment;
 using namespace isc::testutils;
@@ -63,14 +68,23 @@ typedef DataSourceClientPtr (*ClientCreator)(RRClass, const Name&);
 
 // Creator for the in-memory client to be tested
 DataSourceClientPtr
-createInMemoryClient(RRClass zclass, const Name& zname)
-{
-    const ElementPtr config(Element::fromJSON("{}"));
+createInMemoryClient(RRClass zclass, const Name& zname) {
+    const internal::CacheConfig cache_conf(
+        "MasterFiles", NULL, *Element::fromJSON(
+            "{\"cache-enable\": true,"
+            " \"params\":"
+            "  {\"" + zname.toText() + "\": \"" +
+            string(TEST_ZONE_FILE) + "\"}}"), true);
     shared_ptr<ZoneTableSegment> ztable_segment(
-        ZoneTableSegment::create(*config, zclass));
+        ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
+    memory::ZoneWriter writer(*ztable_segment,
+                              cache_conf.getLoadAction(zclass, zname),
+                              zname, zclass);
+    writer.load();
+    writer.install();
+    writer.cleanup();
     shared_ptr<InMemoryClient> client(new InMemoryClient(ztable_segment,
                                                          zclass));
-    client->load(zname, TEST_ZONE_FILE);
 
     return (client);
 }
@@ -107,7 +121,7 @@ createSQLite3ClientWithNS(RRClass zclass, const Name& zname) {
 }
 
 // The test class.  Its parameterized so we can share the test scnearios
-// for any concrete data source implementaitons.
+// for any concrete data source implementations.
 class ZoneFinderContextTest :
         public ::testing::TestWithParam<ClientCreator>
 {

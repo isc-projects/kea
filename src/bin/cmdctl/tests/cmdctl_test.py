@@ -17,6 +17,7 @@
 import unittest
 import socket
 import tempfile
+import time
 import stat
 import sys
 from cmdctl import *
@@ -33,26 +34,13 @@ BUILD_FILE_PATH = os.environ['CMDCTL_BUILD_PATH'] + os.sep
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
     def __init__(self):
-        pass
+        self.session_id = None
 
     def send_response(self, rcode):
         self.rcode = rcode
 
     def end_headers(self):
         pass
-
-    def do_GET(self):
-        self.wfile = open('tmp.file', 'wb')
-        super().do_GET()
-        self.wfile.close()
-        os.remove('tmp.file')
-
-    def do_POST(self):
-        self.wfile = open("tmp.file", 'wb')
-        super().do_POST()
-        self.wfile.close()
-        os.remove('tmp.file')
-
 
 class FakeSecureHTTPServer(SecureHTTPServer):
     def __init__(self):
@@ -84,6 +72,26 @@ class UnreadableFile:
     def __exit__(self, type, value, traceback):
         os.chmod(self.file_name, self.orig_mode)
 
+class TmpTextFile:
+    """
+    Context class for temporarily creating a text file with some
+    lines of content.
+
+    The file is automatically deleted if the context is left, so
+    make sure to not use the path of an existing file!
+    """
+    def __init__(self, path, contents):
+        self.__path = path
+        self.__contents = contents
+
+    def __enter__(self):
+        with open(self.__path, 'w') as f:
+            f.write("\n".join(self.__contents) + "\n")
+
+    def __exit__(self, type, value, traceback):
+        os.unlink(self.__path)
+
+
 class TestSecureHTTPRequestHandler(unittest.TestCase):
     def setUp(self):
         self.old_stdout = sys.stdout
@@ -93,13 +101,22 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.server.user_sessions = {}
         self.handler.server._user_infos = {}
         self.handler.headers = {}
-        self.handler.rfile = open("check.tmp", 'w+b')
+        self.handler.rfile = open('input.tmp', 'w+b')
+        self.handler.wfile = open('output.tmp', 'w+b')
 
     def tearDown(self):
         sys.stdout.close()
         sys.stdout = self.old_stdout
+        self.handler.wfile.close()
+        os.remove('output.tmp')
         self.handler.rfile.close()
-        os.remove('check.tmp')
+        os.remove('input.tmp')
+
+    def test_is_session_valid(self):
+        self.assertIsNone(self.handler.session_id)
+        self.assertFalse(self.handler._is_session_valid())
+        self.handler.session_id = 4234
+        self.assertTrue(self.handler._is_session_valid())
 
     def test_parse_request_path(self):
         self.handler.path = ''
@@ -160,7 +177,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
             self.handler.do_GET()
             self.assertEqual(self.handler.rcode, http.client.OK)
 
-    def test_user_logged_in(self):
+    def test_is_user_logged_in(self):
         self.handler.server.user_sessions = {}
         self.handler.session_id = 12345
         self.assertTrue(self.handler._is_user_logged_in() == False)
@@ -294,7 +311,92 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
+    def test_handle_login(self):
+        orig_is_user_logged_in = self.handler._is_user_logged_in
+        orig_check_user_name_and_pwd = self.handler._check_user_name_and_pwd
+        try:
+            def create_is_user_logged_in(status):
+                '''Create a replacement _is_user_logged_in() method.'''
+                def my_is_user_logged_in():
+                    return status
+                return my_is_user_logged_in
+
+            # Check case where _is_user_logged_in() returns True
+            self.handler._is_user_logged_in = create_is_user_logged_in(True)
+            self.handler.headers['cookie'] = 12345
+            self.handler.path = '/login'
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.OK)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()),
+                             ['user has already login'])
+
+            # Clear the output
+            self.handler.wfile.seek(0, 0)
+            self.handler.wfile.truncate()
+
+            # Check case where _is_user_logged_in() returns False
+            self.handler._is_user_logged_in = create_is_user_logged_in(False)
+
+            def create_check_user_name_and_pwd(status, error_info=None):
+                '''Create a replacement _check_user_name_and_pwd() method.'''
+                def my_check_user_name_and_pwd():
+                    return status, error_info
+                return my_check_user_name_and_pwd
+
+            # (a) Check case where _check_user_name_and_pwd() returns
+            # valid user status
+            self.handler._check_user_name_and_pwd = \
+                create_check_user_name_and_pwd(True)
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.OK)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()), ['login success'])
+
+            # Clear the output
+            self.handler.wfile.seek(0, 0)
+            self.handler.wfile.truncate()
+
+            # (b) Check case where _check_user_name_and_pwd() returns
+            # invalid user status
+            self.handler._check_user_name_and_pwd = \
+                create_check_user_name_and_pwd(False, ['login failed'])
+            self.handler.do_POST()
+            self.assertEqual(self.handler.rcode, http.client.UNAUTHORIZED)
+            self.handler.wfile.seek(0, 0)
+            d = self.handler.wfile.read()
+            self.assertEqual(json.loads(d.decode()), ['login failed'])
+
+        finally:
+            self.handler._is_user_logged_in = orig_is_user_logged_in
+            self.handler._check_user_name_and_pwd = orig_check_user_name_and_pwd
+
+class MockSession:
+    """Act like isc.cc.Session, stealing group_sendmsg/recvmsg().
+
+    The initial simple version only records given parameters in
+    group_sendmsg() for later inspection and raise a timeout exception
+    from recvmsg().  As we see the need for more test cases these methods
+    should be extended.
+
+    """
+    def __init__(self, sent_messages):
+        self.__sent_messages = sent_messages
+
+    def group_sendmsg(self, msg, module_name, want_answer):
+        self.__sent_messages.append((msg, module_name))
+
+    def group_recvmsg(self, nonblock, seq):
+        raise isc.cc.session.SessionTimeout('dummy timeout')
+
 class MyCommandControl(CommandControl):
+    def __init__(self, httpserver, verbose):
+        super().__init__(httpserver, verbose)
+        self.sent_messages = [] # for inspection; allow tests to see it
+        self._cc = MockSession(self.sent_messages)
+
     def _get_modules_specification(self):
         return {}
 
@@ -310,6 +412,12 @@ class MyCommandControl(CommandControl):
 
     def _handle_msg_from_msgq(self):
         pass
+
+    def _start_msg_handle_thread(self): # just not bother to be threads
+        pass
+
+    def _get_current_thread(self):
+        return None
 
 class TestCommandControl(unittest.TestCase):
 
@@ -423,8 +531,24 @@ class TestCommandControl(unittest.TestCase):
         os.remove(file_name)
 
     def test_send_command(self):
-        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings', None)
-        self.assertEqual(rcode, 0)
+        # Send a command to other module.  We check an expected message
+        # is sent via the session (cmdct._cc).  Due to the behavior of
+        # our mock session object the anser will be "fail", but it's not
+        # the subject of this test, and so it's okay.
+        # TODO: more detailed cases should be tested.
+        rcode, value = self.cmdctl.send_command('Init', 'shutdown', None)
+        self.assertEqual(1, len(self.cmdctl.sent_messages))
+        self.assertEqual(({'command': ['shutdown']}, 'Init'),
+                         self.cmdctl.sent_messages[-1])
+        self.assertEqual(1, rcode)
+
+        # Send a command to cmdctl itself.  Should be the same effect.
+        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings',
+                                                None)
+        self.assertEqual(2, len(self.cmdctl.sent_messages))
+        self.assertEqual(({'command': ['print_settings']}, 'Cmdctl'),
+                         self.cmdctl.sent_messages[-1])
+        self.assertEqual(1, rcode)
 
 class MySecureHTTPServer(SecureHTTPServer):
     def server_bind(self):
@@ -469,6 +593,88 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
+
+    def test_get_user_info(self):
+        self.assertIsNone(self.server.get_user_info('root'))
+        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
+        self.assertIn('6f0c73bd33101a5ec0294b3ca39fec90ef4717fe',
+                      self.server.get_user_info('root'))
+
+        # When the file is not changed calling _create_user_info() again
+        # should have no effect. In order to test this, we overwrite the
+        # user-infos that were just set and make sure it isn't touched by
+        # the call (so make sure it isn't set to some empty value)
+        fake_users_val = { 'notinfile': [] }
+        self.server._user_infos = fake_users_val
+        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
+        self.assertEqual(fake_users_val, self.server._user_infos)
+
+    def test_create_user_info_changing_file_time(self):
+        self.assertEqual(0, len(self.server._user_infos))
+
+        # Create a file
+        accounts_file = BUILD_FILE_PATH + 'new_file.csv'
+        with TmpTextFile(accounts_file, ['root,foo,bar']):
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('root' in self.server._user_infos)
+
+            # Make sure re-reading is a noop if file was not modified
+            fake_users_val = { 'notinfile': [] }
+            self.server._user_infos = fake_users_val
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(fake_users_val, self.server._user_infos)
+
+        # create the file again, this time read should not be a noop
+        with TmpTextFile(accounts_file, ['otherroot,foo,bar']):
+            # Set mtime in future
+            stat = os.stat(accounts_file)
+            os.utime(accounts_file, (stat.st_atime, stat.st_mtime + 10))
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('otherroot' in self.server._user_infos)
+
+    def test_create_user_info_changing_file_name(self):
+        """
+        Check that the accounts file is re-read if the file name is different
+        """
+        self.assertEqual(0, len(self.server._user_infos))
+
+        # Create two files
+        accounts_file1 = BUILD_FILE_PATH + 'new_file.csv'
+        accounts_file2 = BUILD_FILE_PATH + 'new_file2.csv'
+        with TmpTextFile(accounts_file2, ['otherroot,foo,bar']):
+            with TmpTextFile(accounts_file1, ['root,foo,bar']):
+                self.server._create_user_info(accounts_file1)
+                self.assertEqual(1, len(self.server._user_infos))
+                self.assertTrue('root' in self.server._user_infos)
+
+                # Make sure re-reading is a noop if file was not modified
+                fake_users_val = { 'notinfile': [] }
+                self.server._user_infos = fake_users_val
+                self.server._create_user_info(accounts_file1)
+                self.assertEqual(fake_users_val, self.server._user_infos)
+
+                # But a different file should be read
+                self.server._create_user_info(accounts_file2)
+                self.assertEqual(1, len(self.server._user_infos))
+                self.assertTrue('otherroot' in self.server._user_infos)
+
+    def test_create_user_info_nonexistent_file(self):
+        # Even if there was data initially, if set to a nonexistent
+        # file it should result in no users
+        accounts_file = BUILD_FILE_PATH + 'new_file.csv'
+        self.assertFalse(os.path.exists(accounts_file))
+        fake_users_val = { 'notinfile': [] }
+        self.server._user_infos = fake_users_val
+        self.server._create_user_info(accounts_file)
+        self.assertEqual({}, self.server._user_infos)
+
+        # Should it now be created it should be read
+        with TmpTextFile(accounts_file, ['root,foo,bar']):
+            self.server._create_user_info(accounts_file)
+            self.assertEqual(1, len(self.server._user_infos))
+            self.assertTrue('root' in self.server._user_infos)
 
     def test_check_file(self):
         # Just some file that we know exists

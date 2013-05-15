@@ -20,7 +20,7 @@ export PYTHON_EXEC
 
 MYPATH_PATH=@abs_top_builddir@/src/bin/msgq
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python/isc/cc:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/log/.libs
+PYTHONPATH=@abs_top_builddir@/src/lib/python/isc/log_messages:@abs_top_builddir@/src/lib/python/isc/cc:@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries

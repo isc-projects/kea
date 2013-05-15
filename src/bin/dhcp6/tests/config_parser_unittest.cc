@@ -88,7 +88,7 @@ public:
     /// option value. These parameters are: "name", "code", "data" and
     /// "csv-format".
     ///
-    /// @param param_value string holiding option parameter value to be
+    /// @param param_value string holding option parameter value to be
     /// injected into the configuration string.
     /// @param parameter name of the parameter to be configured with
     /// param value.
@@ -277,13 +277,13 @@ public:
                             expected_data_len));
     }
 
-    int rcode_;
-    Dhcpv6Srv srv_;
+    int rcode_; ///< return core (see @ref isc::config::parseAnswer)
+    Dhcpv6Srv srv_; ///< instance of the Dhcp6Srv used during tests
 
-    ConstElementPtr comment_;
+    ConstElementPtr comment_; ///< comment (see @ref isc::config::parseAnswer)
 
-    string valid_iface_;
-    string bogus_iface_;
+    string valid_iface_; ///< name of a valid network interface (present in system)
+    string bogus_iface_; ///< name of a invalid network interface (not present in system)
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -499,6 +499,104 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(1, rcode_);
 }
+
+
+// This test checks if it is possible to define a subnet with an
+// interface-id option defined.
+TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
+
+    const string valid_interface_id = "foobar";
+    const string bogus_interface_id = "blah";
+
+    // There should be at least one interface
+
+    const string config = "{ "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface-id\": \"" + valid_interface_id + "\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 0 (configuration success)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(0, rcode_);
+
+    // Try to get a subnet based on bogus interface-id option
+    OptionBuffer tmp(bogus_interface_id.begin(), bogus_interface_id.end());
+    OptionPtr ifaceid(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    EXPECT_FALSE(subnet);
+
+    // Now try to get subnet for valid interface-id value
+    tmp = OptionBuffer(valid_interface_id.begin(), valid_interface_id.end());
+    ifaceid.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+    subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(ifaceid->equal(subnet->getInterfaceId()));
+}
+
+
+// This test checks if it is not allowed to define global interface
+// parameter.
+TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
+
+    const string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"interface-id\": \"foobar\"," // Not valid. Can be defined in subnet only
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 1 (parse error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+}
+
+// This test checks if it is not possible to define a subnet with an
+// interface (i.e. local subnet) and interface-id (remote subnet) defined.
+TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
+
+    const string config = "{ \"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface\": \"" + valid_iface_ + "\","
+        "    \"interface-id\": \"foobar\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 1 (configuration error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+
+}
+
+
 
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.

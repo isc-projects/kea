@@ -25,7 +25,7 @@
 #include <datasrc/client.h>
 #include <datasrc/factory.h>
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/client_list.h>
@@ -162,7 +162,7 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
         try {
             bool separate_rrs = false;
             if (separate_rrs_obj != NULL) {
-                // store result in local var so we can explicitely check for
+                // store result in local var so we can explicitly check for
                 // -1 error return value
                 int separate_rrs_true = PyObject_IsTrue(separate_rrs_obj);
                 if (separate_rrs_true == 1) {

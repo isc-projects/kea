@@ -177,6 +177,14 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             isc_throw(InvalidOperation, "No allocator selected");
         }
 
+        if (!subnet) {
+            isc_throw(InvalidOperation, "Subnet is required for allocation");
+        }
+
+        if (!duid) {
+            isc_throw(InvalidOperation, "DUID is mandatory for allocation");
+        }
+
         // check if there's existing lease for that subnet/duid/iaid combination.
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(*duid, iaid, subnet->getID());
         if (existing) {
@@ -284,10 +292,17 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
             isc_throw(InvalidOperation, "No allocator selected");
         }
 
+        if (!subnet) {
+            isc_throw(InvalidOperation, "Can't allocate IPv4 address without subnet");
+        }
+
+        if (!hwaddr) {
+            isc_throw(InvalidOperation, "HWAddr must be defined");
+        }
+
         // Check if there's existing lease for that subnet/clientid/hwaddr combination.
         Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
         if (existing) {
-            std::cout << "Got lease using HWADdr" << std::endl;
             // We have a lease already. This is a returning client, probably after
             // its reboot.
             existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
@@ -302,7 +317,6 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         if (clientid) {
             existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
             if (existing) {
-            std::cout << "Got lease using Clientid" << std::endl;
                 // we have a lease already. This is a returning client, probably after
                 // its reboot.
                 existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);

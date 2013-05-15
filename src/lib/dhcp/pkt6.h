@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,15 +30,65 @@ namespace isc {
 
 namespace dhcp {
 
+class Pkt6;
+typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
+
 class Pkt6 {
 public:
-    /// specifes DHCPv6 packet header length
+    /// specifies non-relayed DHCPv6 packet header length (over UDP)
     const static size_t DHCPV6_PKT_HDR_LEN = 4;
+
+    /// specifies relay DHCPv6 packet header length (over UDP)
+    const static size_t DHCPV6_RELAY_HDR_LEN = 34;
 
     /// DHCPv6 transport protocol
     enum DHCPv6Proto {
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
+    };
+
+    /// @brief defines relay search pattern
+    ///
+    /// Defines order in which options are searched in a message that
+    /// passed through mulitple relays. RELAY_SEACH_FROM_CLIENT will
+    /// start search from the relay that was the closest to the client
+    /// (i.e. innermost in the encapsulated message, which also means
+    /// this was the first relay that forwarded packet received by the
+    /// server and this will be the last relay that will handle the
+    /// response that server sent towards the client.).
+    /// RELAY_SEARCH_FROM_SERVER is the opposite. This will be the
+    /// relay closest to the server (i.e. outermost in the encapsulated
+    /// message, which also means it was the last relay that relayed
+    /// the received message and will be the first one to process
+    /// server's response). RELAY_GET_FIRST will try to get option from
+    /// the first relay only (closest to the client), RELAY_GET_LAST will
+    /// try to get option form the the last relay (closest to the server).
+    enum RelaySearchOrder {
+        RELAY_SEARCH_FROM_CLIENT = 1,
+        RELAY_SEARCH_FROM_SERVER = 2,
+        RELAY_GET_FIRST = 3,
+        RELAY_GET_LAST = 4
+    };
+
+    /// @brief structure that describes a single relay information
+    ///
+    /// Client sends messages. Each relay along its way will encapsulate the message.
+    /// This structure represents all information added by a single relay.
+    struct RelayInfo {
+
+        /// @brief default constructor
+        RelayInfo();
+        uint8_t   msg_type_;               ///< message type (RELAY-FORW oro RELAY-REPL)
+        uint8_t   hop_count_;              ///< number of traversed relays (up to 32)
+        isc::asiolink::IOAddress linkaddr_;///< fixed field in relay-forw/relay-reply
+        isc::asiolink::IOAddress peeraddr_;///< fixed field in relay-forw/relay-reply
+
+        /// @brief length of the relay_msg_len
+        /// Used when calculating length during pack/unpack
+        uint16_t  relay_msg_len_;
+
+        /// options received from a specified relay, except relay-msg option
+        isc::dhcp::Option::OptionCollection options_;
     };
 
     /// Constructor, used in replying to a message
@@ -88,7 +138,6 @@ public:
     ///
     /// @return reference to output buffer
     const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
-
 
     /// @brief Returns reference to input buffer.
     ///
@@ -159,6 +208,35 @@ public:
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(uint16_t type);
+
+    /// @brief returns option inserted by relay
+    ///
+    /// Returns an option from specified relay scope (inserted by a given relay
+    /// if this is received packet or to be decapsulated by a given relay if
+    /// this is a transmitted packet). nesting_level specifies which relay
+    /// scope is to be used. 0 is the outermost encapsulation (relay closest to
+    /// the server). pkt->relay_info_.size() - 1 is the innermost encapsulation
+    /// (relay closest to the client).
+    ///
+    /// @throw isc::OutOfRange if nesting level has invalid value.
+    ///
+    /// @param option_code code of the requested option
+    /// @param nesting_level see description above
+    ///
+    /// @return pointer to the option (or NULL if there is no such option)
+    OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
+
+    /// @brief Return first instance of a specified option
+    ///
+    /// When a client's packet traverses multiple relays, each passing relay may
+    /// insert extra options. This method allows the specific instance of a given
+    /// option to be obtained (e.g. closest to the client, closest to the server,
+    /// etc.) See @ref RelaySearchOrder for a detailed description.
+    ///
+    /// @param option_code searched option
+    /// @param order option search order (see @ref RelaySearchOrder)
+    /// @return option pointer (or NULL if no option matches specified criteria)
+    OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
 
     /// @brief Returns all instances of specified type.
     ///
@@ -246,7 +324,7 @@ public:
     /// @brief Returns packet timestamp.
     ///
     /// Returns packet timestamp value updated when
-    /// packet is received or send.
+    /// packet is received or sent.
     ///
     /// @return packet timestamp.
     const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
@@ -259,7 +337,17 @@ public:
     /// @return interface name
     void setIface(const std::string& iface ) { iface_ = iface; };
 
+    /// @brief add information about one traversed relay
+    ///
+    /// This adds information about one traversed relay, i.e.
+    /// one relay-forw or relay-repl level of encapsulation.
+    ///
+    /// @param relay structure with necessary relay information
+    void addRelayInfo(const RelayInfo& relay);
+
     /// collection of options present in this message
+    ///
+    /// @todo: Text mentions protected, but this is really public
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -305,6 +393,23 @@ public:
     ///         be freed by the caller.
     const char* getName() const;
 
+    /// @brief copies relay information from client's packet to server's response
+    ///
+    /// This information is not simply copied over. Some parameter are
+    /// removed, msg_type_is updated (RELAY-FORW => RELAY-REPL), etc.
+    ///
+    /// @param question client's packet
+    void copyRelayInfo(const Pkt6Ptr& question);
+
+    /// relay information
+    ///
+    /// this is a public field. Otherwise we hit one of the two problems:
+    /// we return reference to an internal field (and that reference could
+    /// be potentially used past Pkt6 object lifetime causing badness) or
+    /// we return a copy (which is inefficient and also causes any updates
+    /// to be impossible). Therefore public field is considered the best
+    /// (or least bad) solution.
+    std::vector<RelayInfo> relay_info_;
 protected:
     /// Builds on wire packet for TCP transmission.
     ///
@@ -340,6 +445,44 @@ protected:
     /// @return true, if build was successful
     bool unpackUDP();
 
+    /// @brief unpacks direct (non-relayed) message
+    ///
+    /// This method unpacks specified buffer range as a direct
+    /// (e.g. solicit or request) message. This method is called from
+    /// unpackUDP() when received message is detected to be direct.
+    ///
+    /// @param begin start of the buffer
+    /// @param end end of the buffer
+    /// @return true if parsing was successful and there are no leftover bytes
+    bool unpackMsg(OptionBuffer::const_iterator begin,
+                   OptionBuffer::const_iterator end);
+
+    /// @brief unpacks relayed message (RELAY-FORW or RELAY-REPL)
+    ///
+    /// This method is called from unpackUDP() when received message
+    /// is detected to be relay-message. It goes iteratively over
+    /// all relays (if there are multiple encapsulation levels).
+    ///
+    /// @return true if parsing was successful
+    bool unpackRelayMsg();
+
+    /// @brief calculates overhead introduced in specified relay
+    ///
+    /// It is used when calculating message size and packing message
+    /// @param relay RelayInfo structure that holds information about relay
+    /// @return number of bytes needed to store relay information
+    uint16_t getRelayOverhead(const RelayInfo& relay) const;
+
+    /// @brief calculates overhead for all relays defined for this message
+    /// @return number of bytes needed to store all relay information
+    uint16_t calculateRelaySizes();
+
+    /// @brief calculates size of the message as if it was not relayed at all
+    ///
+    /// This is equal to len() if the message was not relayed.
+    /// @return number of bytes required to store the message
+    uint16_t directLen() const;
+
     /// UDP (usually) or TCP (bulk leasequery or failover)
     DHCPv6Proto proto_;
 
@@ -365,7 +508,7 @@ protected:
     /// @brief interface index
     ///
     /// interface index (each network interface has assigned unique ifindex
-    /// it is functional equvalent of name, but sometimes more useful, e.g.
+    /// it is functional equivalent of name, but sometimes more useful, e.g.
     /// when using crazy systems that allow spaces in interface names
     /// e.g. windows
     int ifindex_;
@@ -395,8 +538,6 @@ protected:
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
 }; // Pkt6 class
-
-typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
 } // isc::dhcp namespace
 

@@ -191,14 +191,31 @@ class ZonemgrRefresh:
         self._set_zone_retry_timer(zone_name_class)
 
     def zone_handle_notify(self, zone_name_class, master):
-        """Handle zone notify"""
-        if (self._zone_not_exist(zone_name_class)):
-            logger.error(ZONEMGR_UNKNOWN_ZONE_NOTIFIED, zone_name_class[0],
-                         zone_name_class[1], master)
-            raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
-                                   "doesn't belong to zonemgr" % zone_name_class)
+        """Handle an incoming NOTIFY message via the Auth module.
+
+        It returns True if the specified zone matches one of the locally
+        configured list of secondary zones; otherwise returns False.
+        In the latter case it assumes the server is a primary (master) of the
+        zone; the Auth module should have rejected the case where it's not
+        even authoritative for the zone.
+
+        Note: to be more robust and less independent from other module's
+        behavior, it's probably safer to check the authority condition here,
+        too.  But right now it uses SQLite3 specific API (to be deprecated),
+        so we rather rely on Auth.
+
+        Parameters:
+        zone_name_class (Name, RRClass): the notified zone name and class.
+        master (str): textual address of the NOTIFY sender.
+
+        """
+        if self._zone_not_exist(zone_name_class):
+            logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_ZONE_NOTIFY_NOT_SECONDARY,
+                         zone_name_class[0], zone_name_class[1], master)
+            return False
         self._set_zone_notifier_master(zone_name_class, master)
         self._set_zone_notify_timer(zone_name_class)
+        return True
 
     def zonemgr_reload_zone(self, zone_name_class):
         """ Reload a zone."""
@@ -423,7 +440,7 @@ class ZonemgrRefresh:
 
         # Ask the thread to stop
         self._running = False
-        self._write_sock.send(b'shutdown') # make self._read_sock readble
+        self._write_sock.send(b'shutdown') # make self._read_sock readable
         # Wait for it to actually finnish
         self._thread.join()
         # Wipe out what we do not need
@@ -630,27 +647,33 @@ class Zonemgr:
             """ Handle Auth notify command"""
             # master is the source sender of the notify message.
             zone_name_class, master = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_NOTIFY, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_NOTIFY,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
-                self._zone_refresh.zone_handle_notify(zone_name_class, master)
-            # Send notification to zonemgr timer thread
-            self._master_socket.send(b" ")# make self._slave_socket readble
+                need_refresh = self._zone_refresh.zone_handle_notify(
+                    zone_name_class, master)
+            if need_refresh:
+                # Send notification to zonemgr timer thread by making
+                # self._slave_socket readable.
+                self._master_socket.send(b" ")
 
         elif command == notify_out.ZONE_NEW_DATA_READY_CMD:
             """ Handle xfrin success command"""
             zone_name_class = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_success(zone_name_class)
-            self._master_socket.send(b" ")# make self._slave_socket readble
+            self._master_socket.send(b" ")# make self._slave_socket readable
 
         elif command == notify_out.ZONE_XFRIN_FAILED:
             """ Handle xfrin fail command"""
             zone_name_class = self._parse_cmd_params(args, command)
-            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_FAILED, zone_name_class[0], zone_name_class[1])
+            logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_FAILED,
+                         zone_name_class[0], zone_name_class[1])
             with self._lock:
                 self._zone_refresh.zone_refresh_fail(zone_name_class)
-            self._master_socket.send(b" ")# make self._slave_socket readble
+            self._master_socket.send(b" ")# make self._slave_socket readable
 
         elif command == "shutdown":
             logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_SHUTDOWN)
@@ -667,7 +690,19 @@ class Zonemgr:
         self.running = True
         try:
             while not self._shutdown_event.is_set():
-                self._module_cc.check_command(False)
+                fileno = self._module_cc.get_socket().fileno()
+                # Wait with select() until there is something to read,
+                # and then read it using a non-blocking read
+                # This may or may not be relevant data for this loop,
+                # but due to the way the zonemgr does threading, we
+                # can't have a blocking read loop here.
+                try:
+                    (reads, _, _) = select.select([fileno], [], [])
+                except select.error as se:
+                    if se.args[0] != errno.EINTR:
+                        raise
+                if fileno in reads:
+                    self._module_cc.check_command(True)
         finally:
             self._module_cc.send_stopping()
 

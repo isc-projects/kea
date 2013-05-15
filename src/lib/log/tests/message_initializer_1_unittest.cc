@@ -77,3 +77,37 @@ TEST(MessageInitializerTest1, MessageTest) {
     EXPECT_EQ(string("global message five"), global.getText("GLOBAL5"));
     EXPECT_EQ(string("global message six"), global.getText("GLOBAL6"));
 }
+
+TEST(MessageInitializerTest1, Duplicates) {
+    // Original set should not have dupes
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+
+    // This just defines 1, but we'll add it a number of times
+    const char* dupe[] = {
+        "DUPE", "dupe",
+        NULL
+    };
+    const MessageInitializer init_message_initializer_unittest_1(dupe);
+    const MessageInitializer init_message_initializer_unittest_2(dupe);
+
+    MessageInitializer::loadDictionary();
+    // Should be a dupe now
+    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+
+    // clear them
+    MessageInitializer::clearDuplicates();
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+
+    // Do it again to make sure, let's explicitly provide false now
+    const MessageInitializer init_message_initializer_unittest_3(dupe);
+    MessageInitializer::loadDictionary(false);
+    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+
+    // Loading with ignore_duplicates=true should result in no (reported)
+    // dupes
+    MessageInitializer::clearDuplicates();
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    const MessageInitializer init_message_initializer_unittest_4(dupe);
+    MessageInitializer::loadDictionary(true);
+    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+}

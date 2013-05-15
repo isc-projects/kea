@@ -177,7 +177,7 @@ datasource, or when an internal error occurs.\n\
 \n\
 The default implementation throws isc.datasrc.NotImplemented. This allows for\n\
 easy and fast deployment of minimal custom data sources, where the\n\
-user/implementator doesn't have to care about anything else but the\n\
+user/implementer doesn't have to care about anything else but the\n\
 actual queries. Also, in some cases, it isn't possible to traverse the\n\
 zone from logic point of view (eg. dynamically generated zone data).\n\
 \n\

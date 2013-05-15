@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "memory_segment_test.h"
-
 #include <exceptions/exceptions.h>
 
 #include <util/memory_segment_local.h>
@@ -25,6 +23,8 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/segment_object_holder.h>
+
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -56,7 +56,7 @@ protected:
     }
     const RRClass zclass_;
     const Name zname1, zname2, zname3;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     ZoneTable* zone_table;
 };
 
@@ -70,9 +70,13 @@ TEST_F(ZoneTableTest, create) {
 }
 
 TEST_F(ZoneTableTest, addZone) {
+    // By default there's no zone contained.
+    EXPECT_EQ(0, zone_table->getZoneCount());
+
     // It doesn't accept empty (NULL) zones
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, zname1, NULL),
                  isc::BadValue);
+    EXPECT_EQ(0, zone_table->getZoneCount()); // count is still 0
 
     SegmentObjectHolder<ZoneData, RRClass> holder1(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
@@ -85,6 +89,7 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(static_cast<const ZoneData*>(NULL), result1.zone_data);
     // It got released by it
     EXPECT_EQ(static_cast<const ZoneData*>(NULL), holder1.get());
+    EXPECT_EQ(1, zone_table->getZoneCount()); // count is now incremented
 
     // Duplicate add doesn't replace the existing data.
     SegmentObjectHolder<ZoneData, RRClass> holder2(
@@ -99,6 +104,7 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(static_cast<const ZoneData*>(NULL), holder2.get());
     // We need to release the old one manually
     ZoneData::destroy(mem_sgmt_, result2.zone_data, zclass_);
+    EXPECT_EQ(1, zone_table->getZoneCount()); // count doesn't change.
 
     SegmentObjectHolder<ZoneData, RRClass> holder3(
         mem_sgmt_, ZoneData::create(mem_sgmt_, Name("EXAMPLE.COM")),
@@ -115,11 +121,13 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname2,
                                   holder4.release()).code);
+    EXPECT_EQ(2, zone_table->getZoneCount());
     SegmentObjectHolder<ZoneData, RRClass> holder5(
         mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname3,
                                   holder5.release()).code);
+    EXPECT_EQ(3, zone_table->getZoneCount());
 
     // Have the memory segment throw an exception in extending the internal
     // tree.  It still shouldn't cause memory leak (which would be detected

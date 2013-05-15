@@ -55,7 +55,7 @@ class ZoneTableSegment;
 class InMemoryClient : public DataSourceClient {
 public:
     ///
-    /// \name Constructors and Destructor.
+    /// \name Constructor.
     ///
     //@{
 
@@ -66,9 +66,6 @@ public:
     /// It never throws an exception otherwise.
     InMemoryClient(boost::shared_ptr<ZoneTableSegment> ztable_segment,
                    isc::dns::RRClass rrclass);
-
-    /// The destructor.
-    ~InMemoryClient();
     //@}
 
     /// \brief Returns the class of the data source client.
@@ -80,68 +77,6 @@ public:
     ///
     /// \return The number of zones stored in the client.
     virtual unsigned int getZoneCount() const;
-
-    /// \brief Load zone from masterfile.
-    ///
-    /// This loads data from masterfile specified by filename. It replaces
-    /// current content. The masterfile parsing ability is kind of limited,
-    /// see isc::dns::masterLoad.
-    ///
-    /// This throws isc::dns::MasterLoadError or AddError if there are
-    /// problems with loading (missing file, malformed data, unexpected
-    /// zone, etc. - see isc::dns::masterLoad for details).
-    ///
-    /// In case of internal problems, NullRRset or AssertError could
-    /// be thrown, but they should not be expected. Exceptions caused by
-    /// allocation may be thrown as well.
-    ///
-    /// If anything is thrown, the previous content is preserved (so it can
-    /// be used to update the data, but if user makes a typo, the old one
-    /// is kept).
-    ///
-    /// \param filename The master file to load.
-    ///
-    /// \todo We may need to split it to some kind of build and commit/abort.
-    ///     This will probably be needed when a better implementation of
-    ///     configuration reloading is written.
-    result::Result load(const isc::dns::Name& zone_name,
-                        const std::string& filename);
-
-    /// \brief Load zone from another data source.
-    ///
-    /// This is similar to the other version, but zone's RRsets are provided
-    /// by an iterator of another data source.  On successful load, the
-    /// internal filename will be cleared.
-    ///
-    /// This implementation assumes the iterator produces combined RRsets,
-    /// that is, there should exactly one RRset for the same owner name and
-    /// RR type.  This means the caller is expected to create the iterator
-    /// with \c separate_rrs being \c false.  This implementation also assumes
-    /// RRsets of different names are not mixed; so if the iterator produces
-    /// an RRset of a different name than that of the previous RRset, that
-    /// previous name must never appear in the subsequent sequence of RRsets.
-    /// Note that the iterator API does not ensure this.  If the underlying
-    /// implementation does not follow it, load() will fail.  Note, however,
-    /// that this whole interface is tentative.  in-memory zone loading will
-    /// have to be revisited fundamentally, and at that point this restriction
-    /// probably won't matter.
-    result::Result load(const isc::dns::Name& zone_name,
-                        ZoneIterator& iterator);
-
-    /// Return the master file name of the zone
-    ///
-    /// This method returns the name of the zone's master file to be loaded.
-    /// The returned string will be an empty unless the data source client has
-    /// successfully loaded the \c zone_name zone from a file before.
-    ///
-    /// This method should normally not throw an exception.  But the creation
-    /// of the return string may involve a resource allocation, and if it
-    /// fails, the corresponding standard exception will be thrown.
-    ///
-    /// \return The name of the zone file corresponding to the zone, or
-    /// an empty string if the client hasn't loaded the \c zone_name
-    /// zone from a file before.
-    const std::string getFileName(const isc::dns::Name& zone_name) const;
 
     /// Returns a \c ZoneFinder result that best matches the given name.
     ///
@@ -180,20 +115,8 @@ public:
                      uint32_t end_serial) const;
 
 private:
-    // Some type aliases
-    typedef DomainTree<std::string> FileNameTree;
-    typedef DomainTreeNode<std::string> FileNameNode;
-
-    // Common process for zone load. Registers filename internally and
-    // adds the ZoneData to the ZoneTable.
-    result::Result loadInternal(const isc::dns::Name& zone_name,
-                                const std::string& filename,
-                                ZoneData* zone_data);
-
     boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     const isc::dns::RRClass rrclass_;
-    unsigned int zone_count_;
-    FileNameTree* file_name_tree_;
 };
 
 } // namespace memory

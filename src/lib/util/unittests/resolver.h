@@ -60,7 +60,7 @@ class TestResolver : public isc::resolve::ResolverInterface {
         PresetAnswers answers_;
     public:
         typedef std::pair<isc::dns::QuestionPtr, CallbackPtr> Request;
-        /// \brief List of requests the tested class sent trough resolve
+        /// \brief List of requests the tested class sent through resolve
         std::vector<Request> requests;
 
         /// \brief Destructor

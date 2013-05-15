@@ -38,6 +38,7 @@ __main__.
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
+from isc.util.address_formatter import AddressFormatter
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -151,7 +152,7 @@ class ProcessInfo:
         """Function used before running a program that needs to run as a
         different user."""
         # First, put us into a separate process group so we don't get
-        # SIGINT signals on Ctrl-C (b10-init will shut everthing down by
+        # SIGINT signals on Ctrl-C (b10-init will shut everything down by
         # other means).
         os.setpgrp()
 
@@ -222,7 +223,7 @@ class Init:
         self.component_config = {}
         # Some time in future, it may happen that a single component has
         # multple processes (like a pipeline-like component). If so happens,
-        # name "components" may be inapropriate. But as the code isn't probably
+        # name "components" may be inappropriate. But as the code isn't probably
         # completely ready for it, we leave it at components for now. We also
         # want to support multiple instances of a single component. If it turns
         # out that we'll have a single component with multiple same processes
@@ -428,7 +429,7 @@ class Init:
                         port)
         else:
             logger.info(BIND10_STARTING_PROCESS_PORT_ADDRESS,
-                        self.curproc, address, port)
+                        self.curproc, AddressFormatter((address, port)))
 
     def log_started(self, pid = None):
         """

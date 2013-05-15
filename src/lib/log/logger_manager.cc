@@ -121,25 +121,26 @@ LoggerManager::init(const std::string& root, isc::log::Severity severity,
 
     // Check if there were any duplicate message IDs in the default dictionary
     // and if so, log them.  Log using the logging facility logger.
-    vector<string>& duplicates = MessageInitializer::getDuplicates();
+    const vector<string>& duplicates = MessageInitializer::getDuplicates();
     if (!duplicates.empty()) {
 
-        // There are duplicates present.  This will be listed in alphabetic
-        // order of message ID, so they need to be sorted.  This list itself may
-        // contain duplicates; if so, the message ID is listed as many times as
+        // There are duplicates present. This list itself may contain
+        // duplicates; if so, the message ID is listed as many times as
         // there are duplicates.
-        sort(duplicates.begin(), duplicates.end());
-        for (vector<string>::iterator i = duplicates.begin();
+        for (vector<string>::const_iterator i = duplicates.begin();
              i != duplicates.end(); ++i) {
             LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
         }
-
+        MessageInitializer::clearDuplicates();
     }
 
     // Replace any messages with local ones (if given)
     if (file) {
         readLocalMessageFile(file);
     }
+
+    // Ensure that the mutex is constructed and ready at this point.
+    (void) getMutex();
 }
 
 
@@ -192,6 +193,13 @@ void
 LoggerManager::reset() {
     setRootLoggerName(initRootName());
     LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
+}
+
+isc::util::thread::Mutex&
+LoggerManager::getMutex() {
+    static isc::util::thread::Mutex mutex;
+
+    return (mutex);
 }
 
 } // namespace log

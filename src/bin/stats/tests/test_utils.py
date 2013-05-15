@@ -20,13 +20,11 @@ Utilities and mock modules for unittests of statistics modules
 import os
 import io
 import time
-import sys
 import threading
-import tempfile
 import json
 import signal
+import socket
 
-import msgq
 import isc.config.cfgmgr
 import stats
 import stats_httpd
@@ -48,21 +46,8 @@ class SignalHandler():
         signal.signal(signal.SIGALRM, self.orig_handler)
 
     def sig_handler(self, signal, frame):
-        """envokes unittest.TestCase.fail as a signal handler"""
+        """invokes unittest.TestCase.fail as a signal handler"""
         self.fail_handler("A deadlock might be detected")
-
-def send_command(command_name, module_name, params=None):
-    cc_session = isc.cc.Session()
-    command = isc.config.ccsession.create_command(command_name, params)
-    seq = cc_session.group_sendmsg(command, module_name)
-    try:
-        (answer, env) = cc_session.group_recvmsg(False, seq)
-        if answer:
-            return isc.config.ccsession.parse_answer(answer)
-    except isc.cc.SessionTimeout:
-        pass
-    finally:
-        cc_session.close()
 
 class ThreadingServerManager:
     def __init__(self, server, *args, **kwargs):
@@ -91,45 +76,7 @@ class ThreadingServerManager:
         else:
             self.server._thread.join(0) # timeout is 0
 
-class MockMsgq:
-    def __init__(self):
-        self._started = threading.Event()
-        self.msgq = msgq.MsgQ(verbose=False)
-        result = self.msgq.setup()
-        if result:
-            sys.exit("Error on Msgq startup: %s" % result)
-
-    def run(self):
-        self._started.set()
-        try:
-            self.msgq.run()
-        finally:
-            # Make sure all the sockets, etc, are removed once it stops.
-            self.msgq.shutdown()
-
-    def shutdown(self):
-        # Ask it to terminate nicely
-        self.msgq.stop()
-
-class MockCfgmgr:
-    def __init__(self):
-        self._started = threading.Event()
-        self.cfgmgr = isc.config.cfgmgr.ConfigManager(
-            os.environ['CONFIG_TESTDATA_PATH'], "b10-config.db")
-        self.cfgmgr.read_config()
-
-    def run(self):
-        self._started.set()
-        try:
-            self.cfgmgr.run()
-        except Exception:
-            pass
-
-    def shutdown(self):
-        self.cfgmgr.running = False
-
-class MockInit:
-    spec_str = """\
+INIT_SPEC_STR = """\
 {
   "module_spec": {
     "module_name": "Init",
@@ -221,56 +168,12 @@ class MockInit:
   }
 }
 """
-    _BASETIME = CONST_BASETIME
 
-    def __init__(self):
-        self._started = threading.Event()
-        self.running = False
-        self.spec_file = io.StringIO(self.spec_str)
-        # create ModuleCCSession object
-        self.mccs = isc.config.ModuleCCSession(
-            self.spec_file,
-            self.config_handler,
-            self.command_handler)
-        self.spec_file.close()
-        self.cc_session = self.mccs._session
-        self.got_command_name = ''
-        self.pid_list = [[ 9999, "b10-auth", "Auth" ],
-                         [ 9998, "b10-auth-2", "Auth" ]]
-        self.statistics_data = {
-            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-            }
-
-    def run(self):
-        self.mccs.start()
-        self.running = True
-        self._started.set()
-        try:
-            while self.running:
-                self.mccs.check_command(False)
-        except Exception:
-            pass
-
-    def shutdown(self):
-        self.running = False
-
-    def config_handler(self, new_config):
-        return isc.config.create_answer(0)
-
-    def command_handler(self, command, *args, **kwargs):
-        self._started.set()
-        self.got_command_name = command
-        sdata = self.statistics_data
-        if command == 'getstats':
-            return isc.config.create_answer(0, sdata)
-        elif command == 'show_processes':
-            # Return dummy pids
-            return isc.config.create_answer(
-                0, self.pid_list)
-        return isc.config.create_answer(1, "Unknown Command")
-
-class MockAuth:
-    spec_str = """\
+# Note: this is derived of the spec for the DNS authoritative server, but
+# for the purpose of this test, it's completely irrelevant to DNS.
+# Some statisittics specs do not make sense for practical sense but used
+# just cover various types of statistics data (list, map/dict, etc).
+AUTH_SPEC_STR = """\
 {
   "module_spec": {
     "module_name": "Auth",
@@ -392,68 +295,6 @@ class MockAuth:
   }
 }
 """
-    def __init__(self):
-        self._started = threading.Event()
-        self.running = False
-        self.spec_file = io.StringIO(self.spec_str)
-        # create ModuleCCSession object
-        self.mccs = isc.config.ModuleCCSession(
-            self.spec_file,
-            self.config_handler,
-            self.command_handler)
-        self.spec_file.close()
-        self.cc_session = self.mccs._session
-        self.got_command_name = ''
-        self.queries_tcp = 3
-        self.queries_udp = 2
-        self.queries_per_zone = [{
-                'zonename': 'test1.example',
-                'queries.tcp': 5,
-                'queries.udp': 4
-                }]
-        self.nds_queries_per_zone = {
-            'test10.example': {
-                'queries.tcp': 5,
-                'queries.udp': 4
-                }
-            }
-
-    def run(self):
-        self.mccs.start()
-        self.running = True
-        self._started.set()
-        try:
-            while self.running:
-                self.mccs.check_command(False)
-        except Exception:
-            pass
-
-    def shutdown(self):
-        self.running = False
-
-    def config_handler(self, new_config):
-        return isc.config.create_answer(0)
-
-    def command_handler(self, command, *args, **kwargs):
-        self.got_command_name = command
-        sdata = { 'queries.tcp': self.queries_tcp,
-                  'queries.udp': self.queries_udp,
-                  'queries.perzone' : self.queries_per_zone,
-                  'nds_queries.perzone' : {
-                    'test10.example': {
-                    'queries.tcp': \
-                      isc.cc.data.find(
-                        self.nds_queries_per_zone,
-                        'test10.example/queries.tcp')
-                    }
-                  },
-                  'nds_queries.perzone/test10.example/queries.udp' :
-                      isc.cc.data.find(self.nds_queries_per_zone,
-                                       'test10.example/queries.udp')
-                }
-        if command == 'getstats':
-            return isc.config.create_answer(0, sdata)
-        return isc.config.create_answer(1, "Unknown Command")
 
 class MyModuleCCSession(isc.config.ConfigData):
     """Mocked ModuleCCSession class.
@@ -468,6 +309,7 @@ class MyModuleCCSession(isc.config.ConfigData):
         isc.config.ConfigData.__init__(self, module_spec)
         self._session = self
         self.stopped = False
+        self.closed = False
         self.lname = 'mock_mod_ccs'
 
     def start(self):
@@ -476,10 +318,13 @@ class MyModuleCCSession(isc.config.ConfigData):
     def send_stopping(self):
         self.stopped = True     # just record it's called to inspect it later
 
-class SimpleStats(stats.Stats):
+    def close(self):
+        self.closed = True
+
+class MyStats(stats.Stats):
     """A faked Stats class for unit tests.
 
-    This class inherits most of the real Stats class, but replace the
+    This class inherits most of the real Stats class, but replaces the
     ModuleCCSession with a fake one so we can avoid network I/O in tests,
     and can also inspect or tweak messages via the session more easily.
     This class also maintains some faked module information and statistics
@@ -500,9 +345,9 @@ class SimpleStats(stats.Stats):
         # the default answer from faked recvmsg if _answers is empty
         self.__default_answer = isc.config.ccsession.create_answer(
             0, {'Init':
-                    json.loads(MockInit.spec_str)['module_spec']['statistics'],
+                    json.loads(INIT_SPEC_STR)['module_spec']['statistics'],
                 'Auth':
-                    json.loads(MockAuth.spec_str)['module_spec']['statistics']
+                    json.loads(AUTH_SPEC_STR)['module_spec']['statistics']
                 })
         # setup faked auth statistics
         self.__init_auth_stat()
@@ -530,24 +375,24 @@ class SimpleStats(stats.Stats):
     def __init_auth_stat(self):
         self._queries_tcp = 3
         self._queries_udp = 2
-        self.__queries_per_zone = [{
+        self._queries_per_zone = [{
                 'zonename': 'test1.example', 'queries.tcp': 5, 'queries.udp': 4
                 }]
-        self.__nds_queries_per_zone = \
+        self._nds_queries_per_zone = \
             { 'test10.example': { 'queries.tcp': 5, 'queries.udp': 4 } }
         self._auth_sdata = \
             { 'queries.tcp': self._queries_tcp,
               'queries.udp': self._queries_udp,
-              'queries.perzone' : self.__queries_per_zone,
+              'queries.perzone' : self._queries_per_zone,
               'nds_queries.perzone' : {
                 'test10.example': {
                     'queries.tcp': isc.cc.data.find(
-                        self.__nds_queries_per_zone,
+                        self._nds_queries_per_zone,
                         'test10.example/queries.tcp')
                     }
                 },
               'nds_queries.perzone/test10.example/queries.udp' :
-                  isc.cc.data.find(self.__nds_queries_per_zone,
+                  isc.cc.data.find(self._nds_queries_per_zone,
                                    'test10.example/queries.udp')
               }
 
@@ -589,32 +434,62 @@ class SimpleStats(stats.Stats):
         answer, _ = self.__group_recvmsg(None, None)
         return isc.config.ccsession.parse_answer(answer)[1]
 
-class MyStats(stats.Stats):
-
-    stats._BASETIME = CONST_BASETIME
-    stats.get_timestamp = lambda: time.mktime(CONST_BASETIME)
-    stats.get_datetime = lambda x=None: time.strftime("%Y-%m-%dT%H:%M:%SZ", CONST_BASETIME)
-
-    def __init__(self):
-        self._started = threading.Event()
-        stats.Stats.__init__(self)
-
-    def run(self):
-        self._started.set()
-        try:
-            self.start()
-        except Exception:
-            pass
-
-    def shutdown(self):
-        self.command_shutdown()
-
 class MyStatsHttpd(stats_httpd.StatsHttpd):
+    """A faked StatsHttpd class for unit tests.
+
+    This class inherits most of the real StatsHttpd class, but replaces the
+    ModuleCCSession with a fake one so we can avoid network I/O in tests,
+    and can also inspect or tweak messages via the session more easily.
+
+    """
+
     ORIG_SPECFILE_LOCATION = stats_httpd.SPECFILE_LOCATION
     def __init__(self, *server_address):
         self._started = threading.Event()
+        self.__dummy_sock = None # see below
+
+        # Prepare commonly used statistics schema and data requested in
+        # stats-httpd tests.  For the purpose of these tests, the content of
+        # statistics data is not so important (they don't test whther the
+        # counter values are correct, etc), so hardcoding the common case
+        # should suffice.  Note also that some of the statistics values and
+        # specs don't make sense in practice (see also comments on
+        # AUTH_SPEC_STR).
+        with open(stats.SPECFILE_LOCATION) as f:
+            stat_spec_str = f.read()
+        self.__default_spec_answer = {
+            'Init': json.loads(INIT_SPEC_STR)['module_spec']['statistics'],
+            'Auth': json.loads(AUTH_SPEC_STR)['module_spec']['statistics'],
+            'Stats': json.loads(stat_spec_str)['module_spec']['statistics']
+            }
+        self.__default_data_answer = {
+            'Init': {'boot_time':
+                         time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME)},
+            'Stats': {'last_update_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'report_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'lname': 'test-lname',
+                      'boot_time':
+                          time.strftime('%Y-%m-%dT%H:%M:%SZ', CONST_BASETIME),
+                      'timestamp': time.mktime(CONST_BASETIME)},
+            'Auth': {'queries.udp': 4, 'queries.tcp': 6,
+                     'queries.perzone': [
+                    {'queries.udp': 8, 'queries.tcp': 10,
+                     'zonename': 'test1.example'},
+                    {'queries.udp': 6, 'queries.tcp': 8,
+                     'zonename': 'test2.example'}],
+                     'nds_queries.perzone': {
+                    'test10.example': {'queries.udp': 8, 'queries.tcp': 10},
+                    'test20.example': {'queries.udp': 6, 'queries.tcp': 8}}}}
+
+        # if set, use them as faked response to rpc_call (see below).
+        # it's a list of answer data of rpc_call.
+        self._rpc_answers = []
+
         if server_address:
-            stats_httpd.SPECFILE_LOCATION = self.create_specfile(*server_address)
+            stats_httpd.SPECFILE_LOCATION = \
+                self.__create_specfile(*server_address)
             try:
                 stats_httpd.StatsHttpd.__init__(self)
             finally:
@@ -624,7 +499,51 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
         else:
             stats_httpd.StatsHttpd.__init__(self)
 
-    def create_specfile(self, *server_address):
+        # replace some (faked) ModuleCCSession methods so we can inspect/fake.
+        # in order to satisfy select.select() we need some real socket.  We
+        # use an unusable AF_UNIX socket; we won't actually use it for
+        # communication.
+        self.cc_session.rpc_call = self.__rpc_call
+        self.__dummy_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.mccs.get_socket = lambda: self.__dummy_sock
+
+    def open_mccs(self):
+        self.mccs = MyModuleCCSession(stats_httpd.SPECFILE_LOCATION,
+                                      self.config_handler,
+                                      self.command_handler)
+        self.cc_session = self.mccs._session
+        self.mccs.start = self.load_config # force reload
+
+    def close_mccs(self):
+        super().close_mccs()
+        if self.__dummy_sock is not None:
+            self.__dummy_sock.close()
+            self.__dummy_sock = None
+
+    def __rpc_call(self, command, group, params={}):
+        """Faked ModuleCCSession.rpc_call for tests.
+
+        The stats httpd module only issues two commands: 'showschema' and
+        'show'.  In most cases we can simply use the prepared default
+        answer.  If customization is needed, the test case can add a
+        faked answer by appending it to _rpc_answers.  If the added object
+        is of Exception type this method raises it instead of return it,
+        emulating the situation where rpc_call() results in an exception.
+
+        """
+        if len(self._rpc_answers) == 0:
+            if command == 'showschema':
+                return self.__default_spec_answer
+            elif command == 'show':
+                return self.__default_data_answer
+            assert False, "unexpected command for faked rpc_call: " + command
+
+        answer = self._rpc_answers.pop(0)
+        if issubclass(type(answer), Exception):
+            raise answer
+        return answer
+
+    def __create_specfile(self, *server_address):
         spec_io = open(self.ORIG_SPECFILE_LOCATION)
         try:
             spec = json.load(spec_io)
@@ -633,7 +552,8 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
             for i in range(len(config)):
                 if config[i]['item_name'] == 'listen_on':
                     config[i]['item_default'] = \
-                        [ dict(address=a[0], port=a[1]) for a in server_address ]
+                        [ dict(address=a[0], port=a[1])
+                          for a in server_address ]
                     break
             return io.StringIO(json.dumps(spec))
         finally:
@@ -641,53 +561,4 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
 
     def run(self):
         self._started.set()
-        try:
-            self.start()
-        except Exception:
-            pass
-
-    def shutdown(self):
-        self.command_handler('shutdown', None)
-
-class BaseModules:
-    def __init__(self):
-        # MockMsgq
-        self.msgq = ThreadingServerManager(MockMsgq)
-        self.msgq.run()
-        # Check whether msgq is ready. A SessionTimeout is raised here if not.
-        isc.cc.session.Session().close()
-        # MockCfgmgr
-        self.cfgmgr = ThreadingServerManager(MockCfgmgr)
-        self.cfgmgr.run()
-        # MockInit
-        self.b10_init = ThreadingServerManager(MockInit)
-        self.b10_init.run()
-        # MockAuth
-        self.auth = ThreadingServerManager(MockAuth)
-        self.auth.run()
-        self.auth2 = ThreadingServerManager(MockAuth)
-        self.auth2.run()
-
-
-    def shutdown(self):
-        # MockMsgq. We need to wait (blocking) for it, otherwise it'll wipe out
-        # a socket for another test during its shutdown.
-        self.msgq.shutdown(True)
-
-        # We also wait for the others, but these are just so we don't create
-        # too many threads in parallel.
-
-        # MockAuth
-        self.auth2.shutdown(True)
-        self.auth.shutdown(True)
-        # MockInit
-        self.b10_init.shutdown(True)
-        # MockCfgmgr
-        self.cfgmgr.shutdown(True)
-        # remove the unused socket file
-        socket_file = self.msgq.server.msgq.socket_file
-        try:
-            if os.path.exists(socket_file):
-                os.remove(socket_file)
-        except OSError:
-            pass
+        self.start()

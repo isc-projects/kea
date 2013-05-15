@@ -53,10 +53,32 @@ protected:
         // upon creation of a ModuleCCSession, the class
 
         // sends its specification to the config manager.
-        // it expects an ok answer back, so everytime we
+        // it expects an ok answer back, so every time we
         // create a ModuleCCSession, we must set an initial
         // ok answer.
         session.getMessages()->add(createAnswer());
+    }
+    ConstElementPtr rpcCheck(const std::string& reply) {
+        ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL,
+                             false, false);
+        // Prepare the answer beforehand, it'll block until it gets one
+        const ConstElementPtr reply_el(el(reply));
+        session.getMessages()->add(reply_el);
+        const ConstElementPtr
+            result(mccs.rpcCall("test", "Spec2",
+                                el("{\"param1\": \"Param 1\","
+                                   "\"param2\": \"Param 2\"}")));
+        const ConstElementPtr
+            request(el("[\"Spec2\", \"*\", {"
+                       "  \"command\": [\"test\", {"
+                       "    \"param1\": \"Param 1\","
+                       "    \"param2\": \"Param 2\""
+                       "}]}, -1, true]"));
+        // The 0th one is from the initialization, to ConfigManager.
+        // our is the 1st.
+        EXPECT_TRUE(request->equals(*session.getMsgQueue()->get(1))) <<
+            session.getMsgQueue()->get(1)->toWire();
+        return (result);
     }
     ~CCSessionTest() {
         isc::log::setRootLoggerName(root_name);
@@ -64,6 +86,36 @@ protected:
     FakeSession session;
     const std::string root_name;
 };
+
+// Test we can send an RPC (command) and get an answer. The answer is success
+// in this case.
+TEST_F(CCSessionTest, rpcCallSuccess) {
+    const ConstElementPtr result =
+        rpcCheck("{\"result\": [0, {\"Hello\": \"a\"}]}");
+    EXPECT_TRUE(el("{\"Hello\": \"a\"}")->equals(*result));
+}
+
+// Test success of RPC, but the answer is empty (eg. a void function on the
+// remote side).
+TEST_F(CCSessionTest, rpcCallSuccessNone) {
+    EXPECT_FALSE(rpcCheck("{\"result\": [0]}"));
+}
+
+// Test it successfully raises CCSessionError if the answer is malformed.
+TEST_F(CCSessionTest, rpcCallMalformedAnswer) {
+    EXPECT_THROW(rpcCheck("[\"Nonsense\"]"), CCSessionError);
+}
+
+// Test it raises exception when the remote side reports an error
+TEST_F(CCSessionTest, rpcCallError) {
+    EXPECT_THROW(rpcCheck("{\"result\": [1, \"Error\"]}"), RPCError);
+}
+
+// Test it raises exception when the remote side doesn't exist
+TEST_F(CCSessionTest, rpcNoRecpt) {
+    EXPECT_THROW(rpcCheck("{\"result\": [-1, \"Error\"]}"),
+                 RPCRecipientMissing);
+}
 
 TEST_F(CCSessionTest, createAnswer) {
     ConstElementPtr answer;

@@ -205,7 +205,7 @@ public:
         // is consistent with an option definition.
         checkDataType<T>(index);
         // When we created the buffer we have checked that it has a
-        // valid size so this condition here should be always fulfiled.
+        // valid size so this condition here should be always fulfilled.
         assert(buffers_[index].size() == OptionDataTypeTraits<T>::len);
         // Read an integer value.
         return (OptionDataTypeUtil::readInt<T>(buffers_[index]));

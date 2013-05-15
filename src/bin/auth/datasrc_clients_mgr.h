@@ -25,7 +25,7 @@
 
 #include <cc/data.h>
 
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client_list.h>
 #include <datasrc/memory/zone_writer.h>
 
@@ -639,12 +639,21 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE)
             .arg(origin).arg(rrclass);
         break;                  // return NULL below
+    case datasrc::ConfigurableClientList::CACHE_NOT_WRITABLE:
+        // This is an internal error. Auth server should skip reloading zones
+        // on non writable caches.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is not writable");
     case datasrc::ConfigurableClientList::CACHE_DISABLED:
         // This is an internal error. Auth server must have the cache
         // enabled.
         isc_throw(InternalCommandError, "failed to load zone " << origin
                   << "/" << rrclass << ": internal failure, in-memory cache "
                   "is somehow disabled");
+    default:                    // other cases can really never happen
+        isc_throw(Unexpected, "Impossible result in getting data source "
+                  "ZoneWriter: " << writerpair.first);
     }
 
     return (boost::shared_ptr<datasrc::memory::ZoneWriter>());

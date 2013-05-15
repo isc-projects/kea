@@ -26,6 +26,8 @@
 #include <dns/rdataclass.h>
 #include <dns/tsig.h>
 
+#include <cc/proto_defs.h>
+
 #include <server_common/portconfig.h>
 #include <server_common/keyring.h>
 
@@ -76,7 +78,6 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using namespace isc::auth::unittest;
-using isc::datasrc::memory::ZoneTableSegment;
 using isc::UnitTestUtil;
 using boost::scoped_ptr;
 using isc::auth::statistics::Counters;
@@ -242,6 +243,60 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     data.assign(static_cast<const uint8_t*>(renderer.getData()),
                 static_cast<const uint8_t*>(renderer.getData()) +
                 renderer.getLength());
+}
+
+void
+installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
+    // For now, we use explicit swap than reconfigure() because the latter
+    // involves a separate thread and cannot guarantee the new config is
+    // available for the subsequent test.
+    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
+}
+
+void
+updateDatabase(AuthSrv& server, const char* params) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "    \"type\": \"sqlite3\","
+        "    \"params\": " + string(params) +
+        "}]}"));
+    installDataSrcClientLists(server, configureDataSource(config));
+}
+
+void
+updateInMemory(AuthSrv& server, const char* origin, const char* filename,
+               bool with_static = true)
+{
+    string spec_txt = "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
+        "   },"
+        "   \"cache-enable\": true"
+        "}]";
+    if (with_static) {
+        spec_txt += ", \"CH\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {\"BIND\": \"" + string(STATIC_DSRC_FILE) + "\"}"
+            "}]";
+    }
+    spec_txt += "}";
+
+    const ConstElementPtr config(Element::fromJSON(spec_txt));
+    installDataSrcClientLists(server, configureDataSource(config));
+}
+
+void
+updateBuiltin(AuthSrv& server) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"CH\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {\"BIND\": \"" + string(STATIC_DSRC_FILE) + "\"}"
+        "}]}"));
+    installDataSrcClientLists(server, configureDataSource(config));
 }
 
 // We did not configure any client lists. Therefore it should be REFUSED
@@ -647,8 +702,10 @@ TEST_F(AuthSrvTest, IXFRDisconnectFail) {
 }
 
 TEST_F(AuthSrvTest, notify) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -664,7 +721,7 @@ TEST_F(AuthSrvTest, notify) {
                   stringValue());
     ConstElementPtr notify_args =
         notify_session.getSentMessage()->get("command")->get(1);
-    EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
+    EXPECT_EQ("example.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
     EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
@@ -675,7 +732,7 @@ TEST_F(AuthSrvTest, notify) {
 
     // The question must be identical to that of the received notify
     ConstQuestionPtr question = *parse_message->beginQuestion();
-    EXPECT_EQ(Name("example.com"), question->getName());
+    EXPECT_EQ(Name("example"), question->getName());
     EXPECT_EQ(RRClass::IN(), question->getClass());
     EXPECT_EQ(RRType::SOA(), question->getType());
 
@@ -691,9 +748,12 @@ TEST_F(AuthSrvTest, notify) {
 }
 
 TEST_F(AuthSrvTest, notifyForCHClass) {
-    // Same as the previous test, but for the CH RRClass.
+    // Same as the previous test, but for the CH RRClass (so we install the
+    // builtin (static) data source.
+    updateBuiltin(server);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("bind"),
                                        RRClass::CH(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -773,9 +833,11 @@ TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
 }
 
 TEST_F(AuthSrvTest, notifyWithoutAA) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     // implicitly leave the AA bit off.  our implementation will accept it.
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -786,8 +848,10 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
 }
 
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
@@ -799,11 +863,15 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest, notifyWithoutSession) {
-    server.setXfrinSession(NULL);
+TEST_F(AuthSrvTest, notifyWithoutRecipient) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    // Emulate the case where msgq tells auth there's no Zonemgr module.
+    notify_session.setMessage(isc::config::createAnswer(CC_REPLY_NO_RECPT,
+                                                        "no recipient"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -812,14 +880,19 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
     // happens.
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
+    // want_answer should have been set to true so auth can catch it if zonemgr
+    // is not running.
+    EXPECT_TRUE(notify_session.wasAnswerWanted());
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, notifySendFail) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.disableSend();
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -830,10 +903,12 @@ TEST_F(AuthSrvTest, notifySendFail) {
 }
 
 TEST_F(AuthSrvTest, notifyReceiveFail) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.disableReceive();
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -843,10 +918,12 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
 }
 
 TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.setMessage(Element::fromJSON("{\"foo\": 1}"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -856,11 +933,13 @@ TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
 }
 
 TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
     notify_session.setMessage(
         Element::fromJSON("{\"result\": [1, \"FAIL\"]}"));
 
     UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
-                                       default_qid, Name("example.com"),
+                                       default_qid, Name("example"),
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
@@ -869,58 +948,55 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
-void
-installDataSrcClientLists(AuthSrv& server, ClientListMapPtr lists) {
-    // For now, we use explicit swap than reconfigure() because the latter
-    // involves a separate thread and cannot guarantee the new config is
-    // available for the subsequent test.
-    server.getDataSrcClientsMgr().setDataSrcClientLists(lists);
+TEST_F(AuthSrvTest, notifyNotAuth) {
+    // If the server doesn't have authority of the specified zone in NOTIFY,
+    // it will return NOTAUTH
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG /* no AA */, 1, 0, 0, 0);
 }
 
-void
-updateDatabase(AuthSrv& server, const char* params) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"IN\": [{"
-        "    \"type\": \"sqlite3\","
-        "    \"params\": " + string(params) +
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
+TEST_F(AuthSrvTest, notifyNotAuthSubDomain) {
+    // Similar to the previous case, but checking partial match doesn't confuse
+    // the processing.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
+
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("child.example"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-void
-updateInMemory(AuthSrv& server, const char* origin, const char* filename) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"IN\": [{"
-        "   \"type\": \"MasterFiles\","
-        "   \"params\": {"
-        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
-        "   },"
-        "   \"cache-enable\": true"
-        "}],"
-        "\"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
-}
+TEST_F(AuthSrvTest, notifyNotAuthNoClass) {
+    // Likewise, and there's not even a data source in the specified class.
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false);
 
-void
-updateBuiltin(AuthSrv& server) {
-    const ConstElementPtr config(Element::fromJSON("{"
-        "\"CH\": [{"
-        "   \"type\": \"static\","
-        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
-        "}]}"));
-    installDataSrcClientLists(server, configureDataSource(config));
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(),
+                                       default_qid, Name("example"),
+                                       RRClass::CH(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
 // Try giving the server a TSIG signed request and see it can anwer signed as
 // well
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_TSIGSigned) { // Needs builtin
-#else
 TEST_F(AuthSrvTest, TSIGSigned) {
-#endif
     // Prepare key, the client message, etc
     updateBuiltin(server);
     const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
@@ -978,11 +1054,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
 // authoritative only server in terms of performance, and it's quite likely
 // we need to drop it for the authoritative server implementation.
 // At that point we can drop this test, too.
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) {
-#else
 TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
-#endif
     updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
@@ -1010,11 +1082,7 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
 
 // The most primitive check: checking the result of the processMessage()
 // method
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_builtInQuery) {
-#else
 TEST_F(AuthSrvTest, builtInQuery) {
-#endif
     updateBuiltin(server);
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("VERSION.BIND."),
@@ -1031,11 +1099,7 @@ TEST_F(AuthSrvTest, builtInQuery) {
 }
 
 // Same type of test as builtInQueryViaDNSServer but for an error response.
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
-#else
-TEST_F(AuthSrvTest, iqueryViaDNSServer) { // Needs builtin
-#endif
+TEST_F(AuthSrvTest, iqueryViaDNSServer) {
     updateBuiltin(server);
     createDataFromFile("iquery_fromWire.wire");
     (*server.getDNSLookupProvider())(*io_message, parse_message,
@@ -1146,11 +1210,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientNoDNSSEC) {
-#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
-#endif
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
@@ -1166,11 +1226,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-#ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientDNSSEC) {
-#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
-#endif
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
@@ -1185,14 +1241,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 2, 3, 3);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_chQueryWithInMemoryClient
-#else
-       chQueryWithInMemoryClient
-#endif
-    )
-{
+TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
     // Set up the in-memory
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
@@ -1665,9 +1714,7 @@ public:
              real_list, ThrowWhen throw_when, bool isc_exception,
              ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         ConfigurableClientList(RRClass::IN()),
-        real_(real_list),
-        config_(Element::fromJSON("{}")),
-        ztable_segment_(ZoneTableSegment::create(*config_, RRClass::IN()))
+        real_(real_list)
     {
         BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
              const isc::datasrc::DataSourceClientPtr
@@ -1679,13 +1726,13 @@ public:
              data_sources_.push_back(
                  DataSourceInfo(client.get(),
                                 isc::datasrc::DataSourceClientContainerPtr(),
-                                false, RRClass::IN(), ztable_segment_));
+                                boost::shared_ptr<
+                                isc::datasrc::internal::CacheConfig>(),
+                                RRClass::IN(), ""));
         }
     }
 private:
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
-    const ConstElementPtr config_;
-    boost::shared_ptr<ZoneTableSegment> ztable_segment_;
     vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 
@@ -1695,14 +1742,7 @@ private:
 //
 // Set the proxies to never throw, this should have the same result as
 // queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientProxy
-#else
-       queryWithInMemoryClientProxy
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
     boost::shared_ptr<isc::datasrc::ConfigurableClientList> list;
@@ -1749,14 +1789,7 @@ setupThrow(AuthSrv& server, ThrowWhen throw_when, bool isc_exception,
     mgr.setDataSrcClientLists(lists);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithThrowingProxyServfails
-#else
-       queryWithThrowingProxyServfails
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
     // Test the common cases, all of which should simply return SERVFAIL
     // Use THROW_NEVER as end marker
     ThrowWhen throws[] = { THROW_AT_FIND_ZONE,
@@ -1780,14 +1813,7 @@ TEST_F(AuthSrvTest,
 
 // Throw isc::Exception in getClass(). (Currently?) getClass is not called
 // in the processMessage path, so this should result in a normal answer
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientProxyGetClass
-#else
-       queryWithInMemoryClientProxyGetClass
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     setupThrow(server, THROW_AT_GET_CLASS, true);
 
@@ -1800,14 +1826,7 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithThrowingInToWire
-#else
-       queryWithThrowingInToWire
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
     // Set up a faked data source.  It will return an empty RRset for the
     // query.
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),

@@ -91,7 +91,7 @@ class DNSTCPSendBuffer:
           A Python binary object that corresponds to a part of the TCP
           DNS message data starting at the specified position.  It may
           or may not contain all remaining data from that position.
-          If the given position is beyond the end of the enrire data,
+          If the given position is beyond the end of the entire data,
           None will be returned.
 
         '''
@@ -267,7 +267,7 @@ class DNSTCPContext:
         when this object is deallocated, but Python seems to expect socket
         objects should be explicitly closed before deallocation.  So it's
         generally advisable for the user of this object to call this method
-        explictily when it doesn't need the context.
+        explicitly when it doesn't need the context.
 
         This method can be called more than once or can be called after
         other I/O related methods have returned CLOSED; it's compatible
@@ -277,4 +277,4 @@ class DNSTCPContext:
         if self.__sock is None:
             return
         self.__sock.close()
-        self.__sock = None      # prevent furhter operation
+        self.__sock = None      # prevent further operation

@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -230,7 +230,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // 1 byte larger than the size of the string
                     // representation of this FQDN.
                     data_size = fqdn.size() + 1;
-                } else {
+                } else if ( (*field == OPT_BINARY_TYPE) || (*field == OPT_STRING_TYPE) ) {
                     // In other case we are dealing with string or binary value
                     // which size can't be determined. Thus we consume the
                     // remaining part of the buffer for it. Note that variable
@@ -238,14 +238,11 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // that the validate() function in OptionDefinition object
                     // should have checked wheter it is a case for this option.
                     data_size = std::distance(data, data_buf.end());
-                }
-                if (data_size == 0) {
+                } else {
                     // If we reached the end of buffer we assume that this option is
                     // truncated because there is no remaining data to initialize
                     // an option field.
-                    if (data_size == 0) {
-                        isc_throw(OutOfRange, "option buffer truncated");
-                    }
+                    isc_throw(OutOfRange, "option buffer truncated");
                 }
             } else {
                 // Our data field requires that there is a certain chunk of

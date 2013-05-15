@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2011  Internet Systems Consortium.
+# Copyright (C) 2009-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@ import shutil
 import socket
 import sys
 import io
+from datetime import datetime
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.testutils.rrset_utils import *
@@ -717,7 +718,7 @@ class TestXfrinConnection(unittest.TestCase):
         self.sock_map = {}
         self.conn = MockXfrinConnection(self.sock_map, TEST_ZONE_NAME,
                                         TEST_RRCLASS, None, threading.Event(),
-                                        TEST_MASTER_IPV4_ADDRINFO)
+                                        self._master_addrinfo)
         self.conn.init_socket()
         self.soa_response_params = {
             'questions': [example_soa_question],
@@ -748,6 +749,10 @@ class TestXfrinConnection(unittest.TestCase):
         if os.path.exists(TEST_DB_FILE):
             os.remove(TEST_DB_FILE)
         xfrin.check_zone = self.__orig_check_zone
+
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV4_ADDRINFO
 
     def __check_zone(self, name, rrclass, rrsets, callbacks):
         '''
@@ -1064,6 +1069,20 @@ class TestAXFR(TestXfrinConnection):
         self.conn.reply_data = self.conn.create_response_data(response = False)
         self.assertRaises(XfrinProtocolError,
                           self.conn._handle_xfrin_responses)
+
+    def test_ipver_str(self):
+        addrs = (((socket.AF_INET, socket.SOCK_STREAM), 'v4'),
+                 ((socket.AF_INET6, socket.SOCK_STREAM), 'v6'),
+                 ((socket.AF_UNIX, socket.SOCK_STREAM), None))
+        for (info, ver) in addrs:
+            c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
+                                    threading.Event(), info)
+            c.init_socket()
+            if ver is not None:
+                self.assertEqual(ver, c._get_ipver_str())
+            else:
+                self.assertRaises(ValueError, c._get_ipver_str)
+            c.close()
 
     def test_soacheck(self):
         # we need to defer the creation until we know the QID, which is
@@ -2104,6 +2123,187 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.assertFalse(self.record_exist(Name('dns01.example.com'),
                                            RRType.A))
 
+class TestStatisticsXfrinConn(TestXfrinConnection):
+    '''Test class based on TestXfrinConnection and including paramters
+    and methods related to statistics tests'''
+    def setUp(self):
+        super().setUp()
+        # clear all statistics counters before each test
+        self.conn._counters.clear_all()
+        # fake datetime
+        self.__orig_datetime = isc.statistics.counters.datetime
+        self.__orig_start_timer = isc.statistics.counters._start_timer
+        time1 = datetime(2000, 1, 1, 0, 0, 0, 0)
+        time2 = datetime(2000, 1, 1, 0, 0, 0, 1)
+        class FakeDateTime:
+            @classmethod
+            def now(cls): return time2
+        isc.statistics.counters.datetime = FakeDateTime
+        isc.statistics.counters._start_timer = lambda : time1
+        delta = time2 - time1
+        self._const_sec = round(delta.days * 86400 + delta.seconds +
+                                delta.microseconds * 1E-6, 6)
+        # List of statistics counter names and expected initial values
+        self.__name_to_counter = (('axfrreqv4', 0),
+                                 ('axfrreqv6', 0),
+                                 ('ixfrreqv4', 0),
+                                 ('ixfrreqv6', 0),
+                                 ('last_axfr_duration', 0.0),
+                                 ('last_ixfr_duration', 0.0),
+                                 ('soaoutv4', 0),
+                                 ('soaoutv6', 0),
+                                 ('xfrfail', 0),
+                                 ('xfrsuccess', 0))
+        self.__zones = 'zones'
+
+    def tearDown(self):
+        super().tearDown()
+        isc.statistics.counters.datetime = self.__orig_datetime
+        isc.statistics.counters._start_timer = self.__orig_start_timer
+
+    @property
+    def _ipver(self):
+        return 'v4'
+
+    def _check_init_statistics(self):
+        '''checks exception being raised if not incremented statistics
+        counter gotten'''
+        for (name, exp) in self.__name_to_counter:
+            self.assertRaises(isc.cc.data.DataNotFoundError,
+                              self.conn._counters.get, self.__zones,
+                              TEST_ZONE_NAME_STR, name)
+
+    def _check_updated_statistics(self, overwrite):
+        '''checks getting expect values after updating the pairs of
+        statistics counter name and value on to the "overwrite"
+        dictionary'''
+        name2count = dict(self.__name_to_counter)
+        name2count.update(overwrite)
+        for (name, exp) in name2count.items():
+            act = self.conn._counters.get(self.__zones,
+                                          TEST_ZONE_NAME_STR,
+                                          name)
+            msg = '%s is expected %s but actually %s' % (name, exp, act)
+            self.assertEqual(exp, act, msg=msg)
+
+class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
+    '''Xfrin AXFR tests for IPv4 to check statistics counters'''
+    def test_soaout(self):
+        '''tests that an soaoutv4 or soaoutv6 counter is incremented
+        when an soa query succeeds'''
+        self.conn.response_generator = self._create_soa_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        self._check_updated_statistics({'soaout' + self._ipver: 1})
+
+    def test_axfrreq_xfrsuccess_last_axfr_duration(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
+        and last_axfr_duration timer are incremented when xfr succeeds'''
+        self.conn.response_generator = self._create_normal_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_axfr_duration': self._const_sec})
+
+    def test_axfrreq_xfrsuccess_last_axfr_duration2(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
+        and last_axfr_duration timer are incremented when raising
+        XfrinZoneUptodate. The exception is treated as success.'''
+        def exception_raiser():
+            raise XfrinZoneUptodate()
+        self.conn._handle_xfrin_responses = exception_raiser
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_axfr_duration':
+                                            self._const_sec})
+
+    def test_axfrreq_xfrfail(self):
+        '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
+        incremented even if some failure exceptions are expected to be
+        raised inside do_xfrin(): XfrinZoneError, XfrinProtocolError,
+        XfrinException, and Exception'''
+        self._check_init_statistics()
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'axfrreq' + self._ipver: count,
+                                            'xfrfail': count})
+
+class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
+    '''Xfrin IXFR tests for IPv4 to check statistics counters'''
+    def test_ixfrreq_xfrsuccess_last_ixfr_duration(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
+        and last_ixfr_duration timer are incremented when xfr succeeds'''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR)],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+        self._check_init_statistics()
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
+        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_ixfr_duration':
+                                            self._const_sec})
+
+    def test_ixfrreq_xfrsuccess_last_ixfr_duration2(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
+        and last_ixfr_duration timer are incremented when raising
+        XfrinZoneUptodate. The exception is treated as success.'''
+        def exception_raiser():
+            raise XfrinZoneUptodate()
+        self.conn._handle_xfrin_responses = exception_raiser
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_OK)
+        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
+                                        'xfrsuccess': 1,
+                                        'last_ixfr_duration':
+                                            self._const_sec})
+
+    def test_ixfrreq_xfrfail(self):
+        '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters are
+        incremented even if some failure exceptions are expected to be
+        raised inside do_xfrin(): XfrinZoneError, XfrinProtocolError,
+        XfrinException, and Exception'''
+        self._check_init_statistics()
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'ixfrreq' + self._ipver: count,
+                                            'xfrfail': count})
+
+class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
+    '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV6_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'v6'
+
+class TestStatisticsIXFRv6(TestStatisticsXfrinIXFRv4):
+    '''Same tests as TestStatisticsXfrinIXFRv4 for IPv6'''
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV6_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'v6'
+
 class TestXfrinRecorder(unittest.TestCase):
     def setUp(self):
         self.recorder = XfrinRecorder()
@@ -2193,7 +2393,7 @@ class TestXfrinProcess(unittest.TestCase):
                                    master_addrinfo, tsig_key)
 
         # An awkward check that would specifically identify an old bug
-        # where initialziation of XfrinConnection._tsig_ctx_creator caused
+        # where initialization of XfrinConnection._tsig_ctx_creator caused
         # self reference and subsequently led to reference leak.
         orig_ref = sys.getrefcount(conn)
         conn._tsig_ctx_creator = None
@@ -2421,7 +2621,7 @@ class TestXfrin(unittest.TestCase):
         # there can be one more outstanding transfer.
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
-        # make sure the # xfrs would excceed the quota
+        # make sure the # xfrs would exceed the quota
         self.xfr.recorder.increment(Name(str(self.xfr._max_transfers_in) + TEST_ZONE_NAME_STR))
         # this one should fail
         self.assertEqual(self.xfr.command_handler("retransfer",
@@ -2511,6 +2711,14 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler({})['result'][0], 0)
         self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
         self.assertEqual(self.xfr._max_transfers_in, 3)
+
+    def test_command_handler_getstats(self):
+        module_spec = isc.config.module_spec_from_file(
+            xfrin.SPECFILE_LOCATION)
+        ans = isc.config.parse_answer(
+            self.xfr.command_handler("getstats", None))
+        self.assertEqual(0, ans[0])
+        self.assertTrue(module_spec.validate_statistics(False, ans[1]))
 
     def _check_zones_config(self, config_given):
         if 'transfers_in' in config_given:

@@ -25,10 +25,32 @@ from isc.dns import *
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
+def get_notify_msgdata(zone_name, qid=0):
+    """A helper function to generate a notify response in wire format.
+
+    Parameters:
+    zone_name(isc.dns.Name()) The zone name for the notify.  Used as the
+    question name.
+    qid (int): The QID of the response.  In most test cases a value of 0 is
+    expected.
+
+    """
+    m = Message(Message.RENDER)
+    m.set_opcode(Opcode.NOTIFY)
+    m.set_rcode(Rcode.NOERROR)
+    m.set_qid(qid)
+    m.set_header_flag(Message.HEADERFLAG_QR)
+    m.add_question(Question(zone_name, RRClass.IN, RRType.SOA))
+
+    renderer = MessageRenderer()
+    m.to_wire(renderer)
+    return renderer.get_data()
+
 # our fake socket, where we can read and insert messages
 class MockSocket():
     def __init__(self):
         self._local_sock, self._remote_sock = socket.socketpair()
+        self.__raise_on_recv = False # see set_raise_on_recv()
 
     def connect(self, to):
         pass
@@ -44,12 +66,22 @@ class MockSocket():
         return self._local_sock.send(data)
 
     def recvfrom(self, length):
+        if self.__raise_on_recv:
+            raise socket.error('fake error')
         data = self._local_sock.recv(length)
         return (data, None)
 
     # provide a remote end which can write data to MockSocket for testing.
     def remote_end(self):
         return self._remote_sock
+
+    def set_raise_on_recv(self, on):
+        """A helper to force recvfrom() to raise an exception or cancel it.
+
+        The next call to recvfrom() will result in an exception iff parameter
+        'on' (bool) is set to True.
+        """
+        self.__raise_on_recv = on
 
 # We subclass the ZoneNotifyInfo class we're testing here, only
 # to override the create_socket() method.
@@ -79,12 +111,12 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
     def test_set_next_notify_target(self):
         self.info.notify_slaves.append(('127.0.0.1', 53))
-        self.info.notify_slaves.append(('1.1.1.1', 5353))
+        self.info.notify_slaves.append(('192.0.2.1', 5353))
         self.info.prepare_notify_out()
         self.assertEqual(self.info.get_current_notify_target(), ('127.0.0.1', 53))
 
         self.info.set_next_notify_target()
-        self.assertEqual(self.info.get_current_notify_target(), ('1.1.1.1', 5353))
+        self.assertEqual(self.info.get_current_notify_target(), ('192.0.2.1', 5353))
         self.info.set_next_notify_target()
         self.assertIsNone(self.info.get_current_notify_target())
 
@@ -105,14 +137,18 @@ class TestNotifyOut(unittest.TestCase):
 
         net_info = self._notify._notify_infos[('example.net.', 'IN')]
         net_info.notify_slaves.append(('127.0.0.1', 53))
-        net_info.notify_slaves.append(('1.1.1.1', 5353))
+        net_info.notify_slaves.append(('192.0.2.1', 5353))
         com_info = self._notify._notify_infos[('example.com.', 'IN')]
-        com_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_info.notify_slaves.append(('192.0.2.1', 5353))
         com_ch_info = self._notify._notify_infos[('example.com.', 'CH')]
-        com_ch_info.notify_slaves.append(('1.1.1.1', 5353))
+        com_ch_info.notify_slaves.append(('192.0.2.1', 5353))
+        # Keep the original library version in case a test case replaces it
+        self.__time_time_orig = notify_out.time.time
 
     def tearDown(self):
         self._notify._counters.clear_all()
+        # restore the original time.time() in case it was replaced.
+        notify_out.time.time = self.__time_time_orig
 
     def test_send_notify(self):
         notify_out._MAX_NOTIFY_NUM = 2
@@ -221,7 +257,7 @@ class TestNotifyOut(unittest.TestCase):
         info = self._notify._notify_infos[('example.net.', 'IN')]
         self._notify._notify_next_target(info)
         self.assertEqual(0, info.notify_try_num)
-        self.assertEqual(info.get_current_notify_target(), ('1.1.1.1', 5353))
+        self.assertEqual(info.get_current_notify_target(), ('192.0.2.1', 5353))
         self.assertEqual(2, self._notify.notify_num)
         self.assertEqual(1, len(self._notify._waiting_zones))
 
@@ -328,39 +364,86 @@ class TestNotifyOut(unittest.TestCase):
                           'zones', 'example.net.', 'notifyoutv4')
 
     def test_zone_notify_handler(self):
-        old_send_msg = self._notify._send_notify_message_udp
-        def _fake_send_notify_message_udp(va1, va2):
+        sent_addrs = []
+        def _fake_send_notify_message_udp(notify_info, addrinfo):
+            sent_addrs.append(addrinfo)
+            pass
+        notify_out.time.time = lambda: 42
+        self._notify._send_notify_message_udp = _fake_send_notify_message_udp
+        self._notify.send_notify('example.net.')
+
+        example_net_info = self._notify._notify_infos[('example.net.', 'IN')]
+
+        # On timeout, the request will be resent until try_num reaches the max
+        self.assertEqual([], sent_addrs)
+        example_net_info.notify_try_num = 2
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_TIMEOUT)
+        self.assertEqual(3, example_net_info.notify_try_num)
+        self.assertEqual([('127.0.0.1', 53)], sent_addrs)
+        # the timeout time will be set to "current time(=42)"+2**(new try_num)
+        self.assertEqual(42 + 2**3, example_net_info.notify_timeout)
+
+        # If try num exceeds max, the next slave will be tried (and then
+        # next zone, but for this test it sufficies to check the former case)
+        example_net_info.notify_try_num = 5
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_TIMEOUT)
+        self.assertEqual(0, example_net_info.notify_try_num) # should be reset
+        self.assertEqual(('192.0.2.1', 5353), example_net_info._notify_current)
+
+        # Possible event is "read" or "timeout".
+        cur_tgt = example_net_info._notify_current
+        example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
+        self.assertRaises(AssertionError, self._notify._zone_notify_handler,
+                          example_net_info, notify_out._EVENT_TIMEOUT + 1)
+
+    def test_zone_notify_read_handler(self):
+        """Similar to the previous test, but focus on the READ events.
+
+        """
+        sent_addrs = []
+        def _fake_send_notify_message_udp(notify_info, addrinfo):
+            sent_addrs.append(addrinfo)
             pass
         self._notify._send_notify_message_udp = _fake_send_notify_message_udp
         self._notify.send_notify('example.net.')
-        self._notify.send_notify('example.com.')
-        notify_out._MAX_NOTIFY_NUM = 2
-        self._notify.send_notify('example.org.')
 
         example_net_info = self._notify._notify_infos[('example.net.', 'IN')]
-        example_net_info.prepare_notify_out()
-
-        example_net_info.notify_try_num = 2
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_TIMEOUT)
-        self.assertEqual(3, example_net_info.notify_try_num)
-
-        time1 = example_net_info.notify_timeout
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_TIMEOUT)
-        self.assertEqual(4, example_net_info.notify_try_num)
-        self.assertGreater(example_net_info.notify_timeout, time1 + 2) # bigger than 2 seconds
-
-        cur_tgt = example_net_info._notify_current
-        example_net_info.notify_try_num = notify_out._MAX_NOTIFY_TRY_NUM
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_NONE)
-        self.assertNotEqual(cur_tgt, example_net_info._notify_current)
-
-        cur_tgt = example_net_info._notify_current
         example_net_info.create_socket('127.0.0.1')
-        # dns message, will result in bad_qid, but what we are testing
-        # here is whether handle_notify_reply is called correctly
-        example_net_info._sock.remote_end().send(b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\03com\x00\x00\x06\x00\x01')
-        self._notify._zone_notify_handler(example_net_info, notify_out._EVENT_READ)
-        self.assertNotEqual(cur_tgt, example_net_info._notify_current)
+
+        # A successful case: an expected notify response is received, and
+        # another notify will be sent to the next slave immediately.
+        example_net_info._sock.remote_end().send(
+            get_notify_msgdata(Name('example.net')))
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_READ)
+        self.assertEqual(1, example_net_info.notify_try_num)
+        expected_sent_addrs = [('192.0.2.1', 5353)]
+        self.assertEqual(expected_sent_addrs, sent_addrs)
+        self.assertEqual(('192.0.2.1', 5353), example_net_info._notify_current)
+
+        # response's QID doesn't match.  the request will be resent.
+        example_net_info._sock.remote_end().send(
+            get_notify_msgdata(Name('example.net'), qid=1))
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_READ)
+        self.assertEqual(2, example_net_info.notify_try_num)
+        expected_sent_addrs.append(('192.0.2.1', 5353))
+        self.assertEqual(expected_sent_addrs, sent_addrs)
+        self.assertEqual(('192.0.2.1', 5353), example_net_info._notify_current)
+
+        # emulate exception from socket.recvfrom().  It will have the same
+        # effect as a bad response.
+        example_net_info._sock.set_raise_on_recv(True)
+        example_net_info._sock.remote_end().send(
+            get_notify_msgdata(Name('example.net')))
+        self._notify._zone_notify_handler(example_net_info,
+                                          notify_out._EVENT_READ)
+        self.assertEqual(3, example_net_info.notify_try_num)
+        expected_sent_addrs.append(('192.0.2.1', 5353))
+        self.assertEqual(expected_sent_addrs, sent_addrs)
+        self.assertEqual(('192.0.2.1', 5353), example_net_info._notify_current)
 
     def test_get_notify_slaves_from_ns(self):
         records = self._notify._get_notify_slaves_from_ns(Name('example.net.'),

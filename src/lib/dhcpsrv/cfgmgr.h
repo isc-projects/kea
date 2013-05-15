@@ -174,7 +174,6 @@ public:
     /// @param interface_id content of interface-id option returned by a relay
     ///
     /// @return a subnet object
-    /// @todo This method is not currently supported.
     Subnet6Ptr getSubnet6(OptionPtr interface_id);
 
     /// @brief adds an IPv6 subnet

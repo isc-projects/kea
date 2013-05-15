@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,15 @@ using boost::scoped_ptr;
 
 namespace {
 
+// This is a workaround for strange linking problems with gtest:
+// libdhcp___unittests-duid_unittest.o: In function `Compare<long unsigned int, long unsigned int>':
+// ~/gtest-1.6.0/include/gtest/gtest.h:1353: undefined reference to `isc::dhcp::ClientId::MAX_CLIENT_ID_LE'N
+// collect2: ld returned 1 exit status
+
+const size_t MAX_DUID_LEN = DUID::MAX_DUID_LEN;
+const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
+
+
 // This test verifies if the constructors are working as expected
 // and process passed parameters.
 TEST(DuidTest, constructor) {
@@ -61,21 +70,20 @@ TEST(DuidTest, constructor) {
 // This test verifies if DUID size restrictions are implemented
 // properly.
 TEST(DuidTest, size) {
-    const int MAX_DUID_SIZE = 128;
-    uint8_t data[MAX_DUID_SIZE + 1];
+    uint8_t data[MAX_DUID_LEN + 1];
     vector<uint8_t> data2;
-    for (uint8_t i = 0; i < MAX_DUID_SIZE + 1; ++i) {
+    for (uint8_t i = 0; i < MAX_DUID_LEN + 1; ++i) {
         data[i] = i;
-        if (i < MAX_DUID_SIZE)
+        if (i < MAX_DUID_LEN)
             data2.push_back(i);
     }
-    ASSERT_EQ(data2.size(), MAX_DUID_SIZE);
+    ASSERT_EQ(data2.size(), MAX_DUID_LEN);
 
-    scoped_ptr<DUID> duidmaxsize1(new DUID(data, MAX_DUID_SIZE));
+    scoped_ptr<DUID> duidmaxsize1(new DUID(data, MAX_DUID_LEN));
     scoped_ptr<DUID> duidmaxsize2(new DUID(data2));
 
     EXPECT_THROW(
-        scoped_ptr<DUID> toolarge1(new DUID(data, MAX_DUID_SIZE + 1)),
+        scoped_ptr<DUID> toolarge1(new DUID(data, MAX_DUID_LEN + 1)),
         OutOfRange);
 
     // that's one too much
@@ -83,6 +91,16 @@ TEST(DuidTest, size) {
 
     EXPECT_THROW(
         scoped_ptr<DUID> toolarge2(new DUID(data2)),
+        OutOfRange);
+
+    // empty duids are not allowed
+    vector<uint8_t> empty;
+    EXPECT_THROW(
+        scoped_ptr<DUID> emptyDuid(new DUID(empty)),
+        OutOfRange);
+
+    EXPECT_THROW(
+        scoped_ptr<DUID> emptyDuid2(new DUID(data, 0)),
         OutOfRange);
 }
 
@@ -155,6 +173,51 @@ TEST(ClientIdTest, constructor) {
     scoped_ptr<ClientId> id2(new ClientId(data2));
     vecdata = id2->getClientId();
     EXPECT_TRUE(data2 == vecdata);
+}
+
+// Check that client-id sizes are reasonable
+TEST(ClientIdTest, size) {
+    uint8_t data[MAX_CLIENT_ID_LEN + 1];
+    vector<uint8_t> data2;
+    for (uint8_t i = 0; i < MAX_CLIENT_ID_LEN + 1; ++i) {
+        data[i] = i;
+        if (i < MAX_CLIENT_ID_LEN)
+            data2.push_back(i);
+    }
+    ASSERT_EQ(data2.size(), MAX_CLIENT_ID_LEN);
+
+    scoped_ptr<ClientId> duidmaxsize1(new ClientId(data, MAX_CLIENT_ID_LEN));
+    scoped_ptr<ClientId> duidmaxsize2(new ClientId(data2));
+
+    EXPECT_THROW(
+        scoped_ptr<ClientId> toolarge1(new ClientId(data, MAX_CLIENT_ID_LEN + 1)),
+        OutOfRange);
+
+    // that's one too much
+    data2.push_back(128);
+
+    EXPECT_THROW(
+        scoped_ptr<ClientId> toolarge2(new ClientId(data2)),
+        OutOfRange);
+
+    // empty client-ids are not allowed
+    vector<uint8_t> empty;
+    EXPECT_THROW(
+        scoped_ptr<ClientId> empty_client_id1(new ClientId(empty)),
+        OutOfRange);
+
+    EXPECT_THROW(
+        scoped_ptr<ClientId> empty_client_id2(new ClientId(data, 0)),
+        OutOfRange);
+
+    // client-id must be at least 2 bytes long
+    vector<uint8_t> shorty(1,17); // just a single byte with value 17
+    EXPECT_THROW(
+        scoped_ptr<ClientId> too_short_client_id1(new ClientId(shorty)),
+        OutOfRange);
+    EXPECT_THROW(
+        scoped_ptr<ClientId> too_short_client_id1(new ClientId(data, 1)),
+        OutOfRange);
 }
 
 // This test checks if the comparison operators are sane.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -64,7 +64,7 @@ Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
 
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(first, last), type_(type), prefix_len_(0) {
+    :Pool(first, last), type_(type) {
 
     // check if specified address boundaries are sane
     if (!first.isV6() || !last.isV6()) {
@@ -95,16 +95,15 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
              uint8_t prefix_len)
     :Pool(prefix, IOAddress("::")),
-     type_(type), prefix_len_(prefix_len) {
+     type_(type) {
 
     // check if the prefix is sane
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    // check if the prefix length is sane (we use the member variable only
-    // for silencing some compilers; see #2705 and #2789).
-    if (prefix_len_ == 0 || prefix_len_ > 128) {
+    // check if the prefix length is sane 
+    if (prefix_len == 0 || prefix_len > 128) {
         isc_throw(BadValue, "Invalid prefix length");
     }
 

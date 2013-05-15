@@ -25,6 +25,7 @@ logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
 logger_example_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 logger_example_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -34,6 +35,7 @@ init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
 init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -43,6 +45,7 @@ buffer_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 buffer_logger_test_LDFLAGS = $(AM_LDFLAGS)
 buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -53,6 +56,7 @@ logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
 logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
@@ -71,6 +75,7 @@ AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
 AM_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+AM_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 AM_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
@@ -126,11 +131,17 @@ initializer_unittests_2_LDFLAGS  = $(AM_LDFLAGS)
 noinst_PROGRAMS += $(TESTS)
 endif
 
+noinst_SCRIPTS  = console_test.sh
+noinst_SCRIPTS += destination_test.sh
+noinst_SCRIPTS += init_logger_test.sh
+noinst_SCRIPTS += local_file_test.sh
+noinst_SCRIPTS += logger_lock_test.sh
+noinst_SCRIPTS += severity_test.sh
+
 # Additional test using the shell.  These are principally tests
 # where the global logging environment is affected, and where the
 # output needs to be compared with stored output (where "cut" and
 # "diff" are useful utilities).
-
 check-local:
 	$(SHELL) $(abs_builddir)/console_test.sh
 	$(SHELL) $(abs_builddir)/destination_test.sh
@@ -139,11 +150,3 @@ check-local:
 	$(SHELL) $(abs_builddir)/local_file_test.sh
 	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh
-
-noinst_SCRIPTS  = console_test.sh
-noinst_SCRIPTS += destination_test.sh
-noinst_SCRIPTS += init_logger_test.sh
-noinst_SCRIPTS += buffer_logger_test.sh
-noinst_SCRIPTS += local_file_test.sh
-noinst_SCRIPTS += logger_lock_test.sh
-noinst_SCRIPTS += severity_test.sh

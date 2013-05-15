@@ -141,7 +141,7 @@ logged.
 
 % DDNS_RESPONSE_TCP_SOCKET_SEND_FAILED failed to complete sending update response to %1 over TCP
 b10-ddns had tried to send an update response over TCP, and it hadn't
-been completed at that time, and a followup attempt to complete the
+been completed at that time, and a follow-up attempt to complete the
 send operation failed due to some network I/O error.  While a network
 error can happen any time, this event is quite unexpected for two
 reasons.  First, since the size of a response to an update request

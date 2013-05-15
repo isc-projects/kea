@@ -50,7 +50,7 @@ int addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
 
 /// \brief Initialize a wrapped class type, and add to module
 ///
-/// The type object is initalized, and its refcount is increased after
+/// The type object is initialized, and its refcount is increased after
 /// successful addition to the module.
 ///
 /// \param type The type object to initialize

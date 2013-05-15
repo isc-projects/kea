@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
-// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
+// Don't import the entire boost namespace.  It will unexpectedly hide uint8_t
 // for some systems.
 using boost::scoped_ptr;
 
@@ -44,55 +44,39 @@ namespace {
 TEST(Pkt4Test, constructor) {
 
     ASSERT_EQ(236U, static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) );
-    Pkt4* pkt = 0;
+    scoped_ptr<Pkt4> pkt;
 
     // Just some dummy payload.
     uint8_t testData[250];
     for (int i = 0; i < 250; i++) {
-        testData[i]=i;
+        testData[i] = i;
     }
 
     // Positive case1. Normal received packet.
-    EXPECT_NO_THROW(
-        pkt = new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN);
-    );
+    EXPECT_NO_THROW(pkt.reset(new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN)));
 
     EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), pkt->len());
 
-    EXPECT_NO_THROW(
-        delete pkt;
-        pkt = 0;
-    );
+    EXPECT_NO_THROW(pkt.reset());
 
     // Positive case2. Normal outgoing packet.
-    EXPECT_NO_THROW(
-        pkt = new Pkt4(DHCPDISCOVER, 0xffffffff);
-    );
+    EXPECT_NO_THROW(pkt.reset(new Pkt4(DHCPDISCOVER, 0xffffffff)));
 
     // DHCPv4 packet must be at least 236 bytes long, with Message Type
     // Option taking extra 3 bytes it is 239
     EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
     EXPECT_EQ(0xffffffff, pkt->getTransid());
-    EXPECT_NO_THROW(
-        delete pkt;
-        pkt = 0;
-    );
+    EXPECT_NO_THROW(pkt.reset());
 
     // Negative case. Should drop truncated messages.
     EXPECT_THROW(
-        pkt = new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN-1),
+        pkt.reset(new Pkt4(testData, Pkt4::DHCPV4_PKT_HDR_LEN - 1)),
         OutOfRange
     );
-    if (pkt) {
-        // Test failed. Exception should have been thrown, but
-        // object was created instead. Let's clean this up.
-        delete pkt;
-        pkt = 0;
-    }
 }
 
-// a sample data
+// Sample data
 const uint8_t dummyOp = BOOTREQUEST;
 const uint8_t dummyHtype = 6;
 const uint8_t dummyHlen = 6;
@@ -109,16 +93,16 @@ const IOAddress dummyGiaddr("255.255.255.255");
 // a dummy MAC address
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
 
-// a dummy MAC address, padded with 0s
+// A dummy MAC address, padded with 0s
 const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0, 0 };
 
-// let's use some creative test content here (128 chars + \0)
+// Let's use some creative test content here (128 chars + \0)
 const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit. Proin mollis placerat metus, at "
     "lacinia orci ornare vitae. Mauris amet.";
 
-// yet another type of test content (64 chars + \0)
+// Yet another type of test content (64 chars + \0)
 const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit posuere.";
 
@@ -127,12 +111,11 @@ BOOST_STATIC_ASSERT(sizeof(dummySname) == Pkt4::MAX_SNAME_LEN + 1);
 
 /// @brief Generates test packet.
 ///
-/// Allocates and generates test packet, with all fixed
-/// fields set to non-zero values. Content is not always
-/// reasonable.
+/// Allocates and generates test packet, with all fixed fields set to non-zero
+/// values. Content is not always reasonable.
 ///
-/// See generateTestPacket2() function that returns
-/// exactly the same packet in on-wire format.
+/// See generateTestPacket2() function that returns exactly the same packet in
+/// on-wire format.
 ///
 /// @return pointer to allocated Pkt4 object.
 boost::shared_ptr<Pkt4>
@@ -162,12 +145,11 @@ generateTestPacket1() {
 
 /// @brief Generates test packet.
 ///
-/// Allocates and generates on-wire buffer that represents
-/// test packet, with all fixed fields set to non-zero values.
-/// Content is not always reasonable.
+/// Allocates and generates on-wire buffer that represents test packet, with all
+/// fixed fields set to non-zero values.  Content is not always reasonable.
 ///
-/// See generateTestPacket1() function that returns
-/// exactly the same packet as Pkt4 object.
+/// See generateTestPacket1() function that returns exactly the same packet as
+/// Pkt4 object.
 ///
 /// @return pointer to allocated Pkt4 object
 // Returns a vector containing a DHCPv4 packet header.
@@ -206,7 +188,7 @@ TEST(Pkt4Test, fixedFields) {
 
     boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
 
-    // ok, let's check packet values
+    // OK, let's check packet values
     EXPECT_EQ(dummyOp, pkt->getOp());
     EXPECT_EQ(dummyHtype, pkt->getHtype());
     EXPECT_EQ(dummyHlen, pkt->getHlen());
@@ -244,7 +226,7 @@ TEST(Pkt4Test, fixedFieldsPack) {
     // DHCP Message Type Option
     ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
 
-    // redundant but MUCH easier for debug in gdb
+    // Redundant but MUCH easier for debug in gdb
     const uint8_t* exp = &expectedFormat[0];
     const uint8_t* got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
 
@@ -272,7 +254,7 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
         pkt->unpack()
     );
 
-    // ok, let's check packet values
+    // OK, let's check packet values
     EXPECT_EQ(dummyOp, pkt->getOp());
     EXPECT_EQ(dummyHtype, pkt->getHtype());
     EXPECT_EQ(dummyHlen, pkt->getHlen());
@@ -298,7 +280,7 @@ TEST(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
 }
 
-// this test is for hardware addresses (htype, hlen and chaddr fields)
+// This test is for hardware addresses (htype, hlen and chaddr fields)
 TEST(Pkt4Test, hwAddr) {
 
     vector<uint8_t> mac;
@@ -309,7 +291,7 @@ TEST(Pkt4Test, hwAddr) {
     // (growing length back to MAX_CHADDR_LEN).
     mac.resize(Pkt4::MAX_CHADDR_LEN);
 
-    Pkt4* pkt = 0;
+    scoped_ptr<Pkt4> pkt;
     // let's test each hlen, from 0 till 16
     for (int macLen = 0; macLen < Pkt4::MAX_CHADDR_LEN; macLen++) {
         for (int i = 0; i < Pkt4::MAX_CHADDR_LEN; i++) {
@@ -322,8 +304,8 @@ TEST(Pkt4Test, hwAddr) {
         }
 
         // type and transaction doesn't matter in this test
-        pkt = new Pkt4(DHCPOFFER, 1234);
-        pkt->setHWAddr(255-macLen*10, // just weird htype
+        pkt.reset(new Pkt4(DHCPOFFER, 1234));
+        pkt->setHWAddr(255 - macLen * 10, // just weird htype
                        macLen,
                        mac);
         EXPECT_EQ(0, memcmp(expectedChaddr, &pkt->getHWAddr()->hwaddr_[0],
@@ -335,11 +317,11 @@ TEST(Pkt4Test, hwAddr) {
 
         // CHADDR starts at offset 28 in DHCP packet
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+28;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 28;
 
         EXPECT_EQ(0, memcmp(ptr, expectedChaddr, Pkt4::MAX_CHADDR_LEN));
 
-        delete pkt;
+        pkt.reset();
     }
 
     /// TODO: extend this test once options support is implemented. HW address
@@ -368,35 +350,28 @@ TEST(Pkt4Test, msgTypes) {
         {DHCPLEASEACTIVE, BOOTREPLY}
     };
 
-    Pkt4* pkt = 0;
+    scoped_ptr<Pkt4> pkt;
     for (int i = 0; i < sizeof(types) / sizeof(msgType); i++) {
-
-        pkt = new Pkt4(types[i].dhcp, 0);
+        pkt.reset(new Pkt4(types[i].dhcp, 0));
         EXPECT_EQ(types[i].dhcp, pkt->getType());
-
         EXPECT_EQ(types[i].bootp, pkt->getOp());
-
-        delete pkt;
-        pkt = 0;
+        pkt.reset();
     }
 
     EXPECT_THROW(
-        pkt = new Pkt4(100, 0), // there's no message type 100
+        pkt.reset(new Pkt4(100, 0)), // There's no message type 100
         OutOfRange
     );
-    if (pkt) {
-        delete pkt;
-    }
 }
 
-// this test verifies handling of sname field
+// This test verifies handling of sname field
 TEST(Pkt4Test, sname) {
 
     uint8_t sname[Pkt4::MAX_SNAME_LEN];
 
-    Pkt4* pkt = 0;
-    // let's test each sname length, from 0 till 64
-    for (int snameLen=0; snameLen < Pkt4::MAX_SNAME_LEN; snameLen++) {
+    scoped_ptr<Pkt4> pkt;
+    // Let's test each sname length, from 0 till 64
+    for (int snameLen = 0; snameLen < Pkt4::MAX_SNAME_LEN; snameLen++) {
         for (int i = 0; i < Pkt4::MAX_SNAME_LEN; i++) {
             sname[i] = 0;
         }
@@ -404,8 +379,8 @@ TEST(Pkt4Test, sname) {
             sname[i] = i;
         }
 
-        // type and transaction doesn't matter in this test
-        pkt = new Pkt4(DHCPOFFER, 1234);
+        // Type and transaction doesn't matter in this test
+        pkt.reset(new Pkt4(DHCPOFFER, 1234));
         pkt->setSname(sname, snameLen);
 
         EXPECT_EQ(0, memcmp(sname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
@@ -416,10 +391,10 @@ TEST(Pkt4Test, sname) {
 
         // SNAME starts at offset 44 in DHCP packet
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+44;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 44;
         EXPECT_EQ(0, memcmp(ptr, sname, Pkt4::MAX_SNAME_LEN));
 
-        delete pkt;
+        pkt.reset();
     }
 
     // Check that a null argument generates an exception.
@@ -432,7 +407,7 @@ TEST(Pkt4Test, file) {
 
     uint8_t file[Pkt4::MAX_FILE_LEN];
 
-    Pkt4* pkt = 0;
+    scoped_ptr<Pkt4> pkt;
     // Let's test each file length, from 0 till 128.
     for (int fileLen = 0; fileLen < Pkt4::MAX_FILE_LEN; fileLen++) {
         for (int i = 0; i < Pkt4::MAX_FILE_LEN; i++) {
@@ -443,22 +418,21 @@ TEST(Pkt4Test, file) {
         }
 
         // Type and transaction doesn't matter in this test.
-        pkt = new Pkt4(DHCPOFFER, 1234);
+        pkt.reset(new Pkt4(DHCPOFFER, 1234));
         pkt->setFile(file, fileLen);
 
         EXPECT_EQ(0, memcmp(file, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
-        //
         EXPECT_NO_THROW(
             pkt->pack();
         );
 
         // FILE starts at offset 108 in DHCP packet.
         const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData())+108;
+            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 108;
         EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
 
-        delete pkt;
+        pkt.reset();
     }
 
     // Check that a null argument generates an exception.
@@ -481,13 +455,13 @@ static uint8_t v4Opts[] = {
 };
 
 TEST(Pkt4Test, options) {
-    Pkt4* pkt = new Pkt4(DHCPOFFER, 0);
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
 
     vector<uint8_t> payload[5];
     for (int i = 0; i < 5; i++) {
-        payload[i].push_back(i*10);
-        payload[i].push_back(i*10+1);
-        payload[i].push_back(i*10+2);
+        payload[i].push_back(i * 10);
+        payload[i].push_back(i * 10 + 1);
+        payload[i].push_back(i * 10 + 2);
     }
 
     boost::shared_ptr<Option> opt1(new Option(Option::V4, 12, payload[0]));
@@ -509,7 +483,7 @@ TEST(Pkt4Test, options) {
     EXPECT_TRUE(pkt->getOption(254));
     EXPECT_FALSE(pkt->getOption(127)); //  no such option
 
-    // options are unique in DHCPv4. It should not be possible
+    // Options are unique in DHCPv4. It should not be possible
     // to add more than one option of the same type.
     EXPECT_THROW(
         pkt->addOption(opt1),
@@ -521,26 +495,28 @@ TEST(Pkt4Test, options) {
     );
 
     const OutputBuffer& buf = pkt->getBuffer();
-    // check that all options are stored, they should take sizeof(v4Opts),
+    // Check that all options are stored, they should take sizeof(v4Opts),
     // DHCP magic cookie (4 bytes), and OPTION_END added (just one byte)
-    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + sizeof(DHCP_OPTIONS_COOKIE)
-              + sizeof(v4Opts) + 1, buf.getLength());
+    ASSERT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) +
+              sizeof(DHCP_OPTIONS_COOKIE) + sizeof(v4Opts) + 1,
+              buf.getLength());
 
-    // that that this extra data actually contain our options
+    // That that this extra data actually contain our options
     const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
-    ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE); // rewind to end of fixed part
+
+    // Rewind to end of fixed part.
+    ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE);
+
     EXPECT_EQ(0, memcmp(ptr, v4Opts, sizeof(v4Opts)));
     EXPECT_EQ(DHO_END, static_cast<uint8_t>(*(ptr + sizeof(v4Opts))));
 
     // delOption() checks
-    EXPECT_TRUE(pkt->getOption(12)); // Sanity check: option 12 is still there
-    EXPECT_TRUE(pkt->delOption(12)); // We should be able to remove it
+    EXPECT_TRUE(pkt->getOption(12));  // Sanity check: option 12 is still there
+    EXPECT_TRUE(pkt->delOption(12));  // We should be able to remove it
     EXPECT_FALSE(pkt->getOption(12)); // It should not be there anymore
     EXPECT_FALSE(pkt->delOption(12)); // And removal should fail
 
-    EXPECT_NO_THROW(
-        delete pkt;
-    );
+    EXPECT_NO_THROW(pkt.reset());
 }
 
 TEST(Pkt4Test, unpackOptions) {
@@ -576,42 +552,42 @@ TEST(Pkt4Test, unpackOptions) {
     EXPECT_EQ(12, x->getType());  // this should be option 12
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+2, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 2, 3)); // data len=3
 
     x = pkt->getOption(14);
     ASSERT_TRUE(x); // option 13 should exist
     EXPECT_EQ(14, x->getType());  // this should be option 13
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+7, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 7, 3)); // data len=3
 
     x = pkt->getOption(60);
     ASSERT_TRUE(x); // option 60 should exist
     EXPECT_EQ(60, x->getType());  // this should be option 60
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+15, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 15, 3)); // data len=3
 
     x = pkt->getOption(128);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(128, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+20, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 20, 3)); // data len=3
 
     x = pkt->getOption(254);
     ASSERT_TRUE(x); // option 3 should exist
     EXPECT_EQ(254, x->getType());  // this should be option 254
     ASSERT_EQ(3, x->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts+25, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 25, 3)); // data len=3
 }
 
 // This test verifies methods that are used for manipulating meta fields
 // i.e. fields that are not part of DHCPv4 (e.g. interface name).
 TEST(Pkt4Test, metaFields) {
 
-    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
     pkt->setIface("loooopback");
     pkt->setIndex(42);
     pkt->setRemoteAddr(IOAddress("1.2.3.4"));
@@ -621,8 +597,6 @@ TEST(Pkt4Test, metaFields) {
     EXPECT_EQ(42, pkt->getIndex());
     EXPECT_EQ("1.2.3.4", pkt->getRemoteAddr().toText());
     EXPECT_EQ("4.3.2.1", pkt->getLocalAddr().toText());
-
-    delete pkt;
 }
 
 TEST(Pkt4Test, Timestamp) {

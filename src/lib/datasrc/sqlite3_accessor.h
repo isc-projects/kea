@@ -17,7 +17,7 @@
 #define DATASRC_SQLITE3_ACCESSOR_H
 
 #include <datasrc/database.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 
 #include <exceptions/exceptions.h>
 
@@ -230,7 +230,7 @@ public:
         const std::string (&params)[DEL_PARAM_COUNT]);
 
     virtual void deleteNSEC3RecordInZone(
-        const std::string (&params)[DEL_PARAM_COUNT]);
+        const std::string (&params)[DEL_NSEC3_PARAM_COUNT]);
 
     /// This derived version of the method prepares an SQLite3 statement
     /// for adding the diff first time it's called, and if it fails throws
@@ -250,7 +250,7 @@ public:
     virtual std::string findPreviousName(int zone_id, const std::string& rname)
         const;
 
-    /// \brief Conrete implemantion of the pure virtual method of
+    /// \brief Concrete implementation of the pure virtual method of
     /// DatabaseAccessor
     virtual std::string findPreviousNSEC3Hash(int zone_id,
                                               const std::string& hash) const;

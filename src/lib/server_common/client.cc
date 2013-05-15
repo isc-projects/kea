@@ -57,8 +57,14 @@ Client::getRequestSourceIPAddress() const {
 std::string
 Client::toText() const {
     std::stringstream ss;
-    ss << impl_->request_.getRemoteEndpoint().getAddress().toText()
-       << '#' << impl_->request_.getRemoteEndpoint().getPort();
+    const asiolink::IOAddress& addr =
+        impl_->request_.getRemoteEndpoint().getAddress();
+    if (addr.isV6()) {
+        ss << '[' << addr.toText() << ']';
+    } else {
+        ss << addr.toText();
+    }
+    ss << ':' << impl_->request_.getRemoteEndpoint().getPort();
     return (ss.str());
 }
 

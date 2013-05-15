@@ -91,7 +91,7 @@ NameserverEntry::getAddresses(AddressVector& addresses,
             if (!has_address_[family] && expect_address_[family]) {
                 return IN_PROGRESS;
             }
-            // If we do not expect the address, then fall trough to READY
+            // If we do not expect the address, then fall through to READY
         case EXPIRED: // If expired_ok, we pretend to be ready
         case READY:
             if (!has_address_[family]) {
@@ -149,7 +149,7 @@ NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
             }
         }
 
-        // Hack. C++ does not allow ++ on enums, enumerating trough them is pain
+        // Hack. C++ does not allow ++ on enums, enumerating through them is pain
         switch (family) {
             case V4_ONLY: family = V6_ONLY; break;
             default: return;

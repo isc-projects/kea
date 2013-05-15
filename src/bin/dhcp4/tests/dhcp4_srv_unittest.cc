@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
@@ -28,6 +29,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <gtest/gtest.h>
+
+#include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -44,7 +47,16 @@ namespace {
 class NakedDhcpv4Srv: public Dhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedDhcpv4Srv(uint16_t port = 0):Dhcpv4Srv(port) { }
+
+    /// @brief Constructor.
+    ///
+    /// It disables configuration of broadcast options on
+    /// sockets that are opened by the Dhcpv4Srv constructor.
+    /// Setting broadcast options requires root privileges
+    /// which is not the case when running unit tests.
+    NakedDhcpv4Srv(uint16_t port = 0)
+        : Dhcpv4Srv(port, "type=memfile", false) {
+    }
 
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
@@ -116,10 +128,10 @@ public:
 
     /// @brief Configures options being requested in the PRL option.
     ///
-    /// The lpr-servers option is NOT configured here altough it is
+    /// The lpr-servers option is NOT configured here although it is
     /// added to the 'Parameter Request List' option in the
     /// \ref addPrlOption. When requested option is not configured
-    /// the server should not return it in its rensponse. The goal
+    /// the server should not return it in its response. The goal
     /// of not configuring the requested option is to verify that
     /// the server will not return it.
     void configureRequestedOptions() {
@@ -132,8 +144,7 @@ public:
 
         // domain-name
         OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
-        boost::shared_ptr<OptionCustom>
-            option_domain_name(new OptionCustom(def, Option::V4));
+        OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V4));
         option_domain_name->writeFqdn("example.com");
         subnet_->addOption(option_domain_name, false, "dhcp4");
 
@@ -152,8 +163,7 @@ public:
     /// @brief checks that the response matches request
     /// @param q query (client's message)
     /// @param a answer (server's message)
-    void messageCheck(const boost::shared_ptr<Pkt4>& q,
-                      const boost::shared_ptr<Pkt4>& a) {
+    void messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
         ASSERT_TRUE(q);
         ASSERT_TRUE(a);
 
@@ -170,6 +180,8 @@ public:
         EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
         EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
         EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
+        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
+        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
 
         // Check that something is offered
         EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
@@ -345,6 +357,120 @@ public:
         EXPECT_TRUE(expected_clientid->getData() == opt->getData());
     }
 
+    /// @brief Tests if Discover or Request message is processed correctly
+    ///
+    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
+    /// @param client_addr client address
+    /// @param relay_addr relay address
+    void testDiscoverRequest(const uint8_t msg_type,
+                             const IOAddress& client_addr,
+                             const IOAddress& relay_addr) {
+
+        boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+        vector<uint8_t> mac(6);
+        for (int i = 0; i < 6; i++) {
+            mac[i] = i*10;
+        }
+
+        boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
+        boost::shared_ptr<Pkt4> rsp;
+
+        req->setIface("eth0");
+        req->setIndex(17);
+        req->setHWAddr(1, 6, mac);
+        req->setRemoteAddr(IOAddress(client_addr));
+        req->setGiaddr(relay_addr);
+
+        // We are going to test that certain options are returned
+        // in the response message when requested using 'Parameter
+        // Request List' option. Let's configure those options that
+        // are returned when requested.
+        configureRequestedOptions();
+
+        if (msg_type == DHCPDISCOVER) {
+            ASSERT_NO_THROW(
+                rsp = srv->processDiscover(req);
+            );
+
+            // Should return OFFER
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPOFFER, rsp->getType());
+
+        } else {
+            ASSERT_NO_THROW(
+                rsp = srv->processRequest(req);
+            );
+
+            // Should return ACK
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPACK, rsp->getType());
+
+        }
+
+        if (relay_addr.toText() != "0.0.0.0") {
+            // This is relayed message. It should be sent brsp to relay address.
+            EXPECT_EQ(req->getGiaddr().toText(),
+                      rsp->getRemoteAddr().toText());
+
+        } else if (client_addr.toText() != "0.0.0.0") {
+            // This is a message from a client having an IP address.
+            EXPECT_EQ(req->getRemoteAddr().toText(),
+                      rsp->getRemoteAddr().toText());
+
+        } else {
+            // This is a message from a client having no IP address yet.
+            // If IfaceMgr supports direct traffic the response should
+            // be sent to the new address assigned to the client.
+            if (IfaceMgr::instance().isDirectResponseSupported()) {
+                EXPECT_EQ(rsp->getYiaddr(),
+                          rsp->getRemoteAddr().toText());
+
+            // If direct response to the client having no IP address is
+            // not supported, response should go to broadcast.
+            } else {
+                EXPECT_EQ("255.255.255.255", rsp->getRemoteAddr().toText());
+
+            }
+
+        }
+
+        messageCheck(req, rsp);
+
+        // We did not request any options so these should not be present
+        // in the RSP.
+        EXPECT_FALSE(rsp->getOption(DHO_LOG_SERVERS));
+        EXPECT_FALSE(rsp->getOption(DHO_COOKIE_SERVERS));
+        EXPECT_FALSE(rsp->getOption(DHO_LPR_SERVERS));
+
+        // Repeat the test but request some options.
+        // Add 'Parameter Request List' option.
+        addPrlOption(req);
+
+        if (msg_type == DHCPDISCOVER) {
+            ASSERT_NO_THROW(
+                rsp = srv->processDiscover(req);
+            );
+
+            // Should return non-NULL packet.
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPOFFER, rsp->getType());
+
+        } else {
+            ASSERT_NO_THROW(
+                rsp = srv->processRequest(req);
+            );
+
+            // Should return non-NULL packet.
+            ASSERT_TRUE(rsp);
+            EXPECT_EQ(DHCPACK, rsp->getType());
+
+        }
+
+        // Check that the requested options are returned.
+        optionsCheck(rsp);
+
+    }
+
     ~Dhcpv4SrvTest() {
         CfgMgr::instance().deleteSubnets4();
 
@@ -367,29 +493,21 @@ public:
 TEST_F(Dhcpv4SrvTest, basic) {
 
     // Check that the base class can be instantiated
-    Dhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW({
-        srv = new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000);
-    });
-    delete srv;
+    boost::scoped_ptr<Dhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    srv.reset();
 
     // Check that the derived class can be instantiated
-    NakedDhcpv4Srv* naked_srv = NULL;
-    ASSERT_NO_THROW({
-        naked_srv = new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
-    });
-    EXPECT_TRUE(naked_srv->getServerID());
-    delete naked_srv;
-
-    ASSERT_NO_THROW({
-        naked_srv = new NakedDhcpv4Srv(0);
-    });
+    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
+    ASSERT_NO_THROW(
+            naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
     EXPECT_TRUE(naked_srv->getServerID());
 
-    delete naked_srv;
+    ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
+    EXPECT_TRUE(naked_srv->getServerID());
 }
 
-// Verifies that received DISCOVER can be processed correctly,
+// Verifies that DISCOVER received via relay can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
 //
@@ -397,248 +515,86 @@ TEST_F(Dhcpv4SrvTest, basic) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processDiscover) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
-    vector<uint8_t> mac(6);
-    for (int i = 0; i < 6; i++) {
-        mac[i] = 255 - i;
-    }
-
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDISCOVER, 1234));
-    boost::shared_ptr<Pkt4> offer;
-
-    pkt->setIface("eth0");
-    pkt->setIndex(17);
-    pkt->setHWAddr(1, 6, mac);
-    pkt->setRemoteAddr(IOAddress("192.0.2.56"));
-    pkt->setGiaddr(IOAddress("192.0.2.67"));
-
-    // Let's make it a relayed message
-    pkt->setHops(3);
-    pkt->setRemotePort(DHCP4_SERVER_PORT);
-
-    // We are going to test that certain options are returned
-    // (or not returned) in the OFFER message when requested
-    // using 'Parameter Request List' option. Let's configure
-    // those options that are returned when requested.
-    configureRequestedOptions();
-
-    // Should not throw
-    EXPECT_NO_THROW(
-        offer = srv->processDiscover(pkt);
-    );
-
-    // Should return something
-    ASSERT_TRUE(offer);
-
-    EXPECT_EQ(DHCPOFFER, offer->getType());
-
-    // This is relayed message. It should be sent back to relay address.
-    EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
-
-    messageCheck(pkt, offer);
-
-    // There are some options that are always present in the
-    // message, even if not requested.
-    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME));
-    EXPECT_TRUE(offer->getOption(DHO_DOMAIN_NAME_SERVERS));
-
-    // We did not request any options so they should not be present
-    // in the OFFER.
-    EXPECT_FALSE(offer->getOption(DHO_LOG_SERVERS));
-    EXPECT_FALSE(offer->getOption(DHO_COOKIE_SERVERS));
-    EXPECT_FALSE(offer->getOption(DHO_LPR_SERVERS));
-
-    // Add 'Parameter Request List' option.
-    addPrlOption(pkt);
-
-    // Now repeat the test but request some options.
-    EXPECT_NO_THROW(
-        offer = srv->processDiscover(pkt);
-    );
-
-    // Should return something
-    ASSERT_TRUE(offer);
-
-    EXPECT_EQ(DHCPOFFER, offer->getType());
-
-    // This is relayed message. It should be sent back to relay address.
-    EXPECT_EQ(pkt->getGiaddr(), offer->getRemoteAddr());
-
-    messageCheck(pkt, offer);
-
-    // Check that the requested options are returned.
-    optionsCheck(offer);
-
-    // Now repeat the test for directly sent message
-    pkt->setHops(0);
-    pkt->setGiaddr(IOAddress("0.0.0.0"));
-    pkt->setRemotePort(DHCP4_CLIENT_PORT);
-
-    EXPECT_NO_THROW(
-        offer = srv->processDiscover(pkt);
-    );
-
-    // Should return something
-    ASSERT_TRUE(offer);
-
-    EXPECT_EQ(DHCPOFFER, offer->getType());
-
-    // This is direct message. It should be sent back to origin, not
-    // to relay.
-    EXPECT_EQ(pkt->getRemoteAddr(), offer->getRemoteAddr());
-
-    messageCheck(pkt, offer);
-
-    // Check that the requested options are returned.
-    optionsCheck(offer);
-
-    delete srv;
+TEST_F(Dhcpv4SrvTest, processDiscoverRelay) {
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("192.0.2.56"),
+                        IOAddress("192.0.2.67"));
 }
 
-// Verifies that received REQUEST can be processed correctly,
-// that the ACK message generated in response is valid and
+// Verifies that the non-relayed DISCOVER is processed correctly when
+// client source address is specified.
+TEST_F(Dhcpv4SrvTest, processDiscoverNoRelay) {
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("192.0.2.67"));
+}
+
+// Verified that the non-relayed DISCOVER is processed correctly when
+// client source address is not specified.
+TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
+    testDiscoverRequest(DHCPDISCOVER,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("0.0.0.0"));
+}
+
+// Verifies that REQUEST received via relay can be processed correctly,
+// that the OFFER message generated in response is valid and
 // contains necessary options.
 //
 // Note: this test focuses on the packet correctness. There
 // are other tests that verify correctness of the allocation
-// engine. See RequestBasic.
-TEST_F(Dhcpv4SrvTest, processRequest) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv(0);
-    vector<uint8_t> mac(6);
-    for (int i = 0; i < 6; i++) {
-        mac[i] = i*10;
-    }
+// engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
+// and DiscoverInvalidHint.
+TEST_F(Dhcpv4SrvTest, processRequestRelay) {
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("192.0.2.56"),
+                        IOAddress("192.0.2.67"));
+}
 
-    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPREQUEST, 1234));
-    boost::shared_ptr<Pkt4> ack;
+// Verifies that the non-relayed REQUEST is processed correctly when
+// client source address is specified.
+TEST_F(Dhcpv4SrvTest, processRequestNoRelay) {
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("192.0.2.67"));
+}
 
-    req->setIface("eth0");
-    req->setIndex(17);
-    req->setHWAddr(1, 6, mac);
-    req->setRemoteAddr(IOAddress("192.0.2.56"));
-    req->setGiaddr(IOAddress("192.0.2.67"));
-
-    // We are going to test that certain options are returned
-    // in the ACK message when requested using 'Parameter
-    // Request List' option. Let's configure those options that
-    // are returned when requested.
-    configureRequestedOptions();
-
-    // Should not throw
-    ASSERT_NO_THROW(
-        ack = srv->processRequest(req);
-    );
-
-    // Should return something
-    ASSERT_TRUE(ack);
-
-    EXPECT_EQ(DHCPACK, ack->getType());
-
-    // This is relayed message. It should be sent back to relay address.
-    EXPECT_EQ(req->getGiaddr(), ack->getRemoteAddr());
-
-    messageCheck(req, ack);
-
-    // There are some options that are always present in the
-    // message, even if not requested.
-    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME));
-    EXPECT_TRUE(ack->getOption(DHO_DOMAIN_NAME_SERVERS));
-
-    // We did not request any options so these should not be present
-    // in the ACK.
-    EXPECT_FALSE(ack->getOption(DHO_LOG_SERVERS));
-    EXPECT_FALSE(ack->getOption(DHO_COOKIE_SERVERS));
-    EXPECT_FALSE(ack->getOption(DHO_LPR_SERVERS));
-
-    // Add 'Parameter Request List' option.
-    addPrlOption(req);
-
-    // Repeat the test but request some options.
-    ASSERT_NO_THROW(
-        ack = srv->processRequest(req);
-    );
-
-    // Should return something
-    ASSERT_TRUE(ack);
-
-    EXPECT_EQ(DHCPACK, ack->getType());
-
-    // This is relayed message. It should be sent back to relay address.
-    EXPECT_EQ(req->getGiaddr(), ack->getRemoteAddr());
-
-    // Check that the requested options are returned.
-    optionsCheck(ack);
-
-    // Now repeat the test for directly sent message
-    req->setHops(0);
-    req->setGiaddr(IOAddress("0.0.0.0"));
-    req->setRemotePort(DHCP4_CLIENT_PORT);
-
-    EXPECT_NO_THROW(
-        ack = srv->processDiscover(req);
-    );
-
-    // Should return something
-    ASSERT_TRUE(ack);
-
-    EXPECT_EQ(DHCPOFFER, ack->getType());
-
-    // This is direct message. It should be sent back to origin, not
-    // to relay.
-    EXPECT_EQ(ack->getRemoteAddr(), req->getRemoteAddr());
-
-    messageCheck(req, ack);
-
-    // Check that the requested options are returned.
-    optionsCheck(ack);
-
-    delete srv;
+// Verified that the non-relayed REQUEST is processed correctly when
+// client source address is not specified.
+TEST_F(Dhcpv4SrvTest, processRequestNoClientAddr) {
+    testDiscoverRequest(DHCPREQUEST,
+                        IOAddress("0.0.0.0"),
+                        IOAddress("0.0.0.0"));
 }
 
 TEST_F(Dhcpv4SrvTest, processRelease) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPRELEASE, 1234));
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processRelease(pkt);
-    );
-
-    delete srv;
+    EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
 TEST_F(Dhcpv4SrvTest, processDecline) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPDECLINE, 1234));
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processDecline(pkt);
-    );
-
-    delete srv;
+    EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
 TEST_F(Dhcpv4SrvTest, processInform) {
-    NakedDhcpv4Srv* srv = new NakedDhcpv4Srv();
-
-    boost::shared_ptr<Pkt4> pkt(new Pkt4(DHCPINFORM, 1234));
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
     // Should not throw
-    EXPECT_NO_THROW(
-        srv->processInform(pkt);
-    );
+    EXPECT_NO_THROW(srv.processInform(pkt));
 
     // Should return something
-    EXPECT_TRUE(srv->processInform(pkt));
+    EXPECT_TRUE(srv.processInform(pkt));
 
     // @todo Implement more reasonable tests before starting
     // work on processSomething() method.
-
-    delete srv;
 }
 
 TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {

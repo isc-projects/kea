@@ -101,7 +101,7 @@ protected:
     /**
      * \short Function returning a new zone.
      *
-     * Convenience funcion, just creating a new zone, to shorten the code.
+     * Convenience function, just creating a new zone, to shorten the code.
      */
     boost::shared_ptr<InheritedZoneEntry> getZone() {
         return (boost::shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
@@ -228,7 +228,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
     // It should not be answered yet, it should ask for the IP addresses
-    // (trough the NameserverEntry there)
+    // (through the NameserverEntry there)
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));

@@ -76,7 +76,7 @@ public:
        hash_(NULL),
        zone_data_(&zone_data)
     {
-        if (mem_sgmt_.getNamedAddress("updater_zone_data")) {
+        if (mem_sgmt_.getNamedAddress("updater_zone_data").first) {
             isc_throw(isc::InvalidOperation, "A ZoneDataUpdater already exists"
                       " on this memory segment. Destroy it first.");
         }

@@ -1595,7 +1595,7 @@ class TestInitComponents(unittest.TestCase):
         init.components[53] = component
 
         # case where the returned pid is unknown to us. nothing should
-        # happpen then.
+        # happen then.
         init.get_process_exit_status_called = False
         init._get_process_exit_status = init._get_process_exit_status_unknown_pid
         init.components_to_restart = []
@@ -2338,6 +2338,16 @@ class SocketSrvTest(unittest.TestCase):
         self.assertEqual(sock, self.__consumer_dead_called)
         self.assertEqual({}, self.__b10_init._unix_sockets)
         self.assertTrue(sock.closed)
+
+    def test_log_starting(self):
+        """
+        Checks the log_starting call doesn't raise any errors
+        (does not check actual log output)
+        """
+        self.__b10_init.log_starting("foo")
+        self.__b10_init.log_starting("foo", 1)
+        self.__b10_init.log_starting("foo", 1, "192.0.2.1")
+
 
 class TestFunctions(unittest.TestCase):
     def setUp(self):

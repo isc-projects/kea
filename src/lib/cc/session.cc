@@ -325,14 +325,14 @@ Session::establish(const char* socket_file) {
     //
     // send a request for our local name, and wait for a response
     //
-    ConstElementPtr get_lname_msg =
-        Element::fromJSON("{ \"type\": \"getlname\" }");
+    ElementPtr get_lname_msg(Element::createMap());
+    get_lname_msg->set(CC_HEADER_TYPE, Element::create(CC_COMMAND_GET_LNAME));
     sendmsg(get_lname_msg);
 
     ConstElementPtr routing, msg;
     recvmsg(routing, msg, false);
 
-    impl_->lname_ = msg->get("lname")->stringValue();
+    impl_->lname_ = msg->get(CC_PAYLOAD_LNAME)->stringValue();
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_LNAME_RECEIVED).arg(impl_->lname_);
 
     // At this point there's no risk of resource leak.
@@ -387,10 +387,10 @@ Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
         for (size_t i = 0; i < impl_->queue_->size(); i++) {
             q_el = impl_->queue_->get(i);
             if (( seq == -1 &&
-                  !q_el->get(0)->contains("reply")
+                  !q_el->get(0)->contains(CC_HEADER_REPLY)
                 ) || (
-                  q_el->get(0)->contains("reply") &&
-                  q_el->get(0)->get("reply")->intValue() == seq
+                  q_el->get(0)->contains(CC_HEADER_REPLY) &&
+                  q_el->get(0)->get(CC_HEADER_REPLY)->intValue() == seq
                 )
                ) {
                    env = q_el->get(0);
@@ -429,10 +429,10 @@ Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
     ConstElementPtr l_msg =
         Element::fromWire(body_wire_stream, length - header_length);
     if ((seq == -1 &&
-         !l_env->contains("reply")
+         !l_env->contains(CC_HEADER_REPLY)
         ) || (
-         l_env->contains("reply") &&
-         l_env->get("reply")->intValue() == seq
+         l_env->contains(CC_HEADER_REPLY) &&
+         l_env->get(CC_HEADER_REPLY)->intValue() == seq
         )
        ) {
         env = l_env;
@@ -453,9 +453,9 @@ Session::subscribe(std::string group, std::string instance) {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_SUBSCRIBE).arg(group);
     ElementPtr env = Element::createMap();
 
-    env->set("type", Element::create("subscribe"));
-    env->set("group", Element::create(group));
-    env->set("instance", Element::create(instance));
+    env->set(CC_HEADER_TYPE, Element::create(CC_COMMAND_SUBSCRIBE));
+    env->set(CC_HEADER_GROUP, Element::create(group));
+    env->set(CC_HEADER_INSTANCE, Element::create(instance));
 
     sendmsg(env);
 }
@@ -465,9 +465,9 @@ Session::unsubscribe(std::string group, std::string instance) {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_UNSUBSCRIBE).arg(group);
     ElementPtr env = Element::createMap();
 
-    env->set("type", Element::create("unsubscribe"));
-    env->set("group", Element::create(group));
-    env->set("instance", Element::create(instance));
+    env->set(CC_HEADER_TYPE, Element::create(CC_COMMAND_UNSUBSCRIBE));
+    env->set(CC_HEADER_GROUP, Element::create(group));
+    env->set(CC_HEADER_INSTANCE, Element::create(instance));
 
     sendmsg(env);
 }
@@ -498,7 +498,7 @@ bool
 Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
                        bool nonblock, int seq)
 {
-    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE);
+    LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVE).arg(seq);
     bool result(recvmsg(envelope, msg, nonblock, seq));
     if (result) {
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_GROUP_RECEIVED).
@@ -516,13 +516,17 @@ Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
 
-    env->set("type", Element::create("send"));
-    env->set("from", Element::create(impl_->lname_));
-    env->set("to", Element::create(envelope->get("from")->stringValue()));
-    env->set("group", Element::create(envelope->get("group")->stringValue()));
-    env->set("instance", Element::create(envelope->get("instance")->stringValue()));
-    env->set("seq", Element::create(nseq));
-    env->set("reply", Element::create(envelope->get("seq")->intValue()));
+    env->set(CC_HEADER_TYPE, Element::create(CC_COMMAND_SEND));
+    env->set(CC_HEADER_FROM, Element::create(impl_->lname_));
+    env->set(CC_HEADER_TO,
+             Element::create(envelope->get(CC_HEADER_FROM)->stringValue()));
+    env->set(CC_HEADER_GROUP,
+             Element::create(envelope->get(CC_HEADER_GROUP)->stringValue()));
+    env->set(CC_HEADER_INSTANCE,
+             Element::create(envelope->get(CC_HEADER_INSTANCE)->stringValue()));
+    env->set(CC_HEADER_SEQ, Element::create(nseq));
+    env->set(CC_HEADER_REPLY,
+             Element::create(envelope->get(CC_HEADER_SEQ)->intValue()));
 
     sendmsg(env, newmsg);
 

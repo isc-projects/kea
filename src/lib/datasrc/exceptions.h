@@ -20,6 +20,42 @@
 namespace isc {
 namespace datasrc {
 
+/// \brief Top level exception related to data source.
+///
+/// This exception is the most generic form of exception for errors or
+/// unexpected events that can happen in the data source module.  In general,
+/// if an application needs to catch these conditions explicitly, it should
+/// catch more specific exceptions derived from this class; the severity
+/// of the conditions will vary very much, and such an application would
+/// normally like to behave differently depending on the severity.
+class DataSourceError : public Exception {
+public:
+    DataSourceError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// \brief No such serial number when obtaining difference iterator
+///
+/// Thrown if either the zone/start serial number or zone/end serial number
+/// combination does not exist in the differences table.  (Note that this
+/// includes the case where the differences table contains no records related
+/// to that zone.)
+class NoSuchSerial : public DataSourceError {
+public:
+    NoSuchSerial(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
+/// \brief A specified zone does not exist in the specified data source.
+///
+/// This exception is thrown from methods that take a zone name and perform
+/// some action regarding that zone on the corresponding data source.
+class NoSuchZone : public DataSourceError {
+public:
+    NoSuchZone(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
 /// Base class for a number of exceptions that are thrown while working
 /// with zones.
 struct ZoneException : public Exception {

@@ -12,8 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "memory_segment_test.h"
-#include "zone_table_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
+#include <datasrc/tests/memory/zone_loader_util.h>
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
 // was ported during #2109 for the convenience of implementing #2218
@@ -21,14 +22,14 @@
 // In #2219 the original is expected to be removed, and this file should
 // probably be moved here (and any leftover code not handled in #2218 should
 // be cleaned up)
-#include "../../tests/faked_nsec3.h"
+#include <datasrc/tests/faked_nsec3.h>
 
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/memory_client.h>
-#include <datasrc/data_source.h>
+#include <datasrc/exceptions.h>
 #include <datasrc/client.h>
 #include <testutils/dnsmessage_test.h>
 
@@ -220,7 +221,7 @@ protected:
     const RRClass class_;
     const Name origin_;
     // The zone finder to torture by tests
-    MemorySegmentTest mem_sgmt_;
+    MemorySegmentMock mem_sgmt_;
     memory::ZoneData* zone_data_;
     memory::InMemoryZoneFinder zone_finder_;
     boost::scoped_ptr<ZoneDataUpdater> updater_;
@@ -292,7 +293,7 @@ protected:
      * \param zone_finder Check different InMemoryZoneFinder object than
      *     zone_finder_ (if NULL, uses zone_finder_)
      * \param check_wild_answer Checks that the answer has the same RRs, type
-     *     class and TTL as the eqxpected answer and that the name corresponds
+     *     class and TTL as the expected answer and that the name corresponds
      *     to the one searched. It is meant for checking answers for wildcard
      *     queries.
      */
@@ -1610,13 +1611,14 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
 // \brief testcase for #2504 (Problem in inmem NSEC denial of existence
 // handling)
 TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
+    const Name name("example.com.");
     shared_ptr<ZoneTableSegment> ztable_segment(
-         new ZoneTableSegmentTest(class_, mem_sgmt_));
+         new ZoneTableSegmentMock(class_, mem_sgmt_));
     updater_.reset();
+    loadZoneIntoTable(*ztable_segment, name, class_,
+                      TEST_DATA_DIR "/2504-test.zone");
     InMemoryClient client(ztable_segment, class_);
-    Name name("example.com.");
 
-    client.load(name, TEST_DATA_DIR "/2504-test.zone");
     DataSourceClient::FindResult result(client.findZone(name));
 
     // Check for a non-existing name
@@ -1772,17 +1774,18 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
      DefaultNSEC3HashCreator creator;
      setNSEC3HashCreator(&creator);
 
+     const Name name("example.com.");
      shared_ptr<ZoneTableSegment> ztable_segment(
-          new ZoneTableSegmentTest(class_, mem_sgmt_));
+          new ZoneTableSegmentMock(class_, mem_sgmt_));
      updater_.reset();
+     loadZoneIntoTable(*ztable_segment, name, class_,
+                       TEST_DATA_DIR "/2503-test.zone");
      InMemoryClient client(ztable_segment, class_);
-     Name name("example.com.");
 
-     client.load(name, TEST_DATA_DIR "/2503-test.zone");
      DataSourceClient::FindResult result(client.findZone(name));
 
      // Check for a non-existing name
-     Name search_name("nonexist.example.com.");
+     const Name search_name("nonexist.example.com.");
      ZoneFinder::FindNSEC3Result find_result(
           result.zone_finder->findNSEC3(search_name, true));
      // findNSEC3() must have completed (not throw or assert). Because

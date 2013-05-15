@@ -26,6 +26,7 @@ from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
 from isc.statistics import Counters
+from isc.util.address_formatter import AddressFormatter
 
 logger = isc.log.Logger("notify_out")
 
@@ -40,7 +41,6 @@ ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
 _MAX_NOTIFY_NUM = 30
 _MAX_NOTIFY_TRY_NUM = 5
-_EVENT_NONE = 0
 _EVENT_READ = 1
 _EVENT_TIMEOUT = 2
 _NOTIFY_TIMEOUT = 1
@@ -210,7 +210,8 @@ class NotifyOut:
 
             for name_ in not_replied_zones:
                 if not_replied_zones[name_].notify_timeout <= time.time():
-                    self._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
+                    self._zone_notify_handler(not_replied_zones[name_],
+                                              _EVENT_TIMEOUT)
 
     def dispatcher(self, daemon=False):
         """Spawns a thread that will handle notify related events.
@@ -420,31 +421,57 @@ class NotifyOut:
         return replied_zones, not_replied_zones
 
     def _zone_notify_handler(self, zone_notify_info, event_type):
-        '''Notify handler for one zone. The first notify message is
-        always triggered by the event "_EVENT_TIMEOUT" since when
-        one zone prepares to notify its slaves, its notify_timeout
-        is set to now, which is used to trigger sending notify
-        message when dispatcher() scanning zones. '''
+        """Notify handler for one zone.
+
+        For the event type of _EVENT_READ, this method reads a new notify
+        response message from the corresponding socket.  If it succeeds
+        and the response is the expected one, it will send another notify
+        to the next slave for the zone (if any) or the next zone (if any)
+        waiting for its turn of sending notifies.
+
+        In the case of _EVENT_TIMEOUT, or if the read fails or the response
+        is not an expected one in the case of _EVENT_READ, this method will
+        resend the notify request to the same slave up to _MAX_NOTIFY_TRY_NUM
+        times.  If it reaches the max, it will swith to the next slave or
+        the next zone like the successful case above.
+
+        The first notify message is always triggered by the event
+        "_EVENT_TIMEOUT" since when one zone prepares to notify its slaves,
+        its notify_timeout is set to now, which is used to trigger sending
+        notify message when dispatcher() scanning zones.
+
+        Parameters:
+        zone_notify_info(ZoneNotifyInfo): the notify context for the event
+        event_type(int): either _EVENT_READ or _EVENT_TIMEOUT constant
+
+        """
         tgt = zone_notify_info.get_current_notify_target()
         if event_type == _EVENT_READ:
+            # Note: _get_notify_reply() should also check the response's
+            # source address (see #2924).  When it's done the following code
+            # should also be adjusted a bit.
             reply = self._get_notify_reply(zone_notify_info.get_socket(), tgt)
             if reply is not None:
-                if self._handle_notify_reply(zone_notify_info, reply, tgt):
+                if (self._handle_notify_reply(zone_notify_info, reply, tgt) ==
+                    _REPLY_OK):
                     self._notify_next_target(zone_notify_info)
 
-        elif event_type == _EVENT_TIMEOUT and zone_notify_info.notify_try_num > 0:
-            logger.info(NOTIFY_OUT_TIMEOUT, tgt[0], tgt[1])
+        else:
+            assert event_type == _EVENT_TIMEOUT
+            if zone_notify_info.notify_try_num > 0:
+                logger.info(NOTIFY_OUT_TIMEOUT, AddressFormatter(tgt))
 
         tgt = zone_notify_info.get_current_notify_target()
         if tgt:
             zone_notify_info.notify_try_num += 1
             if zone_notify_info.notify_try_num > _MAX_NOTIFY_TRY_NUM:
-                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, tgt[0], tgt[1],
+                logger.warn(NOTIFY_OUT_RETRY_EXCEEDED, AddressFormatter(tgt),
                             _MAX_NOTIFY_TRY_NUM)
                 self._notify_next_target(zone_notify_info)
             else:
-                # set exponential backoff according rfc1996 section 3.6
-                retry_timeout = _NOTIFY_TIMEOUT * pow(2, zone_notify_info.notify_try_num)
+                # set exponential backoff according to rfc1996 section 3.6
+                retry_timeout = (_NOTIFY_TIMEOUT *
+                                 pow(2, zone_notify_info.notify_try_num))
                 zone_notify_info.notify_timeout = time.time() + retry_timeout
                 self._send_notify_message_udp(zone_notify_info, tgt)
 
@@ -487,15 +514,14 @@ class NotifyOut:
             elif zone_notify_info.get_socket().family == socket.AF_INET6:
                 self._counters.inc('zones', zone_notify_info.zone_name,
                                   'notifyoutv6')
-            logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
-                        addrinfo[1])
+            logger.info(NOTIFY_OUT_SENDING_NOTIFY, AddressFormatter(addrinfo))
         except (socket.error, addr.InvalidAddress) as err:
-            logger.error(NOTIFY_OUT_SOCKET_ERROR, addrinfo[0],
-                         addrinfo[1], err)
+            logger.error(NOTIFY_OUT_SOCKET_ERROR, AddressFormatter(addrinfo),
+                         err)
             return False
         except addr.InvalidAddress as iae:
-            logger.error(NOTIFY_OUT_INVALID_ADDRESS, addrinfo[0],
-                         addrinfo[1], iae)
+            logger.error(NOTIFY_OUT_INVALID_ADDRESS,
+                         AddressFormatter(addrinfo), iae)
             return False
 
         return True
@@ -537,38 +563,47 @@ class NotifyOut:
         return soa_rrset
 
     def _handle_notify_reply(self, zone_notify_info, msg_data, from_addr):
-        '''Parse the notify reply message.
-        rcode will not checked here, If we get the response
-        from the slave, it means the slaves has got the notify.'''
+        """Parse the notify reply message.
+
+        rcode will not be checked here; if we get the response
+        from the slave, it means the slave got the notify.
+
+        """
         msg = Message(Message.PARSE)
         try:
             msg.from_wire(msg_data)
             if not msg.get_header_flag(Message.HEADERFLAG_QR):
-                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET, from_addr[0],
-                            from_addr[1])
+                logger.warn(NOTIFY_OUT_REPLY_QR_NOT_SET,
+                            AddressFormatter(from_addr))
                 return _BAD_QR
 
             if msg.get_qid() != zone_notify_info.notify_msg_id:
-                logger.warn(NOTIFY_OUT_REPLY_BAD_QID, from_addr[0],
-                            from_addr[1], msg.get_qid(),
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QID,
+                            AddressFormatter(from_addr), msg.get_qid(),
                             zone_notify_info.notify_msg_id)
                 return _BAD_QUERY_ID
 
             question = msg.get_question()[0]
             if question.get_name() != Name(zone_notify_info.zone_name):
-                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME, from_addr[0],
-                            from_addr[1], question.get_name().to_text(),
+                logger.warn(NOTIFY_OUT_REPLY_BAD_QUERY_NAME,
+                            AddressFormatter(from_addr),
+                            question.get_name().to_text(),
                             Name(zone_notify_info.zone_name).to_text())
                 return _BAD_QUERY_NAME
 
             if msg.get_opcode() != Opcode.NOTIFY:
-                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE, from_addr[0],
-                            from_addr[1], msg.get_opcode().to_text())
+                logger.warn(NOTIFY_OUT_REPLY_BAD_OPCODE,
+                            AddressFormatter(from_addr),
+                            msg.get_opcode().to_text())
                 return _BAD_OPCODE
         except Exception as err:
             # We don't care what exception, just report it?
             logger.error(NOTIFY_OUT_REPLY_UNCAUGHT_EXCEPTION, err)
             return _BAD_REPLY_PACKET
+
+        logger.debug(logger.DBGLVL_TRACE_BASIC, NOTIFY_OUT_REPLY_RECEIVED,
+                     zone_notify_info.zone_name, zone_notify_info.zone_class,
+                     AddressFormatter(from_addr), msg.get_rcode())
 
         return _REPLY_OK
 
@@ -576,8 +611,8 @@ class NotifyOut:
         try:
             msg, addr = sock.recvfrom(512)
         except socket.error as err:
-            logger.error(NOTIFY_OUT_SOCKET_RECV_ERROR, tgt_addr[0],
-                         tgt_addr[1], err)
+            logger.error(NOTIFY_OUT_SOCKET_RECV_ERROR,
+                         AddressFormatter(tgt_addr), err)
             return None
 
         return msg

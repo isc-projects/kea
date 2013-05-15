@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <fstream>
@@ -36,7 +37,7 @@ using namespace isc::config;
 namespace {
 
 class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
-    // "naked" DHCPv4 server, exposes internal fields
+    // "Naked" DHCPv4 server, exposes internal fields
 public:
     NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000) { }
 };
@@ -52,21 +53,21 @@ public:
 
 TEST_F(CtrlDhcpv4SrvTest, commands) {
 
-    ControlledDhcpv4Srv* srv = NULL;
-    ASSERT_NO_THROW({
-        srv = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
-    });
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000))
+    );
 
-    // use empty parameters list
+    // Use empty parameters list
     ElementPtr params(new isc::data::MapElement());
     int rcode = -1;
 
-    // case 1: send bogus command
+    // Case 1: send bogus command
     ConstElementPtr result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("blah", params);
     ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
-    // case 2: send shutdown command without any parameters
+    // Case 2: send shutdown command without any parameters
     result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
@@ -75,13 +76,10 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     ConstElementPtr x(new isc::data::IntElement(pid));
     params->set("pid", x);
 
-    // case 3: send shutdown command with 1 parameter: pid
+    // Case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
-
-
-    delete srv;
 }
 
-} // end of anonymous namespace
+} // End of anonymous namespace

@@ -131,7 +131,7 @@ given host.  This is required by the ACLs.  The %2 represents the IP
 address and port of the peer requesting the transfer, and the %3
 represents the zone name and class.
 
-% XFROUT_QUERY_QUOTA_EXCCEEDED %1 client %2: request denied due to quota (%3)
+% XFROUT_QUERY_QUOTA_EXCEEDED %1 client %2: request denied due to quota (%3)
 The xfr request was rejected because the server was already handling
 the maximum number of allowable transfers as specified in the transfers_out
 configuration parameter, which is also shown in the log message.  The

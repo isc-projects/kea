@@ -93,7 +93,7 @@ class ZoneEntry::ResolverCallback :
          * If there are in the hash table, it is used. If not, they are
          * created. This might still fail, if the list is empty.
          *
-         * It then calls process, to go trough the list of nameservers,
+         * It then calls process, to go through the list of nameservers,
          * examining them and seeing if some addresses are already there
          * and to ask for the rest of them.
          */
@@ -389,7 +389,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
          * \short Callback method.
          *
          * This is called by NameserverEntry when the change happens.
-         * We just call process to go trough relevant nameservers and call
+         * We just call process to go through relevant nameservers and call
          * any callbacks we can.
          */
         virtual void operator()(NameserverPtr ns) {
@@ -451,8 +451,8 @@ ZoneEntry::process(AddressFamily family,
                  * one handle it when we return to it.
                  *
                  * If we didn't do it, one instance would call "resolve". If it
-                 * was from cache, it would imediatelly recurse back to another
-                 * process (trough the nameserver callback, etc), which would
+                 * was from cache, it would immediately recurse back to another
+                 * process (through the nameserver callback, etc), which would
                  * take that only one nameserver and trigger all callbacks.
                  * Only then would resolve terminate and we could ask for the
                  * second nameserver. This way, we first receive all the
