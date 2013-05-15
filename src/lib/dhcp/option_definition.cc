@@ -186,7 +186,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 }
             }
         }
-        return (OptionPtr(new OptionCustom(*this, u, OptionBuffer(begin, end))));
+        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
 
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
