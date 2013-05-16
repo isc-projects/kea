@@ -73,7 +73,8 @@ void
 OptionString::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
     if (std::distance(begin, end) == 0) {
-        isc_throw(isc::OutOfRange, "failed to parse an option holding string value"
+        isc_throw(isc::OutOfRange, "failed to parse an option '"
+                  << getType() << "' holding string value"
                   << " - empty value is not accepted");
     }
     data_.assign(begin, end);
