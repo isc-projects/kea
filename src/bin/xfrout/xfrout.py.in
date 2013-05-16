@@ -152,14 +152,6 @@ def get_soa_serial(soa_rdata):
     '''
     return Serial(int(soa_rdata.to_text().split()[2]))
 
-def make_blocking(fd, on=True):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-    if on:                      # make it blocking
-        flags &= ~os.O_NONBLOCK
-    else:                       # make it non blocking
-        flags |= os.O_NONBLOCK
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
-
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
                  default_acl, zone_config, client_class=DataSourceClient):
