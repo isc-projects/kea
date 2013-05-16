@@ -48,15 +48,28 @@ typedef boost::shared_ptr<SyncUDPServer> SyncUDPServerPtr;
 /// That means, the lookup handler must provide the answer right away.
 /// This allows for implementation with less overhead, compared with
 /// the \c UDPServer class.
+///
+/// This class inherits from boost::enable_shared_from_this so a shared
+/// pointer of this object can be passed in an ASIO callback and won't be
+/// accidentally destroyed while waiting for events.  To enforce this style
+/// of creation, a static factory method is provided, and the constructor is
+/// hidden as a private.
 class SyncUDPServer : public DNSServer,
                       public boost::enable_shared_from_this<SyncUDPServer>,
                       boost::noncopyable
 {
 private:
-    /// \brief Constructor
+    /// \brief Constructor.
+    ///
+    /// This is hidden as private (see the class description).
+    SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
+                  DNSLookup* lookup);
+
+public:
+    /// \brief Factory of SyncUDPServer object in the form of shared_ptr.
     ///
     /// Due to the nature of this server, it's meaningless if the lookup
-    /// callback is NULL.  So the constructor explicitly rejects that case
+    /// callback is NULL.  So this method explicitly rejects that case
     /// with an exception.  Likewise, it doesn't take "checkin" or "answer"
     /// callbacks.  In fact, calling "checkin" from receive callback does not
     /// make sense for any of the DNSServer variants (see Trac #2935);
@@ -74,10 +87,6 @@ private:
     /// \throw isc::InvalidParameter lookup is NULL
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
-    SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
-                  DNSLookup* lookup);
-
-public:
     static SyncUDPServerPtr create(asio::io_service& io_service, const int fd,
                                    const int af, DNSLookup* lookup);
 
