@@ -32,17 +32,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                              const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
       definition_(def) {
-    // It is possible that no data is provided if an option
-    // is being created on a server side. In such case a bunch
-    // of buffers with default values is first created and then
-    // the values are replaced using writeXXX functions. Thus
-    // we need to detect that no data has been specified and
-    // take a different code path.
-    if (!data_.empty()) {
-        createBuffers(data_);
-    } else {
-        createBuffers();
-    }
+    createBuffers(data_);
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
