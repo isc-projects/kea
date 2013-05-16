@@ -36,7 +36,7 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
 
 std::string
 OptionString::getValue() const {
-    return std::string(data_.begin(), data_.end());
+    return (std::string(data_.begin(), data_.end()));
 }
 
 void
