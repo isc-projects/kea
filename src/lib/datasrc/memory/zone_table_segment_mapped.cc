@@ -53,7 +53,7 @@ ZoneTableSegmentMapped::getImplType() const {
 
 bool
 ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
-                                        bool create,
+                                        bool create, bool has_allocations,
                                         std::string& error_msg)
 {
     const MemorySegment::NamedAddressResult result =
@@ -80,9 +80,9 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             }
         }
     } else {
-        if ((!create) && (!segment.allMemoryDeallocated())) {
+        if ((!create) && has_allocations) {
             // If we are resetting in READ_WRITE mode, and some memory
-            // was already allocated but there is no checksum, that
+            // was already allocated but there is no checksum name, that
             // indicates that the segment is corrupted.
             error_msg = "Existing segment is missing a checksum name";
             return (false);
@@ -106,7 +106,7 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
 
 bool
 ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
-                                      bool create,
+                                      bool create, bool has_allocations,
                                       std::string& error_msg)
 {
     const MemorySegment::NamedAddressResult result =
@@ -121,6 +121,14 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             assert(result.second);
         }
     } else {
+        if ((!create) && has_allocations) {
+            // If we are resetting in READ_WRITE mode, and some memory
+            // was already allocated but there is no header name, that
+            // indicates that the segment is corrupted.
+            error_msg = "Existing segment is missing a ZoneTableHeader name";
+            return (false);
+        }
+
         void* ptr = NULL;
         while (!ptr) {
             try {
@@ -168,9 +176,13 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
     std::auto_ptr<MemorySegmentMapped> segment
         (new MemorySegmentMapped(filename, mode));
 
+    // This flag is used inside processCheckSum() and processHeader(),
+    // and must be initialized before we make any further allocations.
+    const bool has_allocations = !segment->allMemoryDeallocated();
+
     std::string error_msg;
-    if ((!processChecksum(*segment, create, error_msg)) ||
-        (!processHeader(*segment, create, error_msg))) {
+    if ((!processChecksum(*segment, create, has_allocations, error_msg)) ||
+        (!processHeader(*segment, create, has_allocations, error_msg))) {
          if (mem_sgmt_) {
               isc_throw(ResetFailed,
                         "Error in resetting zone table segment to use "

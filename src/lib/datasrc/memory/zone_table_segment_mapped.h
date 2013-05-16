@@ -122,9 +122,9 @@ private:
     void sync();
 
     bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create,
-                         std::string& error_msg);
+                         bool has_allocations, std::string& error_msg);
     bool processHeader(isc::util::MemorySegmentMapped& segment, bool create,
-                       std::string& error_msg);
+                       bool has_allocations, std::string& error_msg);
 
     isc::util::MemorySegmentMapped* openReadWrite(const std::string& filename,
                                                   bool create);
