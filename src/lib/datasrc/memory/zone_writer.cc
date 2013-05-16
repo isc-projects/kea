@@ -54,13 +54,12 @@ ZoneWriter::load() {
     }
 
     zone_data_ = load_action_(segment_.getMemorySegment());
+    segment_.resetHeader();
 
     if (!zone_data_) {
         // Bug inside load_action_.
         isc_throw(isc::InvalidOperation, "No data returned from load action");
     }
-
-    segment_.resetHeader();
 
     state_ = ZW_LOADED;
 }
@@ -86,11 +85,10 @@ ZoneWriter::install() {
                                                   zone_data_));
             state_ = ZW_INSTALLED;
             zone_data_ = result.zone_data;
-        } catch (const isc::util::MemorySegmentGrown&) {
-        }
-    }
+        } catch (const isc::util::MemorySegmentGrown&) {}
 
-    segment_.resetHeader();
+        segment_.resetHeader();
+    }
 }
 
 void
