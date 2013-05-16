@@ -1,3 +1,9 @@
+614.	[func]		tmark
+	b10-d2: Initial DHCP-DDNS (a.k.a. D2) module implemented. Currently it does
+	nothing useful, except for providing the skeleton implementation 
+	to be expanded in the future.
+	(Trac #2954, git 392c5ec5d15cd8c809bc9c6096b9f2bfe7b8c66a)
+
 613.	[func]		jinmei
 	datasrc: Error handling in loading zones into memory is now more
 	consistent and convenient: data source configuration does not fail
