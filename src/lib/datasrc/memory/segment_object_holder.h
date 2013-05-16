@@ -37,6 +37,19 @@ getNextHolderName();
 // A simple holder to create and use some objects in this implementation
 // in an exception safe manner.   It works like std::auto_ptr but much
 // more simplified.
+//
+// Note, however, that it doesn't take the pointer to hold on construction.
+// This is because the constructor itself can throw or cause address
+// reallocation inside the memory segment.  If that happens various
+// undesirable effects can happen, such as memory leak or unintentional access
+// to the pre-reallocated address.  To make it safer, we use a separate
+// \c set() method, which is exception free and doesn't cause address
+// reallocation.  So the typical usage is to first construct the holder
+// object, then the object to be held, immediately followed by a call to \c
+// set(). Subsequent access to the held address should be done via the \c get()
+// method.  get() ensures the address is always valid in the memory segment
+// even if address reallocation happens between set() and get().
+//
 // template parameter T is the type of object allocated by mem_sgmt.
 // template parameter ARG_T is the type that will be passed to destroy()
 // (deleter functor, etc).  It must be copyable.
