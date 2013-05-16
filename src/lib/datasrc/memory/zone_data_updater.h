@@ -80,7 +80,13 @@ public:
             isc_throw(isc::InvalidOperation, "A ZoneDataUpdater already exists"
                       " on this memory segment. Destroy it first.");
         }
-        mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_);
+        if (mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_)) {
+            // It might have relocated during the set
+            zone_data_ =
+                static_cast<ZoneData*>(mem_sgmt_.getNamedAddress("updater_zone_data").
+                                       second);
+        }
+        assert(zone_data_);
     }
 
     /// The destructor.
