@@ -48,6 +48,14 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>b10-d2</command>
+      <arg><option>-s</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
@@ -67,8 +75,16 @@
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
-          Enable verbose mode.
-<!-- TODO: what does this do? -->
+          Verbose mode sets the logging level to debug. This is primarily
+          for development purposes in stand-alone mode.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-s</option></term>
+        <listitem><para>
+          Causes the process to run without attempting to connect to the
+          BIND10 message queue.  This is for development purposes.
         </para></listitem>
       </varlistentry>
 
