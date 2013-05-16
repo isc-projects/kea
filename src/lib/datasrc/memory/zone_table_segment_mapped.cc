@@ -142,7 +142,7 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
              // - ZoneTable::create could throw MemorySegmentGrown, leaking
              //   ptr
              // - even on successful return from ZoneTable::create(), ptr
-             //   could be reallocated due to its internal implementation detail
+             //   could be relocated due to its internal implementation detail
              // So, to make it 100% safe we should protect both ptr and
              // zone table in something similar to SegmentObjectHolder, get
              // their addresses via the holder's get() method, and expect
