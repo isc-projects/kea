@@ -235,8 +235,15 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // Explicitly close() isn't necessary for most cases. But for the
+            // very connection, socket_ is shared with the original owner of
+            // the server object and would stay open.
             // TODO: should we keep the connection open for a short time
             // to see if new requests come in?
+            socket_->close(ec);
+            if (ec) {
+                LOG_DEBUG(logger, 0, ASIODNS_TCP_CLOSE_FAIL).arg(ec.message());
+            }
             return;
         }
 
