@@ -83,8 +83,8 @@ public:
         if (mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_)) {
             // It might have relocated during the set
             zone_data_ =
-                static_cast<ZoneData*>(mem_sgmt_.getNamedAddress("updater_zone_data").
-                                       second);
+                static_cast<ZoneData*>(mem_sgmt_.getNamedAddress(
+                                           "updater_zone_data").second);
         }
         assert(zone_data_);
     }
