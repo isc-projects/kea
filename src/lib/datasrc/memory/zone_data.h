@@ -86,6 +86,15 @@ public:
     /// The NSEC3 parameters are extracted and stored within the created
     /// \c NSEC3Data object.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -102,6 +111,15 @@ public:
     /// The NSEC3 hash parameters are extracted and stored within the created
     /// \c NSEC3Data object.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -375,6 +393,15 @@ public:
 public:
     /// \brief Allocate and construct \c ZoneData.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
