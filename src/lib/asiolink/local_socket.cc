@@ -51,10 +51,10 @@ LocalSocket::LocalSocket(IOService& io_service, int fd) :
 {
     try {
         impl_ = new Impl(io_service, fd);
-    } catch (const asio::error_code& error) {
+    } catch (const asio::system_error& error) {
         // Catch and convert any exception from asio's constructor
         isc_throw(IOError, "failed to open local socket with FD " << fd
-                  << ": " << error.message());
+                  << ": " << error.what());
     }
 }
 
