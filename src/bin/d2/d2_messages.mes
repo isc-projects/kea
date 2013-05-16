@@ -19,10 +19,10 @@ This is a debug message issued during a D2 process startup.
 
 % D2_START_INFO pid: %1, verbose: %2, standalone: %3
 This is a debug message issued during the D2 process startup.
-It lists some information about the parameters with which the 
+It lists some information about the parameters with which the
 process is running.
 
 % D2_SHUTDOWN : process is performing a normal shutting down
-This is a debug message issued when a D2 process shuts down 
+This is a debug message issued when a D2 process shuts down
 normally in response to command to stop.
 

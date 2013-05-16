@@ -53,6 +53,7 @@ nodist_b10_d2_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
 
 b10_d2_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
+b10_d2_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 b10_d2dir = $(pkgdatadir)
 b10_d2_DATA = d2.spec
