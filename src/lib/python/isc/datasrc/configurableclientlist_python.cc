@@ -27,6 +27,7 @@
 
 #include <dns/python/rrclass_python.h>
 #include <dns/python/name_python.h>
+#include <dns/python/pydnspp_common.h>
 
 #include <datasrc/client_list.h>
 
@@ -38,7 +39,9 @@
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
+using namespace isc::datasrc::memory;
 using namespace isc::datasrc::python;
+using namespace isc::dns::python;
 
 //
 // ConfigurableClientList
@@ -113,6 +116,39 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
                         "Unknown C++ exception");
         return (NULL);
     }
+}
+
+PyObject*
+ConfigurableClientList_resetMemorySegment(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const char* datasrc_name_p;
+        int mode_int;
+        const char* config_p;
+        if (PyArg_ParseTuple(args, "sis", &datasrc_name_p, &mode_int,
+                             &config_p)) {
+            const std::string datasrc_name(datasrc_name_p);
+            const isc::data::ConstElementPtr
+                config(isc::data::Element::fromJSON(std::string(config_p)));
+            ZoneTableSegment::MemorySegmentOpenMode mode =
+                static_cast<ZoneTableSegment::MemorySegmentOpenMode>
+                    (mode_int);
+            self->cppobj->resetMemorySegment(datasrc_name, mode, config);
+            Py_RETURN_NONE;
+        }
+    } catch (const isc::data::JSONError& jse) {
+        const string ex_what(std::string("JSON parse error in memory segment"
+                               " configuration: ") + jse.what());
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+    }
+
+    return (NULL);
 }
 
 PyObject*
@@ -191,6 +227,19 @@ configuration preserved.\n\
 Parameters:\n\
   configuration     The configuration, as a JSON encoded string.\
   allow_cache       If caching is allowed." },
+    { "reset_memory_segment", ConfigurableClientList_resetMemorySegment,
+      METH_VARARGS,
+        "reset_memory_segment(datasrc_name, mode, config_params) -> None\n\
+\n\
+Wrapper around C++ ConfigurableClientList::resetMemorySegment\n\
+\n\
+This resets the zone table segment for a datasource with a new\n\
+memory segment.\n\
+\n\
+Parameters:\n\
+  datasrc_name      The name of the data source whose segment to reset.\
+  mode              The open mode for the new memory segment.\
+  config_params     The configuration for the new memory segment, as a JSON encoded string." },
     { "find", ConfigurableClientList_find, METH_VARARGS,
 "find(zone, want_exact_match=False, want_finder=True) -> datasrc_client,\
 zone_finder, exact_match\n\
@@ -299,6 +348,29 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&configurableclientlist_type);
+
+    // FIXME: These should eventually be moved to the ZoneTableSegment
+    // class when we add Python bindings for the memory data source
+    // specific bits. But for now, we add these enums here to support
+    // reloading a zone table segment.
+    try {
+        installClassVariable(configurableclientlist_type, "CREATE",
+                             Py_BuildValue("I", ZoneTableSegment::CREATE));
+        installClassVariable(configurableclientlist_type, "READ_WRITE",
+                             Py_BuildValue("I", ZoneTableSegment::READ_WRITE));
+        installClassVariable(configurableclientlist_type, "READ_ONLY",
+                             Py_BuildValue("I", ZoneTableSegment::READ_ONLY));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ConfigurableClientList initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+            "Unexpected failure in ConfigurableClientList initialization");
+        return (false);
+    }
 
     return (true);
 }
