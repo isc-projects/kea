@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,85 @@ using namespace isc::util::encode;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+// helper function for string and lexer constructors
+void
+SSHFP::constructFromLexer(MasterLexer& lexer) {
+    const uint32_t algorithm =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (algorithm > 255) {
+        isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
+    }
+    algorithm_ = static_cast<uint8_t>(algorithm);
+
+    const uint32_t fingerprint_type =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (fingerprint_type > 255) {
+        isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
+    }
+    fingerprint_type_ = static_cast<uint8_t>(fingerprint_type);
+
+    const MasterToken& token = lexer.getNextToken(MasterToken::STRING, true);
+    if ((token.getType() != MasterToken::END_OF_FILE) &&
+	(token.getType() != MasterToken::END_OF_LINE)) {
+        decodeHex(token.getString(), fingerprint_);
+    }
+}
+
+/// \brief Constructor from string.
+///
+/// The given string must represent a valid SSHFP RDATA.  There can be
+/// extra space characters at the beginning or end of the text (which
+/// are simply ignored), but other extra text, including a new line,
+/// will make the construction fail with an exception.
+///
+/// The Algorithm and Fingerprint Type fields must be within their valid
+/// ranges, but are not contrained to the values defined in RFC4255.
+///
+/// The Fingerprint field may be absent, but if present it must contain a
+/// valid hex encoding of the fingerprint.
+///
+/// \throw InvalidRdataText if any fields are missing, out of their valid
+/// ranges, or incorrect.
+///
+/// \param sshfp_str A string containing the RDATA to be created
+SSHFP::SSHFP(const std::string& sshfp_str) {
+    try {
+        std::istringstream ss(sshfp_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        constructFromLexer(lexer);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for SSHFP: "
+                      << sshfp_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct SSHFP from '" <<
+                  sshfp_str << "': " << ex.what());
+    } catch (const isc::BadValue& e) {
+        isc_throw(InvalidRdataText,
+                  "Bad SSHFP fingerprint: " << e.what());
+    }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an SSHFP RDATA.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw InvalidRdataText Fields are out of their valid range, or are
+/// incorrect.
+/// \throw BadValue Fingerprint is not a valid hex string.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+SSHFP::SSHFP(MasterLexer& lexer, const Name*,
+       MasterLoader::Options, MasterLoaderCallbacks&) {
+    constructFromLexer(lexer);
+}
+
 SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 2) {
         isc_throw(InvalidRdataLength, "SSHFP record too short");
@@ -48,36 +127,6 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
         fingerprint_.resize(rdata_len);
         buffer.readData(&fingerprint_[0], rdata_len);
     }
-}
-
-SSHFP::SSHFP(const std::string& sshfp_str) {
-    std::istringstream iss(sshfp_str);
-    std::stringbuf fingerprintbuf;
-    uint32_t algorithm, fingerprint_type;
-
-    iss >> algorithm >> fingerprint_type;
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid SSHFP text");
-    }
-
-    if (algorithm > 255) {
-        isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-
-    if (fingerprint_type > 255) {
-        isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
-
-    iss >> &fingerprintbuf;
-    try {
-        decodeHex(fingerprintbuf.str(), fingerprint_);
-    } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText,
-                  "Bad SSHFP fingerprint: " << e.what());
-    }
-
-    algorithm_ = algorithm;
-    fingerprint_type_ = fingerprint_type;
 }
 
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
