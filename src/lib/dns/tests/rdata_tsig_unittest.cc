@@ -38,23 +38,22 @@ using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {
-const char* const valid_text1 = "hmac-md5.sig-alg.reg.int. 1286779327 300 "
+const string valid_text1 = "hmac-md5.sig-alg.reg.int. 1286779327 300 "
     "0 16020 BADKEY 0";
-const char* const valid_text2 = "hmac-sha256. 1286779327 300 12 "
+const string valid_text2 = "hmac-sha256. 1286779327 300 12 "
     "FAKEFAKEFAKEFAKE 16020 BADSIG 0";
-
-const char* const valid_text3 = "hmac-sha1. 1286779327 300 12 "
+const string valid_text3 = "hmac-sha1. 1286779327 300 12 "
     "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE";
-const char* const valid_text4 = "hmac-sha1. 1286779327 300 12 "
+const string valid_text4 = "hmac-sha1. 1286779327 300 12 "
     "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE";
-const char* const valid_text5 = "hmac-sha256. 1286779327 300 12 "
+const string valid_text5 = "hmac-sha256. 1286779327 300 12 "
     "FAKEFAKEFAKEFAKE 16020 2845 0"; // using numeric error code
-const char* const too_long_label = "012345678901234567890123456789"
-    "0123456789012345678901234567890123";
 
 class Rdata_TSIG_Test : public RdataTest {
 protected:
-    Rdata_TSIG_Test() : rdata_tsig(valid_text1) {}
+    Rdata_TSIG_Test() :
+        rdata_tsig(valid_text1)
+    {}
 
     void checkFromText_InvalidText(const string& rdata_str) {
         checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
@@ -80,6 +79,12 @@ protected:
     void checkFromText_EmptyLabel(const string& rdata_str) {
         checkFromText<any::TSIG, EmptyLabel, EmptyLabel>(
             rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <any::TSIG, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_tsig, true, false);
     }
 
     template <typename Output>
@@ -118,11 +123,13 @@ TEST_F(Rdata_TSIG_Test, fromText) {
 
 TEST_F(Rdata_TSIG_Test, badText) {
     // too many fields
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 BADKEY 0 0"), InvalidRdataText);
+    checkFromText_BadString(valid_text1 + " 0 0");
     // not enough fields
     checkFromText_LexerError("foo 0 0 0 0 BADKEY");
     // bad domain name
-    checkFromText_TooLongLabel(string(too_long_label) + "0 0 0 0 BADKEY 0");
+    checkFromText_TooLongLabel(
+        "0123456789012345678901234567890123456789012345678901234567890123"
+        " 0 0 0 0 BADKEY 0");
     checkFromText_EmptyLabel("foo..bar 0 0 0 0 BADKEY");
     // time is too large (2814...6 is 2^48)
     checkFromText_InvalidText("foo 281474976710656 0 0 0 BADKEY 0");
@@ -150,8 +157,12 @@ TEST_F(Rdata_TSIG_Test, badText) {
     checkFromText_InvalidText("foo 0 0 0 0 TEST 0");
     // Numeric error code is too large
     checkFromText_InvalidText("foo 0 0 0 0 65536 0");
+    // Numeric error code is negative
+    checkFromText_InvalidText("foo 0 0 0 0 -1 0");
     // Other len is too large
     checkFromText_InvalidText("foo 0 0 0 0 NOERROR 65536 FAKE");
+    // Other len is negative
+    checkFromText_LexerError("foo 0 0 0 0 NOERROR -1 FAKE");
     // invalid Other len
     checkFromText_LexerError("foo 0 0 0 0 NOERROR LEN FAKE");
     // Other len and data mismatch
@@ -282,16 +293,6 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
     EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020,
                            18, 6, NULL),
                  isc::InvalidParameter);
-}
-
-TEST_F(Rdata_TSIG_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_tsig.compare(
-        *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
-                                     valid_text1)));
-
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
-                                             "foo 0 0 0 0 BADKEY 0 0"));
 }
 
 TEST_F(Rdata_TSIG_Test, assignment) {

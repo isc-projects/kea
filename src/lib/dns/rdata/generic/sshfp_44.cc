@@ -135,9 +135,8 @@ SSHFP::SSHFP(const string& sshfp_str) :
 /// RDATA to be created
 SSHFP::SSHFP(MasterLexer& lexer, const Name*,
              MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
+    impl_(constructFromLexer(lexer))
 {
-    impl_ = constructFromLexer(lexer);
 }
 
 /// \brief Constructor from InputBuffer.

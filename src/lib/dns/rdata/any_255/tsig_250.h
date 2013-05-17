@@ -142,7 +142,7 @@ public:
     /// This method never throws an exception.
     const void* getOtherData() const;
 private:
-    TSIGImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
+    TSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
 
     TSIGImpl* impl_;
 };
