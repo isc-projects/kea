@@ -19,7 +19,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/strutil.h>
 #include <util/encode/base64.h>
 
 #include <dns/messagerenderer.h>
@@ -34,7 +33,6 @@ using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::util::encode;
-using namespace isc::util::str;
 using namespace isc::dns;
 using isc::dns::rdata::generic::detail::createNameFromLexer;
 
@@ -74,18 +72,18 @@ struct TSIGImpl {
 
 // helper function for string and lexer constructors
 TSIGImpl*
-TSIG::constructFromLexer(MasterLexer& lexer) {
+TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 defines Algorithm Name to be "in domain name syntax",
     // but it's not actually a domain name, so we allow it to be not
     // fully qualified.
-    const Name root(".");
-    const Name& algorithm = createNameFromLexer(lexer, &root);
+    const Name& algorithm =
+        createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
 
-    const string time_str =
+    const string& time_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
     uint64_t time_signed;
     try {
-        time_signed = boost::lexical_cast<uint64_t>(time_str);
+        time_signed = boost::lexical_cast<uint64_t>(time_txt);
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(InvalidRdataText, "Invalid TSIG Time");
     }
@@ -103,7 +101,7 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "TSIG MAC Size out of range");
     }
 
-    const string mac_txt = (macsize > 0) ?
+    const string& mac_txt = (macsize > 0) ?
             lexer.getNextToken(MasterToken::STRING).getString() : "";
     vector<uint8_t> mac;
     decodeBase64(mac_txt, mac);
@@ -117,9 +115,9 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "TSIG Original ID out of range");
     }
 
-    const string error_txt =
+    const string& error_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
-    uint16_t error = 0;
+    uint32_t error = 0;
     // XXX: In the initial implementation we hardcode the mnemonics.
     // We'll soon generalize this.
     if (error_txt == "NOERROR") {
@@ -132,13 +130,16 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         error = TSIGError::BAD_TIME_CODE;
     } else {
         try {
-            error = boost::lexical_cast<uint16_t>(error_txt);
+            error = boost::lexical_cast<uint32_t>(error_txt);
         } catch (const boost::bad_lexical_cast&) {
             isc_throw(InvalidRdataText, "Invalid TSIG Error");
         }
+        if (error > 0xffff) {
+            isc_throw(InvalidRdataText, "TSIG Error out of range");
+        }
     }
 
-    const int32_t otherlen =
+    const uint32_t otherlen =
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (otherlen > 0xffff) {
         isc_throw(InvalidRdataText, "TSIG Other Len out of range");
@@ -151,7 +152,8 @@ TSIG::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText,
                   "TSIG Other Data length does not match Other Len");
     }
-    // also verify Error == BADTIME?
+    // RFC2845 says Other Data is "empty unless Error == BADTIME".
+    // However, we don't enforce that.
 
     return (new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
                          error, other_data));
@@ -212,7 +214,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer));
+        impl_ptr.reset(constructFromLexer(lexer, NULL));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -242,9 +244,9 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-TSIG::TSIG(MasterLexer& lexer, const Name*,
-               MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
+TSIG::TSIG(MasterLexer& lexer, const Name* origin,
+           MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(constructFromLexer(lexer, origin))
 {
 }
 
@@ -268,7 +270,9 @@ TSIG::TSIG(MasterLexer& lexer, const Name*,
 /// But this constructor does not use this parameter; if necessary, the caller
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
-TSIG::TSIG(InputBuffer& buffer, size_t) : impl_(NULL) {
+TSIG::TSIG(InputBuffer& buffer, size_t) :
+    impl_(NULL)
+{
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
