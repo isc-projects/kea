@@ -71,7 +71,7 @@ TEST_F(Rdata_SSHFP_Test, createFromText) {
 TEST_F(Rdata_SSHFP_Test, createFromLexer) {
     EXPECT_EQ(0, rdata_sshfp.compare(
         *test::createRdataUsingLexer(RRType::SSHFP(), RRClass::IN(),
-                                     "2 1 123456789abcdef67890123456789abcdef67890")));
+                                     sshfp_txt)));
 }
 
 TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
