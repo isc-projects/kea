@@ -73,9 +73,6 @@ public:
     Name getText() const { return (text_); }
 
 private:
-    // helper function for string and lexer constructors
-    void constructFromLexer(MasterLexer& lexer, const Name* origin);
-
     Name mailbox_;
     Name text_;
 };

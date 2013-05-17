@@ -31,13 +31,6 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-// helper function for string and lexer constructors
-void
-RP::constructFromLexer(MasterLexer& lexer, const Name* origin) {
-    mailbox_ = createNameFromLexer(lexer, origin);
-    text_ = createNameFromLexer(lexer, origin);
-}
-
 /// \brief Constructor from string.
 ///
 /// \c rp_str must be formatted as follows:
@@ -61,7 +54,8 @@ RP::RP(const std::string& rp_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer, NULL);
+        mailbox_ = createNameFromLexer(lexer, NULL);
+        text_ = createNameFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RP: "
@@ -89,9 +83,9 @@ RP::RP(const std::string& rp_str) :
 /// is non-absolute.
 RP::RP(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
-    mailbox_(Name::ROOT_NAME()), text_(Name::ROOT_NAME())
+    mailbox_(createNameFromLexer(lexer, origin)),
+    text_(createNameFromLexer(lexer, origin))
 {
-    constructFromLexer(lexer, origin);
 }
 
 /// \brief Constructor from wire-format data.

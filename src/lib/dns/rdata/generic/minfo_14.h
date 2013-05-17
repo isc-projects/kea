@@ -69,9 +69,6 @@ public:
     Name getEmailbox() const { return (emailbox_); }
 
 private:
-    // helper function for string and lexer constructors
-    void constructFromLexer(MasterLexer& lexer, const Name* origin);
-
     Name rmailbox_;
     Name emailbox_;
 };

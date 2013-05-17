@@ -41,10 +41,25 @@ protected:
         obuffer(0)
     {}
 
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<generic::RP, isc::Exception, isc::Exception>(
+            rdata_str, rdata_rp, false, false);
+    }
+
     void checkFromText_LexerError(const string& rdata_str) {
         checkFromText
             <generic::RP, InvalidRdataText, MasterLexer::LexerError>(
                 rdata_str, rdata_rp, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText<generic::RP, InvalidRdataText, isc::Exception>(
+            rdata_str, rdata_rp, true, false);
+    }
+
+    void checkFromText_EmptyLabel(const string& rdata_str) {
+        checkFromText<generic::RP, EmptyLabel, EmptyLabel>(
+            rdata_str, rdata_rp, true, true);
     }
 
     void checkFromText_MissingOrigin(const string& rdata_str) {
@@ -53,9 +68,9 @@ protected:
                 rdata_str, rdata_rp, true, true);
     }
 
-    void checkFromText_EmptyLabel(const string& rdata_str) {
-        checkFromText<generic::RP, EmptyLabel, EmptyLabel>(
-            rdata_str, rdata_rp, true, true);
+    void checkFromText_Origin(const string& rdata_str, const Name* origin) {
+        checkFromText<generic::RP, MissingNameOrigin, isc::Exception>(
+            rdata_str, rdata_rp, true, false, origin);
     }
 
     const Name mailbox_name, text_name;
@@ -69,18 +84,27 @@ TEST_F(Rdata_RP_Test, createFromText) {
     EXPECT_EQ(mailbox_name, rdata_rp.getMailbox());
     EXPECT_EQ(text_name, rdata_rp.getText());
 
-    // Invalid textual input cases follow:
-    // names are invalid
-    checkFromText_EmptyLabel("bad..name. rp-text.example.com.");
-    checkFromText_EmptyLabel("root.example.com. bad..name.");
-    checkFromText_MissingOrigin("root.example.com rp-text.example.com");
+    checkFromText_None("root.example.com. rp-text.example.com.");
+
+    // origin defined for lexer constructor, but not string constructor
+    Name origin("example.com");
+    checkFromText_Origin("root rp-text", &origin);
+
+    // lexer constructor accepts extra text, but string constructor doesn't
+    checkFromText_BadString("root.example.com. rp-text.example.com. "
+                            "extra.example.com.");
+}
+
+TEST_F(Rdata_RP_Test, badText) {
+    // invalid names
+    checkFromText_EmptyLabel("root..example.com. rp-text.example.com.");
+    checkFromText_EmptyLabel("root.example.com. rp-text..example.com.");
 
     // missing field
     checkFromText_LexerError("root.example.com.");
 
-    // redundant field
-    EXPECT_THROW(generic::RP("root.example.com. rp-text.example.com. "
-                             "redundant.example."), InvalidRdataText);
+    // missing origin
+    checkFromText_MissingOrigin("root.example.com rp-text.example.com");
 }
 
 TEST_F(Rdata_RP_Test, createFromWire) {
@@ -122,29 +146,6 @@ TEST_F(Rdata_RP_Test, badFromWire) {
 TEST_F(Rdata_RP_Test, createFromParams) {
     EXPECT_EQ(mailbox_name, generic::RP(mailbox_name, text_name).getMailbox());
     EXPECT_EQ(text_name, generic::RP(mailbox_name, text_name).getText());
-}
-
-TEST_F(Rdata_RP_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_rp.compare(
-        *test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
-                                     "root.example.com. "
-                                     "rp-text.example.com.")));
-
-    // test::createRdataUsingLexer() constructs relative to
-    // "example.org." origin.
-    EXPECT_EQ(0, generic::RP("root.example.org. rp-text.example.org.").compare(
-        *test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
-                                     "root rp-text")));
-
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
-                                             "root.example.com."));
-
-    // Extra text at end of line
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::RP(), RRClass::IN(),
-                                                "root.example.com. "
-                                                "rp-text.example.com. "
-                                                "redundant.example.com."));
 }
 
 TEST_F(Rdata_RP_Test, toWireBuffer) {

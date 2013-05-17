@@ -123,7 +123,7 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("1");
     checkFromText_LexerError("ONE 2 123456789abcdef67890123456789abcdef67890");
     checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
-    checkFromText_BadValue("1 2 BUCKLEMYSHOES");
+    checkFromText_BadValue("1 2 BUCKLEMYSHOE");
     checkFromText_BadString(sshfp_txt + " extra text");
 }
 
@@ -181,7 +181,7 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
                  InvalidBufferPosition);
 }
 
-TEST_F(Rdata_SSHFP_Test, createFromComponents) {
+TEST_F(Rdata_SSHFP_Test, createFromParams) {
     const generic::SSHFP rdata_sshfp2(2, 1, "123456789abcdef67890123456789abcdef67890");
     EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
 }
