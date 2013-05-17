@@ -50,8 +50,8 @@ typedef boost::function<void(ZoneData*)> ZoneDataDeleterType;
 ZoneTable*
 ZoneTable::create(util::MemorySegment& mem_sgmt, const RRClass& zone_class) {
     SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> holder(
-        mem_sgmt, ZoneTableTree::create(mem_sgmt),
-        boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));
+        mem_sgmt, boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));
+    holder.set(ZoneTableTree::create(mem_sgmt));
     void* p = mem_sgmt.allocate(sizeof(ZoneTable));
     ZoneTable* zone_table = new(p) ZoneTable(zone_class, holder.get());
     holder.release();
@@ -77,8 +77,8 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     if (content == NULL) {
         isc_throw(isc::BadValue, "Zone content must not be NULL");
     }
-    SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, content,
-                                                  zone_class);
+    SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, zone_class);
+    holder.set(content);
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
     switch (zones_->insert(mem_sgmt, zone_name, &node)) {
