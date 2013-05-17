@@ -83,7 +83,9 @@ copylist = [
     ["data/xfrin-notify.sqlite3.orig",
      "data/xfrin-notify.sqlite3"],
     ["data/ddns/example.org.sqlite3.orig",
-     "data/ddns/example.org.sqlite3"]
+     "data/ddns/example.org.sqlite3"],
+    ["data/empty_db.sqlite3",
+     "data/xfrout.sqlite3"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
