@@ -179,6 +179,13 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     return (zone_data);
 }
 
+ZoneData*
+ZoneData::create(util::MemorySegment& mem_sgmt) {
+    ZoneData* zone_data = create(mem_sgmt, Name::ROOT_NAME());
+    zone_data->origin_node_->setFlag(EMPTY_ZONE);
+    return (zone_data);
+}
+
 void
 ZoneData::destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data,
                   RRClass zone_class)
