@@ -28,6 +28,8 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+struct SSHFPImpl;
+
 class SSHFP : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
@@ -35,6 +37,7 @@ public:
 
     SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
           const std::string& fingerprint);
+    ~SSHFP();
 
     ///
     /// Specialized methods
@@ -44,13 +47,9 @@ public:
     size_t getFingerprintLen() const;
 
 private:
-    void constructFromLexer(MasterLexer& lexer);
+    SSHFPImpl* constructFromLexer(MasterLexer& lexer);
 
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    uint8_t algorithm_;
-    uint8_t fingerprint_type_;
-    std::vector<uint8_t> fingerprint_;
+    SSHFPImpl* impl_;
 };
 
 // END_RDATA_NAMESPACE
