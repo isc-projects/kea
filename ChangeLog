@@ -1,3 +1,10 @@
+615.	[bug]		jinmei
+	b10-auth: Avoid referencing to a freed object when authoritative
+	server addresses are reconfigured.  It caused a crash on a busy
+	server during initial startup time, and the same crash could also
+	happen if listen_on parameters are reconfigured at run time.
+	(Trac #2946, git d5f2a0d0954acd8bc33aabb220fab31652394fcd)
+
 614.	[func]		tmark
 	b10-d2: Initial DHCP-DDNS (a.k.a. D2) module implemented.
 	Currently it does nothing useful, except for does nothing useful,
