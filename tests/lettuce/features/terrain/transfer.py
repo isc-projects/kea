@@ -84,7 +84,7 @@ def perform_axfr(step, zone_name, address, port):
     args = [ 'dig', 'AXFR', '@' + str(address), '-p', str(port), zone_name ]
     world.transfer_result = TransferResult(args)
 
-@step('A customized AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?(?: with pose of (\d+) second)?')
+@step('A customized AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?(?: with pose of (\d+) seconds?)?')
 def perform_custom_axfr(step, zone_name, address, port, delay):
     """Checks AXFR transfer, and store the result in the form of internal
     CustomTransferResult class, which is compatible with TransferResult.
