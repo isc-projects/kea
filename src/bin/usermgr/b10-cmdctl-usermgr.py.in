@@ -75,7 +75,7 @@ class UserManager:
             # Just let any file read error bubble up; it will
             # be caught in the run() method
             with open(self.options.output_file, newline='') as csvfile:
-                reader = csv.reader(csvfile)
+                reader = csv.reader(csvfile, strict=True)
                 for row in reader:
                     self.user_info[row[0]] = row
 
