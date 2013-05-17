@@ -79,7 +79,8 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(0, zone_table->getZoneCount()); // count is still 0
 
     SegmentObjectHolder<ZoneData, RRClass> holder1(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
+        mem_sgmt_, zclass_);
+    holder1.set(ZoneData::create(mem_sgmt_, zname1));
     const ZoneData* data1(holder1.get());
     // Normal successful case.
     const ZoneTable::AddResult result1(zone_table->addZone(mem_sgmt_, zclass_,
@@ -93,7 +94,8 @@ TEST_F(ZoneTableTest, addZone) {
 
     // Duplicate add doesn't replace the existing data.
     SegmentObjectHolder<ZoneData, RRClass> holder2(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
+        mem_sgmt_, zclass_);
+    holder2.set(ZoneData::create(mem_sgmt_, zname1));
     const ZoneTable::AddResult result2(zone_table->addZone(mem_sgmt_, zclass_,
                                                            zname1,
                                                            holder2.release()));
@@ -107,8 +109,8 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(1, zone_table->getZoneCount()); // count doesn't change.
 
     SegmentObjectHolder<ZoneData, RRClass> holder3(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("EXAMPLE.COM")),
-                                    zclass_);
+        mem_sgmt_, zclass_);
+    holder3.set(ZoneData::create(mem_sgmt_, Name("EXAMPLE.COM")));
     // names are compared in a case insensitive manner.
     const ZoneTable::AddResult result3(zone_table->addZone(mem_sgmt_, zclass_,
                                                            Name("EXAMPLE.COM"),
@@ -117,13 +119,15 @@ TEST_F(ZoneTableTest, addZone) {
     ZoneData::destroy(mem_sgmt_, result3.zone_data, zclass_);
     // Add some more different ones.  Should just succeed.
     SegmentObjectHolder<ZoneData, RRClass> holder4(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
+        mem_sgmt_, zclass_);
+    holder4.set(ZoneData::create(mem_sgmt_, zname2));
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname2,
                                   holder4.release()).code);
     EXPECT_EQ(2, zone_table->getZoneCount());
     SegmentObjectHolder<ZoneData, RRClass> holder5(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
+        mem_sgmt_, zclass_);
+    holder5.set(ZoneData::create(mem_sgmt_, zname3));
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname3,
                                   holder5.release()).code);
@@ -133,7 +137,8 @@ TEST_F(ZoneTableTest, addZone) {
     // tree.  It still shouldn't cause memory leak (which would be detected
     // in TearDown()).
     SegmentObjectHolder<ZoneData, RRClass> holder6(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("example.org")), zclass_);
+        mem_sgmt_, zclass_);
+    holder6.set(ZoneData::create(mem_sgmt_, Name("example.org")));
     mem_sgmt_.setThrowCount(1);
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org"),
                                      holder6.release()),
@@ -142,17 +147,20 @@ TEST_F(ZoneTableTest, addZone) {
 
 TEST_F(ZoneTableTest, findZone) {
     SegmentObjectHolder<ZoneData, RRClass> holder1(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname1), zclass_);
+        mem_sgmt_, zclass_);
+    holder1.set(ZoneData::create(mem_sgmt_, zname1));
     ZoneData* zone_data = holder1.get();
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_, zname1,
                                                    holder1.release()).code);
     SegmentObjectHolder<ZoneData, RRClass> holder2(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname2), zclass_);
+        mem_sgmt_, zclass_);
+    holder2.set(ZoneData::create(mem_sgmt_, zname2));
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname2,
                                   holder2.release()).code);
     SegmentObjectHolder<ZoneData, RRClass> holder3(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, zname3), zclass_);
+        mem_sgmt_, zclass_);
+    holder3.set(ZoneData::create(mem_sgmt_, zname3));
     EXPECT_EQ(result::SUCCESS,
               zone_table->addZone(mem_sgmt_, zclass_, zname3,
                                   holder3.release()).code);
@@ -177,7 +185,8 @@ TEST_F(ZoneTableTest, findZone) {
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
     SegmentObjectHolder<ZoneData, RRClass> holder4(
-        mem_sgmt_, ZoneData::create(mem_sgmt_, Name("com")), zclass_);
+        mem_sgmt_, zclass_);
+    holder4.set(ZoneData::create(mem_sgmt_, Name("com")));
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
                                                    Name("com"),
                                                    holder4.release()).code);

@@ -115,6 +115,15 @@ public:
     /// from the given memory segment, constructs the object, and returns
     /// a pointer to it.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -149,6 +158,15 @@ public:
     ///
     /// This method adds a given zone data to the internal table.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Internal resource allocation fails.
     ///
     /// \param mem_sgmt The \c MemorySegment to allocate zone data to be
