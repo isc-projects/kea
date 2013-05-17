@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <string>
+
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -31,17 +33,18 @@ using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
-// minfo text
-const char* const minfo_txt = "rmailbox.example.com. emailbox.example.com.";
-const char* const minfo_txt2 = "root.example.com. emailbox.example.com.";
-const char* const too_long_label = "01234567890123456789012345678901234567"
-                                   "89012345678901234567890123.";
-
 namespace {
+const string too_long_label =
+    "0123456789012345678901234567890123456789012345678901234567890123.";
+
 class Rdata_MINFO_Test : public RdataTest {
 protected:
     Rdata_MINFO_Test():
-        rdata_minfo(string(minfo_txt)), rdata_minfo2(string(minfo_txt2)) {}
+        minfo_txt("rmailbox.example.com. emailbox.example.com."),
+        minfo_txt2("root.example.com. emailbox.example.com."),
+        rdata_minfo(minfo_txt),
+        rdata_minfo2(minfo_txt2)
+    {}
 
     void checkFromText_None(const string& rdata_str) {
         checkFromText<generic::MINFO, isc::Exception, isc::Exception>(
@@ -51,7 +54,7 @@ protected:
     void checkFromText_LexerError(const string& rdata_str) {
         checkFromText
             <generic::MINFO, InvalidRdataText, MasterLexer::LexerError>(
-                rdata_str, rdata_minfo, true, true);
+            rdata_str, rdata_minfo, true, true);
     }
 
     void checkFromText_TooLongLabel(const string& rdata_str) {
@@ -59,6 +62,29 @@ protected:
             rdata_str, rdata_minfo, true, true);
     }
 
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText<generic::MINFO, InvalidRdataText, isc::Exception>(
+            rdata_str, rdata_minfo, true, false);
+    }
+
+    void checkFromText_EmptyLabel(const string& rdata_str) {
+        checkFromText<generic::MINFO, EmptyLabel, EmptyLabel>(
+            rdata_str, rdata_minfo, true, true);
+    }
+
+    void checkFromText_MissingOrigin(const string& rdata_str) {
+        checkFromText
+            <generic::MINFO, MissingNameOrigin, MissingNameOrigin>(
+                rdata_str, rdata_minfo, true, true);
+    }
+
+    void checkFromText_Origin(const string& rdata_str, const Name* origin) {
+        checkFromText<generic::MINFO, MissingNameOrigin, isc::Exception>(
+            rdata_str, rdata_minfo, true, false, origin);
+    }
+
+    const string minfo_txt;
+    const string minfo_txt2;
     const generic::MINFO rdata_minfo;
     const generic::MINFO rdata_minfo2;
 };
@@ -72,21 +98,32 @@ TEST_F(Rdata_MINFO_Test, createFromText) {
     EXPECT_EQ(Name("emailbox.example.com."), rdata_minfo2.getEmailbox());
 
     checkFromText_None(minfo_txt);
+
+    // origin defined for lexer constructor, but not string constructor
+    Name origin("example.com");
+    checkFromText_Origin("rmailbox emailbox", &origin);
+
+    // lexer constructor accepts extra text, but string constructor doesn't
+    checkFromText_BadString("rmailbox.example.com. emailbox.example.com. "
+                            "extra.example.com.");
 }
 
 TEST_F(Rdata_MINFO_Test, badText) {
-    // incomplete text
-    checkFromText_LexerError("root.example.com.");
-    // number of fields (must be 2) is incorrect
-    EXPECT_THROW(generic::MINFO("root.example.com. emailbox.example.com. "
-                                "example.com."),
-                 InvalidRdataText);
-    // bad rmailbox name
-    checkFromText_TooLongLabel("root.example.com. emailbox.example.com." +
-                               string(too_long_label));
-    // bad emailbox name
-    checkFromText_TooLongLabel("root.example.com."  + string(too_long_label) +
+    // too long names
+    checkFromText_TooLongLabel("root.example.com."  + too_long_label +
                                " emailbox.example.com.");
+    checkFromText_TooLongLabel("root.example.com. emailbox.example.com." +
+                               too_long_label);
+
+    // invalid names
+    checkFromText_EmptyLabel("root..example.com. emailbox.example.com.");
+    checkFromText_EmptyLabel("root.example.com. emailbox..example.com.");
+
+    // missing name
+    checkFromText_LexerError("root.example.com.");
+
+    // missing origin
+    checkFromText_MissingOrigin("root.example.com emailbox.example.com");
 }
 
 TEST_F(Rdata_MINFO_Test, createFromWire) {
@@ -116,21 +153,6 @@ TEST_F(Rdata_MINFO_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType::MINFO(), RRClass::IN(),
                                       "rdata_minfo_fromWire6.wire"),
                  DNSMessageFORMERR);
-}
-
-TEST_F(Rdata_MINFO_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_minfo.compare(
-        *test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(),
-                                     minfo_txt)));
-
-    // test::createRdataUsingLexer() constructs relative to
-    // "example.org." origin.
-    EXPECT_EQ(0, generic::MINFO("r.example.org. e.example.org.").compare(
-        *test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(), "r e")));
-
-    // Extra text at end of line
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::MINFO(), RRClass::IN(),
-             "rmailbox.example.com. emailbox.example.com. extra.example.com."));
 }
 
 TEST_F(Rdata_MINFO_Test, assignment) {

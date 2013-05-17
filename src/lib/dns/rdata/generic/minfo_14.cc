@@ -31,13 +31,6 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-// helper function for string and lexer constructors
-void
-MINFO::constructFromLexer(MasterLexer& lexer, const Name* origin) {
-    rmailbox_ = createNameFromLexer(lexer, origin);
-    emailbox_ = createNameFromLexer(lexer, origin);
-}
-
 /// \brief Constructor from string.
 ///
 /// \c minfo_str must be formatted as follows:
@@ -64,7 +57,8 @@ MINFO::MINFO(const std::string& minfo_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer, NULL);
+	rmailbox_ = createNameFromLexer(lexer, NULL);
+	emailbox_ = createNameFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for MINFO: "
@@ -92,10 +86,10 @@ MINFO::MINFO(const std::string& minfo_str) :
 /// \param origin If non NULL, specifies the origin of SERVER when it
 /// is non-absolute.
 MINFO::MINFO(MasterLexer& lexer, const Name* origin,
-       MasterLoader::Options, MasterLoaderCallbacks&) :
-    rmailbox_(Name::ROOT_NAME()), emailbox_(Name::ROOT_NAME())
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    rmailbox_(createNameFromLexer(lexer, origin)),
+    emailbox_(createNameFromLexer(lexer, origin))
 {
-    constructFromLexer(lexer, origin);
 }
 
 /// \brief Constructor from wire-format data.
