@@ -89,8 +89,8 @@ class ServerStopper {
         ServerStopper() : server_to_stop_(NULL) {}
         virtual ~ServerStopper(){}
 
-        void setServerToStop(DNSServer* server) {
-            server_to_stop_ = server;
+        void setServerToStop(DNSServer& server) {
+            server_to_stop_ = &server;
         }
 
         void stopServer() const {
@@ -378,40 +378,36 @@ class DNSServerTestBase : public::testing::Test {
                                                          server_port))),
             tcp_client_(new TCPClient(service,
                                       ip::tcp::endpoint(server_address_,
-                                                        server_port))),
-            udp_server_(NULL),
-            tcp_server_(NULL)
+                                                        server_port)))
         {
             current_service = &service;
         }
 
         ~ DNSServerTestBase() {
-            if (udp_server_ != NULL) {
+            if (udp_server_) {
                 udp_server_->stop();
             }
-            if (tcp_server_ != NULL) {
+            if (tcp_server_) {
                 tcp_server_->stop();
             }
             delete checker_;
             delete lookup_;
             delete sync_lookup_;
             delete answer_;
-            delete udp_server_;
             delete udp_client_;
-            delete tcp_server_;
             delete tcp_client_;
             // No delete here. The service is not allocated by new, but as our
             // member. This only references it, so just cleaning the pointer.
             current_service = NULL;
         }
 
-        void testStopServerByStopper(DNSServer* server, SimpleClient* client,
-                ServerStopper* stopper)
+        void testStopServerByStopper(DNSServer& server, SimpleClient* client,
+                                     ServerStopper* stopper)
         {
             static const unsigned int IO_SERVICE_TIME_OUT = 5;
             io_service_is_time_out = false;
             stopper->setServerToStop(server);
-            (*server)();
+            server();
             client->sendDataThenWaitForFeedback(query_message);
             // Since thread hasn't been introduced into the tool box, using
             // signal to make sure run function will eventually return even
@@ -446,8 +442,8 @@ class DNSServerTestBase : public::testing::Test {
         SimpleAnswer* const answer_;
         UDPClient*    const udp_client_;
         TCPClient*    const tcp_client_;
-        UDPServerClass* udp_server_;
-        TCPServer*    tcp_server_;
+        boost::shared_ptr<UDPServerClass> udp_server_;
+        boost::shared_ptr<TCPServer> tcp_server_;
 
         // To access them in signal handle function, the following
         // variables have to be static.
@@ -508,27 +504,30 @@ protected:
         this->udp_server_ = createServer(fd_udp, AF_INET6);
         const int fd_tcp(getFd(SOCK_STREAM));
         ASSERT_NE(-1, fd_tcp) << strerror(errno);
-        this->tcp_server_ = new TCPServer(this->service, fd_tcp, AF_INET6,
-                                          this->checker_, this->lookup_,
-                                          this->answer_);
+        this->tcp_server_ =
+            boost::shared_ptr<TCPServer>(new TCPServer(
+                                             this->service, fd_tcp, AF_INET6,
+                                             this->checker_, this->lookup_,
+                                             this->answer_));
     }
 
     // A helper factory of the tested UDP server class: allow customization
     // by template specialization.
-    UDPServerClass* createServer(int fd, int af) {
-        return (new UDPServerClass(this->service, fd, af,
-                                   this->checker_, this->lookup_,
-                                   this->answer_));
+    boost::shared_ptr<UDPServerClass> createServer(int fd, int af) {
+        return (boost::shared_ptr<UDPServerClass>(
+                    new UDPServerClass(this->service, fd, af,
+                                       this->checker_, this->lookup_,
+                                       this->answer_)));
     }
 };
 
 // Specialization for SyncUDPServer.  It needs to use SyncDummyLookup.
 template<>
-SyncUDPServer*
+boost::shared_ptr<SyncUDPServer>
 FdInit<SyncUDPServer>::createServer(int fd, int af) {
     delete this->lookup_;
     this->lookup_ = new SyncDummyLookup;
-    return (new SyncUDPServer(this->service, fd, af, this->lookup_));
+    return (SyncUDPServer::create(this->service, fd, af, this->lookup_));
 }
 
 // This makes it the template as gtest wants it.
@@ -557,7 +556,7 @@ asio::io_service* DNSServerTestBase<UDPServerClass>::current_service(NULL);
 // get response, UDP server will be stopped, the io service won't quit
 // if udp server doesn't stop successfully.
 TYPED_TEST(DNSServerTest, stopUDPServerAfterOneQuery) {
-    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+    this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
                                   this->udp_client_);
     EXPECT_EQ(query_message, this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -566,18 +565,17 @@ TYPED_TEST(DNSServerTest, stopUDPServerAfterOneQuery) {
 // Test whether udp server stopped successfully before server start to serve
 TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
     this->udp_server_->stop();
-    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+    this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
                                   this->udp_client_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
-
 // Test whether udp server stopped successfully during message check.
 // This only works for non-sync server; SyncUDPServer doesn't use checkin
 // callback.
 TEST_F(AsyncServerTest, stopUDPServerDuringMessageCheck) {
-    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+    this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
                                   this->checker_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -585,7 +583,7 @@ TEST_F(AsyncServerTest, stopUDPServerDuringMessageCheck) {
 
 // Test whether udp server stopped successfully during query lookup
 TYPED_TEST(DNSServerTest, stopUDPServerDuringQueryLookup) {
-    this->testStopServerByStopper(this->udp_server_, this->udp_client_,
+    this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
                                   this->lookup_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -595,7 +593,7 @@ TYPED_TEST(DNSServerTest, stopUDPServerDuringQueryLookup) {
 // Only works for (non-sync) server because SyncUDPServer doesn't use answer
 // callback.
 TEST_F(AsyncServerTest, stopUDPServerDuringPrepareAnswer) {
-    testStopServerByStopper(udp_server_, udp_client_, answer_);
+    testStopServerByStopper(*udp_server_, udp_client_, answer_);
     EXPECT_EQ(std::string(""), udp_client_->getReceivedData());
     EXPECT_TRUE(serverStopSucceed());
 }
@@ -612,18 +610,17 @@ stopServerManyTimes(DNSServer *server, unsigned int times) {
 TYPED_TEST(DNSServerTest, stopUDPServerMoreThanOnce) {
     ASSERT_NO_THROW({
         boost::function<void()> stop_server_3_times
-            = boost::bind(stopServerManyTimes, this->udp_server_, 3);
+            = boost::bind(stopServerManyTimes, this->udp_server_.get(), 3);
         this->udp_client_->setGetFeedbackCallback(stop_server_3_times);
-        this->testStopServerByStopper(this->udp_server_,
+        this->testStopServerByStopper(*this->udp_server_,
                                       this->udp_client_, this->udp_client_);
         EXPECT_EQ(query_message, this->udp_client_->getReceivedData());
     });
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
-
 TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ(query_message, this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -632,7 +629,7 @@ TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
 TYPED_TEST(DNSServerTest, TCPTimeoutOnLen) {
     this->tcp_server_->setTCPRecvTimeout(100);
     this->tcp_client_->setSendDataLenDelay(2);
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ("", this->tcp_client_->getReceivedData());
     EXPECT_FALSE(this->serverStopSucceed());
@@ -642,7 +639,7 @@ TYPED_TEST(DNSServerTest, TCPTimeout) {
     // set delay higher than timeout
     this->tcp_server_->setTCPRecvTimeout(100);
     this->tcp_client_->setSendDataDelay(2);
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ("", this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -652,7 +649,7 @@ TYPED_TEST(DNSServerTest, TCPNoTimeout) {
     // set delay lower than timeout
     this->tcp_server_->setTCPRecvTimeout(3000);
     this->tcp_client_->setSendDataDelay(1);
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ("BIND10 is awesome", this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -661,7 +658,7 @@ TYPED_TEST(DNSServerTest, TCPNoTimeout) {
 // Test whether tcp server stopped successfully before server start to serve
 TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {
     this->tcp_server_->stop();
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -670,7 +667,7 @@ TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {
 
 // Test whether tcp server stopped successfully during message check
 TYPED_TEST(DNSServerTest, stopTCPServerDuringMessageCheck) {
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->checker_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -678,7 +675,7 @@ TYPED_TEST(DNSServerTest, stopTCPServerDuringMessageCheck) {
 
 // Test whether tcp server stopped successfully during query lookup
 TYPED_TEST(DNSServerTest, stopTCPServerDuringQueryLookup) {
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->lookup_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -686,7 +683,7 @@ TYPED_TEST(DNSServerTest, stopTCPServerDuringQueryLookup) {
 
 // Test whether tcp server stopped successfully during composing answer
 TYPED_TEST(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
-    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                   this->answer_);
     EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
@@ -698,9 +695,9 @@ TYPED_TEST(DNSServerTest, stopTCPServerDuringPrepareAnswer) {
 TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
     ASSERT_NO_THROW({
         boost::function<void()> stop_server_3_times
-            = boost::bind(stopServerManyTimes, this->tcp_server_, 3);
+            = boost::bind(stopServerManyTimes, this->tcp_server_.get(), 3);
         this->tcp_client_->setGetFeedbackCallback(stop_server_3_times);
-        this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+        this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
                                       this->tcp_client_);
         EXPECT_EQ(query_message, this->tcp_client_->getReceivedData());
     });
@@ -759,14 +756,36 @@ TEST_F(SyncServerTest, unsupportedOps) {
 // Check it rejects forgotten resume (eg. insists that it is synchronous)
 TEST_F(SyncServerTest, mustResume) {
     lookup_->allow_resume_ = false;
-    ASSERT_THROW(testStopServerByStopper(udp_server_, udp_client_, lookup_),
+    ASSERT_THROW(testStopServerByStopper(*udp_server_, udp_client_, lookup_),
                  isc::Unexpected);
 }
 
 // SyncUDPServer doesn't allow NULL lookup callback.
 TEST_F(SyncServerTest, nullLookupCallback) {
-    EXPECT_THROW(SyncUDPServer(service, 0, AF_INET, NULL),
+    EXPECT_THROW(SyncUDPServer::create(service, 0, AF_INET, NULL),
                  isc::InvalidParameter);
+}
+
+TEST_F(SyncServerTest, resetUDPServerBeforeEvent) {
+    // Reset the UDP server object after starting and before it would get
+    // an event from io_service (in this case abort event).  The following
+    // sequence confirms it's shut down immediately, and without any
+    // disruption.
+
+    // Since we'll stop the server run() should immediately return, and
+    // it's very unlikely to cause hangup.  But we'll make very sure it
+    // doesn't happen.
+    const unsigned int IO_SERVICE_TIME_OUT = 5;
+    (*udp_server_)();
+    udp_server_->stop();
+    udp_server_.reset();
+    void (*prev_handler)(int) = std::signal(SIGALRM, stopIOService);
+    current_service = &service;
+    alarm(IO_SERVICE_TIME_OUT);
+    service.run();
+    alarm(0);
+    std::signal(SIGALRM, prev_handler);
+    EXPECT_FALSE(io_service_is_time_out);
 }
 
 }
