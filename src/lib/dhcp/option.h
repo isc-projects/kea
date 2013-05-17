@@ -282,8 +282,13 @@ public:
     ///
     /// @param first iterator pointing to beginning of buffer to copy.
     /// @param last iterator pointing to end of buffer to copy.
-    void setData(const OptionBufferConstIter first,
-                 const OptionBufferConstIter last);
+    ///
+    /// @tparam InputIterator type of the iterator representing the
+    /// limits of the buffer to be assigned to a data_ buffer.
+    template<typename InputIterator>
+    void setData(InputIterator first, InputIterator last) {
+        data_.assign(first, last);
+    }
 
     /// just to force that every option has virtual dtor
     virtual ~Option();
