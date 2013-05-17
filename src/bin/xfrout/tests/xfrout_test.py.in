@@ -290,7 +290,7 @@ class TestXfroutSessionBase(unittest.TestCase):
 
     def setUp(self):
         # xfrout.make_blocking won't work with faked socket, and we'd like to
-        # examine how it's called, so we replace it without our mock.
+        # examine how it's called, so we replace it with our mock.
         self.__orig_make_blocking = xfrout.make_blocking
         self._make_blocking_history = []
         xfrout.make_blocking = lambda x, y: self.__make_blocking(x, y)
