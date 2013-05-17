@@ -16,7 +16,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES  = *.gcno *.gcda spec_config.h d2_srv_messages.h d2_srv_messages.cc
+CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc
 
 man_MANS = b10-d2.8
 DISTCLEANFILES = $(man_MANS)
