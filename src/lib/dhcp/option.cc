@@ -55,7 +55,7 @@ Option::Option(Universe u, uint16_t type, const OptionBuffer& data)
 
 Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
                OptionBufferConstIter last)
-    :universe_(u), type_(type), data_(OptionBuffer(first,last)) {
+    :universe_(u), type_(type), data_(first, last) {
     check();
 }
 
@@ -121,7 +121,7 @@ Option::packOptions(isc::util::OutputBuffer& buf) {
 
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
-    data_ = OptionBuffer(begin, end);
+    setData(begin, end);
 }
 
 void
@@ -272,13 +272,6 @@ void Option::setUint16(uint16_t value) {
 void Option::setUint32(uint32_t value) {
   data_.resize(4);
   writeUint32(value, &data_[0]);
-}
-
-void Option::setData(const OptionBufferConstIter first,
-                     const OptionBufferConstIter last) {
-    // We will copy entire option buffer, so we have to resize data_.
-    data_.resize(std::distance(first, last));
-    std::copy(first, last, data_.begin());
 }
 
 bool Option::equal(const OptionPtr& other) const {

@@ -36,7 +36,8 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
 
 std::string
 OptionString::getValue() const {
-    return (std::string(data_.begin(), data_.end()));
+    const OptionBuffer& data = getData();
+    return (std::string(data.begin(), data.end()));
 }
 
 void
@@ -49,13 +50,13 @@ OptionString::setValue(const std::string& value) {
                   << getType() << "' must not be empty");
     }
 
-    data_.assign(value.begin(), value.end());
+    setData(value.begin(), value.end());
 }
 
 
 uint16_t
 OptionString::len() {
-    return (getHeaderLen() + data_.size());
+    return (getHeaderLen() + getData().size());
 }
 
 void
@@ -63,7 +64,8 @@ OptionString::pack(isc::util::OutputBuffer& buf) {
     // Pack option header.
     packHeader(buf);
     // Pack data.
-    buf.writeData(&data_[0], data_.size());
+    const OptionBuffer& data = getData();
+    buf.writeData(&data[0], data.size());
 
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.
@@ -77,7 +79,7 @@ OptionString::unpack(OptionBufferConstIter begin,
                   << getType() << "' holding string value"
                   << " - empty value is not accepted");
     }
-    data_.assign(begin, end);
+    setData(begin, end);
 }
 
 } // end of isc::dhcp namespace
