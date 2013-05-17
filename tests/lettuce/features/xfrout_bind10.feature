@@ -19,6 +19,11 @@ Feature: Xfrout
 
     # Similar to the previous one, but using a much larger zone, and with
     # a small delay at the client side.  It should still succeed.
+    # The specific delay (5 seconds) was chosen for an environment that
+    # revealed a bug which is now fixed to reproduce the issue; shorter delays
+    # didn't trigger the problem.  Depending on the OS implementation, machine
+    # speed, etc, the same delay may be too long or too short, but in any case
+    # the test should succeed now.
     Scenario: transfer a large zone
 
     Load 50000 records for zone example.org to DB file data/xfrout.sqlite3
