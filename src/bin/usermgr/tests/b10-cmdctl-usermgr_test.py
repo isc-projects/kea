@@ -140,6 +140,7 @@ class TestUserMgr(unittest.TestCase):
         if expected_stdout is not None:
             self.assertEqual(expected_stdout, stdout.decode())
         self.assertEqual(expected_returncode, returncode, " ".join(command))
+        return (returncode, stdout.decode(), stderr.decode())
 
     def test_help(self):
         self.run_check(0,
@@ -468,14 +469,23 @@ Options:
         # I can only think of one invalid format, an unclosed string
         with open(self.OUTPUT_FILE, 'w', newline='') as f:
             f.write('a,"\n')
-        self.run_check(2,
-                       'Using accounts file: test_users.csv\n'
-                       'Error parsing csv file: newline inside string\n',
+        # Different versions of the csv library return different errors.
+        # So we need to check the output in a little more complex way.
+        # We ask the run_check not tu check the output and check it
+        # ourselves.
+        (returncode, stdout, stderr) = self.run_check(2, None,
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
                          'add', 'user1', 'pass1'
                        ])
+        self.assertTrue(stdout ==
+                        'Using accounts file: test_users.csv\n'
+                        'Error parsing csv file: newline inside string\n' or
+                        stdout ==
+                        'Using accounts file: test_users.csv\n'
+                        'Error parsing csv file: unexpected end of data\n')
+
 
 
 if __name__== '__main__':
