@@ -28,20 +28,20 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
-                             Universe u,
-                             const OptionBuffer& data)
+                           Universe u,
+                           const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
       definition_(def) {
-    createBuffers(data_);
+    createBuffers(getData());
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
-                             Universe u,
-                             OptionBufferConstIter first,
-                             OptionBufferConstIter last)
+                           Universe u,
+                           OptionBufferConstIter first,
+                           OptionBufferConstIter last)
     : Option(u, def.getCode(), first, last),
       definition_(def) {
-    createBuffers(data_);
+    createBuffers(getData());
 }
 
 void
@@ -507,9 +507,7 @@ OptionCustom::writeString(const std::string& text, const uint32_t index) {
 void
 OptionCustom::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
-    data_ = OptionBuffer(begin, end);
-    // Chop the buffer stored in data_ into set of sub buffers.
-    createBuffers(data_);
+    initialize(begin, end);
 }
 
 uint16_t
@@ -533,15 +531,13 @@ OptionCustom::len() {
     return (length);
 }
 
-void OptionCustom::setData(const OptionBufferConstIter first,
-                     const OptionBufferConstIter last) {
-    // We will copy entire option buffer, so we have to resize data_.
-    data_.resize(std::distance(first, last));
-    std::copy(first, last, data_.begin());
+void OptionCustom::initialize(const OptionBufferConstIter first,
+                              const OptionBufferConstIter last) {
+    setData(first, last);
 
     // Chop the data_ buffer into set of buffers that represent
     // option fields data.
-    createBuffers(data_);
+    createBuffers(getData());
 }
 
 std::string OptionCustom::toText(int indent) {
