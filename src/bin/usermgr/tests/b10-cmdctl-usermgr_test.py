@@ -471,7 +471,7 @@ Options:
             f.write('a,"\n')
         # Different versions of the csv library return different errors.
         # So we need to check the output in a little more complex way.
-        # We ask the run_check not tu check the output and check it
+        # We ask the run_check not to check the output and check it
         # ourselves.
         (returncode, stdout, stderr) = self.run_check(2, None,
                        '',
