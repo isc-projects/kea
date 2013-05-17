@@ -25,7 +25,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for a.c.x.w.example. should have rcode NXDOMAIN
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 8
@@ -57,7 +57,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for ns1.example. type MX should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
@@ -85,7 +85,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for y.w.example. should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
@@ -113,7 +113,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for mc.c.example. type MX should have rcode NOERROR
-        The last query response should have flags qr rd
+        The last query response should have flags qr
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 6
@@ -148,7 +148,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for a.z.w.example. type MX should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 2
         The last query response should have nscount 5
@@ -195,7 +195,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for a.z.w.example. type AAAA should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 8
@@ -227,7 +227,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for example. type DS should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
@@ -259,7 +259,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for b.x.w.example. should have rcode NXDOMAIN
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 6
@@ -289,7 +289,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for a.w.example. should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 6
@@ -319,7 +319,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for *.w.example. type MX should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 2
         The last query response should have nscount 3
@@ -362,7 +362,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for *.w.example. type A should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
@@ -390,7 +390,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example. type NSEC3 should have rcode NXDOMAIN
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 8
@@ -422,7 +422,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for ai.example. type DS should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 4
@@ -450,7 +450,7 @@ Feature: NSEC3 Authoritative service
         And bind10 module StatsHttpd should not be running
 
         A dnssec query for c.example. type DS should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 6
