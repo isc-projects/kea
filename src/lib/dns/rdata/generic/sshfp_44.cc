@@ -221,9 +221,6 @@ int
 SSHFP::compare(const Rdata& other) const {
     const SSHFP& other_sshfp = dynamic_cast<const SSHFP&>(other);
 
-    /* This doesn't really make any sort of sense, but in the name of
-       consistency... */
-
     if (impl_->algorithm_ < other_sshfp.impl_->algorithm_) {
         return (-1);
     } else if (impl_->algorithm_ > other_sshfp.impl_->algorithm_) {
