@@ -154,13 +154,16 @@ def get_soa_serial(soa_rdata):
     return Serial(int(soa_rdata.to_text().split()[2]))
 
 def make_blocking(filenum, on):
-    """A helper function to change blocking mode of the given file.
+    """A helper function to change blocking mode of the given socket.
 
-    It sets the mode of blocking I/O for the file associated with filenum,
-    according to parameter 'on': if it's True the file will be made blocking;
-    otherwise it will be made non-blocking.
+    It sets the mode of blocking I/O for the socket associated with filenum
+    (descriptor of the socket) according to parameter 'on': if it's True the
+    file will be made blocking; otherwise it will be made non-blocking.
 
-    filenum(int): file number (descriptor) of the file to update.
+    The given filenum must be a descriptor of a socket (not an ordinary file
+    etc), but this function doesn't check that condition.
+
+    filenum(int): file number (descriptor) of the socket to update.
     on(bool): whether enable (True) or disable (False) blocking I/O.
 
     """
