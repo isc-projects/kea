@@ -120,7 +120,7 @@ Feature: Example feature
         The last query response should have adcount 0
         # When checking flags, we must pass them exactly as they appear in
         # the output of dig.
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
 
         A query for www.example.org type TXT should have rcode NOERROR
         The last query response should have ancount 0
