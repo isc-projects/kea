@@ -779,7 +779,7 @@ TEST_F(SyncServerTest, resetUDPServerBeforeEvent) {
     (*udp_server_)();
     udp_server_->stop();
     udp_server_.reset();
-    void (*prev_handler)(int) = std::signal(SIGALRM, this->stopIOService);
+    void (*prev_handler)(int) = std::signal(SIGALRM, stopIOService);
     current_service = &service;
     alarm(IO_SERVICE_TIME_OUT);
     service.run();
