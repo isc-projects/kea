@@ -17,6 +17,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <cassert>
+#include <stdint.h>
 
 namespace isc {
 namespace datasrc {
