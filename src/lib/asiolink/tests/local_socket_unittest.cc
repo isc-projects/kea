@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 
 #include <csignal>
+#include <cstring>
 #include <vector>
 
 #include <sys/socket.h>
@@ -185,8 +186,10 @@ TEST_F(LocalSocketTest, asyncPartialRead) {
     alarm(IO_TIMEOUT);
 
     // specify reading 4 bytes of data, and send 3 bytes.  It shouldn't cause
-    // callback.
+    // callback.  while we actually don't use the buffer, we'll initialize it
+    // to make valgrind happy.
     char recv_buf[4];
+    std::memset(recv_buf, 0, sizeof(recv_buf));
     bool callback_called = false;
     LocalSocket sock(io_service_, sock_pair_[0].release());
     sock.asyncRead(boost::bind(&callback, _1, &io_service_, &callback_called,
