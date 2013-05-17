@@ -48,6 +48,11 @@ protected:
             rdata_str, rdata_sshfp, false, false);
     }
 
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<generic::SSHFP, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_sshfp, true, true);
+    }
+
     void checkFromText_LexerError(const string& rdata_str) {
         checkFromText
             <generic::SSHFP, InvalidRdataText, MasterLexer::LexerError>(
@@ -125,6 +130,14 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
     checkFromText_BadValue("1 2 BUCKLEMYSHOE");
     checkFromText_BadString(sshfp_txt + " extra text");
+
+    // yes, these are redundant to the last test cases in algorithmTypes
+    checkFromText_InvalidText("2345 1 123456789abcdef67890123456789abcdef67890");
+    checkFromText_InvalidText("2 1234 123456789abcdef67890123456789abcdef67890");
+
+    // negative values are trapped in the lexer rather than the constructor
+    checkFromText_LexerError("-2 1 123456789abcdef67890123456789abcdef67890");
+    checkFromText_LexerError("2 -1 123456789abcdef67890123456789abcdef67890");
 }
 
 TEST_F(Rdata_SSHFP_Test, copy) {
@@ -183,11 +196,6 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
 
 TEST_F(Rdata_SSHFP_Test, createFromParams) {
     const generic::SSHFP rdata_sshfp2(2, 1, "123456789abcdef67890123456789abcdef67890");
-    EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
-}
-
-TEST_F(Rdata_SSHFP_Test, createByCopy) {
-    const generic::SSHFP rdata_sshfp2(rdata_sshfp);
     EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
 }
 
