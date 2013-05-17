@@ -73,9 +73,6 @@ struct TSIGImpl {
 // helper function for string and lexer constructors
 TSIGImpl*
 TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
-    // RFC2845 defines Algorithm Name to be "in domain name syntax",
-    // but it's not actually a domain name, so we allow it to be not
-    // fully qualified.
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
 
@@ -161,48 +158,43 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 
 /// \brief Constructor from string.
 ///
-/// \c tsig_str must be formatted as follows:
-/// \code <Alg> <Time> <Fudge> <MACsize> [<MAC>] <OrigID> <Error> <OtherLen> [<OtherData>]
-/// \endcode
-/// where
-/// - &lt;Alg&gt; is a valid textual representation of domain name.
-/// - &lt;Time&gt; is an unsigned 48-bit decimal integer.
-/// - &lt;MACSize&gt;, &lt;OrigID&gt;, and &lt;OtherLen&gt; are an unsigned
-///   16-bit decimal
-///   integer.
-/// - &lt;Error&gt; is an unsigned 16-bit decimal integer or a valid mnemonic
-///   for the Error field specified in RFC2845.  Currently, "BADSIG", "BADKEY",
-///   and "BADTIME" are supported (case sensitive).  In future versions
-///   other representations that are compatible with the DNS RCODE will be
-///   supported.
-/// - &lt;MAC&gt; and &lt;OtherData&gt; is a BASE-64 encoded string that does
-///   not contain space characters.
-///   When &lt;MACSize&gt; and &lt;OtherLen&gt; is 0, &lt;MAC&gt; and
-///   &lt;OtherData&gt; must not appear in \c tsig_str, respectively.
-/// - The decoded data of &lt;MAC&gt; is &lt;MACSize&gt; bytes of binary
-///   stream.
-/// - The decoded data of &lt;OtherData&gt; is &lt;OtherLen&gt; bytes of
-///   binary stream.
+/// The given string must represent a valid TSIG RDATA.  There can be
+/// extra space characters at the beginning or end of the text (which
+/// are simply ignored), but other extra text, including a new line,
+/// will make the construction fail with an exception.
+///
+/// Note that, since Algorithm Name is defined to be "in domain name syntax",
+/// but it is not actually a domain name, it does not have to be fully
+/// qualified.
+///
+/// Error is an unsigned 16-bit decimal integer or a valid mnemonic for the
+/// Error field specified in RFC2845.  Currently, "NOERROR", "BADSIG",
+/// "BADKEY", and "BADTIME" are supported (case sensitive).  In future
+/// versions other representations that are compatible with the DNS RCODE
+/// will be supported.
+///
+/// MAC and Other Data are base-64 encoded strings that do not contain space
+/// characters.
+/// If MAC Size or Other Len is 0, MAC or Other Data must not appear in
+/// \c tsig_str, respectively.
+/// The decoded data of MAC is MAC Size bytes of binary stream.
+/// The decoded data of Other Data is Other Len bytes of binary stream.
 ///
 /// An example of valid string is:
 /// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
-/// In this example &lt;OtherData&gt; is missing because &lt;OtherLen&gt; is 0.
+/// In this example Other Data is missing because Other Len is 0.
 ///
 /// Note that RFC2845 does not define the standard presentation format
 /// of %TSIG RR, so the above syntax is implementation specific.
 /// This is, however, compatible with the format acceptable to BIND 9's
 /// RDATA parser.
 ///
-/// <b>Exceptions</b>
+/// \throw Others Exception from the Name constructors.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+/// \throw BadValue if MAC or Other Data is not validly encoded in base-64.
 ///
-/// If &lt;Alg&gt; is not a valid domain name, a corresponding exception from
-/// the \c Name class will be thrown;
-/// if &lt;MAC&gt; or &lt;OtherData&gt; is not validly encoded in BASE-64, an
-/// exception of class \c isc::BadValue will be thrown;
-/// if %any of the other bullet points above is not met, an exception of
-/// class \c InvalidRdataText will be thrown.
-/// This constructor internally involves resource allocation, and if it fails
-/// a corresponding standard exception will be thrown.
+/// \param tsig_str A string containing the RDATA to be created
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     // We use auto_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
