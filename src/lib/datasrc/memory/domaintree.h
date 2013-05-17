@@ -1301,15 +1301,24 @@ public:
     /// doesn't exist.
     ///
     /// This method normally involves resource allocation.  If it fails
-    /// the corresponding standard exception will be thrown.
+    /// \c std::bad_alloc will be thrown.  Also, depending on details of the
+    /// specific \c MemorySegment, it can propagate the \c MemorySegmentGrown
+    /// exception.
     ///
     /// This method does not provide the strong exception guarantee in its
-    /// strict sense; if an exception is thrown in the middle of this
-    /// method, the internal structure may change.  However, it should
-    /// still retain the same property as a mapping container before this
-    /// method is called.  For example, the result of \c find() should be
-    /// the same.  This method provides the weak exception guarantee in its
-    /// normal sense.
+    /// strict sense; there can be new empty nodes that are superdomains of
+    /// the domain to be inserted as a side effect.  However, the tree
+    /// retains internal integrity otherwise, and, in particular, the intended
+    /// insert operation is "resumable": if the \c insert() method is called
+    /// again with the same argument after resolving the cause of the
+    /// exception (possibly multiple times), it should now succeed.  Note,
+    /// however, that in case of \c MemorySegmentGrown the address of the
+    /// `DomainTree` object may have been reallocated if it was created with
+    /// the same \c MemorySegment (which will often be the case in practice).
+    /// So the caller may have to re-get the address before calling \c insert
+    /// again.  It can be done using the concept of "named addresses" of
+    /// \c MemorySegment, or the direct caller may not have to worry about it
+    /// if this condition is guaranteed at a higher level.
     ///
     /// \param mem_sgmt A \c MemorySegment object for allocating memory of
     /// a new node to be inserted.  Must be the same segment as that used
