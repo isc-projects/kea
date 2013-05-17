@@ -35,28 +35,43 @@ using namespace isc::util::encode;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+struct SSHFPImpl {
+    // straightforward representation of SSHFP RDATA fields
+    SSHFPImpl(uint8_t algorithm, uint8_t fingerprint_type,
+              vector<uint8_t>& fingerprint) :
+        algorithm_(algorithm),
+        fingerprint_type_(fingerprint_type),
+        fingerprint_(fingerprint)
+    {}
+
+    uint8_t algorithm_;
+    uint8_t fingerprint_type_;
+    const vector<uint8_t> fingerprint_;
+};
+
 // helper function for string and lexer constructors
-void
+SSHFPImpl*
 SSHFP::constructFromLexer(MasterLexer& lexer) {
     const uint32_t algorithm =
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (algorithm > 255) {
         isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
     }
-    algorithm_ = static_cast<uint8_t>(algorithm);
 
     const uint32_t fingerprint_type =
         lexer.getNextToken(MasterToken::NUMBER).getNumber();
     if (fingerprint_type > 255) {
         isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
     }
-    fingerprint_type_ = static_cast<uint8_t>(fingerprint_type);
 
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING, true);
+    vector<uint8_t> fingerprint;
     if ((token.getType() != MasterToken::END_OF_FILE) &&
-	(token.getType() != MasterToken::END_OF_LINE)) {
-        decodeHex(token.getString(), fingerprint_);
+        (token.getType() != MasterToken::END_OF_LINE)) {
+        decodeHex(token.getString(), fingerprint);
     }
+
+    return (new SSHFPImpl(algorithm, fingerprint_type, fingerprint));
 }
 
 /// \brief Constructor from string.
@@ -76,13 +91,20 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
 /// ranges, or incorrect.
 ///
 /// \param sshfp_str A string containing the RDATA to be created
-SSHFP::SSHFP(const std::string& sshfp_str) {
+SSHFP::SSHFP(const string& sshfp_str) :
+    impl_(NULL)
+{
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the SSHFPImpl that constructFromLexer() returns.
+    std::auto_ptr<SSHFPImpl> impl_ptr(NULL);
+
     try {
         std::istringstream ss(sshfp_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer);
+        impl_ptr.reset(constructFromLexer(lexer));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for SSHFP: "
@@ -95,6 +117,8 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
         isc_throw(InvalidRdataText,
                   "Bad SSHFP fingerprint: " << e.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -110,69 +134,87 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 SSHFP::SSHFP(MasterLexer& lexer, const Name*,
-       MasterLoader::Options, MasterLoaderCallbacks&) {
-    constructFromLexer(lexer);
+             MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(NULL)
+{
+    impl_ = constructFromLexer(lexer);
 }
 
+/// \brief Constructor from InputBuffer.
+///
+/// The passed buffer must contain a valid SSHFP RDATA.
+///
+/// The Algorithm and Fingerprint Type fields are not checked for unknown
+/// values.  It is okay for the fingerprint data to be missing (see the
+/// description of the constructor from string).
 SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 2) {
         isc_throw(InvalidRdataLength, "SSHFP record too short");
     }
 
-    algorithm_ = buffer.readUint8();
-    fingerprint_type_ = buffer.readUint8();
+    const uint8_t algorithm = buffer.readUint8();
+    const uint8_t fingerprint_type = buffer.readUint8();
 
+    vector<uint8_t> fingerprint;
     rdata_len -= 2;
     if (rdata_len > 0) {
-        fingerprint_.resize(rdata_len);
-        buffer.readData(&fingerprint_[0], rdata_len);
+        fingerprint.resize(rdata_len);
+        buffer.readData(&fingerprint[0], rdata_len);
     }
+
+    impl_ = new SSHFPImpl(algorithm, fingerprint_type, fingerprint);
 }
 
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
-             const std::string& fingerprint)
+             const string& fingerprint_txt) :
+    impl_(NULL)
 {
-    algorithm_ = algorithm;
-    fingerprint_type_ = fingerprint_type;
-
+    vector<uint8_t> fingerprint;
     try {
-        decodeHex(fingerprint, fingerprint_);
+        decodeHex(fingerprint_txt, fingerprint);
     } catch (const isc::BadValue& e) {
         isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
     }
+
+    impl_ = new SSHFPImpl(algorithm, fingerprint_type, fingerprint);
 }
 
 SSHFP::SSHFP(const SSHFP& other) :
-  Rdata(), algorithm_(other.algorithm_),
-  fingerprint_type_(other.fingerprint_type_),
-  fingerprint_(other.fingerprint_)
+        Rdata(), impl_(new SSHFPImpl(*other.impl_))
 {}
+
+SSHFP::~SSHFP() {
+    delete impl_;
+}
 
 void
 SSHFP::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(algorithm_);
-    buffer.writeUint8(fingerprint_type_);
+    buffer.writeUint8(impl_->algorithm_);
+    buffer.writeUint8(impl_->fingerprint_type_);
 
-    if (!fingerprint_.empty()) {
-        buffer.writeData(&fingerprint_[0], fingerprint_.size());
+    if (!impl_->fingerprint_.empty()) {
+        buffer.writeData(&impl_->fingerprint_[0],
+                         impl_->fingerprint_.size());
     }
 }
 
 void
 SSHFP::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(algorithm_);
-    renderer.writeUint8(fingerprint_type_);
+    renderer.writeUint8(impl_->algorithm_);
+    renderer.writeUint8(impl_->fingerprint_type_);
 
-    if (!fingerprint_.empty()) {
-        renderer.writeData(&fingerprint_[0], fingerprint_.size());
+    if (!impl_->fingerprint_.empty()) {
+        renderer.writeData(&impl_->fingerprint_[0],
+                           impl_->fingerprint_.size());
     }
 }
 
 string
 SSHFP::toText() const {
-    return (lexical_cast<string>(static_cast<int>(algorithm_)) +
-            " " + lexical_cast<string>(static_cast<int>(fingerprint_type_)) +
-            (fingerprint_.empty() ? "" : " " + encodeHex(fingerprint_)));
+    return (lexical_cast<string>(static_cast<int>(impl_->algorithm_)) + " " +
+            lexical_cast<string>(static_cast<int>(impl_->fingerprint_type_)) +
+            (impl_->fingerprint_.empty() ? "" :
+             " " + encodeHex(impl_->fingerprint_)));
 }
 
 int
@@ -182,24 +224,26 @@ SSHFP::compare(const Rdata& other) const {
     /* This doesn't really make any sort of sense, but in the name of
        consistency... */
 
-    if (algorithm_ < other_sshfp.algorithm_) {
+    if (impl_->algorithm_ < other_sshfp.impl_->algorithm_) {
         return (-1);
-    } else if (algorithm_ > other_sshfp.algorithm_) {
+    } else if (impl_->algorithm_ > other_sshfp.impl_->algorithm_) {
         return (1);
     }
 
-    if (fingerprint_type_ < other_sshfp.fingerprint_type_) {
+    if (impl_->fingerprint_type_ < other_sshfp.impl_->fingerprint_type_) {
         return (-1);
-    } else if (fingerprint_type_ > other_sshfp.fingerprint_type_) {
+    } else if (impl_->fingerprint_type_ >
+               other_sshfp.impl_->fingerprint_type_) {
         return (1);
     }
 
-    const size_t this_len = fingerprint_.size();
-    const size_t other_len = other_sshfp.fingerprint_.size();
+    const size_t this_len = impl_->fingerprint_.size();
+    const size_t other_len = other_sshfp.impl_->fingerprint_.size();
     const size_t cmplen = min(this_len, other_len);
 
     if (cmplen > 0) {
-        const int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0],
+        const int cmp = memcmp(&impl_->fingerprint_[0],
+                               &other_sshfp.impl_->fingerprint_[0],
                                cmplen);
         if (cmp != 0) {
             return (cmp);
@@ -217,17 +261,17 @@ SSHFP::compare(const Rdata& other) const {
 
 uint8_t
 SSHFP::getAlgorithmNumber() const {
-    return (algorithm_);
+    return (impl_->algorithm_);
 }
 
 uint8_t
 SSHFP::getFingerprintType() const {
-    return (fingerprint_type_);
+    return (impl_->fingerprint_type_);
 }
 
 size_t
 SSHFP::getFingerprintLen() const {
-    return (fingerprint_.size());
+    return (impl_->fingerprint_.size());
 }
 
 // END_RDATA_NAMESPACE
