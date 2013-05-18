@@ -34,14 +34,13 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace {
-const string too_long_label =
-    "0123456789012345678901234567890123456789012345678901234567890123.";
-
 class Rdata_MINFO_Test : public RdataTest {
 protected:
     Rdata_MINFO_Test():
         minfo_txt("rmailbox.example.com. emailbox.example.com."),
         minfo_txt2("root.example.com. emailbox.example.com."),
+        too_long_label("01234567890123456789012345678901234567"
+                       "89012345678901234567890123."),
         rdata_minfo(minfo_txt),
         rdata_minfo2(minfo_txt2)
     {}
@@ -85,6 +84,7 @@ protected:
 
     const string minfo_txt;
     const string minfo_txt2;
+    const string too_long_label;
     const generic::MINFO rdata_minfo;
     const generic::MINFO rdata_minfo2;
 };
@@ -100,7 +100,7 @@ TEST_F(Rdata_MINFO_Test, createFromText) {
     checkFromText_None(minfo_txt);
 
     // origin defined for lexer constructor, but not string constructor
-    Name origin("example.com");
+    const Name origin("example.com");
     checkFromText_Origin("rmailbox emailbox", &origin);
 
     // lexer constructor accepts extra text, but string constructor doesn't
