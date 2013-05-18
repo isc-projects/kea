@@ -99,13 +99,13 @@ private:
     /// An object of this class is always expected to be created by the
     /// allocator (\c create()), so the constructor is hidden as private.
     ///
-    /// This constructor internally involves resource allocation, and if
-    /// it fails, a corresponding standard exception will be thrown.
-    /// It never throws an exception otherwise.
-    ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones) :
+    /// This constructor never throws.
+    ZoneTable(const dns::RRClass& rrclass, ZoneTableTree* zones,
+              ZoneData* null_zone_data) :
         rrclass_(rrclass),
         zone_count_(0),
-        zones_(zones)
+        zones_(zones),
+        null_zone_data_(null_zone_data)
     {}
 
 public:
@@ -213,6 +213,9 @@ private:
     const dns::RRClass rrclass_;
     size_t zone_count_;
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
+
+    // this is a shared placeholder for broken zones
+    boost::interprocess::offset_ptr<ZoneData> null_zone_data_;
 };
 }
 }
