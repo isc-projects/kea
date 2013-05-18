@@ -132,8 +132,10 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_BadString(sshfp_txt + " extra text");
 
     // yes, these are redundant to the last test cases in algorithmTypes
-    checkFromText_InvalidText("2345 1 123456789abcdef67890123456789abcdef67890");
-    checkFromText_InvalidText("2 1234 123456789abcdef67890123456789abcdef67890");
+    checkFromText_InvalidText(
+        "2345 1 123456789abcdef67890123456789abcdef67890");
+    checkFromText_InvalidText(
+        "2 1234 123456789abcdef67890123456789abcdef67890");
 
     // negative values are trapped in the lexer rather than the constructor
     checkFromText_LexerError("-2 1 123456789abcdef67890123456789abcdef67890");
@@ -195,7 +197,8 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
 }
 
 TEST_F(Rdata_SSHFP_Test, createFromParams) {
-    const generic::SSHFP rdata_sshfp2(2, 1, "123456789abcdef67890123456789abcdef67890");
+    const generic::SSHFP rdata_sshfp2(
+        2, 1, "123456789abcdef67890123456789abcdef67890");
     EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
 }
 
