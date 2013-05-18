@@ -123,7 +123,8 @@ TEST_F(Rdata_MINFO_Test, badText) {
     checkFromText_LexerError("root.example.com.");
 
     // missing origin
-    checkFromText_MissingOrigin("root.example.com emailbox.example.com");
+    checkFromText_MissingOrigin("root.example.com emailbox.example.com.");
+    checkFromText_MissingOrigin("root.example.com. emailbox.example.com");
 }
 
 TEST_F(Rdata_MINFO_Test, createFromWire) {
