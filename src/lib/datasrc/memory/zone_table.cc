@@ -40,7 +40,10 @@ void
 deleteZoneData(util::MemorySegment* mem_sgmt, ZoneData* zone_data,
                RRClass rrclass)
 {
-    if (zone_data != NULL) {
+    // We shouldn't delete empty zone data here; the only empty zone
+    // that can be passed here is the placeholder for broken zones maintained
+    // in the zone table.  It will stay there until the table is destroyed.
+    if (zone_data && !zone_data->isEmpty()) {
         ZoneData::destroy(*mem_sgmt, zone_data, rrclass);
     }
 }
@@ -49,21 +52,30 @@ typedef boost::function<void(ZoneData*)> ZoneDataDeleterType;
 
 ZoneTable*
 ZoneTable::create(util::MemorySegment& mem_sgmt, const RRClass& zone_class) {
-    SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> holder(
+    // Create a placeholder "null" zone data
+    SegmentObjectHolder<ZoneData, RRClass> zdholder(mem_sgmt, zone_class);
+    zdholder.set(ZoneData::create(mem_sgmt));
+
+    // create and setup the tree for the table.
+    SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> tree_holder(
         mem_sgmt, boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));
-    holder.set(ZoneTableTree::create(mem_sgmt));
+    tree_holder.set(ZoneTableTree::create(mem_sgmt));
     void* p = mem_sgmt.allocate(sizeof(ZoneTable));
-    ZoneTable* zone_table = new(p) ZoneTable(zone_class, holder.get());
-    holder.release();
+
+    // Build zone table with the created objects.  Its constructor doesn't
+    // throw, so we can release them from the holder at this point.
+    ZoneTable* zone_table = new(p) ZoneTable(zone_class, tree_holder.release(),
+                                             zdholder.release());
     return (zone_table);
 }
 
 void
-ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable)
-{
+ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
     ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get(),
                            boost::bind(deleteZoneData, &mem_sgmt, _1,
                                        ztable->rrclass_));
+    ZoneData::destroy(mem_sgmt, ztable->null_zone_data_.get(),
+                      ztable->rrclass_);
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
