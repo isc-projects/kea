@@ -32,7 +32,8 @@ A::A(const std::string&) {
 }
 
 A::A(MasterLexer&, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&) {
+     MasterLoader::Options, MasterLoaderCallbacks&)
+{
     // TBD
 }
 
