@@ -87,7 +87,7 @@ TEST_F(Rdata_RP_Test, createFromText) {
     checkFromText_None("root.example.com. rp-text.example.com.");
 
     // origin defined for lexer constructor, but not string constructor
-    Name origin("example.com");
+    const Name origin("example.com");
     checkFromText_Origin("root rp-text", &origin);
 
     // lexer constructor accepts extra text, but string constructor doesn't
@@ -104,7 +104,8 @@ TEST_F(Rdata_RP_Test, badText) {
     checkFromText_LexerError("root.example.com.");
 
     // missing origin
-    checkFromText_MissingOrigin("root.example.com rp-text.example.com");
+    checkFromText_MissingOrigin("root.example.com rp-text.example.com.");
+    checkFromText_MissingOrigin("root.example.com. rp-text.example.com");
 }
 
 TEST_F(Rdata_RP_Test, createFromWire) {
