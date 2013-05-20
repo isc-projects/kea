@@ -147,7 +147,8 @@ public:
     /// \param ztable A non NULL pointer to a valid \c ZoneTable object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
+                        int = 0);
 
     /// \brief Return the number of zones contained in the zone table.
     ///
