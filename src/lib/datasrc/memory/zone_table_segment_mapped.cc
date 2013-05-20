@@ -133,15 +133,15 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
         }
 
         while (true) {
-             try {
-                  SegmentObjectHolder<ZoneTable, int> zt_holder(segment, 0);
-                  zt_holder.set(ZoneTable::create(segment, rrclass_));
-                  void* ptr = segment.allocate(sizeof(ZoneTableHeader));
-                  ZoneTableHeader* new_header = new(ptr)
-                       ZoneTableHeader(zt_holder.release());
-                  segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
-                  break;
-             } catch (const MemorySegmentGrown&) {}
+            try {
+                SegmentObjectHolder<ZoneTable, int> zt_holder(segment, 0);
+                zt_holder.set(ZoneTable::create(segment, rrclass_));
+                void* ptr = segment.allocate(sizeof(ZoneTableHeader));
+                ZoneTableHeader* new_header = new(ptr)
+                    ZoneTableHeader(zt_holder.release());
+                segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
+                break;
+            } catch (const MemorySegmentGrown&) {}
         }
     }
 
