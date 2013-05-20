@@ -92,9 +92,8 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(static_cast<const ZoneData*>(NULL), holder1.get());
     EXPECT_EQ(1, zone_table->getZoneCount()); // count is now incremented
 
-    // Duplicate add doesn't replace the existing data.
-    SegmentObjectHolder<ZoneData, RRClass> holder2(
-        mem_sgmt_, zclass_);
+    // Duplicate add replaces the existing data wit the newly added one.
+    SegmentObjectHolder<ZoneData, RRClass> holder2(mem_sgmt_, zclass_);
     holder2.set(ZoneData::create(mem_sgmt_, zname1));
     const ZoneTable::AddResult result2(zone_table->addZone(mem_sgmt_, zclass_,
                                                            zname1,
@@ -143,6 +142,46 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org"),
                                      holder6.release()),
                  std::bad_alloc);
+}
+
+TEST_F(ZoneTableTest, addEmptyZone) {
+    // By default there's no zone contained.
+    EXPECT_EQ(0, zone_table->getZoneCount());
+
+    // Adding an empty zone.  It should succeed.
+    const ZoneTable::AddResult result1 =
+        zone_table->addEmptyZone(mem_sgmt_, zname1);
+    EXPECT_EQ(result::SUCCESS, result1.code);
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), result1.zone_data);
+    EXPECT_EQ(1, zone_table->getZoneCount());
+
+    // The empty zone can be "found", with the ZONE_EMPTY flag on, and the
+    // returned ZoneData being NULL.
+    const ZoneTable::FindResult fresult1 = zone_table->findZone(zname1);
+    EXPECT_EQ(result::SUCCESS, fresult1.code);
+    EXPECT_EQ(result::ZONE_EMPTY, fresult1.flags);
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), fresult1.zone_data);
+
+    // Replacing an empty zone with non-empty one.  Should be no problem, but
+    // the empty zone data are not returned in the result structure; it's
+    // internal to the ZoneTable implementation.
+    SegmentObjectHolder<ZoneData, RRClass> holder2(mem_sgmt_, zclass_);
+    holder2.set(ZoneData::create(mem_sgmt_, zname1));
+    const ZoneTable::AddResult result2(zone_table->addZone(mem_sgmt_, zclass_,
+                                                           zname1,
+                                                           holder2.release()));
+    EXPECT_EQ(result::EXIST, result2.code);
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL), result2.zone_data);
+    EXPECT_EQ(1, zone_table->getZoneCount());
+
+    // Replacing a non-empty zone with an empty one is also okay.  It's not
+    // different from replacing with another non-empty one.
+    const ZoneTable::AddResult result3 =
+        zone_table->addEmptyZone(mem_sgmt_, zname1);
+    EXPECT_EQ(result::EXIST, result3.code);
+    EXPECT_NE(static_cast<const ZoneData*>(NULL), result3.zone_data);
+    ZoneData::destroy(mem_sgmt_, result3.zone_data, zclass_);
+    EXPECT_EQ(1, zone_table->getZoneCount());
 }
 
 TEST_F(ZoneTableTest, findZone) {
