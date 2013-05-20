@@ -75,8 +75,16 @@ TEST_F(ZoneTableTest, addZone) {
 
     // It doesn't accept empty (NULL) zones
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, zname1, NULL),
-                 isc::BadValue);
+                 isc::InvalidParameter);
     EXPECT_EQ(0, zone_table->getZoneCount()); // count is still 0
+
+    // or an empty zone
+    SegmentObjectHolder<ZoneData, RRClass> holder_empty(
+        mem_sgmt_, zclass_);
+    holder_empty.set(ZoneData::create(mem_sgmt_));
+    EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, zname1,
+                                     holder_empty.get()),
+                 isc::InvalidParameter);
 
     SegmentObjectHolder<ZoneData, RRClass> holder1(
         mem_sgmt_, zclass_);

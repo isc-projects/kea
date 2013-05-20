@@ -18,6 +18,8 @@
 #include <datasrc/memory/segment_object_holder.h>
 #include <datasrc/memory/logger.h>
 
+#include <exceptions/exceptions.h>
+
 #include <util/memory_segment.h>
 
 #include <dns/name.h>
@@ -86,8 +88,8 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_);
 
-    if (content == NULL) {
-        isc_throw(isc::BadValue, "Zone content must not be NULL");
+    if (!content || content->isEmpty()) {
+        isc_throw(InvalidParameter, "Zone content must not be NULL or empty");
     }
     SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, zone_class);
     holder.set(content);
