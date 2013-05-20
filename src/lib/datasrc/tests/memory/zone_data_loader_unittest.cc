@@ -24,7 +24,9 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rdataclass.h>
+#ifdef USE_SHARED_MEMORY
 #include <util/memory_segment_mapped.h>
+#endif
 #include <util/memory_segment_local.h>
 
 #include <datasrc/tests/memory/memory_segment_mock.h>
@@ -33,12 +35,12 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
+#ifdef USE_SHARED_MEMORY
 using isc::util::MemorySegmentMapped;
+#endif
 using isc::datasrc::memory::detail::SegmentObjectHolder;
 
 namespace {
-
-const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
 
 class ZoneDataLoaderTest : public ::testing::Test {
 protected:
@@ -84,7 +86,10 @@ TEST_F(ZoneDataLoaderTest, zoneMinTTL) {
 
 // Load bunch of small zones, hoping some of the relocation will happen
 // during the memory creation, not only Rdata creation.
+// Note: this doesn't even compile unless USE_SHARED_MEMORY is defined.
+#ifdef USE_SHARED_MEMORY
 TEST(ZoneDataLoaterTest, relocate) {
+    const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
     MemorySegmentMapped segment(mapped_file,
                                 isc::util::MemorySegmentMapped::CREATE_ONLY,
                                 4096);
@@ -108,5 +113,6 @@ TEST(ZoneDataLoaterTest, relocate) {
     EXPECT_TRUE(segment.allMemoryDeallocated());
     EXPECT_EQ(0, unlink(mapped_file));
 }
+#endif
 
 }
