@@ -167,6 +167,7 @@ public:
     /// accordingly.  On successful return, this method ensures there's no
     /// address relocation.
     ///
+    /// \throw InvalidParameter content is NULL or empty.
     /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
     ///     relocating data.
     /// \throw std::bad_alloc Internal resource allocation fails.
@@ -178,9 +179,9 @@ public:
     /// \param zone_class The RR class of the zone.  It must be the RR class
     ///     that is supposed to be associated to the zone table.
     /// \param content This one should hold the zone content (the ZoneData).
-    ///     The ownership is passed onto the zone table. Must not be null.
-    ///     Must correspond to the name and class and must be allocated from
-    ///     mem_sgmt.
+    ///     The ownership is passed onto the zone table. Must not be null or
+    ///     empty. Must correspond to the name and class and must be allocated
+    ///     from mem_sgmt.
     /// \return \c result::SUCCESS If the zone is successfully
     ///     added to the zone table.
     /// \return \c result::EXIST The zone table already contained
