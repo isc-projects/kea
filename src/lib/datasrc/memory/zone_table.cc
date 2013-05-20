@@ -91,6 +91,26 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     }
     SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, zone_class);
     holder.set(content);
+
+    const AddResult result =
+        addZoneInternal(mem_sgmt, zone_name, holder.get());
+    holder.release();
+    return (result);
+}
+
+ZoneTable::AddResult
+ZoneTable::addEmptyZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_EMPTY_ZONE).
+        arg(zone_name).arg(rrclass_);
+
+    return (addZoneInternal(mem_sgmt, zone_name, null_zone_data_.get()));
+}
+
+ZoneTable::AddResult
+ZoneTable::addZoneInternal(util::MemorySegment& mem_sgmt,
+                           const dns::Name& zone_name,
+                           ZoneData* content)
+{
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
     switch (zones_->insert(mem_sgmt, zone_name, &node)) {
@@ -105,10 +125,9 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
     // Can Not Happen
     assert(node != NULL);
 
-    // We can release now, setData never throws
-    ZoneData* old = node->setData(holder.release());
+    ZoneData* old = node->setData(content);
     if (old != NULL) {
-        return (AddResult(result::EXIST, old));
+        return (AddResult(result::EXIST, old->isEmpty() ? NULL : old));
     } else {
         ++zone_count_;
         return (AddResult(result::SUCCESS, NULL));
@@ -138,10 +157,16 @@ ZoneTable::findZone(const Name& name) const {
         return (FindResult(result::NOTFOUND, NULL));
     }
 
-    // Can Not Happen (remember, NOTFOUND is handled)
-    assert(node != NULL);
+    // Can Not Happen (remember, NOTFOUND is handled).  node should also have
+    // data because the tree is constructed in the way empty nodes would
+    // be "invisible" for find().
+    assert(node != NULL && node->getData());
 
-    return (FindResult(my_result, node->getData()));
+    const ZoneData* zone_data = node->getData();
+    const result::ResultFlags flags =
+        zone_data->isEmpty() ? result::ZONE_EMPTY : result::FLAGS_DEFAULT;
+    return (FindResult(my_result, zone_data->isEmpty() ? NULL : zone_data,
+                       flags));
 }
 
 } // end of namespace memory
