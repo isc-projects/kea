@@ -171,7 +171,7 @@ public:
                 new memory::ZoneWriter(
                     *dsrc_info.ztable_segment_,
                     cache_conf->getLoadAction(rrclass_, zone),
-                    zone, rrclass_));
+                    zone, rrclass_, false));
             writer->load();
             writer->install();
             writer->cleanup(); // not absolutely necessary, but just in case

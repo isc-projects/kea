@@ -79,7 +79,7 @@ createInMemoryClient(RRClass zclass, const Name& zname) {
         ZoneTableSegment::create(zclass, cache_conf.getSegmentType()));
     memory::ZoneWriter writer(*ztable_segment,
                               cache_conf.getLoadAction(zclass, zname),
-                              zname, zclass);
+                              zname, zclass, false);
     writer.load();
     writer.install();
     writer.cleanup();

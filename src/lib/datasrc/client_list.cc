@@ -159,8 +159,8 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         cache_conf->getLoadAction(rrclass_, zname);
                     // in this loop this should be always true
                     assert(load_action);
-                    memory::ZoneWriter writer(zt_segment,
-                        load_action, zname, rrclass_);
+                    memory::ZoneWriter writer(zt_segment, load_action, zname,
+                                              rrclass_, false);
                     writer.load();
                     writer.install();
                     writer.cleanup();
@@ -357,7 +357,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name,
                                ZoneWriterPtr(
                                    new memory::ZoneWriter(
                                        *info.ztable_segment_,
-                                       load_action, name, rrclass_))));
+                                       load_action, name, rrclass_, false))));
     }
 
     // We can't find the specified zone.  If a specific data source was
