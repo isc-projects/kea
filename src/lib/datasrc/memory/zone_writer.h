@@ -42,15 +42,27 @@ class ZoneWriter {
 public:
     /// \brief Constructor
     ///
+    /// If \c catch_load_error is set to true, the \c load() method will
+    /// internally catch load related errors reported as a DataSourceError
+    /// exception, and subsequent \c install() method will add a special
+    /// empty zone to the zone table segment.  If it's set to false, \c load()
+    /// will simply propagate the exception.  This parameter would normally
+    /// be set to false as it's not desirable to install a broken zone;
+    /// however, it would be better to be set to true at the initial loading
+    /// so the zone table recognizes the existence of the zone (and being
+    /// aware that it's broken).
+    ///
     /// \throw isc::InvalidOperation if \c segment is read-only.
     ///
     /// \param segment The zone table segment to store the zone into.
     /// \param load_action The callback used to load data.
     /// \param name The name of the zone.
     /// \param rrclass The class of the zone.
+    /// \param catch_load_error true if loading errors are to be caught
+    /// internally; false otherwise.
     ZoneWriter(ZoneTableSegment& segment,
                const LoadAction& load_action, const dns::Name& name,
-               const dns::RRClass& rrclass);
+               const dns::RRClass& rrclass, bool catch_load_error);
 
     /// \brief Destructor.
     ~ZoneWriter();
@@ -71,6 +83,8 @@ public:
     /// \note After successful load(), you have to call cleanup() some time
     ///     later.
     /// \throw isc::InvalidOperation if called second time.
+    /// \throw DataSourceError load related error (not thrown if constructed
+    /// with catch_load_error being false).
     void load();
 
     /// \brief Put the changes to effect.
@@ -78,7 +92,11 @@ public:
     /// This replaces the old version of zone with the one previously prepared
     /// by load(). It takes ownership of the old zone data, if any.
     ///
-    /// You may call it only after successful load() and at most once.
+    /// You may call it only after successful load() and at most once.  It
+    /// includes the case the writer is constructed with catch_load_error
+    /// being true and load() encountered and caught a DataSourceError
+    /// exception.  In this case this method installs a special empty zone
+    /// to the table.
     ///
     /// The operation is expected to be fast and is meant to be used inside
     /// a critical section.
@@ -112,10 +130,15 @@ private:
         ZW_CLEANED
     };
     State state_;
+    const bool catch_load_error_;
 };
 
 }
 }
 }
 
-#endif
+#endif  // MEM_ZONE_WRITER_H
+
+// Local Variables:
+// mode: c++
+// End:

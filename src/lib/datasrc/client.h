@@ -132,8 +132,8 @@ public:
     /// \brief A helper structure to represent the search result of
     /// \c find().
     ///
-    /// This is a straightforward pair of the result code and a share pointer
-    /// to the found zone to represent the result of \c find().
+    /// This is a straightforward tuple of the result code/flags and a shared
+    /// pointer to the found zone to represent the result of \c find().
     /// We use this in order to avoid overloading the return value for both
     /// the result code ("success" or "not found") and the found object,
     /// i.e., avoid using \c NULL to mean "not found", etc.
@@ -146,10 +146,13 @@ public:
     /// variables.
     struct FindResult {
         FindResult(result::Result param_code,
-                   const ZoneFinderPtr param_zone_finder) :
-            code(param_code), zone_finder(param_zone_finder)
+                   const ZoneFinderPtr param_zone_finder,
+                   result::ResultFlags param_flags = result::FLAGS_DEFAULT) :
+            code(param_code), flags(param_flags),
+            zone_finder(param_zone_finder)
         {}
         const result::Result code;
+        const result::ResultFlags flags;
         const ZoneFinderPtr zone_finder;
     };
 

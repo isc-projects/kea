@@ -41,7 +41,7 @@ loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
             " \"params\": {\"" + zname.toText() + "\": \"" + zone_file +
             "\"}}"), true);
     memory::ZoneWriter writer(zt_sgmt, cache_conf.getLoadAction(zclass, zname),
-                              zname, zclass);
+                              zname, zclass, false);
     writer.load();
     writer.install();
     writer.cleanup();
@@ -72,7 +72,7 @@ loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
                   const dns::RRClass& zclass, ZoneIterator& iterator)
 {
     memory::ZoneWriter writer(zt_sgmt, IteratorLoader(zclass, zname, iterator),
-                              zname, zclass);
+                              zname, zclass, false);
     writer.load();
     writer.install();
     writer.cleanup();
