@@ -133,6 +133,8 @@ class TestUserMgr(unittest.TestCase):
                          May be None, in which case the check is skipped.
         expected_stderr, (multiline) string that is checked against stderr.
                          May be None, in which case the check is skipped.
+
+        Returns the standard output and error captured to a string.
         """
         (returncode, stdout, stderr) = run(command)
         if expected_stderr is not None:
@@ -140,7 +142,7 @@ class TestUserMgr(unittest.TestCase):
         if expected_stdout is not None:
             self.assertEqual(expected_stdout, stdout.decode())
         self.assertEqual(expected_returncode, returncode, " ".join(command))
-        return (returncode, stdout.decode(), stderr.decode())
+        return (stdout.decode(), stderr.decode())
 
     def test_help(self):
         self.run_check(0,
@@ -473,12 +475,15 @@ Options:
         # So we need to check the output in a little more complex way.
         # We ask the run_check not to check the output and check it
         # ourselves.
-        (returncode, stdout, stderr) = self.run_check(2, None,
+        (stdout, stderr) = self.run_check(2, None,
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
                          'add', 'user1', 'pass1'
                        ])
+        # This looks little bit awkward, but is probably easiest with
+        # just 2 known possibilities. If there are more, we'll have to
+        # think of something else.
         self.assertTrue(stdout ==
                         'Using accounts file: test_users.csv\n'
                         'Error parsing csv file: newline inside string\n' or
