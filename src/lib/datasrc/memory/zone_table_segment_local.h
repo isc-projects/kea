@@ -49,10 +49,6 @@ public:
     /// \brief Returns "local" as the implementation type.
     virtual const std::string& getImplType() const;
 
-    /// \brief This method does not have to do anything in this
-    /// implementation. It has an empty definition.
-    virtual void resetHeader();
-
     /// \brief Return the \c ZoneTableHeader for this local zone table
     /// segment.
     virtual ZoneTableHeader& getHeader();

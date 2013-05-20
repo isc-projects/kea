@@ -38,25 +38,10 @@ namespace {
 
 class TestException {};
 
-class ZoneTableSegmentHelper : public ZoneTableSegmentMock {
-public:
-    ZoneTableSegmentHelper(const isc::dns::RRClass& rrclass,
-                           isc::util::MemorySegment& mem_sgmt) :
-        ZoneTableSegmentMock(rrclass, mem_sgmt),
-        reset_header_called_(false)
-    {}
-
-    virtual void resetHeader() {
-        reset_header_called_ = true;
-    }
-
-    bool reset_header_called_;
-};
-
 class ZoneWriterTest : public ::testing::Test {
 protected:
     ZoneWriterTest() :
-        segment_(new ZoneTableSegmentHelper(RRClass::IN(), mem_sgmt_)),
+        segment_(new ZoneTableSegmentMock(RRClass::IN(), mem_sgmt_)),
         writer_(new
             ZoneWriter(*segment_,
                        bind(&ZoneWriterTest::loadAction, this, _1),
@@ -71,7 +56,7 @@ protected:
         writer_.reset();
     }
     MemorySegmentMock mem_sgmt_;
-    scoped_ptr<ZoneTableSegmentHelper> segment_;
+    scoped_ptr<ZoneTableSegmentMock> segment_;
     scoped_ptr<ZoneWriter> writer_;
     bool load_called_;
     bool load_throw_;
@@ -139,18 +124,14 @@ TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
 TEST_F(ZoneWriterTest, correctCall) {
     // Nothing called before we call it
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(segment_->reset_header_called_);
 
     // Just the load gets called now
     EXPECT_NO_THROW(writer_->load());
     EXPECT_TRUE(load_called_);
-    EXPECT_TRUE(segment_->reset_header_called_);
     load_called_ = false;
-    segment_->reset_header_called_ = false;
 
     EXPECT_NO_THROW(writer_->install());
     EXPECT_FALSE(load_called_);
-    EXPECT_TRUE(segment_->reset_header_called_);
 
     // We don't check explicitly how this works, but call it to free memory. If
     // everything is freed should be checked inside the TearDown.
@@ -161,19 +142,15 @@ TEST_F(ZoneWriterTest, loadTwice) {
     // Load it the first time
     EXPECT_NO_THROW(writer_->load());
     EXPECT_TRUE(load_called_);
-    EXPECT_TRUE(segment_->reset_header_called_);
     load_called_ = false;
-    segment_->reset_header_called_ = false;
 
     // The second time, it should not be possible
     EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(segment_->reset_header_called_);
 
     // The object should not be damaged, try installing and clearing now
     EXPECT_NO_THROW(writer_->install());
     EXPECT_FALSE(load_called_);
-    EXPECT_TRUE(segment_->reset_header_called_);
 
     // We don't check explicitly how this works, but call it to free memory. If
     // everything is freed should be checked inside the TearDown.
@@ -188,18 +165,15 @@ TEST_F(ZoneWriterTest, loadLater) {
     EXPECT_NO_THROW(writer_->install());
     // Reset so we see nothing is called now
     load_called_ = false;
-    segment_->reset_header_called_ = false;
 
     EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(segment_->reset_header_called_);
 
     // Cleanup and try loading again. Still shouldn't work.
     EXPECT_NO_THROW(writer_->cleanup());
 
     EXPECT_THROW(writer_->load(), isc::InvalidOperation);
     EXPECT_FALSE(load_called_);
-    EXPECT_FALSE(segment_->reset_header_called_);
 }
 
 // Try calling install at various bad times

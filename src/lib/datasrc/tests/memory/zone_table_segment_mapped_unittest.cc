@@ -563,36 +563,4 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreateOverCorruptedFile) {
     EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
 }
 
-TEST_F(ZoneTableSegmentMappedTest, resetHeaderUninitialized) {
-    // This should throw as we haven't called reset() yet.
-    EXPECT_THROW(ztable_segment_->resetHeader(), isc::InvalidOperation);
-}
-
-TEST_F(ZoneTableSegmentMappedTest, resetHeader) {
-    // First, open an underlying mapped file in read+write mode (doesn't
-    // exist yet)
-    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
-
-    // Check if a valid ZoneTable is found.
-    {
-        const ZoneTableHeader& header = ztable_segment_->getHeader();
-        const ZoneTable* table = header.getTable();
-        EXPECT_EQ(0, table->getZoneCount());
-    }
-
-    // Grow the segment by allocating something large.
-    EXPECT_THROW(ztable_segment_->getMemorySegment().allocate(1<<16),
-                 MemorySegmentGrown);
-
-    // Reset the header address. This should not throw now.
-    EXPECT_NO_THROW(ztable_segment_->resetHeader());
-
-    // Check if a valid ZoneTable is found.
-    {
-        const ZoneTableHeader& header = ztable_segment_->getHeader();
-        const ZoneTable* table = header.getTable();
-        EXPECT_EQ(0, table->getZoneCount());
-    }
-}
-
 } // anonymous namespace
