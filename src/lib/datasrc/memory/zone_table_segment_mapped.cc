@@ -13,12 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_mapped.h>
+#include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/segment_object_holder.h>
 
 #include <memory>
 
 using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::datasrc::memory::detail::SegmentObjectHolder;
 
 namespace isc {
 namespace datasrc {
@@ -129,35 +132,16 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             return (false);
         }
 
-        void* ptr = NULL;
-        while (!ptr) {
-            try {
-                ptr = segment.allocate(sizeof(ZoneTableHeader));
-            } catch (const MemorySegmentGrown&) {
-                // Do nothing and try again.
-            }
-        }
-        try {
-             // FIXME: in theory this code is not safe:
-             // - ZoneTable::create could throw MemorySegmentGrown, leaking
-             //   ptr
-             // - even on successful return from ZoneTable::create(), ptr
-             //   could be relocated due to its internal implementation detail
-             // So, to make it 100% safe we should protect both ptr and
-             // zone table in something similar to SegmentObjectHolder, get
-             // their addresses via the holder's get() method, and expect
-             // MemorySegmentGrown and handle it.  However, in this specific
-             // context the segment should have sufficient capacity in practice
-             // and the above cases are extremely unlikely to happen.  So
-             // we go for simpler code for now.
-            ZoneTableHeader* new_header = new(ptr)
-                ZoneTableHeader(ZoneTable::create(segment, rrclass_));
-            segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
-        } catch (const MemorySegmentGrown&) {
-            // This is extremely unlikely and we just throw a fatal
-            // exception here without attempting to recover.
-
-            throw std::bad_alloc();
+        while (true) {
+             try {
+                  SegmentObjectHolder<ZoneTable, int> zt_holder(segment, 0);
+                  zt_holder.set(ZoneTable::create(segment, rrclass_));
+                  void* ptr = segment.allocate(sizeof(ZoneTableHeader));
+                  ZoneTableHeader* new_header = new(ptr)
+                       ZoneTableHeader(zt_holder.release());
+                  segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
+                  break;
+             } catch (const MemorySegmentGrown&) {}
         }
     }
 
