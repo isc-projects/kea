@@ -108,10 +108,9 @@ private:
 /// for the specific memory-implementation behavior.
 ///
 /// Note: At some point in the future, methods such as \c reset(),
-/// \c clear(), \c resetHeader(), \c getHeader(), \c isWritable(),
-/// \c isUsable() may become non-virtual methods. Such a change should
-/// not affect any code that uses this class, but please be aware of
-/// such plans.
+/// \c clear(), \c getHeader(), \c isWritable(), \c isUsable() may
+/// become non-virtual methods. Such a change should not affect any code
+/// that uses this class, but please be aware of such plans.
 class ZoneTableSegment {
 protected:
     /// \brief Protected constructor
@@ -338,12 +337,6 @@ public:
     /// Note that after calling \c clear(), this method will return
     /// false until the segment is reset successfully again.
     virtual bool isUsable() const = 0;
-
-    /// \brief Reset the table header address.
-    ///
-    /// This method must recalculate the \c ZoneTableHeader address, so
-    /// that it is valid when requested using the \c getHeader() method.
-    virtual void resetHeader() = 0;
 };
 
 } // namespace memory

@@ -50,12 +50,6 @@ public:
     /// \brief Returns "mapped" as the implementation type.
     virtual const std::string& getImplType() const;
 
-    /// \brief Resets the \c ZoneTableHeader address from the named
-    /// address in the mapped file. This method should be called once
-    /// before calls to \c getHeader() if the mapped \c MemorySegment
-    /// has grown.
-    virtual void resetHeader();
-
     /// \brief Return the \c ZoneTableHeader for this mapped zone table
     /// segment.
     ///
@@ -140,7 +134,6 @@ private:
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
-    ZoneTableHeader* cached_header_;
 };
 
 } // namespace memory
