@@ -15,6 +15,7 @@
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
+#include <datasrc/exceptions.h>
 
 #include <dns/rrclass.h>
 #include <dns/name.h>
@@ -31,6 +32,7 @@ using boost::scoped_ptr;
 using boost::bind;
 using isc::dns::RRClass;
 using isc::dns::Name;
+using isc::datasrc::ZoneLoaderException;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc::memory::test;
 
@@ -60,9 +62,10 @@ protected:
         writer_(new
             ZoneWriter(*segment_,
                        bind(&ZoneWriterTest::loadAction, this, _1),
-                       Name("example.org"), RRClass::IN())),
+                       Name("example.org"), RRClass::IN(), false)),
         load_called_(false),
         load_throw_(false),
+        load_loader_throw_(false),
         load_null_(false),
         load_data_(false)
     {}
@@ -75,6 +78,7 @@ protected:
     scoped_ptr<ZoneWriter> writer_;
     bool load_called_;
     bool load_throw_;
+    bool load_loader_throw_;
     bool load_null_;
     bool load_data_;
 public:
@@ -86,6 +90,9 @@ public:
         load_called_ = true;
         if (load_throw_) {
             throw TestException();
+        }
+        if (load_loader_throw_) {
+            isc_throw(ZoneLoaderException, "faked loader exception");
         }
 
         if (load_null_) {
@@ -130,7 +137,7 @@ TEST_F(ZoneWriterTest, constructForReadOnlySegment) {
     ReadOnlySegment ztable_segment(RRClass::IN(), mem_sgmt);
     EXPECT_THROW(ZoneWriter(ztable_segment,
                             bind(&ZoneWriterTest::loadAction, this, _1),
-                            Name("example.org"), RRClass::IN()),
+                            Name("example.org"), RRClass::IN(), false),
                  isc::InvalidOperation);
 }
 
@@ -241,6 +248,30 @@ TEST_F(ZoneWriterTest, loadThrows) {
 
     // But we can cleanup
     EXPECT_NO_THROW(writer_->cleanup());
+}
+
+// Emulate the situation where load() throws loader error.
+TEST_F(ZoneWriterTest, loadLoaderException) {
+    // By default, the exception is propagated.
+    load_loader_throw_ = true;
+    EXPECT_THROW(writer_->load(), ZoneLoaderException);
+
+    // If we specify allowing load error, load() will succeed and install()
+    // adds an empty zone.
+    writer_.reset(new ZoneWriter(*segment_,
+                                 bind(&ZoneWriterTest::loadAction, this, _1),
+                                 Name("example.org"), RRClass::IN(), true));
+    writer_->load();
+    writer_->install();
+    writer_->cleanup();
+
+    // Check an empty zone has been really installed.
+    using namespace isc::datasrc::result;
+    const ZoneTable* ztable = segment_->getHeader().getTable();
+    ASSERT_TRUE(ztable);
+    const ZoneTable::FindResult result = ztable->findZone(Name("example.org"));
+    EXPECT_EQ(SUCCESS, result.code);
+    EXPECT_EQ(ZONE_EMPTY, result.flags);
 }
 
 // Check the strong exception guarantee - if it throws, nothing happened
