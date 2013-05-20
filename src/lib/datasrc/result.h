@@ -18,13 +18,10 @@
 namespace isc {
 namespace datasrc {
 namespace result {
-/// Result codes of various public methods of in memory data source
+/// \brief Result codes of various public methods of DataSourceClient.
 ///
 /// The detailed semantics may differ in different methods.
 /// See the description of specific methods for more details.
-///
-/// Note: this is intended to be used from other data sources eventually,
-/// but for now it's specific to in memory data source and its backend.
 enum Result {
     SUCCESS,  ///< The operation is successful.
     EXIST,    ///< The search key is already stored.
@@ -32,8 +29,26 @@ enum Result {
     PARTIALMATCH ///< Only a partial match is found.
 };
 
+/// \brief Flags for supplemental information along with the \c Result
+///
+/// Initially there's only one flag defined, but several flags will be added
+/// later.  One likely case is to indicate a flag that is listed in in-memory
+/// but its content is served in the underlying data source.  This will help
+/// when only a subset of zones are cached in-memory so the lookup code can
+/// efficiently detect whether it doesn't exist or is not just cached.
+/// When more flags are added, the logical-or operation should be allowed
+/// (by defining \c operator|) on these flags.
+enum ResultFlags {
+    FLAGS_DEFAULT = 0,          // no flags
+    ZONE_EMPTY = 1 ///< The zone found is empty, normally meaning it's broken
+};
+
 }
 }
 }
 
-#endif
+#endif  // DATASRC_RESULT_H
+
+// Local Variables:
+// mode: c++
+// End:

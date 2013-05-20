@@ -86,10 +86,12 @@ public:
     /// \brief Result data of findZone() method.
     struct FindResult {
         FindResult(result::Result param_code,
-                   const ZoneData* param_zone_data) :
-            code(param_code), zone_data(param_zone_data)
+                   const ZoneData* param_zone_data,
+                   result::ResultFlags param_flags = result::FLAGS_DEFAULT) :
+            code(param_code), flags(param_flags), zone_data(param_zone_data)
         {}
         const result::Result code;
+        const result::ResultFlags flags;
         const ZoneData* const zone_data;
     };
 
@@ -154,7 +156,7 @@ public:
     /// \throw None.
     size_t getZoneCount() const { return (zone_count_); }
 
-    /// Add a new zone to the \c ZoneTable.
+    /// \brief Add a new zone to the \c ZoneTable.
     ///
     /// This method adds a given zone data to the internal table.
     ///
@@ -183,13 +185,36 @@ public:
     ///     added to the zone table.
     /// \return \c result::EXIST The zone table already contained
     ///     zone of the same origin. The old data is replaced and returned
-    ///     inside the result.
+    ///     inside the result unless it's empty; if the zone was previously
+    ///     added by \c addEmptyZone(), the data returned is NULL.
     AddResult addZone(util::MemorySegment& mem_sgmt,
                       dns::RRClass zone_class,
                       const dns::Name& zone_name,
                       ZoneData* content);
 
-    /// Find a zone that best matches the given name in the \c ZoneTable.
+    /// \brief Add an empty zone to the \c ZoneTable.
+    ///
+    /// This method is similar to \c addZone(), but adds a conceptual "empty"
+    /// zone of the given zone name to the table.  The added empty zone
+    /// affects subsequent calls to \c addZone() (and \c addEmptyZone() itself)
+    /// and \c findZone() as described for these methods.
+    ///
+    /// The intended meaning of an empty zone in the table is that the zone
+    /// is somehow broken, such as configured to be loaded but loading failed.
+    /// But this class is not aware of such interpretation; it's up to the
+    /// user of the class how to use the concept of empty zones.
+    ///
+    /// It returns an \c AddResult object as described for \c addZone().
+    ///
+    /// The same notes on exception safety as that for \c addZone() applies.
+    ///
+    /// \param mem_sgmt Same as addZone().
+    /// \param zone_name Same as addZone().
+    AddResult addEmptyZone(util::MemorySegment& mem_sgmt,
+                           const dns::Name& zone_name);
+
+    /// \brief Find a zone that best matches the given name in the
+    /// \c ZoneTable.
     ///
     /// It searches the internal storage for a zone that gives the
     /// longest match against \c name, and returns the result in the
@@ -200,8 +225,11 @@ public:
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
     ///    super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
-    /// - \c zone_data: corresponding zone data of the found zone; NULL if
-    ///   no matching zone is found.
+    /// - \c flags If the zone is empty (added by \c addEmptyZone()),
+    ///   result::ZONE_EMPTY is set.
+    /// - \c zone_data: corresponding zone data of the found zone if found and
+    ///   non empty; NULL if no matching zone is found or the found zone is
+    ///   empty.
     ///
     /// \throw none
     ///
@@ -216,6 +244,15 @@ private:
 
     // this is a shared placeholder for broken zones
     boost::interprocess::offset_ptr<ZoneData> null_zone_data_;
+
+    // Common routine for addZone and addEmptyZone.  This method can throw
+    // util::MemorySegmentGrown, in which case addresses from mem_sgmt
+    // can be relocated.  The caller is responsible for destroying content
+    // on exception, if it needs to be destroyed.  On successful return it
+    // ensures there's been no address relocation.
+    AddResult addZoneInternal(util::MemorySegment& mem_sgmt,
+                              const dns::Name& zone_name,
+                              ZoneData* content);
 };
 }
 }
