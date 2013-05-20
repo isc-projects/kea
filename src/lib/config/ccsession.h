@@ -425,6 +425,23 @@ public:
                                            params =
                                            isc::data::ConstElementPtr());
 
+    /// \brief Send a notification to subscribed clients
+    ///
+    /// Send a notification message to all clients subscribed to the given
+    /// notification group.
+    ///
+    /// \param notification_group This parameter (indirectly) signifies what
+    ///     clients should receive the notification. Only the clients that
+    ///     subscribed to notifications on the same group receive it.
+    /// \param name The name of the event to notify about (for example
+    ///     `config_changed`).
+    /// \param params Other parameters that describe the event. This might
+    ///     be, for example, the new configuration value.
+    void notify(const std::string& notification_group,
+                const std::string& name,
+                const isc::data::ConstElementPtr& params =
+                    isc::data::ConstElementPtr());
+
     /// \brief Convenience version of rpcCall
     ///
     /// This is exactly the same as the previous version of rpcCall, except
