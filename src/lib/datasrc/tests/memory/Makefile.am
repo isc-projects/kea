@@ -8,6 +8,14 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+if USE_SHARED_MEMORY
+# See src/lib/util/Makefile.am.  We need this because some tests directly
+# use the Boost managed_mapped_file.  It's not ideal to deal with it as
+# a module-wide flag, but considering it's for tests and only for limited
+# environments, it would still be better to introduce more complicated setup.
+AM_CXXFLAGS += $(BOOST_MAPPED_FILE_CXXFLAG)
+endif
+
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
