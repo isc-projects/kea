@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -108,13 +108,16 @@ TEST_F(RRParamRegistryTest, addError) {
 
 class TestRdataFactory : public AbstractRdataFactory {
 public:
-    using AbstractRdataFactory::create;
     virtual RdataPtr create(const string& rdata_str) const
     { return (RdataPtr(new in::A(rdata_str))); }
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
     { return (RdataPtr(new in::A(buffer, rdata_len))); }
     virtual RdataPtr create(const Rdata& source) const
     { return (RdataPtr(new in::A(dynamic_cast<const in::A&>(source)))); }
+    virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
+                            MasterLoader::Options options,
+                            MasterLoaderCallbacks& callbacks) const
+    { return (RdataPtr(new in::A(lexer, origin, options, callbacks))); }
 };
 
 TEST_F(RRParamRegistryTest, addRemoveFactory) {
