@@ -64,11 +64,25 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
         isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
     }
 
-    const MasterToken& token = lexer.getNextToken(MasterToken::STRING, true);
+    std::string fingerprint_str;
+    std::string fingerprint_substr;
+    while (true) {
+        const MasterToken& token =
+            lexer.getNextToken(MasterToken::STRING, true);
+        if ((token.getType() == MasterToken::END_OF_FILE) ||
+            (token.getType() == MasterToken::END_OF_LINE)) {
+            break;
+        }
+        token.getString(fingerprint_substr);
+        fingerprint_str.append(fingerprint_substr);
+    }
+    lexer.ungetToken();
+
     vector<uint8_t> fingerprint;
-    if ((token.getType() != MasterToken::END_OF_FILE) &&
-        (token.getType() != MasterToken::END_OF_LINE)) {
-        decodeHex(token.getString(), fingerprint);
+    // If fingerprint is missing, it's OK. See the API documentation of the
+    // constructor.
+    if (fingerprint_str.size() > 0) {
+        decodeHex(fingerprint_str, fingerprint);
     }
 
     return (new SSHFPImpl(algorithm, fingerprint_type, fingerprint));
@@ -85,7 +99,8 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
 /// ranges, but are not constrained to the values defined in RFC4255.
 ///
 /// The Fingerprint field may be absent, but if present it must contain a
-/// valid hex encoding of the fingerprint.
+/// valid hex encoding of the fingerprint. For compatibility with BIND 9,
+/// whitespace is allowed in the hex text (RFC4255 is silent on the matter).
 ///
 /// \throw InvalidRdataText if any fields are missing, out of their valid
 /// ranges, or incorrect.
