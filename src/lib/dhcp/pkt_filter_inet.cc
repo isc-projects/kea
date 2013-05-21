@@ -53,7 +53,7 @@ int PktFilterInet::openSocket(const Iface& iface,
     }
 
 #ifdef SO_BINDTODEVICE
-    if (receive_bcast) {
+    if (receive_bcast && iface.flag_broadcast_) {
         // Bind to device so as we receive traffic on a specific interface.
         if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.getName().c_str(),
                        iface.getName().length() + 1) < 0) {

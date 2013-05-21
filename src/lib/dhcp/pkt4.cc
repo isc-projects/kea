@@ -284,7 +284,8 @@ Pkt4::setHWAddr(uint8_t htype, uint8_t hlen,
 void
 Pkt4::setHWAddr(const HWAddrPtr& addr) {
     if (!addr) {
-        isc_throw(BadValue, "Setting hw address to NULL is forbidden");
+        isc_throw(BadValue, "Setting DHCPv4 chaddr field to NULL"
+                  << " is forbidden");
     }
     hwaddr_ = addr;
 }
@@ -315,7 +316,8 @@ Pkt4::setLocalHWAddr(const uint8_t htype, const uint8_t hlen,
 void
 Pkt4::setLocalHWAddr(const HWAddrPtr& addr) {
     if (!addr) {
-        isc_throw(BadValue, "Setting HW address to NULL is forbidden");
+        isc_throw(BadValue, "Setting local HW address to NULL is"
+                  << " forbidden.");
     }
     local_hwaddr_ = addr;
 }
@@ -329,7 +331,8 @@ Pkt4::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
 void
 Pkt4::setRemoteHWAddr(const HWAddrPtr& addr) {
     if (!addr) {
-        isc_throw(BadValue, "Setting HW address to NULL is forbidden");
+        isc_throw(BadValue, "Setting remote HW address to NULL is"
+                  << " forbidden.");
     }
     remote_hwaddr_ = addr;
 }

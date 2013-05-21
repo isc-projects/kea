@@ -515,12 +515,10 @@ void Iface::setFlags(uint32_t flags) {
 void
 IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
     if (direct_response_desired) {
-        boost::shared_ptr<PktFilter> pkt_filter(new PktFilterLPF());
-        setPacketFilter(pkt_filter);
+        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
 
     } else {
-        boost::shared_ptr<PktFilter> pkt_filter(new PktFilterInet());
-        setPacketFilter(pkt_filter);
+        setPacketFilter(PktFilterPtr(new PktFilterInet()));
 
     }
 }

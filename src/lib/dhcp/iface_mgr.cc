@@ -220,9 +220,10 @@ IfaceMgr::setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
         const Iface::SocketCollection& sockets = iface->getSockets();
         for (Iface::SocketCollection::const_iterator sock = sockets.begin();
              sock != sockets.end(); ++sock) {
-            // There is at least one socket open, so we have to fail.
             if (sock->family_ == AF_INET) {
-                isc_throw(PacketFilterChangeDenied, "it is not allowed to set new packet"
+            // There is at least one socket open, so we have to fail.
+                isc_throw(PacketFilterChangeDenied,
+                          "it is not allowed to set new packet"
                           << " filter when there are open IPv4 sockets - need"
                           << " to close them first");
             }

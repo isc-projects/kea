@@ -48,12 +48,26 @@ public:
 
     /// @brief Constructor.
     ///
-    /// It disables configuration of broadcast options on
-    /// sockets that are opened by the Dhcpv4Srv constructor.
-    /// Also, disables the Direct V4 traffic as it requires
-    /// use of raw sockets. Use of broadcast as well as raw
-    /// sockets require root privileges, thus can't be used
-    /// in unit testing.
+    /// This constructor disables default modes of operation used by the
+    /// Dhcpv4Srv class:
+    /// - Send/receive broadcast messages through sockets on interfaces
+    /// which support broadcast traffic.
+    /// - Direct DHCPv4 traffic - communication with clients which do not
+    /// have IP address assigned yet.
+    ///
+    /// Enabling these modes requires root privilges so they must be
+    /// disabled for unit testing.
+    ///
+    /// Note, that disabling broadcast options on sockets does not impact
+    /// the operation of these tests because they use local loopback
+    /// interface which doesn't have broadcast capability anyway. It rather
+    /// prevents setting broadcast options on other (broadcast capable)
+    /// sockets which are opened on other interfaces in Dhcpv4Srv constructor.
+    ///
+    /// The Direct DHCPv4 Traffic capability can be disabled here because
+    /// it is tested with PktFilterLPFTest unittest. The tests which belong
+    /// to PktFilterLPFTest can be enabled on demand when root privileges can
+    /// be guaranteed.
     NakedDhcpv4Srv(uint16_t port = 0)
         : Dhcpv4Srv(port, "type=memfile", false, false) {
     }
@@ -373,26 +387,41 @@ public:
                              const IOAddress& client_addr,
                              const IOAddress& relay_addr) {
 
+        // Create an instance of the tested class.
         boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+        // Initialize the source HW address.
         vector<uint8_t> mac(6);
         for (int i = 0; i < 6; i++) {
-            mac[i] = i*10;
+            mac[i] = i * 10;
         }
-
+        // Initialized the destination HW address.
         vector<uint8_t> dst_mac(6);
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; ++i) {
             dst_mac[i] = i * 20;
         }
-
+        // Create a DHCP message. It will be used to simulate the
+        // incoming message.
         boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
+        // Create a response message. It will hold a reponse packet.
+        // Initially, set it to NULL.
         boost::shared_ptr<Pkt4> rsp;
-
+        // Set the name of the interface on which packet is received.
         req->setIface("eth0");
+        // Set the interface index. It is just a dummy value and will
+        // not be interprented.
         req->setIndex(17);
+        // Set the target HW address. This value is normally used to
+        // construct the data link layer header.
         req->setRemoteHWAddr(1, 6, dst_mac);
+        // Set the HW address. This value is set on DHCP level (in chaddr).
         req->setHWAddr(1, 6, mac);
+        // Set local HW address. It is used to construct the data link layer
+        // header.
         req->setLocalHWAddr(1, 6, mac);
+        // Set target IP address.
         req->setRemoteAddr(IOAddress(client_addr));
+        // Set relay address.
         req->setGiaddr(relay_addr);
 
         // We are going to test that certain options are returned
