@@ -1,3 +1,7 @@
+TBD.	[func]		y-aharen
+	b10-auth: A new statistics item 'qryrecursion' has been introduced.
+	(Trac #2796, git TBD)
+
 614.	[func]		tmark
 	b10-d2: Initial DHCP-DDNS (a.k.a. D2) module implemented. Currently it does
 	nothing useful, except for providing the skeleton implementation 
