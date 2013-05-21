@@ -52,6 +52,7 @@ const int CC_REPLY_SUCCESS = 0;
 const char *const CC_PAYLOAD_LNAME = "lname";
 const char *const CC_PAYLOAD_RESULT = "result";
 const char *const CC_PAYLOAD_COMMAND = "command";
+const char *const CC_PAYLOAD_NOTIFICATION = "notification";
 
 }
 }
