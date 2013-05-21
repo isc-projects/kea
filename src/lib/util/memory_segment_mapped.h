@@ -256,7 +256,6 @@ public:
 private:
     struct Impl;
     Impl* impl_;
-    size_t allocated_size_;
 };
 
 } // namespace util
