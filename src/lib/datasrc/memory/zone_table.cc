@@ -162,9 +162,10 @@ ZoneTable::findZone(const Name& name) const {
     // Can Not Happen (remember, NOTFOUND is handled).  node should also have
     // data because the tree is constructed in the way empty nodes would
     // be "invisible" for find().
-    assert(node != NULL && node->getData());
+    assert(node != NULL);
 
     const ZoneData* zone_data = node->getData();
+    assert(zone_data);
     const result::ResultFlags flags =
         zone_data->isEmpty() ? result::ZONE_EMPTY : result::FLAGS_DEFAULT;
     return (FindResult(my_result, zone_data->isEmpty() ? NULL : zone_data,
