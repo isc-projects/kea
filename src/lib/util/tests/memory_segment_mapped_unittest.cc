@@ -276,13 +276,11 @@ TEST_F(MemorySegmentMappedTest, badDeallocate) {
         resetSegment();
     }
 
-    // Invalid size; this implementation doesn't detect such errors and
-    // will free the memory, but \c allMemoryDeallocated() will detect
-    // it.
+    // Invalid size; this implementation doesn't detect such errors.
     ptr = segment_->allocate(4);
     EXPECT_NE(static_cast<void*>(NULL), ptr);
     segment_->deallocate(ptr, 8);
-    EXPECT_FALSE(segment_->allMemoryDeallocated());
+    EXPECT_TRUE(segment_->allMemoryDeallocated());
 }
 
 // A helper of namedAddress.
