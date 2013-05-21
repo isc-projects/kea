@@ -894,7 +894,7 @@ ModuleCCSession::notify(const std::string &group, const std::string &name,
     if (params) {
         notification->add(params);
     }
-    message->set("notification", notification);
+    message->set(isc::cc::CC_PAYLOAD_NOTIFICATION, notification);
     groupSendMsg(message, isc::cc::CC_GROUP_NOTIFICATION_PREFIX + group,
                  isc::cc::CC_INSTANCE_WILDCARD,
                  isc::cc::CC_TO_WILDCARD, false);

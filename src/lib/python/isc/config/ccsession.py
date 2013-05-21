@@ -554,7 +554,7 @@ class ModuleCCSession(ConfigData):
         notification = [event_name]
         if params is not None:
             notification.append(params)
-        self._session.group_sendmsg({'notification': notification},
+        self._session.group_sendmsg({CC_PAYLOAD_NOTIFICATION: notification},
                                     CC_GROUP_NOTIFICATION_PREFIX +
                                     notification_group,
                                     instance=CC_INSTANCE_WILDCARD,
