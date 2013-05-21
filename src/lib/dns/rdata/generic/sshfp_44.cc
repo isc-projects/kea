@@ -82,7 +82,7 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
 /// will make the construction fail with an exception.
 ///
 /// The Algorithm and Fingerprint Type fields must be within their valid
-/// ranges, but are not contrained to the values defined in RFC4255.
+/// ranges, but are not constrained to the values defined in RFC4255.
 ///
 /// The Fingerprint field may be absent, but if present it must contain a
 /// valid hex encoding of the fingerprint.
@@ -181,6 +181,20 @@ SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
 SSHFP::SSHFP(const SSHFP& other) :
         Rdata(), impl_(new SSHFPImpl(*other.impl_))
 {}
+
+SSHFP&
+SSHFP::operator=(const SSHFP& source)
+{
+    if (impl_ == source.impl_) {
+        return (*this);
+    }
+
+    SSHFPImpl* newimpl = new SSHFPImpl(*source.impl_);
+    delete impl_;
+    impl_ = newimpl;
+
+    return (*this);
+}
 
 SSHFP::~SSHFP() {
     delete impl_;
