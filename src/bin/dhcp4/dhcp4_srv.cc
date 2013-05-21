@@ -205,9 +205,9 @@ Dhcpv4Srv::run() {
             }
 
             if (rsp) {
-                if (rsp->getRemoteAddr().toText() == "0.0.0.0") {
-                    rsp->setRemoteAddr(query->getRemoteAddr());
-                }
+
+                adjustRemoteAddr(query, rsp);
+
                 if (!rsp->getHops()) {
                     rsp->setRemotePort(DHCP4_CLIENT_PORT);
                 } else {
@@ -357,14 +357,6 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // relay address
     answer->setGiaddr(question->getGiaddr());
-
-    if (question->getGiaddr().toText() != "0.0.0.0") {
-        // relayed traffic
-        answer->setRemoteAddr(question->getGiaddr());
-    } else {
-        // direct traffic
-        answer->setRemoteAddr(question->getRemoteAddr());
-    }
 
     // Let's copy client-id to response. See RFC6842.
     OptionPtr client_id = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
@@ -539,28 +531,6 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         answer->setYiaddr(lease->addr_);
 
-        // If remote address is not set, we are dealing with a directly
-        // connected client requesting new lease. We can send response to
-        // the address assigned in the lease, but first we have to make sure
-        // that IfaceMgr supports responding directly to the client when
-        // client doesn't have address assigned to its interface yet.
-        if (answer->getRemoteAddr().toText() == "0.0.0.0") {
-            if (IfaceMgr::instance().isDirectResponseSupported()) {
-                answer->setRemoteAddr(lease->addr_);
-            } else {
-                // Since IfaceMgr does not support direct responses to
-                // clients not having IP addresses, we have to send response
-                // to broadcast. We don't check whether the use_bcast flag
-                // was set in the constructor, because this flag is only used
-                // by unit tests to prevent opening broadcast sockets, as
-                // it requires root privileges. If this function is invoked by
-                // unit tests, we expect that it sets broadcast address if
-                // direct response is not supported, so as a test can verify
-                // function's behavior, regardless of the use_bcast flag's value.
-                answer->setRemoteAddr(IOAddress("255.255.255.255"));
-            }
-        }
-
         // IP Address Lease time (type 51)
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
         opt->setUint32(lease->valid_lft_);
@@ -594,6 +564,60 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         answer->setYiaddr(IOAddress("0.0.0.0"));
     }
 }
+
+void
+Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+    // Let's create static objects representing zeroed and broadcast
+    // addresses. We will use them further in this function to test
+    // other addresses against them. Since they are static, they will
+    // be created only once.
+    static const IOAddress zero_addr("0.0.0.0");
+    static const IOAddress bcast_addr("255.255.255.255");
+
+    // If received relayed message, server responds to the relay address.
+    if (question->getGiaddr() != zero_addr) {
+        msg->setRemoteAddr(question->getGiaddr());
+
+    // If giaddr is 0 but client set ciaddr, server should unicast the
+    // response to ciaddr.
+    } else if (question->getCiaddr() != zero_addr) {
+        msg->setRemoteAddr(question->getCiaddr());
+
+    // We can't unicast the response to the client when sending NAK,
+    // because we haven't allocated address for him. Therefore,
+    // NAK is broadcast.
+    } else if (msg->getType() == DHCPNAK) {
+        msg->setRemoteAddr(bcast_addr);
+
+    // If yiaddr is set it means that we have created a lease for a client.
+    } else if (question->getYiaddr() != zero_addr) {
+        // If the broadcast bit is set in the flags field, we have to
+        // send the response to broadcast address. Client may have requested it
+        // because it doesn't support reception of messages on the interface
+        // which doesn't have an address assigned. The other case when response
+        // must be broadcasted is when our server does not support responding
+        // directly to a client without address assigned.
+        bool bcast_flag = (question->getFlags() >> 0xF) ? true : false;
+        if (!IfaceMgr::instance().isDirectResponseSupported() || bcast_flag) {
+            msg->setRemoteAddr(bcast_addr);
+
+        // Client cleared the broadcast bit and we support direct responses
+        // so we should unicast the response to a newly allocated address -
+        // yiaddr.
+        } else {
+            msg->setRemoteAddr(question->getYiaddr());
+
+        }
+
+    // In most cases, we should have the remote address found already. If we
+    // found ourselves at this point, the rational thing to do is to respond
+    // to the address we got the query from.
+    } else {
+        msg->setRemoteAddr(question->getRemoteAddr());
+
+    }
+}
+
 
 OptionPtr
 Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {

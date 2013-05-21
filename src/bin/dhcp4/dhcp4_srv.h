@@ -225,6 +225,23 @@ protected:
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
+    /// @brief Sets remote addresses for outgoing packet.
+    ///
+    /// This method sets the local and remote addresses on outgoing packet.
+    /// The addresses being set depend on the following conditions:
+    /// - has incoming packet been relayed,
+    /// - is direct response to a client without address supported,
+    /// - type of the outgoing packet,
+    /// - broadcast flag set in the incoming packet.
+    ///
+    /// @warning This method does not check whether provided packet pointers
+    /// are valid. Make sure that pointers are correct before calling this
+    /// function.
+    ///
+    /// @param question instance of a packet received by a server.
+    /// @param [out] msg response packet which addresses are to be adjusted.
+    void adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg);
+
     /// @brief Returns server-identifier option
     ///
     /// @return server-id option

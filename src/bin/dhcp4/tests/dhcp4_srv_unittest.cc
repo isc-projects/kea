@@ -72,6 +72,7 @@ public:
         : Dhcpv4Srv(port, "type=memfile", false, false) {
     }
 
+    using Dhcpv4Srv::adjustRemoteAddr;
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
     using Dhcpv4Srv::processRelease;
@@ -450,7 +451,7 @@ public:
 
         }
 
-        if (relay_addr.toText() != "0.0.0.0") {
+        /*        if (relay_addr.toText() != "0.0.0.0") {
             // This is relayed message. It should be sent brsp to relay address.
             EXPECT_EQ(req->getGiaddr().toText(),
                       rsp->getRemoteAddr().toText());
@@ -475,7 +476,7 @@ public:
 
             }
 
-        }
+            } */
 
         messageCheck(req, rsp);
 
@@ -512,6 +513,28 @@ public:
         // Check that the requested options are returned.
         optionsCheck(rsp);
 
+    }
+
+    void testAdjustRemoteAddress(const uint8_t in_msg_type,
+                                 const uint8_t out_msg_type,
+                                 const std::string& giaddr,
+                                 const std::string& ciaddr,
+                                 const std::string& yiaddr,
+                                 const uint16_t flags) {
+        boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+        boost::shared_ptr<Pkt4> req(new Pkt4(in_msg_type, 1234));
+        req->setGiaddr(IOAddress(giaddr));
+        req->setCiaddr(IOAddress(ciaddr));
+        req->setFlags(flags);
+
+        boost::shared_ptr<Pkt4> resp(new Pkt4(out_msg_type, 1234));
+        resp->setYiaddr(IOAddress(yiaddr));
+
+        ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+
+        
     }
 
     ~Dhcpv4SrvTest() {
@@ -556,6 +579,22 @@ TEST_F(Dhcpv4SrvTest, basic) {
     EXPECT_TRUE(naked_srv->getServerID());
 
     delete naked_srv;
+}
+
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    req->setGiaddr(IOAddress("192.0.2.1"));
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    req->setFlags(flags);
+    
+    boost::shared_ptr<Pkt4> resp(new Pkt4(OFFER, 1234));
+    resp->setYiaddr(IOAddress("192.0.2.100"));
+
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
 }
 
 // Verifies that DISCOVER received via relay can be processed correctly,
