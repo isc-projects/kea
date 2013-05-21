@@ -43,6 +43,8 @@ const char* const CC_COMMAND_STOP = "stop";
 // The wildcards of some headers
 const char* const CC_TO_WILDCARD = "*";
 const char* const CC_INSTANCE_WILDCARD = "*";
+// Prefixes for groups
+const char* const CC_GROUP_NOTIFICATION_PREFIX = "notifications/";
 // Reply codes
 const int CC_REPLY_NO_RECPT = -1;
 const int CC_REPLY_SUCCESS = 0;
