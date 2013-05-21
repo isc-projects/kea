@@ -41,12 +41,18 @@ checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok) {
 
     // NULL name isn't allowed.
     EXPECT_THROW(segment.setNamedAddress(NULL, ptr32), InvalidParameter);
+    EXPECT_THROW(segment.getNamedAddress(NULL), InvalidParameter);
+    EXPECT_THROW(segment.clearNamedAddress(NULL), InvalidParameter);
 
     // Empty names are not allowed.
     EXPECT_THROW(segment.setNamedAddress("", ptr32), InvalidParameter);
+    EXPECT_THROW(segment.getNamedAddress(""), InvalidParameter);
+    EXPECT_THROW(segment.clearNamedAddress(""), InvalidParameter);
 
     // Names beginning with _ are not allowed.
     EXPECT_THROW(segment.setNamedAddress("_foo", ptr32), InvalidParameter);
+    EXPECT_THROW(segment.getNamedAddress("_foo"), InvalidParameter);
+    EXPECT_THROW(segment.clearNamedAddress("_foo"), InvalidParameter);
 
     // we can now get it; the stored value should be intact.
     MemorySegment::NamedAddressResult result =

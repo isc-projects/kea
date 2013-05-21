@@ -171,13 +171,13 @@ public:
     /// corresponding address by that name (in such cases the real address
     /// may be different between these two processes).
     ///
-    /// Note that names beginning with an underscore (such as
-    /// \c "_example") are reserved for internal use by this class. If such
-    /// a name is passed to this method, an \c isc::InvalidParameter
-    /// exception will be thrown.
+    /// Names beginning with an underscore (such as \c "_example") are
+    /// reserved for internal use by this class. If such a name is
+    /// passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
     ///
-    /// Note that empty names (\c "") are not allowed too. If an empty name
-    /// is passed to this method, an \c isc::InvalidParameter exception
+    /// Empty names (\c "") are not allowed too. If an empty name is
+    /// passed to this method, an \c isc::InvalidParameter exception
     /// will be thrown.
     ///
     /// \c addr must be 0 (NULL) or an address that belongs to this segment.
@@ -223,7 +223,8 @@ public:
     ///
     /// \throw std::bad_alloc Allocation of a segment space for the given name
     /// failed.
-    /// \throw InvalidParameter name is NULL.
+    /// \throw InvalidParameter name is NULL, empty ("") or begins with
+    /// an underscore ('_').
     /// \throw MemorySegmentError Failure of implementation specific
     /// validation.
     ///
@@ -235,18 +236,7 @@ public:
         // This public method implements common validation.  The actual
         // work specific to the derived segment is delegated to the
         // corresponding protected method.
-        if (!name) {
-            isc_throw(InvalidParameter,
-                      "NULL name is given to setNamedAddress");
-        }
-        if (*name == '\0') {
-            isc_throw(InvalidParameter,
-                      "Empty name was passed to setNamedAddress");
-        } else if (*name == '_') {
-            isc_throw(InvalidParameter,
-                      "Names beginning with _ are reserved for "
-                      "internal use only.");
-        }
+        validateName(name);
         return (setNamedAddressImpl(name, addr));
     }
 
@@ -260,13 +250,23 @@ public:
     /// associated by a prior call to \c setNameAddress().  If no address
     /// associated with the given name is found, it returns NULL.
     ///
+    /// Names beginning with an underscore (such as \c "_example") are
+    /// reserved for internal use by this class. If such a name is
+    /// passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
+    ///
+    /// Empty names (\c "") are not allowed too. If an empty name is
+    /// passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
+    ///
     /// This method should generally be considered exception free, but there
     /// can be a small chance it throws, depending on the internal
     /// implementation (e.g., if it converts the name to std::string), so the
     /// API doesn't guarantee that property.  In general, if this method
     /// throws it should be considered a fatal condition.
     ///
-    /// \throw InvalidParameter name is NULL.
+    /// \throw InvalidParameter name is NULL, empty ("") or begins with
+    /// an underscore ('_').
     ///
     /// \param name A C string of which the segment memory address is to be
     /// returned.  Must not be NULL.
@@ -277,10 +277,7 @@ public:
         // This public method implements common validation.  The actual
         // work specific to the derived segment is delegated to the
         // corresponding protected method.
-        if (!name) {
-            isc_throw(InvalidParameter,
-                      "NULL name is given to getNamedAddress");
-        }
+        validateName(name);
         return (getNamedAddressImpl(name));
     }
 
@@ -291,9 +288,19 @@ public:
     /// \c setNamedAddress().  If there is no association for the given name
     /// this method returns false; otherwise it returns true.
     ///
+    /// Names beginning with an underscore (such as \c "_example") are
+    /// reserved for internal use by this class. If such a name is
+    /// passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
+    ///
+    /// Empty names (\c "") are not allowed too. If an empty name is
+    /// passed to this method, an \c isc::InvalidParameter exception
+    /// will be thrown.
+    ///
     /// See \c getNamedAddress() about exception consideration.
     ///
-    /// \throw InvalidParameter name is NULL.
+    /// \throw InvalidParameter name is NULL, empty ("") or begins with
+    /// an underscore ('_').
     /// \throw MemorySegmentError Failure of implementation specific
     /// validation.
     ///
@@ -303,11 +310,32 @@ public:
         // This public method implements common validation.  The actual
         // work specific to the derived segment is delegated to the
         // corresponding protected method.
+        validateName(name);
+        return (clearNamedAddressImpl(name));
+    }
+
+private:
+    /// \brief Validate the passed name.
+    ///
+    /// This method validates the passed name (for name/address pairs)
+    /// and throws \c InvalidParameter if the name fails
+    /// validation. Otherwise, it does nothing.
+    ///
+    /// \throw InvalidParameter name is NULL, empty ("") or begins with
+    /// an underscore ('_').
+    static void validateName(const char* name) {
         if (!name) {
             isc_throw(InvalidParameter,
-                      "NULL name is given to clearNamedAddress");
+                      "NULL is invalid for a name.");
         }
-        return (clearNamedAddressImpl(name));
+        if (*name == '\0') {
+            isc_throw(InvalidParameter,
+                      "Empty names are invalid.");
+        } else if (*name == '_') {
+            isc_throw(InvalidParameter,
+                      "Names beginning with '_' are reserved for "
+                      "internal use only.");
+        }
     }
 
 protected:
