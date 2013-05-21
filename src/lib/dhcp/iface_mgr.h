@@ -88,7 +88,7 @@ struct SocketInfo {
 };
 
 
-/// @brief represents a single network interface
+/// @brief Represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
 /// information, like name, interface index, MAC address and
@@ -96,13 +96,20 @@ struct SocketInfo {
 class Iface {
 public:
 
-    /// maximum MAC address length (Infiniband uses 20 bytes)
+    /// Maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
-    /// type that defines list of addresses
+    /// Type that defines list of addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
-    /// type that holds a list of socket informations
+    /// @brief Type that holds a list of socket information.
+    ///
+    /// @warning The type of the container used here must guarantee
+    /// that the iterators do not invalidate when erase() is called.
+    /// This is because, the \ref closeSockets function removes
+    /// elements selectively by calling erase on the element to be
+    /// removed and further iterates through remaining elements.
+    ///
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
@@ -167,7 +174,7 @@ public:
 
     /// @brief Sets flag_*_ fields based on bitmask value returned by OS
     ///
-    /// Note: Implementation of this method is OS-dependent as bits have
+    /// @note Implementation of this method is OS-dependent as bits have
     /// different meaning on each OS.
     ///
     /// @param flags bitmask value returned by OS in interface detection
@@ -258,53 +265,53 @@ public:
     const SocketCollection& getSockets() const { return sockets_; }
 
 protected:
-    /// socket used to sending data
+    /// Socket used to send data.
     SocketCollection sockets_;
 
-    /// network interface name
+    /// Network interface name.
     std::string name_;
 
-    /// interface index (a value that uniquely indentifies an interface)
+    /// Interface index (a value that uniquely indentifies an interface).
     int ifindex_;
 
-    /// list of assigned addresses
+    /// List of assigned addresses.
     AddressCollection addrs_;
 
-    /// link-layer address
+    /// Link-layer address.
     uint8_t mac_[MAX_MAC_LEN];
 
-    /// length of link-layer address (usually 6)
+    /// Length of link-layer address (usually 6).
     size_t mac_len_;
 
-    /// hardware type
+    /// Hardware type.
     uint16_t hardware_type_;
 
 public:
     /// @todo: Make those fields protected once we start supporting more
     /// than just Linux
 
-    /// specifies if selected interface is loopback
+    /// Specifies if selected interface is loopback.
     bool flag_loopback_;
 
-    /// specifies if selected interface is up
+    /// Specifies if selected interface is up.
     bool flag_up_;
 
-    /// flag specifies if selected interface is running
-    /// (e.g. cable plugged in, wifi associated)
+    /// Flag specifies if selected interface is running
+    /// (e.g. cable plugged in, wifi associated).
     bool flag_running_;
 
-    /// flag specifies if selected interface is multicast capable
+    /// Flag specifies if selected interface is multicast capable.
     bool flag_multicast_;
 
-   /// flag specifies if selected interface is broadcast capable
+    /// Flag specifies if selected interface is broadcast capable.
     bool flag_broadcast_;
 
-    /// interface flags (this value is as is returned by OS,
-    /// it may mean different things on different OSes)
+    /// Interface flags (this value is as is returned by OS,
+    /// it may mean different things on different OSes).
     uint32_t flags_;
 };
 
-/// @brief handles network interfaces, transmission and reception
+/// @brief Handles network interfaces, transmission and reception.
 ///
 /// IfaceMgr is an interface manager class that detects available network
 /// interfaces, configured addresses, link-local addresses, and provides
@@ -312,7 +319,7 @@ public:
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// defines callback used when commands are received over control session
+    /// Defines callback used when commands are received over control session.
     typedef void (*SessionCallback) (void);
 
     /// @brief Packet reception buffer size
@@ -328,7 +335,7 @@ public:
     //      2 maps (ifindex-indexed and name-indexed) and
     //      also hide it (make it public make tests easier for now)
 
-    /// type that holds a list of interfaces
+    /// Type that holds a list of interfaces.
     typedef std::list<Iface> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
@@ -401,11 +408,10 @@ public:
     /// @return a socket descriptor
     uint16_t getSocket(const isc::dhcp::Pkt4& pkt);
 
-    /// debugging method that prints out all available interfaces
+    /// Debugging method that prints out all available interfaces.
     ///
     /// @param out specifies stream to print list of interfaces to
-    void
-    printIfaces(std::ostream& out = std::cout);
+    void printIfaces(std::ostream& out = std::cout);
 
     /// @brief Sends an IPv6 packet.
     ///
@@ -563,7 +569,7 @@ public:
                       const bool use_bcast = true);
 
     /// @brief Closes all open sockets.
-    /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
+    /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
 
     /// @brief Closes all IPv4 or IPv6 sockets.
@@ -587,7 +593,7 @@ public:
     /// @throw BadValue if family value is different than AF_INET or AF_INET6.
     void closeSockets(const uint16_t family);
 
-    /// @brief returns number of detected interfaces
+    /// @brief Returns number of detected interfaces.
     ///
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
@@ -618,7 +624,7 @@ public:
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is NULL.
     /// @throw PacketFilterChangeDenied if there are open IPv4 sockets
-    void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter);
+    void setPacketFilter(const PktFilterPtr& packet_filter);
 
     /// @brief Set Packet Filter object to handle send/receive packets.
     ///
@@ -718,14 +724,14 @@ protected:
     //int recvsock_; // TODO: should be fd_set eventually, but we have only
     //int sendsock_; // 2 sockets for now. Will do for until next release
 
-    // we can't use the same socket, as receiving socket
+    // We can't use the same socket, as receiving socket
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
 
-    /// length of the control_buf_ array
+    /// Length of the control_buf_ array
     size_t control_buf_len_;
 
-    /// control-buffer, used in transmission and reception
+    /// Control-buffer, used in transmission and reception.
     boost::scoped_array<char> control_buf_;
 
     /// @brief A wrapper for OS-specific operations before sending IPv4 packet
@@ -745,10 +751,10 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
-    /// socket descriptor of the session socket
+    /// Socket descriptor of the session socket.
     int session_socket_;
 
-    /// a callback that will be called when data arrives over session_socket_
+    /// A callback that will be called when data arrives over session_socket_.
     SessionCallback session_callback_;
 private:
 
@@ -795,7 +801,7 @@ private:
     /// families, e.g. AF_INET, AF_PACKET etc. Another possible type of
     /// Packet Filter is the one used for unit testing, which doesn't
     /// open sockets but rather mimics their behavior (mock object).
-    boost::shared_ptr<PktFilter> packet_filter_;
+    PktFilterPtr packet_filter_;
 };
 
 }; // namespace isc::dhcp

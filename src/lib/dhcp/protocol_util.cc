@@ -16,6 +16,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/protocol_util.h>
 #include <boost/static_assert.hpp>
+#include <net/ethernet.h>
 // in_systm.h is required on some some BSD systems
 // complaining that n_time is undefined but used
 // in ip.h.
@@ -34,7 +35,8 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // then the size of the Ethernet frame header.
     if (buf.getLength() - buf.getPosition() < ETHERNET_HEADER_LEN) {
         isc_throw(InvalidPacketHeader, "size of ethernet header in received "
-                  << "packet is invalid, expected at least 14 bytes, received "
+                  << "packet is invalid, expected at least "
+                  << ETHERNET_HEADER_LEN << " bytes, received "
                   << buf.getLength() - buf.getPosition() << " bytes");
     }
     // Packet object must not be NULL. We want to output some values
@@ -92,7 +94,9 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // IP length is the number of 4 byte chunks that construct IPv4 header.
     // It must not be lower than 5 because first 20 bytes are fixed.
     if (ip_len < 5) {
-        ip_len = 5;
+        isc_throw(InvalidPacketHeader, "Value of the length of the IP header must not be"
+                  << " lower than 5 words. The length of the received header is "
+                  << ip_len << ".");
     }
 
     // Seek to the position of source IP address.
@@ -102,7 +106,8 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // Read destination address.
     pkt->setLocalAddr(IOAddress(buf.readUint32()));
 
-    // Skip IP header options (if any).
+    // Skip IP header options (if any) to start of the
+    // UDP header.
     buf.setPosition(start_pos + ip_len * 4);
 
     // Read source port from UDP header.
@@ -110,7 +115,8 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // Read destination port from UDP header.
     pkt->setLocalPort(buf.readUint16());
 
-    // Set the pointer position to the tail of UDP header.
+    // Set the pointer position to the first byte o the
+    // UDP payload (DHCP packet).
     buf.setPosition(start_pos + ip_len * 4 + UDP_HEADER_LEN);
 }
 
@@ -156,7 +162,7 @@ writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
     }
 
     // Type IP.
-    out_buf.writeUint16(0x0800);
+    out_buf.writeUint16(ETHERTYPE_IP);
 }
 
 void
@@ -216,7 +222,7 @@ uint16_t
 calcChecksum(const uint8_t* buf, const uint32_t buf_size, uint32_t sum) {
     uint32_t i;
     for (i = 0; i < (buf_size & ~1U); i += 2) {
-        uint16_t chunk = buf[i] << 8 | buf[i+1];
+        uint16_t chunk = buf[i] << 8 | buf[i + 1];
         sum += chunk;
         if (sum > 0xFFFF) {
             sum -= 0xFFFF;
