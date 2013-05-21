@@ -52,7 +52,7 @@ ZoneWriter::~ZoneWriter() {
 }
 
 void
-ZoneWriter::load() {
+ZoneWriter::load(std::string* error_msg) {
     if (state_ != ZW_UNUSED) {
         isc_throw(isc::InvalidOperation, "Trying to load twice");
     }
@@ -69,6 +69,9 @@ ZoneWriter::load() {
     } catch (const ZoneLoaderException& ex) {
         if (!catch_load_error_) {
             throw;
+        }
+        if (error_msg) {
+            *error_msg = ex.what();
         }
         segment_.resetHeader();
     }

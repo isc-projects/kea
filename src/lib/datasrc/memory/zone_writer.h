@@ -76,6 +76,12 @@ public:
     /// This is the first method you should call on the object. Never call it
     /// multiple times.
     ///
+    /// If the optional parameter \c error_msg is given and non NULL, and
+    /// if the writer object was constructed with \c catch_load_error being
+    /// true, then error_msg will be filled with text indicating the reason
+    /// for the error in case a load error happens.  In other cases any
+    /// passed non NULL error_msg will be intact.
+    ///
     /// \note As this contains reading of files or other data sources, or with
     ///     some other source of the data to load, it may throw quite anything.
     ///     If it throws, do not call any other methods on the object and
@@ -85,7 +91,10 @@ public:
     /// \throw isc::InvalidOperation if called second time.
     /// \throw DataSourceError load related error (not thrown if constructed
     /// with catch_load_error being false).
-    void load();
+    ///
+    /// \param error_msg If non NULL, used as a placeholder to store load error
+    /// messages.
+    void load(std::string* error_msg = NULL);
 
     /// \brief Put the changes to effect.
     ///
