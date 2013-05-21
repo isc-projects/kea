@@ -590,7 +590,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         msg->setRemoteAddr(bcast_addr);
 
     // If yiaddr is set it means that we have created a lease for a client.
-    } else if (question->getYiaddr() != zero_addr) {
+    } else if (msg->getYiaddr() != zero_addr) {
         // If the broadcast bit is set in the flags field, we have to
         // send the response to broadcast address. Client may have requested it
         // because it doesn't support reception of messages on the interface
@@ -605,7 +605,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         // so we should unicast the response to a newly allocated address -
         // yiaddr.
         } else {
-            msg->setRemoteAddr(question->getYiaddr());
+            msg->setRemoteAddr(msg->getYiaddr());
 
         }
 
