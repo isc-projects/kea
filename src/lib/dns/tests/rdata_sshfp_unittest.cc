@@ -95,7 +95,17 @@ TEST_F(Rdata_SSHFP_Test, createFromText) {
     checkFromText_None("2 1   123456789abcdef67890123456789abcdef67890");
 
     // Combination of lowercase and uppercase
-    checkFromText_None("2 1   123456789ABCDEF67890123456789abcdef67890");
+    checkFromText_None("2 1 123456789ABCDEF67890123456789abcdef67890");
+
+    // spacing in the fingerprint field
+    checkFromText_None("2 1 123456789abcdef67890 123456789abcdef67890");
+
+    // multi-line fingerprint field
+    checkFromText_None("2 1 ( 123456789abcdef67890\n 123456789abcdef67890 )");
+
+    // string constructor throws if there's extra text,
+    // but lexer constructor doesn't
+    checkFromText_BadString(sshfp_txt + "\n" + sshfp_txt);
 }
 
 TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
@@ -129,7 +139,7 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("ONE 2 123456789abcdef67890123456789abcdef67890");
     checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
     checkFromText_BadValue("1 2 BUCKLEMYSHOE");
-    checkFromText_BadString(sshfp_txt + " extra text");
+    checkFromText_BadValue(sshfp_txt + " extra text");
 
     // yes, these are redundant to the last test cases in algorithmTypes
     checkFromText_InvalidText(
