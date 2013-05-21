@@ -28,6 +28,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 
+#include <string>
+
 using boost::scoped_ptr;
 using boost::bind;
 using isc::dns::RRClass;
@@ -252,9 +254,17 @@ TEST_F(ZoneWriterTest, loadThrows) {
 
 // Emulate the situation where load() throws loader error.
 TEST_F(ZoneWriterTest, loadLoaderException) {
+    std::string error_msg;
+
     // By default, the exception is propagated.
     load_loader_throw_ = true;
     EXPECT_THROW(writer_->load(), ZoneLoaderException);
+    // In this case, passed error_msg won't be updated.
+    writer_.reset(new ZoneWriter(*segment_,
+                                 bind(&ZoneWriterTest::loadAction, this, _1),
+                                 Name("example.org"), RRClass::IN(), false));
+    EXPECT_THROW(writer_->load(&error_msg), ZoneLoaderException);
+    EXPECT_EQ("", error_msg);
 
     // If we specify allowing load error, load() will succeed and install()
     // adds an empty zone.
@@ -272,6 +282,23 @@ TEST_F(ZoneWriterTest, loadLoaderException) {
     const ZoneTable::FindResult result = ztable->findZone(Name("example.org"));
     EXPECT_EQ(SUCCESS, result.code);
     EXPECT_EQ(ZONE_EMPTY, result.flags);
+
+    // Allowing an error, and passing a template for the error message.
+    // It will be filled with the reason for the error.
+    writer_.reset(new ZoneWriter(*segment_,
+                                 bind(&ZoneWriterTest::loadAction, this, _1),
+                                 Name("example.org"), RRClass::IN(), true));
+    writer_->load(&error_msg);
+    EXPECT_NE("", error_msg);
+
+    // In case of no error, the placeholder will be intact.
+    load_loader_throw_ = false;
+    error_msg.clear();
+    writer_.reset(new ZoneWriter(*segment_,
+                                 bind(&ZoneWriterTest::loadAction, this, _1),
+                                 Name("example.org"), RRClass::IN(), true));
+    writer_->load(&error_msg);
+    EXPECT_EQ("", error_msg);
 }
 
 // Check the strong exception guarantee - if it throws, nothing happened

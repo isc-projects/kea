@@ -163,16 +163,18 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     // loading error and install an empty zone in the table.
                     memory::ZoneWriter writer(zt_segment, load_action, zname,
                                               rrclass_, true);
-                    writer.load();
+
+                    std::string error_msg;
+                    writer.load(&error_msg);
+                    if (!error_msg.empty()) {
+                        LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).arg(zname).
+                            arg(rrclass_).arg(datasrc_name).arg(error_msg);
+                    }
                     writer.install();
                     writer.cleanup();
                 } catch (const NoSuchZone&) {
                     LOG_ERROR(logger, DATASRC_CACHE_ZONE_NOTFOUND).
                         arg(zname).arg(rrclass_).arg(datasrc_name);
-                } catch (const ZoneLoaderException& e) {
-                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).
-                        arg(zname).arg(rrclass_).arg(datasrc_name).
-                        arg(e.what());
                 }
             }
         }
