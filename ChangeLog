@@ -1,3 +1,9 @@
+616.	[doc]		stephen
+	Added description to the DHCP "Database Back-Ends" section of the
+	BIND 10 Developer's Guide about how to set up a MySQL database for
+	testing the DHCP MySQL backend.
+	(Trac #2653, git da3579feea036aa2b7d094b1c260a80a69d2f9aa)
+
 615.	[bug]		jinmei
 	b10-auth: Avoid referencing to a freed object when authoritative
 	server addresses are reconfigured.  It caused a crash on a busy
