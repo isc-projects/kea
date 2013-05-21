@@ -231,12 +231,22 @@ public:
     /// of the searched name is needed. Therefore, the call would look like:
     ///
     /// \code FindResult result(list->find(queried_name));
-    ///   FindResult result(list->find(queried_name));
     ///   if (result.datasrc_) {
-    ///       createTheAnswer(result.finder_);
+    ///       if (result.finder_) {
+    ///           createTheAnswer(result.finder_);
+    ///       } else {
+    ///           // broken zone, handle it accordingly.
+    ///       }
     ///   } else {
     ///       createNotAuthAnswer();
     /// } \endcode
+    ///
+    /// Note that it is possible that \c finder_ is NULL while \c datasrc_
+    /// is not.  This happens if the zone is configured to be served from
+    /// the data source but it is broken in some sense and doesn't hold any
+    /// zone data, e.g., when the zone file has an error or the secondary
+    /// zone hasn't been transferred yet.  The caller needs to expect the case
+    /// and handle it accordingly.
     ///
     /// The other scenario is manipulating zone data (XfrOut, XfrIn, DDNS,
     /// ...). In this case, the finder itself is not so important. However,
@@ -244,7 +254,6 @@ public:
     /// know exactly, which zone we are about to manipulate). Then the call
     ///
     /// \code FindResult result(list->find(zone_name, true, false));
-    ///   FindResult result(list->find(zone_name, true, false));
     ///   if (result.datasrc_) {
     ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
     ///       ...
