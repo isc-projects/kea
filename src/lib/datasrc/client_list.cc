@@ -90,15 +90,15 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
-            const ConstElementPtr typeElem(dconf->get("type"));
-            if (typeElem == ConstElementPtr()) {
+            const ConstElementPtr type_elem(dconf->get("type"));
+            if (type_elem == ConstElementPtr()) {
                 isc_throw(ConfigurationError, "Missing the type option in "
                           "data source no " << i);
             }
-            const string type(typeElem->stringValue());
-            ConstElementPtr paramConf(dconf->get("params"));
-            if (paramConf == ConstElementPtr()) {
-                paramConf.reset(new NullElement());
+            const string type(type_elem->stringValue());
+            ConstElementPtr param_conf(dconf->get("params"));
+            if (param_conf == ConstElementPtr()) {
+                param_conf.reset(new NullElement());
             }
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
@@ -114,7 +114,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             // no-op.  In the latter case, it's of no use unless cache is
             // allowed; we simply skip building it in that case.
             const DataSourcePair dsrc_pair = getDataSourceClient(type,
-                                                                 paramConf);
+                                                                 param_conf);
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
                     arg(datasrc_name).arg(rrclass_);
