@@ -159,8 +159,10 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         cache_conf->getLoadAction(rrclass_, zname);
                     // in this loop this should be always true
                     assert(load_action);
+                    // For the initial load, we'll let the writer handle
+                    // loading error and install an empty zone in the table.
                     memory::ZoneWriter writer(zt_segment, load_action, zname,
-                                              rrclass_, false);
+                                              rrclass_, true);
                     writer.load();
                     writer.install();
                     writer.cleanup();
