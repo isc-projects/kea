@@ -539,6 +539,28 @@ class ModuleCCSession(ConfigData):
             raise RPCError(code, value)
         return value
 
+    def notify(self, notification_group, event_name, params=None):
+        """
+        Send a notification about an event to a group of recipients.
+
+        Params:
+        - notification_group: This indirectly specifies which recipients get
+          the notification. Only the ones that register callback for the same
+          gorup get it.
+        - event_name: The name of the notification.
+        - params: Additional description of the event.
+        Return: Nothing
+        """
+        notification = [event_name]
+        if params is not None:
+            notification.append(params)
+        self._session.group_sendmsg({'notification': notification},
+                                    CC_GROUP_NOTIFICATION_PREFIX +
+                                    notification_group,
+                                    instance=CC_INSTANCE_WILDCARD,
+                                    to=CC_TO_WILDCARD,
+                                    want_answer=False)
+
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
        specific functions for getting, displaying, and sending
