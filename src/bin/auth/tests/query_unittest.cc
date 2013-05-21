@@ -961,6 +961,12 @@ protected:
         setNSEC3HashCreator(NULL);
     }
 
+    bool isEmptyZoneSupported() const {
+        // Not all data sources support the concept of empty zones.
+        // Specifically for this test, SQLite3-based data source doesn't.
+        return (GetParam() != SQLITE3);
+    }
+
     void enableNSEC3(const vector<string>& rrsets_to_add) {
         boost::shared_ptr<ConfigurableClientList> new_list;
         switch (GetParam()) {
@@ -1158,6 +1164,25 @@ TEST_P(QueryTest, noZone) {
     SingletonList empty_list(empty_mock_client);
     EXPECT_NO_THROW(query.process(empty_list, qname, qtype, response));
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
+}
+
+TEST_P(QueryTest, emptyZone) {
+    // Query for an "empty (broken)" zone.  If the concept is supported by
+    // the underlying data source, the result should be SERVFAIL; otherwise
+    // it would be handled as a nonexistent zone, resulting in REFUSED.
+    const Rcode expected_rcode =
+        isEmptyZoneSupported() ? Rcode::SERVFAIL() : Rcode::REFUSED();
+
+    query.process(*list_, Name(EMPTY_ZONE_NAME), qtype, response);
+    responseCheck(response, expected_rcode, 0, 0, 0, 0, NULL, NULL, NULL);
+
+    // Same for the partial match case
+    response.clear(isc::dns::Message::RENDER);
+    response.setRcode(Rcode::NOERROR());
+    response.setOpcode(Opcode::QUERY());
+    query.process(*list_, Name(string("www.") + EMPTY_ZONE_NAME), qtype,
+                  response);
+    responseCheck(response, expected_rcode, 0, 0, 0, 0, NULL, NULL, NULL);
 }
 
 TEST_P(QueryTest, exactMatch) {
