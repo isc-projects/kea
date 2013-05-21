@@ -187,8 +187,12 @@ public:
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
     ///   super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
+    /// - \c flags: usually FLAGS_DEFAULT, but if the zone data are not
+    ///   available (possibly because an error was detected at load time)
+    ///   the ZONE_EMPTY flag is set.
     /// - \c zone_finder: Pointer to a \c ZoneFinder object for the found zone
-    /// if one is found; otherwise \c NULL.
+    /// if one is found and is not empty (flags doesn't have ZONE_EMPTY);
+    /// otherwise \c NULL.
     ///
     /// A specific derived version of this method may throw an exception.
     /// This interface does not specify which exceptions can happen (at least
@@ -218,6 +222,9 @@ public:
     /// \throw Others Possibly implementation specific exceptions (it is
     /// not fixed if a concrete implementation of this method can throw
     /// anything else.)
+    /// \throw EmptyZone the zone is supposed to exist in the data source,
+    /// but its content is not available.  This generally means there's an
+    /// error in the content.
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.

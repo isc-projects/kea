@@ -33,7 +33,8 @@ namespace test {
 
 void
 loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
-                  const dns::RRClass& zclass, const std::string& zone_file)
+                  const dns::RRClass& zclass, const std::string& zone_file,
+                  bool load_error_ok)
 {
     const isc::datasrc::internal::CacheConfig cache_conf(
         "MasterFiles", NULL, *data::Element::fromJSON(
@@ -41,7 +42,7 @@ loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
             " \"params\": {\"" + zname.toText() + "\": \"" + zone_file +
             "\"}}"), true);
     memory::ZoneWriter writer(zt_sgmt, cache_conf.getLoadAction(zclass, zname),
-                              zname, zclass, false);
+                              zname, zclass, load_error_ok);
     writer.load();
     writer.install();
     writer.cleanup();
