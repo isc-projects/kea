@@ -22,6 +22,8 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -87,6 +89,41 @@ public:
 };
 
 static const char* SRVID_FILE = "server-id-test.txt";
+
+/// @brief Dummy Packet Filtering class.
+///
+/// This class reports capability to respond directly to the
+/// client which doesn't have address configured yet.
+///
+/// All packet and socket handling functions do nothing because
+/// they are not used in unit tests.
+class PktFilterTest : public PktFilter {
+public:
+
+    /// @brief Reports 'direct response' capability.
+    ///
+    /// @return always true.
+    virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
+
+    /// Does nothing.
+    virtual int openSocket(const Iface&, const IOAddress&, const uint16_t,
+                           const bool, const bool) {
+        return (0);
+    }
+
+    /// Does nothing.
+    virtual Pkt4Ptr receive(const Iface&, const SocketInfo&) {
+        return Pkt4Ptr();
+    }
+
+    /// Does nothing.
+    virtual int send(const Iface&, uint16_t, const Pkt4Ptr&) {
+        return (0);
+    }
+
+};
 
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
@@ -515,28 +552,6 @@ public:
 
     }
 
-    void testAdjustRemoteAddress(const uint8_t in_msg_type,
-                                 const uint8_t out_msg_type,
-                                 const std::string& giaddr,
-                                 const std::string& ciaddr,
-                                 const std::string& yiaddr,
-                                 const uint16_t flags) {
-        boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-
-        boost::shared_ptr<Pkt4> req(new Pkt4(in_msg_type, 1234));
-        req->setGiaddr(IOAddress(giaddr));
-        req->setCiaddr(IOAddress(ciaddr));
-        req->setFlags(flags);
-
-        boost::shared_ptr<Pkt4> resp(new Pkt4(out_msg_type, 1234));
-        resp->setYiaddr(IOAddress(yiaddr));
-
-        ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
-
-
-        
-    }
-
     ~Dhcpv4SrvTest() {
         CfgMgr::instance().deleteSubnets4();
 
@@ -581,20 +596,203 @@ TEST_F(Dhcpv4SrvTest, basic) {
     delete naked_srv;
 }
 
+/// This test verfifies that the target address for the response
+/// is set to the address of the relay if the incoming packet was
+/// received from the relay and thus giaddr is set.
 TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
+    // Create the instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address as if it was relayed.
     req->setGiaddr(IOAddress("192.0.2.1"));
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
     req->setCiaddr(IOAddress("0.0.0.0"));
-    req->setFlags(flags);
-    
-    boost::shared_ptr<Pkt4> resp(new Pkt4(OFFER, 1234));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Create a response packet. Assume that the new lease have
+    // been created and new address allocated. This address is
+    // stored in yiaddr field.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
     resp->setYiaddr(IOAddress("192.0.2.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    // This function never throws.
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+
+    // Let's do another test and set other fields: ciaddr and
+    // flags. By doing it, we want to make sure that the relay
+    // address will take precedence.
+    req->setGiaddr(IOAddress("192.0.2.50"));
+    req->setCiaddr(IOAddress("192.0.2.11"));
+    req->setFlags(0x8000);
+
+    resp->setYiaddr(IOAddress("192.0.2.100"));
+    // Clear remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
 
-    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+    // Response should be sent back to the relay address.
+    EXPECT_EQ("192.0.2.50", resp->getRemoteAddr().toText());
+}
+
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Set ciaddr to non-zero address. The response should be sent to this
+    // address as the client is in renewing or rebinding state (it is fully
+    // configured).
+    req->setCiaddr(IOAddress("192.0.2.15"));
+    // Let's configure broadcast flag. It should be ignored because
+    // we are responding directly to the client having an address
+    // and trying to extend his lease. Broadcast flag is only used
+    // when new lease is acquired and server must make a decision
+    // whether to unicast the response to the acquired address or
+    // broadcast it.
+    req->setFlags(0x8000);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Let's extend the lease for the client in such a way that
+    // it will actually get different address. The response
+    // should not be sent to this address but rather to ciaddr
+    // as client still have ciaddr configured.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    // Check that server responds to ciaddr
+    EXPECT_EQ("192.0.2.15", resp->getRemoteAddr().toText());
+}
+
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Let's clear the broadcast flag.
+    req->setFlags(0);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    // When running unit tests, the IfaceMgr is using the default Packet
+    // Filtering class, PktFilterInet. This class does not support direct
+    // responses to clients without address assigned. When giaddr and ciaddr
+    // are zero and client has just got new lease, the assigned address is
+    // carried in yiaddr. In order to send this address to the client,
+    // server must broadcast its response.
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    // Check that the response is sent to broadcast address as the
+    // server doesn't have capability to respond directly.
+    EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
+
+    // We also want to test the case when the server has capability to
+    // respond directly to the client which is not configured. Server
+    // makes decision whether it responds directly or broadcast its
+    // response based on the capability reported by IfaceMgr. In order
+    // to set this capability we have to provide a dummy Packet Filter
+    // class which would report the support for direct responses.
+    // This class is called PktFilterTest.
+    IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterTest()));
+
+    // Now we expect that the server will send its response to the
+    // address assigned for the client.
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    // Since IfaceMgr is a singleton it will keep using the dummy packet
+    // filtering class after this test completes. We want to avoid the
+    // impact of this test on other tests so we will try to restore the
+    // original packet filtering class. If this fails, we have to abort the
+    // test because other tests would be otherwise affected.
+    try {
+        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
+    } catch (const Exception& ex) {
+        FAIL() << "Failed to restore the default Packet Filter class"
+               << " after replacing it with dummy class used for testing.";
+    }
+
+    EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
+}
+
+TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
+
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Let's set the broadcast flag.
+    req->setFlags(0x8000);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    // When running unit tests, the IfaceMgr is using the default Packet
+    // Filtering class, PktFilterInet. This class does not support direct
+    // responses to the clients without address assigned. If giaddr and
+    // ciaddr are zero and client has just got the new lease, the assigned
+    // address is carried in yiaddr. In order to send this address to the
+    // client, server must send the response to the broadcast address when
+    // direct response is not supported. This conflicts with the purpose
+    // of this test which is supposed to verify that responses are sent
+    // to broadcast address only, when broadcast flag is set. Therefore,
+    // in order to simulate that direct responses are supported we have
+    // to replace the default packet filtering class with a dummy class
+    // which reports direct response capability.
+    IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterTest()));
+
+    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+
+    // Since IfaceMgr is a singleton it will keep using the dummy packet
+    // filtering class after this test completes. We want to avoid the
+    // impact of this test on other tests so we will try to restore the
+    // original packet filtering class. If this fails, we have to abort the
+    // test because other tests would be otherwise affected.
+    try {
+        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
+    } catch (const Exception& ex) {
+        FAIL() << "Failed to restore the default Packet Filter class"
+               << " after replacing it with dummy class used for testing.";
+    }
+    // Server must repond to broadcast address when client desired that
+    // by setting the broadcast flag in its request.
+    EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
 }
 
 // Verifies that DISCOVER received via relay can be processed correctly,
