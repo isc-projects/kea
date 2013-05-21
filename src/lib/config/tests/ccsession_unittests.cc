@@ -117,6 +117,28 @@ TEST_F(CCSessionTest, rpcNoRecpt) {
                  RPCRecipientMissing);
 }
 
+// Test sending a notification
+TEST_F(CCSessionTest, notify) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    mccs.notify("group", "event", el("{\"param\": true}"));
+    const ConstElementPtr notification(el(
+        "["
+        "   \"notifications/group\","
+        "   \"*\","
+        "   {"
+        "       \"notification\": ["
+        "           \"event\", {"
+        "               \"param\": true"
+        "           }"
+        "       ]"
+        "   },"
+        "   -1"
+        "]"));
+    EXPECT_TRUE(notification->equals(*session.getMsgQueue()->get(1))) <<
+            session.getMsgQueue()->get(1)->toWire();
+}
+
 TEST_F(CCSessionTest, createAnswer) {
     ConstElementPtr answer;
     answer = createAnswer();

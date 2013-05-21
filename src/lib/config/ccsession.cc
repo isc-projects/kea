@@ -884,5 +884,21 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
     }
 }
 
+void
+ModuleCCSession::notify(const std::string &group, const std::string &name,
+                        const ConstElementPtr &params)
+{
+    const ElementPtr message(Element::createMap());
+    const ElementPtr notification(Element::createList());
+    notification->add(Element::create(name));
+    if (params) {
+        notification->add(params);
+    }
+    message->set("notification", notification);
+    groupSendMsg(message, isc::cc::CC_GROUP_NOTIFICATION_PREFIX + group,
+                 isc::cc::CC_INSTANCE_WILDCARD,
+                 isc::cc::CC_TO_WILDCARD, false);
+}
+
 }
 }
