@@ -29,6 +29,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// Forward declaration to the structure describing a socket.
 struct SocketInfo;
 
 /// Forward declaration to the class representing interface

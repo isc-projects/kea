@@ -54,8 +54,7 @@ void
 IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
     // @todo Currently we ignore the preference to use direct traffic
     // because it hasn't been implemented for BSD systems.
-    boost::shared_ptr<PktFilter> pkt_filter(new PktFilterInet());
-    setPacketFilter(pkt_filter);
+    setPacketFilter(PktFilterPtr(new PktFilterInet()));
 }
 
 

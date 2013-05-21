@@ -26,45 +26,66 @@
 
 namespace {
 
-/// Socket filter program, used to filter out all traffic other
-/// then DHCP. In particular, it allows receipt of UDP packets
+using namespace isc::dhcp;
+
+/// The socket filter program, used to filter out all traffic other
+/// than DHCP. In particular, it allows receipt of UDP packets
 /// on a specific (customizable) port. It does not allow fragmented
 /// packets.
 ///
 /// Socket filter program is platform independent code which is
 /// executed on the kernel level when new packet arrives. This concept
-/// origins from the Berkeley Packet Filtering supported on BSD systems.
+/// originates from the Berkeley Packet Filtering supported on BSD systems.
 ///
 /// @todo We may want to extend the filter to receive packets sent
 /// to the particular IP address assigned to the interface or
 /// broadcast address.
 struct sock_filter dhcp_sock_filter [] = {
-    // Make sure this is an IP packet...
-    BPF_STMT (BPF_LD + BPF_H + BPF_ABS, 12),
-    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
+    // Make sure this is an IP packet: check the half-word (two bytes)
+    // at offset 12 in the packet (the Ethernet packet type).  If it
+    // is, advance to the next instruction.  If not, advance 8
+    // instructions (which takes execution to the last instruction in
+    // the sequence: "drop it").
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
 
-    // Make sure it's a UDP packet...
-    BPF_STMT (BPF_LD + BPF_B + BPF_ABS, 23),
-    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+    // Make sure it's a UDP packet.  The IP protocol is at offset
+    // 9 in the IP header so, adding the Ethernet packet header size
+    // of 14 bytes gives an absolute byte offset in the packet of 23.
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS, ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
 
-    // Make sure this isn't a fragment...
-    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+    // Make sure this isn't a fragment by checking that the fragment
+    // offset field in the IP header is zero.  This field is the
+    // least-significant 13 bits in the bytes at offsets 6 and 7 in
+    // the IP header, so the half-word at offset 20 (6 + size of
+    // Ethernet header) is loaded and an appropriate mask applied.
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
     BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
 
-    // Get the IP header length...
-    BPF_STMT (BPF_LDX + BPF_B + BPF_MSH, 14),
+    // Get the IP header length.  This is achieved by the following
+    // (special) instruction that, given the offset of the start
+    // of the IP header (offset 14) loads the IP header length.
+    BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, ETHERNET_HEADER_LEN),
 
-    // Make sure it's to the right port...
-    BPF_STMT (BPF_LD + BPF_H + BPF_IND, 16),
-    // Use default DHCP server port, but it can be
-    // replaced if neccessary.
-    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, isc::dhcp::DHCP4_SERVER_PORT, 0, 1),
+    // Make sure it's to the right port.  The following instruction
+    // adds the previously extracted IP header length to the given
+    // offset to locate the correct byte.  The given offset of 16
+    // comprises the length of the Ethernet header (14) plus the offset
+    // of the UDP destination port (2) within the UDP header.
+    BPF_STMT(BPF_LD + BPF_H + BPF_IND, ETHERNET_HEADER_LEN + UDP_DEST_PORT),
+    // The following instruction tests against the default DHCP server port,
+    // but the action port is actually set in PktFilterLPF::openSocket().
+    // N.B. The code in that method assumes that this instruction is at
+    // offset 8 in the program.  If this is changed, openSocket() must be
+    // updated.
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
     // If we passed all the tests, ask for the whole packet.
-    BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+    BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
 
     // Otherwise, drop it.
-    BPF_STMT(BPF_RET+BPF_K, 0),
+    BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
 }
@@ -107,6 +128,10 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
     sa.sll_family = AF_PACKET;
     sa.sll_ifindex = iface.getIndex();
 
+    // For raw sockets we construct IP headers on our own, so we don't bind
+    // socket to IP address but to the interface. We will later use the
+    // Linux Packet Filtering to filter out these packets that we are
+    // interested in.
     if (bind(sock, reinterpret_cast<const struct sockaddr*>(&sa),
              sizeof(sa)) < 0) {
         close(sock);
@@ -120,9 +145,13 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
 
 Pkt4Ptr
 PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
-    // @todo: implement this function
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
+    // If negative value is returned by read(), it indicates that an
+    // error occured. If returned value is 0, no data was read from the
+    // socket. In both cases something has gone wrong, because we expect
+    // that a chunk of data is there. We signal the lack of data by
+    // returing an empty packet.
     if (data_len <= 0) {
         return Pkt4Ptr();
     }
@@ -131,9 +160,12 @@ PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
 
     // @todo: This is awkward way to solve the chicken and egg problem
     // whereby we don't know the offset where DHCP data start in the
-    // received buffer when we create the packet object. The dummy
-    // object is created so as we can pass it to the functions which
-    // decode IP stack and find actual offset of the DHCP packet.
+    // received buffer when we create the packet object. In general case,
+    // the IP header has variable length. The information about its length
+    // is stored in one of its fields. Therefore, we have to decode the
+    // packet to get the offset of the DHCP data. The dummy object is
+    // created so as we can pass it to the functions which decode IP stack
+    // and find actual offset of the DHCP data.
     // Once we find the offset we can create another Pkt4 object from
     // the reminder of the input buffer and set the IP addresses and
     // ports from the dummy packet. We should consider doing it
@@ -180,11 +212,17 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     // are valid because they are checked by the function called.
     writeEthernetHeader(pkt, buf);
 
+    // This object represents broadcast address. We will compare the
+    // local packet address with it a few lines below. Having static
+    // variable guarantees that this object is created only once, not
+    // every time this function is called.
+    static const isc::asiolink::IOAddress bcast_addr("255.255.255.255");
+
     // It is likely that the local address in pkt object is set to
     // broadcast address. This is the case if server received the
     // client's packet on broadcast address. Therefore, we need to
     // correct it here and assign the actual source address.
-    if (pkt->getLocalAddr().toText() == "255.255.255.255") {
+    if (pkt->getLocalAddr() == bcast_addr) {
         const Iface::SocketCollection& sockets = iface.getSockets();
         for (Iface::SocketCollection::const_iterator it = sockets.begin();
              it != sockets.end(); ++it) {

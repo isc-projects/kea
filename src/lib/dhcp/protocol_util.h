@@ -35,19 +35,31 @@ public:
 
 /// Size of the Ethernet frame header.
 static const size_t ETHERNET_HEADER_LEN = 14;
+/// Offset of the 2-byte word in the Ethernet packet which
+/// holds the type of the protocol it encapsulates.
+static const size_t ETHERNET_PACKET_TYPE_OFFSET = 12;
+
 /// Minimal IPv4 header length.
 static const size_t MIN_IP_HEADER_LEN = 20;
-/// UDP header length.
-static const size_t UDP_HEADER_LEN = 8;
+/// Offset in the IP header where the flags field starts.
+static const size_t IP_FLAGS_OFFSET = 6;
+/// Offset of the byte in IP header which holds the type
+/// of the protocol it encapsulates.
+static const size_t IP_PROTO_TYPE_OFFSET = 9;
 /// Offset of source address in the IPv4 header.
 static const size_t IP_SRC_ADDR_OFFSET = 12;
+
+/// UDP header length.
+static const size_t UDP_HEADER_LEN = 8;
+/// Offset within UDP header where destination port is held.
+static const size_t UDP_DEST_PORT = 2;
 
 /// @brief Decode the Ethernet header.
 ///
 /// This function reads Ethernet frame header from the provided
 /// buffer at the current read position. The source HW address
 /// is read from the header and assigned as client address in
-/// a pkt object. The buffer read pointer is set to the end
+/// the pkt object. The buffer read pointer is set to the end
 /// of the Ethernet frame header if read was successful.
 ///
 /// @warning This function does not check that the provided 'pkt'
@@ -66,7 +78,7 @@ void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 /// This function reads IP and UDP headers from the provided buffer
 /// at the current read position. The source and destination IP
 /// addresses and ports and read from these headers and stored in
-/// the appropriate members of pkt object.
+/// the appropriate members of the pkt object.
 ///
 /// @warning This function does not check that the provided 'pkt'
 /// pointer is valid. Caller must make sure that pointer is
@@ -95,7 +107,7 @@ void writeEthernetHeader(const Pkt4Ptr& pkt,
 ///
 /// This utility function assembles IP and UDP packet headers for the
 /// provided DHCPv4 message. The source and destination addreses and
-/// ports stored in the Pkt4 object are copied as source and destination
+/// ports stored in the pkt object are copied as source and destination
 /// addresses and ports into IP/UDP headers.
 ///
 /// @warning This function does not check that the provided 'pkt'
@@ -116,6 +128,9 @@ void writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf);
 /// by this function. However, this function does not compute complement
 /// of the summed values. It must be calculated outside of this function
 /// before writing the value to the packet buffer.
+///
+/// The IP header checksum calculation algorithm has been defined in
+/// <a href="https://tools.ietf.org/html/rfc791#page-14">RFC 791</a>
 ///
 /// @param buf buffer for which the checksum is calculated.
 /// @param buf_size size of the buffer for which checksum is calculated.
