@@ -74,7 +74,7 @@ struct MemorySegmentMapped::Impl {
     // to detect possible conflict with other readers or writers using
     // file lock.
     Impl(const std::string& filename, create_only_t, size_t initial_size) :
-        read_only_(false), filename_(filename), allocated_size_(0)
+        read_only_(false), filename_(filename)
     {
         try {
             // First, try opening it in boost create_only mode; it fails if
@@ -115,7 +115,6 @@ struct MemorySegmentMapped::Impl {
         read_only_(false), filename_(filename),
         base_sgmt_(new BaseSegment(open_or_create, filename.c_str(),
                                    initial_size)),
-        allocated_size_(0),
         lock_(new boost::interprocess::file_lock(filename.c_str()))
     {
         checkWriter();
@@ -128,7 +127,6 @@ struct MemorySegmentMapped::Impl {
         base_sgmt_(read_only_ ?
                    new BaseSegment(open_read_only, filename.c_str()) :
                    new BaseSegment(open_only, filename.c_str())),
-        allocated_size_(0),
         lock_(new boost::interprocess::file_lock(filename.c_str()))
     {
         if (read_only_) {
@@ -211,10 +209,6 @@ struct MemorySegmentMapped::Impl {
 
     // actual Boost implementation of mapped segment.
     boost::scoped_ptr<BaseSegment> base_sgmt_;
-
-    // number of bytes of memory currently allocated in this segment
-    // through allocate().
-    size_t allocated_size_;
 
 private:
     // helper methods and member to detect any reader-writer conflict at
@@ -299,7 +293,6 @@ MemorySegmentMapped::allocate(size_t size) {
     if (impl_->base_sgmt_->get_free_memory() >= size) {
         void* ptr = impl_->base_sgmt_->allocate(size, std::nothrow);
         if (ptr) {
-            impl_->allocated_size_ += size;
             return (ptr);
         }
     }
@@ -315,7 +308,7 @@ MemorySegmentMapped::allocate(size_t size) {
 }
 
 void
-MemorySegmentMapped::deallocate(void* ptr, size_t size) {
+MemorySegmentMapped::deallocate(void* ptr, size_t) {
     if (impl_->read_only_) {
         isc_throw(MemorySegmentError,
                   "deallocate attempt on read-only segment");
@@ -328,15 +321,21 @@ MemorySegmentMapped::deallocate(void* ptr, size_t size) {
     }
 
     impl_->base_sgmt_->deallocate(ptr);
-    impl_->allocated_size_ -= size;
 }
 
 bool
 MemorySegmentMapped::allMemoryDeallocated() const {
-     const size_t expected_num_named_objs = impl_->read_only_ ? 0 : 1;
-     const size_t num_named_objs = impl_->base_sgmt_->get_num_named_objects();
-     return ((impl_->allocated_size_ == 0) &&
-             (num_named_objs == expected_num_named_objs));
+    // This method is not technically const, but it reserves the
+    // const-ness property. In case of exceptions, we abort here. (See
+    // ticket #2850 for additional commentary.)
+    try {
+        impl_->freeReservedMemory();
+        const bool result = impl_->base_sgmt_->all_memory_deallocated();
+        impl_->reserveMemory();
+        return (result);
+    } catch (...) {
+        abort();
+    }
 }
 
 MemorySegment::NamedAddressResult
