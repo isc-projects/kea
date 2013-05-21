@@ -885,8 +885,8 @@ ModuleCCSession::rpcCall(const std::string &command, const std::string &group,
 }
 
 void
-ModuleCCSession::notify(const std::string &group, const std::string &name,
-                        const ConstElementPtr &params)
+ModuleCCSession::notify(const std::string& group, const std::string& name,
+                        const ConstElementPtr& params)
 {
     const ElementPtr message(Element::createMap());
     const ElementPtr notification(Element::createList());
