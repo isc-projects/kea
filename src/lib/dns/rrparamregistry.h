@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -55,11 +55,11 @@ namespace rdata {
 /// \brief The \c AbstractRdataFactory class is an abstract base class to
 /// encapsulate a set of Rdata factory methods in a polymorphic way.
 ///
-/// An external developers who want to introduce a new or experimental RR type
-/// are expected to define a corresponding derived class of \c
+/// An external developer who wants to introduce a new or experimental RR type
+/// is expected to define a corresponding derived class of \c
 /// AbstractRdataFactory and register it via \c RRParamRegistry.
 ///
-/// For other users of this API normally do not have to care about this class
+/// Other users of this API normally do not have to care about this class
 /// or its derived classes; this class is generally intended to be used
 /// as an internal utility of the API implementation.
 class AbstractRdataFactory {
@@ -125,16 +125,9 @@ public:
     /// of a specific RR type and class for \c RRParamRegistry::createRdata()
     /// that uses \c MasterLexer.  See its description for the expected
     /// behavior and meaning of the parameters.
-    ///
-    /// \note Right now this is not defined as a pure virtual method and
-    /// provides the default implementation.  This is an intermediate
-    /// workaround until we implement the underlying constructor for all
-    /// supported \c Rdata classes; once it's completed the workaround
-    /// default implementation should be removed and this method should become
-    /// pure virtual.
     virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
                             MasterLoader::Options options,
-                            MasterLoaderCallbacks& callbacks) const;
+                            MasterLoaderCallbacks& callbacks) const = 0;
     //@}
 };
 
