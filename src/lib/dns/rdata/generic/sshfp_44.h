@@ -37,6 +37,7 @@ public:
 
     SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
           const std::string& fingerprint);
+    SSHFP& operator=(const SSHFP& source);
     ~SSHFP();
 
     ///
