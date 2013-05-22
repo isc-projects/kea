@@ -16,7 +16,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/protocol_util.h>
 #include <boost/static_assert.hpp>
-#include <net/ethernet.h>
 // in_systm.h is required on some some BSD systems
 // complaining that n_time is undefined but used
 // in ip.h.
@@ -162,7 +161,7 @@ writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
     }
 
     // Type IP.
-    out_buf.writeUint16(ETHERTYPE_IP);
+    out_buf.writeUint16(ETHERNET_TYPE_IP);
 }
 
 void

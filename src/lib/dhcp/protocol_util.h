@@ -38,6 +38,14 @@ static const size_t ETHERNET_HEADER_LEN = 14;
 /// Offset of the 2-byte word in the Ethernet packet which
 /// holds the type of the protocol it encapsulates.
 static const size_t ETHERNET_PACKET_TYPE_OFFSET = 12;
+/// This value is held in the Ethertype field of Ethernet frame
+/// and indicates that an IP packet is encapsulated with this
+/// frame. In the standard headers, there is an ETHERTYPE_IP,
+/// constant which serves the same purpose. However, it is more
+/// convenient to have our constant because we avoid
+/// inclusion of additional headers, which have different names
+/// and locations on different OSes.
+static const uint16_t ETHERNET_TYPE_IP = 0x0800;
 
 /// Minimal IPv4 header length.
 static const size_t MIN_IP_HEADER_LEN = 20;
