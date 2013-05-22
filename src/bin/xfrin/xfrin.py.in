@@ -656,9 +656,9 @@ class XfrinConnection(asyncore.dispatcher):
         if result != DataSourceClient.SUCCESS:
             # The data source doesn't know the zone.  For now, we provide
             # backward compatibility and creates a new one ourselves.
-            isc.datasrc.sqlite3_ds.load(self._db_file,
-                                        self._zone_name.to_text(),
-                                        lambda : [])
+            # For longer term, we should probably separate this level of zone
+            # management outside of xfrin.
+            self._datasrc_client.create_zone(self._zone_name)
             logger.warn(XFRIN_ZONE_CREATED, self.zone_str())
             # try again
             result, finder = self._datasrc_client.find_zone(self._zone_name)
