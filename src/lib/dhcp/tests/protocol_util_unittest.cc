@@ -85,7 +85,7 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     OutputBuffer buf(1);
     buf.writeData(dest_hw_addr, sizeof(dest_hw_addr));
     buf.writeData(src_hw_addr, sizeof(src_hw_addr));
-    buf.writeUint16(0x800);
+    buf.writeUint16(ETHERNET_TYPE_IP);
     // Append dummy data. We will later check that this data is not
     // removed or corrupted when reading the ethernet header.
     buf.writeUint32(0x01020304);
