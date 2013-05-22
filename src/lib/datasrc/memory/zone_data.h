@@ -378,22 +378,27 @@ private:
     /// It never throws an exception.
     ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node);
 
-    // Zone node flags.
+    // Zone node flags.  When adding a new flag, it's generally advisable to
+    // keep existing values so the binary image of the data is as much
+    // backward compatible as possible.  And it can be helpful in practice
+    // for file-mapped data.
 private:
     // Set in the origin node (which always exists at the same address)
     // to indicate whether the zone is signed or not.  Internal use,
     // so defined as private.
     static const ZoneNode::Flags DNSSEC_SIGNED = ZoneNode::FLAG_USER1;
 
-    // Also set in the origin node, indicating this is a special "empty zone",
-    // that could be created only by the corresponding create() method to be
-    // used for some kind of sentinel data.
-    static const ZoneNode::Flags EMPTY_ZONE = ZoneNode::FLAG_USER2;
 public:
     /// \brief Node flag indicating it is at a "wildcard level"
     ///
     /// This means one of the node's immediate children is a wildcard.
-    static const ZoneNode::Flags WILDCARD_NODE = ZoneNode::FLAG_USER3;
+    static const ZoneNode::Flags WILDCARD_NODE = ZoneNode::FLAG_USER2;
+
+private:
+    // Also set in the origin node, indicating this is a special "empty zone",
+    // that could be created only by the corresponding create() method to be
+    // used for some kind of sentinel data.
+    static const ZoneNode::Flags EMPTY_ZONE = ZoneNode::FLAG_USER3;
 
 public:
     /// \brief Allocate and construct \c ZoneData.
