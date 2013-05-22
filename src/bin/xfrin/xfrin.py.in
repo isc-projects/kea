@@ -1518,67 +1518,69 @@ class Xfrin:
                 continue
             th.join()
 
-    def __handle_xfr_by_zonemgr(self, args):
-        # Xfrin receives the refresh/notify command from zone manager.
-        # notify command maybe has the parameters which
-        # specify the notifyfrom address and port, according to
-        # RFC1996, zone transfer should starts first from the
-        # notifyfrom, but this is a 'TODO' item for now.
-        # (using the value now, while we can only set one master
-        # address, would be a security hole. Once we add the ability
-        # to have multiple master addresses,
-        # we should check if it matches one of them, and then use it.)
-        (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-        zone_str = format_zone_str(zone_name, rrclass)
-        zone_info = self._get_zone_info(zone_name, rrclass)
-        notify_addr = self._parse_master_and_port(args, zone_name, rrclass)
+    def __validate_notify_addr(self, notify_addr, zone_str, zone_info):
+        """Validate notify source as a destination for xfr source.
+
+        This is called from __handle_xfr_command in case xfr is triggered
+        by ZoneMgr either due to incoming Notify or periodic refresh event.
+
+        """
         if zone_info is None:
             # TODO what to do? no info known about zone. defaults?
             errmsg = "Got notification to retransfer unknown zone " + zone_str
             logger.info(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_str)
-            answer = create_answer(1, errmsg)
+            return create_answer(1, errmsg)
         else:
-            request_type = RRType.AXFR
-            if zone_info.use_ixfr:
-                request_type = RRType.IXFR
             master_addr = zone_info.get_master_addr_info()
-            if (notify_addr[0] == master_addr[0] and
-                notify_addr[2] == master_addr[2]):
-                ret = self.xfrin_start(zone_name, rrclass, self._get_db_file(),
-                                       master_addr, zone_info.get_tsig_key(),
-                                       request_type, True)
-                answer = create_answer(ret[0], ret[1])
-            else:
+            if (notify_addr[0] != master_addr[0] or
+                notify_addr[2] != master_addr[2]):
                 notify_addr_str = format_addrinfo(notify_addr)
                 master_addr_str = format_addrinfo(master_addr)
                 errmsg = "Got notification for " + zone_str\
                     + "from unknown address: " + notify_addr_str;
                 logger.info(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
                             notify_addr_str, master_addr_str)
-                answer = create_answer(1, errmsg)
-        return answer
+                return create_answer(1, errmsg)
 
-    def __handle_xfr_by_user(self, command, args):
-        # Xfrin receives the retransfer/refresh from cmdctl(sent by
-        # bindctl). If the command has specified master address, do
-        # transfer from the master address, or else do transfer from
-        # the configured masters.
+        # Notified address is okay
+        return None
+
+    def __handle_xfr_command(self, args, arg_db, check_soa, addr_validator):
+        """Common subroutine for handling transfer commands.
+
+        This helper method unifies both cases of transfer command from
+        ZoneMgr or from a user.  Depending on who invokes the transfer,
+        details of validation and parameter selection slightly vary.
+        These conditions are passed through parameters and handled in the
+        unified code of this method accordingly.
+
+        If this is from the ZoneMgr due to incoming notify, zone transfer
+        should start from the notify's source address as long as it's
+        configured as a master address, according to RFC1996.  The current
+        implementation conforms to it in a limited way: we can only set one
+        master address. Once we add the ability to have multiple master
+        addresses, we should check if it matches one of them, and then use it.
+
+        In case of transfer command from the user, if the command specifies
+        the master address, use that one; otherwise try to use a configured
+        master address for the zone.
+
+        """
         (zone_name, rrclass) = self._parse_zone_name_and_class(args)
         master_addr = self._parse_master_and_port(args, zone_name, rrclass)
         zone_info = self._get_zone_info(zone_name, rrclass)
-        tsig_key = None
         request_type = RRType.AXFR
-        if zone_info:
-            tsig_key = zone_info.get_tsig_key()
-            if zone_info.use_ixfr:
-                request_type = RRType.IXFR
-        db_file = args.get('db_file') or self._get_db_file()
+        if zone_info is not None and zone_info.use_ixfr:
+            request_type = RRType.IXFR
+        tsig_key = None if zone_info is None else zone_info.get_tsig_key()
+        db_file = arg_db or self._get_db_file()
+        zone_str = format_zone_str(zone_name, rrclass) # for logging
+        answer = addr_validator(master_addr, zone_str, zone_info)
+        if answer is not None:
+            return answer
         ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
-                               tsig_key, request_type,
-                               (False if command == 'retransfer' else True))
-        answer = create_answer(ret[0], ret[1])
-
-        return answer
+                               tsig_key, request_type, check_soa)
+        return create_answer(ret[0], ret[1])
 
     def command_handler(self, command, args):
         logger.debug(DBG_XFRIN_TRACE, XFRIN_RECEIVED_COMMAND, command)
@@ -1587,9 +1589,22 @@ class Xfrin:
             if command == 'shutdown':
                 self._shutdown_event.set()
             elif command == 'notify' or command == REFRESH_FROM_ZONEMGR:
-                answer = self.__handle_xfr_by_zonemgr(args)
+                # refresh/notify command from zone manager.
+                # The address has to be validated, db_file is local only,
+                # and always perform SOA check.
+                addr_validator = \
+                    lambda x, y, z: self.__validate_notify_addr(x, y, z)
+                answer = self.__handle_xfr_command(args, None, True,
+                                                   addr_validator)
             elif command == 'retransfer' or command == 'refresh':
-                answer = self.__handle_xfr_by_user(command, args)
+                # retransfer/refresh from cmdctl (sent by bindctl).
+                # No need for address validation, db_file may be specified
+                # with the command, and whether to do SOA check depends on
+                # type of command.
+                check_soa = False if command == 'retransfer' else True
+                answer = self.__handle_xfr_command(args, args.get('db_file'),
+                                                   check_soa,
+                                                   lambda x, y, z: None)
             # return statistics data to the stats daemon
             elif command == "getstats":
                 # The log level is here set to debug in order to avoid
@@ -1610,7 +1625,8 @@ class Xfrin:
         if zone_name_str is None:
             raise XfrinException('zone name should be provided')
 
-        return (_check_zone_name(zone_name_str), _check_zone_class(args.get('zone_class')))
+        return (_check_zone_name(zone_name_str),
+                _check_zone_class(args.get('zone_class')))
 
     def _parse_master_and_port(self, args, zone_name, zone_class):
         """
