@@ -552,14 +552,14 @@ class ModuleCCSession(ConfigData):
         Throws:
         - CCSessionError: for low-level communication errors.
         Params:
-        - notification_group (string): This parameter (indirectly) signifies what
-          clients should receive the notification. Only clients that subscribed
-          to notifications on the same group receive it.
-        - event_name (string): The name of the event to notify about (for example
-          `config_changed`).
+        - notification_group (string): This parameter (indirectly) signifies
+          what clients should receive the notification. Only clients that
+          subscribed to notifications on the same group receive it.
+        - event_name (string): The name of the event to notify about (for
+          example `config_changed`).
         - params: Other parameters that describe the event. This might be, for
-          example, the new configuration value. This can be any data that can be
-          sent over the isc.cc.Session, but it is common for it to be dict.
+          example, the new configuration value. This can be any data that can
+          be sent over the isc.cc.Session, but it is common for it to be dict.
         Returns: Nothing
         """
         notification = [event_name]
