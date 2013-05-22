@@ -1324,7 +1324,7 @@ TEST_F(OptionCustomTest, unpack) {
 
 // The purpose of this test is to verify that new data can be set for
 // a custom option.
-TEST_F(OptionCustomTest, setData) {
+TEST_F(OptionCustomTest, initialize) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
 
     // Initialize reference data.
@@ -1370,7 +1370,7 @@ TEST_F(OptionCustomTest, setData) {
     }
 
     // Replace the option data.
-    ASSERT_NO_THROW(option->setData(buf.begin(), buf.end()));
+    ASSERT_NO_THROW(option->initialize(buf.begin(), buf.end()));
 
     // Now we should have only 2 data fields.
     ASSERT_EQ(2, option->getDataFieldsNum());

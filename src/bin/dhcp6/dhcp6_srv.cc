@@ -463,10 +463,9 @@ Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
     assert(status_code_def);
 
     // As there is no dedicated class to represent Status Code
-    // the OptionCustom class should be returned here.
-    boost::shared_ptr<OptionCustom> option_status =
-        boost::dynamic_pointer_cast<
-            OptionCustom>(status_code_def->optionFactory(Option::V6, D6O_STATUS_CODE));
+    // the OptionCustom class is used here instead.
+    OptionCustomPtr option_status =
+        OptionCustomPtr(new OptionCustom(*status_code_def, Option::V6));
     assert(option_status);
 
     // Set status code to 'code' (0 - means data field #0).

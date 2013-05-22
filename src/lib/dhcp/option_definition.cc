@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -160,6 +161,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
             break;
 
+        case OPT_STRING_TYPE:
+            return (OptionPtr(new OptionString(u, type, begin, end)));
+
         default:
             if (u == Option::V6) {
                 if ((code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
@@ -182,7 +186,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 }
             }
         }
-        return (OptionPtr(new OptionCustom(*this, u, OptionBuffer(begin, end))));
+        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
 
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());

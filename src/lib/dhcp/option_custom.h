@@ -280,8 +280,8 @@ public:
     ///
     /// @param first iterator pointing to beginning of buffer to copy.
     /// @param last iterator pointing to end of buffer to copy.
-    void setData(const OptionBufferConstIter first,
-                 const OptionBufferConstIter last);
+    void initialize(const OptionBufferConstIter first,
+                    const OptionBufferConstIter last);
 
 private:
 
@@ -335,6 +335,11 @@ private:
     /// @return text representation of a data field.
     std::string dataFieldToText(const OptionDataType data_type,
                                 const uint32_t index) const;
+
+    /// Make this function private as we don't want it to be invoked
+    /// on OptionCustom object. We rather want that initialize to
+    /// be called instead.
+    using Option::setData;
 
     /// Option definition used to create an option.
     OptionDefinition definition_;
