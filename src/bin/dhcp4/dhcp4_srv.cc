@@ -597,7 +597,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         // which doesn't have an address assigned. The other case when response
         // must be broadcasted is when our server does not support responding
         // directly to a client without address assigned.
-        bool bcast_flag = (question->getFlags() >> 0xF) ? true : false;
+        const bool bcast_flag = ((question->getFlags() & Pkt4::FLAG_BROADCAST_MASK) != 0);
         if (!IfaceMgr::instance().isDirectResponseSupported() || bcast_flag) {
             msg->setRemoteAddr(bcast_addr);
 
