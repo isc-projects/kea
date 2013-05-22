@@ -1518,6 +1518,68 @@ class Xfrin:
                 continue
             th.join()
 
+    def __handle_xfr_by_zonemgr(self, args):
+        # Xfrin receives the refresh/notify command from zone manager.
+        # notify command maybe has the parameters which
+        # specify the notifyfrom address and port, according to
+        # RFC1996, zone transfer should starts first from the
+        # notifyfrom, but this is a 'TODO' item for now.
+        # (using the value now, while we can only set one master
+        # address, would be a security hole. Once we add the ability
+        # to have multiple master addresses,
+        # we should check if it matches one of them, and then use it.)
+        (zone_name, rrclass) = self._parse_zone_name_and_class(args)
+        zone_str = format_zone_str(zone_name, rrclass)
+        zone_info = self._get_zone_info(zone_name, rrclass)
+        notify_addr = self._parse_master_and_port(args, zone_name, rrclass)
+        if zone_info is None:
+            # TODO what to do? no info known about zone. defaults?
+            errmsg = "Got notification to retransfer unknown zone " + zone_str
+            logger.info(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_str)
+            answer = create_answer(1, errmsg)
+        else:
+            request_type = RRType.AXFR
+            if zone_info.use_ixfr:
+                request_type = RRType.IXFR
+            master_addr = zone_info.get_master_addr_info()
+            if (notify_addr[0] == master_addr[0] and
+                notify_addr[2] == master_addr[2]):
+                ret = self.xfrin_start(zone_name, rrclass, self._get_db_file(),
+                                       master_addr, zone_info.get_tsig_key(),
+                                       request_type, True)
+                answer = create_answer(ret[0], ret[1])
+            else:
+                notify_addr_str = format_addrinfo(notify_addr)
+                master_addr_str = format_addrinfo(master_addr)
+                errmsg = "Got notification for " + zone_str\
+                    + "from unknown address: " + notify_addr_str;
+                logger.info(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
+                            notify_addr_str, master_addr_str)
+                answer = create_answer(1, errmsg)
+        return answer
+
+    def __handle_xfr_by_user(self, command, args):
+        # Xfrin receives the retransfer/refresh from cmdctl(sent by
+        # bindctl). If the command has specified master address, do
+        # transfer from the master address, or else do transfer from
+        # the configured masters.
+        (zone_name, rrclass) = self._parse_zone_name_and_class(args)
+        master_addr = self._parse_master_and_port(args, zone_name, rrclass)
+        zone_info = self._get_zone_info(zone_name, rrclass)
+        tsig_key = None
+        request_type = RRType.AXFR
+        if zone_info:
+            tsig_key = zone_info.get_tsig_key()
+            if zone_info.use_ixfr:
+                request_type = RRType.IXFR
+        db_file = args.get('db_file') or self._get_db_file()
+        ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
+                               tsig_key, request_type,
+                               (False if command == 'retransfer' else True))
+        answer = create_answer(ret[0], ret[1])
+
+        return answer
+
     def command_handler(self, command, args):
         logger.debug(DBG_XFRIN_TRACE, XFRIN_RECEIVED_COMMAND, command)
         answer = create_answer(0)
@@ -1525,69 +1587,9 @@ class Xfrin:
             if command == 'shutdown':
                 self._shutdown_event.set()
             elif command == 'notify' or command == REFRESH_FROM_ZONEMGR:
-                # Xfrin receives the refresh/notify command from zone manager.
-                # notify command maybe has the parameters which
-                # specify the notifyfrom address and port, according the RFC1996, zone
-                # transfer should starts first from the notifyfrom, but now, let 'TODO' it.
-                # (using the value now, while we can only set one master address, would be
-                # a security hole. Once we add the ability to have multiple master addresses,
-                # we should check if it matches one of them, and then use it.)
-                (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-                zone_str = format_zone_str(zone_name, rrclass)
-                zone_info = self._get_zone_info(zone_name, rrclass)
-                notify_addr = self._parse_master_and_port(args, zone_name,
-                                                          rrclass)
-                if zone_info is None:
-                    # TODO what to do? no info known about zone. defaults?
-                    errmsg = "Got notification to retransfer unknown zone " + zone_str
-                    logger.info(XFRIN_RETRANSFER_UNKNOWN_ZONE, zone_str)
-                    answer = create_answer(1, errmsg)
-                else:
-                    request_type = RRType.AXFR
-                    if zone_info.use_ixfr:
-                        request_type = RRType.IXFR
-                    master_addr = zone_info.get_master_addr_info()
-                    if notify_addr[0] == master_addr[0] and\
-                       notify_addr[2] == master_addr[2]:
-                        ret = self.xfrin_start(zone_name,
-                                               rrclass,
-                                               self._get_db_file(),
-                                               master_addr,
-                                               zone_info.get_tsig_key(), request_type,
-                                               True)
-                        answer = create_answer(ret[0], ret[1])
-                    else:
-                        notify_addr_str = format_addrinfo(notify_addr)
-                        master_addr_str = format_addrinfo(master_addr)
-                        errmsg = "Got notification for " + zone_str\
-                               + "from unknown address: " + notify_addr_str;
-                        logger.info(XFRIN_NOTIFY_UNKNOWN_MASTER, zone_str,
-                                    notify_addr_str, master_addr_str)
-                        answer = create_answer(1, errmsg)
-
+                answer = self.__handle_xfr_by_zonemgr(args)
             elif command == 'retransfer' or command == 'refresh':
-                # Xfrin receives the retransfer/refresh from cmdctl(sent by bindctl).
-                # If the command has specified master address, do transfer from the
-                # master address, or else do transfer from the configured masters.
-                (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-                master_addr = self._parse_master_and_port(args, zone_name,
-                                                          rrclass)
-                zone_info = self._get_zone_info(zone_name, rrclass)
-                tsig_key = None
-                request_type = RRType.AXFR
-                if zone_info:
-                    tsig_key = zone_info.get_tsig_key()
-                    if zone_info.use_ixfr:
-                        request_type = RRType.IXFR
-                db_file = args.get('db_file') or self._get_db_file()
-                ret = self.xfrin_start(zone_name,
-                                       rrclass,
-                                       db_file,
-                                       master_addr,
-                                       tsig_key, request_type,
-                                       (False if command == 'retransfer' else True))
-                answer = create_answer(ret[0], ret[1])
-
+                answer = self.__handle_xfr_by_user(command, args)
             # return statistics data to the stats daemon
             elif command == "getstats":
                 # The log level is here set to debug in order to avoid
