@@ -1373,7 +1373,8 @@ class ZoneInfo:
 
     def set_request_ixfr(self, request_ixfr):
         if request_ixfr is None:
-            request_ixfr = 'no' # if unspecified, use the default
+            request_ixfr = \
+                self._module_cc.get_default_value("zones/request_ixfr")
         cfg_to_val = { 'yes': self.REQUEST_IXFR_FIRST,
                        'only': self.REQUEST_IXFR_ONLY,
                        'no': self.REQUEST_IXFR_DISABLED }
