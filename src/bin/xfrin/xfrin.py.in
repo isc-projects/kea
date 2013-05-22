@@ -565,13 +565,10 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
-                 shutdown_event, master_addrinfo, db_file, tsig_key=None,
+                 shutdown_event, master_addrinfo, tsig_key=None,
                  idle_timeout=60):
         '''Constructor of the XfirnConnection class.
 
-        db_file: SQLite3 DB file.  Unforutnately we still need this for
-                 temporary workaround in _get_zone_soa().  This should be
-                 removed when we eliminate the need for the workaround.
         idle_timeout: max idle time for read data from socket.
         datasrc_client: the data source client object used for the XFR session.
                         This will eventually replace db_file completely.
@@ -595,7 +592,6 @@ class XfrinConnection(asyncore.dispatcher):
         self._rrclass = rrclass
 
         # Data source handler
-        self._db_file = db_file
         self._datasrc_client = datasrc_client
         self._zone_soa = self._get_zone_soa()
 
@@ -1147,8 +1143,7 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         while retry:
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
-                              shutdown_event, master_addrinfo, db_file,
-                              tsig_key)
+                              shutdown_event, master_addrinfo, tsig_key)
             conn.init_socket()
             ret = XFRIN_FAIL
             if conn.connect_to_master():
