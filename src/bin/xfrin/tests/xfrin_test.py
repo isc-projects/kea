@@ -242,6 +242,10 @@ class MockDataSourceClient():
         self.committed_diffs.append(self.diffs)
         self.diffs = []
 
+    def create_zone(self, zone_name):
+        # pretend it just succeeds
+        pass
+
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
     # default behavior triggered in _cc_check_command().  Specific test methods
