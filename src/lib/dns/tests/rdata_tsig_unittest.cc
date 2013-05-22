@@ -38,20 +38,25 @@ using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {
-const string valid_text1 = "hmac-md5.sig-alg.reg.int. 1286779327 300 "
-    "0 16020 BADKEY 0";
-const string valid_text2 = "hmac-sha256. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADSIG 0";
-const string valid_text3 = "hmac-sha1. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE";
-const string valid_text4 = "hmac-sha1. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE";
-const string valid_text5 = "hmac-sha256. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 2845 0"; // using numeric error code
 
 class Rdata_TSIG_Test : public RdataTest {
 protected:
     Rdata_TSIG_Test() :
+	// no MAC or Other Data
+        valid_text1("hmac-md5.sig-alg.reg.int. 1286779327 300 "
+                    "0 16020 BADKEY 0"),
+	// MAC but no Other Data
+        valid_text2("hmac-sha256. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADSIG 0"),
+	// MAC and Other Data
+        valid_text3("hmac-sha1. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE"),
+	// MAC and Other Data (with Error that doesn't expect Other Data)
+        valid_text4("hmac-sha1. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE"),
+	// numeric error code
+        valid_text5("hmac-sha256. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 2845 0"),
         rdata_tsig(valid_text1)
     {}
 
@@ -90,6 +95,11 @@ protected:
     template <typename Output>
     void toWireCommonChecks(Output& output) const;
 
+    const string valid_text1;
+    const string valid_text2;
+    const string valid_text3;
+    const string valid_text4;
+    const string valid_text5;
     vector<uint8_t> expect_data;
     const any::TSIG rdata_tsig; // commonly used test RDATA
 };
@@ -106,19 +116,24 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     EXPECT_EQ(0, rdata_tsig.getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getOtherData());
 
-    any::TSIG tsig2((string(valid_text2)));
+    any::TSIG tsig2(valid_text2);
     EXPECT_EQ(12, tsig2.getMACSize());
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig2.getError());
 
-    any::TSIG tsig3((string(valid_text3)));
+    any::TSIG tsig3(valid_text3);
     EXPECT_EQ(6, tsig3.getOtherLen());
 
     // The other data is unusual, but we don't reject it.
-    EXPECT_NO_THROW(any::TSIG(string(valid_text4)));
+    EXPECT_NO_THROW(any::TSIG tsig4(valid_text4));
 
     // numeric representation of TSIG error
-    any::TSIG tsig5((string(valid_text5)));
+    any::TSIG tsig5(valid_text5);
     EXPECT_EQ(2845, tsig5.getError());
+
+    // not fully qualified algorithm name
+    any::TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 "
+                    "0 16020 BADKEY 0");
+    EXPECT_EQ(0, tsig1.compare(rdata_tsig));
 }
 
 TEST_F(Rdata_TSIG_Test, badText) {
@@ -269,12 +284,12 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
 
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
                                   0x14, 0x02, 0x84, 0x14, 0x02, 0x84 }; 
-    EXPECT_EQ(0, any::TSIG((string(valid_text2))).compare(
+    EXPECT_EQ(0, any::TSIG(valid_text2).compare(
                   any::TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
                             fake_data, 16020, 16, 0, NULL)));
 
     const uint8_t fake_data2[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
-    EXPECT_EQ(0, any::TSIG((string(valid_text3))).compare(
+    EXPECT_EQ(0, any::TSIG(valid_text3).compare(
                   any::TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
                             fake_data, 16020, 18, 6, fake_data2)));
 
@@ -296,13 +311,13 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
 }
 
 TEST_F(Rdata_TSIG_Test, assignment) {
-    any::TSIG copy((string(valid_text2)));
+    any::TSIG copy(valid_text2);
     copy = rdata_tsig;
     EXPECT_EQ(0, copy.compare(rdata_tsig));
 
     // Check if the copied data is valid even after the original is deleted
     any::TSIG* copy2 = new any::TSIG(rdata_tsig);
-    any::TSIG copy3((string(valid_text2)));
+    any::TSIG copy3(valid_text2);
     copy3 = *copy2;
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_tsig));
@@ -329,7 +344,7 @@ Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(string(valid_text2)).toWire(output);
+    any::TSIG(valid_text2).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire2.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -338,7 +353,7 @@ Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(string(valid_text3)).toWire(output);
+    any::TSIG(valid_text3).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire3.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -377,10 +392,10 @@ TEST_F(Rdata_TSIG_Test, toWireRenderer) {
 }
 
 TEST_F(Rdata_TSIG_Test, toText) {
-    EXPECT_EQ(string(valid_text1), rdata_tsig.toText());
-    EXPECT_EQ(string(valid_text2), any::TSIG(string(valid_text2)).toText());
-    EXPECT_EQ(string(valid_text3), any::TSIG(string(valid_text3)).toText());
-    EXPECT_EQ(string(valid_text5), any::TSIG(string(valid_text5)).toText());
+    EXPECT_EQ(valid_text1, rdata_tsig.toText());
+    EXPECT_EQ(valid_text2, any::TSIG(valid_text2).toText());
+    EXPECT_EQ(valid_text3, any::TSIG(valid_text3).toText());
+    EXPECT_EQ(valid_text5, any::TSIG(valid_text5).toText());
 }
 
 TEST_F(Rdata_TSIG_Test, compare) {
