@@ -269,15 +269,15 @@ class MockXfrin(Xfrin):
             MockXfrin.check_command_hook()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, request_type, check_soa=True):
+                    tsig_key, request_ixfr, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
-        self.xfrin_started_request_type = request_type
+        self.xfrin_started_request_ixfr = request_ixfr
         return Xfrin.xfrin_start(self, zone_name, rrclass, None,
                                  master_addrinfo, tsig_key,
-                                 request_type, check_soa)
+                                 request_ixfr, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
@@ -2419,7 +2419,7 @@ class TestXfrinProcess(unittest.TestCase):
         # Normal, successful case.  We only check that things are cleaned up
         # at the tearDown time.
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
+                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
                       self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_connect(self):
@@ -2427,7 +2427,7 @@ class TestXfrinProcess(unittest.TestCase):
         # cleaned up.
         self.do_raise_on_connect = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
+                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
                       self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_close(self):
@@ -2437,7 +2437,7 @@ class TestXfrinProcess(unittest.TestCase):
         self.do_raise_on_connect = True
         self.do_raise_on_close = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
+                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
                       self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_publish(self):
@@ -2445,7 +2445,7 @@ class TestXfrinProcess(unittest.TestCase):
         # everything must still be cleaned up.
         self.do_raise_on_publish = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
+                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
                       self.create_xfrinconn)
 
 class TestXfrin(unittest.TestCase):
@@ -2545,7 +2545,8 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.args['master'], self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(self.args['port']), self.xfr.xfrin_started_master_port)
         # By default we use AXFR (for now)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_short_command1(self):
         # try it when only specifying the zone name (of unknown zone)
@@ -2659,7 +2660,8 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(int(TEST_MASTER_PORT),
                          self.xfr.xfrin_started_master_port)
         # By default we use AXFR (for now)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
@@ -2759,7 +2761,8 @@ class TestXfrin(unittest.TestCase):
                 elif cfg_val == 'only':
                     self.assertEqual(ZoneInfo.REQUEST_IXFR_ONLY, val)
             else:               # check the default
-                self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                #self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
                                  zone_info.request_ixfr)
 
     def test_config_handler_zones(self):
@@ -2929,7 +2932,7 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self._check_zones_config(config)
 
-    def common_ixfr_setup(self, xfr_mode, use_ixfr, tsig_key_str = None):
+    def common_ixfr_setup(self, xfr_mode, request_ixfr, tsig_key_str=None):
         # This helper method explicitly sets up a zone configuration with
         # use_ixfr, and invokes either retransfer or refresh.
         # Shared by some of the following test cases.
@@ -2937,59 +2940,65 @@ class TestXfrin(unittest.TestCase):
                 {'name': 'example.com.',
                  'master_addr': '192.0.2.1',
                  'tsig_key': tsig_key_str,
-                 'use_ixfr': use_ixfr}]}
+                 'request_ixfr': request_ixfr}]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self.assertEqual(self.xfr.command_handler(xfr_mode,
                                                   self.args)['result'][0], 0)
 
     def test_command_handler_retransfer_ixfr_enabled(self):
         # If IXFR is explicitly enabled in config, IXFR will be used
-        self.common_ixfr_setup('retransfer', True)
-        self.assertEqual(RRType.IXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('retransfer', 'yes')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_ixfr_enabled(self):
         # Same for refresh
-        self.common_ixfr_setup('refresh', True)
-        self.assertEqual(RRType.IXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('refresh', 'yes')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_with_tsig(self):
-        self.common_ixfr_setup('retransfer', False, 'example.com.key')
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('retransfer', 'no', 'example.com.key')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_with_tsig_bad_key(self):
         # bad keys should not reach xfrin, but should they somehow,
         # they are ignored (and result in 'key not found' + error log).
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'retransfer', False, 'bad.key')
+                          'retransfer', 'no', 'bad.key')
 
     def test_command_handler_retransfer_with_tsig_unknown_key(self):
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'retransfer', False, 'no.such.key')
+                          'retransfer', 'no', 'no.such.key')
 
     def test_command_handler_refresh_with_tsig(self):
-        self.common_ixfr_setup('refresh', False, 'example.com.key')
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('refresh', 'no', 'example.com.key')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_with_tsig_bad_key(self):
         # bad keys should not reach xfrin, but should they somehow,
         # they are ignored (and result in 'key not found' + error log).
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'refresh', False, 'bad.key')
+                          'refresh', 'no', 'bad.key')
 
     def test_command_handler_refresh_with_tsig_unknown_key(self):
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'refresh', False, 'no.such.key')
+                          'refresh', 'no', 'no.such.key')
 
     def test_command_handler_retransfer_ixfr_disabled(self):
         # Similar to the previous case, but explicitly disabled.  AXFR should
         # be used.
-        self.common_ixfr_setup('retransfer', False)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('retransfer', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_ixfr_disabled(self):
         # Same for refresh
-        self.common_ixfr_setup('refresh', False)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('refresh', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
 class TestXfrinMemoryZones(unittest.TestCase):
     def setUp(self):
@@ -3256,7 +3265,7 @@ class TestXfrinProcess(unittest.TestCase):
         """
         pass
 
-    def __do_test(self, rets, transfers, request_type):
+    def __do_test(self, rets, transfers, request_ixfr):
         """
         Do the actual test. The request type, prepared sucesses/failures
         and expected sequence of transfers is passed to specify what test
@@ -3266,7 +3275,7 @@ class TestXfrinProcess(unittest.TestCase):
         published = rets[-1]
         xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
                             RRClass.IN, None, None, None, True, None,
-                            request_type, self.__get_connection)
+                            request_ixfr, self.__get_connection)
         self.assertEqual([], self.__rets)
         self.assertEqual(transfers, self.__transfers)
         # Create a connection for each attempt
@@ -3277,7 +3286,7 @@ class TestXfrinProcess(unittest.TestCase):
         """
         Everything OK the first time, over IXFR.
         """
-        self.__do_test([XFRIN_OK], [RRType.IXFR], RRType.IXFR)
+        self.__do_test([XFRIN_OK], [RRType.IXFR], ZoneInfo.REQUEST_IXFR_FIRST)
         # Check there was loadzone command
         self.assertTrue(self._send_cc_session.send_called)
         self.assertTrue(self._send_cc_session.send_called_correctly)
@@ -3288,23 +3297,27 @@ class TestXfrinProcess(unittest.TestCase):
         """
         Everything OK the first time, over AXFR.
         """
-        self.__do_test([XFRIN_OK], [RRType.AXFR], RRType.AXFR)
+        self.__do_test([XFRIN_OK], [RRType.AXFR],
+                       ZoneInfo.REQUEST_IXFR_DISABLED)
 
     def test_axfr_fail(self):
         """
         The transfer failed over AXFR. Should not be retried (we don't expect
-        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the first
-        place for some reason.
+        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the
+        first place for some reason.
+
         """
-        self.__do_test([XFRIN_FAIL], [RRType.AXFR], RRType.AXFR)
+        self.__do_test([XFRIN_FAIL], [RRType.AXFR],
+                       ZoneInfo.REQUEST_IXFR_DISABLED)
 
     def test_ixfr_fallback(self):
         """
-        The transfer fails over IXFR, but suceeds over AXFR. It should fall back
-        to it and say everything is OK.
+        The transfer fails over IXFR, but suceeds over AXFR. It should fall
+        back to it and say everything is OK.
+
         """
         self.__do_test([XFRIN_FAIL, XFRIN_OK], [RRType.IXFR, RRType.AXFR],
-                       RRType.IXFR)
+                       ZoneInfo.REQUEST_IXFR_FIRST)
 
     def test_ixfr_fail(self):
         """
@@ -3312,13 +3325,14 @@ class TestXfrinProcess(unittest.TestCase):
         (only once) and should try both before giving up.
         """
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
-                       [RRType.IXFR, RRType.AXFR], RRType.IXFR)
+                       [RRType.IXFR, RRType.AXFR], ZoneInfo.REQUEST_IXFR_FIRST)
 
     def test_send_loadzone(self):
         """
         Check the loadzone command is sent after successful transfer.
         """
-        self.__do_test([XFRIN_OK], [RRType.IXFR], RRType.IXFR)
+        self.__do_test([XFRIN_OK], [RRType.IXFR],
+                       ZoneInfo.REQUEST_IXFR_FIRST)
         self.assertTrue(self._send_cc_session.send_called)
         self.assertTrue(self._send_cc_session.send_called_correctly)
         self.assertTrue(self._send_cc_session.recv_called)
