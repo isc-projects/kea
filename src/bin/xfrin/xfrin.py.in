@@ -593,7 +593,8 @@ class XfrinConnection(asyncore.dispatcher):
 
         # Data source handler
         self._datasrc_client = datasrc_client
-        self._zone_soa = self._get_zone_soa()
+        self._zone_soa = _get_zone_soa(self._datasrc_client, zone_name,
+                                       rrclass)
 
         self._sock_map = sock_map
         self._soa_rr_count = 0
@@ -621,54 +622,6 @@ class XfrinConnection(asyncore.dispatcher):
         '''
         self.create_socket(self._master_addrinfo[0], self._master_addrinfo[1])
         self.socket.setblocking(1)
-
-    def _get_zone_soa(self):
-        '''Retrieve the current SOA RR of the zone to be transferred.
-
-        It will be used for various purposes in subsequent xfr protocol
-        processing.   It is validly possible that the zone is currently
-        empty and therefore doesn't have an SOA, so this method doesn't
-        consider it an error and returns None in such a case.  It may or
-        may not result in failure in the actual processing depending on
-        how the SOA is used.
-
-        When the zone has an SOA RR, this method makes sure that it's
-        valid, i.e., it has exactly one RDATA; if it is not the case
-        this method returns None.
-
-        If the underlying data source doesn't even know the zone, this method
-        tries to provide backward compatible behavior where xfrin is
-        responsible for creating zone in the corresponding DB table.
-        For a longer term we should deprecate this behavior by introducing
-        more generic zone management framework, but at the moment we try
-        to not surprise existing users.  (Note also that the part of
-        providing the compatible behavior uses the old data source API.
-        We'll deprecate this API in a near future, too).
-
-        '''
-        # get the zone finder.  this must be SUCCESS (not even
-        # PARTIALMATCH) because we are specifying the zone origin name.
-        result, finder = self._datasrc_client.find_zone(self._zone_name)
-        if result != DataSourceClient.SUCCESS:
-            # The data source doesn't know the zone.  For now, we provide
-            # backward compatibility and creates a new one ourselves.
-            # For longer term, we should probably separate this level of zone
-            # management outside of xfrin.
-            self._datasrc_client.create_zone(self._zone_name)
-            logger.warn(XFRIN_ZONE_CREATED, self.zone_str())
-            # try again
-            result, finder = self._datasrc_client.find_zone(self._zone_name)
-        if result != DataSourceClient.SUCCESS:
-            return None
-        result, soa_rrset, _ = finder.find(self._zone_name, RRType.SOA)
-        if result != ZoneFinder.SUCCESS:
-            logger.info(XFRIN_ZONE_NO_SOA, self.zone_str())
-            return None
-        if soa_rrset.get_rdata_count() != 1:
-            logger.warn(XFRIN_ZONE_MULTIPLE_SOA, self.zone_str(),
-                        soa_rrset.get_rdata_count())
-            return None
-        return soa_rrset
 
     def __set_xfrstate(self, new_state):
         self.__state = new_state
@@ -1109,6 +1062,58 @@ class XfrinConnection(asyncore.dispatcher):
         '''Ignore the writable socket. '''
 
         return False
+
+def _get_zone_soa(datasrc_client, zone_name, zone_class):
+    """Retrieve the current SOA RR of the zone to be transferred.
+
+    This function is essentially private to the module, but will also
+    be called from tests; no one else should use this function directly.
+
+    It will be used for various purposes in subsequent xfr protocol
+    processing.   It is validly possible that the zone is currently
+    empty and therefore doesn't have an SOA, so this method doesn't
+    consider it an error and returns None in such a case.  It may or
+    may not result in failure in the actual processing depending on
+    how the SOA is used.
+
+    When the zone has an SOA RR, this method makes sure that it's
+    valid, i.e., it has exactly one RDATA; if it is not the case
+    this method returns None.
+
+    If the underlying data source doesn't even know the zone, this method
+    tries to provide backward compatible behavior where xfrin is
+    responsible for creating zone in the corresponding DB table.
+    For a longer term we should deprecate this behavior by introducing
+    more generic zone management framework, but at the moment we try
+    to not surprise existing users.  (Note also that the part of
+    providing the compatible behavior uses the old data source API.
+    We'll deprecate this API in a near future, too).
+
+    """
+    # get the zone finder.  this must be SUCCESS (not even
+    # PARTIALMATCH) because we are specifying the zone origin name.
+    result, finder = datasrc_client.find_zone(zone_name)
+    if result != DataSourceClient.SUCCESS:
+        # The data source doesn't know the zone.  For now, we provide
+        # backward compatibility and creates a new one ourselves.
+        # For longer term, we should probably separate this level of zone
+        # management outside of xfrin.
+        datasrc_client.create_zone(zone_name)
+        logger.warn(XFRIN_ZONE_CREATED, format_zone_str(zone_name, zone_class))
+        # try again
+        result, finder = datasrc_client.find_zone(zone_name)
+    if result != DataSourceClient.SUCCESS:
+        return None
+    result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
+    if result != ZoneFinder.SUCCESS:
+        logger.info(XFRIN_ZONE_NO_SOA, format_zone_str(zone_name, zone_class))
+        return None
+    if soa_rrset.get_rdata_count() != 1:
+        logger.warn(XFRIN_ZONE_MULTIPLE_SOA,
+                    format_zone_str(zone_name, zone_class),
+                    soa_rrset.get_rdata_count())
+        return None
+    return soa_rrset
 
 def __process_xfrin(server, zone_name, rrclass, db_file,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,

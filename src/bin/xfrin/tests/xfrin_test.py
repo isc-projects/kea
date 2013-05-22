@@ -850,7 +850,9 @@ class TestXfrinConnection(unittest.TestCase):
 
         '''
         self.conn._zone_name = zone_name
-        self.conn._zone_soa = self.conn._get_zone_soa()
+        self.conn._zone_soa = xfrin._get_zone_soa(self.conn._datasrc_client,
+                                                  zone_name,
+                                                  self.conn._rrclass)
 
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
@@ -974,7 +976,9 @@ class TestAXFR(TestXfrinConnection):
                           RRType.IXFR)
 
         self._set_test_zone(Name('dup-soa.example'))
-        self.conn._zone_soa = self.conn._get_zone_soa()
+        self.conn._zone_soa = xfrin._get_zone_soa(self.conn._datasrc_client,
+                                                  self.conn._zone_name,
+                                                  self.conn._rrclass)
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR)
 
