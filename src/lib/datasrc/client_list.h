@@ -234,8 +234,8 @@ public:
     ///   if (result.datasrc_) {
     ///       if (result.finder_) {
     ///           createTheAnswer(result.finder_);
-    ///       } else {
-    ///           // broken zone, handle it accordingly.
+    ///       } else { // broken zone, return SERVFAIL
+    ///           createErrorMessage(Rcode.SERVFAIL());
     ///       }
     ///   } else {
     ///       createNotAuthAnswer();
