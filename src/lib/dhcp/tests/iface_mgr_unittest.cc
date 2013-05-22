@@ -689,23 +689,11 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     // open sockets on the same ports.
     ifacemgr->closeSockets();
 
-    // The check below has been commented out. It verified the ability
-    // to open suitable socket for sending broadcast request. However,
+    // There used to be a check here that verified the ability to open
+    // suitable socket for sending broadcast request. However,
     // there is no guarantee for such test to work on all systems
     // because some systems may have no broadcast capable interfaces at all.
-
-/* #if defined(OS_LINUX)
-    // Open v4 socket to connect to broadcast address.
-    int socket3  = 0;
-    IOAddress bcastAddr("255.255.255.255");
-    try {
-        socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
-    } catch (const Exception& ex) {
-        std::cout << ex.what() << std::endl;
-        FAIL();
-    }
-    EXPECT_GT(socket3, 0);
-#endif */
+    // Thus, this check has been removed.
 
     // Do not call closeSockets() because it is called by IfaceMgr's
     // virtual destructor.
