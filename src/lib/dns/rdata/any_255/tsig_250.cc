@@ -126,6 +126,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     } else if (error_txt == "BADTIME") {
         error = TSIGError::BAD_TIME_CODE;
     } else {
+	/// we cast to uint32_t and range-check, because casting directly to
+	/// uint16_t will convert negative numbers to large positive numbers
         try {
             error = boost::lexical_cast<uint32_t>(error_txt);
         } catch (const boost::bad_lexical_cast&) {
@@ -158,27 +160,33 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 
 /// \brief Constructor from string.
 ///
-/// The given string must represent a valid TSIG RDATA.  There can be
-/// extra space characters at the beginning or end of the text (which
-/// are simply ignored), but other extra text, including a new line,
-/// will make the construction fail with an exception.
+/// The given string must represent a valid TSIG RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
 ///
-/// Note that, since Algorithm Name is defined to be "in domain name syntax",
-/// but it is not actually a domain name, it does not have to be fully
-/// qualified.
+/// \c tsig_str must be formatted as follows:
+/// \code <Algorithm Name> <Time Signed> <Fudge> <MAC Size> [<MAC>]
+/// <Original ID> <Error> <Other Len> [<Other Data>]
+/// \endcode
 ///
-/// Error is an unsigned 16-bit decimal integer or a valid mnemonic for the
-/// Error field specified in RFC2845.  Currently, "NOERROR", "BADSIG",
-/// "BADKEY", and "BADTIME" are supported (case sensitive).  In future
-/// versions other representations that are compatible with the DNS RCODE
-/// will be supported.
+/// Note that, since the Algorithm Name field is defined to be "in domain name
+/// syntax", but it is not actually a domain name, it does not have to be
+/// fully qualified.
 ///
-/// MAC and Other Data are base-64 encoded strings that do not contain space
-/// characters.
-/// If MAC Size or Other Len is 0, MAC or Other Data must not appear in
-/// \c tsig_str, respectively.
-/// The decoded data of MAC is MAC Size bytes of binary stream.
-/// The decoded data of Other Data is Other Len bytes of binary stream.
+/// The Error field is an unsigned 16-bit decimal integer or a valid mnemonic
+/// as specified in RFC2845.  Currently, "NOERROR", "BADSIG", "BADKEY", and
+/// "BADTIME" are supported (case sensitive).  In future versions other
+/// representations that are compatible with the DNS RCODE may be supported.
+///
+/// The MAC and Other Data fields are base-64 encoded strings that do not
+/// contain space characters.
+/// If the MAC Size field is 0, the MAC field must not appear in \c tsig_str.
+/// If the Other Len field is 0, the Other Data field must not appear in
+/// \c tsig_str.
+/// The decoded data of the MAC field is MAC Size bytes of binary stream.
+/// The decoded data of the Other Data field is Other Len bytes of binary
+/// stream.
 ///
 /// An example of valid string is:
 /// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
