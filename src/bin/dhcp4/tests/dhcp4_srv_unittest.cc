@@ -70,6 +70,9 @@ public:
     /// it is tested with PktFilterLPFTest unittest. The tests which belong
     /// to PktFilterLPFTest can be enabled on demand when root privileges can
     /// be guaranteed.
+    ///
+    /// @param port port number to listen on; the default value 0 indicates
+    /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
         : Dhcpv4Srv(port, "type=memfile", false, false) {
     }
@@ -425,7 +428,7 @@ public:
 
         // Initialize the source HW address.
         vector<uint8_t> mac(6);
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; ++i) {
             mac[i] = i * 10;
         }
         // Initialized the destination HW address.
@@ -442,7 +445,7 @@ public:
         // Set the name of the interface on which packet is received.
         req->setIface("eth0");
         // Set the interface index. It is just a dummy value and will
-        // not be interprented.
+        // not be interpreted.
         req->setIndex(17);
         // Set the target HW address. This value is normally used to
         // construct the data link layer header.
@@ -520,12 +523,32 @@ public:
 
     }
 
-    ~Dhcpv4SrvTest() {
+    /// @brief This function cleans up after the test.
+    virtual void TearDown() {
+
         CfgMgr::instance().deleteSubnets4();
 
         // Let's clean up if there is such a file.
         unlink(SRVID_FILE);
-    };
+
+        // Some unit tests override the default packet filtering class, used
+        // by the IfaceMgr. The dummy class, called PktFilterTest, reports the
+        // capability to directly respond to the clients without IP address
+        // assigned. This capability is not supported by the default packet
+        // filtering class: PktFilterInet. Therefore setting the dummy class
+        // allows to test scenarios, when server responds to the broadcast address
+        // on client's request, despite having support for direct response.
+        // The following call restores the use of original packet filtering class
+        // after the test.
+        try {
+            IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
+
+        } catch (const Exception& ex) {
+            FAIL() << "Failed to restore the default (PktFilterInet) packet filtering"
+                   << " class after the test. Exception has been caught: "
+                   << ex.what();
+        }
+    }
 
     /// @brief A subnet used in most tests
     Subnet4Ptr subnet_;
@@ -599,7 +622,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     // address will take precedence.
     req->setGiaddr(IOAddress("192.0.2.50"));
     req->setCiaddr(IOAddress("192.0.2.11"));
-    req->setFlags(0x8000);
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
     resp->setYiaddr(IOAddress("192.0.2.100"));
     // Clear remote address.
@@ -633,7 +656,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
     // when new lease is acquired and server must make a decision
     // whether to unicast the response to the acquired address or
     // broadcast it.
-    req->setFlags(0x8000);
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
@@ -705,18 +728,6 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
     // address assigned for the client.
     ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
 
-    // Since IfaceMgr is a singleton it will keep using the dummy packet
-    // filtering class after this test completes. We want to avoid the
-    // impact of this test on other tests so we will try to restore the
-    // original packet filtering class. If this fails, we have to abort the
-    // test because other tests would be otherwise affected.
-    try {
-        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
-    } catch (const Exception& ex) {
-        FAIL() << "Failed to restore the default Packet Filter class"
-               << " after replacing it with dummy class used for testing.";
-    }
-
     EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
 }
 
@@ -737,7 +748,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     req->setCiaddr(IOAddress("0.0.0.0"));
 
     // Let's set the broadcast flag.
-    req->setFlags(0x8000);
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
@@ -763,17 +774,6 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
 
     ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
 
-    // Since IfaceMgr is a singleton it will keep using the dummy packet
-    // filtering class after this test completes. We want to avoid the
-    // impact of this test on other tests so we will try to restore the
-    // original packet filtering class. If this fails, we have to abort the
-    // test because other tests would be otherwise affected.
-    try {
-        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
-    } catch (const Exception& ex) {
-        FAIL() << "Failed to restore the default Packet Filter class"
-               << " after replacing it with dummy class used for testing.";
-    }
     // Server must repond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
