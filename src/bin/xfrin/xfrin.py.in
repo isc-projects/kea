@@ -565,15 +565,25 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
-                 shutdown_event, master_addrinfo, tsig_key=None,
+                 shutdown_event, master_addrinfo, zone_soa, tsig_key=None,
                  idle_timeout=60):
-        '''Constructor of the XfirnConnection class.
+        """Constructor of the XfirnConnection class.
 
-        idle_timeout: max idle time for read data from socket.
-        datasrc_client: the data source client object used for the XFR session.
-                        This will eventually replace db_file completely.
+        Parameters:
+          sock_map: empty dict, used with asyncore.
+          zone_name (dns.Name): Zone name.
+          rrclass (dns.RRClass): Zone RR class.
+          datasrc_client (DataSourceClient): the data source client object
+            used for the XFR session.
+          shutdown_event (threaving.Event): used for synchronization with
+            parent thread.
+          master_addrinfo (tuple: (sock family, sock type, sockaddr)):
+            address and port of the master server.
+          zone_soa (RRset or None): SOA RRset of zone's current SOA or None
+            if it's not available.
+          idle_timeout (int): max idle time for read data from socket.
 
-        '''
+        """
 
         asyncore.dispatcher.__init__(self, map=sock_map)
 
@@ -593,8 +603,7 @@ class XfrinConnection(asyncore.dispatcher):
 
         # Data source handler
         self._datasrc_client = datasrc_client
-        self._zone_soa = _get_zone_soa(self._datasrc_client, zone_name,
-                                       rrclass)
+        self._zone_soa = zone_soa
 
         self._sock_map = sock_map
         self._soa_rr_count = 0
@@ -1139,6 +1148,10 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
 
+        zone_soa = None
+        if datasrc_client is not None:
+            zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+
         # Create a TCP connection for the XFR session and perform the
         # operation.
         sock_map = {}
@@ -1156,7 +1169,8 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         while retry:
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
-                              shutdown_event, master_addrinfo, tsig_key)
+                              shutdown_event, master_addrinfo, zone_soa,
+                              tsig_key)
             conn.init_socket()
             ret = XFRIN_FAIL
             if conn.connect_to_master():
