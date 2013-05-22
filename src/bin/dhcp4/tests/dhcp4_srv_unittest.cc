@@ -419,12 +419,7 @@ public:
     /// @brief Tests if Discover or Request message is processed correctly
     ///
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
-    /// @param client_addr client address
-    /// @param relay_addr relay address
-    void testDiscoverRequest(const uint8_t msg_type,
-                             const IOAddress& client_addr,
-                             const IOAddress& relay_addr) {
-
+    void testDiscoverRequest(const uint8_t msg_type) {
         // Create an instance of the tested class.
         boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -458,9 +453,9 @@ public:
         // header.
         req->setLocalHWAddr(1, 6, mac);
         // Set target IP address.
-        req->setRemoteAddr(IOAddress(client_addr));
+        req->setRemoteAddr(IOAddress("192.0.2.55"));
         // Set relay address.
-        req->setGiaddr(relay_addr);
+        req->setGiaddr(IOAddress("192.0.2.10"));
 
         // We are going to test that certain options are returned
         // in the response message when requested using 'Parameter
@@ -487,33 +482,6 @@ public:
             EXPECT_EQ(DHCPACK, rsp->getType());
 
         }
-
-        /*        if (relay_addr.toText() != "0.0.0.0") {
-            // This is relayed message. It should be sent brsp to relay address.
-            EXPECT_EQ(req->getGiaddr().toText(),
-                      rsp->getRemoteAddr().toText());
-
-        } else if (client_addr.toText() != "0.0.0.0") {
-            // This is a message from a client having an IP address.
-            EXPECT_EQ(req->getRemoteAddr().toText(),
-                      rsp->getRemoteAddr().toText());
-
-        } else {
-            // This is a message from a client having no IP address yet.
-            // If IfaceMgr supports direct traffic the response should
-            // be sent to the new address assigned to the client.
-            if (IfaceMgr::instance().isDirectResponseSupported()) {
-                EXPECT_EQ(rsp->getYiaddr(),
-                          rsp->getRemoteAddr().toText());
-
-            // If direct response to the client having no IP address is
-            // not supported, response should go to broadcast.
-            } else {
-                EXPECT_EQ("255.255.255.255", rsp->getRemoteAddr().toText());
-
-            }
-
-            } */
 
         messageCheck(req, rsp);
 
@@ -596,9 +564,9 @@ TEST_F(Dhcpv4SrvTest, basic) {
     delete naked_srv;
 }
 
-/// This test verfifies that the target address for the response
-/// is set to the address of the relay if the incoming packet was
-/// received from the relay and thus giaddr is set.
+// This test verifies that the destination address of the response
+// message is set to giaddr, when giaddr is set to non-zero address
+// in the received message.
 TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -643,6 +611,10 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     EXPECT_EQ("192.0.2.50", resp->getRemoteAddr().toText());
 }
 
+// This test verifies that the destination address of the response message
+// is set to ciaddr when giaddr is set to zero and the ciaddr is set to
+// non-zero address in the received message. This is the case when the
+// client is in Renew or Rebind state.
 TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -679,6 +651,13 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
     EXPECT_EQ("192.0.2.15", resp->getRemoteAddr().toText());
 }
 
+// This test verifies that the destination address of the response message
+// is set correctly when giaddr and ciaddr is zeroed in the received message
+// and the new lease is acquired. The lease address is carried in the
+// response message in the yiaddr field. In this case destination address
+// of the response should be set to yiaddr if server supports direct responses
+// to the client which doesn't have an address yet or broadcast if the server
+// doesn't support direct responses.
 TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -741,6 +720,11 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
     EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
 }
 
+// This test verifies that the destination address of the response message
+// is set to broadcast address when client set broadcast flag in its
+// query. Client sets this flag to indicate that it can't receive direct
+// responses from the server when it doesn't have its interface configured.
+// Server must respect broadcast flag.
 TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -795,7 +779,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
 }
 
-// Verifies that DISCOVER received via relay can be processed correctly,
+// Verifies that DISCOVER message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
 //
@@ -803,29 +787,11 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processDiscoverRelay) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("192.0.2.56"),
-                        IOAddress("192.0.2.67"));
+TEST_F(Dhcpv4SrvTest, processDiscover) {
+    testDiscoverRequest(DHCPDISCOVER);
 }
 
-// Verifies that the non-relayed DISCOVER is processed correctly when
-// client source address is specified.
-TEST_F(Dhcpv4SrvTest, processDiscoverNoRelay) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("192.0.2.67"));
-}
-
-// Verified that the non-relayed DISCOVER is processed correctly when
-// client source address is not specified.
-TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("0.0.0.0"));
-}
-
-// Verifies that REQUEST received via relay can be processed correctly,
+// Verifies that REQUEST message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
 //
@@ -833,26 +799,8 @@ TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processRequestRelay) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("192.0.2.56"),
-                        IOAddress("192.0.2.67"));
-}
-
-// Verifies that the non-relayed REQUEST is processed correctly when
-// client source address is specified.
-TEST_F(Dhcpv4SrvTest, processRequestNoRelay) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("192.0.2.67"));
-}
-
-// Verified that the non-relayed REQUEST is processed correctly when
-// client source address is not specified.
-TEST_F(Dhcpv4SrvTest, processRequestNoClientAddr) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("0.0.0.0"));
+TEST_F(Dhcpv4SrvTest, processRequest) {
+    testDiscoverRequest(DHCPREQUEST);
 }
 
 TEST_F(Dhcpv4SrvTest, processRelease) {
