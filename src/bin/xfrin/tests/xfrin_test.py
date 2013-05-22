@@ -129,17 +129,12 @@ class XfrinTestException(Exception):
 class XfrinTestTimeoutException(Exception):
     pass
 
-class MockCC(MockModuleCCSession):
-    def get_default_value(self, identifier):
-        # The returned values should be identical to the spec file
-        # XXX: these should be retrieved from the spec file
-        # (see MyCCSession of xfrout_test.py.in)
-        if identifier == "zones/master_port":
-            return TEST_MASTER_PORT
-        if identifier == "zones/class":
-            return TEST_RRCLASS_STR
-        if identifier == "zones/use_ixfr":
-            return False
+class MockCC(MockModuleCCSession, ConfigData):
+    def __init__(self):
+        super().__init__()
+        module_spec = isc.config.module_spec_from_file(
+            xfrin.SPECFILE_LOCATION)
+        ConfigData.__init__(self, module_spec)
 
     def add_remote_config_by_name(self, name, callback):
         pass
