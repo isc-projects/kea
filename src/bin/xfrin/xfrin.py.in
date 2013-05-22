@@ -1117,14 +1117,14 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
 
 def __process_xfrin(server, zone_name, rrclass, db_file,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,
-                    request_type, conn_class):
+                    request_ixfr, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
     try:
         # Create a data source client used in this XFR session.  Right now we
-        # still assume an sqlite3-based data source, and use both the old and new
-        # data source APIs.  We also need to use a mock client for tests.
+        # still assume an sqlite3-based data source, and use both the old and
+        # new data source APIs.  We also need to use a mock client for tests.
         # For a temporary workaround to deal with these situations, we skip the
         # creation when the given file is none (the test case).  Eventually
         # this code will be much cleaner.
@@ -1132,19 +1132,26 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         if db_file is not None:
             # temporary hardcoded sqlite initialization. Once we decide on
             # the config specification, we need to update this (TODO)
-            # this may depend on #1207, or any follow-up ticket created for #1207
+            # this may depend on #1207, or any follow-up ticket created for
+            # #1207
             datasrc_type = "sqlite3"
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
 
-        # Create a TCP connection for the XFR session and perform the operation.
+        # Create a TCP connection for the XFR session and perform the
+        # operation.
         sock_map = {}
-        # In case we were asked to do IXFR and that one fails, we try again with
-        # AXFR. But only if we could actually connect to the server.
+        # In case we were asked to do IXFR and that one fails, we try again
+        # with AXFR. But only if we could actually connect to the server.
         #
-        # So we start with retry as True, which is set to false on each attempt.
-        # In the case of connected but failed IXFR, we set it to true once again.
+        # So we start with retry as True, which is set to false on each
+        # attempt. In the case of connected but failed IXFR, we set it to true
+        # once again.
         retry = True
+        if request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED:
+            request_type = RRType.AXFR
+        else:
+            request_type = RRType.IXFR
         while retry:
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
@@ -1154,10 +1161,10 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             if conn.connect_to_master():
                 ret = conn.do_xfrin(check_soa, request_type)
                 if ret == XFRIN_FAIL and request_type == RRType.IXFR:
-                    # IXFR failed for some reason. It might mean the server can't
-                    # handle it, or we don't have the zone or we are out of sync or
-                    # whatever else. So we retry with with AXFR, as it may succeed
-                    # in many such cases.
+                    # IXFR failed for some reason. It might mean the server
+                    # can't handle it, or we don't have the zone or we are out
+                    # of sync or whatever else. So we retry with with AXFR, as
+                    # it may succeed in many such cases.
                     retry = True
                     request_type = RRType.AXFR
                     logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
@@ -1188,7 +1195,7 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, tsig_key,
-                  request_type, conn_class=XfrinConnection):
+                  request_ixfr, conn_class=XfrinConnection):
     # Even if it should be rare, the main process of xfrin session can
     # raise an exception.  In order to make sure the lock in xfrin_recorder
     # is released in any cases, we delegate the main part to the helper
@@ -1198,14 +1205,17 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     try:
         __process_xfrin(server, zone_name, rrclass, db_file,
                         shutdown_event, master_addrinfo, check_soa, tsig_key,
-                        request_type, conn_class)
+                        request_ixfr, conn_class)
     except Exception as ex:
         # don't log it until we complete decrement().
         exception = ex
     xfrin_recorder.decrement(zone_name)
 
     if exception is not None:
-        typestr = "AXFR" if request_type == RRType.AXFR else "IXFR"
+        if request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED:
+            typestr = "AXFR"
+        else:
+            typestr = "IXFR"
         logger.error(XFRIN_XFR_PROCESS_FAILURE, typestr, zone_name.to_text(),
                      str(rrclass), str(exception))
 
@@ -1363,7 +1373,7 @@ class ZoneInfo:
 
     def set_request_ixfr(self, request_ixfr):
         if request_ixfr is None:
-            request_ixfr = 'yes' # if unspecified, use the default
+            request_ixfr = 'no' # if unspecified, use the default
         cfg_to_val = { 'yes': self.REQUEST_IXFR_FIRST,
                        'only': self.REQUEST_IXFR_ONLY,
                        'no': self.REQUEST_IXFR_DISABLED }
@@ -1595,9 +1605,9 @@ class Xfrin:
         (zone_name, rrclass) = self._parse_zone_name_and_class(args)
         master_addr = self._parse_master_and_port(args, zone_name, rrclass)
         zone_info = self._get_zone_info(zone_name, rrclass)
-        request_type = RRType.AXFR
-        if zone_info is not None and zone_info.use_ixfr:
-            request_type = RRType.IXFR
+        request_ixfr = ZoneInfo.REQUEST_IXFR_DISABLED
+        if zone_info is not None:
+            request_ixfr = zone_info.request_ixfr
         tsig_key = None if zone_info is None else zone_info.get_tsig_key()
         db_file = arg_db or self._get_db_file()
         zone_str = format_zone_str(zone_name, rrclass) # for logging
@@ -1605,7 +1615,7 @@ class Xfrin:
         if answer is not None:
             return answer
         ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
-                               tsig_key, request_type, check_soa)
+                               tsig_key, request_ixfr, check_soa)
         return create_answer(ret[0], ret[1])
 
     def command_handler(self, command, args):
@@ -1769,7 +1779,7 @@ class Xfrin:
             self._cc_check_command()
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, request_type, check_soa=True):
+                    tsig_key, request_ixfr, check_soa=True):
         if "pydnspp" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
 
@@ -1788,7 +1798,7 @@ class Xfrin:
                                                 db_file,
                                                 self._shutdown_event,
                                                 master_addrinfo, check_soa,
-                                                tsig_key, request_type))
+                                                tsig_key, request_ixfr))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
