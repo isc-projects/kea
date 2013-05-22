@@ -28,14 +28,21 @@ namespace {
 
 using namespace isc::dhcp;
 
-/// The socket filter program, used to filter out all traffic other
-/// than DHCP. In particular, it allows receipt of UDP packets
-/// on a specific (customizable) port. It does not allow fragmented
-/// packets.
+/// The following structure defines a Berkely Packet Filter program to perform
+/// packet filtering. The program operates on Ethernet packets.  To help with
+/// interpretation of the program, for the types of Ethernet packets we are
+/// interested in, the header layout is:
 ///
-/// Socket filter program is platform independent code which is
-/// executed on the kernel level when new packet arrives. This concept
-/// originates from the Berkeley Packet Filtering supported on BSD systems.
+///   6 bytes  Destination Ethernet Address
+///   6 bytes  Source Ethernet Address
+///   2 bytes  Ethernet packet type
+///
+///  20 bytes  Fixed part of IP header
+///  variable  Variable part of IP header
+///
+///   2 bytes  UDP Source port
+///   2 bytes  UDP destination port
+///   4 bytes  Rest of UDP header
 ///
 /// @todo We may want to extend the filter to receive packets sent
 /// to the particular IP address assigned to the interface or
