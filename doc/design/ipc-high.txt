@@ -210,7 +210,7 @@ about changes to zone data, they'd subscribe to the
 `Notifications/ZoneUpdates` group. Then, other client (let's say
 `XfrIn`, with session ID `s12345`) would send something like:
 
-  s12345 -> Notifications/ZoneUpdates
+  s12345 -> notifications/ZoneUpdates
   {"notification": ["zone-update", {
       "class": "IN",
       "origin": "example.org.",
@@ -221,7 +221,7 @@ Both receivers would receive the message and know that the
 `example.org` zone is now at version 123456. Note that multiple users
 may produce the same kind of notification. Also, single group may be
 used to send multiple notification names (but they should be related;
-in our example, the `Notifications/ZoneUpdates` could be used for
+in our example, the `notifications/ZoneUpdates` could be used for
 `zone-update`, `zone-available` and `zone-unavailable` notifications
 for change in zone data, configuration of new zone in the system and
 removal of a zone from configuration).
