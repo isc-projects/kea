@@ -89,7 +89,9 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
         arg(zone_name).arg(rrclass_);
 
     if (!content || content->isEmpty()) {
-        isc_throw(InvalidParameter, "Zone content must not be NULL or empty");
+        isc_throw(InvalidParameter,
+                  (content ? "empty data" : "NULL") <<
+                  " is passed to Zone::addZone");
     }
     SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, zone_class);
     holder.set(content);
