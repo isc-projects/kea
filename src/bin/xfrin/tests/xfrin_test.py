@@ -283,7 +283,7 @@ class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
                  shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
-                         shutdown_event, master_addr, TEST_DB_FILE)
+                         shutdown_event, master_addr)
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
