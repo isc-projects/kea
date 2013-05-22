@@ -430,13 +430,20 @@ public:
     /// Send a notification message to all clients subscribed to the given
     /// notification group.
     ///
+    /// This method does not not block.
+    ///
+    /// See docs/design/ipc-high.txt for details about notifications and
+    /// the format of messages sent.
+    ///
+    /// \throw CCSessionError for low-level communication errors.
     /// \param notification_group This parameter (indirectly) signifies what
     ///     clients should receive the notification. Only the clients that
     ///     subscribed to notifications on the same group receive it.
     /// \param name The name of the event to notify about (for example
     ///     `config_changed`).
     /// \param params Other parameters that describe the event. This might
-    ///     be, for example, the new configuration value.
+    ///     be, for example, the new configuration value. This can be any
+    ///     data element, but it is common for it to be map.
     void notify(const std::string& notification_group,
                 const std::string& name,
                 const isc::data::ConstElementPtr& params =
