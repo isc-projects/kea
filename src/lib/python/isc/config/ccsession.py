@@ -541,15 +541,26 @@ class ModuleCCSession(ConfigData):
 
     def notify(self, notification_group, event_name, params=None):
         """
-        Send a notification about an event to a group of recipients.
+        Send a notification to subscribed clients.
 
+        Send a notification message to all clients subscribed to the given
+        notification group.
+
+        See docs/design/ipc-high.txt for details about notifications
+        and the format of messages sent.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
         Params:
-        - notification_group: This indirectly specifies which recipients get
-          the notification. Only the ones that register callback for the same
-          gorup get it.
-        - event_name: The name of the notification.
-        - params: Additional description of the event.
-        Return: Nothing
+        - notification_group (string): This parameter (indirectly) signifies what
+          clients should receive the notification. Only clients that subscribed
+          to notifications on the same group receive it.
+        - event_name (string): The name of the event to notify about (for example
+          `config_changed`).
+        - params: Other parameters that describe the event. This might be, for
+          example, the new configuration value. This can be any data that can be
+          sent over the isc.cc.Session, but it is common for it to be dict.
+        Returns: Nothing
         """
         notification = [event_name]
         if params is not None:
