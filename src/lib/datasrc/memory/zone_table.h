@@ -84,6 +84,8 @@ public:
      };
 
     /// \brief Result data of findZone() method.
+    ///
+    /// See \c findZone() about the semantics of the members.
     struct FindResult {
         FindResult(result::Result param_code,
                    const ZoneData* param_zone_data,
