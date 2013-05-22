@@ -267,7 +267,9 @@ TEST_F(ZoneWriterTest, loadLoaderException) {
     EXPECT_EQ("", error_msg);
 
     // If we specify allowing load error, load() will succeed and install()
-    // adds an empty zone.
+    // adds an empty zone.  Note that we implicitly pass NULL to load()
+    // as it's the default parameter, so the following also confirms it doesn't
+    // cause disruption.
     writer_.reset(new ZoneWriter(*segment_,
                                  bind(&ZoneWriterTest::loadAction, this, _1),
                                  Name("example.org"), RRClass::IN(), true));
