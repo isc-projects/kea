@@ -45,7 +45,7 @@ namespace dhcp {
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class Dhcpv4Srv : public boost::noncopyable {
 
-    public:
+public:
 
     /// @brief defines if certain option may, must or must not appear
     typedef enum {
@@ -296,7 +296,7 @@ protected:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
-    private:
+private:
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated

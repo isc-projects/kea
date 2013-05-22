@@ -47,6 +47,10 @@ public:
     /// specifies DHCPv4 packet header length (fixed part)
     const static size_t DHCPV4_PKT_HDR_LEN = 236;
 
+    /// Mask for the value of flags field in the DHCPv4 message
+    /// to check whether client requested broadcast response.
+    const static uint16_t FLAG_BROADCAST_MASK = 0x8000;
+
     /// Constructor, used in replying to a message.
     ///
     /// @param msg_type type of message (e.g. DHCPDISOVER=1)
