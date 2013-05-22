@@ -231,7 +231,7 @@ public:
     /// of the searched name is needed. Therefore, the call would look like:
     ///
     /// \code FindResult result(list->find(queried_name));
-    ///   if (result.datasrc_) {
+    ///   if (result.dsrc_client_) {
     ///       if (result.finder_) {
     ///           createTheAnswer(result.finder_);
     ///       } else { // broken zone, return SERVFAIL
