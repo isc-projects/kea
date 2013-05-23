@@ -17,6 +17,7 @@
 #if defined(OS_SUN)
 
 #include <dhcp/iface_mgr.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 
 using namespace std;
@@ -34,11 +35,6 @@ IfaceMgr::detectIfaces() {
     stubDetectIfaces();
 }
 
-bool
-IfaceMgr::isDirectResponseSupported() {
-    return (false);
-}
-
 void IfaceMgr::os_send4(struct msghdr& /*m*/,
                         boost::scoped_array<char>& /*control_buf*/,
                         size_t /*control_buf_len*/,
@@ -52,6 +48,13 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
   // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
 
   return (true); // pretend that we have everything set up for reception.
+}
+
+void
+IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
+    // @todo Currently we ignore the preference to use direct traffic
+    // because it hasn't been implemented for Solaris.
+    setPacketFilter(PktFilterPtr(new PktFilterInet()));
 }
 
 } // end of isc::dhcp namespace

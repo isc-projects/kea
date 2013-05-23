@@ -74,6 +74,10 @@ public:
         : open_socket_called_(false) {
     }
 
+    virtual bool isDirectResponseSupported() const {
+        return (false);
+    }
+
     /// Pretends to open socket. Only records a call to this function.
     virtual int openSocket(const Iface&,
                            const isc::asiolink::IOAddress&,
@@ -91,7 +95,7 @@ public:
     }
 
     /// Does nothing
-    virtual int send(uint16_t, const Pkt4Ptr&) {
+    virtual int send(const Iface&, uint16_t, const Pkt4Ptr&) {
         return (0);
     }
 
@@ -103,7 +107,8 @@ public:
 class NakedIfaceMgr: public IfaceMgr {
     // "Naked" Interface Manager, exposes internal fields
 public:
-    NakedIfaceMgr() { }
+    NakedIfaceMgr() {
+    }
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
 
@@ -115,6 +120,24 @@ public:
     }
 
     ~IfaceMgrTest() {
+    }
+
+    // Get ther number of IPv4 or IPv6 sockets on the loopback interface
+    int getOpenSocketsCount(const Iface& iface, uint16_t family) const {
+        // Get all sockets.
+        Iface::SocketCollection sockets = iface.getSockets();
+
+        // Loop through sockets and try to find the ones which match the
+        // specified type.
+        int sockets_count = 0;
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            // Match found, increase the counter.
+            if (sock->family_ == family) {
+                ++sockets_count;
+            }
+        }
+        return (sockets_count);
     }
 
 };
@@ -206,6 +229,66 @@ TEST_F(IfaceMgrTest, basic) {
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
+}
+
+
+// This test verifies that sockets can be closed selectively, i.e. all
+// IPv4 sockets can be closed first and all IPv6 sockets remain open.
+TEST_F(IfaceMgrTest, closeSockets) {
+    // Will be using local loopback addresses for this test.
+    IOAddress loaddr("127.0.0.1");
+    IOAddress loaddr6("::1");
+
+    // Create instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Out constructor does not detect interfaces by itself. We need
+    // to create one and add.
+    int ifindex = if_nametoindex(LOOPBACK);
+    ASSERT_GT(ifindex, 0);
+    Iface lo_iface(LOOPBACK, ifindex);
+    iface_mgr->getIfacesLst().push_back(lo_iface);
+
+    // Create set of V4 and V6 sockets on the loopback interface.
+    // They must differ by a port they are bound to.
+    for (int i = 0; i < 6; ++i) {
+        // Every other socket will be IPv4.
+        if (i % 2) {
+            ASSERT_NO_THROW(
+                iface_mgr->openSocket(LOOPBACK, loaddr, 10000 + i)
+            );
+        } else {
+            ASSERT_NO_THROW(
+                iface_mgr->openSocket(LOOPBACK, loaddr6, 10000 + i)
+            );
+        }
+    }
+
+    // At the end we should have 3 IPv4 and 3 IPv6 sockets open.
+    Iface* iface = iface_mgr->getIface(LOOPBACK);
+    ASSERT_TRUE(iface != NULL);
+
+    int v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    ASSERT_EQ(3, v4_sockets_count);
+    int v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    ASSERT_EQ(3, v6_sockets_count);
+
+    // Let's try to close only IPv4 sockets.
+    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET));
+    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    EXPECT_EQ(0, v4_sockets_count);
+    // The IPv6 sockets should remain open.
+    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    EXPECT_EQ(3, v6_sockets_count);
+
+    // Let's try to close IPv6 sockets.
+    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET6));
+    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
+    EXPECT_EQ(0, v4_sockets_count);
+    // They should have been closed now.
+    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
+    EXPECT_EQ(0, v6_sockets_count);
 }
 
 TEST_F(IfaceMgrTest, ifaceClass) {
@@ -597,19 +680,11 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     // open sockets on the same ports.
     ifacemgr->closeSockets();
 
-    // The following test is currently disabled for OSes other than
-    // Linux because interface detection is not implemented on them.
-    // @todo enable this test for all OSes once interface detection
-    // is implemented.
-#if defined(OS_LINUX)
-    // Open v4 socket to connect to broadcast address.
-    int socket3  = 0;
-    IOAddress bcastAddr("255.255.255.255");
-    EXPECT_NO_THROW(
-        socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
-    );
-    EXPECT_GT(socket3, 0);
-#endif
+    // There used to be a check here that verified the ability to open
+    // suitable socket for sending broadcast request. However,
+    // there is no guarantee for such test to work on all systems
+    // because some systems may have no broadcast capable interfaces at all.
+    // Thus, this check has been removed.
 
     // Do not call closeSockets() because it is called by IfaceMgr's
     // virtual destructor.
@@ -714,14 +789,12 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // let's assume that every supported OS have lo interface
     IOAddress loAddr("127.0.0.1");
-    int socket1 = 0, socket2 = 0;
+    int socket1 = 0;
     EXPECT_NO_THROW(
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
-        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000 + 1);
     );
 
     EXPECT_GE(socket1, 0);
-    EXPECT_GE(socket2, 0);
 
     boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
 
@@ -754,7 +827,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     boost::shared_ptr<Pkt4> rcvPkt;
 
-    EXPECT_EQ(true, ifacemgr->send(sendPkt));
+    EXPECT_NO_THROW(ifacemgr->send(sendPkt));
 
     ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
     ASSERT_TRUE(rcvPkt); // received our own packet
@@ -826,8 +899,80 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     EXPECT_TRUE(custom_packet_filter->open_socket_called_);
     // This function always returns fake socket descriptor equal to 1024.
     EXPECT_EQ(1024, socket1);
+
+    // Replacing current packet filter object while there are IPv4
+    // sockets open is not allowed!
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 PacketFilterChangeDenied);
+
+    // So, let's close the open IPv4 sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets(AF_INET);
+    EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
 
+#if defined OS_LINUX
+
+// This Linux specific test checks whether it is possible to use
+// IfaceMgr to figure out which Pakcket Filter object should be
+// used when direct responses to hosts, having no address assigned
+// are desired or not desired.
+TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
+
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Let IfaceMgr figure out which Packet Filter to use when
+    // direct response capability is not desired. It should pick
+    // PktFilterInet.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
+    // The PktFilterInet is supposed to report lack of direct
+    // response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+
+    // There is working implementation of direct responses on Linux
+    // in PktFilterLPF. It uses Linux Packet Filtering as underlying
+    // mechanism. When direct responses are desired the object of
+    // this class should be set.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
+    // This object should report that direct responses are supported.
+    EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
+}
+
+#else
+
+// This non-Linux specific test checks whether it is possible to use
+// IfaceMgr to figure out which Pakcket Filter object should be
+// used when direct responses to hosts, having no address assigned
+// are desired or not desired. Since direct responses aren't supported
+// on systems other than Linux the function under test should always
+// set object of PktFilterInet type as current Packet Filter. This
+// object does not support direct responses. Once implementation is
+// added on non-Linux systems the OS specific version of the test
+// will be removed.
+TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
+
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Let IfaceMgr figure out which Packet Filter to use when
+    // direct response capability is not desired. It should pick
+    // PktFilterInet.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(false));
+    // The PktFilterInet is supposed to report lack of direct
+    // response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+
+    // On non-Linux systems, we are missing the direct traffic
+    // implementation. Therefore, we expect that PktFilterInet
+    // object will be set.
+    EXPECT_NO_THROW(iface_mgr->setMatchingPacketFilter(true));
+    // This object should report lack of direct response capability.
+    EXPECT_FALSE(iface_mgr->isDirectResponseSupported());
+}
+
+#endif
 
 TEST_F(IfaceMgrTest, socket4) {
 

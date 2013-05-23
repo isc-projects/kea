@@ -16,6 +16,7 @@
 #define PKT_FILTER_INET_H
 
 #include <dhcp/pkt_filter.h>
+#include <boost/scoped_array.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -31,6 +32,17 @@ public:
     ///
     /// Allocates control buffer.
     PktFilterInet();
+
+    /// @brief Check if packet can be sent to the host without address directly.
+    ///
+    /// This Packet Filter sends packets through AF_INET datagram sockets, so
+    /// it can't inject the HW address of the destionation host into the packet.
+    /// Therefore this class does not support direct responses.
+    ///
+    /// @return false always.
+    virtual bool isDirectResponseSupported() const {
+        return (false);
+    }
 
     /// @brief Open socket.
     ///
@@ -57,11 +69,13 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @return result of sending a packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt);
 
 private:
     /// Length of the control_buf_ array.
