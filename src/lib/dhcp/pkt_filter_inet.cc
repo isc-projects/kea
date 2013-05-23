@@ -28,24 +28,11 @@ PktFilterInet::PktFilterInet()
 {
 }
 
-// iface is only used when SO_BINDTODEVICE is defined and thus
-// the code section using this variable is compiled.
-#ifdef SO_BINDTODEVICE
 int PktFilterInet::openSocket(const Iface& iface,
                               const isc::asiolink::IOAddress& addr,
                               const uint16_t port,
                               const bool receive_bcast,
                               const bool send_bcast) {
-
-#else
-int PktFilterInet::openSocket(const Iface&,
-                              const isc::asiolink::IOAddress& addr,
-                              const uint16_t port,
-                              const bool receive_bcast,
-                              const bool send_bcast) {
-
-
-#endif
 
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
@@ -54,7 +41,7 @@ int PktFilterInet::openSocket(const Iface&,
 
     // If we are to receive broadcast messages we have to bind
     // to "ANY" address.
-    if (receive_bcast) {
+    if (receive_bcast && iface.flag_broadcast_) {
         addr4.sin_addr.s_addr = INADDR_ANY;
     } else {
         addr4.sin_addr.s_addr = htonl(addr);
@@ -66,7 +53,7 @@ int PktFilterInet::openSocket(const Iface&,
     }
 
 #ifdef SO_BINDTODEVICE
-    if (receive_bcast) {
+    if (receive_bcast && iface.flag_broadcast_) {
         // Bind to device so as we receive traffic on a specific interface.
         if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.getName().c_str(),
                        iface.getName().length() + 1) < 0) {
@@ -77,7 +64,7 @@ int PktFilterInet::openSocket(const Iface&,
     }
 #endif
 
-    if (send_bcast) {
+    if (send_bcast && iface.flag_broadcast_) {
         // Enable sending to broadcast address.
         int flag = 1;
         if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &flag, sizeof(flag)) < 0) {
@@ -198,7 +185,8 @@ PktFilterInet::receive(const Iface& iface, const SocketInfo& socket_info) {
 }
 
 int
-PktFilterInet::send(uint16_t sockfd, const Pkt4Ptr& pkt) {
+PktFilterInet::send(const Iface&, uint16_t sockfd,
+                    const Pkt4Ptr& pkt) {
     memset(&control_buf_[0], 0, control_buf_len_);
 
     // Set the target address we're sending to.
