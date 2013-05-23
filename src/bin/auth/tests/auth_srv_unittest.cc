@@ -1210,6 +1210,38 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
+TEST_F(AuthSrvTest, emptyZone) {
+    // Similar to the previous setup, but the configuration has an error
+    // (zone file doesn't exist) and the query should result in SERVFAIL.
+    // Here we check the rcode other header parameters, and statistics.
+
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {\"example.com\": \"nosuchfile.zone\"},"
+        "   \"cache-enable\": true"
+        "}]}"));
+    installDataSrcClientLists(server, configureDataSource(config));
+    createDataFromFile("examplequery_fromWire.wire");
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+
+    checkAllRcodeCountersZeroExcept(Rcode::SERVFAIL(), 1);
+    ConstElementPtr stats = server.getStatistics()->get("zones")->
+        get("_SERVER_");
+    std::map<std::string, int> expect;
+    expect["request.v4"] = 1;
+    expect["request.udp"] = 1;
+    expect["opcode.query"] = 1;
+    expect["responses"] = 1;
+    expect["qrynoauthans"] = 1;
+    expect["rcode.servfail"] = 1;
+    checkStatisticsCounters(stats, expect);
+}
+
 TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty

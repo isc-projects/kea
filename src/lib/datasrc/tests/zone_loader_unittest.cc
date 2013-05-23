@@ -320,8 +320,9 @@ protected:
         if (filename) {
             boost::scoped_ptr<memory::ZoneWriter> writer(
                 new memory::ZoneWriter(*ztable_segment_,
-                                       cache_conf.getLoadAction(rrclass_, zone),
-                                       zone, rrclass_));
+                                       cache_conf.getLoadAction(rrclass_,
+                                                                zone),
+                                       zone, rrclass_, false));
             writer->load();
             writer->install();
             writer->cleanup();

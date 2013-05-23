@@ -38,6 +38,10 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+// Definition of a class static constant.  It's public and its address
+// could be needed by applications, so we need an explicit definition.
+const ZoneNode::Flags ZoneData::DNSSEC_SIGNED;
+
 namespace {
 void
 rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
@@ -176,6 +180,13 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     void* p = mem_sgmt.allocate(sizeof(ZoneData));
     ZoneData* zone_data = new(p) ZoneData(holder.release(), origin_node);
 
+    return (zone_data);
+}
+
+ZoneData*
+ZoneData::create(util::MemorySegment& mem_sgmt) {
+    ZoneData* zone_data = create(mem_sgmt, Name::ROOT_NAME());
+    zone_data->origin_node_->setFlag(EMPTY_ZONE);
     return (zone_data);
 }
 
