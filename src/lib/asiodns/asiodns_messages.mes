@@ -103,6 +103,12 @@ would be better to not be too verbose, but you might want to increase
 the log level and make sure there's no resource leak or other system
 level troubles when it's logged.
 
+% ASIODNS_TCP_CLOSE_NORESP_FAIL failed to close DNS/TCP socket with a client: %1
+A TCP DNS server tried to close a TCP socket used to communicate with
+a client without returning an answer (which normally happens for zone
+transfer requests), but it failed to do that.  See ASIODNS_TCP_CLOSE_FAIL
+for more details.
+
 % ASIODNS_TCP_GETREMOTE_FAIL failed to get remote address of a DNS TCP connection: %1
 A TCP DNS server tried to get the address and port of a remote client
 on a connected socket but failed.  It's expected to be rare but can
