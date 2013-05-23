@@ -541,9 +541,9 @@ class ModuleCCSession(ConfigData):
 
     def notify(self, notification_group, event_name, params=None):
         """
-        Send a notification to subscribed clients.
+        Send a notification to subscribed users.
 
-        Send a notification message to all clients subscribed to the given
+        Send a notification message to all users subscribed to the given
         notification group.
 
         See docs/design/ipc-high.txt for details about notifications
@@ -553,7 +553,7 @@ class ModuleCCSession(ConfigData):
         - CCSessionError: for low-level communication errors.
         Params:
         - notification_group (string): This parameter (indirectly) signifies
-          what clients should receive the notification. Only clients that
+          what users should receive the notification. Only users that
           subscribed to notifications on the same group receive it.
         - event_name (string): The name of the event to notify about (for
           example `config_changed`).
