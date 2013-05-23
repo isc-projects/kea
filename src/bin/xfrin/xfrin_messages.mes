@@ -230,6 +230,17 @@ such that the remote server doesn't support IXFR, we don't have the SOA record
 (or the zone at all), we are out of sync, etc. In many of these situations,
 AXFR could still work. Therefore we try that one in case it helps.
 
+% XFRIN_XFR_TRANSFER_FALLBACK_DISABLED suppressing fallback from IXFR to AXFR for %1
+An IXFR transfer of the given zone failed.  By default AXFR will be
+tried next, but this fallback is disabled by configuration, so the
+whole transfer attempt failed at that point.  If the reason for the
+failure (which should be logged separately) is temporary, this is
+probably harmless or even desired as another IXFR will take place some
+time later (without falling back to the possibly expensive AXFR).  If
+this is a permanent error (e.g., some change at the master server
+completely disables IXFR), the secondary zone will eventually expire,
+so the configuration should be changed to allow AXFR.
+
 % XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION %1 transfer of zone %2 with %3 failed: %4
 The XFR transfer for the given zone has failed due to a protocol
 error, such as an unexpected response from the primary server.  The
