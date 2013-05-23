@@ -60,6 +60,11 @@ protected:
         rdata_tsig(valid_text1)
     {}
 
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<any::TSIG, isc::Exception, isc::Exception>(
+            rdata_str, rdata_tsig, false, false);
+    }
+
     void checkFromText_InvalidText(const string& rdata_str) {
         checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
             rdata_str, rdata_tsig, true, true);
@@ -112,7 +117,7 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     EXPECT_EQ(0, rdata_tsig.getMACSize());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getMAC());
     EXPECT_EQ(16020, rdata_tsig.getOriginalID());
-    EXPECT_EQ(17, rdata_tsig.getError()); // TODO: use constant
+    EXPECT_EQ(TSIGError::BAD_KEY_CODE, rdata_tsig.getError());
     EXPECT_EQ(0, rdata_tsig.getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getOtherData());
 
@@ -134,7 +139,11 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     any::TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 "
                     "0 16020 BADKEY 0");
     EXPECT_EQ(0, tsig1.compare(rdata_tsig));
-}
+
+    // multi-line rdata
+    checkFromText_None("hmac-md5.sig-alg.reg.int. ( 1286779327 300 \n"
+                       "0 16020 BADKEY 0 )");
+};
 
 TEST_F(Rdata_TSIG_Test, badText) {
     // too many fields
