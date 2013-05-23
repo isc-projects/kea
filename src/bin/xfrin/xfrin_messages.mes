@@ -80,6 +80,24 @@ is not equal to the requested SOA serial.
 There was an error importing the python DNS module pydnspp. The most
 likely cause is a PYTHONPATH problem.
 
+% XFRIN_INITIAL_AXFR no SOA available for %1 yet, requesting AXFR of initial version from %2
+On starting the zone transfer, it's detected that there is no SOA
+record available for the zone.  This is always the case for the very
+first transfer or if the administrator has removed the locally copied
+data by hand for some reason.  In this case trying IXFR does not make
+sense for the obvious reason, so AXFR will be used from the beginning,
+regardless of the request_ixfr configuration (even if "only" is
+specified).
+
+% XFRIN_INITIAL_IXFR requesting IXFR for %1 from %2
+IXFR will be used for the initial request type for the specified zone
+transfer.  It will fall back to AXFR if the initial request fails
+(and unless specified not to do so by configuration).
+
+% XFRIN_INITIAL_IXFR_DISABLED IXFR disabled for %1, requesting AXFR from %2
+The use of IXFR is disabled by configuration for the specified zone,
+so only AXFR will be tried.
+
 % XFRIN_INVALID_ZONE_DATA zone %1 received from %2 is broken and unusable
 The zone was received, but it failed sanity validation. The previous version
 of zone (if any is available) will be used. Look for previous

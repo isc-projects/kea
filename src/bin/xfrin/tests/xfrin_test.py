@@ -3205,6 +3205,13 @@ class TestXfrinProcess(unittest.TestCase):
         self.__published = []
         # How many connections were created.
         self.__created_connections = 0
+        # prepare for possible replacement
+        self.__orig_get_zone_soa = xfrin._get_zone_soa
+        xfrin._get_zone_soa = lambda x, y, z: begin_soa_rdata
+
+    def tearDown(self):
+        # restore original value
+        xfrin._get_zone_soa = self.__orig_get_zone_soa
 
     def __get_connection(self, *args):
         """
@@ -3269,8 +3276,8 @@ class TestXfrinProcess(unittest.TestCase):
         self.__rets = rets
         published = rets[-1]
         xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
-                            RRClass.IN, None, None, None, True, None,
-                            request_ixfr, self.__get_connection)
+                            RRClass.IN, None, None, TEST_MASTER_IPV4_ADDRINFO,
+                            True, None, request_ixfr, self.__get_connection)
         self.assertEqual([], self.__rets)
         self.assertEqual(transfers, self.__transfers)
         # Create a connection for each attempt
@@ -3332,6 +3339,35 @@ class TestXfrinProcess(unittest.TestCase):
         self.assertTrue(self._send_cc_session.send_called_correctly)
         self.assertTrue(self._send_cc_session.recv_called)
         self.assertTrue(self._send_cc_session.recv_called_correctly)
+
+    def test_initial_request_type(self):
+        """Check initial xfr reuqest type (AXFR or IXFR).
+
+        Varying the policy of use of IXFR and availability of current
+        zone SOA.  We are only interested in the initial request type,
+        so won't check the xfr results.
+
+        """
+        for soa in [begin_soa_rdata, None]:
+            for request_ixfr in [ZoneInfo.REQUEST_IXFR_FIRST,
+                                 ZoneInfo.REQUEST_IXFR_ONLY,
+                                 ZoneInfo.REQUEST_IXFR_DISABLED]:
+                # set up our dummy _get_zone_soa()
+                xfrin._get_zone_soa = lambda x, y, z: soa
+
+                # Clear all counters
+                self.__transfers = []
+                self.__published = []
+                self.__created_connections = 0
+
+                # Determine the expected type
+                expected_type = RRType.IXFR
+                if (soa is None or
+                    request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED):
+                    expected_type = RRType.AXFR
+
+                # perform the test
+                self.__do_test([XFRIN_OK], [expected_type], request_ixfr)
 
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library
