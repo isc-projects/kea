@@ -32,7 +32,9 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/interprocess/file_mapping.hpp>
 
 #include <set>
 #include <fstream>
@@ -134,6 +136,20 @@ public:
         }
     }
 
+    ~ListTest() {
+        ds_info_.clear();
+        ds_.clear();
+        for (size_t i(0); i < ds_count; ++ i) {
+            boost::interprocess::file_mapping::remove(
+                getMappedFilename(i).c_str());
+        }
+    }
+
+    static std::string getMappedFilename(size_t index) {
+         return (boost::str(boost::format(TEST_DATA_BUILDDIR "/test%d.mapped")
+                            % index));
+    }
+
     // Install a "fake" cached zone using a temporary underlying data source
     // client.  If 'enabled' is set to false, emulate a disabled cache, in
     // which case there will be no data in memory.
@@ -154,6 +170,7 @@ public:
             Element::fromJSON("{\"type\": \"mock\","
                               " \"cache-enable\": " +
                               string(enabled ? "true," : "false,") +
+                              " \"cache-type\": \"mapped\"," +
                               " \"cache-zones\": "
                               "   [\"" + zone.toText() + "\"]}");
         boost::shared_ptr<internal::CacheConfig> cache_conf(
@@ -164,8 +181,17 @@ public:
             dsrc_info.container_,
             cache_conf, rrclass_, dsrc_info.name_);
 
+        const ConstElementPtr config_ztable_segment_(
+            Element::fromJSON("{\"mapped-file\": \"" +
+                              getMappedFilename(index) +
+                              "\"}"));
+
         // Load the data into the zone table.
         if (enabled) {
+            list_->resetMemorySegment(dsrc_info.name_,
+                                      memory::ZoneTableSegment::CREATE,
+                                      config_ztable_segment_);
+
             boost::scoped_ptr<memory::ZoneWriter> writer(
                 new memory::ZoneWriter(
                     *dsrc_info.ztable_segment_,
@@ -174,6 +200,10 @@ public:
             writer->load();
             writer->install();
             writer->cleanup(); // not absolutely necessary, but just in case
+
+            list_->resetMemorySegment(dsrc_info.name_,
+                                      memory::ZoneTableSegment::READ_WRITE,
+                                      config_ztable_segment_);
         }
 
         // On completion of load revert to the previous state of underlying
