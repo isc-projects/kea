@@ -2756,8 +2756,7 @@ class TestXfrin(unittest.TestCase):
                 elif cfg_val == 'only':
                     self.assertEqual(ZoneInfo.REQUEST_IXFR_ONLY, val)
             else:               # check the default
-                #self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
-                self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
                                  zone_info.request_ixfr)
 
     def test_config_handler_zones(self):
