@@ -360,8 +360,8 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     ASSERT_NO_THROW(
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
     );
-    // Socket is open if its descriptor is greater than zero.
-    ASSERT_GT(socket1, 0);
+    // Socket is open if result is non-negative.
+    ASSERT_GE(socket1, 0);
 
     // Remember when we call receive6().
     ptime start_time = microsec_clock::universal_time();
@@ -412,8 +412,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     ASSERT_NO_THROW(
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
     );
-    // Socket is open if its descriptor is greater than zero.
-    ASSERT_GT(socket1, 0);
+    // Socket is open if returned value is non-negative.
+    ASSERT_GE(socket1, 0);
 
     Pkt4Ptr pkt;
     // Remember when we call receive4().
@@ -462,7 +462,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     ASSERT_NO_THROW(
         socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET);
     );
-    ASSERT_GT(socket1, 0);
+    ASSERT_GE(socket1, 0);
     init_sockets.push_back(socket1);
 
     // Create socket #2
@@ -471,7 +471,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     ASSERT_NO_THROW(
         socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
     );
-    ASSERT_GT(socket2, 0);
+    ASSERT_GE(socket2, 0);
     init_sockets.push_back(socket2);
 
     // Get loopback interface. If we don't find one we are unable to run
@@ -552,13 +552,13 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     // Bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
-    EXPECT_GT(socket1, 0); // socket > 0
+    EXPECT_GE(socket1, 0); // socket >= 0
 
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
     // Bind unicast socket to port 10548
     int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
-    EXPECT_GT(socket2, 0);
+    EXPECT_GE(socket2, 0);
 
     // Removed code for binding socket twice to the same address/port
     // as it caused problems on some platforms (e.g. Mac OS X)
@@ -592,8 +592,8 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     EXPECT_NO_THROW(
         socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET6);
     );
-    // Socket descriptor must be positive integer
-    EXPECT_GT(socket1, 0);
+    // Socket descriptor must be non-negative integer
+    EXPECT_GE(socket1, 0);
     close(socket1);
 
     // Open v4 socket on loopback interface and bind to different port
@@ -601,8 +601,8 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
     EXPECT_NO_THROW(
         socket2 = ifacemgr->openSocketFromIface(LOOPBACK, PORT2, AF_INET);
     );
-    // socket descriptor must be positive integer
-    EXPECT_GT(socket2, 0);
+    // socket descriptor must be non-negative integer
+    EXPECT_GE(socket2, 0);
     close(socket2);
 
     // Close sockets here because the following tests will want to
@@ -629,8 +629,8 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
     EXPECT_NO_THROW(
         socket1 = ifacemgr->openSocketFromAddress(loAddr6, PORT1);
     );
-    // socket descriptor must be positive integer
-    EXPECT_GT(socket1, 0);
+    // socket descriptor must be non-negative integer
+    EXPECT_GE(socket1, 0);
 
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
@@ -639,7 +639,7 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
         socket2 = ifacemgr->openSocketFromAddress(loAddr, PORT2);
     );
     // socket descriptor must be positive integer
-    EXPECT_GT(socket2, 0);
+    EXPECT_GE(socket2, 0);
 
     // Close sockets here because the following tests will want to
     // open sockets on the same ports.
@@ -666,7 +666,7 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     EXPECT_NO_THROW(
         socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
     );
-    EXPECT_GT(socket1, 0);
+    EXPECT_GE(socket1, 0);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
@@ -674,7 +674,7 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     EXPECT_NO_THROW(
         socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
     );
-    EXPECT_GT(socket2, 0);
+    EXPECT_GE(socket2, 0);
 
     // Close sockets here because the following tests will want to
     // open sockets on the same ports.
@@ -703,12 +703,12 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
     // bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
-    EXPECT_GT(socket1, 0); // socket > 0
+    EXPECT_GE(socket1, 0); // socket > 0
 
     // expect success. This address/port is already bound, but
     // we are using SO_REUSEADDR, so we can bind it twice
     int socket2 = ifacemgr->openSocket(LOOPBACK, mcastAddr, 10547);
-    EXPECT_GT(socket2, 0);
+    EXPECT_GE(socket2, 0);
 
     // there's no good way to test negative case here.
     // we would need non-multicast interface. We will be able
@@ -734,8 +734,8 @@ TEST_F(IfaceMgrTest, sendReceive6) {
         socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
     );
 
-    EXPECT_GT(socket1, 0);
-    EXPECT_GT(socket2, 0);
+    EXPECT_GE(socket1, 0);
+    EXPECT_GE(socket2, 0);
 
 
     // prepare dummy payload
@@ -987,7 +987,7 @@ TEST_F(IfaceMgrTest, socket4) {
         socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
     );
 
-    EXPECT_GT(socket1, 0);
+    EXPECT_GE(socket1, 0);
 
     Pkt4 pkt(DHCPDISCOVER, 1234);
     pkt.setIface(LOOPBACK);
