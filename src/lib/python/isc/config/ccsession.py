@@ -546,6 +546,8 @@ class ModuleCCSession(ConfigData):
         Send a notification message to all users subscribed to the given
         notification group.
 
+        This method does not block.
+
         See docs/design/ipc-high.txt for details about notifications
         and the format of messages sent.
 
