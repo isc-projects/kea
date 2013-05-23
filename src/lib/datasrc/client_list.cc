@@ -90,15 +90,15 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
-            const ConstElementPtr typeElem(dconf->get("type"));
-            if (typeElem == ConstElementPtr()) {
+            const ConstElementPtr type_elem(dconf->get("type"));
+            if (type_elem == ConstElementPtr()) {
                 isc_throw(ConfigurationError, "Missing the type option in "
                           "data source no " << i);
             }
-            const string type(typeElem->stringValue());
-            ConstElementPtr paramConf(dconf->get("params"));
-            if (paramConf == ConstElementPtr()) {
-                paramConf.reset(new NullElement());
+            const string type(type_elem->stringValue());
+            ConstElementPtr param_conf(dconf->get("params"));
+            if (param_conf == ConstElementPtr()) {
+                param_conf.reset(new NullElement());
             }
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
@@ -114,7 +114,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             // no-op.  In the latter case, it's of no use unless cache is
             // allowed; we simply skip building it in that case.
             const DataSourcePair dsrc_pair = getDataSourceClient(type,
-                                                                 paramConf);
+                                                                 param_conf);
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
                     arg(datasrc_name).arg(rrclass_);
@@ -159,18 +159,22 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         cache_conf->getLoadAction(rrclass_, zname);
                     // in this loop this should be always true
                     assert(load_action);
-                    memory::ZoneWriter writer(zt_segment,
-                        load_action, zname, rrclass_);
-                    writer.load();
+                    // For the initial load, we'll let the writer handle
+                    // loading error and install an empty zone in the table.
+                    memory::ZoneWriter writer(zt_segment, load_action, zname,
+                                              rrclass_, true);
+
+                    std::string error_msg;
+                    writer.load(&error_msg);
+                    if (!error_msg.empty()) {
+                        LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).arg(zname).
+                            arg(rrclass_).arg(datasrc_name).arg(error_msg);
+                    }
                     writer.install();
                     writer.cleanup();
                 } catch (const NoSuchZone&) {
                     LOG_ERROR(logger, DATASRC_CACHE_ZONE_NOTFOUND).
                         arg(zname).arg(rrclass_).arg(datasrc_name);
-                } catch (const ZoneLoaderException& e) {
-                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).
-                        arg(zname).arg(rrclass_).arg(datasrc_name).
-                        arg(e.what());
                 }
             }
         }
@@ -357,7 +361,7 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name,
                                ZoneWriterPtr(
                                    new memory::ZoneWriter(
                                        *info.ztable_segment_,
-                                       load_action, name, rrclass_))));
+                                       load_action, name, rrclass_, false))));
     }
 
     // We can't find the specified zone.  If a specific data source was

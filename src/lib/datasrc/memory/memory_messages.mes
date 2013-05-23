@@ -92,6 +92,12 @@ tried).
 Debug information.  A specific type RRset is requested at a zone origin
 of an in-memory zone and it is found.
 
+% DATASRC_MEMORY_MEM_ADD_EMPTY_ZONE adding an empty zone '%1/%2'
+Debug information. An "empty" zone is being added into the in-memory
+data source.  This is conceptual data indicating the state where the
+zone exists but its content isn't available.  That would be the case,
+for example, a broken zone specified in the configuration.
+
 % DATASRC_MEMORY_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
 

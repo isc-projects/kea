@@ -56,6 +56,17 @@ public:
         DataSourceError(file, line, what) {}
 };
 
+/// \brief An error indicating a zone is recognized but its content is not
+/// available.
+///
+/// This generally indicates a condition that there's an error in the zone
+/// content and it's not successfully loaded.
+class EmptyZone : public DataSourceError {
+public:
+    EmptyZone(const char* file, size_t line, const char* what) :
+        DataSourceError(file, line, what) {}
+};
+
 /// Base class for a number of exceptions that are thrown while working
 /// with zones.
 struct ZoneException : public Exception {
