@@ -425,9 +425,9 @@ public:
                                            params =
                                            isc::data::ConstElementPtr());
 
-    /// \brief Send a notification to subscribed clients
+    /// \brief Send a notification to subscribed users
     ///
-    /// Send a notification message to all clients subscribed to the given
+    /// Send a notification message to all users subscribed to the given
     /// notification group.
     ///
     /// This method does not not block.
@@ -437,7 +437,7 @@ public:
     ///
     /// \throw CCSessionError for low-level communication errors.
     /// \param notification_group This parameter (indirectly) signifies what
-    ///     clients should receive the notification. Only the clients that
+    ///     users should receive the notification. Only the users that
     ///     subscribed to notifications on the same group receive it.
     /// \param name The name of the event to notify about (for example
     ///     `config_changed`).
