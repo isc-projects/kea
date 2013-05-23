@@ -51,7 +51,7 @@ public:
 
     /// @brief Callback that will invoke shutdown method.
     static void genShutdownCallback() {
-        D2ProcessTest::process_->shutdown();
+        process_->shutdown();
     }
 
     /// @brief Callback that throws an exception.
@@ -63,6 +63,9 @@ public:
     /// supplied by management layer.
     IOServicePtr io_service_;
 };
+
+// Define the static process instance
+DProcessPtr D2ProcessTest::process_;
 
 
 /// @brief Verifies D2Process constructor behavior.
@@ -103,7 +106,7 @@ TEST_F(D2ProcessTest, command) {
     string args = "{ \"arg1\": 77 } ";
     isc::data::ElementPtr json = isc::data::Element::fromJSON(args);
     isc::data::ConstElementPtr answer = 
-                                process_->command("bogus_command", json); 
+                                    process_->command("bogus_command", json); 
     parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
