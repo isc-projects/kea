@@ -862,10 +862,30 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // assume the one or the other will always be chosen for sending data. We should
     // skip checking source port of sent address.
 
-    // try to receive data over the closed socket. Closed socket's descriptor is
-    // still being hold by IfaceMgr which will try to use it to receive data.
+    // Close the socket. Further we will test if errors are reported
+    // properly on attempt to use closed soscket.
     close(socket1);
+
+// Warning: kernel bug on FreeBSD. The following code checks that attempt to
+// read through invalid descriptor will result in exception. The reason why
+// this failure is expected is that select() function should result in EBADF
+// error when invalid descriptor is passed to it. In particular, closed socket
+// descriptor is invalid. On the following OS:
+//
+// 8.1-RELEASE FreeBSD 8.1-RELEASE #0: Mon Jul 19 02:55:53 UTC 2010
+//
+// calling select() using invalid descriptor results in timeout and eventually
+// value of 0 is returned. This has been identified and reported as a bug in
+// FreeBSD: http://www.freebsd.org/cgi/query-pr.cgi?pr=155606
+//
+// @todo: This part of the test is currently disabled on all BSD systems as it was
+// the quick fix. We need a more elegant (config-based) solution to disable
+// this check on affected systems only. The ticket has been submited for this
+// work: http://bind10.isc.org/ticket/2971
+#ifndef OS_BSD
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+#endif
+
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
