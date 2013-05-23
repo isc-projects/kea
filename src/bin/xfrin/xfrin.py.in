@@ -31,6 +31,7 @@ from isc.config.ccsession import *
 from isc.statistics import Counters
 from isc.notify import notify_out
 import isc.util.process
+from isc.util.address_formatter import AddressFormatter
 from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
 from isc.xfrin.diff import Diff
@@ -1077,7 +1078,8 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     """Retrieve the current SOA RR of the zone to be transferred.
 
     This function is essentially private to the module, but will also
-    be called from tests; no one else should use this function directly.
+    be called (or tweaked) from tests; no one else should use this
+    function directly.
 
     It will be used for various purposes in subsequent xfr protocol
     processing.   It is validly possible that the zone is currently
@@ -1100,6 +1102,11 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     We'll deprecate this API in a near future, too).
 
     """
+    # datasrc_client should never be None in production case (only tests could
+    # specify None)
+    if datasrc_client is None:
+        return None
+
     # get the zone finder.  this must be SUCCESS (not even
     # PARTIALMATCH) because we are specifying the zone origin name.
     result, finder = datasrc_client.find_zone(zone_name)
@@ -1125,6 +1132,29 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
         return None
     return soa_rrset
 
+def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
+    """Determine the initial xfr request type.
+
+    This is a dedicated subroutine of __process_xfrin.
+    """
+    if zone_soa is None:
+        # This is a kind of special case, so we log it at info level.
+        logger.info(XFRIN_INITIAL_AXFR, format_zone_str(zname, zclass),
+                     AddressFormatter(master_addr))
+        return RRType.AXFR
+    if request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED:
+        logger.debug(DBG_XFRIN_TRACE, XFRIN_INITIAL_IXFR_DISABLED,
+                     format_zone_str(zname, zclass),
+                     AddressFormatter(master_addr))
+        return RRType.AXFR
+
+    assert(request_ixfr == ZoneInfo.REQUEST_IXFR_FIRST or
+           request_ixfr == ZoneInfo.REQUEST_IXFR_ONLY)
+    logger.debug(DBG_XFRIN_TRACE, XFRIN_INITIAL_IXFR,
+                     format_zone_str(zname, zclass),
+                     AddressFormatter(master_addr))
+    return RRType.IXFR
+
 def __process_xfrin(server, zone_name, rrclass, db_file,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,
                     request_ixfr, conn_class):
@@ -1148,9 +1178,12 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
             datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
             datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
 
-        zone_soa = None
-        if datasrc_client is not None:
-            zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+        # Get the current zone SOA (if available) and determine the initial
+        # reuqest type: AXFR or IXFR.
+        zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+        request_type = __get_initial_xfr_type(zone_soa, request_ixfr,
+                                              zone_name, rrclass,
+                                              master_addrinfo[2])
 
         # Create a TCP connection for the XFR session and perform the
         # operation.
@@ -1162,10 +1195,6 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
         # attempt. In the case of connected but failed IXFR, we set it to true
         # once again.
         retry = True
-        if request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED:
-            request_type = RRType.AXFR
-        else:
-            request_type = RRType.IXFR
         while retry:
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
