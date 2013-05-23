@@ -3329,6 +3329,13 @@ class TestXfrinProcess(unittest.TestCase):
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
                        [RRType.IXFR, RRType.AXFR], ZoneInfo.REQUEST_IXFR_FIRST)
 
+    def test_ixfr_only(self):
+        """
+        The transfer fails and IXFR_ONLY is specified.  It shouldn't fall
+        back to AXFR and should report failure.
+        """
+        self.__do_test([XFRIN_FAIL], [RRType.IXFR], ZoneInfo.REQUEST_IXFR_ONLY)
+
     def test_send_loadzone(self):
         """
         Check the loadzone command is sent after successful transfer.

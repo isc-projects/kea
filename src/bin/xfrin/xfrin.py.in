@@ -1208,12 +1208,19 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
                     # IXFR failed for some reason. It might mean the server
                     # can't handle it, or we don't have the zone or we are out
                     # of sync or whatever else. So we retry with with AXFR, as
-                    # it may succeed in many such cases.
-                    retry = True
-                    request_type = RRType.AXFR
-                    logger.warn(XFRIN_XFR_TRANSFER_FALLBACK, conn.zone_str())
-                    conn.close()
-                    conn = None
+                    # it may succeed in many such cases; if "IXFR only" is
+                    # specified in request_ixfr, however, we suppress the
+                    # fallback.
+                    if request_ixfr == ZoneInfo.REQUEST_IXFR_ONLY:
+                        logger.warn(XFRIN_XFR_TRANSFER_FALLBACK_DISABLED,
+                                    conn.zone_str())
+                    else:
+                        retry = True
+                        request_type = RRType.AXFR
+                        logger.warn(XFRIN_XFR_TRANSFER_FALLBACK,
+                                    conn.zone_str())
+                        conn.close()
+                        conn = None
 
     except Exception as ex:
         # If exception happens, just remember it here so that we can re-raise
