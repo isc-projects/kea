@@ -152,12 +152,14 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("2 -1 123456789abcdef67890123456789abcdef67890");
 }
 
-TEST_F(Rdata_SSHFP_Test, copy) {
-    const generic::SSHFP rdata_sshfp2(rdata_sshfp);
+TEST_F(Rdata_SSHFP_Test, copyAndAssign) {
+    // Copy construct
+    generic::SSHFP rdata_sshfp2(rdata_sshfp);
     EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp2));
 
-    const generic::SSHFP rdata_sshfp3 = rdata_sshfp;
-    EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp3));
+    // Assignment, mainly to confirm it doesn't cause disruption.
+    rdata_sshfp2 = rdata_sshfp;
+    EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp2));
 }
 
 TEST_F(Rdata_SSHFP_Test, createFromWire) {
