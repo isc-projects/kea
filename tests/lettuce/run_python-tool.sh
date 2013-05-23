@@ -19,5 +19,5 @@
 # BIND 10 Python libraries (in case the program needs them)
 # usage example: run_python-tool.sh tools/xfr-client.py -p 5300 example.org
 
-. setup_intree_bind10.sh
+. ./setup_intree_bind10.sh
 $PYTHON_EXEC $*
