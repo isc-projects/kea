@@ -52,7 +52,7 @@
           { "item_name": "request_ixfr",
             "item_type": "string",
             "item_optional": false,
-            "item_default": "no"
+            "item_default": "yes"
           }
           ]
         }
