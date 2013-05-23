@@ -374,8 +374,9 @@ database backend (sqlite3, for example) and use it from there.
 During data source configuration, an error was found in the zone data
 when it was being loaded in to memory on the shown data source.  This
 particular zone was not loaded, but data source configuration
-continues, possibly loading other zones into memory. The specific
-error is shown in the message, and should be addressed.
+continues, possibly loading other zones into memory.  Subsequent lookups
+will treat this zone as broken.  The specific error is shown in the
+message, and should be addressed.
 
 % DATASRC_MASTER_LOAD_ERROR %1:%2: Zone '%3/%4' contains error: %5
 There's an error in the given master file. The zone won't be loaded for

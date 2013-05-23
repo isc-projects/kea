@@ -277,4 +277,14 @@ TEST_F(ZoneDataTest, minTTL) {
     zone_data_->setMinTTL(1200);
     EXPECT_EQ(RRTTL(1200), createRRTTL(zone_data_->getMinTTLData()));
 }
+
+TEST_F(ZoneDataTest, emptyData) {
+    // normally create zone data are never "empty"
+    EXPECT_FALSE(zone_data_->isEmpty());
+
+    // zone data instance created by the special create() is made "empty".
+    ZoneData* empty_data = ZoneData::create(mem_sgmt_);
+    EXPECT_TRUE(empty_data->isEmpty());
+    ZoneData::destroy(mem_sgmt_, empty_data, RRClass::IN());
+}
 }
