@@ -1,3 +1,14 @@
+618.	[func]*		marcin
+	b10-dhcp4: Added the ability for the server to respond to a directly
+        connected client which does not yet have an IP address.  On Linux, the
+        server will unicast the	response to the client's hardware address and
+        the 'yiaddr' (the client's new IP address). Sending a response to the
+        unicast address prevents other (not interested) hosts from receiving
+        the server response. This capability is not yet implemented on non-Linux
+        Operating Systems where, in all cases, the server responds to the
+        broadcast address. The logic conforms to section 4.1 of RFC 2131.
+	(Trac #2902, git c2d40e3d425f1e51647be6a717c4a97d7ca3c29c)
+
 617.	[bug]		marcin
 	b10-dhcp4: Fixed a bug whereby the domain-name option was encoded
 	as FQDN (using technique described in RFC1035) instead of a string.
