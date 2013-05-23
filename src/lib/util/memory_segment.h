@@ -325,12 +325,10 @@ private:
     /// an underscore ('_').
     static void validateName(const char* name) {
         if (!name) {
-            isc_throw(InvalidParameter,
-                      "NULL is invalid for a name.");
+            isc_throw(InvalidParameter, "NULL is invalid for a name.");
         }
         if (*name == '\0') {
-            isc_throw(InvalidParameter,
-                      "Empty names are invalid.");
+            isc_throw(InvalidParameter, "Empty names are invalid.");
         } else if (*name == '_') {
             isc_throw(InvalidParameter,
                       "Names beginning with '_' are reserved for "
