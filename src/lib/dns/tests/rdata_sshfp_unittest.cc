@@ -155,6 +155,9 @@ TEST_F(Rdata_SSHFP_Test, badText) {
 TEST_F(Rdata_SSHFP_Test, copy) {
     const generic::SSHFP rdata_sshfp2(rdata_sshfp);
     EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp2));
+
+    const generic::SSHFP rdata_sshfp3 = rdata_sshfp;
+    EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp3));
 }
 
 TEST_F(Rdata_SSHFP_Test, createFromWire) {
