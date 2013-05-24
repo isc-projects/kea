@@ -1,4 +1,13 @@
-615.	[bug]		jinmei
+620.	[bug]		jinmei
+	b10-auth now returns SERVFAIL to queries for a zone that is
+	configured to be loaded in-memory but isn't due to load time
+	errors (missing zone file or errors in the zone file, etc).
+	Such zones were previously treated as non existent and would
+	result in REFUSED or unintentional match against less specific
+	zones.  The revised behavior is also compatible with BIND 9.
+	(Trac #2905, git 56ee9810fdfb5f86bd6948e6bf26545ac714edd8)
+
+619.	[bug]		jinmei
 	b10-xfrout now uses blocking send for xfr response messages
 	to prevent abrupt termination of the stream due to a slower
 	client or narrower network bandwidth.
