@@ -27,25 +27,25 @@ namespace isc {
 namespace d2 {
 
 /// @brief Exception thrown if the process encountered an operational error.
-class DProcessError : public isc::Exception {
+class DProcessBaseError : public isc::Exception {
 public:
-    DProcessError(const char* file, size_t line, const char* what) :
+    DProcessBaseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Application Process Interface
 ///
-/// DProcess is an abstract class represents the primary "application" level  
-/// object in a "managed" asyncrhonous application.  It provides a uniform 
+/// DProcessBase is an abstract class represents the primary "application" 
+/// level object in a "managed" asynchronous application. It provides a uniform 
 /// interface such that a managing layer can construct, intialize, and start
 /// the application's event loop.  The event processing is centered around the
 /// use of isc::asiolink::io_service. The io_service is shared between the 
-/// the managing layer and the DProcess.  This allows management layer IO 
+/// the managing layer and the DProcessBase.  This allows management layer IO 
 /// such as directives to be sensed and handled, as well as processing IO 
-/// activity specific to the application.  In terms fo management layer IO,
+/// activity specific to the application.  In terms of management layer IO,
 /// there are methods shutdown, configuration updates, and commands unique
 /// to the application.  
-class DProcess {
+class DProcessBase {
 public:
     /// @brief Constructor
     ///
@@ -54,12 +54,12 @@ public:
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
-    /// @throw DProcessError is io_service is NULL. 
-    DProcess(const char* name, IOServicePtr io_service) : name_(name),
-        io_service_(io_service), shut_down_(false) {
+    /// @throw DProcessBaseError is io_service is NULL. 
+    DProcessBase(const char* name, IOServicePtr io_service) : name_(name),
+        io_service_(io_service), shut_down_flag(false) {
 
         if (!io_service_) {
-            isc_throw (DProcessError, "IO Service cannot be null");
+            isc_throw (DProcessBaseError, "IO Service cannot be null");
         }
     };
 
@@ -112,9 +112,25 @@ public:
             const std::string& command, isc::data::ConstElementPtr args) = 0; 
 
     /// @brief Destructor 
-    virtual ~DProcess(){};
+    virtual ~DProcessBase(){};
 
-protected:
+    bool shouldShutDown() { 
+        return shut_down_flag; 
+    }
+
+    void setShutdownFlag(bool value) { 
+        shut_down_flag = value; 
+    }
+
+    const std::string& getName() {
+        return (name_);
+    }
+
+    IOServicePtr& getIoService() {
+        return (io_service_);
+    }
+
+private:
     /// @brief Text label for the process. Generally used in log statements, 
     /// but otherwise can be arbitrary. 
     std::string name_;
@@ -123,11 +139,11 @@ protected:
     IOServicePtr io_service_;
 
     /// @brief Boolean flag set when shutdown has been requested.
-    bool shut_down_;
+    bool shut_down_flag;
 };
 
-/// @brief Defines a shared pointer to DProcess.
-typedef boost::shared_ptr<DProcess> DProcessPtr;
+/// @brief Defines a shared pointer to DProcessBase.
+typedef boost::shared_ptr<DProcessBase> DProcessBasePtr;
 
 }; // namespace isc::d2 
 }; // namespace isc
