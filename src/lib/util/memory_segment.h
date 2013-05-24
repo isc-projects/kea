@@ -326,8 +326,7 @@ private:
     static void validateName(const char* name) {
         if (!name) {
             isc_throw(InvalidParameter, "NULL is invalid for a name.");
-        }
-        if (*name == '\0') {
+        } else if (*name == '\0') {
             isc_throw(InvalidParameter, "Empty names are invalid.");
         } else if (*name == '_') {
             isc_throw(InvalidParameter,
