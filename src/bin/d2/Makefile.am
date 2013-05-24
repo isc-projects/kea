@@ -48,7 +48,7 @@ pkglibexec_PROGRAMS = b10-d2
 
 b10_d2_SOURCES  = main.cc
 b10_d2_SOURCES += d2_log.cc d2_log.h
-b10_d2_SOURCES += d2_process.h 
+b10_d2_SOURCES += d_process.h 
 b10_d2_SOURCES += d2_process.cc d2_process.h
 
 nodist_b10_d2_SOURCES = d2_messages.h d2_messages.cc
