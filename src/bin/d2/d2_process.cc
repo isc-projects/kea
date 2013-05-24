@@ -22,7 +22,7 @@ namespace isc {
 namespace d2 {
 
 D2Process::D2Process(const char* name, IOServicePtr io_service) 
-    : DProcess(name, io_service) {
+    : DProcessBase(name, io_service) {
 };
 
 void
@@ -38,9 +38,10 @@ D2Process::run() {
     // or the call to run will continue to block, and shutdown will not
     // occur.
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_ENTER);
-    while (!shut_down_) {
+    IOServicePtr& io_service = getIoService();
+    while (!shouldShutDown()) {
         try {
-            io_service_->run_one();
+            io_service->run_one();
         } catch (const std::exception& ex) {
             LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
             return (EXIT_FAILURE); 
@@ -54,7 +55,7 @@ D2Process::run() {
 int 
 D2Process::shutdown() {
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_SHUTDOWN);
-    shut_down_ = true;
+    setShutdownFlag(true);
     return (0);
 }    
 

@@ -35,7 +35,7 @@ class D2ProcessTest : public ::testing::Test {
 public:
 
     /// @brief Static instance accessible via test callbacks.
-    static DProcessPtr process_;
+    static DProcessBasePtr process_;
 
     /// @brief Constructor
     D2ProcessTest() {
@@ -56,7 +56,7 @@ public:
 
     /// @brief Callback that throws an exception.
     static void genFatalErrorCallback() {
-        isc_throw (DProcessError, "simulated fatal error");
+        isc_throw (DProcessBaseError, "simulated fatal error");
     }
 
     /// @brief IOService for event processing. Fills in for IOservice
@@ -65,7 +65,7 @@ public:
 };
 
 // Define the static process instance
-DProcessPtr D2ProcessTest::process_;
+DProcessBasePtr D2ProcessTest::process_;
 
 
 /// @brief Verifies D2Process constructor behavior.
@@ -75,7 +75,7 @@ TEST(D2Process, construction) {
     // Verify that the constructor will fail if given an empty
     // io service.
     IOServicePtr lcl_io_service;
-    EXPECT_THROW (D2Process("TestProcess", lcl_io_service), DProcessError);
+    EXPECT_THROW (D2Process("TestProcess", lcl_io_service), DProcessBaseError);
 
     // Verify that the constructor succeeds with a valid io_service
     lcl_io_service.reset(new isc::asiolink::IOService());
@@ -115,16 +115,16 @@ TEST_F(D2ProcessTest, command) {
 /// the run method to exit gracefully with a return value of EXIT_SUCCESS.
 TEST_F(D2ProcessTest, normalShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
-    // shutdown invocation. 
+    // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     isc::asiolink::IntervalTimer timer(*io_service_);
-    timer.setup(genShutdownCallback, 2*1000);
+    timer.setup(genShutdownCallback, 2 * 1000);
 
     // Record start time, and invoke run().
-    ptime start = second_clock::universal_time();
+    ptime start = microsec_clock::universal_time();
     int rcode = process_->run();
 
     // Record stop time.
-    ptime stop = second_clock::universal_time();
+    ptime stop = microsec_clock::universal_time();
 
     // Verify normal shutdown status.
     EXPECT_EQ(EXIT_SUCCESS, rcode);
@@ -133,23 +133,24 @@ TEST_F(D2ProcessTest, normalShutdown) {
     // timer duration.  This demonstrates that the shutdown was driven
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
-    EXPECT_EQ(2L, elapsed.seconds());
+    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 && 
+                elapsed.total_milliseconds() <= 2100);
 }
 
 /// @brief Verifies that an "uncaught" exception thrown during event loop 
 /// processing is treated as a fatal error.
 TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
-    // the exception.
+    // the exception.  (Note IntervalTimer setup is in milliseconds).
     isc::asiolink::IntervalTimer timer(*io_service_);
-    timer.setup(genFatalErrorCallback, 2*1000);
+    timer.setup(genFatalErrorCallback, 2 * 1000);
 
     // Record start time, and invoke run().
-    ptime start = second_clock::universal_time();
+    ptime start = microsec_clock::universal_time();
     int rcode = process_->run();
 
     // Record stop time.
-    ptime stop = second_clock::universal_time();
+    ptime stop = microsec_clock::universal_time();
 
     // Verify failure status.
     EXPECT_EQ(EXIT_FAILURE, rcode);
@@ -158,7 +159,8 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // timer duration.  This demonstrates that the anomaly occurred
     // during io callback processing. 
     time_duration elapsed = stop - start;
-    EXPECT_EQ(2L, elapsed.seconds());
+    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 && 
+                elapsed.total_milliseconds() <= 2100);
 }
 
 } // end of anonymous namespace

@@ -25,10 +25,10 @@ namespace d2 {
 /// D2Process provides the top level application logic for DHCP-driven DDNS 
 /// update processing.  It provides the asynchronous event processing required 
 /// to receive DNS mapping change requests and carry them out.   
-/// It implements the DProcess interface, which structures it such that it
+/// It implements the DProcessBase interface, which structures it such that it
 /// is a managed "application", controlled by a management layer. 
 
-class D2Process : public DProcess {
+class D2Process : public DProcessBase {
 public:
     /// @brief Constructor
     ///
@@ -37,7 +37,7 @@ public:
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
-    /// @throw DProcessError is io_service is NULL. 
+    /// @throw DProcessBaseError is io_service is NULL. 
     D2Process(const char* name, IOServicePtr io_service);
 
     /// @brief Will be used after instantiation to perform initialization 

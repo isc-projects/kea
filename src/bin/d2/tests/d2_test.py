@@ -161,7 +161,7 @@ class TestD2Daemon(unittest.TestCase):
         # soon enough to catch it.
         (returncode, output, error) = self.runCommand(["../b10-d2", "-s"])
         output_text = str(output) + str(error)
-        self.assertEqual(output_text.count("D2_STARTING"), 1)
+        self.assertEqual(output_text.count("D2CTL_STARTING"), 1)
 
 if __name__ == '__main__':
     unittest.main()

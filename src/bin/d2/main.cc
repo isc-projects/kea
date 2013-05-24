@@ -82,16 +82,14 @@ main(int argc, char* argv[]) {
                          ((verbose_mode && stand_alone)
                            ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
-    LOG_INFO(d2_logger, D2_STARTING);
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2_START_INFO)
-              .arg(getpid()).arg(verbose_mode ? "yes" : "no")
-              .arg(stand_alone ? "yes" : "no" );
+
+    LOG_INFO(d2_logger, D2CTL_STARTING);
 
     // For now we will sleep awhile to simulate doing something.
     // Without at least a sleep, the process will start, exit and be
     // restarted by Bind10/Init endlessley in a rapid succession.
     sleep(1000);
-    LOG_INFO(d2_logger, D2_SHUTDOWN);
+    LOG_INFO(d2_logger, D2CTL_STOPPING);
     return (EXIT_SUCCESS);
 }
 
