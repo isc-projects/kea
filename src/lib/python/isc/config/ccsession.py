@@ -539,6 +539,42 @@ class ModuleCCSession(ConfigData):
             raise RPCError(code, value)
         return value
 
+    def notify(self, notification_group, event_name, params=None):
+        """
+        Send a notification to subscribed users.
+
+        Send a notification message to all users subscribed to the given
+        notification group.
+
+        This method does not block.
+
+        See docs/design/ipc-high.txt for details about notifications
+        and the format of messages sent.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        Params:
+        - notification_group (string): This parameter (indirectly) signifies
+          what users should receive the notification. Only users that
+          subscribed to notifications on the same group receive it.
+        - event_name (string): The name of the event to notify about (for
+          example `new_group_member`).
+        - params: Other parameters that describe the event. This might be, for
+          example, the ID of the new member and the name of the group. This can
+          be any data that can be sent over the isc.cc.Session, but it is
+          common for it to be dict.
+        Returns: Nothing
+        """
+        notification = [event_name]
+        if params is not None:
+            notification.append(params)
+        self._session.group_sendmsg({CC_PAYLOAD_NOTIFICATION: notification},
+                                    CC_GROUP_NOTIFICATION_PREFIX +
+                                    notification_group,
+                                    instance=CC_INSTANCE_WILDCARD,
+                                    to=CC_TO_WILDCARD,
+                                    want_answer=False)
+
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
        specific functions for getting, displaying, and sending
