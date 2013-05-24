@@ -331,6 +331,8 @@ MemorySegmentMapped::allMemoryDeallocated() const {
     try {
         impl_->freeReservedMemory();
         const bool result = impl_->base_sgmt_->all_memory_deallocated();
+        // reserveMemory() should succeed now as the memory was already
+        // allocated.
         impl_->reserveMemory();
         return (result);
     } catch (...) {
