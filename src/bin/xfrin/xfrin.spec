@@ -61,7 +61,36 @@
     "commands": [
      {
         "command_name": "retransfer",
-        "command_description": "retransfer a single zone without checking zone serial number",
+        "command_description": "retransfer a single zone without checking zone serial number, always using AXFR",
+        "command_args": [ {
+            "item_name": "zone_name",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+          {
+            "item_name": "zone_class",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "IN"
+          },
+          {
+            "item_name": "master",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+          },
+          {
+            "item_name": "port",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": 53
+          }
+        ]
+      },
+     {
+        "command_name": "refresh",
+        "command_description": "transfer a single zone with checking zone serial number and honoring the request_ixfr policy",
         "command_args": [ {
             "item_name": "zone_name",
             "item_type": "string",

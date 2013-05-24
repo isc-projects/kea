@@ -1304,6 +1304,12 @@ class ZoneInfo:
     REQUEST_IXFR_ONLY = 1       # request_ixfr=only, use IXFR only
     REQUEST_IXFR_DISABLED = 2   # request_ixfr=no, AXFR-only
 
+    # Map from configuration values for request_ixfr to internal values
+    # This is a constant; don't modify.
+    REQUEST_IXFR_CFG_TO_VAL = { 'yes': REQUEST_IXFR_FIRST,
+                                'only': REQUEST_IXFR_ONLY,
+                                'no': REQUEST_IXFR_DISABLED }
+
     def __init__(self, config_data, module_cc):
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec. Module_cc is
@@ -1426,11 +1432,8 @@ class ZoneInfo:
         if request_ixfr is None:
             request_ixfr = \
                 self._module_cc.get_default_value("zones/request_ixfr")
-        cfg_to_val = { 'yes': self.REQUEST_IXFR_FIRST,
-                       'only': self.REQUEST_IXFR_ONLY,
-                       'no': self.REQUEST_IXFR_DISABLED }
         try:
-            self.__request_ixfr = cfg_to_val[request_ixfr]
+            self.__request_ixfr = self.REQUEST_IXFR_CFG_TO_VAL[request_ixfr]
         except KeyError:
             raise XfrinZoneInfoException('invalid value for request_ixfr: ' +
                                          request_ixfr)
@@ -1633,7 +1636,25 @@ class Xfrin:
         # Notified address is okay
         return None
 
-    def __handle_xfr_command(self, args, arg_db, check_soa, addr_validator):
+    def __get_running_request_ixfr(self, arg_request_ixfr, zone_info):
+        """Determine the request_ixfr policy for a specific transfer.
+
+        This is a dedicated subroutine of __handle_xfr_command.
+
+        """
+        # If explicitly specified, use it.
+        if arg_request_ixfr is not None:
+            return arg_request_ixfr
+        # Otherwise, if zone info is known, use its value.
+        if zone_info is not None:
+            return zone_info.request_ixfr
+        # Otherwise, use the default value for ZoneInfo
+        request_ixfr_def = \
+            self._module_cc.get_default_value("zones/request_ixfr")
+        return ZoneInfo.REQUEST_IXFR_CFG_TO_VAL[request_ixfr_def]
+
+    def __handle_xfr_command(self, args, arg_db, check_soa, addr_validator,
+                             request_ixfr):
         """Common subroutine for handling transfer commands.
 
         This helper method unifies both cases of transfer command from
@@ -1657,15 +1678,13 @@ class Xfrin:
         (zone_name, rrclass) = self._parse_zone_name_and_class(args)
         master_addr = self._parse_master_and_port(args, zone_name, rrclass)
         zone_info = self._get_zone_info(zone_name, rrclass)
-        request_ixfr = ZoneInfo.REQUEST_IXFR_DISABLED
-        if zone_info is not None:
-            request_ixfr = zone_info.request_ixfr
         tsig_key = None if zone_info is None else zone_info.get_tsig_key()
         db_file = arg_db or self._get_db_file()
         zone_str = format_zone_str(zone_name, rrclass) # for logging
         answer = addr_validator(master_addr, zone_str, zone_info)
         if answer is not None:
             return answer
+        request_ixfr = self.__get_running_request_ixfr(request_ixfr, zone_info)
         ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
                                tsig_key, request_ixfr, check_soa)
         return create_answer(ret[0], ret[1])
@@ -1683,16 +1702,20 @@ class Xfrin:
                 addr_validator = \
                     lambda x, y, z: self.__validate_notify_addr(x, y, z)
                 answer = self.__handle_xfr_command(args, None, True,
-                                                   addr_validator)
-            elif command == 'retransfer' or command == 'refresh':
-                # retransfer/refresh from cmdctl (sent by bindctl).
+                                                   addr_validator, None)
+            elif command == 'retransfer':
+                # retransfer from cmdctl (sent by bindctl).
                 # No need for address validation, db_file may be specified
-                # with the command, and whether to do SOA check depends on
-                # type of command.
-                check_soa = False if command == 'retransfer' else True
-                answer = self.__handle_xfr_command(args, args.get('db_file'),
-                                                   check_soa,
-                                                   lambda x, y, z: None)
+                # with the command, and skip SOA check, always use AXFR.
+                answer = self.__handle_xfr_command(
+                    args, args.get('db_file'), False, lambda x, y, z: None,
+                    ZoneInfo.REQUEST_IXFR_DISABLED)
+            elif command == 'refresh':
+                # retransfer from cmdctl (sent by bindctl).  similar to
+                # retransfer, but do SOA check, and honor request_ixfr config.
+                answer = self.__handle_xfr_command(
+                    args, args.get('db_file'), True, lambda x, y, z: None,
+                    None)
             # return statistics data to the stats daemon
             elif command == "getstats":
                 # The log level is here set to debug in order to avoid

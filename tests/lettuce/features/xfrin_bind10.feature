@@ -182,7 +182,8 @@ Feature: Xfrin
     example.    3600    IN      SOA     ns1.example. hostmaster.example. 94 3600 900 7200 300
     """
 
-    When I send bind10 the command Xfrin retransfer example. IN ::1 47807
+    # To invoke IXFR we need to use refresh command
+    When I send bind10 the command Xfrin refresh example. IN ::1 47807
     Then wait for new bind10 stderr message XFRIN_GOT_INCREMENTAL_RESP
     Then wait for new bind10 stderr message XFRIN_IXFR_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     # This can't be 'wait for new'

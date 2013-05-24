@@ -2654,8 +2654,8 @@ class TestXfrin(unittest.TestCase):
                          self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(TEST_MASTER_PORT),
                          self.xfr.xfrin_started_master_port)
-        # By default we use AXFR (for now)
-        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+        # By default we use IXFR (with AXFR fallback)
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
                          self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_notify(self):
@@ -2928,7 +2928,7 @@ class TestXfrin(unittest.TestCase):
 
     def common_ixfr_setup(self, xfr_mode, request_ixfr, tsig_key_str=None):
         # This helper method explicitly sets up a zone configuration with
-        # use_ixfr, and invokes either retransfer or refresh.
+        # request_ixfr, and invokes either retransfer or refresh.
         # Shared by some of the following test cases.
         config = {'zones': [
                 {'name': 'example.com.',
@@ -2940,15 +2940,17 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 0)
 
     def test_command_handler_retransfer_ixfr_enabled(self):
-        # If IXFR is explicitly enabled in config, IXFR will be used
+        # retransfer always uses AXFR (disabling IXFR), regardless of
+        # request_ixfr value
         self.common_ixfr_setup('retransfer', 'yes')
-        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
                          self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_ixfr_enabled(self):
-        # Same for refresh
-        self.common_ixfr_setup('refresh', 'yes')
-        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+        # for refresh, it honors zone configuration if defined (the default
+        # case is covered in test_command_handler_refresh
+        self.common_ixfr_setup('refresh', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
                          self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_with_tsig(self):
