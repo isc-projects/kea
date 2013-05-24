@@ -199,16 +199,21 @@ class TestUtility(unittest.TestCase):
         def is_blocking(fd):
             return (fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_NONBLOCK) == 0
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM,
-                           socket.IPPROTO_TCP) as sock:
-            # By default socket is made blocking
-            self.assertTrue(is_blocking(sock.fileno()))
-            # make_blocking(False) makes it non blocking
-            xfrout.make_blocking(sock.fileno(), False)
-            self.assertFalse(is_blocking(sock.fileno()))
-            # make_blocking(True) makes it blocking again
-            xfrout.make_blocking(sock.fileno(), True)
-            self.assertTrue(is_blocking(sock.fileno()))
+        # socket.socket doesn't support the 'with' statement before Python
+        # 3.2, so we'll close it ourselves (while it's not completely exception
+        # safe, it should be acceptable for a test case)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
+                             socket.IPPROTO_TCP)
+        # By default socket is made blocking
+        self.assertTrue(is_blocking(sock.fileno()))
+        # make_blocking(False) makes it non blocking
+        xfrout.make_blocking(sock.fileno(), False)
+        self.assertFalse(is_blocking(sock.fileno()))
+        # make_blocking(True) makes it blocking again
+        xfrout.make_blocking(sock.fileno(), True)
+        self.assertTrue(is_blocking(sock.fileno()))
+
+        sock.close()
 
 class TestXfroutSessionBase(unittest.TestCase):
     '''Base class for tests related to xfrout sessions
