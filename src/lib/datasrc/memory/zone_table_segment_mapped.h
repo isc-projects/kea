@@ -124,7 +124,7 @@ private:
                                                   bool create);
     isc::util::MemorySegmentMapped* openReadOnly(const std::string& filename);
 
-    template<typename T> T* getHeaderHelper() const;
+    template<typename T> T* getHeaderHelper(bool initial) const;
 
 private:
     std::string impl_type_;
@@ -134,6 +134,7 @@ private:
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
+    ZoneTableHeader* cached_ro_header_;
 };
 
 } // namespace memory
