@@ -286,6 +286,12 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     current_filename_ = filename;
     current_mode_ = mode;
     mem_sgmt_.reset(segment.release());
+
+    if (!isWritable()) {
+        // Given what we setup above, the following must not throw at
+        // this point. If it does, all bets are off.
+        cached_ro_header_ = getHeaderHelper<ZoneTableHeader>(true);
+    }
 }
 
 void
@@ -319,10 +325,16 @@ ZoneTableSegmentMapped::clear() {
 
 template<typename T>
 T*
-ZoneTableSegmentMapped::getHeaderHelper() const {
+ZoneTableSegmentMapped::getHeaderHelper(bool initial) const {
     if (!isUsable()) {
         isc_throw(isc::InvalidOperation,
                   "getHeader() called without calling reset() first");
+    }
+
+    if (!isWritable() && !initial) {
+        // The header address would not have changed since reset() for
+        // READ_ONLY segments.
+        return (cached_ro_header_);
     }
 
     const MemorySegment::NamedAddressResult result =
@@ -340,12 +352,12 @@ ZoneTableSegmentMapped::getHeaderHelper() const {
 
 ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() {
-    return (*getHeaderHelper<ZoneTableHeader>());
+    return (*getHeaderHelper<ZoneTableHeader>(false));
 }
 
 const ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() const {
-    return (*getHeaderHelper<const ZoneTableHeader>());
+    return (*getHeaderHelper<const ZoneTableHeader>(false));
 }
 
 MemorySegment&
