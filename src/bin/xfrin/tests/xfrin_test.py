@@ -2739,12 +2739,6 @@ class TestXfrin(unittest.TestCase):
                                  Name(zone_config['tsig_key']).to_text())
             else:
                 self.assertIsNone(zone_info.tsig_key_name)
-            if 'use_ixfr' in zone_config and\
-               zone_config.get('use_ixfr'):
-                self.assertTrue(zone_info.use_ixfr)
-            else:
-                # if not set, should default to False
-                self.assertFalse(zone_info.use_ixfr)
             if ('request_ixfr' in zone_config and
                 zone_config.get('request_ixfr')):
                 cfg_val = zone_config.get('request_ixfr')
@@ -2925,6 +2919,17 @@ class TestXfrin(unittest.TestCase):
                  ]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self._check_zones_config(config)
+
+    def test_config_handler_use_ixfr(self):
+        # use_ixfr was deprecated and explicitly rejected for now.
+        config = { 'zones': [
+                   { 'name': 'test.example.',
+                    'master_addr': '192.0.2.1',
+                    'master_port': 53,
+                     'use_ixfr': True
+                   }
+                 ]}
+        self.assertEqual(self.xfr.config_handler(config)['result'][0], 1)
 
     def common_ixfr_setup(self, xfr_mode, request_ixfr, tsig_key_str=None):
         # This helper method explicitly sets up a zone configuration with
