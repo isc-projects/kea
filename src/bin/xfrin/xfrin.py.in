@@ -1314,6 +1314,11 @@ class ZoneInfo:
         """Creates a zone_info with the config data element as
            specified by the 'zones' list in xfrin.spec. Module_cc is
            needed to get the defaults from the specification"""
+        # Handle deprecated config parameter explicitly for the moment.
+        if config_data.get('use_ixfr') is not None:
+            raise XfrinZoneInfoException('use_ixfr was deprecated.' +
+                                         'use rquest_ixfr')
+
         self._module_cc = module_cc
         self.set_name(config_data.get('name'))
         self.set_master_addr(config_data.get('master_addr'))
@@ -1321,7 +1326,6 @@ class ZoneInfo:
         self.set_master_port(config_data.get('master_port'))
         self.set_zone_class(config_data.get('class'))
         self.set_tsig_key_name(config_data.get('tsig_key'))
-        self.set_use_ixfr(config_data.get('use_ixfr'))
         self.set_request_ixfr(config_data.get('request_ixfr'))
 
     @property
@@ -1418,15 +1422,6 @@ class ZoneInfo:
                                          self.tsig_key_name.to_text())
         else:
             return key
-
-    def set_use_ixfr(self, use_ixfr):
-        """Set use_ixfr. If set to True, it will use
-           IXFR for incoming transfers. If set to False, it will use AXFR."""
-        if use_ixfr is None:
-            self.use_ixfr = \
-                self._module_cc.get_default_value("zones/use_ixfr")
-        else:
-            self.use_ixfr = use_ixfr
 
     def set_request_ixfr(self, request_ixfr):
         if request_ixfr is None:
