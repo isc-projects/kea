@@ -181,13 +181,13 @@ public:
             dsrc_info.container_,
             cache_conf, rrclass_, dsrc_info.name_);
 
-        const ConstElementPtr config_ztable_segment_(
-            Element::fromJSON("{\"mapped-file\": \"" +
-                              getMappedFilename(index) +
-                              "\"}"));
-
         // Load the data into the zone table.
         if (enabled) {
+            const ConstElementPtr config_ztable_segment_(
+                Element::fromJSON("{\"mapped-file\": \"" +
+                                  getMappedFilename(index) +
+                                  "\"}"));
+
             list_->resetMemorySegment(dsrc_info.name_,
                                       memory::ZoneTableSegment::CREATE,
                                       config_ztable_segment_);
