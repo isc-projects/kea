@@ -255,7 +255,7 @@ public:
     ConfigurableClientList::CacheStatus doReload(
         const Name& origin, const string& datasrc_name = "");
     void accessorIterate(boost::shared_ptr<const ZoneTableAccessor>accessor,
-        int numZones);
+        int numZones, const string& zoneName);
 
     const RRClass rrclass_;
     shared_ptr<TestedList> list_;
@@ -1132,13 +1132,24 @@ TEST_F(ListTest, reloadByDataSourceName) {
 
 void
 ListTest::accessorIterate(boost::shared_ptr<const ZoneTableAccessor>accessor,
-                          int numZones)
+                          int numZones, const string& zoneName="")
 {
     // Confirm basic iterator behavior.
     ZoneTableAccessor::IteratorPtr it = accessor->getIterator();
     ASSERT_TRUE(it);
-    for (int i = 0; i < numZones; ++i) {
-        it->next();
+    if (numZones > 0) {
+        EXPECT_FALSE(it->isLast());
+        EXPECT_EQ(0, it->getCurrent().index);
+        // Iterator does not guarantee ordering, so we look for the target
+        // name anywhere in the table.
+        bool found = false;
+        for (int i = 0; i < numZones; ++i) {
+            if (Name(zoneName) == it->getCurrent().origin) {
+                found = true;
+            }
+            it->next();
+        }
+        EXPECT_TRUE(found);
     }
     EXPECT_TRUE(it->isLast());
 }
@@ -1163,7 +1174,7 @@ TEST_F(ListTest, zoneTableAccessor) {
     list_->configure(config_elem_zones_, true);
     EXPECT_THROW(list_->getZoneTableAccessor("", false), isc::NotImplemented);
     EXPECT_THROW(list_->getZoneTableAccessor("type1", false),
-		 isc::NotImplemented);                 
+                 isc::NotImplemented);
 
     const ConstElementPtr elem2(Element::fromJSON("["
         "{"
@@ -1197,11 +1208,11 @@ TEST_F(ListTest, zoneTableAccessor) {
 
     // return first enabled datasrc
     z = list_->getZoneTableAccessor("", true);
-    accessorIterate(z, 1);
+    accessorIterate(z, 1, "example.com");
 
     // search by name
     z = list_->getZoneTableAccessor("type3", true);
-    accessorIterate(z, 2);
+    accessorIterate(z, 2, "example.net");
 }
 
 // Check the status holds data
