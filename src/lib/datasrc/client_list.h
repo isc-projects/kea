@@ -493,7 +493,7 @@ public:
     /// true.
     /// \throw NotImplemented if \c use_cache is false.
     /// \return A pointer to the accessor, or NULL if the requested data
-    /// source is not found or has its cache disabled.
+    /// source is not found.
     boost::shared_ptr<const ZoneTableAccessor>
     getZoneTableAccessor(const std::string& datasrc_name,
                          bool use_cache) const;
