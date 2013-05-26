@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include "memory/zone_table_segment.h"
+#include <datasrc/zone_table_accessor.h>
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -279,8 +280,8 @@ typedef boost::shared_ptr<ClientList> ClientListPtr;
 /// \brief Shared const pointer to the list.
 typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 
-/// \Concrete implementation of the ClientList, which is constructed based on
-///     configuration.
+/// \brief Concrete implementation of the ClientList, which is constructed
+/// based on configuration.
 ///
 /// This is the implementation which is expected to be used in the servers.
 /// However, it is expected most of the code will use it as the ClientList,
@@ -481,6 +482,22 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \note At present, the only concrete implementation of
+    /// ZoneTableAccessor is ZoneTableAccessorCache, so \c use_cache must be
+    /// true.
+    /// \throw NotImplemented if \c use_cache is false.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found or has its cache disabled.
+    boost::shared_ptr<const ZoneTableAccessor>
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const;
+
 private:
     struct MutableResult;
     /// \brief Internal implementation of find.
