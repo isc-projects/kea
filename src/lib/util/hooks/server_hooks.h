@@ -65,7 +65,7 @@ public:
     ///         fails in some way.
     ServerHooks();
 
-    /// @brief Register a Hook
+    /// @brief Register a hook
     ///
     /// Registers a hook and returns the hook index.
     ///
@@ -78,7 +78,7 @@ public:
     ///         registered.
     int registerHook(const std::string& name);
 
-    /// @brief Get Hook Index
+    /// @brief Get hook index
     ///
     /// Returns the index of a hook.
     ///
@@ -88,7 +88,7 @@ public:
     ///         -1 is returned if no hook of the given name is found.
     int getIndex(const std::string& name) const;
 
-    /// @brief Return Number of Hooks
+    /// @brief Return number of hooks
     ///
     /// Returns the total number of hooks registered.
     ///
@@ -97,7 +97,7 @@ public:
         return (hooks_.size());
     }
 
-    /// @brief Hook Names
+    /// @brief Get hook names
     ///
     /// Return list of hooks registered in the object.
     ///
