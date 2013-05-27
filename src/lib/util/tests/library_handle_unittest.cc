@@ -444,5 +444,23 @@ TEST_F(LibraryHandleTest, DeregisterAll) {
     EXPECT_FALSE(handle.calloutsPresent(getServerHooks()->getIndex("alpha")));
 }
 
+// Add checks that invalid names etc. all throw.  With the base hooks added
+// by the constructor, there are five valid hooks, with valid indexes 0 to 4.
+
+TEST_F(LibraryHandleTest, InvalidNameAndIndex) {
+    LibraryHandle handle(getServerHooks(), 1);
+
+    EXPECT_THROW(handle.registerCallout("omega", one), NoSuchHook);
+    EXPECT_THROW(handle.deregisterCallout("omega", one), NoSuchHook);
+    EXPECT_THROW(handle.deregisterAll("omega"), NoSuchHook);
+
+    EXPECT_THROW(static_cast<void>(handle.calloutsPresent(-1)), NoSuchHook);
+    EXPECT_THROW(static_cast<void>(handle.calloutsPresent(5)), NoSuchHook);
+
+    CalloutHandle dummy;
+    EXPECT_THROW(static_cast<void>(handle.callCallouts(-1, dummy)), NoSuchHook);
+    EXPECT_THROW(static_cast<void>(handle.callCallouts(10, dummy)), NoSuchHook);
+}
+
 
 } // Anonymous namespace
