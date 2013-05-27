@@ -218,6 +218,30 @@ TEST_F(CalloutHandleTest, PointerTypes) {
                  boost::bad_any_cast);
 }
 
+// Check that we can get the names of the arguments.
+
+TEST_F(CalloutHandleTest, ContextItemNames) {
+    CalloutHandle handle(getHookManager());
+
+    vector<string> expected_names;
+    int value = 42;
+
+    expected_names.push_back("faith");
+    handle.setArgument("faith", value++);
+    expected_names.push_back("hope");
+    handle.setArgument("hope", value++);
+    expected_names.push_back("charity");
+    handle.setArgument("charity", value++);
+
+    // Get the names and check against the expected names.  We'll sort
+    // both arrays to simplify the checking.
+    vector<string> actual_names = handle.getArgumentNames();
+
+    sort(actual_names.begin(), actual_names.end());
+    sort(expected_names.begin(), expected_names.end());
+    EXPECT_TRUE(expected_names == actual_names);
+}
+
 // Test that we can delete and argument.
 
 TEST_F(CalloutHandleTest, DeleteArgument) {

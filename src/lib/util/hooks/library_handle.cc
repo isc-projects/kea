@@ -28,9 +28,8 @@ namespace util {
 void
 LibraryHandle::checkHookIndex(int index) const {
     if ((index < 0) || (index >= hook_vector_.size())) {
-        isc_throw(NoSuchHook, "unable to call callout for hook index " <<
-                  index << ": index is invalid for the size of the hook "
-                  "vector (" << hook_vector_.size() << ")");
+        isc_throw(NoSuchHook, "hook index " << index << " is invalid for the "
+                  " size of the hook vector (" << hook_vector_.size() << ")");
     }
 }
 
@@ -135,6 +134,20 @@ LibraryHandle::deregisterAll(const std::string& name) {
 
     // Get rid of everything.
     hook_vector_[index].clear();
+}
+
+// return the name of all context items.
+
+vector<string>
+LibraryHandle::getContextNames() const {
+
+    vector<string> names;
+    ContextCollection::const_iterator i;
+    for (i = context_.begin(); i != context_.end(); ++i) {
+        names.push_back(i->first);
+    }
+
+    return (names);
 }
 
 } // namespace util
