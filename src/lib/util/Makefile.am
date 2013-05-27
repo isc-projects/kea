@@ -37,6 +37,7 @@ libb10_util_la_SOURCES += encode/base32hex_from_binary.h
 libb10_util_la_SOURCES += encode/base_n.cc encode/hex.h
 libb10_util_la_SOURCES += encode/binary_from_base32hex.h
 libb10_util_la_SOURCES += encode/binary_from_base16.h
+libb10_util_la_SOURCES += hooks/callout_handles.h
 libb10_util_la_SOURCES += hooks/server_hooks.h hooks/server_hooks.cc
 libb10_util_la_SOURCES += random/qid_gen.h random/qid_gen.cc
 libb10_util_la_SOURCES += random/random_number_generator.h
