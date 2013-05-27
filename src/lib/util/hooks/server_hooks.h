@@ -24,11 +24,10 @@
 namespace isc {
 namespace util {
 
-/// @brief Duplicate Hook
+/// @brief Duplicate hook
 ///
 /// Thrown if an attempt is made to register a hook with the same name as a
 /// previously-registered hook.
-
 class DuplicateHook : public Exception {
 public:
     DuplicateHook(const char* file, size_t line, const char* what) :
