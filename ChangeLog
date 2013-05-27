@@ -1,3 +1,15 @@
+621.	[func]		team
+	libdns++: All Rdata classes now use the generic lexer in
+	constructors from text. This means that the name fields in such
+	RRs in a zone file can now be non-absolute (the origin name in that
+	context will be used), e.g., when loaded by b10-loadzone. Note
+	that the existing string constructors for these Rdata classes also
+	use the generic lexer, and they now expect an absolute name (with
+	the trailing '.') in the name fields.
+	(Trac #2522, git ea97070cf6b41299351fc29af66fa39c6465d56a)
+	(Trac #2521, git c6603decaadcd33ccf9aee4a7b22447acec4b7f6)
+	(See also ChangeLog 594, 564, 545)
+
 620.	[bug]		jinmei
 	b10-auth now returns SERVFAIL to queries for a zone that is
 	configured to be loaded in-memory but isn't due to load time
