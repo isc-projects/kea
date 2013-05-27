@@ -56,15 +56,14 @@ extern "C" {
 };
 
 
-/// @brief Global Callout Handle
-/// @todo Change name to Library Handle?
+/// @brief Library handle
 ///
 /// This class is used to manage a loaded library.  It is used by the user
 /// library to register callouts and by the HookManager to call them.  The
 /// class also contains storage for library-specific context.
 ///
-/// Although there is an argument for the class to load unload the user
-/// library, that is handled by the HookManager to prevent the user library
+/// Although there is a persuasive argument for the class to load unload the
+/// user library, that is handled by the HookManager to prevent the user library
 /// from accessing those functions.
 
 class LibraryHandle {
@@ -167,7 +166,7 @@ public:
     ///
     /// @return true if callouts are present, false if not.
     ///
-    /// @throw NoSuchHook Thrown if the indesx is not valid.
+    /// @throw NoSuchHook Thrown if the index is not valid.
     bool calloutsPresent(int index) const;
 
     /// @brief Calls the callouts for a given hook
