@@ -94,4 +94,19 @@ TEST(ServerHooksTest, GetHookNames) {
     EXPECT_TRUE(expected_names == actual_names);
 }
 
+// Check that the count of hooks is correct.
+
+TEST(ServerHooksTest, HookCount) {
+    ServerHooks hooks;
+
+    // Insert the names into the hooks object
+    hooks.registerHook("alpha");
+    hooks.registerHook("betha");
+    hooks.registerHook("gamma");
+    hooks.registerHook("delta");
+
+    // Should be two more hooks that the number we have registered.
+    EXPECT_EQ(6, hooks.getCount());
+}
+
 } // Anonymous namespace
