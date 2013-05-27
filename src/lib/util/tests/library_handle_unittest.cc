@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/hooks/callout_handle.h>
 #include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
@@ -23,7 +24,7 @@ using namespace std;
 // Dummy class for testing
 namespace isc {
 namespace util {
-class CalloutHandle {};
+class HookManager {};
 }
 }
 
@@ -35,7 +36,8 @@ public:
     ///
     /// Sets up an appropriate number of server hooks to pass to the
     /// constructed callout handle objects.
-    LibraryHandleTest() : hooks_(new ServerHooks()) {
+    LibraryHandleTest()
+        : hooks_(new ServerHooks()), manager_(new HookManager()) {
         hooks_->registerHook("alpha");
         hooks_->registerHook("beta");
         hooks_->registerHook("gamma");
@@ -47,8 +49,13 @@ public:
     }
 
     /// Obtain constructed server hooks
-    boost::shared_ptr<ServerHooks> getServerHooks() {
+    boost::shared_ptr<ServerHooks>& getServerHooks() {
         return (hooks_);
+    }
+
+    // Obtain constructed hook manager
+    boost::shared_ptr<HookManager>& getHookManager() {
+        return (manager_);
     }
 
     /// Variables for callouts test. These are public and static to allow non-
@@ -60,6 +67,7 @@ public:
 
 private:
     boost::shared_ptr<ServerHooks> hooks_;
+    boost::shared_ptr<HookManager> manager_;
 };
 
 // Definition of the static variables.
@@ -278,6 +286,14 @@ int one_error(CalloutHandle& handle) {
     return (1);
 }
 
+// The next function is a duplicate of "one", but sets the skip flag.
+
+int one_skip(CalloutHandle& handle) {
+    (void) one(handle);
+    handle.setSkip(true);
+    return (0);
+}
+
 };  // extern "C"
 
 // Check that we can register callouts on a particular hook.
@@ -315,8 +331,8 @@ TEST_F(LibraryHandleTest, CallSingleCallout) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle dummy;
-    int status = handle.callCallouts(index, dummy);
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
     EXPECT_EQ(1, LibraryHandleTest::one_count);
@@ -341,8 +357,8 @@ TEST_F(LibraryHandleTest, TwoCallouts) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle dummy;
-    int status = handle.callCallouts(index, dummy);
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
     EXPECT_EQ(1, LibraryHandleTest::one_count);
@@ -366,10 +382,35 @@ TEST_F(LibraryHandleTest, TwoCalloutsWithError) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle dummy;
-    int status = handle.callCallouts(index, dummy);
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(1, status);
+    EXPECT_EQ(1, LibraryHandleTest::one_count);
+    EXPECT_EQ(0, LibraryHandleTest::two_count);
+    EXPECT_EQ(10, LibraryHandleTest::callout_value);
+}
+
+// Check that we can register two callouts for a hook and that the second is not
+// called if the first returns a non-zero status.
+
+TEST_F(LibraryHandleTest, TwoCalloutsWithSkip) {
+    LibraryHandle handle(getServerHooks(), 1);
+
+    // Register callout for hook alpha...
+    handle.registerCallout("alpha", one_skip);
+    handle.registerCallout("alpha", two);
+
+    // Call them.
+    EXPECT_EQ(0, LibraryHandleTest::one_count);
+    EXPECT_EQ(0, LibraryHandleTest::two_count);
+    EXPECT_EQ(0, LibraryHandleTest::callout_value);
+
+    int index = getServerHooks()->getIndex("alpha");
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
+
+    EXPECT_EQ(0, status);
     EXPECT_EQ(1, LibraryHandleTest::one_count);
     EXPECT_EQ(0, LibraryHandleTest::two_count);
     EXPECT_EQ(10, LibraryHandleTest::callout_value);
@@ -391,8 +432,8 @@ TEST_F(LibraryHandleTest, MultipleRegistration) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle dummy;
-    int status = handle.callCallouts(index, dummy);
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
     EXPECT_EQ(2, LibraryHandleTest::one_count);
@@ -402,7 +443,7 @@ TEST_F(LibraryHandleTest, MultipleRegistration) {
 
 // Check that a callout can be deregistered.
 
-TEST_F(LibraryHandleTest, Degreister) {
+TEST_F(LibraryHandleTest, Deregister) {
     LibraryHandle handle(getServerHooks(), 1);
 
     // Register callouts for hook alpha...
@@ -419,8 +460,8 @@ TEST_F(LibraryHandleTest, Degreister) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle dummy;
-    int status = handle.callCallouts(index, dummy);
+    CalloutHandle callout_handle(getHookManager());
+    int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
     EXPECT_EQ(0, LibraryHandleTest::one_count);
@@ -457,9 +498,11 @@ TEST_F(LibraryHandleTest, InvalidNameAndIndex) {
     EXPECT_THROW(static_cast<void>(handle.calloutsPresent(-1)), NoSuchHook);
     EXPECT_THROW(static_cast<void>(handle.calloutsPresent(5)), NoSuchHook);
 
-    CalloutHandle dummy;
-    EXPECT_THROW(static_cast<void>(handle.callCallouts(-1, dummy)), NoSuchHook);
-    EXPECT_THROW(static_cast<void>(handle.callCallouts(10, dummy)), NoSuchHook);
+    CalloutHandle callout_handle(getHookManager());
+    EXPECT_THROW(static_cast<void>(handle.callCallouts(-1, callout_handle)),
+                 NoSuchHook);
+    EXPECT_THROW(static_cast<void>(handle.callCallouts(10, callout_handle)),
+                 NoSuchHook);
 }
 
 

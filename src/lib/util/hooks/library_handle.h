@@ -81,7 +81,7 @@ public:
     ///
     /// @param hooks Pointer to the hooks registered by the server.
     /// @param index Index of this library in the list of loaded libraries.
-    LibraryHandle(boost::shared_ptr<ServerHooks> hooks, int index)
+    LibraryHandle(boost::shared_ptr<ServerHooks>& hooks, int index)
         : context_(), hooks_(hooks), hook_vector_(hooks->getCount()),
           index_(index)
     {}
