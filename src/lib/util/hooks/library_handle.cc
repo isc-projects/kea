@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/hooks/callout_handle.h>
 #include <util/hooks/library_handle.h>
 
 #include <algorithm>
@@ -87,7 +88,9 @@ LibraryHandle::callCallouts(int index, CalloutHandle& handle) {
     // Call all the callouts, stopping if a non-zero status is returned.
     // @todo also need to stop if the callout handle "skip" flag is set.
     int status = 0;
-    for (int i = 0; (i < hook_vector_[index].size()) && (status == 0); ++i) {
+    for (int i = 0;
+         (i < hook_vector_[index].size()) && !handle.getSkip() && (status == 0);
+          ++i) {
         status = (*hook_vector_[index][i])(handle);
     }
 
