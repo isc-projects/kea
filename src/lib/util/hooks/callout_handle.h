@@ -101,15 +101,15 @@ public:
     /// vector.
     ///
     /// @return Vector of strings reflecting argument names
-    std::vector<std::string> getArgumentNames() const {
-        std::vector<std::string> a;
-        return (a);
-    }
+    std::vector<std::string> getArgumentNames() const;
 
     /// @brief Delete argument
     ///
     /// Deletes an argument of the given name.  If an argument of that name
     /// does not exist, the method is a no-op.
+    ///
+    /// N.B. If the element is a raw pointer, the pointed-to data is
+    /// NOT deleted by this.
     ///
     /// @param name Name of the element in the argument list to set.
     void deleteArgument(const std::string& name) {
