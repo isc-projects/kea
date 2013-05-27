@@ -121,6 +121,36 @@ public:
 
         value = boost::any_cast<T>(element_ptr->second);
     }
+    
+    /// @brief Get context names
+    ///
+    /// Returns a vector holding the names of context items.
+    ///
+    /// @return Vector of strings reflecting argument names
+    std::vector<std::string> getContextNames() const;
+
+    /// @brief Delete context element
+    ///
+    /// Deletes context item of the given name.  If an item  of that name
+    /// does not exist, the method is a no-op.
+    ///
+    /// N.B. If the element is a raw pointer, the pointed-to data is
+    /// NOT deleted by this.
+    ///
+    /// @param name Name of the element in the argument list to set.
+    void deleteContext(const std::string& name) {
+        static_cast<void>(context_.erase(name));
+    }
+
+    /// @brief Delete all arguments
+    ///
+    /// Deletes all arguments associated with this context.
+    ///
+    /// N.B. If any elements are raw pointers, the pointed-to data is
+    /// NOT deleted by this.
+    void deleteAllContext() {
+        context_.clear();
+    }
 
     /// @brief Register a callout
     ///

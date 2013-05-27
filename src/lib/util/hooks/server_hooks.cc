@@ -77,10 +77,10 @@ ServerHooks::getIndex(const string& name) const {
 
 // Return list of hooks
 
-std::vector<std::string>
+vector<string>
 ServerHooks::getHookNames() const {
 
-    std::vector<std::string> names;
+    vector<string> names;
     HookCollection::const_iterator i;
     for (i = hooks_.begin(); i != hooks_.end(); ++i) {
         names.push_back(i->first);

@@ -18,6 +18,10 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 using namespace isc::util;
 using namespace std;
 
@@ -236,6 +240,69 @@ TEST_F(LibraryHandleTest, PointerTypes) {
     EXPECT_THROW(handle.getContext("const_pointer", pb3),
                  boost::bad_any_cast);
 }
+
+// Check that we can get the names of the context items.
+
+TEST_F(LibraryHandleTest, ContextItemNames) {
+    LibraryHandle handle(getServerHooks(), 1);
+
+    vector<string> expected_names;
+    int value = 42;
+
+    expected_names.push_back("faith");
+    handle.setContext("faith", value++);
+    expected_names.push_back("hope");
+    handle.setContext("hope", value++);
+    expected_names.push_back("charity");
+    handle.setContext("charity", value++);
+
+    // Get the names and check against the expected names.  We'll sort
+    // both arrays to simplify the checking.
+    vector<string> actual_names = handle.getContextNames();
+
+    sort(actual_names.begin(), actual_names.end());
+    sort(expected_names.begin(), expected_names.end());
+    EXPECT_TRUE(expected_names == actual_names);
+}
+
+// Check that we can delete one item of context.
+
+TEST_F(LibraryHandleTest, DeleteContext) {
+    LibraryHandle handle(getServerHooks(), 1);
+
+    int value = 42;
+    handle.setContext("faith", value++);
+    handle.setContext("hope", value++);
+    value = 0;
+
+    // Delete "faith" and verify that getting it throws an exception
+    handle.deleteContext("faith");
+    EXPECT_THROW(handle.getContext("faith", value), NoSuchContext);
+
+    // Check that the other item is untouched.
+    EXPECT_NO_THROW(handle.getContext("hope", value));
+    EXPECT_EQ(43, value);
+}
+
+// Delete all all items of context.
+
+TEST_F(LibraryHandleTest, DeleteAllContext) {
+    LibraryHandle handle(getServerHooks(), 1);
+
+    int value = 42;
+    handle.setContext("faith", value++);
+    handle.setContext("hope", value++);
+    handle.setContext("charity", value++);
+    value = 0;
+
+    // Delete all items of context and verify that they are gone.
+    handle.deleteAllContext();
+    EXPECT_THROW(handle.getContext("faith", value), NoSuchContext);
+    EXPECT_THROW(handle.getContext("hope", value), NoSuchContext);
+    EXPECT_THROW(handle.getContext("charity", value), NoSuchContext);
+}
+
+
 
 // *** Callout Tests ***
 //
