@@ -825,7 +825,7 @@ TEST_F(RdataSerializationTest, badAddRdata) {
     EXPECT_THROW(encoder_.addRdata(*aaaa_rdata_), std::bad_cast);
 
     const ConstRdataPtr rp_rdata =
-        createRdata(RRType::RP(), RRClass::IN(), "a.example. b.example");
+        createRdata(RRType::RP(), RRClass::IN(), "a.example. b.example.");
     encoder_.start(RRClass::IN(), RRType::NS());
     EXPECT_THROW(encoder_.addRdata(*rp_rdata), std::bad_cast);
 
