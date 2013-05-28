@@ -576,7 +576,7 @@ class XfrinConnection(asyncore.dispatcher):
           rrclass (dns.RRClass): Zone RR class.
           datasrc_client (DataSourceClient): the data source client object
             used for the XFR session.
-          shutdown_event (threaving.Event): used for synchronization with
+          shutdown_event (threading.Event): used for synchronization with
             parent thread.
           master_addrinfo (tuple: (sock family, sock type, sockaddr)):
             address and port of the master server.
