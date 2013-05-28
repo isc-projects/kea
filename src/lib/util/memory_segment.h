@@ -171,14 +171,9 @@ public:
     /// corresponding address by that name (in such cases the real address
     /// may be different between these two processes).
     ///
-    /// Names beginning with an underscore (such as \c "_example") are
-    /// reserved for internal use by this class. If such a name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
-    ///
-    /// Empty names (\c "") are not allowed too. If an empty name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
+    /// Some names are reserved for internal use by this class. If such
+    /// a name is passed to this method, an \c isc::InvalidParameter
+    /// exception will be thrown. See \c validateName() method for details.
     ///
     /// \c addr must be 0 (NULL) or an address that belongs to this segment.
     /// The latter case means it must be the return value of a previous call
@@ -250,14 +245,9 @@ public:
     /// associated by a prior call to \c setNameAddress().  If no address
     /// associated with the given name is found, it returns NULL.
     ///
-    /// Names beginning with an underscore (such as \c "_example") are
-    /// reserved for internal use by this class. If such a name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
-    ///
-    /// Empty names (\c "") are not allowed too. If an empty name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
+    /// Some names are reserved for internal use by this class. If such
+    /// a name is passed to this method, an \c isc::InvalidParameter
+    /// exception will be thrown. See \c validateName() method for details.
     ///
     /// This method should generally be considered exception free, but there
     /// can be a small chance it throws, depending on the internal
@@ -288,14 +278,9 @@ public:
     /// \c setNamedAddress().  If there is no association for the given name
     /// this method returns false; otherwise it returns true.
     ///
-    /// Names beginning with an underscore (such as \c "_example") are
-    /// reserved for internal use by this class. If such a name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
-    ///
-    /// Empty names (\c "") are not allowed too. If an empty name is
-    /// passed to this method, an \c isc::InvalidParameter exception
-    /// will be thrown.
+    /// Some names are reserved for internal use by this class. If such
+    /// a name is passed to this method, an \c isc::InvalidParameter
+    /// exception will be thrown. See \c validateName() method for details.
     ///
     /// See \c getNamedAddress() about exception consideration.
     ///
