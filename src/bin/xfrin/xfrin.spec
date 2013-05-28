@@ -136,16 +136,16 @@
         "item_optional": false,
         "item_default": {
           "_SERVER_" : {
-	    "soaoutv4": 0,
-	    "soaoutv6": 0,
-	    "axfrreqv4": 0,
-	    "axfrreqv6": 0,
-	    "ixfrreqv4": 0,
-	    "ixfrreqv6": 0,
-	    "xfrsuccess": 0,
-	    "xfrfail": 0,
-	    "last_ixfr_duration": 0.0,
-	    "last_axfr_duration": 0.0
+            "soaoutv4": 0,
+            "soaoutv6": 0,
+            "axfrreqv4": 0,
+            "axfrreqv6": 0,
+            "ixfrreqv4": 0,
+            "ixfrreqv6": 0,
+            "xfrsuccess": 0,
+            "xfrfail": 0,
+            "last_ixfr_duration": 0.0,
+            "last_axfr_duration": 0.0
           }
         },
         "item_title": "Zone names",
