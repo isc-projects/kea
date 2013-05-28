@@ -1097,9 +1097,7 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     responsible for creating zone in the corresponding DB table.
     For a longer term we should deprecate this behavior by introducing
     more generic zone management framework, but at the moment we try
-    to not surprise existing users.  (Note also that the part of
-    providing the compatible behavior uses the old data source API.
-    We'll deprecate this API in a near future, too).
+    to not surprise existing users.
 
     """
     # datasrc_client should never be None in production case (only tests could
