@@ -23,19 +23,6 @@
 using namespace isc::util;
 using namespace std;
 
-// Dummy class for testing
-namespace isc {
-namespace util {
-class HookManager {
-public:
-    HookManager() {}
-};
-}
-}
-
-using namespace isc::util;
-using namespace std;
-
 namespace {
 
 class CalloutHandleTest : public ::testing::Test {
@@ -44,16 +31,16 @@ public:
     ///
     /// Sets up an appropriate number of server hooks to pass to the
     /// constructed callout handle objects.
-    CalloutHandleTest() : manager_(new HookManager()) {
+    CalloutHandleTest() : collection_(new LibraryHandleCollection()) {
     }
 
     /// Obtain hook manager
-    boost::shared_ptr<HookManager>& getHookManager() {
-        return (manager_);
+    boost::shared_ptr<LibraryHandleCollection>& getLibraryHandleCollection() {
+        return (collection_);
     }
 
 private:
-    boost::shared_ptr<HookManager> manager_;
+    boost::shared_ptr<LibraryHandleCollection> collection_;
 };
 
 // *** Argument Tests ***
@@ -65,7 +52,7 @@ private:
 // are distinct.
 
 TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Store and retrieve an int (random value).
     int a = 42;
@@ -99,7 +86,7 @@ TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
 // exception.
 
 TEST_F(CalloutHandleTest, ArgumentUnknownName) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Set an integer
     int a = 42;
@@ -119,7 +106,7 @@ TEST_F(CalloutHandleTest, ArgumentUnknownName) {
 // Test that trying to get something with an incorrect type throws an exception.
 
 TEST_F(CalloutHandleTest, ArgumentIncorrectType) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Set an integer
     int a = 42;
@@ -148,7 +135,7 @@ struct Beta {
 };
 
 TEST_F(CalloutHandleTest, ComplexTypes) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Declare two variables of different (complex) types. (Note as to the
     // variable names: aleph and beth are the first two letters of the Hebrew
@@ -187,7 +174,7 @@ TEST_F(CalloutHandleTest, ComplexTypes) {
 // that a "pointer to X" is not the same as a "pointer to const X".
 
 TEST_F(CalloutHandleTest, PointerTypes) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Declare a couple of variables, const and non-const.
     Alpha aleph(5, 10);
@@ -221,7 +208,7 @@ TEST_F(CalloutHandleTest, PointerTypes) {
 // Check that we can get the names of the arguments.
 
 TEST_F(CalloutHandleTest, ContextItemNames) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     vector<string> expected_names;
     int value = 42;
@@ -245,7 +232,7 @@ TEST_F(CalloutHandleTest, ContextItemNames) {
 // Test that we can delete and argument.
 
 TEST_F(CalloutHandleTest, DeleteArgument) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     int one = 1;
     int two = 2;
@@ -287,7 +274,7 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
 // Test that we can delete all arguments
 
 TEST_F(CalloutHandleTest, DeleteAllArguments) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     int one = 1;
     int two = 2;
@@ -314,7 +301,7 @@ TEST_F(CalloutHandleTest, DeleteAllArguments) {
 // Test the "skip" flag.
 
 TEST_F(CalloutHandleTest, SkipFlag) {
-    CalloutHandle handle(getHookManager());
+    CalloutHandle handle(getLibraryHandleCollection());
 
     // Should be false on construction.
     EXPECT_FALSE(handle.getSkip());
