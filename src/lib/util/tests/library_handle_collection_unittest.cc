@@ -27,13 +27,6 @@ using namespace isc;
 using namespace isc::util;
 using namespace std;
 
-// Dummy class for testing
-namespace isc {
-namespace util {
-class HookManager {};
-}
-}
-
 namespace {
 
 /// @brief No such hook
@@ -52,7 +45,7 @@ public:
     /// Sets up a collection of three LibraryHandle objects to use in the test.
     LibraryHandleCollectionTest()
         : collection_(new LibraryHandleCollection()), handles_(),
-          hooks_(new ServerHooks()), manager_(new HookManager()) {
+          hooks_(new ServerHooks()) {
 
         // Set up the server hooks
         hooks_->registerHook("one");
@@ -75,13 +68,6 @@ public:
     /// @return Reference to shared pointer pointing to server hooks object.
     boost::shared_ptr<ServerHooks>& getServerHooks() {
         return (hooks_);
-    }
-
-    /// @brief Obtain constructed hook manager
-    ///
-    /// @return Reference to shared pointer pointing to hook manager.
-    boost::shared_ptr<HookManager>& getHookManager() {
-        return (manager_);
     }
 
     /// @brief Obtain LibraryHandleCollection object
@@ -120,7 +106,6 @@ private:
 
     /// Server hooks and hooks manager
     boost::shared_ptr<ServerHooks> hooks_;
-    boost::shared_ptr<HookManager> manager_;
 };
 
 // Definition of the static variable.
@@ -280,7 +265,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSuccess) {
     EXPECT_FALSE(getLibraryHandleCollection()->calloutsPresent(four_index));
                  
     // Set up different sequences of callouts on different handles.
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status;
 
     // Each library contributing one callout on hook "one".
@@ -330,7 +315,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     EXPECT_FALSE(getLibraryHandleCollection()->calloutsPresent(four_index));
                  
     // Set up different sequences of callouts on different handles.
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status;
 
     // Each library contributing one callout on hook "one". First callout
@@ -406,7 +391,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSkip) {
     EXPECT_FALSE(getLibraryHandleCollection()->calloutsPresent(four_index));
                  
     // Set up different sequences of callouts on different handles.
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status;
 
     // Each library contributing one callout on hook "one". First callout

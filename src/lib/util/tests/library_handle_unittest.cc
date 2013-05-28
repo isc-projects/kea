@@ -25,13 +25,6 @@
 using namespace isc::util;
 using namespace std;
 
-// Dummy class for testing
-namespace isc {
-namespace util {
-class HookManager {};
-}
-}
-
 namespace {
 
 class LibraryHandleTest : public ::testing::Test {
@@ -41,7 +34,8 @@ public:
     /// Sets up an appropriate number of server hooks to pass to the
     /// constructed callout handle objects.
     LibraryHandleTest()
-        : hooks_(new ServerHooks()), manager_(new HookManager()) {
+        : hooks_(new ServerHooks()),
+          collection_(new LibraryHandleCollection()) {
         hooks_->registerHook("alpha");
         hooks_->registerHook("beta");
         hooks_->registerHook("gamma");
@@ -56,8 +50,8 @@ public:
     }
 
     // Obtain constructed hook manager
-    boost::shared_ptr<HookManager>& getHookManager() {
-        return (manager_);
+    boost::shared_ptr<LibraryHandleCollection>& getLibraryHandleCollection() {
+        return (collection_);
     }
 
     /// Variable for callouts test. This is public and static to allow non-
@@ -67,7 +61,7 @@ public:
 
 private:
     boost::shared_ptr<ServerHooks> hooks_;
-    boost::shared_ptr<HookManager> manager_;
+    boost::shared_ptr<LibraryHandleCollection> collection_;
 };
 
 // Definition of the static variable.
@@ -388,7 +382,7 @@ TEST_F(LibraryHandleTest, CallSingleCallout) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
@@ -410,7 +404,7 @@ TEST_F(LibraryHandleTest, TwoCallouts) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
@@ -431,7 +425,7 @@ TEST_F(LibraryHandleTest, TwoCalloutsWithError) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(1, status);
@@ -452,7 +446,7 @@ TEST_F(LibraryHandleTest, TwoCalloutsWithSkip) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
@@ -473,7 +467,7 @@ TEST_F(LibraryHandleTest, MultipleRegistration) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
@@ -497,7 +491,7 @@ TEST_F(LibraryHandleTest, Deregister) {
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     int status = handle.callCallouts(index, callout_handle);
 
     EXPECT_EQ(0, status);
@@ -533,7 +527,7 @@ TEST_F(LibraryHandleTest, InvalidNameAndIndex) {
     EXPECT_THROW(static_cast<void>(handle.calloutsPresent(-1)), NoSuchHook);
     EXPECT_THROW(static_cast<void>(handle.calloutsPresent(5)), NoSuchHook);
 
-    CalloutHandle callout_handle(getHookManager());
+    CalloutHandle callout_handle(getLibraryHandleCollection());
     EXPECT_THROW(static_cast<void>(handle.callCallouts(-1, callout_handle)),
                  NoSuchHook);
     EXPECT_THROW(static_cast<void>(handle.callCallouts(10, callout_handle)),

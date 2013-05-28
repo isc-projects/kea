@@ -295,7 +295,8 @@ public:
     /// @return Pointer to current library handle. This is the handle for
     ///         which a callout is being called.
     boost::shared_ptr<LibraryHandle> getLibraryHandle() const {
-        return (boost::shared_ptr<LibraryHandle>(curidx_));
+        return (boost::shared_ptr<LibraryHandle>());
+        /// @todo Return the appropriate handle
     }
 
     /// @brief Checks if callouts are present

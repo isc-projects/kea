@@ -36,8 +36,8 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-// Forward declaration of the hook manager class
-class HookManager;
+// Forward declaration of the handle collection class.
+class LibraryHandleCollection;
 
 /// @brief Per-Packet callout handle
 ///
@@ -54,10 +54,9 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param manager Pointer to the HookManager object controlling the
-    ///        the operations of the hooks.
-    CalloutHandle(boost::shared_ptr<HookManager>& manager)
-        : arguments_(), manager_(manager), skip_(false)
+    /// @param manager Pointer to the collection of library handles.
+    CalloutHandle(boost::shared_ptr<LibraryHandleCollection>& collection)
+        : arguments_(), collection_(collection), skip_(false)
     {}
 
     /// @brief Set argument
@@ -148,8 +147,9 @@ private:
     /// Collection of arguments passed to the callouts
     ArgumentCollection arguments_;
 
-    /// Controlling hook manager
-    boost::shared_ptr<HookManager> manager_;   ///< Controlling hook manager
+    /// Library handle collection, used to obtain the correct library handle
+    /// during a call to a callout.
+    boost::shared_ptr<LibraryHandleCollection> collection_;
 
     /// "Skip" flag, indicating if the caller should bypass remaining callouts.
     bool skip_;
