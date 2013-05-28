@@ -56,7 +56,7 @@ public:
     ///
     /// @throw DProcessBaseError is io_service is NULL. 
     DProcessBase(const char* name, IOServicePtr io_service) : name_(name),
-        io_service_(io_service), shut_down_flag(false) {
+        io_service_(io_service), shut_down_flag_(false) {
 
         if (!io_service_) {
             isc_throw (DProcessBaseError, "IO Service cannot be null");
@@ -114,15 +114,15 @@ public:
     /// @brief Destructor 
     virtual ~DProcessBase(){};
 
-    bool shouldShutDown() { 
-        return shut_down_flag; 
+    bool shouldShutdown() { 
+        return (shut_down_flag_); 
     }
 
     void setShutdownFlag(bool value) { 
-        shut_down_flag = value; 
+        shut_down_flag_ = value; 
     }
 
-    const std::string& getName() {
+    const std::string& getName() const {
         return (name_);
     }
 
@@ -139,7 +139,7 @@ private:
     IOServicePtr io_service_;
 
     /// @brief Boolean flag set when shutdown has been requested.
-    bool shut_down_flag;
+    bool shut_down_flag_;
 };
 
 /// @brief Defines a shared pointer to DProcessBase.
