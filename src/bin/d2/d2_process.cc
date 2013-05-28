@@ -39,7 +39,7 @@ D2Process::run() {
     // occur.
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_ENTER);
     IOServicePtr& io_service = getIoService();
-    while (!shouldShutDown()) {
+    while (!shouldShutdown()) {
         try {
             io_service->run_one();
         } catch (const std::exception& ex) {
