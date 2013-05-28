@@ -29,7 +29,7 @@
             "name": "example.org",
             "master_addr": "::1",
             "master_port": 47807,
-	    "request_ixfr": "no"
+            "request_ixfr": "no"
         } ]
     },
     "Zonemgr": {
