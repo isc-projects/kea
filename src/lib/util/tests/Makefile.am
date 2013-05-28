@@ -32,6 +32,7 @@ run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
 run_unittests_SOURCES += library_handle_unittest.cc
+run_unittests_SOURCES += library_handle_collection_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
 if USE_SHARED_MEMORY

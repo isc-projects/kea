@@ -79,18 +79,19 @@ LibraryHandle::calloutsPresent(int index) const {
 // Call all the callouts for a given hook.
 
 int
-LibraryHandle::callCallouts(int index, CalloutHandle& handle) {
+LibraryHandle::callCallouts(int index, CalloutHandle& callout_handle) {
 
     // Validate the hook index.
     checkHookIndex(index);
 
-    // Call all the callouts, stopping if a non-zero status is returned.
-    // @todo also need to stop if the callout handle "skip" flag is set.
+    // Call all the callouts, stopping if a non-zero status is returned or if
+    // the "skip" flag is set.
     int status = 0;
     for (int i = 0;
-         (i < hook_vector_[index].size()) && !handle.getSkip() && (status == 0);
+         (i < hook_vector_[index].size()) && !callout_handle.getSkip() &&
+         (status == 0);
           ++i) {
-        status = (*hook_vector_[index][i])(handle);
+        status = (*hook_vector_[index][i])(callout_handle);
     }
 
     return (status);
@@ -148,6 +149,55 @@ LibraryHandle::getContextNames() const {
     }
 
     return (names);
+}
+
+// LibraryHandleCollection methods.
+
+// Check if a callout is present on a hook in any of the libraries.
+
+bool
+LibraryHandleCollection::calloutsPresent(int index) const {
+
+    // Method returns false if no LibraryHandles are present.  Otherwise,
+    // the validity of the index is checked by the calloutsPresent() method
+    // on the first handle processed.
+    bool present = false;
+    for (int i = 0; (i < handles_.size()) && !present; ++i) {
+        present = handles_[i]->calloutsPresent(index);
+    }
+
+    return (present);
+}
+
+// Call all the callouts for a given hook.
+
+int
+LibraryHandleCollection::callCallouts(int index,
+                                      CalloutHandle& callout_handle) {
+
+    // Don't validate the hook index, that is checked in the call to the
+    // callCallouts() method of the first library handle.
+
+    // Clear the skip flag before we start so that no state from a previous
+    // call of a hook accidentally leaks through.
+    callout_handle.setSkip(false);
+
+    // Call all the callouts, stopping if a non-zero status is returned or if
+    // the "skip" flag is set.  Note that we iterate using the current index
+    // as the counter (so that the callout handle object retrieves the
+    // correct LibraryHandle from the collection).
+    int status = 0;
+    for (curidx_ = 0;
+         (curidx_ < handles_.size()) && !callout_handle.getSkip() &&
+         (status == 0); ++curidx_) {
+        status = handles_[curidx_]->callCallouts(index, callout_handle);
+    }
+
+    // Reset current index to an invalid value as we are no longer calling
+    // the callouts.
+    curidx_ = -1;
+
+    return (status);
 }
 
 } // namespace util
