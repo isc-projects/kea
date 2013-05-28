@@ -80,10 +80,8 @@ public:
     /// is used by the CalloutHandle object to access appropriate context
     ///
     /// @param hooks Pointer to the hooks registered by the server.
-    /// @param index Index of this library in the list of loaded libraries.
-    LibraryHandle(boost::shared_ptr<ServerHooks>& hooks, int index)
-        : context_(), hooks_(hooks), hook_vector_(hooks->getCount()),
-          index_(index)
+    LibraryHandle(boost::shared_ptr<ServerHooks>& hooks)
+        : context_(), hooks_(hooks), hook_vector_(hooks->getCount())
     {}
 
     /// @brief Set context
@@ -116,7 +114,7 @@ public:
         ContextCollection::const_iterator element_ptr = context_.find(name);
         if (element_ptr == context_.end()) {
             isc_throw(NoSuchContext, "unable to find library context datum " <<
-                      name << " in library at index " << index_);
+                      name << " in library handle");
         }
 
         value = boost::any_cast<T>(element_ptr->second);
@@ -204,12 +202,12 @@ public:
     /// Calls the callouts associated with the given hook index.
     ///
     /// @param index Index of the hook to call.
-    /// @param handle Reference to the CalloutHandle object for the current
-    ///        object being processed.
+    /// @param callout_handle Reference to the CalloutHandle object for the
+    ///        current object being processed.
     ///
     /// @return Status return.
     ///
-    int callCallouts(int index, CalloutHandle& handle);
+    int callCallouts(int index, CalloutHandle& callout_handle);
 
 private:
     /// @brief Check hook index
@@ -239,10 +237,6 @@ private:
     /// @throw Unexpected Index not valid for the hook vector.
     int getHookIndex(const std::string& name) const;
 
-    /// @brief Callout pointers equal
-    ///
-    /// Unary predicate to 
-
     // Member variables
 
     /// Context - mapping of names variables that can be of different types.
@@ -254,9 +248,87 @@ private:
     /// Each element in the following vector corresponds to a single hook and
     /// is an ordered list of callouts for that hook.
     std::vector<std::vector<CalloutPtr> >  hook_vector_;
+};
 
-    /// Index of this library in the list of libraries
-    int index_;
+
+/// @brief Collection of Library Handles
+///
+/// This simple class is a collection of handles for all libraries loaded.
+/// It is pointed to by the CalloutHandle object and is used by that object
+/// to locate the correct LibraryHandle to pass to a callout function. To
+/// do this, the class contains an index indicating the "current" handle.  This
+/// is used in the calling of callouts: prior to calling a callout associated
+/// with a LibraryHandle, the index is updated to point to that handle.
+/// If the callout requests access to the LibraryHandle, it is passed a
+/// reference to the correct one.
+
+class LibraryHandleCollection {
+private:
+    /// Private typedef to abbreviate statements in class methods.
+    typedef std::vector<boost::shared_ptr<LibraryHandle> > HandleVector;
+public:
+
+    /// @brief Constructor
+    ///
+    /// Initializes member variables, in particular setting the current index
+    /// to an invalid value.
+    LibraryHandleCollection() : curidx_(-1), handles_()
+    {}
+
+    /// @brief Add library handle
+    ///
+    /// Adds a library handle to the collection.  The collection is ordered,
+    /// and this adds a library handle to the end of the current list.
+    ///
+    /// @param library_handle Pointer to the a library handle to be added.
+    void addLibraryHandle(boost::shared_ptr<LibraryHandle>& handle) {
+        handles_.push_back(handle);
+    }
+
+    /// @brief Get current library handle
+    ///
+    /// Returns a pointer to the current library handle.  This method can
+    /// only be called while the code is iterating through the list of
+    /// library handles: calling it at any other time is meaningless and will
+    /// cause an exception to be thrown.
+    ///
+    /// @return Pointer to current library handle. This is the handle for
+    ///         which a callout is being called.
+    boost::shared_ptr<LibraryHandle> getLibraryHandle() const {
+        return (boost::shared_ptr<LibraryHandle>(curidx_));
+    }
+
+    /// @brief Checks if callouts are present
+    ///
+    /// Checks all loaded libraries and returns true if at least one callout
+    /// has been registered for a hook in any of them.
+    ///
+    /// @param index Hook index for which callouts are checked.
+    ///
+    /// @return true if callouts are present, false if not.
+    ///
+    /// @throw NoSuchHook Thrown if the index is not valid.
+    bool calloutsPresent(int index) const;
+
+    /// @brief Calls the callouts for a given hook
+    ///
+    /// Iterates through the libray handles and calls the callouts associated
+    /// with the given hook index.
+    ///
+    /// @param index Index of the hook to call.
+    /// @param callout_handle Reference to the CalloutHandle object for the
+    ///        current object being processed.
+    ///
+    /// @return Status return.
+    ///
+    int callCallouts(int index, CalloutHandle& callout_handle);
+
+private:
+    /// Index of the current library handle during iteration.
+    int curidx_;
+
+    /// Vector of pointers to library handles.
+    HandleVector handles_;
 };
 
 } // namespace util
