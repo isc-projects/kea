@@ -1,3 +1,9 @@
+615.	[bug]		jinmei
+	b10-xfrout now uses blocking send for xfr response messages
+	to prevent abrupt termination of the stream due to a slower
+	client or narrower network bandwidth.
+	(Trac #2934, git bde0e94518469557c8b455ccbecc079a38382afd)
+
 617.	[bug]		marcin
 	b10-dhcp4: Fixed a bug whereby the domain-name option was encoded
 	as FQDN (using technique described in RFC1035) instead of a string.
