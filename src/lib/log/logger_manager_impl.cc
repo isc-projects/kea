@@ -124,12 +124,17 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
 
 // File appender.  Depending on whether a maximum size is given, either
 // a standard file appender or a rolling file appender will be created.
+// In the case of the latter, we set "UseLockFile" to true so that
+// log4cplus internally avoids race in rolling over the files by multiple
+// processes.  This feature isn't supported in log4cplus 1.0.x, but setting
+// the property unconditionally is okay as unknown properties are simply
+// ignored.
 void
 LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
                                       const OutputOption& opt)
 {
     // Append to existing file
-    std::ios::openmode mode = std::ios::app;
+    const std::ios::openmode mode = std::ios::app;
 
     log4cplus::SharedAppenderPtr fileapp;
     if (opt.maxsize == 0) {
@@ -142,7 +147,7 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
                                lexical_cast<string>(opt.maxsize));
         properties.setProperty("MaxBackupIndex",
                                lexical_cast<string>(opt.maxver));
-        properties.setProperty("ImmediateFlush", "true");
+        properties.setProperty("ImmediateFlush", opt.flush ? "true" : "false");
         properties.setProperty("UseLockFile", "true");
         fileapp = log4cplus::SharedAppenderPtr(
             new log4cplus::RollingFileAppender(properties));
