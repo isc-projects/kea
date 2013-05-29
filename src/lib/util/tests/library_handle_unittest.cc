@@ -40,23 +40,24 @@ public:
         hooks_->registerHook("beta");
         hooks_->registerHook("gamma");
 
-        // Also initialize the callout variables.
+        // Also initialize the variable used to pass information back from the
+        // callouts to the tests.
         callout_value = 0;
     }
 
-    /// Obtain constructed server hooks
+    /// Obtain constructed server hooks.
     boost::shared_ptr<ServerHooks>& getServerHooks() {
         return (hooks_);
     }
 
-    // Obtain constructed hook manager
+    /// Obtain constructed hook manager.
     boost::shared_ptr<LibraryHandleCollection>& getLibraryHandleCollection() {
         return (collection_);
     }
 
     /// Variable for callouts test. This is public and static to allow non-
-    /// member functions to access it.  It is initialized every time a
-    /// new test starts.
+    /// member functions to access it.  It is initialized every time a new
+    /// test starts.
     static int callout_value;
 
 private:
@@ -72,8 +73,8 @@ int LibraryHandleTest::callout_value = 0;
 // The first set of tests check that the LibraryHandle can store and retrieve
 // context.
 
-// Test that we can store multiple values of the same type and that they
-// are distinct.
+// Test that we can store multiple values of the same type and that they are
+// distinct.
 
 TEST_F(LibraryHandleTest, ContextDistinctSimpleType) {
     LibraryHandle handle(getServerHooks());
@@ -92,18 +93,18 @@ TEST_F(LibraryHandleTest, ContextDistinctSimpleType) {
     handle.setContext("integer2", c);
     EXPECT_EQ(142, c);
 
-    int d = -1;
+    int d = 0;
     handle.getContext("integer2", d);
     EXPECT_EQ(142, d);
 
     // Add a short (random value).
-    short e = 81; 
+    short e = -81; 
     handle.setContext("short", e);
-    EXPECT_EQ(81, e);
+    EXPECT_EQ(-81, e);
 
-    short f = -1;
+    short f = 0;
     handle.getContext("short", f);
-    EXPECT_EQ(81, f);
+    EXPECT_EQ(-81, f);
 }
 
 // Test that trying to get something with an incorrect name throws an
@@ -124,7 +125,7 @@ TEST_F(LibraryHandleTest, ContextUnknownName) {
 
     // Check that getting an unknown name throws an exception.
     int c = -1;
-    EXPECT_THROW(handle.getContext("unknown", c), NoSuchContext);
+    EXPECT_THROW(handle.getContext("unknown", c), NoSuchLibraryContext);
 }
 
 // Test that trying to get something with an incorrect type throws an exception.
@@ -137,7 +138,7 @@ TEST_F(LibraryHandleTest, ContextIncorrectType) {
     handle.setContext("integer1", a);
     EXPECT_EQ(42, a);
 
-    // Check we can retrieve it
+    // Check we can't retrieve it using a variable of the wrong type.
     long b = 0;
     EXPECT_THROW(handle.getContext("integer1", b), boost::bad_any_cast);
 }
@@ -194,7 +195,7 @@ TEST_F(LibraryHandleTest, ComplexTypes) {
     EXPECT_THROW(handle.getContext("aleph", beth), boost::bad_any_cast);
 }
 
-// Check that the context can store pointers. And also check that it respects
+// Check that the context can store pointers. Also check that it respects
 // that a "pointer to X" is not the same as a "pointer to const X".
 
 TEST_F(LibraryHandleTest, PointerTypes) {
@@ -261,18 +262,18 @@ TEST_F(LibraryHandleTest, DeleteContext) {
     int value = 42;
     handle.setContext("faith", value++);
     handle.setContext("hope", value++);
-    value = 0;
 
     // Delete "faith" and verify that getting it throws an exception
     handle.deleteContext("faith");
-    EXPECT_THROW(handle.getContext("faith", value), NoSuchContext);
+    EXPECT_THROW(handle.getContext("faith", value), NoSuchLibraryContext);
 
     // Check that the other item is untouched.
+    value = 0;
     EXPECT_NO_THROW(handle.getContext("hope", value));
     EXPECT_EQ(43, value);
 }
 
-// Delete all all items of context.
+// Check we can delete all all items of context.
 
 TEST_F(LibraryHandleTest, DeleteAllContext) {
     LibraryHandle handle(getServerHooks());
@@ -281,13 +282,14 @@ TEST_F(LibraryHandleTest, DeleteAllContext) {
     handle.setContext("faith", value++);
     handle.setContext("hope", value++);
     handle.setContext("charity", value++);
-    value = 0;
 
     // Delete all items of context and verify that they are gone.
     handle.deleteAllContext();
-    EXPECT_THROW(handle.getContext("faith", value), NoSuchContext);
-    EXPECT_THROW(handle.getContext("hope", value), NoSuchContext);
-    EXPECT_THROW(handle.getContext("charity", value), NoSuchContext);
+
+    value = 0;
+    EXPECT_THROW(handle.getContext("faith", value), NoSuchLibraryContext);
+    EXPECT_THROW(handle.getContext("hope", value), NoSuchLibraryContext);
+    EXPECT_THROW(handle.getContext("charity", value), NoSuchLibraryContext);
 }
 
 
@@ -296,24 +298,14 @@ TEST_F(LibraryHandleTest, DeleteAllContext) {
 //
 // The next set of tests check that callouts can be registered.
 
-// Supply callouts structured in such a way that we can determine the order
-// that they are called and whether they are called at all. The method used
-// is simple - after a sequence of callouts, the digits in the value, reading
-// left to right, determines the order of the callouts and whether they were
-// called at all.  So:
+// The callouts defined here are structured in such a way that it is possible
+// to determine the order in which they are called and whether they are called
+// at all. The method used is simple - after a sequence of callouts, the digits
+// in the value, reading left to right, determines the order of the callouts
+// called.  For example, callout one followed by two followed by three followed
+// by two followed by one results in a value of 12321.
 //
-// * one followed by two, the resulting value is 12
-// * two followed by one, the resuling value is 21
-// * one and two is not called, the resulting value is 1
-// * two and one is not called, the resulting value is 2
-// * neither called, the resulting value is 0
-//
-// ... and extending beyond two callouts:
-//
-// * one followed by two followed by three followed by two followed by one
-//   results in a value of 12321.
-//
-// Functions return a zero indicating success.
+// Functions return a zero to indicate success.
 
 extern "C" {
 int one(CalloutHandle&) {
@@ -337,7 +329,7 @@ int three(CalloutHandle&) {
 // The next function is a duplicate of "one", but returns an error status.
 
 int one_error(CalloutHandle& handle) {
-    (void) one(handle);
+    static_cast<void>(one(handle));
     return (1);
 }
 
@@ -366,9 +358,9 @@ TEST_F(LibraryHandleTest, RegisterSingleCallout) {
     EXPECT_TRUE(handle.calloutsPresent(getServerHooks()->getIndex("beta")));
 }
 
-// Check that we can call a single callout on a particular hook.  Refer
-// to the above definition of the callouts "one" and "two" to understand
-// the expected return values.
+// Check that we can call a single callout on a particular hook.  Refer to the
+// above definition of the callouts "one" and "two" to understand the expected
+// return values.
 
 TEST_F(LibraryHandleTest, CallSingleCallout) {
     LibraryHandle handle(getServerHooks());
@@ -396,11 +388,11 @@ TEST_F(LibraryHandleTest, CallSingleCallout) {
 TEST_F(LibraryHandleTest, TwoCallouts) {
     LibraryHandle handle(getServerHooks());
 
-    // Register two callouts for hook alpha...
+    // Register two callouts for hook alpha.
     handle.registerCallout("alpha", one);
     handle.registerCallout("alpha", two);
 
-    // ... and call them.
+    // Call them.
     EXPECT_EQ(0, LibraryHandleTest::callout_value);
 
     int index = getServerHooks()->getIndex("alpha");
@@ -438,7 +430,7 @@ TEST_F(LibraryHandleTest, TwoCalloutsWithError) {
 TEST_F(LibraryHandleTest, TwoCalloutsWithSkip) {
     LibraryHandle handle(getServerHooks());
 
-    // Register callout for hook alpha...
+    // Register callout for hook alpha.
     handle.registerCallout("alpha", one_skip);
     handle.registerCallout("alpha", two);
 
@@ -458,7 +450,7 @@ TEST_F(LibraryHandleTest, TwoCalloutsWithSkip) {
 TEST_F(LibraryHandleTest, MultipleRegistration) {
     LibraryHandle handle(getServerHooks());
 
-    // Register callouts for hook alpha...
+    // Register callouts for hook alpha.
     handle.registerCallout("alpha", one);
     handle.registerCallout("alpha", two);
     handle.registerCallout("alpha", one);

@@ -48,7 +48,7 @@ namespace {
 
 // The next set of functions define the callouts used by the tests.  They
 // manipulate the data in such a way that callouts called - and the order in
-// which they were called can be determined.  The functions also check that
+// which they were called - can be determined.  The functions also check that
 // the "callout context" and "library context" data areas are separate.
 //
 // Three libraries are assumed, and each supplies four callouts.  All callouts
@@ -57,9 +57,9 @@ namespace {
 // the type of data manipulated).
 //
 // For the string item, each callout shifts data to the left and inserts its own
-// data.  Data is a string of the form "nmwc", where "n" is the number of the
-// library, "m" is the callout number and "w" is an indication of what is being
-// altered (library context ["x"] or callout context ["c"]) and "y" is the
+// data.  The aata is a string of the form "nmwc", where "n" is the number of
+// the library, "m" is the callout number and "w" is an indication of what is
+// being altered (library context ["x"] or callout context ["c"]) and "y" is the
 // indication of what callout was passed as an argument ("x" or "b"). ("x" is
 // used instead of "l" to indicate that library context is being altered since
 // in the results, these single characters will be mixed with digits and "l"
@@ -78,16 +78,17 @@ namespace {
 // use of a name the same as that of one of the context elements serves as a
 // check that the argument name space and argument context space are separate.
 //
-// For integer data, the value starts at zero and an increment added on each
+// For integer data, the value starts at zero and an increment is added on each
 // call.  This increment is equal to:
 //
 // 1000 * library number + 100 * callout_number + 10 * lib/callout + indicator
 //
-// where "lib/callout" is 1 for updating a library context and 2 for updating
-// a callout context, and "indicator" is 1 for callout a and 2 for callout b.
-// This gives a direct correspondence between the characters appended to the
-// string context item and the amount by which the integer context item is
-// incremented.  For example, the string "21cb" corresponds to a value of 2122.
+// where "lib/callout" is 1 if a library context is updated and 2 if a
+// a callout context is changed. "indicator" is 1 for callout a and 2 for
+// callout b.  This scheme gives a direct correspondence between the characters
+//  appended to the string context item and the amount by which the integers
+// context item is incremented.  For example, the string "21cb" corresponds to
+// a value of 2122.
 //
 // Although this gives less information than the string value, the reasons for
 // using it are:
@@ -157,14 +158,14 @@ execute(CalloutHandle& callout_handle, int library_num, int callout_num) {
     string string_value = "";
     try {
         callout_handle.getLibraryHandle().getContext("string", string_value);
-    } catch (const NoSuchContext&) {
+    } catch (const NoSuchLibraryContext&) {
         string_value = "";
     }
 
     int int_value = 0;
     try {
         callout_handle.getLibraryHandle().getContext("int", int_value);
-    } catch (const NoSuchContext&) {
+    } catch (const NoSuchLibraryContext&) {
         int_value = 0;
     }
 
@@ -355,10 +356,10 @@ TEST(HandlesTest, ContextAccessCheck) {
     // To explain the expected library context results:
     //
     // The first callCallouts() call above calls the callouts for hook "one"
-    // with callout handle "a".  This calls the callouts attached to hook "one"
-    // from library 1, then those attached to hook "one" from library 2, then
+    // with callout handle "a".  This calls the callout attached to hook "one"
+    // from library 1, then that attached to hook "one" from library 2, then
     // from library 3.  The callout in library 1 appends "11xa" to the first
-    // library's context. The callout in library 2 appends "21xa" to that
+    // library's context. The callout in library 2 appends "21xa" to its
     // library's context.  Finally, the third library's context gets "31xa"
     // appended to it.
     //
@@ -366,11 +367,11 @@ TEST(HandlesTest, ContextAccessCheck) {
     // to hook "one", which result in "11xb", "21xb", "31xb" being appended to
     // the context of libraries 1, 2, and 3 respectively.
     //
-    // The expected integer values can be found by summing up the values
-    // corresponding to the elements of the strings.
-    //
     // The process is then repeated for hooks "two" and "three", leading to
     // the expected context values listed below.
+    //
+    // The expected integer values can be found by summing up the values
+    // corresponding to the elements of the strings.
 
     EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
     EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));
@@ -397,6 +398,9 @@ TEST(HandlesTest, ContextAccessCheck) {
     // "12ca", "22ca" and "32ca" for hook "two" and "31ca", "32ca" and "33ca"
     // for hook "three".
     //
+    // The expected integer values can be found by summing up the values
+    // corresponding to the elements of the strings.
+
     // At this point, we have only called the "print" function for callout
     // handle "a", so the following results are checking the context values
     // maintained in that callout handle.
@@ -554,11 +558,11 @@ TEST(HandlesTest, ContextDeletionCheck) {
     collection->callCallouts(four_index, callout_handle_a);
 
     // The logic by which the expected results are arrived at is described
-    // in the ContextAccessCheck test.  The results here are difference
+    // in the ContextAccessCheck test.  The results here are different
     // because context items have been modified along the way.
     //
     // As only the ContextHandle context is modified, the LibraryHandle
-    // context is unaltered.
+    // context is unaltered from the values obtained in the previous test.
 
     EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
     EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));

@@ -27,6 +27,7 @@ namespace {
 
 class CalloutHandleTest : public ::testing::Test {
 public:
+
     /// @brief Constructor
     ///
     /// Sets up an appropriate number of server hooks to pass to the
@@ -68,22 +69,21 @@ TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
     handle.setArgument("integer2", c);
     EXPECT_EQ(142, c);
 
-    int d = -1;
+    int d = 0;
     handle.getArgument("integer2", d);
     EXPECT_EQ(142, d);
 
     // Add a short (random value).
-    short e = 81; 
+    short e = -81; 
     handle.setArgument("short", e);
-    EXPECT_EQ(81, e);
+    EXPECT_EQ(-81, e);
 
-    short f = -1;
+    short f = 0;
     handle.getArgument("short", f);
-    EXPECT_EQ(81, f);
+    EXPECT_EQ(-81, f);
 }
 
-// Test that trying to get something with an incorrect name throws an
-// exception.
+// Test that trying to get an unknown argument throws an exception.
 
 TEST_F(CalloutHandleTest, ArgumentUnknownName) {
     CalloutHandle handle(getLibraryHandleCollection());
@@ -99,11 +99,12 @@ TEST_F(CalloutHandleTest, ArgumentUnknownName) {
     EXPECT_EQ(42, b);
 
     // Check that getting an unknown name throws an exception.
-    int c = -1;
+    int c = 0;
     EXPECT_THROW(handle.getArgument("unknown", c), NoSuchArgument);
 }
 
-// Test that trying to get something with an incorrect type throws an exception.
+// Test that trying to get an argument with an incorrect type throws an
+// exception.
 
 TEST_F(CalloutHandleTest, ArgumentIncorrectType) {
     CalloutHandle handle(getLibraryHandleCollection());
@@ -150,7 +151,7 @@ TEST_F(CalloutHandleTest, ComplexTypes) {
     EXPECT_EQ(22, beth.d);
     handle.setArgument("beth", beth);
 
-    // Ensure we can extract the data correctly
+    // Ensure we can extract the data correctly.
     Alpha aleph2;
     EXPECT_EQ(0, aleph2.a);
     EXPECT_EQ(0, aleph2.b);
@@ -183,7 +184,7 @@ TEST_F(CalloutHandleTest, PointerTypes) {
     Alpha* pa = &aleph;
     const Beta* pcb = &beth;
 
-    // Check pointers can be set and retrieved OK
+    // Check pointers can be set and retrieved OK.
     handle.setArgument("non_const_pointer", pa);
     handle.setArgument("const_pointer", pcb);
 
@@ -229,7 +230,7 @@ TEST_F(CalloutHandleTest, ContextItemNames) {
     EXPECT_TRUE(expected_names == actual_names);
 }
 
-// Test that we can delete and argument.
+// Test that we can delete an argument.
 
 TEST_F(CalloutHandleTest, DeleteArgument) {
     CalloutHandle handle(getLibraryHandleCollection());
@@ -245,7 +246,7 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
     handle.setArgument("three", three);
     handle.setArgument("four", four);
 
-    // Delete "one"
+    // Delete "one".
     handle.getArgument("one", value);
     EXPECT_EQ(1, value);
     handle.deleteArgument("one");
@@ -271,7 +272,7 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
     EXPECT_EQ(4, value);
 }
 
-// Test that we can delete all arguments
+// Test that we can delete all arguments.
 
 TEST_F(CalloutHandleTest, DeleteAllArguments) {
     CalloutHandle handle(getLibraryHandleCollection());
