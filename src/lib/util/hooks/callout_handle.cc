@@ -14,6 +14,7 @@
 
 #include <util/hooks/callout_handle.h>
 #include <util/hooks/library_handle.h>
+#include <util/hooks/server_hooks.h>
 
 #include <string>
 #include <utility>
@@ -24,6 +25,43 @@ using namespace isc::util;
 
 namespace isc {
 namespace util {
+
+// Constructor.
+CalloutHandle::CalloutHandle(
+    boost::shared_ptr<LibraryHandleCollection>& collection)
+    : arguments_(), context_collection_(), library_collection_(collection),
+      skip_(false) {
+
+    // Call the "context_create" hook.  We should be OK doing this - although
+    // the constructor has not finished running, all the member variables
+    // have been created.
+    int status = library_collection_->callCallouts(ServerHooks::CONTEXT_CREATE,
+                                                   *this);
+    if (status > 0) {
+        isc_throw(ContextCreateFail, "error code of " << status << " returned "
+                  "from context_create callout during the creation of a "
+                  "ContextHandle object");
+    }
+}
+
+// Destructor
+CalloutHandle::~CalloutHandle() {
+
+    // Call the "context_destroy" hook.  We should be OK doing this - although
+    // the destructor is being called, all the member variables are still in
+    // existence.
+    int status = library_collection_->callCallouts(ServerHooks::CONTEXT_DESTROY,
+                                                   *this);
+    if (status > 0) {
+        // An exception is thrown on failure.  This may be severe, but if
+        // none is thrown a resoucre leak in a library (signalled by the
+        // context_destroy callout returning an error) may be difficult to
+        // trace.
+        isc_throw(ContextDestroyFail, "error code of " << status << " returned "
+                  "from context_destroy callout during the destruction of a "
+                  "ContextHandle object");
+    }
+}
 
 // Return the name of all argument items.
 

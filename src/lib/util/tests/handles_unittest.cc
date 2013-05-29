@@ -57,20 +57,24 @@ namespace {
 // the type of data manipulated).
 //
 // For the string item, each callout shifts data to the left and inserts its own
-// data.  The aata is a string of the form "nmwc", where "n" is the number of
+// data.  The data is a string of the form "nmwc", where "n" is the number of
 // the library, "m" is the callout number and "w" is an indication of what is
 // being altered (library context ["x"] or callout context ["c"]) and "y" is the
-// indication of what callout was passed as an argument ("x" or "b"). ("x" is
-// used instead of "l" to indicate that library context is being altered since
-// in the results, these single characters will be mixed with digits and "l"
-// " looks too much like "1".)  Hence we have:
+// indication of what callout was passed as an argument ("a" or "b" - "" is
+// entered if no argument is supplied). ("x" is used instead of "l" to indicate
+// that library context is being altered since in the results, these single
+// characters will be mixed with digits and "l" " looks too much like "1".)
+// Hence we have:
 //
 // - "xa" if library context is being altered from a callout made with the
-//        first callout handle passed as argument.
+//        first callout handle indicator passed as argument.
 // - "xb" if library context is being altered from a callout made with the
-//        second callout handle passed as argument.
+//        second callout handle indicator passed as argument.
+// - "x"  if library context is being altered and no argument is set.
 // - "ca" if the first callout handle's context is being manipulated.
 // - "cb" if the second callout handle's context is being manipulated.
+// - "c"  if the a callout handle's context is being manipulated and it is not
+//        possible to identify the callout handle.
 //
 // For simplicity, and to cut down the number of functions actually written,
 // the callout indicator ("a" or "b") ) used in the in the CalloutHandle
@@ -84,11 +88,11 @@ namespace {
 // 1000 * library number + 100 * callout_number + 10 * lib/callout + indicator
 //
 // where "lib/callout" is 1 if a library context is updated and 2 if a
-// a callout context is changed. "indicator" is 1 for callout a and 2 for
-// callout b.  This scheme gives a direct correspondence between the characters
-//  appended to the string context item and the amount by which the integers
-// context item is incremented.  For example, the string "21cb" corresponds to
-// a value of 2122.
+// callout context is changed. "indicator" is 1 for callout a, 2 for callout
+// b and 0 if unknown.  This scheme gives a direct correspondence between the
+// characters appended to the string context item and the amount by which the
+// integer context item is incremented.  For example, the string "21cb"
+// corresponds to a value of 2122.
 //
 // Although this gives less information than the string value, the reasons for
 // using it are:
@@ -144,9 +148,15 @@ static void zero_results() {
 int
 execute(CalloutHandle& callout_handle, int library_num, int callout_num) {
 
-    // Obtain the callout handle indicator.
-    string indicator;
-    callout_handle.getArgument("string", indicator);
+    // Obtain the callout handle indicator and set a number for it.
+    string sindicator = "";
+    int indicator = 0;
+    try  {
+        callout_handle.getArgument("string", sindicator);
+        indicator = (sindicator == "a") ? 1 : 2;
+    } catch (const NoSuchArgument&) {
+        indicator = 0;
+    }
 
     // Create the basic data to be appended to the context value.
     int idata = 1000 * library_num + 100 * callout_num;
@@ -171,10 +181,10 @@ execute(CalloutHandle& callout_handle, int library_num, int callout_num) {
 
     // Update the context value with the library/callout indication (and the
     // suffix "x" to denote library) and set it.
-    string_value += (sdata + string("x") + indicator);
+    string_value += (sdata + string("x") + sindicator);
     callout_handle.getLibraryHandle().setContext("string", string_value);
 
-    int_value += (idata + 10 + (indicator == "a" ? 1 : 2));
+    int_value += (idata + 10 + indicator);
     callout_handle.getLibraryHandle().setContext("int", int_value);
 
     // Get the context data. As before, this will not exist for the first
@@ -196,10 +206,10 @@ execute(CalloutHandle& callout_handle, int library_num, int callout_num) {
     }
 
     // Update the values and set them.
-    string_value += (sdata + string("c") + indicator);
+    string_value += (sdata + string("c") + sindicator);
     callout_handle.setContext("string", string_value);
 
-    int_value += (idata + 20 + (indicator == "a" ? 1 : 2));
+    int_value += (idata + 20 + indicator);
     callout_handle.setContext("int", int_value);
 
     return (0);
@@ -295,7 +305,7 @@ print3(CalloutHandle& callout_handle) {
 
 TEST(HandlesTest, ContextAccessCheck) {
     // Create the LibraryHandleCollection with a set of four callouts
-    // (the test does not use the ContextCreate and ContextDestroy callouts.)
+    // (the test does not use the context_create and context_destroy callouts.)
 
     boost::shared_ptr<ServerHooks> server_hooks(new ServerHooks());
     const int one_index = server_hooks->registerHook("one");
@@ -494,7 +504,7 @@ printContextNames3(CalloutHandle& handle) {
 
 TEST(HandlesTest, ContextDeletionCheck) {
     // Create the LibraryHandleCollection with a set of four callouts
-    // (the test does not use the ContextCreate and ContextDestroy callouts.)
+    // (the test does not use the context_create and context_destroy callouts.)
 
     boost::shared_ptr<ServerHooks> server_hooks(new ServerHooks());
     const int one_index = server_hooks->registerHook("one");
@@ -617,6 +627,68 @@ TEST(HandlesTest, ContextDeletionCheck) {
 
     EXPECT_EQ(0, getItemNames(2).size());
 }
+
+// Tests that the CalloutHandle's constructor and destructor call the
+// context_create and context_destroy callbacks (if registered).  For
+// simplicity, we'll use the same callout functions as used above, plus
+// the following that returns an error:
+
+int returnError(CalloutHandle&) {
+    return (1);
+}
+
+TEST(HandlesTest, ConstructionDestructionCallouts) {
+    // Create the LibraryHandleCollection comprising two LibraryHandles.
+    // Register callouts for the context_create and context_destroy hooks.
+
+    boost::shared_ptr<ServerHooks> server_hooks(new ServerHooks());
+
+    // Create the library handle collection and the library handles.
+    boost::shared_ptr<LibraryHandleCollection>
+        collection(new LibraryHandleCollection());
+
+    boost::shared_ptr<LibraryHandle> handle(new LibraryHandle(server_hooks));
+    handle->registerCallout("context_create", callout11);
+    handle->registerCallout("context_create", print1);
+    handle->registerCallout("context_destroy", callout12);
+    handle->registerCallout("context_destroy", print1);
+    collection->addLibraryHandle(handle);
+
+    // Create the CalloutHandle and check that the constructor callout
+    // has run.
+    zero_results();
+    boost::shared_ptr<CalloutHandle>
+        callout_handle(new CalloutHandle(collection));
+
+    EXPECT_EQ("11x", resultLibraryString(0));
+    EXPECT_EQ(1110, resultLibraryInt(0));
+
+    // Check that the destructor callout runs.  Note that the "print1" callout
+    // didn't destroy the library context - it only copied it to where it
+    // could be examined.  As a result, the destructor callout appends its
+    // elements to the constructor's values and the result is printed.
+    zero_results();
+    callout_handle.reset();
+
+    EXPECT_EQ("11x12x", resultLibraryString(0));
+    EXPECT_EQ((1110 + 1210), resultLibraryInt(0));
+
+    // Test that the destructor throws an error if the context_destroy
+    // callout returns an error.
+    handle->registerCallout("context_destroy", returnError);
+    callout_handle.reset(new CalloutHandle(collection));
+    EXPECT_THROW(callout_handle.reset(), ContextDestroyFail);
+
+    // We don't know what callout_handle is pointing to - it could be to a
+    // half-destroyed object - so use a new CalloutHandle to test construction
+    // failure.
+    handle->registerCallout("context_create", returnError);
+    boost::shared_ptr<CalloutHandle> callout_handle2;
+    EXPECT_THROW(callout_handle2.reset(new CalloutHandle(collection)),
+                 ContextCreateFail);
+
+}
+
 
 } // Anonymous namespace
 
