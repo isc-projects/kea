@@ -1,4 +1,6 @@
-615.	[bug]		jinmei
+bind10-1.1.0rc1 released on May 29, 2013
+
+619.	[bug]		jinmei
 	b10-xfrout now uses blocking send for xfr response messages
 	to prevent abrupt termination of the stream due to a slower
 	client or narrower network bandwidth.
