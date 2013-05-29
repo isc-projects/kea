@@ -24,6 +24,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -373,7 +374,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 /// is no restriction on the data length being carried by them.
 /// For simplicity, we assign data of the length 3 for each
 /// of them.
-static uint8_t v4Opts[] = {
+static uint8_t v4_opts[] = {
     12,  3, 0,   1,  2, // Hostname
     60,  3, 10, 11, 12, // Class Id
     14,  3, 20, 21, 22, // Merit Dump File
@@ -404,18 +405,18 @@ TEST_F(LibDhcpTest, packOptions4) {
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
 
-    vector<uint8_t> expVect(v4Opts, v4Opts + sizeof(v4Opts));
+    vector<uint8_t> expVect(v4_opts, v4_opts + sizeof(v4_opts));
 
     OutputBuffer buf(100);
     EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
-    ASSERT_EQ(buf.getLength(), sizeof(v4Opts));
-    EXPECT_EQ(0, memcmp(v4Opts, buf.getData(), sizeof(v4Opts)));
+    ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
+    EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
 
 }
 
 TEST_F(LibDhcpTest, unpackOptions4) {
 
-    vector<uint8_t> v4packed(v4Opts, v4Opts + sizeof(v4Opts));
+    vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::Option::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
@@ -424,38 +425,43 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
-    EXPECT_EQ(12, x->second->getType());  // this should be option 12
-    ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+2, 3)); // data len=3
+    // Option 12 holds a string so let's cast it to an appropriate type.
+    OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x->second);
+    ASSERT_TRUE(option12);
+    EXPECT_EQ(12, option12->getType());  // this should be option 12
+    ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option12->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4_opts + 2, 3)); // data len=3
 
     x = options.find(60);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
     EXPECT_EQ(60, x->second->getType());  // this should be option 60
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+7, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 7, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
-    EXPECT_EQ(14, x->second->getType());  // this should be option 14
-    ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+12, 3)); // data len=3
+    OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x->second);
+    ASSERT_TRUE(option14);
+    EXPECT_EQ(14, option14->getType());  // this should be option 14
+    ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option14->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 12, 3)); // data len=3
 
     x = options.find(254);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     EXPECT_EQ(254, x->second->getType());  // this should be option 254
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+17, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 17, 3)); // data len=3
 
     x = options.find(128);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     EXPECT_EQ(128, x->second->getType());  // this should be option 254
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4Opts+22, 3)); // data len=3
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 22, 3)); // data len=3
 
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
@@ -533,7 +539,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     // It will be used to create most of the options.
     std::vector<uint8_t> buf(48, 1);
     OptionBufferConstIter begin = buf.begin();
-    OptionBufferConstIter end = buf.begin();
+    OptionBufferConstIter end = buf.end();
 
     LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_MASK, begin, end,
                                     typeid(OptionCustom));
@@ -569,25 +575,25 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option4AddrLst));
 
     LibDhcpTest::testStdOptionDefs4(DHO_HOST_NAME, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_BOOT_SIZE, begin, begin + 2,
                                     typeid(OptionInt<uint16_t>));
 
     LibDhcpTest::testStdOptionDefs4(DHO_MERIT_DUMP, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_NAME, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_SWAP_SERVER, begin, end,
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_ROOT_PATH, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_EXTENSIONS_PATH, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_IP_FORWARDING, begin, end,
                                     typeid(OptionCustom));
@@ -653,7 +659,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NIS_DOMAIN, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NIS_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
@@ -675,7 +681,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionInt<uint8_t>));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_SCOPE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_FONT_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
@@ -702,7 +708,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MAX_MESSAGE_SIZE, begin, begin + 2,
                                     typeid(OptionInt<uint16_t>));
@@ -720,7 +726,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_DOMAIN_NAME, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
                                     typeid(Option));
@@ -909,10 +915,10 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_NEW_POSIX_TIMEZONE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs6(D6O_NEW_TZDB_TIMEZONE, begin, end,
-                                    typeid(OptionCustom));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs6(D6O_ERO, begin, end,
                                     typeid(OptionIntArray<uint16_t>));
