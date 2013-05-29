@@ -153,6 +153,19 @@ LibraryHandle::getContextNames() const {
 
 // LibraryHandleCollection methods.
 
+// Return pointer to the current library handle.
+
+boost::shared_ptr<LibraryHandle>
+LibraryHandleCollection::getLibraryHandle() const {
+    if ((curidx_ < 0) || (curidx_ >= handles_.size())) {
+        isc_throw(InvalidIndex, "current library handle index of (" <<
+                  curidx_ << ") is not valid for the library handle vector "
+                  "of size " << handles_.size());
+    }
+
+    return (handles_[curidx_]);
+}
+
 // Check if a callout is present on a hook in any of the libraries.
 
 bool

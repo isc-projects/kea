@@ -47,6 +47,18 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid index
+///
+/// Thrown if an attempt is made to obtain a library handle but the current
+/// library handle index is invalid.  This will occur if the method
+/// LibraryHandleCollection::getLibraryHandle() is called outside of a callout.
+
+class InvalidIndex : public Exception {
+public:
+    InvalidIndex(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 // Forward declaration for CalloutHandle
 class CalloutHandle;
 
@@ -97,6 +109,7 @@ public:
     }
 
     /// @brief Get context
+
     ///
     /// Sets an element in the library context.  If the name does not exist,
     /// a "NoSuchContext" exception is thrown.
@@ -113,7 +126,7 @@ public:
     void getContext(const std::string& name, T& value) const {
         ContextCollection::const_iterator element_ptr = context_.find(name);
         if (element_ptr == context_.end()) {
-            isc_throw(NoSuchContext, "unable to find library context datum " <<
+            isc_throw(NoSuchContext, "unable to find library context item " <<
                       name << " in library handle");
         }
 
@@ -186,7 +199,6 @@ public:
     ///
     /// @throw NoSuchHook Thrown if the hook name is unrecognised.
     void deregisterAll(const std::string& name);
-
 
     /// @brief Checks if callouts are present
     ///
@@ -285,6 +297,18 @@ public:
         handles_.push_back(handle);
     }
 
+    /// @brief Return current library index
+    ///
+    /// Returns the value of the "current library index".  Although a callout
+    /// callout can retrieve this information, it is of limited use: the
+    /// value is intended for use by the CalloutHandle object in order to
+    /// access the per-library context.
+    ///
+    /// @return Current library index value
+    int getLibraryIndex() const {
+        return (curidx_);
+    }
+
     /// @brief Get current library handle
     ///
     /// Returns a pointer to the current library handle.  This method can
@@ -294,10 +318,7 @@ public:
     ///
     /// @return Pointer to current library handle. This is the handle for
     ///         which a callout is being called.
-    boost::shared_ptr<LibraryHandle> getLibraryHandle() const {
-        return (boost::shared_ptr<LibraryHandle>());
-        /// @todo Return the appropriate handle
-    }
+    boost::shared_ptr<LibraryHandle> getLibraryHandle() const;
 
     /// @brief Checks if callouts are present
     ///
