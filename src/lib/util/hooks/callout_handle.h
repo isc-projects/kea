@@ -49,6 +49,28 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Context creation failure
+///
+/// Thrown if, during the running of the constructor, the call to the
+/// context_create hook returns an error.
+
+class ContextCreateFail : public Exception {
+public:
+    ContextCreateFail(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Context destruction failure
+///
+/// Thrown if, during the running of the desstructor, the call to the
+/// context_destroy hook returns an error.
+
+class ContextDestroyFail : public Exception {
+public:
+    ContextDestroyFail(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 // Forward declaration of the library handle and related collection classes.
 
 class LibraryHandle;
@@ -110,11 +132,16 @@ public:
 
     /// @brief Constructor
     ///
+    /// Creates the object and calls the callouts on the "context_create"
+    /// hook.
+    ///
     /// @param manager Pointer to the collection of library handles.
-    CalloutHandle(boost::shared_ptr<LibraryHandleCollection>& collection)
-        : arguments_(), context_collection_(), library_collection_(collection),
-          skip_(false)
-    {}
+    CalloutHandle(boost::shared_ptr<LibraryHandleCollection>& collection);
+
+    /// @brief Destructor
+    ///
+    /// Calls the context_destroy callback to release any per-packet context.
+    ~CalloutHandle();
 
     /// @brief Set argument
     ///
