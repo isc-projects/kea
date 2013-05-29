@@ -178,6 +178,15 @@ class MsgQTest(unittest.TestCase):
         data = json.loads(msg[6 + header_len:].decode('utf-8'))
         return (header, data)
 
+    def test_unknown_command(self):
+        """
+        Test the command handler returns error when the command is unknown.
+        """
+        # Fake we are running, to disable test workarounds
+        self.__msgq.running = True
+        self.assertEqual({'result': [1, "unknown command: unknown"]},
+                         self.__msgq.command_handler('unknown', {}))
+
     def test_undeliverable_errors(self):
         """
         Send several packets through the MsgQ and check it generates
