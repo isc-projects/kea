@@ -121,6 +121,8 @@ private:
     MemorySegmentState state_;
 };
 
+typedef boost::shared_ptr<const ZoneTableAccessor> ConstZoneTableAccessorPtr;
+
 /// \brief The list of data source clients.
 ///
 /// The purpose of this class is to hold several data source clients and search
@@ -273,6 +275,19 @@ public:
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
                             bool want_finder = true) const = 0;
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source.
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \throw NotImplemented if this method is not implemented.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found.
+    virtual ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const = 0;
+
 };
 
 /// \brief Shared pointer to the list.
@@ -494,7 +509,7 @@ public:
     /// \throw NotImplemented if \c use_cache is false.
     /// \return A pointer to the accessor, or NULL if the requested data
     /// source is not found.
-    boost::shared_ptr<const ZoneTableAccessor>
+    ConstZoneTableAccessorPtr
     getZoneTableAccessor(const std::string& datasrc_name,
                          bool use_cache) const;
 

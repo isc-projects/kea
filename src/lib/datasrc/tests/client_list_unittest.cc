@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -254,7 +254,7 @@ public:
     }
     ConfigurableClientList::CacheStatus doReload(
         const Name& origin, const string& datasrc_name = "");
-    void accessorIterate(boost::shared_ptr<const ZoneTableAccessor> accessor,
+    void accessorIterate(ConstZoneTableAccessorPtr& accessor,
         int numZones, const string& zoneName);
 
     const RRClass rrclass_;
@@ -1134,31 +1134,25 @@ TEST_F(ListTest, reloadByDataSourceName) {
 // through the table, and verifies that the expected number of zones are
 // present, as well as the named zone.
 void
-ListTest::accessorIterate(boost::shared_ptr<const ZoneTableAccessor> accessor,
+ListTest::accessorIterate(ConstZoneTableAccessorPtr& accessor,
                           int numZones, const string& zoneName="")
 {
     // Confirm basic iterator behavior.
     ASSERT_TRUE(accessor);
     ZoneTableAccessor::IteratorPtr it = accessor->getIterator();
     ASSERT_TRUE(it);
+    // Iterator does not guarantee ordering, so we look for the target
+    // name anywhere in the table.
+    bool found = false;
+    int i;
+    for (i = 0; !it->isLast(); ++i, it->next()) {
+	if (Name(zoneName) == it->getCurrent().origin) {
+	    found = true;
+	}
+    }
+    EXPECT_EQ(i, numZones);
     if (numZones > 0) {
-        EXPECT_FALSE(it->isLast());
-        EXPECT_EQ(0, it->getCurrent().index);
-        // Iterator does not guarantee ordering, so we look for the target
-        // name anywhere in the table.
-        bool found = false;
-        int i = 0;
-        while (!it->isLast()) {
-            ++i;
-            if (Name(zoneName) == it->getCurrent().origin) {
-                found = true;
-            }
-            it->next();
-        }
         EXPECT_TRUE(found);
-        EXPECT_EQ(i, numZones);
-    } else {
-        EXPECT_TRUE(it->isLast());
     }
 }
 
@@ -1171,8 +1165,7 @@ TEST_F(ListTest, zoneTableAccessor) {
 
     // empty list; expect it to return an empty list
     list_->configure(config_elem_, true);
-    boost::shared_ptr<const ZoneTableAccessor>
-        z(list_->getZoneTableAccessor("", true));
+    ConstZoneTableAccessorPtr z(list_->getZoneTableAccessor("", true));
     accessorIterate(z, 0);
 
     const ConstElementPtr elem2(Element::fromJSON("["

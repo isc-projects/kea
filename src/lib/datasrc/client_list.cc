@@ -24,9 +24,9 @@
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/logger.h>
+#include <datasrc/zone_table_accessor_cache.h>
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
-#include <datasrc/zone_table_accessor_cache.h>
 
 #include <memory>
 #include <set>
@@ -400,7 +400,7 @@ ConfigurableClientList::getStatus() const {
     return (result);
 }
 
-boost::shared_ptr<const ZoneTableAccessor>
+ConstZoneTableAccessorPtr
 ConfigurableClientList::getZoneTableAccessor(const std::string& datasrc_name,
                                              bool use_cache) const
 {
@@ -418,11 +418,11 @@ ConfigurableClientList::getZoneTableAccessor(const std::string& datasrc_name,
         const internal::CacheConfig* config(info.getCacheConfig());
         // If caching is disabled for the named data source, this will
         // return an accessor to an effectivley empty table.
-        return (boost::shared_ptr<const ZoneTableAccessor>
+        return (ConstZoneTableAccessorPtr
                 (new internal::ZoneTableAccessorCache(*config)));
     }
 
-    return (boost::shared_ptr<const ZoneTableAccessor>());
+    return (ConstZoneTableAccessorPtr());
 }
 
 }
