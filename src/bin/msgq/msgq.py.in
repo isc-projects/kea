@@ -807,7 +807,19 @@ class MsgQ:
             if not self.running:
                 return
 
-            # TODO: Any commands go here
+            # TODO: Who does validation? The ModuleCCSession or must we?
+
+            if command == 'members':
+                # List all members of MsgQ or of a group.
+                if args is None:
+                    args = {}
+                group = args.get('group')
+                if group:
+                    return isc.config.create_answer(0,
+                        list(map(lambda sock: self.fd_to_lname[sock.fileno()],
+                                 self.subs.find(group, ''))))
+                else:
+                    return isc.config.create_answer(0, self.lnames.keys())
 
             config_logger.error(MSGQ_COMMAND_UNKNOWN, command)
             return isc.config.create_answer(1, 'unknown command: ' + command)
