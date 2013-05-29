@@ -10,7 +10,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda *.lock
 
 EXTRA_DIST = log_test_messages.mes
 BUILT_SOURCES = log_test_messages.h log_test_messages.cc
