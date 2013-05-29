@@ -1,3 +1,11 @@
+617.	[bug]		marcin
+	b10-dhcp4: Fixed a bug whereby the domain-name option was encoded
+	as FQDN (using technique described in RFC1035) instead of a string.
+	Also, created new class which represents an option carrying a single
+	string value. This class is now used for all standard options of
+	this kind.
+	(Trac #2786, git 96b1a7eb31b16bf9b270ad3d82873c0bd86a3530)
+
 615.	[bug]		jinmei
 	b10-auth: Avoid referencing to a freed object when authoritative
 	server addresses are reconfigured.  It caused a crash on a busy
