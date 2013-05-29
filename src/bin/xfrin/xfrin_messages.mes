@@ -279,9 +279,9 @@ On starting an xfrin session, it is identified that the zone to be
 transferred has multiple SOA RRs.  Such a zone is broken, but could be
 accidentally configured especially in a data source using "non
 captive" backend database.  The implementation ignores entire SOA RRs
-and tries to continue processing as if the zone were empty.  This
-means subsequent AXFR can succeed and possibly replace the zone with
-valid content, but an IXFR attempt will fail.
+and tries to continue processing as if the zone were empty.  This also
+means AXFR will be used unconditionally, regardless of the configured value
+for request_ixfr of the zone.
 
 % XFRIN_ZONE_NO_SOA Zone %1 does not have SOA
 On starting an xfrin session, it is identified that the zone to be
