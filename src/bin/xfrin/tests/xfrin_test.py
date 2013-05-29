@@ -2913,8 +2913,8 @@ class TestXfrin(unittest.TestCase):
         # test case for a fresh xfr object.
         config = { 'zones': [
                    { 'name': 'test.example.',
-                    'master_addr': '192.0.2.1',
-                    'master_port': 53,
+                     'master_addr': '192.0.2.1',
+                     'master_port': 53,
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
@@ -2924,8 +2924,8 @@ class TestXfrin(unittest.TestCase):
         # use_ixfr was deprecated and explicitly rejected for now.
         config = { 'zones': [
                    { 'name': 'test.example.',
-                    'master_addr': '192.0.2.1',
-                    'master_port': 53,
+                     'master_addr': '192.0.2.1',
+                     'master_port': 53,
                      'use_ixfr': True
                    }
                  ]}
