@@ -5506,6 +5506,23 @@ TODO; there's a ticket to determine these levels, see #1074
             If this is 0, no maximum file size is used.
           </para>
 
+          <note>
+            <simpara>
+	      Due to a limitation of the underlying logging library
+	      (log4cplus), rolling over the log files (from ".1" to
+	      ".2", etc) may show odd results: There can be
+	      multiple small files at the timing of roll over.  This
+	      can happen when multiple BIND 10 processes try to roll
+	      over the files simultaneously.
+	      Version 1.1.0 of log4cplus solved this problem, so if
+	      this or higher version of log4cplus is used to build
+	      BIND 10, it shouldn't happen.  Even for older versions
+	      it is normally expected to happen rarely unless the log
+	      messages are produced very frequently by multiple
+	      different processes.
+	    </simpara>
+	  </note>
+
         </section>
 
         <section>
