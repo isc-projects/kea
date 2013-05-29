@@ -416,12 +416,8 @@ ConfigurableClientList::getZoneTableAccessor(const std::string& datasrc_name,
         }
 
         const internal::CacheConfig* config(info.getCacheConfig());
-        if (!config->isEnabled() && datasrc_name.empty()) {
-            continue;
-	}
-
-	// If caching is disabled for the named data source, this will
-	// return an accessor to an effectivley empty table.
+        // If caching is disabled for the named data source, this will
+        // return an accessor to an effectivley empty table.
         return (boost::shared_ptr<const ZoneTableAccessor>
                 (new internal::ZoneTableAccessorCache(*config)));
     }
