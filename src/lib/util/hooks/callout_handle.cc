@@ -50,7 +50,6 @@ CalloutHandle::getLibraryHandle() const {
     // after this method returns, because this object maintains a shared
     // pointer to the LibraryHandleCollection, which in turn maintains
     // a shared pointer to the LibraryHandle in question.
-
     return (*handle);
 }
 
@@ -72,7 +71,6 @@ CalloutHandle::getLibraryIndex() const {
 
 CalloutHandle::ElementCollection&
 CalloutHandle::getContextForLibrary() {
-
     int libindex = getLibraryIndex();
 
     // Access a reference to the element collection for the given index,
@@ -81,13 +79,12 @@ CalloutHandle::getContextForLibrary() {
 }
 
 // The "const" version of the above, used by the "getContext()" method.  If
-// the context for the current library doesn't exist, throw a
-// "NoSuchCalloutContext" exception.
+// the context for the current library doesn't exist, throw an exception.
 
 const CalloutHandle::ElementCollection&
 CalloutHandle::getContextForLibrary() const {
-
     int libindex = getLibraryIndex();
+
     ContextCollection::const_iterator libcontext =
         context_collection_.find(libindex);
     if (libcontext == context_collection_.end()) {
