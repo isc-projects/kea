@@ -218,8 +218,8 @@ class MsgQTest(unittest.TestCase):
             any order).
             """
             array = result['result'][1]
-            self.assertEqual(set(['first', 'second']), array)
-            self.assertEqual({'result': [0, array]}, array)
+            self.assertEqual(set(['first', 'second']), set(array))
+            self.assertEqual({'result': [0, array]}, result)
         # Members of the G1 and G2
         self.assertEqual({'result': [0, ["second"]]},
                          self.__msgq.command_handler('members',
