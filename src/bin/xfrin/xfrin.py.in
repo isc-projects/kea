@@ -1138,7 +1138,7 @@ def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
     if zone_soa is None:
         # This is a kind of special case, so we log it at info level.
         logger.info(XFRIN_INITIAL_AXFR, format_zone_str(zname, zclass),
-                     AddressFormatter(master_addr))
+                    AddressFormatter(master_addr))
         return RRType.AXFR
     if request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED:
         logger.debug(DBG_XFRIN_TRACE, XFRIN_INITIAL_IXFR_DISABLED,
