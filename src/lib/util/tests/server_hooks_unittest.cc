@@ -24,18 +24,27 @@ using namespace isc;
 using namespace isc::util;
 using namespace std;
 
-// Checks the registration of hooks and the interrogation methods.  As the
-// constructor registers two hooks, this is also a test of the construction.
-
 namespace {
+
+// Checks the registration of hooks and the interrogation methods.  As the
+// constructor registers two hooks, this is also a test of the constructor.
 
 TEST(ServerHooksTest, RegisterHooks) {
     ServerHooks hooks;
 
-    // Should be two hooks already registered, with indexes 0 and 1.
+    // There should be two hooks already registered, with indexes 0 and 1.
     EXPECT_EQ(2, hooks.getCount());
     EXPECT_EQ(0, hooks.getIndex("context_create"));
     EXPECT_EQ(1, hooks.getIndex("context_destroy"));
+
+    // Check that the constants are as expected. (The intermediate variables
+    // are used because of problems with g++ 4.6.1/Ubuntu 11.10 when resolving
+    // the value of the ServerHooks constants when they appeared within the
+    // gtest macro.)
+    const int create_value = ServerHooks::CONTEXT_CREATE;
+    const int destroy_value = ServerHooks::CONTEXT_DESTROY;
+    EXPECT_EQ(0, create_value);
+    EXPECT_EQ(1, destroy_value);
 
     // Register another couple of hooks.  The test on returned index is based
     // on knowledge that the hook indexes are assigned in ascending order.
@@ -51,26 +60,27 @@ TEST(ServerHooksTest, RegisterHooks) {
     EXPECT_EQ(4, hooks.getCount());
 }
 
-// Checks that duplcate names cannot be registered.
+// Check that duplcate names cannot be registered.
 
 TEST(ServerHooksTest, DuplicateHooks) {
     ServerHooks hooks;
 
-    // Ensure we can duplicate one of the existing names.
+    // Ensure we can't duplicate one of the existing names.
     EXPECT_THROW(hooks.registerHook("context_create"), DuplicateHook);
 
+    // Check we can't duplicate a newly registered hook.
     int gamma = hooks.registerHook("gamma");
     EXPECT_EQ(2, gamma);
     EXPECT_THROW(hooks.registerHook("gamma"), DuplicateHook);
 }
 
-// Checks that we can get the name of the hooks
+// Checks that we can get the name of the hooks.
 
 TEST(ServerHooksTest, GetHookNames) {
     vector<string> expected_names;
     ServerHooks hooks;
 
-    // Insert the names into the hooks object
+    // Add names into the hooks object and to the set of expected names.
     expected_names.push_back("alpha");
     expected_names.push_back("beta");
     expected_names.push_back("gamma");
@@ -86,7 +96,7 @@ TEST(ServerHooksTest, GetHookNames) {
     // Get the actual hook names
     vector<string> actual_names = hooks.getHookNames();
 
-    // For comparison, sort the name sinto alphabetical order and do a straight
+    // For comparison, sort the names into alphabetical order and do a straight
     // vector comparison.
     sort(expected_names.begin(), expected_names.end());
     sort(actual_names.begin(), actual_names.end());
@@ -101,7 +111,7 @@ TEST(ServerHooksTest, HookCount) {
 
     // Insert the names into the hooks object
     hooks.registerHook("alpha");
-    hooks.registerHook("betha");
+    hooks.registerHook("beta");
     hooks.registerHook("gamma");
     hooks.registerHook("delta");
 

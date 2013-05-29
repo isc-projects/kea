@@ -40,7 +40,8 @@ ServerHooks::ServerHooks() {
 }
 
 // Register a hook.  The index assigned to the hook is the current number
-// of entries in the collection.
+// of entries in the collection, so ensuring that hook indexes are unique
+// (and non-negative).
 
 int
 ServerHooks::registerHook(const string& name) {
@@ -66,16 +67,15 @@ ServerHooks::registerHook(const string& name) {
 int
 ServerHooks::getIndex(const string& name) const {
 
-    // Return pair of <hook name, index>.
+    // Get iterator to matching element.
     HookCollection::const_iterator i = hooks_.find(name);
-    if (i == hooks_.end()) {
-        return (-1);
-    }
 
-    return (i->second);
+    // ... and convert this into a return value.
+    return ((i == hooks_.end()) ? -1 : i->second);
 }
 
-// Return list of hooks
+// Return vector of hook names.  The names are not sorted - it is up to the
+// caller to perform sorting if required.
 
 vector<string>
 ServerHooks::getHookNames() const {

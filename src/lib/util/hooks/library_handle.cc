@@ -24,7 +24,8 @@ using namespace isc::util;
 namespace isc {
 namespace util {
 
-// Check that an index is valid for the hook vector
+// Check that an index is valid for the hook vector.
+
 void
 LibraryHandle::checkHookIndex(int index) const {
     if ((index < 0) || (index >= hook_vector_.size())) {
@@ -33,7 +34,8 @@ LibraryHandle::checkHookIndex(int index) const {
     }
 }
 
-// Get index for named hook
+// Get index for named hook.
+
 int
 LibraryHandle::getHookIndex(const std::string& name) const {
 
@@ -51,7 +53,8 @@ LibraryHandle::getHookIndex(const std::string& name) const {
     return (index);
 }
 
-// Register a callout at the back of the named hook
+// Register a callout for a hook, adding it to run after any previously
+// registered callouts on that hook.
 
 void
 LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
@@ -60,7 +63,7 @@ LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
     // do so.
     int index = getHookIndex(name);
 
-    // Index valid, so add the callout to the end of the list.
+    // Index valid, so add the callout to the end of the list of callouts.
     hook_vector_[index].push_back(callout);
 }
 
@@ -84,8 +87,8 @@ LibraryHandle::callCallouts(int index, CalloutHandle& callout_handle) {
     // Validate the hook index.
     checkHookIndex(index);
 
-    // Call all the callouts, stopping if a non-zero status is returned or if
-    // the "skip" flag is set.
+    // Call all the callouts, stopping if the "skip" flag is set or if a
+    // non-zero status is returned.
     int status = 0;
     for (int i = 0;
          (i < hook_vector_[index].size()) && !callout_handle.getSkip() &&
@@ -97,7 +100,7 @@ LibraryHandle::callCallouts(int index, CalloutHandle& callout_handle) {
     return (status);
 }
 
-// Deregister a callout
+// Deregister a callout on a given hook.
 
 void
 LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
@@ -108,10 +111,10 @@ LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
 
     if (!hook_vector_[index].empty()) {
         // The next bit is standard STL (see "Item 33" in "Effective STL" by
-        // Scott Meyters.
+        // Scott Meyers).
         //
         // remove_if reorders the hook vector so that all items not matching
-        // the predicate are at the start of the vector, and returns a pointer
+        // the predicate are at the start of the vector and returns a pointer
         // to the next element. (In this case, the predicate is that the item
         // is equal to the value of the passed callout.)  The erase() call
         // removes everything from that element to the end of the vector, i.e.
@@ -124,7 +127,7 @@ LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
     }
 }
 
-// Deregister all callouts
+// Deregister all callouts on a given hook.
 
 void
 LibraryHandle::deregisterAll(const std::string& name) {
@@ -137,7 +140,7 @@ LibraryHandle::deregisterAll(const std::string& name) {
     hook_vector_[index].clear();
 }
 
-// return the name of all context items.
+// Return the name of all items in the library's context.
 
 vector<string>
 LibraryHandle::getContextNames() const {
@@ -160,13 +163,14 @@ LibraryHandleCollection::getLibraryHandle() const {
     if ((curidx_ < 0) || (curidx_ >= handles_.size())) {
         isc_throw(InvalidIndex, "current library handle index of (" <<
                   curidx_ << ") is not valid for the library handle vector "
-                  "of size " << handles_.size());
+                  "(size = " << handles_.size() << ")");
     }
 
     return (handles_[curidx_]);
 }
 
-// Check if a callout is present on a hook in any of the libraries.
+// Check if a any of the libraries have at least one callout present on a given
+// hook.
 
 bool
 LibraryHandleCollection::calloutsPresent(int index) const {
@@ -188,21 +192,22 @@ int
 LibraryHandleCollection::callCallouts(int index,
                                       CalloutHandle& callout_handle) {
 
-    // Don't validate the hook index, that is checked in the call to the
+    // Don't validate the hook index here as it is checked in the call to the
     // callCallouts() method of the first library handle.
 
     // Clear the skip flag before we start so that no state from a previous
     // call of a hook accidentally leaks through.
     callout_handle.setSkip(false);
 
-    // Call all the callouts, stopping if a non-zero status is returned or if
-    // the "skip" flag is set.  Note that we iterate using the current index
-    // as the counter (so that the callout handle object retrieves the
-    // correct LibraryHandle from the collection).
+    // Call all the callouts, stopping if the "skip" flag is set or if a
+    // non-zero status is returned.  Note that we iterate using the current
+    // index as the counter to allow callout handle object to retrieve the
+    // current LibraryHandle.
     int status = 0;
     for (curidx_ = 0;
          (curidx_ < handles_.size()) && !callout_handle.getSkip() &&
-         (status == 0); ++curidx_) {
+         (status == 0);
+         ++curidx_) {
         status = handles_[curidx_]->callCallouts(index, callout_handle);
     }
 

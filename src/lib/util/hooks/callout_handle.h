@@ -29,7 +29,8 @@ namespace util {
 
 /// @brief No such argument
 ///
-/// Thrown if an attempt is made to use an invalid argument name.
+/// Thrown if an attempt is made access an argument that does not exist.
+
 class NoSuchArgument : public Exception {
 public:
     NoSuchArgument(const char* file, size_t line, const char* what) :
@@ -39,38 +40,39 @@ public:
 /// @brief No such callout context item
 ///
 /// Thrown if an attempt is made to get an item of data from this callout's
-/// context.
+/// context and either the context or an item in the context with that name
+/// does not exist.
+
 class NoSuchCalloutContext : public Exception {
 public:
     NoSuchCalloutContext(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
-//
-
 // Forward declaration of the library handle and related collection classes.
+
 class LibraryHandle;
 class LibraryHandleCollection;
 
 /// @brief Per-packet callout handle
 ///
 /// An object of this class is associated with every packet (or request)
-/// processed by the server.  It forms the principle means of passing 
-/// data between the server and the user-library callouts.
+/// processed by the server.  It forms the principle means of passing data
+/// between the server and the user-library callouts.
 ///
 /// The class allows access to the following information:
 ///
 /// - Arguments.  When the callouts associated with a hook are called, they
 ///   are passed information by the server (and can return information to it)
 ///   through name/value pairs.  Each of these pairs is an argument and the
-///   information is accessed through the {get,get}Argument() methods.
+///   information is accessed through the {get,set}Argument() methods.
 ///
 /// - Per-packet context.  Each packet has a context associated with it, this
-///   context being a per-library context.  In other words, As a packet passes
+///   context being  on a per-library basis.  In other words, As a packet passes
 ///   through the callouts associated with a given library, the callouts can
 ///   associate and retrieve information with the packet.  The per-library
 ///   nature of the context means that the callouts within a given library can
-///   pass packet-specific information between one another, they cannot pass
+///   pass packet-specific information between one another, but they cannot pass
 ///   information to callous within another library.  Typically such context
 ///   is created in the "context_create" callout and destroyed in the
 ///   "context_destroy" callout.  The information is accessed through the
@@ -79,7 +81,7 @@ class LibraryHandleCollection;
 /// - Per-library context.  Each library has a context associated with it that
 ///   is independent of the packet.  All callouts in the library share the
 ///   information in the context, regardless of the packet being processed.
-///   The context is typically createed in the library's "load()" method and
+///   The context is typically created in the library's "load()" method and
 ///   destroyed in its "unload()" method.  The information is available by
 ///   obtaining the handle to the library through this class's
 ///   getLibraryHandle() method, then calling {get,set}Context() on the
@@ -100,7 +102,7 @@ public:
     /// library handles and a name.value collection.
     ///
     /// The collection of contexts is stored in a map, as not every library
-    /// will require creating a context associated with each packet.  In
+    /// will require creation of a context associated with each packet.  In
     /// addition, the structure is more flexible in that the size does not
     /// need to be set when the CalloutHandle is constructed.
     typedef std::map<int, ElementCollection> ContextCollection;
@@ -116,9 +118,10 @@ public:
 
     /// @brief Set argument
     ///
-    /// Sets an argument.  If the argument is already present, it is replaced.
+    /// Sets the value of an argument.  The argument is created if it does not
+    /// already exist.
     ///
-    /// @param name Name of the element in the context to set
+    /// @param name Name of the argument.
     /// @param value Value to set
     template <typename T>
     void setArgument(const std::string& name, T value) {
@@ -127,17 +130,16 @@ public:
 
     /// @brief Get argument
     ///
-    /// Gets an argument.  If an argument of the given name does not exist,
-    /// a "NoSuchArgument" exception is thrown.
+    /// Gets the value of an argument.
     ///
-    /// @param name Name of the element in the argument list to set.
+    /// @param name Name of the element in the argument list to get.
     /// @param value [out] Value to set.  The type of "value" is important:
     ///        it must match the type of the value set.
     ///
-    /// @throw NoSuchArgument Thrown if no argument with the name "name" is
-    ///        present.
-    /// @throw boost::bad_any_cast Thrown if the context element is present,
-    ///        but the type of the element is not that expected
+    /// @throw NoSuchArgument No argument with the given name is present.
+    /// @throw boost::bad_any_cast An argument with the given name is present,
+    ///        but the data type of the value is not the same as the type of
+    ///        the variable provided to receive the value.
     template <typename T>
     void getArgument(const std::string& name, T& value) const {
         ElementCollection::const_iterator element_ptr = arguments_.find(name);
@@ -208,7 +210,7 @@ public:
     /// library index is valid.  A callout would use this method to get to
     /// the context associated with the library in which it resides.
     ///
-    /// @return Reference to the current library handle
+    /// @return Reference to the current library handle.
     ///
     /// @throw InvalidIndex thrown if this method is called outside of the
     ///        "callCallouts() method. (Exception is so-named because the
@@ -221,8 +223,8 @@ public:
     /// Sets an element in the context associated with the current library.  If
     /// an element of the name is already present, it is replaced.
     ///
-    /// @param name Name of the element in the context to set
-    /// @param value Value to set
+    /// @param name Name of the element in the context to set.
+    /// @param value Value to set.
     template <typename T>
     void setContext(const std::string& name, T value) {
         getContextForLibrary()[name] = value;
@@ -238,8 +240,9 @@ public:
     ///
     /// @throw NoSuchCalloutContext Thrown if no context element with the name
     ///        "name" is present.
-    /// @throw boost::bad_any_cast Thrown if the context element is present,
-    ///        but the type of the element is not that expected
+    /// @throw boost::bad_any_cast Thrown if the context element is present
+    ///        but the type of the data is not the same as the type of the
+    ///        variable provided to receive its value.
     template <typename T>
     void getContext(const std::string& name, T& value) const {
         const ElementCollection& lib_context = getContextForLibrary();
@@ -259,7 +262,8 @@ public:
     /// Returns a vector holding the names of items in the context associated
     /// with the current library.
     ///
-    /// @return Vector of strings reflecting argument names
+    /// @return Vector of strings reflecting the names of items in the callout
+    ///         context associated with the current library.
     std::vector<std::string> getContextNames() const;
 
     /// @brief Delete context element
@@ -271,7 +275,7 @@ public:
     /// N.B. If the element is a raw pointer, the pointed-to data is NOT deleted
     /// by this.
     ///
-    /// @param name Name of the element in the argument list to set.
+    /// @param name Name of the context item to delete.
     void deleteContext(const std::string& name) {
         static_cast<void>(getContextForLibrary().erase(name));
     }
@@ -294,29 +298,29 @@ private:
     /// or is invalid for the current library collection.
     ///
     /// @return Current library index, valid for this library collection.
+    ///
+    /// @throw InvalidIndex current library index is not valid for the library
+    ///        handle collection.
     int getLibraryIndex() const;
 
     /// @brief Return reference to context for current library
     ///
-    /// Called by all context-accessing functions, this checks if the current
-    /// library index is valid (throwing an exception if not).  If it is, it
-    /// returns a reference to the appropriate context, creating one if it does
-    /// not exist. (The last task allows the list of library handles to grow
-    /// dynamically - although only if handles are appended to the end of the
-    /// library handle collection.)
+    /// Called by all context-setting functions, this returns a reference to
+    /// the callout context for the current library, creating a context if it
+    /// does not exist.
     ///
     /// @return Reference to the collection of name/value pairs associated
     ///         with the current library.
+    ///
+    /// @throw InvalidIndex current library index is not valid for the library
+    ///        handle collection.
     ElementCollection& getContextForLibrary();
 
     /// @brief Return reference to context for current library (const version)
     ///
-    /// Called by all context-accessing functions, this checks if the current
-    /// library index is valid (throwing an exception if not).  If it is, it
-    /// returns a reference to the appropriate context, creating one if it does
-    /// not exist. (The last task allows the list of library handles to grow
-    /// dynamically - although only if handles are appended to the end of the
-    /// library handle collection.)
+    /// Called by all context-accessing functions, this a reference to the
+    /// callout context for the current library.  An exception is thrown if
+    /// it does not exist.
     ///
     /// @return Reference to the collection of name/value pairs associated
     ///         with the current library.

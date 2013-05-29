@@ -83,7 +83,7 @@ public:
     ///
     /// @return Reference to shared pointer pointing to the relevant handle.
     ///
-    /// @throws InvalidIndex if the requeste dindex is not valid.
+    /// @throws InvalidIndex if the requested index is not valid.
     boost::shared_ptr<LibraryHandle>& getLibraryHandle(int i) {
         if ((i < 0) || (i >= handles_.size())) {
             isc_throw(InvalidIndex, "handle index of " << i << " not valid for "
@@ -115,24 +115,14 @@ int LibraryHandleCollectionTest::callout_value_ = 0;
 //
 // The next set of tests check that callouts can be called.
 
-// Supply callouts structured in such a way that we can determine the order
-// that they are called and whether they are called at all. The method used
-// is simple - after a sequence of callouts, the digits in the value, reading
-// left to right, determines the order of the callouts and whether they were
-// called at all.  So:
+// The callouts defined here are structured in such a way that it is possible
+// to determine the order in which they are called and whether they are called
+// at all. The method used is simple - after a sequence of callouts, the digits
+// in the value, reading left to right, determines the order of the callouts
+// called.  For example, callout one followed by two followed by three followed
+// by two followed by one results in a value of 12321.
 //
-// * one followed by two, the resulting value is 12
-// * two followed by one, the resuling value is 21
-// * one and two is not called, the resulting value is 1
-// * two and one is not called, the resulting value is 2
-// * neither called, the resulting value is 0
-//
-// ... and extending beyond two callouts:
-//
-// * one followed by two followed by three followed by two followed by one
-//   results in a value of 12321.
-//
-// Functions return a zero indicating success.
+// Functions return a zero to indicate success.
 
 extern "C" {
 int collection_one(CalloutHandle&) {
@@ -205,7 +195,8 @@ int collection_four_skip(CalloutHandle& handle) {
 
 };  // extern "C"
 
-// Check that we know which hooks have callouts attached to them.
+// Check the "calloutsPresent()" method.
+//
 // Note: as we needed to use the addHandleMethod() to set up the handles to
 // which the callouts are attached, this can also be construed as a test
 // of the addLibraryHandle method as well.
@@ -250,7 +241,7 @@ TEST_F(LibraryHandleCollectionTest, CalloutsPresent) {
     EXPECT_FALSE(empty_collection.calloutsPresent(-1));
 }
 
-// Test that the callouts are called in order.
+// Test that the callouts are called in the correct order.
 
 TEST_F(LibraryHandleCollectionTest, CallCalloutsSuccess) {
     const int one_index = getServerHooks()->getIndex("one");
@@ -290,8 +281,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSuccess) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(1124, callout_value_);
 
-    // Ensure that calling the callouts on a hook with no callouts works,
-    // even though it does not return any value.
+    // Ensure that calling the callouts on a hook with no callouts works.
     callout_value_ = 0;
     status = getLibraryHandleCollection()->callCallouts(three_index,
                                                         callout_handle);
@@ -299,8 +289,11 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSuccess) {
     EXPECT_EQ(0, callout_value_);
 }
 
-// Test that the callouts are called in order, but not after a callout
-// returing an error code.
+// Test that the callouts are called in order, but that callouts occurring
+// after a callout that returns an error are not called.
+//
+// (Note: in this test, the callouts that return an error set the value of
+// callout_value_ before they return the error code.)
 
 TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     const int one_index = getServerHooks()->getIndex("one");
@@ -318,7 +311,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     CalloutHandle callout_handle(getLibraryHandleCollection());
     int status;
 
-    // Each library contributing one callout on hook "one". First callout
+    // Each library contributing one callout on hook "one". The first callout
     // returns an error.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("one", collection_one_error);
@@ -330,8 +323,8 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     EXPECT_EQ(1, status);
     EXPECT_EQ(1, callout_value_);
 
-    // Each library contributing multiple callouts on hook "two". Last callout
-    // on first library returns an error after updating the value.
+    // Each library contributing multiple callouts on hook "two". The last
+    // callout on the first library returns an error.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("two", collection_one);
     getLibraryHandle(0)->registerCallout("two", collection_one_error);
@@ -346,7 +339,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     EXPECT_EQ(1, status);
     EXPECT_EQ(11, callout_value_);
 
-    // Random callout returns an error.
+    // A callout in a random position in the callout list returns an error.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("three", collection_one);
     getLibraryHandle(0)->registerCallout("three", collection_one);
@@ -359,7 +352,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsError) {
     EXPECT_EQ(1, status);
     EXPECT_EQ(11224, callout_value_);
 
-    // Last callout returns an error.
+    // The last callout on a hook returns an error.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("four", collection_one);
     getLibraryHandle(0)->registerCallout("four", collection_one);
@@ -394,8 +387,8 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSkip) {
     CalloutHandle callout_handle(getLibraryHandleCollection());
     int status;
 
-    // Each library contributing one callout on hook "one". First callout
-    // returns an error.
+    // Each library contributing one callout on hook "one". The first callout
+    // sets the "skip" flag.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("one", collection_one_skip);
     getLibraryHandle(1)->registerCallout("one", collection_two);
@@ -406,8 +399,8 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSkip) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(1, callout_value_);
 
-    // Each library contributing multiple callouts on hook "two". Last callout
-    // on first library returns an error after updating the value.
+    // Each library contributing multiple callouts on hook "two". The last
+    // callout on the first library sets the "skip" flag.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("two", collection_one);
     getLibraryHandle(0)->registerCallout("two", collection_one_skip);
@@ -422,7 +415,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSkip) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(11, callout_value_);
 
-    // Random callout returns an error.
+    // A callout in a random position in the callout list sets the "skip" flag.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("three", collection_one);
     getLibraryHandle(0)->registerCallout("three", collection_one);
@@ -435,7 +428,7 @@ TEST_F(LibraryHandleCollectionTest, CallCalloutsSkip) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(11224, callout_value_);
 
-    // Last callout returns an error.
+    // The last callout on a hook sets the "skip" flag.
     callout_value_ = 0;
     getLibraryHandle(0)->registerCallout("four", collection_one);
     getLibraryHandle(0)->registerCallout("four", collection_one);

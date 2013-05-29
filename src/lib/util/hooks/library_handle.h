@@ -15,14 +15,14 @@
 #ifndef LIBRARY_HANDLE_H
 #define LIBRARY_HANDLE_H
 
-#include <map>
-#include <string>
+#include <exceptions/exceptions.h>
+#include <util/hooks/server_hooks.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
-#include <util/hooks/server_hooks.h>
+#include <map>
+#include <string>
 
 namespace isc {
 namespace util {
@@ -30,6 +30,7 @@ namespace util {
 /// @brief No such hook
 ///
 /// Thrown if an attempt is made to use an invalid hook name or hook index.
+
 class NoSuchHook : public Exception {
 public:
     NoSuchHook(const char* file, size_t line, const char* what) :
@@ -41,9 +42,9 @@ public:
 /// Thrown if an attempt is made to obtain context that has not been previously
 /// set.
 
-class NoSuchContext : public Exception {
+class NoSuchLibraryContext : public Exception {
 public:
-    NoSuchContext(const char* file, size_t line, const char* what) :
+    NoSuchLibraryContext(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -62,7 +63,7 @@ public:
 // Forward declaration for CalloutHandle
 class CalloutHandle;
 
-/// Typedef for a callout pointer
+/// Typedef for a callout pointer.  (Callouts must have "C" linkage.)
 extern "C" {
     typedef int (*CalloutPtr)(CalloutHandle&);
 };
@@ -74,12 +75,15 @@ extern "C" {
 /// library to register callouts and by the HookManager to call them.  The
 /// class also contains storage for library-specific context.
 ///
-/// Although there is a persuasive argument for the class to load unload the
-/// user library, that is handled by the HookManager to prevent the user library
-/// from accessing those functions.
+/// The functions related to loading and unloading the asssociated library are
+/// handled in the related LibraryManager class - there is a 1:1 correspondence
+/// between LibraryManager and LibraryHandle objects.  The separation prevents
+/// the user library callouts from tinkering around with the loading and
+/// unloading of libraries.
 
 class LibraryHandle {
 private:
+
     /// Typedef to allow abbreviation of iterator specification in methods
     typedef std::map<std::string, boost::any> ContextCollection;
 
@@ -87,9 +91,8 @@ public:
 
     /// @brief Constructor
     ///
-    /// This is passed the ServerHooks object and an index number: the former
-    /// allows for the sizing of the internal hook vector, and the latter
-    /// is used by the CalloutHandle object to access appropriate context
+    /// This is passed the ServerHooks object, which is used both to size the
+    /// internal hook vector and in the registration of callouts.
     ///
     /// @param hooks Pointer to the hooks registered by the server.
     LibraryHandle(boost::shared_ptr<ServerHooks>& hooks)
@@ -109,25 +112,24 @@ public:
     }
 
     /// @brief Get context
-
     ///
-    /// Sets an element in the library context.  If the name does not exist,
-    /// a "NoSuchContext" exception is thrown.
+    /// Gets an element in the library context.
     ///
-    /// @param name Name of the element in the context to set.
-    /// @param value [out] Value to set.  The type of "value" is important:
+    /// @param name Name of the element in the context to get.
+    /// @param value [out] retrieved value.  The type of "value" is important:
     ///        it must match the type of the value set.
     ///
-    /// @throw NoSuchContext Thrown if no context element with the name
-    ///        "name" is present.
-    /// @throw boost::bad_any_cast Thrown if the context element is present,
-    ///        but the type of the element is not that expected
+    /// @throw NoSuchLibraryContext No context element with the given name
+    ///        is present.
+    /// @throw boost::bad_any_cast The context element is present, but the
+    ///        type of the element does not match the type of the variable
+    ///        specified to receive it.
     template <typename T>
     void getContext(const std::string& name, T& value) const {
         ContextCollection::const_iterator element_ptr = context_.find(name);
         if (element_ptr == context_.end()) {
-            isc_throw(NoSuchContext, "unable to find library context item " <<
-                      name << " in library handle");
+            isc_throw(NoSuchLibraryContext, "unable to find library context "
+                      "item " << name << " in library handle");
         }
 
         value = boost::any_cast<T>(element_ptr->second);
@@ -142,11 +144,11 @@ public:
 
     /// @brief Delete context element
     ///
-    /// Deletes context item of the given name.  If an item  of that name
+    /// Deletes context item of the given name.  If an item of that name
     /// does not exist, the method is a no-op.
     ///
-    /// N.B. If the element is a raw pointer, the pointed-to data is
-    /// NOT deleted by this.
+    /// N.B. If the element is a raw pointer, the pointed-to data is NOT deleted
+    /// by this method.
     ///
     /// @param name Name of the element in the argument list to set.
     void deleteContext(const std::string& name) {
@@ -157,13 +159,13 @@ public:
     ///
     /// Deletes all arguments associated with this context.
     ///
-    /// N.B. If any elements are raw pointers, the pointed-to data is
-    /// NOT deleted by this.
+    /// N.B. If any elements are raw pointers, the pointed-to data is NOT
+    /// deleted by this method.
     void deleteAllContext() {
         context_.clear();
     }
 
-    /// @brief Register a callout
+    /// @brief Register a callout on a hook
     ///
     /// Registers a callout function with a given hook.  The callout is added
     /// to the end of the callouts associated with the hook.
@@ -171,12 +173,12 @@ public:
     /// @param name Name of the hook to which the callout is added.
     /// @param callout Pointer to the callout function to be registered.
     ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
-    /// @throw Unexpected Hooks name is valid but internal data structure is
-    ///        of the wrong size.
+    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw Unexpected The hook name is valid but an internal data structure
+    ///        is of the wrong size.
     void registerCallout(const std::string& name, CalloutPtr callout);
 
-    /// @brief De-Register a callout
+    /// @brief De-Register a callout on a hook
     ///
     /// Searches through the functions associated with the named hook and
     /// removes all entries matching the callout.  If there are no matching
@@ -185,12 +187,12 @@ public:
     /// @param name Name of the hook from which the callout is removed.
     /// @param callout Pointer to the callout function to be removed.
     ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
-    /// @throw Unexpected Hooks name is valid but internal data structure is
-    ///        of the wrong size.
+    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw Unexpected The hook name is valid but an internal data structure
+    ///        is of the wrong size.
     void deregisterCallout(const std::string& name, CalloutPtr callout);
 
-    /// @brief Removes all callouts
+    /// @brief Removes all callouts on a hook
     ///
     /// Removes all callouts associated with a given hook.  This is a no-op
     /// if there are no callouts associated with the hook.
@@ -200,7 +202,7 @@ public:
     /// @throw NoSuchHook Thrown if the hook name is unrecognised.
     void deregisterAll(const std::string& name);
 
-    /// @brief Checks if callouts are present
+    /// @brief Checks if callouts are present on a hook
     ///
     /// @param index Hook index for which callouts are checked.
     ///
@@ -218,10 +220,10 @@ public:
     ///        current object being processed.
     ///
     /// @return Status return.
-    ///
     int callCallouts(int index, CalloutHandle& callout_handle);
 
 private:
+
     /// @brief Check hook index
     ///
     /// Checks that the hook index is valid for the hook vector.  If not,
@@ -229,7 +231,9 @@ private:
     ///
     /// @param index Hooks index to check.
     ///
-    /// @throw NoSuchHook Thrown if the index is not valid for the hook vector.
+    /// @throw NoSuchHook The index is not valid for the hook vector (i.e.
+    ///        less than zero or equal to or greater than the size of the
+    ///        vector).
     void checkHookIndex(int index) const;
 
     /// @brief Get hook index
@@ -238,15 +242,16 @@ private:
     /// also checks for validity of the index: if the name is valid, the
     /// index should be valid.  However, as the class only keeps a pointer to
     /// a shared ServerHooks object, it is possible that the object was modified
-    /// after the hook_vector_ was sized.  This function performs some checks
-    /// on the name and throws an exception if the checks fail.
+    /// after the hook_vector_ was sized: in this case the name could be valid
+    /// but the index is invalid.
     ///
     /// @param name Name of the hook to check
     ///
     /// @return Index of the hook in the hook_vector_
     ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
-    /// @throw Unexpected Index not valid for the hook vector.
+    /// @throw NoSuchHook The hook name is unrecognised.
+    /// @throw Unexpected Index of the hook name is not valid for the hook
+    ///        vector.
     int getHookIndex(const std::string& name) const;
 
     // Member variables
@@ -255,11 +260,11 @@ private:
     ContextCollection context_;
 
     /// Pointer to the list of hooks registered by the server
-    boost::shared_ptr<ServerHooks>      hooks_;     ///< Pointer to hooks
+    boost::shared_ptr<ServerHooks> hooks_;
 
     /// Each element in the following vector corresponds to a single hook and
     /// is an ordered list of callouts for that hook.
-    std::vector<std::vector<CalloutPtr> >  hook_vector_;
+    std::vector<std::vector<CalloutPtr> > hook_vector_;
 };
 
 
@@ -267,33 +272,37 @@ private:
 ///
 /// This simple class is a collection of handles for all libraries loaded.
 /// It is pointed to by the CalloutHandle object and is used by that object
-/// to locate the correct LibraryHandle to pass to a callout function. To
-/// do this, the class contains an index indicating the "current" handle.  This
-/// is used in the calling of callouts: prior to calling a callout associated
-/// with a LibraryHandle, the index is updated to point to that handle.
-/// If the callout requests access to the LibraryHandle, it is passed a
-/// reference to the correct one.
+/// to locate the correct LibraryHandle should one be requested by a callout
+/// function.
+///
+/// To do this, the class contains an index indicating the "current" handle.
+/// This is updated during the calling of callouts: prior to calling a callout
+/// associated with a particular LibraryHandle, the index is updated to point to
+/// that handle.  If the callout requests access to the LibraryHandle, it is
+/// passed a reference to the correct one.
 
 class LibraryHandleCollection {
 private:
+
     /// Private typedef to abbreviate statements in class methods.
     typedef std::vector<boost::shared_ptr<LibraryHandle> > HandleVector;
+
 public:
 
     /// @brief Constructor
     ///
-    /// Initializes member variables, in particular setting the current index
-    /// to an invalid value.
+    /// Initializes member variables, in particular setting the "current library
+    /// handle index" to an invalid value.
     LibraryHandleCollection() : curidx_(-1), handles_()
     {}
 
     /// @brief Add library handle
     ///
     /// Adds a library handle to the collection.  The collection is ordered,
-    /// and this adds a library handle to the end of the current list.
+    /// and this adds a library handle to the end of it.
     ///
     /// @param library_handle Pointer to the a library handle to be added.
-    void addLibraryHandle(boost::shared_ptr<LibraryHandle>& handle) {
+    void addLibraryHandle(const boost::shared_ptr<LibraryHandle>& handle) {
         handles_.push_back(handle);
     }
 
@@ -301,8 +310,8 @@ public:
     ///
     /// Returns the value of the "current library index".  Although a callout
     /// callout can retrieve this information, it is of limited use: the
-    /// value is intended for use by the CalloutHandle object in order to
-    /// access the per-library context.
+    /// value is intended for use by the CalloutHandle object to access the
+    /// per-library context.
     ///
     /// @return Current library index value
     int getLibraryIndex() const {
@@ -316,20 +325,20 @@ public:
     /// library handles: calling it at any other time is meaningless and will
     /// cause an exception to be thrown.
     ///
-    /// @return Pointer to current library handle. This is the handle for
-    ///         which a callout is being called.
+    /// @return Pointer to current library handle. This is the handle for the
+    ///         library on which the callout currently running is associated.
     boost::shared_ptr<LibraryHandle> getLibraryHandle() const;
 
-    /// @brief Checks if callouts are present
+    /// @brief Checks if callouts are present on a hook
     ///
     /// Checks all loaded libraries and returns true if at least one callout
-    /// has been registered for a hook in any of them.
+    /// has been registered by any of them for the given hook.
     ///
     /// @param index Hook index for which callouts are checked.
     ///
     /// @return true if callouts are present, false if not.
     ///
-    /// @throw NoSuchHook Thrown if the index is not valid.
+    /// @throw NoSuchHook Given index does not correspond to a valid hook.
     bool calloutsPresent(int index) const;
 
     /// @brief Calls the callouts for a given hook
@@ -342,11 +351,11 @@ public:
     ///        current object being processed.
     ///
     /// @return Status return.
-    ///
     int callCallouts(int index, CalloutHandle& callout_handle);
 
 private:
-    /// Index of the current library handle during iteration.
+    /// Index of the library handle on which the currently called callout is
+    /// registered.
     int curidx_;
 
     /// Vector of pointers to library handles.

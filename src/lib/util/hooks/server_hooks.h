@@ -35,7 +35,7 @@ public:
 };
 
 
-/// @brief Server Hook List
+/// @brief Server hook collection
 ///
 /// This class is used by the server-side code to register hooks - points at
 /// in the server processing at which libraries can register functions
@@ -45,17 +45,20 @@ public:
 /// The ServerHooks class is little more than a wrapper around the std::map
 /// class.  It stores a hook, assigning to it a unique index number.  This
 /// number is then used by the server code to identify the hook being called.
+/// (Although it would be feasible to use a name as an index, using an integer
+/// will speed up the time taken to locate the callouts, which may make a
+/// difference in a frequently-executed piece of code.)
 
 class ServerHooks {
 public:
 
-    /// Pre-Defined Hooks
+    /// Index numbers for pre-defined hooks.
     static const int CONTEXT_CREATE = 0;
     static const int CONTEXT_DESTROY = 1;
 
     /// @brief Constructor
     ///
-    /// This pre-registers two hooks, context_create and context_destroy.  These
+    /// This pre-registers two hooks, context_create and context_destroy, which
     /// are called by the server before processing a packet and after processing
     /// for the packet has completed.  They allow the server code to allocate
     /// and destroy per-packet context.
@@ -70,8 +73,9 @@ public:
     ///
     /// @param name Name of the hook
     ///
-    /// @return Index of the hook, to be used in subsequent calls.  This will
-    ///         be greater than or equal to zero.
+    /// @return Index of the hook, to be used in subsequent hook-related calls.
+    ///         This will be greater than or equal to zero (so allowing a
+    ///         negative value to indicate an invalid index).
     ///
     /// @throws DuplicateHook A hook with the same name has already been
     ///         registered.
