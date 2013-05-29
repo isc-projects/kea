@@ -187,6 +187,55 @@ class MsgQTest(unittest.TestCase):
         self.assertEqual({'result': [1, "unknown command: unknown"]},
                          self.__msgq.command_handler('unknown', {}))
 
+    def test_get_members(self):
+        """
+        Test getting members of a group or of all connected clients.
+        """
+        # Push two dummy "clients" into msgq (the ugly way, by directly
+        # tweaking relevant data structures).
+        class Sock:
+            def __init__(self, fileno):
+                self.fileno = lambda: fileno
+        self.__msgq.lnames["first"] = Sock(1)
+        self.__msgq.lnames["second"] = Sock(2)
+        self.__msgq.fd_to_lname[1] = "first"
+        self.__msgq.fd_to_lname[2] = "second"
+        # Subscribe them to some groups
+        self.__msgq.process_command_subscribe(self.__msgq.lnames["first"],
+                                              {'group': "G1", 'instance': "*"},
+                                              None)
+        self.__msgq.process_command_subscribe(self.__msgq.lnames["second"],
+                                              {'group': "G1", 'instance': "*"},
+                                              None)
+        self.__msgq.process_command_subscribe(self.__msgq.lnames["second"],
+                                              {'group': "G2", 'instance': "*"},
+                                              None)
+        # Now query content of some groups through the command handler.
+        self.__msgq.running = True # Enable the command handler
+        def check_both(result):
+            """
+            Check the result is successful one and it contains both lnames (in
+            any order).
+            """
+            array = result['result'][1]
+            self.assertEqual(set(['first', 'second']), array)
+            self.assertEqual({'result': [0, array]}, array)
+        # Members of the G1 and G2
+        self.assertEqual({'result': [0, ["second"]]},
+                         self.__msgq.command_handler('members',
+                                                     {'group': "G2"}))
+        check_both(self.__msgq.command_handler('members', {'group': 'G1'}))
+        # We pretend that all the possible groups exist, just that most
+        # of them are empty. So requesting for G3 is request for an empty
+        # group and should not fail.
+        self.assertEqual({'result': [0, []]},
+                         self.__msgq.command_handler('members',
+                                                     {'group': "Empty"}))
+        # Without the name of the group, we just get all the clients.
+        check_both(self.__msgq.command_handler('members', {}))
+        # Omitting the parameters completely in such case is OK
+        check_both(self.__msgq.command_handler('members', None))
+
     def test_undeliverable_errors(self):
         """
         Send several packets through the MsgQ and check it generates
