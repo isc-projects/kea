@@ -85,7 +85,7 @@
 	while Xfrin is running.
 	(Trac #2252, git e1a0ea8ef5c51b9b25afa111fbfe9347afbe5413)
 
-bind10-1.0.0beta2 released on May 10, 2013
+bind10-1.1.0beta2 released on May 10, 2013
 
 610.	[bug]		muks
 	When the sqlite3 program is not available on the system (in
@@ -188,7 +188,7 @@ bind10-1.0.0beta2 released on May 10, 2013
 	messages.
 	(Trac #2827, git 29c3f7f4e82d7e85f0f5fb692345fd55092796b4)
 
-bind10-1.0.0beta1 released on April 4, 2013
+bind10-1.1.0beta1 released on April 4, 2013
 
 598.	[func]*		jinmei
 	The separate "static" data source is now deprecated as it can be
