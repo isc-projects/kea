@@ -184,6 +184,7 @@ class MsgQ:
         self.hostname = socket.gethostname()
         self.subs = SubscriptionManager(self.cfgmgr_ready)
         self.lnames = {}
+        self.fd_to_lname = {}
         self.sendbuffs = {}
         self.running = False
         self.__cfgmgr_ready = None
@@ -328,6 +329,7 @@ class MsgQ:
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
+        self.fd_to_lname[newsocket.fileno()] = lname
 
         logger.debug(TRACE_BASIC, MSGQ_SOCKET_REGISTERED, newsocket.fileno(),
                      lname)
@@ -346,7 +348,8 @@ class MsgQ:
             self.poller.unregister(sock)
 
         self.subs.unsubscribe_all(sock)
-        lname = [ k for k, v in self.lnames.items() if v == sock ][0]
+        lname = self.fd_to_lname[fd]
+        del self.fd_to_lname[fd]
         del self.lnames[lname]
         sock.close()
         del self.sockets[fd]
