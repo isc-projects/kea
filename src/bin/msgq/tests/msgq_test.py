@@ -421,12 +421,17 @@ class SendNonblock(unittest.TestCase):
         The write end is put into the message queue, so we can check it.
         It returns (msgq, read_end, write_end). It is expected the sockets
         are closed by the caller afterwards.
+
+        Also check the sockets are registered correctly (eg. internal data
+        structures are there for them).
         '''
         msgq = MsgQ()
         # We do only partial setup, so we don't create the listening socket
         msgq.setup_poller()
         (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         msgq.register_socket(write)
+        self.assertEqual(1, len(msgq.lnames))
+        self.assertEqual(write, msgq.lnames[msgq.fd_to_lname[write.fileno()]])
         return (msgq, read, write)
 
     def infinite_sender(self, sender):
@@ -446,8 +451,15 @@ class SendNonblock(unittest.TestCase):
         # Explicitly close temporary socket pair as the Python
         # interpreter expects it.  It may not be 100% exception safe,
         # but since this is only for tests we prefer brevity.
+        # Actually, the write end is often closed by the sender.
+        if write.fileno() != -1:
+            # Some of the senders passed here kill the socket internally.
+            # So kill it only if not yet done so. If the socket is closed,
+            # it gets -1 as fileno().
+            msgq.kill_socket(write.fileno(), write)
+        self.assertFalse(msgq.lnames)
+        self.assertFalse(msgq.fd_to_lname)
         read.close()
-        write.close()
 
     def test_infinite_sendmsg(self):
         """
