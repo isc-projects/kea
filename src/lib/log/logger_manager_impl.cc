@@ -35,7 +35,10 @@
 #include <log/logger_specification.h>
 #include <log/buffer_appender_impl.h>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
+using boost::lexical_cast;
 
 namespace isc {
 namespace log {
@@ -123,7 +126,7 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
 // a standard file appender or a rolling file appender will be created.
 void
 LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
-                                         const OutputOption& opt)
+                                      const OutputOption& opt)
 {
     // Append to existing file
     std::ios::openmode mode = std::ios::app;
@@ -133,9 +136,16 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
         fileapp = log4cplus::SharedAppenderPtr(new log4cplus::FileAppender(
             opt.filename, mode, opt.flush));
     } else {
+        log4cplus::helpers::Properties properties;
+        properties.setProperty("File", opt.filename);
+        properties.setProperty("MaxFileSize",
+                               lexical_cast<string>(opt.maxsize));
+        properties.setProperty("MaxBackupIndex",
+                               lexical_cast<string>(opt.maxver));
+        properties.setProperty("ImmediateFlush", "true");
+        properties.setProperty("UseLockFile", "true");
         fileapp = log4cplus::SharedAppenderPtr(
-            new log4cplus::RollingFileAppender(opt.filename, opt.maxsize,
-                                               opt.maxver, opt.flush));
+            new log4cplus::RollingFileAppender(properties));
     }
 
     // use the same console layout for the files.
