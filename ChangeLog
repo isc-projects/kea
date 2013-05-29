@@ -1,5 +1,7 @@
 TBD.	[func]		y-aharen
 	b10-auth: A new statistics item 'qryrecursion' has been introduced.
+	The counter is for the number of queries (OpCode=Query) with Recursion
+	Desired (RD) bit on.
 	(Trac #2796, git TBD)
 
 614.	[func]		tmark
