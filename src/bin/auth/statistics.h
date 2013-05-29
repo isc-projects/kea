@@ -182,8 +182,7 @@ public:
 
     /// \brief Set Recursion Desired (RD) bit of the request.
     ///
-    /// \param with_dnssec_ok true if Recursion Desired (RD)bit of the request
-    //                        is set
+    /// \param with_rd true if Recursion Desired (RD)bit of the request is set
     /// \throw None
     void setRequestRD(const bool with_rd) {
         bit_attributes_[REQ_WITH_RD] = with_rd;
