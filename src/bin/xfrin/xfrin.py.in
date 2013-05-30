@@ -1529,69 +1529,6 @@ class Xfrin:
     def _auth_config_handler(self, new_config, config_data):
         # Config handler for changes in Auth configuration
         self._set_db_file()
-        self._set_memory_zones(new_config, config_data)
-
-    def _clear_memory_zones(self):
-        """Clears the memory_zones set; called before processing the
-           changed list of memory datasource zones that have file type
-           sqlite3"""
-        self._memory_zones.clear()
-
-    def _is_memory_zone(self, zone_name_str, zone_class_str):
-        """Returns true if the given zone/class combination is configured
-           in the in-memory datasource of the Auth process with file type
-           'sqlite3'.
-           Note: this method is not thread-safe. We are considering
-           changing the threaded model here, but if we do not, take
-           care in accessing and updating the memory zone set (or add
-           locks)
-        """
-        # Normalize them first, if either conversion fails, return false
-        # (they won't be in the set anyway)
-        try:
-            zone_name_str = Name(zone_name_str).to_text().lower()
-            zone_class_str = RRClass(zone_class_str).to_text()
-        except Exception:
-            return False
-        return (zone_name_str, zone_class_str) in self._memory_zones
-
-    def _set_memory_zones(self, new_config, config_data):
-        """Part of the _auth_config_handler function, keeps an internal set
-           of zones in the datasources config subset that have 'sqlite3' as
-           their file type.
-           Note: this method is not thread-safe. We are considering
-           changing the threaded model here, but if we do not, take
-           care in accessing and updating the memory zone set (or add
-           locks)
-        """
-        # walk through the data and collect the memory zones
-        # If this causes any exception, assume we were passed bad data
-        # and keep the original set
-        new_memory_zones = set()
-        try:
-            if "datasources" in new_config:
-                for datasource in new_config["datasources"]:
-                    if "class" in datasource:
-                        ds_class = RRClass(datasource["class"])
-                    else:
-                        # Get the default
-                        ds_class = RRClass(config_data.get_default_value(
-                                               "datasources/class"))
-                    if datasource["type"] == "memory":
-                        for zone in datasource["zones"]:
-                            if "filetype" in zone and \
-                               zone["filetype"] == "sqlite3":
-                                zone_name = Name(zone["origin"])
-                                zone_name_str = zone_name.to_text().lower()
-                                new_memory_zones.add((zone_name_str,
-                                                      ds_class.to_text()))
-                # Ok, we can use the data, update our list
-                self._memory_zones = new_memory_zones
-        except Exception:
-            # Something is wrong with the data. If this data even reached us,
-            # we cannot do more than assume the real module has logged and
-            # reported an error. Keep the old set.
-            return
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
