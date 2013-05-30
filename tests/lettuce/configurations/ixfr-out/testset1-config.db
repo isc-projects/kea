@@ -2,7 +2,6 @@
     "Xfrin": {
         "zones": [
             {
-                "use_ixfr": true,
                 "class": "IN",
                 "name": "example.com.",
                 "master_addr": "178.18.82.80"
