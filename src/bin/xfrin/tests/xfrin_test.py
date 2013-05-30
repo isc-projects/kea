@@ -250,10 +250,7 @@ class MockXfrin(Xfrin):
     check_command_hook = None
 
     def _cc_setup(self):
-        self._tsig_key = None
         self._module_cc = MockCC()
-        init_keyring(self._module_cc)
-        pass
 
     def _get_db_file(self):
         pass
