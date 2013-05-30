@@ -135,9 +135,11 @@ class MockCC(MockModuleCCSession, ConfigData):
         module_spec = isc.config.module_spec_from_file(
             xfrin.SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
+        # For inspection
+        self.added_remote_modules = []
 
     def add_remote_config_by_name(self, name, callback):
-        pass
+        self.added_remote_modules.append((name, callback))
 
     def get_remote_config_value(self, module, identifier):
         if module == 'tsig_keys' and identifier == 'keys':
@@ -2460,6 +2462,13 @@ class TestXfrin(unittest.TestCase):
         self.assertTrue(self.xfr._module_cc.stopped);
         sys.stderr.close()
         sys.stderr = self.stderr_backup
+
+    def test_init(self):
+        """Check some initial configuration after construction"""
+        # data source "module" should have been registrered as a necessary
+        # remote config
+        self.assertEqual([('data_sources', self.xfr._datasrc_config_handler)],
+                         self.xfr._module_cc.added_remote_modules)
 
     def _do_parse_zone_name_class(self):
         return self.xfr._parse_zone_name_and_class(self.args)
