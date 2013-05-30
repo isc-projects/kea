@@ -1454,10 +1454,15 @@ class Xfrin:
         # is used to trigger Auth/in-memory so that it reloads
         # zones when they have been transfered in
         self._memory_zones = set()
-        self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
         self._counters = Counters(SPECFILE_LOCATION)
+
+        # Initial configuration
+        self._cc_setup()
+        config_data = self._module_cc.get_full_config()
+        self.config_handler(config_data)
+        init_keyring(self._module_cc)
 
     def _cc_setup(self):
         '''This method is used only as part of initialization, but is
@@ -1471,11 +1476,10 @@ class Xfrin:
                                               self.config_handler,
                                               self.command_handler)
         self._module_cc.start()
-        config_data = self._module_cc.get_full_config()
-        self.config_handler(config_data)
+        # TBD: this will be removed in this branch
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
                                           self._auth_config_handler)
-        init_keyring(self._module_cc)
+        # END_OF_TBD
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
