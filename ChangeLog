@@ -1,3 +1,10 @@
+622.	[func]		tmark
+	Created the initial, bare-bones implementation of DHCP-DDNS service
+	process class, D2Process, and the abstract class from which it derives,
+	DProcessBase. D2Process will provide the DHCP-DDNS specific event loop
+	and business logic.
+	(Trac #2955, git dbe4772246039a1257b6492936fda2a8600cd245)
+
 621.	[func]		team
 	libdns++: All Rdata classes now use the generic lexer in
 	constructors from text. This means that the name fields in such
