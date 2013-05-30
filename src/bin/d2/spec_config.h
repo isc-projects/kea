@@ -12,16 +12,4 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// Defines the logger used by the top-level component of b10-d2.
-
-#include <d2/d2_log.h>
-
-namespace isc {
-namespace d2 {
-
-const char* const D2_MODULE_NAME = "b10-d2";
-isc::log::Logger d2_logger(D2_MODULE_NAME);
-
-} // namespace d2
-} // namespace isc
-
+#define D2_SPECFILE_LOCATION "/labs/toms_lab/var/test_1/share/bind10/d2.spec"
