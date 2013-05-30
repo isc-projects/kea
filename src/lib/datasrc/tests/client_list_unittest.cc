@@ -254,7 +254,7 @@ public:
     }
     ConfigurableClientList::CacheStatus doReload(
         const Name& origin, const string& datasrc_name = "");
-    void accessorIterate(ConstZoneTableAccessorPtr& accessor,
+    void accessorIterate(const ConstZoneTableAccessorPtr& accessor,
         int numZones, const string& zoneName);
 
     const RRClass rrclass_;
@@ -1134,7 +1134,7 @@ TEST_F(ListTest, reloadByDataSourceName) {
 // through the table, and verifies that the expected number of zones are
 // present, as well as the named zone.
 void
-ListTest::accessorIterate(ConstZoneTableAccessorPtr& accessor,
+ListTest::accessorIterate(const ConstZoneTableAccessorPtr& accessor,
                           int numZones, const string& zoneName="")
 {
     // Confirm basic iterator behavior.
