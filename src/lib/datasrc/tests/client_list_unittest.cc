@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -266,6 +266,8 @@ public:
     }
     ConfigurableClientList::CacheStatus doReload(
         const Name& origin, const string& datasrc_name = "");
+    void accessorIterate(const ConstZoneTableAccessorPtr& accessor,
+        int numZones, const string& zoneName);
 
     const RRClass rrclass_;
     shared_ptr<TestedList> list_;
@@ -1145,6 +1147,93 @@ TEST_F(ListTest, reloadByDataSourceName) {
     // specified name of data source doesn't exist.
     EXPECT_EQ(ConfigurableClientList::DATASRC_NOT_FOUND,
               doReload(Name("example.org"), "test_type4"));
+}
+
+// This takes the accessor provided by getZoneTableAccessor(), iterates
+// through the table, and verifies that the expected number of zones are
+// present, as well as the named zone.
+void
+ListTest::accessorIterate(const ConstZoneTableAccessorPtr& accessor,
+                          int numZones, const string& zoneName="")
+{
+    // Confirm basic iterator behavior.
+    ASSERT_TRUE(accessor);
+    ZoneTableAccessor::IteratorPtr it = accessor->getIterator();
+    ASSERT_TRUE(it);
+    // Iterator does not guarantee ordering, so we look for the target
+    // name anywhere in the table.
+    bool found = false;
+    int i;
+    for (i = 0; !it->isLast(); ++i, it->next()) {
+	if (Name(zoneName) == it->getCurrent().origin) {
+	    found = true;
+	}
+    }
+    EXPECT_EQ(i, numZones);
+    if (numZones > 0) {
+        EXPECT_TRUE(found);
+    }
+}
+
+TEST_F(ListTest, zoneTableAccessor) {
+    // empty configuration
+    const ConstElementPtr elem(new ListElement);
+    list_->configure(elem, true);
+    // null pointer treated as false
+    EXPECT_FALSE(list_->getZoneTableAccessor("", true));
+
+    // empty list; expect it to return an empty list
+    list_->configure(config_elem_, true);
+    ConstZoneTableAccessorPtr z(list_->getZoneTableAccessor("", true));
+    accessorIterate(z, 0);
+
+    const ConstElementPtr elem2(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.com\"],"
+        "   \"params\": [\"example.com\"]"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"params\": [\"example.org\"]"
+        "},"
+        "{"
+        "   \"type\": \"type3\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.net\", \"example.info\"],"
+        "   \"params\": [\"example.net\", \"example.info\"]"
+        "}]"));
+
+    // allow_cache = false
+    // ask for a non-existent zone table, expect null
+    list_->configure(elem2, false);
+    EXPECT_FALSE(list_->getZoneTableAccessor("bogus", true));
+    // ask for any zone table, expect an empty list
+    z = list_->getZoneTableAccessor("", true);
+    accessorIterate(z, 0);
+
+    // allow_cache = true, use_cache = false
+    list_->configure(elem2, true);
+    EXPECT_THROW(list_->getZoneTableAccessor("", false), isc::NotImplemented);
+    EXPECT_THROW(list_->getZoneTableAccessor("type1", false),
+                 isc::NotImplemented);
+
+    // datasrc not found, returns NULL pointer
+    EXPECT_FALSE(list_->getZoneTableAccessor("bogus", true));
+
+    // return first datasrc
+    z = list_->getZoneTableAccessor("", true);
+    accessorIterate(z, 1, "example.com");
+
+    // datasrc has cache disabled, returns accessor to empty list
+    z = list_->getZoneTableAccessor("type2", true);
+    accessorIterate(z, 0);
+
+    // search by name
+    z = list_->getZoneTableAccessor("type3", true);
+    accessorIterate(z, 2, "example.net");
 }
 
 // Check the status holds data
