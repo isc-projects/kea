@@ -1462,6 +1462,8 @@ class Xfrin:
         self._cc_setup()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
+        self._module_cc.add_remote_config_by_name('data_sources',
+                                                  self._datasrc_config_handler)
         init_keyring(self._module_cc)
 
     def _cc_setup(self):
@@ -1473,8 +1475,8 @@ class Xfrin:
         # listening session will block the send operation.
         self._send_cc_session = isc.cc.Session()
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
-                                              self.config_handler,
-                                              self.command_handler)
+                                                     self.config_handler,
+                                                     self.command_handler)
         self._module_cc.start()
         # TBD: this will be removed in this branch
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
@@ -1529,6 +1531,9 @@ class Xfrin:
     def _auth_config_handler(self, new_config, config_data):
         # Config handler for changes in Auth configuration
         self._set_db_file()
+
+    def _datasrc_config_handler(self, new_config, config_data):
+        pass
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
