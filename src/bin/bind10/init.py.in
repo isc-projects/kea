@@ -514,6 +514,35 @@ class Init:
 
         return msgq_proc
 
+    def wait_msgq(self):
+        """
+            Wait for the message queue to fully start. It does so only after the
+            config manager connects to it. We know it is ready when it starts
+            answering commands.
+
+            We don't add a specific command for it here, an error response is
+            as good as positive one to know it is alive.
+        """
+        # We do 10 times shorter sleep here (since the start should be fast
+        # now), so we have 10 times more attempts.
+        time_remaining = self.wait_time * 10
+        retry = True
+        while time_remaining > 0 and retry:
+            try:
+                self.ccs.rpc_call('AreYouThere?', 'Msgq')
+                # We don't expect this to succeed. If it does, it's programmer error
+                raise Exception("Non-existing RPC call succeeded")
+            except isc.config.RPCRecipientMissing:
+                retry = True # Not there yet
+                time.sleep(0.1)
+                time_remaining -= 1
+            except isc.config.RPCError:
+                retry = False # It doesn't like the RPC, so it's alive now
+
+        if retry: # Still not started
+            raise ProcessStartError("Msgq didn't complete the second stage " +
+                                    "of startup")
+
     def start_cfgmgr(self):
         """
             Starts the configuration manager process
@@ -665,6 +694,10 @@ class Init:
         # Connect to the msgq. This is not a process, so it's not handled
         # inside the configurator.
         self.start_ccsession(self.c_channel_env)
+
+        # Make sure msgq is fully started before proceeding to the rest
+        # of the components.
+        self.wait_msgq()
 
         # Extract the parameters associated with Init.  This can only be
         # done after the CC Session is started.  Note that the logging
