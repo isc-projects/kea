@@ -220,6 +220,10 @@ class MsgQTest(unittest.TestCase):
             array = result['result'][1]
             self.assertEqual(set(['first', 'second']), set(array))
             self.assertEqual({'result': [0, array]}, result)
+            # Make sure the result can be encoded as JSON
+            # (there seems to be types that look like a list but JSON choks
+            # on them)
+            json.dumps(result)
         # Members of the G1 and G2
         self.assertEqual({'result': [0, ["second"]]},
                          self.__msgq.command_handler('members',
