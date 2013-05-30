@@ -86,6 +86,15 @@ public:
     /// The NSEC3 parameters are extracted and stored within the created
     /// \c NSEC3Data object.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -102,6 +111,15 @@ public:
     /// The NSEC3 hash parameters are extracted and stored within the created
     /// \c NSEC3Data object.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -360,21 +378,40 @@ private:
     /// It never throws an exception.
     ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node);
 
-    // Zone node flags.
+    // Zone node flags.  When adding a new flag, it's generally advisable to
+    // keep existing values so the binary image of the data is as much
+    // backward compatible as possible.  And it can be helpful in practice
+    // for file-mapped data.
 private:
     // Set in the origin node (which always exists at the same address)
     // to indicate whether the zone is signed or not.  Internal use,
     // so defined as private.
     static const ZoneNode::Flags DNSSEC_SIGNED = ZoneNode::FLAG_USER1;
+
 public:
     /// \brief Node flag indicating it is at a "wildcard level"
     ///
     /// This means one of the node's immediate children is a wildcard.
     static const ZoneNode::Flags WILDCARD_NODE = ZoneNode::FLAG_USER2;
 
+private:
+    // Also set in the origin node, indicating this is a special "empty zone",
+    // that could be created only by the corresponding create() method to be
+    // used for some kind of sentinel data.
+    static const ZoneNode::Flags EMPTY_ZONE = ZoneNode::FLAG_USER3;
+
 public:
     /// \brief Allocate and construct \c ZoneData.
     ///
+    /// This method ensures there'll be no memory leak on exception.
+    /// But addresses allocated from \c mem_sgmt could be relocated if
+    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
+    /// must be aware of that possibility and update any such addresses
+    /// accordingly.  On successful return, this method ensures there's no
+    /// address relocation.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
     /// \throw std::bad_alloc Memory allocation fails.
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
@@ -382,6 +419,23 @@ public:
     /// \param zone_origin The zone origin.
     static ZoneData* create(util::MemorySegment& mem_sgmt,
                             const dns::Name& zone_origin);
+
+    /// \brief Allocate and construct a special "empty" \c ZoneData.
+    ///
+    /// A ZoneData object created this way holds all internal integrity
+    /// that those created by the other \c create() method have, but is not
+    /// publicly associated with any actual zone data.  It's intended to be
+    /// used as a kind of sentinel data to representing the concept such as
+    /// "broken zone".
+    ///
+    /// Methods calls on empty \c ZoneData object except \c destroy() and
+    /// \c isEmpty() are meaningless, while they shouldn't cause disruption.
+    /// It's caller's responsibility to use empty zone data objects in the
+    /// intended way.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c ZoneData is allocated.
+    static ZoneData* create(util::MemorySegment& mem_sgmt);
 
     /// \brief Destruct and deallocate \c ZoneData.
     ///
@@ -454,6 +508,13 @@ public:
     ///
     /// \throw none
     bool isNSEC3Signed() const { return (nsec3_data_); }
+
+    /// \brief Return whether or not the zone data is "empty".
+    ///
+    /// See the description of \c create() for the concept of empty zone data.
+    ///
+    /// \throw None
+    bool isEmpty() const { return (origin_node_->getFlag(EMPTY_ZONE)); }
 
     /// \brief Return NSEC3Data of the zone.
     ///

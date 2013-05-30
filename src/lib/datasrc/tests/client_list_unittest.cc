@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
 #include <datasrc/cache_config.h>
@@ -169,7 +171,7 @@ public:
                 new memory::ZoneWriter(
                     *dsrc_info.ztable_segment_,
                     cache_conf->getLoadAction(rrclass_, zone),
-                    zone, rrclass_));
+                    zone, rrclass_, false));
             writer->load();
             writer->install();
             writer->cleanup(); // not absolutely necessary, but just in case
@@ -206,6 +208,18 @@ public:
             EXPECT_EQ(dsrc.get(), result.dsrc_client_);
         }
     }
+
+    // check the result with empty (broken) zones.  Right now this can only
+    // happen for in-memory caches.
+    void emptyResult(const ClientList::FindResult& result, bool exact,
+                     const char* trace_txt)
+    {
+        SCOPED_TRACE(trace_txt);
+        ASSERT_FALSE(result.finder_);
+        EXPECT_EQ(exact, result.exact_match_);
+        EXPECT_TRUE(dynamic_cast<InMemoryClient*>(result.dsrc_client_));
+    }
+
     // Configure the list with multiple data sources, according to
     // some configuration. It uses the index as parameter, to be able to
     // loop through the configurations.
@@ -760,7 +774,7 @@ TEST_F(ListTest, masterFiles) {
               list_->getDataSources()[0].data_src_client_);
 
     // And it can search
-    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
+    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "root",
                    true);
 
     // If cache is not enabled, nothing is loaded
@@ -818,7 +832,8 @@ TEST_F(ListTest, names) {
 
 TEST_F(ListTest, BadMasterFile) {
     // Configuration should succeed, and the good zones in the list
-    // below should be loaded. No bad zones should be loaded.
+    // below should be loaded.  Bad zones won't be "loaded" in its usual sense,
+    // but are still recognized with conceptual "empty" data.
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"MasterFiles\","
@@ -854,13 +869,19 @@ TEST_F(ListTest, BadMasterFile) {
 
     positiveResult(list_->find(Name("example.com."), true), ds_[0],
                    Name("example.com."), true, "example.com", true);
-    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org."), true));
-    EXPECT_TRUE(negative_result_ == list_->find(Name("foo.bar"), true));
-    EXPECT_TRUE(negative_result_ == list_->find(Name("example.net."), true));
-    EXPECT_TRUE(negative_result_ == list_->find(Name("example.edu."), true));
-    EXPECT_TRUE(negative_result_ == list_->find(Name("example.info."), true));
+    // Bad cases: should result in "empty zone", whether the match is exact
+    // or partial.
+    emptyResult(list_->find(Name("foo.bar"), true), true, "foo.bar");
+    emptyResult(list_->find(Name("example.net."), true), true, "example.net");
+    emptyResult(list_->find(Name("example.edu."), true), true, "example.edu");
+    emptyResult(list_->find(Name("example.info."), true), true,
+                "example.info");
+    emptyResult(list_->find(Name("www.example.edu."), false), false,
+                "example.edu, partial");
     positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "root",
                    true);
+    // This one simply doesn't exist.
+    EXPECT_TRUE(list_->find(Name("example.org."), true) == negative_result_);
 }
 
 ConfigurableClientList::CacheStatus

@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -549,17 +550,25 @@ TEST(Pkt4Test, unpackOptions) {
 
     boost::shared_ptr<Option> x = pkt->getOption(12);
     ASSERT_TRUE(x); // option 1 should exist
-    EXPECT_EQ(12, x->getType());  // this should be option 12
-    ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 2, 3)); // data len=3
+    // Option 12 is represented by the OptionString class so let's do
+    // the appropriate conversion.
+    OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
+    ASSERT_TRUE(option12);
+    EXPECT_EQ(12, option12->getType());  // this should be option 12
+    ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option12->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4Opts + 2, 3)); // data len=3
 
     x = pkt->getOption(14);
-    ASSERT_TRUE(x); // option 13 should exist
-    EXPECT_EQ(14, x->getType());  // this should be option 13
-    ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->len()); // total option length 5
-    EXPECT_EQ(0, memcmp(&x->getData()[0], v4Opts + 7, 3)); // data len=3
+    ASSERT_TRUE(x); // option 14 should exist
+    // Option 14 is represented by the OptionString class so let's do
+    // the appropriate conversion.
+    OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x);
+    ASSERT_TRUE(option14);
+    EXPECT_EQ(14, option14->getType());  // this should be option 14
+    ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5, option14->len()); // total option length 5
+    EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4Opts + 7, 3)); // data len=3
 
     x = pkt->getOption(60);
     ASSERT_TRUE(x); // option 60 should exist
@@ -642,6 +651,51 @@ TEST(Pkt4Test, hwaddr) {
     EXPECT_EQ(sizeof(hw), pkt->getHlen());
 
     EXPECT_TRUE(hwaddr == pkt->getHWAddr());
+}
+
+// This test verifies that the packet remte and local HW address can
+// be set and returned.
+TEST(Pkt4Test, hwaddrSrcRemote) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+    const uint8_t src_hw[] = { 1, 2, 3, 4, 5, 6 };
+    const uint8_t dst_hw[] = { 7, 8, 9, 10, 11, 12 };
+    const uint8_t hw_type = 123;
+
+    HWAddrPtr dst_hwaddr(new HWAddr(dst_hw, sizeof(src_hw), hw_type));
+    HWAddrPtr src_hwaddr(new HWAddr(src_hw, sizeof(src_hw), hw_type));
+
+    // Check that we can set the local address.
+    EXPECT_NO_THROW(pkt->setLocalHWAddr(dst_hwaddr));
+    EXPECT_TRUE(dst_hwaddr == pkt->getLocalHWAddr());
+
+    // Check that we can set the remote address.
+    EXPECT_NO_THROW(pkt->setRemoteHWAddr(src_hwaddr));
+    EXPECT_TRUE(src_hwaddr == pkt->getRemoteHWAddr());
+
+    // Can't set the NULL addres.
+    EXPECT_THROW(pkt->setRemoteHWAddr(HWAddrPtr()), BadValue);
+    EXPECT_THROW(pkt->setLocalHWAddr(HWAddrPtr()), BadValue);
+
+    // Test alternative way to set local address.
+    const uint8_t dst_hw2[] = { 19, 20, 21, 22, 23, 24 };
+    std::vector<uint8_t> dst_hw_vec(dst_hw2, dst_hw2 + sizeof(dst_hw2));
+    const uint8_t hw_type2 = 234;
+    EXPECT_NO_THROW(pkt->setLocalHWAddr(hw_type2, sizeof(dst_hw2), dst_hw_vec));
+    HWAddrPtr local_addr = pkt->getLocalHWAddr();
+    ASSERT_TRUE(local_addr);
+    EXPECT_EQ(hw_type2, local_addr->htype_);
+    EXPECT_TRUE(std::equal(dst_hw_vec.begin(), dst_hw_vec.end(),
+                           local_addr->hwaddr_.begin()));
+
+    // Set remote address.
+    const uint8_t src_hw2[] = { 25, 26, 27, 28, 29, 30 };
+    std::vector<uint8_t> src_hw_vec(src_hw2, src_hw2 + sizeof(src_hw2));
+    EXPECT_NO_THROW(pkt->setRemoteHWAddr(hw_type2, sizeof(src_hw2), src_hw_vec));
+    HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
+    ASSERT_TRUE(remote_addr);
+    EXPECT_EQ(hw_type2, remote_addr->htype_);
+    EXPECT_TRUE(std::equal(src_hw_vec.begin(), src_hw_vec.end(),
+                           remote_addr->hwaddr_.begin()));
 }
 
 } // end of anonymous namespace

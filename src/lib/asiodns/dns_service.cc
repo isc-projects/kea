@@ -64,8 +64,9 @@ public:
     // SyncUDPServer has different constructor signature so it cannot be
     // templated.
     void addSyncUDPServerFromFD(int fd, int af) {
-        SyncUDPServerPtr server(new SyncUDPServer(io_service_.get_io_service(),
-                                                  fd, af, lookup_));
+        SyncUDPServerPtr server(SyncUDPServer::create(
+                                    io_service_.get_io_service(), fd, af,
+                                    lookup_));
         startServer(server);
     }
 

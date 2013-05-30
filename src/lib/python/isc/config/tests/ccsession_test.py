@@ -350,6 +350,32 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(RPCRecipientMissing, self.rpc_check,
                           {"result": [-1, "Error"]})
 
+    def test_notify(self):
+        """
+        Test the sent notification has the right format.
+        """
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.notify("group", "event", {"param": True})
+        self.assertEqual([
+            ["notifications/group", "*", {"notification": ["event", {
+                "param": True
+            }]}, False]], fake_session.message_queue)
+
+    def test_notify_no_params(self):
+        """
+        Test the sent notification has the right format, this time
+        without passing parameters.
+        """
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.notify("group", "event")
+        self.assertEqual([
+                ["notifications/group", "*", {"notification": ["event"]},
+                 False]
+            ],
+            fake_session.message_queue)
+
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
 
