@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,17 +30,50 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_SSHFP_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+        Rdata_SSHFP_Test() :
+            sshfp_txt("2 1 123456789abcdef67890123456789abcdef67890"),
+            rdata_sshfp(sshfp_txt)
+        {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<generic::SSHFP, isc::Exception, isc::Exception>(
+            rdata_str, rdata_sshfp, false, false);
+    }
+
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<generic::SSHFP, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_sshfp, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <generic::SSHFP, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_sshfp, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<generic::SSHFP, InvalidRdataText, BadValue>(
+            rdata_str, rdata_sshfp, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <generic::SSHFP, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_sshfp, true, false);
+    }
+
+    const string sshfp_txt;
+    const generic::SSHFP rdata_sshfp;
 };
 
-const string sshfp_txt("2 1 123456789abcdef67890123456789abcdef67890");
-const generic::SSHFP rdata_sshfp(2, 1, "123456789abcdef67890123456789abcdef67890");
 const uint8_t rdata_sshfp_wiredata[] = {
     // algorithm
     0x02,
@@ -56,22 +89,23 @@ const uint8_t rdata_sshfp_wiredata[] = {
 
 TEST_F(Rdata_SSHFP_Test, createFromText) {
     // Basic test
-    const generic::SSHFP rdata_sshfp2(sshfp_txt);
-    EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
+    checkFromText_None(sshfp_txt);
 
     // With different spacing
-    const generic::SSHFP rdata_sshfp3("2 1   123456789abcdef67890123456789abcdef67890");
-    EXPECT_EQ(0, rdata_sshfp3.compare(rdata_sshfp));
+    checkFromText_None("2 1   123456789abcdef67890123456789abcdef67890");
 
     // Combination of lowercase and uppercase
-    const generic::SSHFP rdata_sshfp4("2 1   123456789ABCDEF67890123456789abcdef67890");
-    EXPECT_EQ(0, rdata_sshfp4.compare(rdata_sshfp));
-}
+    checkFromText_None("2 1 123456789ABCDEF67890123456789abcdef67890");
 
-TEST_F(Rdata_SSHFP_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_sshfp.compare(
-        *test::createRdataUsingLexer(RRType::SSHFP(), RRClass::IN(),
-                                     "2 1 123456789abcdef67890123456789abcdef67890")));
+    // spacing in the fingerprint field
+    checkFromText_None("2 1 123456789abcdef67890 123456789abcdef67890");
+
+    // multi-line fingerprint field
+    checkFromText_None("2 1 ( 123456789abcdef67890\n 123456789abcdef67890 )");
+
+    // string constructor throws if there's extra text,
+    // but lexer constructor doesn't
+    checkFromText_BadString(sshfp_txt + "\n" + sshfp_txt);
 }
 
 TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
@@ -101,13 +135,30 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
 }
 
 TEST_F(Rdata_SSHFP_Test, badText) {
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1"), InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("BUCKLE MY SHOES"), InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2 foo bar"), InvalidRdataText);
+    checkFromText_LexerError("1");
+    checkFromText_LexerError("ONE 2 123456789abcdef67890123456789abcdef67890");
+    checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
+    checkFromText_BadValue("1 2 BUCKLEMYSHOE");
+    checkFromText_BadValue(sshfp_txt + " extra text");
+
+    // yes, these are redundant to the last test cases in algorithmTypes
+    checkFromText_InvalidText(
+        "2345 1 123456789abcdef67890123456789abcdef67890");
+    checkFromText_InvalidText(
+        "2 1234 123456789abcdef67890123456789abcdef67890");
+
+    // negative values are trapped in the lexer rather than the constructor
+    checkFromText_LexerError("-2 1 123456789abcdef67890123456789abcdef67890");
+    checkFromText_LexerError("2 -1 123456789abcdef67890123456789abcdef67890");
 }
 
-TEST_F(Rdata_SSHFP_Test, copy) {
-    const generic::SSHFP rdata_sshfp2(rdata_sshfp);
+TEST_F(Rdata_SSHFP_Test, copyAndAssign) {
+    // Copy construct
+    generic::SSHFP rdata_sshfp2(rdata_sshfp);
+    EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp2));
+
+    // Assignment, mainly to confirm it doesn't cause disruption.
+    rdata_sshfp2 = rdata_sshfp;
     EXPECT_EQ(0, rdata_sshfp.compare(rdata_sshfp2));
 }
 
@@ -158,6 +209,12 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
     EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                       "rdata_sshfp_fromWire11"),
                  InvalidBufferPosition);
+}
+
+TEST_F(Rdata_SSHFP_Test, createFromParams) {
+    const generic::SSHFP rdata_sshfp2(
+        2, 1, "123456789abcdef67890123456789abcdef67890");
+    EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
 }
 
 TEST_F(Rdata_SSHFP_Test, toText) {

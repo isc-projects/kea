@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,13 +18,8 @@
 
 #include <string>
 
+#include <dns/name.h>
 #include <dns/rdata.h>
-
-namespace isc {
-namespace dns {
-class Name;
-}
-}
 
 // BEGIN_ISC_NAMESPACE
 
@@ -32,6 +27,8 @@ class Name;
 // END_COMMON_DECLARATIONS
 
 // BEGIN_RDATA_NAMESPACE
+
+struct TSIGImpl;
 
 /// \brief \c rdata::TSIG class represents the TSIG RDATA as defined %in
 /// RFC2845.
@@ -145,7 +142,8 @@ public:
     /// This method never throws an exception.
     const void* getOtherData() const;
 private:
-    struct TSIGImpl;
+    TSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+
     TSIGImpl* impl_;
 };
 

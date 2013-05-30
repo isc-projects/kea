@@ -1,7 +1,67 @@
+621.	[func]		team
+	libdns++: All Rdata classes now use the generic lexer in
+	constructors from text. This means that the name fields in such
+	RRs in a zone file can now be non-absolute (the origin name in that
+	context will be used), e.g., when loaded by b10-loadzone. Note
+	that the existing string constructors for these Rdata classes also
+	use the generic lexer, and they now expect an absolute name (with
+	the trailing '.') in the name fields.
+	(Trac #2522, git ea97070cf6b41299351fc29af66fa39c6465d56a)
+	(Trac #2521, git c6603decaadcd33ccf9aee4a7b22447acec4b7f6)
+	(See also ChangeLog 594, 564, 545)
+
+620.	[bug]		jinmei
+	b10-auth now returns SERVFAIL to queries for a zone that is
+	configured to be loaded in-memory but isn't due to load time
+	errors (missing zone file or errors in the zone file, etc).
+	Such zones were previously treated as non existent and would
+	result in REFUSED or unintentional match against less specific
+	zones.  The revised behavior is also compatible with BIND 9.
+	(Trac #2905, git 56ee9810fdfb5f86bd6948e6bf26545ac714edd8)
+
+619.	[bug]		jinmei
+	b10-xfrout now uses blocking send for xfr response messages
+	to prevent abrupt termination of the stream due to a slower
+	client or narrower network bandwidth.
+	(Trac #2934, git bde0e94518469557c8b455ccbecc079a38382afd)
+
+618.	[func]*		marcin
+	b10-dhcp4: Added the ability for the server to respond to a
+	directly connected client which does not yet have an IP address.
+	On Linux, the server will unicast the response to the client's
+	hardware address and the 'yiaddr' (the client's new IP
+	address). Sending a response to the unicast address prevents other
+	(not interested) hosts from receiving the server response. This
+	capability is not yet implemented on non-Linux Operating Systems
+	where, in all cases, the server responds to the broadcast
+	address. The logic conforms to section 4.1 of RFC 2131.
+	(Trac #2902, git c2d40e3d425f1e51647be6a717c4a97d7ca3c29c)
+
+617.	[bug]		marcin
+	b10-dhcp4: Fixed a bug whereby the domain-name option was encoded
+	as FQDN (using technique described in RFC1035) instead of a string.
+	Also, created new class which represents an option carrying a single
+	string value. This class is now used for all standard options of
+	this kind.
+	(Trac #2786, git 96b1a7eb31b16bf9b270ad3d82873c0bd86a3530)
+
+616.	[doc]		stephen
+	Added description to the DHCP "Database Back-Ends" section of the
+	BIND 10 Developer's Guide about how to set up a MySQL database for
+	testing the DHCP MySQL backend.
+	(Trac #2653, git da3579feea036aa2b7d094b1c260a80a69d2f9aa)
+
+615.	[bug]		jinmei
+	b10-auth: Avoid referencing to a freed object when authoritative
+	server addresses are reconfigured.  It caused a crash on a busy
+	server during initial startup time, and the same crash could also
+	happen if listen_on parameters are reconfigured at run time.
+	(Trac #2946, git d5f2a0d0954acd8bc33aabb220fab31652394fcd)
+
 614.	[func]		tmark
-	b10-d2: Initial DHCP-DDNS (a.k.a. D2) module implemented. Currently it does
-	nothing useful, except for providing the skeleton implementation 
-	to be expanded in the future.
+	b10-d2: Initial DHCP-DDNS (a.k.a. D2) module implemented.
+	Currently it does nothing useful, except for providing the
+	skeleton implementation to be expanded in the future.
 	(Trac #2954, git 392c5ec5d15cd8c809bc9c6096b9f2bfe7b8c66a)
 
 613.	[func]		jinmei
@@ -25,7 +85,7 @@
 	while Xfrin is running.
 	(Trac #2252, git e1a0ea8ef5c51b9b25afa111fbfe9347afbe5413)
 
-bind10-1.0.0beta2 released on May 10, 2013
+bind10-1.1.0beta2 released on May 10, 2013
 
 610.	[bug]		muks
 	When the sqlite3 program is not available on the system (in
@@ -128,7 +188,7 @@ bind10-1.0.0beta2 released on May 10, 2013
 	messages.
 	(Trac #2827, git 29c3f7f4e82d7e85f0f5fb692345fd55092796b4)
 
-bind10-1.0.0beta1 released on April 4, 2013
+bind10-1.1.0beta1 released on April 4, 2013
 
 598.	[func]*		jinmei
 	The separate "static" data source is now deprecated as it can be

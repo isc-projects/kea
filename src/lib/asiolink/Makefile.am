@@ -32,6 +32,7 @@ libb10_asiolink_la_SOURCES += tcp_endpoint.h
 libb10_asiolink_la_SOURCES += tcp_socket.h
 libb10_asiolink_la_SOURCES += udp_endpoint.h
 libb10_asiolink_la_SOURCES += udp_socket.h
+libb10_asiolink_la_SOURCES += local_socket.h local_socket.cc
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)

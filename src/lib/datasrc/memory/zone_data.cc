@@ -38,6 +38,10 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+// Definition of a class static constant.  It's public and its address
+// could be needed by applications, so we need an explicit definition.
+const ZoneNode::Flags ZoneData::DNSSEC_SIGNED;
+
 namespace {
 void
 rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
@@ -91,8 +95,8 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt,
     // (with an assertion check for that).
     typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
-        mem_sgmt, ZoneTree::create(mem_sgmt, true),
-        boost::bind(nullDeleter, _1));
+        mem_sgmt, boost::bind(nullDeleter, _1));
+    holder.set(ZoneTree::create(mem_sgmt, true));
 
     ZoneTree* tree = holder.get();
     const ZoneTree::Result result =
@@ -165,8 +169,8 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     // NSEC3Data::create().
     typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
-        mem_sgmt, ZoneTree::create(mem_sgmt, true),
-        boost::bind(nullDeleter, _1));
+        mem_sgmt, boost::bind(nullDeleter, _1));
+    holder.set(ZoneTree::create(mem_sgmt, true));
 
     ZoneTree* tree = holder.get();
     ZoneNode* origin_node = NULL;
@@ -176,6 +180,13 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     void* p = mem_sgmt.allocate(sizeof(ZoneData));
     ZoneData* zone_data = new(p) ZoneData(holder.release(), origin_node);
 
+    return (zone_data);
+}
+
+ZoneData*
+ZoneData::create(util::MemorySegment& mem_sgmt) {
+    ZoneData* zone_data = create(mem_sgmt, Name::ROOT_NAME());
+    zone_data->origin_node_->setFlag(EMPTY_ZONE);
     return (zone_data);
 }
 

@@ -386,6 +386,12 @@ Query::process(datasrc::ClientList& client_list,
         response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_->setRcode(Rcode::REFUSED());
         return;
+    } else if (!result.finder_) {
+        // We found a matching zone in a data source but its data are not
+        // available.
+        response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
+        response_->setRcode(Rcode::SERVFAIL());
+        return;
     }
     ZoneFinder& zfinder = *result.finder_;
 

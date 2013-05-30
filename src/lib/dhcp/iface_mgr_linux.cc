@@ -33,6 +33,8 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/pkt_filter_inet.h>
+#include <dhcp/pkt_filter_lpf.h>
 #include <exceptions/exceptions.h>
 #include <util/io/sockaddr_util.h>
 
@@ -494,11 +496,6 @@ void IfaceMgr::detectIfaces() {
     nl.release_list(addr_info);
 }
 
-bool
-IfaceMgr::isDirectResponseSupported() {
-    return (false);
-}
-
 /// @brief sets flag_*_ fields.
 ///
 /// This implementation is OS-specific as bits have different meaning
@@ -515,6 +512,16 @@ void Iface::setFlags(uint32_t flags) {
     flag_broadcast_ = flags & IFF_BROADCAST;
 }
 
+void
+IfaceMgr::setMatchingPacketFilter(const bool direct_response_desired) {
+    if (direct_response_desired) {
+        setPacketFilter(PktFilterPtr(new PktFilterLPF()));
+
+    } else {
+        setPacketFilter(PktFilterPtr(new PktFilterInet()));
+
+    }
+}
 
 void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
                         size_t, const Pkt4Ptr&) {

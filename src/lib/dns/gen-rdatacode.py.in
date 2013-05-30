@@ -24,39 +24,6 @@ from os.path import getmtime
 import re
 import sys
 
-# new_rdata_factory_users[] is a list of tuples of the form (rrtype,
-# rrclass). Items in the list use the (new) RdataFactory class, and
-# items which are not in the list use OldRdataFactory class.
-# Note: rrtype and rrclass must be specified in lowercase in
-# new_rdata_factory_users.
-#
-# Example:
-#     new_rdata_factory_users = [('a', 'in'), ('a', 'ch'), ('soa', 'generic')]
-new_rdata_factory_users = [('a', 'in'),
-                           ('aaaa', 'in'),
-                           ('afsdb', 'generic'),
-                           ('cname', 'generic'),
-                           ('dhcid', 'in'),
-                           ('dlv', 'generic'),
-                           ('dname', 'generic'),
-                           ('dnskey', 'generic'),
-                           ('ds', 'generic'),
-                           ('hinfo', 'generic'),
-                           ('naptr', 'generic'),
-                           ('mx', 'generic'),
-                           ('ns', 'generic'),
-                           ('nsec', 'generic'),
-                           ('nsec3', 'generic'),
-                           ('nsec3param', 'generic'),
-                           ('opt', 'generic'),
-                           ('ptr', 'generic'),
-                           ('rrsig', 'generic'),
-                           ('soa', 'generic'),
-                           ('spf', 'generic'),
-                           ('srv', 'in'),
-                           ('txt', 'generic')
-                          ]
-
 re_typecode = re.compile('([\da-z\-]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
@@ -66,7 +33,7 @@ meta_types = {
     # Real meta types.  We won't have Rdata implement for them, but we need
     # RRType constants.
     '251': 'ixfr', '252': 'axfr', '255': 'any',
-    # Obsolete types.  We probalby won't implement Rdata for them, but it's
+    # Obsolete types.  We probably won't implement Rdata for them, but it's
     # better to have RRType constants.
     '3': 'md', '4': 'mf', '7': 'mb', '8': 'mg', '9': 'mr', '30': 'nxt',
     '38': 'a6', '254': 'maila',
@@ -375,28 +342,15 @@ def generate_rrparam(fileprefix, basemtime):
         indent = ' ' * 8
         typeandclassparams += indent
 
-        # By default, we use OldRdataFactory (see bug #2497). If you
-        # want to pick RdataFactory for a particular type, add it to
-        # new_rdata_factory_users.  Note that we explicitly generate (for
-        # optimization) class-independent ("generic") factories for class IN
-        # for optimization.
-        if (((type_txt.lower(), class_txt.lower()) in
-             new_rdata_factory_users) or
-            ((class_txt.lower() == 'in') and
-             ((type_txt.lower(), 'generic') in new_rdata_factory_users))):
-            rdf_class = 'RdataFactory'
-        else:
-            rdf_class = 'OldRdataFactory'
-
         if class_tuple[1] != 'generic':
             typeandclassparams += 'add("' + type_utxt + '", '
             typeandclassparams += str(type_code) + ', "' + class_utxt
             typeandclassparams += '", ' + str(class_code)
-            typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
+            typeandclassparams += ', RdataFactoryPtr(new ' + 'RdataFactory' + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
         else:
             typeandclassparams += 'add("' + type_utxt + '", ' + str(type_code)
-            typeandclassparams += ', RdataFactoryPtr(new ' + rdf_class + '<'
+            typeandclassparams += ', RdataFactoryPtr(new ' + 'RdataFactory' + '<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
     typeandclassparams += indent + '// Meta and non-implemented RR types\n'

@@ -77,17 +77,17 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
 }
 
 namespace {
-    // Called by the timeout_ deadline timer if the client takes too long.
-    // If not aborted, cancels the given socket
-    // (in which case TCPServer::operator() will be called to continue,
-    // with an 'aborted' error code
-    void do_timeout(asio::ip::tcp::socket& socket,
-                    const asio::error_code& error)
-    {
-        if (error != asio::error::operation_aborted) {
-            socket.cancel();
-        }
+// Called by the timeout_ deadline timer if the client takes too long.
+// If not aborted, cancels the given socket
+// (in which case TCPServer::operator() will be called to continue,
+// with an 'aborted' error code.)
+void doTimeOut(boost::shared_ptr<asio::ip::tcp::socket> socket,
+               const asio::error_code& error)
+{
+    if (error != asio::error::operation_aborted) {
+        socket->cancel();
     }
+}
 }
 
 void
@@ -149,13 +149,16 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         /// asynchronous read call.
         data_.reset(new char[MAX_LENGTH]);
 
-        /// Start a timer to drop the connection if it is idle
+        /// Start a timer to drop the connection if it is idle.  note that
+        // we pass a shared_ptr of the socket object so that it won't be
+        // destroyed at least until the timeout callback (including abort)
+        // is called.
         if (*tcp_recv_timeout_ > 0) {
             timeout_.reset(new asio::deadline_timer(io_)); // shouldn't throw
             timeout_->expires_from_now( // consider any exception fatal.
                 boost::posix_time::milliseconds(*tcp_recv_timeout_));
-            timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
-                                 asio::placeholders::error));
+            timeout_->async_wait(boost::bind(&doTimeOut, socket_,
+                                             asio::placeholders::error));
         }
 
         /// Read the message, in two parts.  First, the message length:
@@ -235,8 +238,15 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // Explicitly close() isn't necessary for most cases. But for the
+            // very connection, socket_ is shared with the original owner of
+            // the server object and would stay open.
             // TODO: should we keep the connection open for a short time
             // to see if new requests come in?
+            socket_->close(ec);
+            if (ec) {
+                LOG_DEBUG(logger, 0, ASIODNS_TCP_CLOSE_FAIL).arg(ec.message());
+            }
             return;
         }
 

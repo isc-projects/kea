@@ -17,6 +17,8 @@
 
 #include <dhcp/pkt_filter.h>
 
+#include <util/buffer.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -29,6 +31,15 @@ namespace dhcp {
 /// currently throw isc::NotImplemented exception.
 class PktFilterLPF : public PktFilter {
 public:
+
+    /// @brief Check if packet can be sent to the host without address directly.
+    ///
+    /// This class supports direct responses to the host without address.
+    ///
+    /// @return true always.
+    virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
 
     /// @brief Open socket.
     ///
@@ -57,12 +68,14 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @throw isc::NotImplemented always
     /// @return result of sending a packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt);
 
 };
 
