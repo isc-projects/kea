@@ -1,9 +1,20 @@
-622.	[func]		tmark
+623.	[func]		tmark
 	Created the initial, bare-bones implementation of DHCP-DDNS service
 	process class, D2Process, and the abstract class from which it derives,
 	DProcessBase. D2Process will provide the DHCP-DDNS specific event loop
 	and business logic.
 	(Trac #2955, git dbe4772246039a1257b6492936fda2a8600cd245)
+
+622.	[func]*		jinmei
+	b10-xfrin now has tighter control on the choice of IXFR or AXFR
+	through zones/request_ixfr configuration item.  It includes
+	the new "IXFR only" behavior for some special cases.  b10-xfrin
+	now also uses AXFR whenever necessary, so it is now safe to try
+	IXFR by default and it's made the default.  The previous
+	use_ixfr configuration item was deprecated and triggers startup
+	failure if specified; configuration using use_ixfr should be
+	updated.
+	(Trac #2911, git 8118f8e4e9c0ad3e7b690bbce265a163e4f8767a)
 
 621.	[func]		team
 	libdns++: All Rdata classes now use the generic lexer in
