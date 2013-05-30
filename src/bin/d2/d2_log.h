@@ -22,11 +22,15 @@
 namespace isc {
 namespace d2 {
 
+/// @TODO need brief
+extern const char* const D2_MODULE_NAME;
+
 /// Define the logger for the "d2" module part of b10-d2.  We could define
 /// a logger in each file, but we would want to define a common name to avoid
 /// spelling mistakes, so it is just one small step from there to define a
 /// module-common logger.
 extern isc::log::Logger d2_logger;
+
 
 } // namespace d2
 } // namespace isc
