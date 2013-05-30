@@ -80,6 +80,12 @@ public:
                 return (FindResult());
         }
     }
+    virtual ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string&, bool) const {
+        isc_throw(isc::NotImplemented,
+                  "getZoneTableAccessor not implemented for SingletonList");
+    }
+
 private:
     DataSourceClient& client_;
 };
