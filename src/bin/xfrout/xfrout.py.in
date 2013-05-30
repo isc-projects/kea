@@ -30,6 +30,7 @@ from isc.cc import SessionError, SessionTimeout
 from isc.statistics import Counters
 from isc.notify import notify_out
 import isc.util.process
+import fcntl
 import socket
 import select
 import errno
@@ -152,13 +153,26 @@ def get_soa_serial(soa_rdata):
     '''
     return Serial(int(soa_rdata.to_text().split()[2]))
 
-def make_blocking(fd, on=True):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+def make_blocking(filenum, on):
+    """A helper function to change blocking mode of the given socket.
+
+    It sets the mode of blocking I/O for the socket associated with filenum
+    (descriptor of the socket) according to parameter 'on': if it's True the
+    file will be made blocking; otherwise it will be made non-blocking.
+
+    The given filenum must be a descriptor of a socket (not an ordinary file
+    etc), but this function doesn't check that condition.
+
+    filenum(int): file number (descriptor) of the socket to update.
+    on(bool): whether enable (True) or disable (False) blocking I/O.
+
+    """
+    flags = fcntl.fcntl(filenum, fcntl.F_GETFL)
     if on:                      # make it blocking
         flags &= ~os.O_NONBLOCK
     else:                       # make it non blocking
         flags |= os.O_NONBLOCK
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+    fcntl.fcntl(filenum, fcntl.F_SETFL, flags)
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
@@ -198,6 +212,10 @@ class XfroutSession():
         quota_ok = self._server.increase_transfers_counter()
         ex = None
         try:
+            # Before start, make sure the socket uses blocking I/O because
+            # responses will be sent in the blocking mode; otherwise it could
+            # result in EWOULDBLOCK and disrupt the session.
+            make_blocking(self._sock_fd, True)
             self.dns_xfrout_start(self._sock_fd, self._request_data, quota_ok)
         except Exception as e:
             # To avoid resource leak we need catch all possible exceptions

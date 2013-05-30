@@ -694,6 +694,15 @@ TEST_F(MemoryClientTest, getIterator) {
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 }
 
+TEST_F(MemoryClientTest, getIteratorForEmptyZone) {
+    // trying to load a broken zone (zone file not existent).  It's internally
+    // stored an empty zone.
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/no-such-file.zone", true);
+    // Then getIterator will result in an exception.
+    EXPECT_THROW(client_->getIterator(Name("example.org")), EmptyZone);
+}
+
 TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
     loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
                       TEST_DATA_DIR "/example.org-multiple.zone");
@@ -789,6 +798,35 @@ TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
                                        rrsets_vec)),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, findEmptyZone) {
+    // trying to load a broken zone (zone file not existent).  It's internally
+    // stored an empty zone.
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/no-such-file.zone", true);
+
+    using namespace isc::datasrc::result;
+
+    // findZone() returns the match, with NULL zone finder and the result
+    // flag indicating it's empty.
+    const DataSourceClient::FindResult result =
+        client_->findZone(Name("example.org"));
+    EXPECT_EQ(SUCCESS, result.code);
+    EXPECT_EQ(ZONE_EMPTY, result.flags);
+    EXPECT_FALSE(result.zone_finder);
+
+    // Same for the case of subdomain match
+    const DataSourceClient::FindResult result_sub =
+        client_->findZone(Name("www.example.org"));
+    EXPECT_EQ(PARTIALMATCH, result_sub.code);
+    EXPECT_EQ(ZONE_EMPTY, result_sub.flags);
+    EXPECT_FALSE(result_sub.zone_finder);
+
+    // findZoneData() will simply NULL (this is for testing only anyway,
+    // so any result would be okay as long as it doesn't cause disruption).
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL),
+              client_->findZoneData(Name("example.org")));
 }
 
 TEST_F(MemoryClientTest, findZoneData) {

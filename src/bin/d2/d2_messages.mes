@@ -100,4 +100,3 @@ the process when it is not running.
 % D2CTL_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the controller has received an
 updated configuration from the BIND 10 configuration system.
-

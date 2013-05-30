@@ -41,8 +41,16 @@ libdhcp___unittests_SOURCES += option_definition_unittest.cc
 libdhcp___unittests_SOURCES += option_custom_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
 libdhcp___unittests_SOURCES += option_space_unittest.cc
+libdhcp___unittests_SOURCES += option_string_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
+
+if OS_LINUX
+libdhcp___unittests_SOURCES += pkt_filter_lpf_unittest.cc
+endif
+
+libdhcp___unittests_SOURCES += protocol_util_unittest.cc
 libdhcp___unittests_SOURCES += duid_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

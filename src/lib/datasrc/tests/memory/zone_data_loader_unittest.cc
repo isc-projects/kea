@@ -16,11 +16,18 @@
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_data_updater.h>
+#include <datasrc/memory/segment_object_holder.h>
+#include <datasrc/zone_iterator.h>
 
 #include <util/buffer.h>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rdataclass.h>
+#ifdef USE_SHARED_MEMORY
+#include <util/memory_segment_mapped.h>
+#endif
+#include <util/memory_segment_local.h>
 
 #include <datasrc/tests/memory/memory_segment_mock.h>
 
@@ -28,6 +35,10 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
+#ifdef USE_SHARED_MEMORY
+using isc::util::MemorySegmentMapped;
+#endif
+using isc::datasrc::memory::detail::SegmentObjectHolder;
 
 namespace {
 
@@ -72,5 +83,36 @@ TEST_F(ZoneDataLoaderTest, zoneMinTTL) {
     isc::util::InputBuffer b(zone_data_->getMinTTLData(), sizeof(uint32_t));
     EXPECT_EQ(RRTTL(1200), RRTTL(b));
 }
+
+// Load bunch of small zones, hoping some of the relocation will happen
+// during the memory creation, not only Rdata creation.
+// Note: this doesn't even compile unless USE_SHARED_MEMORY is defined.
+#ifdef USE_SHARED_MEMORY
+TEST(ZoneDataLoaterTest, relocate) {
+    const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+    MemorySegmentMapped segment(mapped_file,
+                                isc::util::MemorySegmentMapped::CREATE_ONLY,
+                                4096);
+    const size_t zone_count = 10000;
+    typedef SegmentObjectHolder<ZoneData, RRClass> Holder;
+    typedef boost::shared_ptr<Holder> HolderPtr;
+    std::vector<HolderPtr> zones;
+    for (size_t i = 0; i < zone_count; ++i) {
+        // Load some zone
+        ZoneData* data = loadZoneData(segment, RRClass::IN(),
+                                      Name("example.org"),
+                                      TEST_DATA_DIR
+                                      "/example.org-nsec3-signed.zone");
+        // Store it, so it is cleaned up later
+        zones.push_back(HolderPtr(new Holder(segment, RRClass::IN())));
+        zones.back()->set(data);
+
+    }
+    // Deallocate all the zones now.
+    zones.clear();
+    EXPECT_TRUE(segment.allMemoryDeallocated());
+    EXPECT_EQ(0, unlink(mapped_file));
+}
+#endif
 
 }

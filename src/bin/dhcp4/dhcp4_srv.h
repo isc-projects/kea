@@ -45,7 +45,7 @@ namespace dhcp {
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class Dhcpv4Srv : public boost::noncopyable {
 
-    public:
+public:
 
     /// @brief defines if certain option may, must or must not appear
     typedef enum {
@@ -61,15 +61,22 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
     /// port on which DHCPv4 server will listen on. That is mostly useful
-    /// for testing purposes.
+    /// for testing purposes. The Last two arguments of the constructor
+    /// should be left at default values for normal server operation.
+    /// They should be set to 'false' when creating an instance of this
+    /// class for unit testing because features they enable require
+    /// root privileges.
     ///
     /// @param port specifies port number to listen on
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     /// @param use_bcast configure sockets to support broadcast messages.
+    /// @param direct_response_desired specifies if it is desired to
+    /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
               const char* dbconfig = "type=memfile",
-              const bool use_bcast = true);
+              const bool use_bcast = true,
+              const bool direct_response_desired = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     ~Dhcpv4Srv();
@@ -218,6 +225,23 @@ protected:
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
+    /// @brief Sets remote addresses for outgoing packet.
+    ///
+    /// This method sets the local and remote addresses on outgoing packet.
+    /// The addresses being set depend on the following conditions:
+    /// - has incoming packet been relayed,
+    /// - is direct response to a client without address supported,
+    /// - type of the outgoing packet,
+    /// - broadcast flag set in the incoming packet.
+    ///
+    /// @warning This method does not check whether provided packet pointers
+    /// are valid. Make sure that pointers are correct before calling this
+    /// function.
+    ///
+    /// @param question instance of a packet received by a server.
+    /// @param [out] msg response packet which addresses are to be adjusted.
+    void adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg);
+
     /// @brief Returns server-identifier option
     ///
     /// @return server-id option
@@ -272,7 +296,7 @@ protected:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
-    private:
+private:
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
