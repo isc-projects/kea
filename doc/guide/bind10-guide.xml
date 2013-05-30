@@ -2725,11 +2725,8 @@ TODO
 
     <para>
       The <command>b10-xfrin</command> process supports both AXFR and
-      IXFR.  Due to some implementation limitations of the current
-      development release, however, it only tries AXFR by default,
-      and care should be taken to enable IXFR.
+      IXFR.
     </para>
-<!-- TODO: http://bind10.isc.org/ticket/1279 -->
 
     <section>
       <title>Configuration for Incoming Zone Transfers</title>
@@ -2763,34 +2760,82 @@ TODO
 &gt; <userinput>config set Xfrin/zones[0]/tsig_key "<option>example.key</option>"</userinput>
     </section>
 
-    <section>
-      <title>Enabling IXFR</title>
+    <section id="request_ixfr">
+      <title>Control the use of IXFR</title>
       <para>
-        As noted above, <command>b10-xfrin</command> uses AXFR for
-        zone transfers by default.  To enable IXFR for zone transfers
-        for a particular zone, set the <varname>use_ixfr</varname>
-        configuration parameter to <quote>true</quote>.
-        In the above example of configuration sequence, you'll need
-        to add the following before performing <userinput>commit</userinput>:
-      <screen>&gt; <userinput>config set Xfrin/zones[0]/use_ixfr true</userinput></screen>
+	By default, <command>b10-xfrin</command> uses IXFR for
+	transferring zones specified in
+	the <varname>Xfrin/zones</varname> list of the configuration,
+	unless it doesn't know the current SOA serial of the zone
+	(including the case where the zone has never transferred or
+	locally loaded), in which case it automatically uses AXFR.
+	If the attempt of IXFR fails, <command>b10-xfrin</command>
+	automatically retries the transfer using AXFR.
+	In general, this works for any master server implementations
+	including those that don't support IXFR and in any local state
+	of the zone.  So there should normally be no need to configure
+	on whether to use IXFR.
       </para>
 
-<!-- TODO: http://bind10.isc.org/ticket/1279 -->
-      <note><simpara>
-      One reason why IXFR is disabled by default in the current
-      release is because it does not support automatic fallback from IXFR to
-      AXFR when it encounters a primary server that doesn't support
-      outbound IXFR (and, not many existing implementations support
-      it).  Another, related reason is that it does not use AXFR even
-      if it has no knowledge about the zone (like at the very first
-      time the secondary server is set up).  IXFR requires the
-      "current version" of the zone, so obviously it doesn't work
-      in this situation and AXFR is the only workable choice.
-      The current release of <command>b10-xfrin</command> does not
-      make this selection automatically.
-      These features will be implemented in a near future
-      version, at which point we will enable IXFR by default.
-      </simpara></note>
+      <para>
+	In some cases, however, it may be desirable to specify how and
+	whether to use IXFR and AXFR.
+	The <varname>request_ixfr</varname> configuration item under
+	<varname>Xfrin/zones</varname> can be used to control such
+	policies.
+	It can take the following values.
+      </para>
+      <variablelist>
+	<varlistentry>
+	  <term>yes</term>
+	  <listitem>
+	    <simpara>
+	      This is the default behavior as described above.
+	    </simpara>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>no</term>
+	  <listitem>
+	    <simpara>
+	      Only use AXFR.  Note that this value normally shouldn't
+	      be needed thanks to the automatic fallback from IXFR to IXFR.
+	      A possible case where this value needs to be used is
+	      that the master server has a bug and crashes if it
+	      receives an IXFR request.
+	    </simpara>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>only</term>
+	  <listitem>
+	    <simpara>
+	      Only use IXFR except when the current SOA serial is not
+	      known.
+	      This value has a severe drawback, that is, if the master
+	      server does not support IXFR zone transfers never
+	      succeed (except for the very first one, which will use AXFR),
+	      and the zone will eventually expire.
+	      Therefore it should not be used in general.
+	      Still, in some special cases the use of this value may
+	      make sense.  For example, if the operator is sure that
+	      the master server supports IXFR and the zone is very
+	      large, they may want to avoid falling back to AXFR as
+	      it can be more expensive.
+	    </simpara>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <note>
+        <simpara>
+	  There used to be a boolean configuration item named
+	  <varname>use_ixfr</varname>.
+	  It was deprecated for the finer control described above.
+	  The <varname>request_ixfr</varname> item should be used instead.
+	</simpara>
+      </note>
+
     </section>
 
 <!-- TODO:
@@ -2854,6 +2899,23 @@ what if a NOTIFY is sent?
 
         <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
       </para>
+
+      <para>
+	The <command>retransfer</command> command always uses AXFR.
+	To use IXFR for a zone that has already been transferred once,
+	use the <command>refresh</command> command.
+	It honors the <varname>Xfrin/zones/request_ixfr</varname>
+	configuration item (see <xref linkend="request_ixfr"/>.), and
+	if it's configured to use IXFR, it will be used.
+      </para>
+
+      <para>
+	Both the <command>retransfer</command>
+	and <command>refresh</command> commands can be used for
+	an initial transfer before setting up secondary
+	configurations.
+	In this case AXFR will be used for the obvious reason.
+      </para>
     </section>
 
     <section>
@@ -2879,7 +2941,6 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
       </para>
     </section>
 
-<!-- TODO: can that retransfer be used to identify a new zone? -->
 <!-- TODO: what if doesn't exist at that master IP? -->
 
   </chapter>
