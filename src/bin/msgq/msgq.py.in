@@ -125,9 +125,12 @@ class SubscriptionManager:
 
     def unsubscribe_all(self, socket):
         """Remove the socket from all subscriptions."""
-        for socklist in self.subscriptions.values():
+        removed_from = []
+        for subs, socklist in self.subscriptions.items():
             if socket in socklist:
                 socklist.remove(socket)
+                removed_from.append(subs)
+        return removed_from
 
     def find_sub(self, group, instance):
         """Return an array of sockets which want this specific group,

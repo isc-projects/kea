@@ -75,7 +75,9 @@ class TestSubscriptionManager(unittest.TestCase):
         self.sm.subscribe('g2', 'i1', 's2')
         self.sm.subscribe('g2', 'i2', 's1')
         self.sm.subscribe('g2', 'i2', 's2')
-        self.sm.unsubscribe_all('s1')
+        self.assertEqual(set([('g1', 'i1'), ('g1', 'i2'), ('g2', 'i1'),
+                              ('g2', 'i2')]),
+                         set(self.sm.unsubscribe_all('s1')))
         self.assertEqual(self.sm.find_sub("g1", "i1"), [ 's2' ])
         self.assertEqual(self.sm.find_sub("g1", "i2"), [ 's2' ])
         self.assertEqual(self.sm.find_sub("g2", "i1"), [ 's2' ])
