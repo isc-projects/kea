@@ -240,6 +240,58 @@ class MsgQTest(unittest.TestCase):
         # Omitting the parameters completely in such case is OK
         check_both(self.__msgq.command_handler('members', None))
 
+    def test_notifies(self):
+        """
+        Test the message queue sends notifications about connecting,
+        disconnecting and subscription changes.
+        """
+        # Mock the method to send notifications (we don't really want
+        # to send them now, just see they'd be sent).
+        # Mock the poller, as we don't need it at all (and we don't have
+        # real socket to give it now).
+        notifications = []
+        def send_notification(event, params):
+            notifications.append((event, params))
+        class FakePoller:
+            def register(self, socket, mode):
+                pass
+            def unregister(self, fd, sock):
+                pass
+        self.__msgq.members_notify = send_notification
+        self.__msgq.poller = FakePoller()
+
+        # Create a socket
+        class Sock:
+            def __init__(self, fileno):
+                self.fileno = lambda: fileno
+        sock = Sock(1)
+
+        # We should notify about new cliend when we register it
+        self.__msgq.register_socket(sock)
+        lname = list(self.__msgq.lnames.keys())[0] # Steal the lname
+        self.assertEqual([('connected', {'client': lname})], notifications)
+        notifications.clear()
+
+        # A notification should happen for a subscription to a group
+        self.__msgq.process_command_subscribe(sock, {'group': 'G',
+                                                     'instance': '*'},
+                                              None)
+        self.assertEqual([('subscribed', {'client': lname, 'group': 'G'})],
+                         notifications)
+        notifications.clear()
+
+        # As well for unsubscription
+        self.__msgq.process_command_unsubscribe(sock, {'group': 'G',
+                                                       'instance': '*'},
+                                                None)
+        self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'})],
+                         notifications)
+        notifications.clear()
+
+        # And, finally, for removal of client
+        self.__msgq.kill_socket(sock.fileno(), sock)
+        self.assertEqual([('disconnected', {'client': lname})], notifications)
+
     def test_undeliverable_errors(self):
         """
         Send several packets through the MsgQ and check it generates
