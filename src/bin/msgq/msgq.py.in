@@ -374,7 +374,7 @@ class MsgQ:
         if self.poller:
             self.poller.unregister(sock)
 
-        self.subs.unsubscribe_all(sock)
+        unsubscribed_from = self.subs.unsubscribe_all(sock)
         lname = self.fd_to_lname[fd]
         del self.fd_to_lname[fd]
         del self.lnames[lname]
@@ -383,6 +383,13 @@ class MsgQ:
         if fd in self.sendbuffs:
             del self.sendbuffs[fd]
         logger.debug(TRACE_BASIC, MSGQ_SOCK_CLOSE, fd)
+        # Filter out just the groups.
+        unsubscribed_from_groups = set(map(lambda x: x[0], unsubscribed_from))
+        for group in unsubscribed_from_groups:
+            self.members_notify('unsubscribed', {
+                                    'client': lname,
+                                    'group': group
+                                })
         self.members_notify('disconnected', {'client': lname})
 
     def __getbytes(self, fd, sock, length, continued):
