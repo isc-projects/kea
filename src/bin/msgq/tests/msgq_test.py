@@ -240,10 +240,9 @@ class MsgQTest(unittest.TestCase):
         # Omitting the parameters completely in such case is OK
         check_both(self.__msgq.command_handler('members', None))
 
-    def test_notifies(self):
+    def notifications_setup(self):
         """
-        Test the message queue sends notifications about connecting,
-        disconnecting and subscription changes.
+        Common setup of some notifications tests. Mock several things.
         """
         # Mock the method to send notifications (we don't really want
         # to send them now, just see they'd be sent).
@@ -255,7 +254,7 @@ class MsgQTest(unittest.TestCase):
         class FakePoller:
             def register(self, socket, mode):
                 pass
-            def unregister(self, fd, sock):
+            def unregister(self, sock):
                 pass
         self.__msgq.members_notify = send_notification
         self.__msgq.poller = FakePoller()
@@ -264,7 +263,17 @@ class MsgQTest(unittest.TestCase):
         class Sock:
             def __init__(self, fileno):
                 self.fileno = lambda: fileno
+            def close(self):
+                pass
         sock = Sock(1)
+        return notifications, sock
+
+    def test_notifies(self):
+        """
+        Test the message queue sends notifications about connecting,
+        disconnecting and subscription changes.
+        """
+        notifications, sock = self.notifications_setup()
 
         # We should notify about new cliend when we register it
         self.__msgq.register_socket(sock)
@@ -291,6 +300,28 @@ class MsgQTest(unittest.TestCase):
         # And, finally, for removal of client
         self.__msgq.kill_socket(sock.fileno(), sock)
         self.assertEqual([('disconnected', {'client': lname})], notifications)
+
+    def test_notifies_implicit_kill(self):
+        """
+        Test that the unsubscription notifications are sent before the socket
+        is dropped, even in case it does not unsubscribe explicitly.
+        """
+        notifications, sock = self.notifications_setup()
+
+        # Register and subscribe. Notifications for these are in above test.
+        self.__msgq.register_socket(sock)
+        lname = list(self.__msgq.lnames.keys())[0] # Steal the lname
+        self.__msgq.process_command_subscribe(sock, {'group': 'G',
+                                                     'instance': '*'},
+                                              None)
+        notifications.clear()
+
+        self.__msgq.kill_socket(sock.fileno(), sock)
+        # Now, the notification for unsubscribe should be first, second for
+        # the disconnection.
+        self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'}),
+                          ('disconnected', {'client': lname})
+                         ], notifications)
 
     def test_undeliverable_errors(self):
         """
