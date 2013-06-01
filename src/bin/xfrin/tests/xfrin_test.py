@@ -2413,16 +2413,16 @@ class TestXfrinProcess(unittest.TestCase):
         # Normal, successful case.  We only check that things are cleaned up
         # at the tearDown time.
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_connect(self):
         # connect_to_master() will raise an exception.  Things must still be
         # cleaned up.
         self.do_raise_on_connect = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_close(self):
         # connect() will result in exception, and even the cleanup close()
@@ -2431,16 +2431,16 @@ class TestXfrinProcess(unittest.TestCase):
         self.do_raise_on_connect = True
         self.do_raise_on_close = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_publish(self):
         # xfr succeeds but notifying the zonemgr fails with exception.
         # everything must still be cleaned up.
         self.do_raise_on_publish = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, ZoneInfo.REQUEST_IXFR_DISABLED,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
 class TestXfrin(unittest.TestCase):
     def setUp(self):
@@ -3151,7 +3151,8 @@ class TestXfrinProcess(unittest.TestCase):
         """
         pass
 
-    def __do_test(self, rets, transfers, request_ixfr):
+    def __do_test(self, rets, transfers, request_ixfr,
+                  zone_soa=begin_soa_rrset):
         """
         Do the actual test. The request type, prepared sucesses/failures
         and expected sequence of transfers is passed to specify what test
@@ -3160,8 +3161,9 @@ class TestXfrinProcess(unittest.TestCase):
         self.__rets = rets
         published = rets[-1]
         xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
-                            RRClass.IN, None, None, TEST_MASTER_IPV4_ADDRINFO,
-                            True, None, request_ixfr, self.__get_connection)
+                            RRClass.IN, None, zone_soa, None,
+                            TEST_MASTER_IPV4_ADDRINFO, True, None,
+                            request_ixfr, self.__get_connection)
         self.assertEqual([], self.__rets)
         self.assertEqual(transfers, self.__transfers)
         # Create a connection for each attempt
@@ -3243,9 +3245,6 @@ class TestXfrinProcess(unittest.TestCase):
             for request_ixfr in [ZoneInfo.REQUEST_IXFR_FIRST,
                                  ZoneInfo.REQUEST_IXFR_ONLY,
                                  ZoneInfo.REQUEST_IXFR_DISABLED]:
-                # set up our dummy _get_zone_soa()
-                xfrin._get_zone_soa = lambda x, y, z: soa
-
                 # Clear all counters
                 self.__transfers = []
                 self.__published = []
@@ -3258,7 +3257,7 @@ class TestXfrinProcess(unittest.TestCase):
                     expected_type = RRType.AXFR
 
                 # perform the test
-                self.__do_test([XFRIN_OK], [expected_type], request_ixfr)
+                self.__do_test([XFRIN_OK], [expected_type], request_ixfr, soa)
 
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library

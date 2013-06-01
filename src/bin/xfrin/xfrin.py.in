@@ -1074,62 +1074,6 @@ class XfrinConnection(asyncore.dispatcher):
 
         return False
 
-def _get_zone_soa(datasrc_client, zone_name, zone_class):
-    """Retrieve the current SOA RR of the zone to be transferred.
-
-    This function is essentially private to the module, but will also
-    be called (or tweaked) from tests; no one else should use this
-    function directly.
-
-    It will be used for various purposes in subsequent xfr protocol
-    processing.   It is validly possible that the zone is currently
-    empty and therefore doesn't have an SOA, so this method doesn't
-    consider it an error and returns None in such a case.  It may or
-    may not result in failure in the actual processing depending on
-    how the SOA is used.
-
-    When the zone has an SOA RR, this method makes sure that it's
-    valid, i.e., it has exactly one RDATA; if it is not the case
-    this method returns None.
-
-    If the underlying data source doesn't even know the zone, this method
-    tries to provide backward compatible behavior where xfrin is
-    responsible for creating zone in the corresponding DB table.
-    For a longer term we should deprecate this behavior by introducing
-    more generic zone management framework, but at the moment we try
-    to not surprise existing users.
-
-    """
-    # datasrc_client should never be None in production case (only tests could
-    # specify None)
-    if datasrc_client is None:
-        return None
-
-    # get the zone finder.  this must be SUCCESS (not even
-    # PARTIALMATCH) because we are specifying the zone origin name.
-    result, finder = datasrc_client.find_zone(zone_name)
-    if result != DataSourceClient.SUCCESS:
-        # The data source doesn't know the zone.  For now, we provide
-        # backward compatibility and creates a new one ourselves.
-        # For longer term, we should probably separate this level of zone
-        # management outside of xfrin.
-        datasrc_client.create_zone(zone_name)
-        logger.warn(XFRIN_ZONE_CREATED, format_zone_str(zone_name, zone_class))
-        # try again
-        result, finder = datasrc_client.find_zone(zone_name)
-    if result != DataSourceClient.SUCCESS:
-        return None
-    result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
-    if result != ZoneFinder.SUCCESS:
-        logger.info(XFRIN_ZONE_NO_SOA, format_zone_str(zone_name, zone_class))
-        return None
-    if soa_rrset.get_rdata_count() != 1:
-        logger.warn(XFRIN_ZONE_MULTIPLE_SOA,
-                    format_zone_str(zone_name, zone_class),
-                    soa_rrset.get_rdata_count())
-        return None
-    return soa_rrset
-
 def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
     """Determine the initial xfr request type.
 
@@ -1153,32 +1097,14 @@ def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
                      AddressFormatter(master_addr))
     return RRType.IXFR
 
-def __process_xfrin(server, zone_name, rrclass, db_file,
+def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,
                     request_ixfr, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
     try:
-        # Create a data source client used in this XFR session.  Right now we
-        # still assume an sqlite3-based data source, and use both the old and
-        # new data source APIs.  We also need to use a mock client for tests.
-        # For a temporary workaround to deal with these situations, we skip the
-        # creation when the given file is none (the test case).  Eventually
-        # this code will be much cleaner.
-        datasrc_client = None
-        if db_file is not None:
-            # temporary hardcoded sqlite initialization. Once we decide on
-            # the config specification, we need to update this (TODO)
-            # this may depend on #1207, or any follow-up ticket created for
-            # #1207
-            datasrc_type = "sqlite3"
-            datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
-            datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
-
-        # Get the current zone SOA (if available) and determine the initial
-        # reuqest type: AXFR or IXFR.
-        zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+        # Determine the initialreuqest type: AXFR or IXFR.
         request_type = __get_initial_xfr_type(zone_soa, request_ixfr,
                                               zone_name, rrclass,
                                               master_addrinfo[2])
@@ -1242,9 +1168,9 @@ def __process_xfrin(server, zone_name, rrclass, db_file,
     if exception is not None:
         raise exception
 
-def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
-                  shutdown_event, master_addrinfo, check_soa, tsig_key,
-                  request_ixfr, conn_class=XfrinConnection):
+def process_xfrin(server, xfrin_recorder, zone_name, rrclass, datasrc_client,
+                  zone_soa, shutdown_event, master_addrinfo, check_soa,
+                  tsig_key, request_ixfr, conn_class=XfrinConnection):
     # Even if it should be rare, the main process of xfrin session can
     # raise an exception.  In order to make sure the lock in xfrin_recorder
     # is released in any cases, we delegate the main part to the helper
@@ -1252,7 +1178,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     xfrin_recorder.increment(zone_name)
     exception = None
     try:
-        __process_xfrin(server, zone_name, rrclass, db_file,
+        __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                         shutdown_event, master_addrinfo, check_soa, tsig_key,
                         request_ixfr, conn_class)
     except Exception as ex:
@@ -1795,7 +1721,9 @@ class Xfrin:
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
                     tsig_key, request_ixfr, check_soa=True):
         if "pydnspp" not in sys.modules:
-            return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
+            return (1,
+                    "xfrin failed, can't load dns message python library: " +
+                    "'pydnspp'")
 
         # check max_transfer_in, else return quota error
         if self.recorder.count() >= self._max_transfers_in:
@@ -1804,19 +1732,91 @@ class Xfrin:
         if self.recorder.xfrin_in_progress(zone_name):
             return (1, 'zone xfrin is in progress')
 
-        xfrin_thread = threading.Thread(target = process_xfrin,
-                                        args = (self,
-                                                self.recorder,
-                                                zone_name,
-                                                rrclass,
-                                                db_file,
-                                                self._shutdown_event,
-                                                master_addrinfo, check_soa,
-                                                tsig_key, request_ixfr))
+        # Create a data source client used in this XFR session.  Right now we
+        # still assume an sqlite3-based data source, and use both the old and
+        # new data source APIs.  We also need to use a mock client for tests.
+        # For a temporary workaround to deal with these situations, we skip the
+        # creation when the given file is none (the test case).  Eventually
+        # this code will be much cleaner.
+        datasrc_client = None
+        if db_file is not None:
+            # temporary hardcoded sqlite initialization. Once we decide on
+            # the config specification, we need to update this (TODO)
+            # this may depend on #1207, or any follow-up ticket created for
+            # #1207
+            datasrc_type = "sqlite3"
+            datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
+            datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
+
+        # Get the current zone SOA (if available).
+        zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+
+        xfrin_thread = threading.Thread(target=process_xfrin,
+                                        args=(self, self.recorder,
+                                              zone_name, rrclass,
+                                              datasrc_client, zone_soa,
+                                              self._shutdown_event,
+                                              master_addrinfo, check_soa,
+                                              tsig_key, request_ixfr))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
 
+def _get_zone_soa(datasrc_client, zone_name, zone_class):
+    """Retrieve the current SOA RR of the zone to be transferred.
+
+    This function is essentially private to the module, but will also
+    be called (or tweaked) from tests; no one else should use this
+    function directly.
+
+    It will be used for various purposes in subsequent xfr protocol
+    processing.   It is validly possible that the zone is currently
+    empty and therefore doesn't have an SOA, so this method doesn't
+    consider it an error and returns None in such a case.  It may or
+    may not result in failure in the actual processing depending on
+    how the SOA is used.
+
+    When the zone has an SOA RR, this method makes sure that it's
+    valid, i.e., it has exactly one RDATA; if it is not the case
+    this method returns None.
+
+    If the underlying data source doesn't even know the zone, this method
+    tries to provide backward compatible behavior where xfrin is
+    responsible for creating zone in the corresponding DB table.
+    For a longer term we should deprecate this behavior by introducing
+    more generic zone management framework, but at the moment we try
+    to not surprise existing users.
+
+    """
+    # datasrc_client should never be None in production case (only tests could
+    # specify None)
+    if datasrc_client is None:
+        return None
+
+    # get the zone finder.  this must be SUCCESS (not even
+    # PARTIALMATCH) because we are specifying the zone origin name.
+    result, finder = datasrc_client.find_zone(zone_name)
+    if result != DataSourceClient.SUCCESS:
+        # The data source doesn't know the zone.  For now, we provide
+        # backward compatibility and creates a new one ourselves.
+        # For longer term, we should probably separate this level of zone
+        # management outside of xfrin.
+        datasrc_client.create_zone(zone_name)
+        logger.warn(XFRIN_ZONE_CREATED, format_zone_str(zone_name, zone_class))
+        # try again
+        result, finder = datasrc_client.find_zone(zone_name)
+    if result != DataSourceClient.SUCCESS:
+        return None
+    result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
+    if result != ZoneFinder.SUCCESS:
+        logger.info(XFRIN_ZONE_NO_SOA, format_zone_str(zone_name, zone_class))
+        return None
+    if soa_rrset.get_rdata_count() != 1:
+        logger.warn(XFRIN_ZONE_MULTIPLE_SOA,
+                    format_zone_str(zone_name, zone_class),
+                    soa_rrset.get_rdata_count())
+        return None
+    return soa_rrset
 
 xfrind = None
 
