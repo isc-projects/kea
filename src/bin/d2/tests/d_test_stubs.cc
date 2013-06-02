@@ -20,28 +20,31 @@ using namespace asio;
 namespace isc {
 namespace d2 {
 
+// Initialize the static failure flag.
 SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 
-const std::string DStubProcess::custom_process_command_("valid_prc_command");
+// Define custom process command supported by DStubProcess.
+const std::string DStubProcess::stub_proc_command_("cool_proc_cmd");
 
-DStubProcess::DStubProcess(const char* name, IOServicePtr io_service) 
+DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
     : DProcessBase(name, io_service) {
 };
 
 void
 DStubProcess::init() {
+    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_PROCESS_INIT);
     if (SimFailure::shouldFailOn(SimFailure::ftProcessInit)) {
-        // Simulates a failure to instantiate the process. 
-        isc_throw(DProcessBaseError, "DStubProcess simulated init failure");
+        // Simulates a failure to instantiate the process.
+        isc_throw(DProcessBaseError, "DStubProcess simulated init() failure");
     }
 };
 
-int
+void
 DStubProcess::run() {
     // Until shut down or an fatal error occurs, wait for and
     // execute a single callback. This is a preliminary implementation
     // that is likely to evolve as development progresses.
-    // To use run(), the "managing" layer must issue an io_service::stop 
+    // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_ENTER);
@@ -51,27 +54,31 @@ DStubProcess::run() {
             io_service->run_one();
         } catch (const std::exception& ex) {
             LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
-            return (EXIT_FAILURE); 
+            isc_throw (DProcessBaseError,
+                std::string("Process run method failed:") + ex.what());
         }
     }
 
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_EXIT);
-    return (EXIT_SUCCESS);
 };
 
-int 
+void
 DStubProcess::shutdown() {
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_SHUTDOWN);
+    if (SimFailure::shouldFailOn(SimFailure::ftProcessShutdown)) {
+        // Simulates a failure during shutdown process.
+        isc_throw(DProcessBaseError, "DStubProcess simulated shutdown failure");
+    }
     setShutdownFlag(true);
-    return (0);
-}    
+}
 
-isc::data::ConstElementPtr 
+isc::data::ConstElementPtr
 DStubProcess::configure(isc::data::ConstElementPtr config_set) {
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, 
+    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
               D2PRC_CONFIGURE).arg(config_set->str());
 
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
+        // Simulates a process configure failure.
         return (isc::config::createAnswer(1,
                 "Simulated process configuration error."));
     }
@@ -79,16 +86,18 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set) {
     return (isc::config::createAnswer(0, "Configuration accepted."));
 }
 
-isc::data::ConstElementPtr 
-DStubProcess::command(const std::string& command, isc::data::ConstElementPtr args){
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, 
+isc::data::ConstElementPtr
+DStubProcess::command(const std::string& command,
+                      isc::data::ConstElementPtr args) {
+    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
               D2PRC_COMMAND).arg(command).arg(args->str());
 
     isc::data::ConstElementPtr answer;
     if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
+        // Simulates a process command execution failure.
         answer = isc::config::createAnswer(COMMAND_ERROR,
                                           "SimFailure::ftProcessCommand");
-    } else if (command.compare(custom_process_command_) == 0) {
+    } else if (command.compare(stub_proc_command_) == 0) {
         answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
     } else {
         answer = isc::config::createAnswer(COMMAND_INVALID,
@@ -103,10 +112,15 @@ DStubProcess::~DStubProcess() {
 
 //************************** DStubController *************************
 
-const std::string DStubController::custom_ctl_command_("valid_ctrl_command");
+// Define custom controller command supported by DStubController.
+const std::string DStubController::stub_ctl_command_("spiffy");
+
+// Define custom command line option command supported by DStubController.
+const char* DStubController::stub_option_x_ = "x";
 
 DControllerBasePtr&
 DStubController::instance() {
+    // If the singleton hasn't been created, do it now.
     if (!getController()) {
         setController(new DStubController());
     }
@@ -128,22 +142,22 @@ DStubController::DStubController()
 bool
 DStubController::customOption(int option, char* /* optarg */)
 {
-    // Default implementation returns false
-    if (option == 'x') {
-        return (true);         
+    // Check for the custom option supported by DStubController.
+    if ((char)(option) == *stub_option_x_) {
+        return (true);
     }
-    
+
     return (false);
 }
 
 DProcessBase* DStubController::createProcess() {
     if (SimFailure::shouldFailOn(SimFailure::ftCreateProcessException)) {
-        // Simulates a failure to instantiate the process due to exception. 
+        // Simulates a failure to instantiate the process due to exception.
         throw std::runtime_error("SimFailure::ftCreateProcess");
     }
 
     if (SimFailure::shouldFailOn(SimFailure::ftCreateProcessNull)) {
-        // Simulates a failure to instantiate the process. 
+        // Simulates a failure to instantiate the process.
         return (NULL);
     }
 
@@ -156,9 +170,10 @@ DStubController::customControllerCommand(const std::string& command,
                                      isc::data::ConstElementPtr /* args */) {
     isc::data::ConstElementPtr answer;
     if (SimFailure::shouldFailOn(SimFailure::ftControllerCommand)) {
+        // Simulates command failing to execute.
         answer = isc::config::createAnswer(COMMAND_ERROR,
                                           "SimFailure::ftControllerCommand");
-    } else if (command.compare(custom_ctl_command_) == 0) {
+    } else if (command.compare(stub_ctl_command_) == 0) {
         answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
     } else {
         answer = isc::config::createAnswer(COMMAND_INVALID,
@@ -169,14 +184,15 @@ DStubController::customControllerCommand(const std::string& command,
 }
 
 const std::string DStubController::getCustomOpts(){
-    return (std::string("x"));
+    // Return the "list" of custom options supported by DStubController.
+    return (std::string(stub_option_x_));
 }
 
 DStubController::~DStubController() {
 }
 
-DControllerBasePtr DControllerTest::controller_under_test_;
+// Initialize controller wrapper's static instance getter member.
 DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
 
-}; // namespace isc::d2 
+}; // namespace isc::d2
 }; // namespace isc

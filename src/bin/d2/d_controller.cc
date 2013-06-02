@@ -26,12 +26,12 @@ namespace d2 {
 DControllerBasePtr DControllerBase::controller_;
 
 // Note that the constructor instantiates the controller's primary IOService.
-DControllerBase::DControllerBase(const char* name) 
-    : name_(name), stand_alone_(false), verbose_(false), 
+DControllerBase::DControllerBase(const char* name)
+    : name_(name), stand_alone_(false), verbose_(false),
     spec_file_name_(""), io_service_(new isc::asiolink::IOService()){
 }
 
-void 
+void
 DControllerBase::setController(DControllerBase* controller) {
     if (controller_) {
         // This shouldn't happen, but let's make sure it can't be done.
@@ -45,61 +45,66 @@ DControllerBase::setController(DControllerBase* controller) {
 
 int
 DControllerBase::launch(int argc, char* argv[]) {
-    int ret = EXIT_SUCCESS;
+    int ret = d2::NORMAL_EXIT;
 
     // Step 1 is to parse the command line arguments.
     try {
         parseArgs(argc, argv);
     } catch (const InvalidUsage& ex) {
         usage(ex.what());
-        return (EXIT_FAILURE);
+        return (d2::INVALID_USAGE);
     }
 
 #if 1
     //@TODO During initial development default to max log, no buffer
-    isc::log::initLogger(name_, isc::log::DEBUG, 
+    isc::log::initLogger(name_, isc::log::DEBUG,
                          isc::log::MAX_DEBUG_LEVEL, NULL, false);
 #else
     // Now that we know what the mode flags are, we can init logging.
     // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(name_,
-                         ((verbose_ && stand_alone_) 
+                         ((verbose_ && stand_alone_)
                           ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
 #endif
 
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STARTING).arg(getpid());
     try {
-        // Step 2 is to create and init the application process.
+        // Step 2 is to create and initialize the application process.
         initProcess();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
+        return (PROCESS_INIT_ERROR);
+    }
 
-        // Next we connect if we are running integrated.
-        if (!stand_alone_) {
-            try {
-                establishSession();
-            } catch (const std::exception& ex) {
-                LOG_ERROR(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
-                return (EXIT_FAILURE);
-            }
-        } else {
-            LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STANDALONE);
+    // Next we connect if we are running integrated.
+    if (stand_alone_) {
+        LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STANDALONE);
+    } else {
+        try {
+            establishSession();
+        } catch (const std::exception& ex) {
+            LOG_ERROR(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
+            return (d2::SESSION_START_ERROR);
         }
+    }
 
-        // Everything is clear for launch, so start the application's
-        // event loop.
+    // Everything is clear for launch, so start the application's
+    // event loop.
+    try {
         runProcess();
     } catch (const std::exception& ex) {
         LOG_FATAL(d2_logger, D2CTL_FAILED).arg(ex.what());
-        ret = EXIT_FAILURE;
+        ret = d2::RUN_ERROR;
     }
 
     // If running integrated, always try to disconnect.
     if (!stand_alone_) {
-        try { 
+        try {
             disconnectSession();
         } catch (const std::exception& ex) {
             LOG_ERROR(d2_logger, D2CTL_DISCONNECT_FAIL).arg(ex.what());
-            ret = EXIT_FAILURE;
+            ret = d2::SESSION_END_ERROR;
         }
     }
 
@@ -111,11 +116,11 @@ DControllerBase::launch(int argc, char* argv[]) {
 void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
-    // Iterate over the given command line options. If its a stock option 
+    // Iterate over the given command line options. If its a stock option
     // ("s" or "v") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
-    opterr = 0; 
+    opterr = 0;
     optind = 1;
     std::string opts(":vs" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
@@ -139,13 +144,13 @@ DControllerBase::parseArgs(int argc, char* argv[])
             isc_throw(InvalidUsage,tmp.str());
             break;
             }
-            
+
         default:
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
-                // this would be a programmatic err
+                // This would be a programmatic error.
                 std::stringstream tmp;
-                tmp << " Option listed but implemented?: [" << 
+                tmp << " Option listed but implemented?: [" <<
                         (char)ch << "] " << (!optarg ? "" : optarg);
                 isc_throw(InvalidUsage,tmp.str());
             }
@@ -156,12 +161,12 @@ DControllerBase::parseArgs(int argc, char* argv[])
     // There was too much information on the command line.
     if (argc > optind) {
         std::stringstream tmp;
-        tmp << "extraneous command line information"; 
+        tmp << "extraneous command line information";
         isc_throw(InvalidUsage,tmp.str());
     }
 }
 
-bool 
+bool
 DControllerBase::customOption(int /* option */, char* /*optarg*/)
 {
     // Default implementation returns false.
@@ -171,26 +176,26 @@ DControllerBase::customOption(int /* option */, char* /*optarg*/)
 void
 DControllerBase::initProcess() {
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_INIT_PROCESS);
-  
-    // Invoke virtual method to instantiate the application process. 
+
+    // Invoke virtual method to instantiate the application process.
     try {
-        process_.reset(createProcess()); 
+        process_.reset(createProcess());
     } catch (const std::exception& ex) {
         isc_throw (DControllerBaseError, std::string("createProcess failed:")
-                    + ex.what()); 
+                    + ex.what());
     }
 
     // This is pretty unlikely, but will test for it just to be safe..
     if (!process_) {
         isc_throw (DControllerBaseError, "createProcess returned NULL");
-    }  
+    }
 
-    // Invoke application's init method
-    // @TODO This call may throw DProcessError 
+    // Invoke application's init method (Note this call should throw
+    // DProcessBaseError if it fails).
     process_->init();
 }
 
-void 
+void
 DControllerBase::establishSession() {
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_CCSESSION_STARTING)
               .arg(spec_file_name_);
@@ -200,13 +205,13 @@ DControllerBase::establishSession() {
                              io_service_->get_io_service()));
 
     // Create the BIND10 config session with the stub configuration handler.
-    // This handler is internally invoked by the constructor and on success 
+    // This handler is internally invoked by the constructor and on success
     // the constructor updates the current session with the configuration that
     // had been committed in the previous session. If we do not install
-    // the dummy handler, the previous configuration would be lost. 
+    // the dummy handler, the previous configuration would be lost.
     config_session_ = ModuleCCSessionPtr(new isc::config::ModuleCCSession(
                                          spec_file_name_, *cc_session_,
-                                         dummyConfigHandler, commandHandler, 
+                                         dummyConfigHandler, commandHandler,
                                          false));
     // Enable configuration even processing.
     config_session_->start();
@@ -224,13 +229,13 @@ DControllerBase::establishSession() {
     // Parse the answer returned from the configHandler.  Log the error but
     // keep running. This provides an opportunity for the user to correct
     // the configuration dynamically.
-    int ret = 0; 
-    isc::data::ConstElementPtr comment = isc::config::parseAnswer(ret, answer); 
+    int ret = 0;
+    isc::data::ConstElementPtr comment = isc::config::parseAnswer(ret, answer);
     if (ret) {
         LOG_ERROR(d2_logger, D2CTL_CONFIG_LOAD_FAIL).arg(comment->str());
     }
 
-    // Lastly, call onConnect. This allows deriving class to execute custom 
+    // Lastly, call onConnect. This allows deriving class to execute custom
     // logic predicated by session connect.
     onSessionConnect();
 }
@@ -243,14 +248,15 @@ DControllerBase::runProcess() {
         isc_throw(DControllerBaseError, "Process not initialized");
     }
 
-    // Invoke the applicatio process's run method. This may throw DProcessError
+    // Invoke the application process's run method. This may throw
+    // DProcessBaseError
     process_->run();
 }
 
 void DControllerBase::disconnectSession() {
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_CCSESSION_ENDING);
 
-    // Call virtual onDisconnect. Allows deriving class to execute custom 
+    // Call virtual onDisconnect. Allows deriving class to execute custom
     // logic prior to session loss.
     onSessionDisconnect();
 
@@ -279,7 +285,7 @@ DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
             .arg(new_config->str());
 
     if (!controller_) {
-        // This should never happen as we install the handler after we 
+        // This should never happen as we install the handler after we
         // instantiate the server.
         isc::data::ConstElementPtr answer =
             isc::config::createAnswer(1, "Configuration rejected,"
@@ -293,14 +299,14 @@ DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
 
 // Static callback which invokes non-static handler on singleton
 isc::data::ConstElementPtr
-DControllerBase::commandHandler(const std::string& command, 
+DControllerBase::commandHandler(const std::string& command,
                             isc::data::ConstElementPtr args) {
 
     LOG_DEBUG(d2_logger, DBGLVL_COMMAND, D2CTL_COMMAND_RECEIVED)
               .arg(command).arg(args->str());
 
     if (!controller_ )  {
-        // This should never happen as we install the handler after we 
+        // This should never happen as we install the handler after we
         // instantiate the server.
         isc::data::ConstElementPtr answer =
             isc::config::createAnswer(1, "Command rejected,"
@@ -315,14 +321,14 @@ DControllerBase::commandHandler(const std::string& command,
 isc::data::ConstElementPtr
 DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
     isc::data::ConstElementPtr full_config;
-    if (stand_alone_) { 
+    if (stand_alone_) {
         // @TODO Until there is a configuration manager to provide retrieval
         // we'll just assume the incoming config is the full configuration set.
         // It may also make more sense to isolate the controller from the
         // configuration manager entirely. We could do something like
         // process_->getFullConfig() here for stand-alone mode?
         full_config = new_config;
-    } else { 
+    } else {
         if (!config_session_) {
             // That should never happen as we install config_handler
             // after we instantiate the server.
@@ -343,13 +349,13 @@ DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
     // be set if the definition of this option is set. If someone removes
     // an existing option definition then the partial configuration that
     // removes that definition is triggered while a relevant option value
-    // may remain configured. This eventually results in the 
+    // may remain configured. This eventually results in the
     // configuration being in the inconsistent state.
     // In order to work around this problem we need to merge the new
     // configuration with the existing (full) configuration.
 
     // Let's create a new object that will hold the merged configuration.
-    boost::shared_ptr<isc::data::MapElement> 
+    boost::shared_ptr<isc::data::MapElement>
                             merged_config(new isc::data::MapElement());
 
     // Merge an existing and new configuration.
@@ -362,9 +368,9 @@ DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
 
 
 isc::data::ConstElementPtr
-DControllerBase::executeCommand(const std::string& command, 
+DControllerBase::executeCommand(const std::string& command,
                             isc::data::ConstElementPtr args) {
-    // Shutdown is univeral.  If its not that, then try it as
+    // Shutdown is universal.  If its not that, then try it as
     // an custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
@@ -375,7 +381,7 @@ DControllerBase::executeCommand(const std::string& command,
         // It wasn't shutdown, so may be a custom controller command.
         int rcode = 0;
         answer = customControllerCommand(command, args);
-        isc::config::parseAnswer(rcode, answer); 
+        isc::config::parseAnswer(rcode, answer);
         if (rcode == COMMAND_INVALID)
         {
             // It wasn't controller command, so may be an application command.
@@ -387,7 +393,7 @@ DControllerBase::executeCommand(const std::string& command,
 }
 
 isc::data::ConstElementPtr
-DControllerBase::customControllerCommand(const std::string& command, 
+DControllerBase::customControllerCommand(const std::string& command,
                                      isc::data::ConstElementPtr /* args */) {
 
     // Default implementation always returns invalid command.
@@ -395,14 +401,14 @@ DControllerBase::customControllerCommand(const std::string& command,
                                       "Unrecognized command:" + command));
 }
 
-isc::data::ConstElementPtr 
+isc::data::ConstElementPtr
 DControllerBase::shutdown() {
-    // @TODO TKM - not sure about io_service_->stop here
+    // @TODO (tmark) - not sure about io_service_->stop here
     // IF application is using this service for all of its IO, stopping
     // here would mean, no more work by the application.. UNLESS it resets
     // it. People have discussed letting the application finish any in-progress
-    // updates before shutting down.  If we don't stop it here, then 
-    // application can't use io_service_->run(), it will never "see" the 
+    // updates before shutting down.  If we don't stop it here, then
+    // application can't use io_service_->run(), it will never "see" the
     // shutdown.
     io_service_->stop();
     if (process_) {
@@ -425,13 +431,10 @@ DControllerBase::usage(const std::string & text)
 
     std::cerr << "Usage: " << name_ <<  std::endl;
     std::cerr << "  -v: verbose output" << std::endl;
-    std::cerr << "  -s: stand-alone mode (don't connect to BIND10)" 
+    std::cerr << "  -s: stand-alone mode (don't connect to BIND10)"
               << std::endl;
-   
-    std::cerr << getUsageText() << std::endl; 
 
-    exit(EXIT_FAILURE);
-
+    std::cerr << getUsageText() << std::endl;
 }
 
 DControllerBase::~DControllerBase() {
