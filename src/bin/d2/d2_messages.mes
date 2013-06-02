@@ -26,6 +26,10 @@ following a shut down (normal or otherwise) of the DDHCP-DDNS process.
 This is a debug message issued when the service process has been instructed
 to shut down by the controller.
 
+% D2PRC_PROCESS_INIT DHCP-DDNS application init invoked
+This is a debug message issued when the D2 process enters it's
+init method. 
+
 % D2PRC_RUN_ENTER process has entered the event loop 
 This is a debug message issued when the D2 process enters it's
 run method. 
