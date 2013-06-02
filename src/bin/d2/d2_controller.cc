@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,12 +19,12 @@
 namespace isc {
 namespace d2 {
 
-DControllerBasePtr& 
+DControllerBasePtr&
 D2Controller::instance() {
-    // If the instance hasn't been created yet, create it.  Note this method 
+    // If the instance hasn't been created yet, create it.  Note this method
     // must use the base class singleton instance methods.  The base class
     // must own the singleton in order to use it within BIND10 static function
-    // callbacks. 
+    // callbacks.
     if (!getController()) {
         setController(new D2Controller());
     }

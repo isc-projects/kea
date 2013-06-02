@@ -19,7 +19,11 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Defines the service name which is used in the controller constructor
+/// and ultimately defines the BIND10 module name.
 const char* const D2_MODULE_NAME = "b10-d2";
+
+/// @brief Defines the logger used within D2.
 isc::log::Logger d2_logger(D2_MODULE_NAME);
 
 } // namespace d2

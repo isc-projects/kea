@@ -22,7 +22,7 @@ namespace d2 {
 
 /// @brief Process Controller for D2 Process
 /// This class is the DHCP-DDNS specific derivation of DControllerBase. It 
-/// creates and manages an instance of the DCHP-DDNS application process, 
+/// creates and manages an instance of the DHCP-DDNS application process, 
 /// D2Process.  
 /// @TODO Currently, this class provides only the minimum required specialized
 /// behavior to run the DHCP-DDNS service. It may very well expand as the 
@@ -36,7 +36,7 @@ public:
     /// base class singleton instance member.  It instantiates the singleton 
     /// and sets the base class instance member upon first invocation. 
     ///
-    /// @return returns the a pointer reference to the singleton instance.
+    /// @return returns the pointer reference to the singleton instance.
     static DControllerBasePtr& instance();
 
     /// @brief Destructor.
@@ -47,7 +47,7 @@ private:
     /// process.  This method is invoked during the process initialization
     /// step of the controller launch.
     ///  
-    /// @return returns a DProcessBase* to the applicatio process created.
+    /// @return returns a DProcessBase* to the application process created.
     /// Note the caller is responsible for destructing the process. This
     /// is handled by the base class, which wraps this pointer with a smart
     /// pointer.

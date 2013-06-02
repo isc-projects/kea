@@ -22,7 +22,8 @@
 namespace isc {
 namespace d2 {
 
-/// @TODO need brief
+/// @brief Defines the executable name, ultimately this is the BIND10 module 
+/// name.
 extern const char* const D2_MODULE_NAME;
 
 /// Define the logger for the "d2" module part of b10-d2.  We could define
