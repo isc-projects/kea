@@ -77,7 +77,11 @@ public:
     // Destructor, remove the file.  This is only a test, so ignore failures
     ~SpecificationForFileLogger() {
         if (! name_.empty()) {
-            (void) unlink(name_.c_str());
+            static_cast<void>(unlink(name_.c_str()));
+
+            // Depending on the log4cplus version, a lock file may also be
+            // created.
+            static_cast<void>(unlink((name_ + ".lock").c_str()));
         }
     }
 

@@ -35,7 +35,10 @@
 #include <log/logger_specification.h>
 #include <log/buffer_appender_impl.h>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
+using boost::lexical_cast;
 
 namespace isc {
 namespace log {
@@ -121,21 +124,33 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
 
 // File appender.  Depending on whether a maximum size is given, either
 // a standard file appender or a rolling file appender will be created.
+// In the case of the latter, we set "UseLockFile" to true so that
+// log4cplus internally avoids race in rolling over the files by multiple
+// processes.  This feature isn't supported in log4cplus 1.0.x, but setting
+// the property unconditionally is okay as unknown properties are simply
+// ignored.
 void
 LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
-                                         const OutputOption& opt)
+                                      const OutputOption& opt)
 {
     // Append to existing file
-    std::ios::openmode mode = std::ios::app;
+    const std::ios::openmode mode = std::ios::app;
 
     log4cplus::SharedAppenderPtr fileapp;
     if (opt.maxsize == 0) {
         fileapp = log4cplus::SharedAppenderPtr(new log4cplus::FileAppender(
             opt.filename, mode, opt.flush));
     } else {
+        log4cplus::helpers::Properties properties;
+        properties.setProperty("File", opt.filename);
+        properties.setProperty("MaxFileSize",
+                               lexical_cast<string>(opt.maxsize));
+        properties.setProperty("MaxBackupIndex",
+                               lexical_cast<string>(opt.maxver));
+        properties.setProperty("ImmediateFlush", opt.flush ? "true" : "false");
+        properties.setProperty("UseLockFile", "true");
         fileapp = log4cplus::SharedAppenderPtr(
-            new log4cplus::RollingFileAppender(opt.filename, opt.maxsize,
-                                               opt.maxver, opt.flush));
+            new log4cplus::RollingFileAppender(properties));
     }
 
     // use the same console layout for the files.
