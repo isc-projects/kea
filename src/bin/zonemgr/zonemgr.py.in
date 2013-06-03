@@ -691,6 +691,7 @@ class Zonemgr:
         try:
             while not self._shutdown_event.is_set():
                 fileno = self._module_cc.get_socket().fileno()
+                reads = []
                 # Wait with select() until there is something to read,
                 # and then read it using a non-blocking read
                 # This may or may not be relevant data for this loop,
