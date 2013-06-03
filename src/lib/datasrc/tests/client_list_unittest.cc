@@ -187,14 +187,14 @@ public:
 
         // Load the data into the zone table.
         if (enabled) {
-            const ConstElementPtr config_ztable_segment_(
+            const ConstElementPtr config_ztable_segment(
                 Element::fromJSON("{\"mapped-file\": \"" +
                                   getMappedFilename(index) +
                                   "\"}"));
 
             list_->resetMemorySegment(dsrc_info.name_,
                                       memory::ZoneTableSegment::CREATE,
-                                      config_ztable_segment_);
+                                      config_ztable_segment);
 
             boost::scoped_ptr<memory::ZoneWriter> writer(
                 new memory::ZoneWriter(
@@ -207,7 +207,7 @@ public:
 
             list_->resetMemorySegment(dsrc_info.name_,
                                       memory::ZoneTableSegment::READ_WRITE,
-                                      config_ztable_segment_);
+                                      config_ztable_segment);
         }
 
         // On completion of load revert to the previous state of underlying
