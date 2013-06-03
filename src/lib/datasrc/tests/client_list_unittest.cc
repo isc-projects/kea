@@ -138,7 +138,11 @@ public:
 
     ~ListTest() {
         ds_info_.clear();
+        for (size_t i(0); i < ds_count; ++ i) {
+            ds_[i].reset();
+        }
         ds_.clear();
+
         for (size_t i(0); i < ds_count; ++ i) {
             boost::interprocess::file_mapping::remove(
                 getMappedFilename(i).c_str());
