@@ -60,11 +60,6 @@ ZoneTableSegmentLocal::clear()
               "should not be used.");
 }
 
-void
-ZoneTableSegmentLocal::resetHeader() {
-    // This method does not have to do anything in this implementation.
-}
-
 // After more methods' definitions are added here, it would be a good
 // idea to move getHeader() and getMemorySegment() definitions to the
 // header file.

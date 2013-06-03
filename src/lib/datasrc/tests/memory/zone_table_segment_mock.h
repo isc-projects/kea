@@ -56,11 +56,6 @@ public:
         isc_throw(isc::NotImplemented, "clear() is not implemented");
     }
 
-    virtual void resetHeader() {
-        // This method does not have to do anything in this
-        // implementation.
-    }
-
     virtual ZoneTableHeader& getHeader() {
         return (header_);
     }
