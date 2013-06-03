@@ -137,7 +137,7 @@ struct MemorySegmentMapped::Impl {
         reserveMemory();
     }
 
-    void reserveMemory() {
+    void reserveMemory(bool no_grow = false) {
         if (!read_only_) {
             // Reserve a named address for use during
             // setNamedAddress(). Though this will almost always succeed
@@ -153,6 +153,7 @@ struct MemorySegmentMapped::Impl {
                 if (reserved_storage) {
                     break;
                 }
+                assert(!no_grow);
 
                 growSegment();
             }
@@ -332,8 +333,8 @@ MemorySegmentMapped::allMemoryDeallocated() const {
         impl_->freeReservedMemory();
         const bool result = impl_->base_sgmt_->all_memory_deallocated();
         // reserveMemory() should succeed now as the memory was already
-        // allocated.
-        impl_->reserveMemory();
+        // allocated, so we set no_grow to true.
+        impl_->reserveMemory(true);
         return (result);
     } catch (...) {
         abort();
