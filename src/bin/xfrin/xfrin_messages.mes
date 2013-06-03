@@ -266,19 +266,6 @@ is recommended to check the primary server configuration.
 A connection to the master server has been made, the serial value in
 the SOA record has been checked, and a zone transfer has been started.
 
-% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
-On starting an xfrin session, it is identified that the zone to be
-transferred is not found in the data source.  This can happen if a
-secondary DNS server first tries to perform AXFR from a primary server
-without creating the zone image beforehand (e.g. by b10-loadzone).  As
-of this writing the xfrin process provides backward compatible
-behavior to previous versions: creating a new one in the data source
-not to surprise existing users too much.  This is probably not a good
-idea, however, in terms of who should be responsible for managing
-zones at a higher level.  In future it is more likely that a separate
-zone management framework is provided, and the situation where the
-given zone isn't found in xfrout will be treated as an error.
-
 % XFRIN_ZONE_INVALID Newly received zone %1/%2 fails validation: %3
 The zone was received successfully, but it failed validation. The problem
 is severe enough that the new version of zone is discarded and the old version,

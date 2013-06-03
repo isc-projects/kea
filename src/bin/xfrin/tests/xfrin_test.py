@@ -861,9 +861,11 @@ class TestXfrinConnection(unittest.TestCase):
 
         '''
         self.conn._zone_name = zone_name
-        self.conn._zone_soa = xfrin._get_zone_soa(self.conn._datasrc_client,
-                                                  zone_name,
-                                                  self.conn._rrclass)
+        try:
+            self.conn._zone_soa = xfrin._get_zone_soa(
+                self.conn._datasrc_client, zone_name, self.conn._rrclass)
+        except XfrinException:  # zone doesn't exist
+            self.conn._zone_soa = None
 
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
@@ -2115,32 +2117,6 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
 
         '''
         self.axfr_failure_check(RRType.AXFR)
-
-    def test_do_axfrin_nozone_sqlite3(self):
-        '''AXFR test with an empty SQLite3 DB file, thus no target zone there.
-
-        For now, we provide backward compatible behavior: xfrin will create
-        the zone (after even setting up the entire schema) in the zone.
-        Note: a future version of this test will make it fail.
-
-        '''
-        self.conn._db_file = self.empty_sqlite3db_obj
-        self.conn._datasrc_client = DataSourceClient(
-            "sqlite3",
-            "{ \"database_file\": \"" + self.empty_sqlite3db_obj + "\"}")
-        def create_response():
-            self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.AXFR)],
-                answers=[soa_rrset, self._create_ns(), soa_rrset])
-        self.conn.response_generator = create_response
-        self._set_test_zone(Name('example.com'))
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.AXFR))
-        self.assertEqual(type(XfrinAXFREnd()),
-                         type(self.conn.get_xfrstate()))
-        self.assertEqual(1234, self.get_zone_serial().get_value())
-        self.assertFalse(self.record_exist(Name('dns01.example.com'),
-                                           RRType.A))
 
 class TestStatisticsXfrinConn(TestXfrinConnection):
     '''Test class based on TestXfrinConnection and including paramters
