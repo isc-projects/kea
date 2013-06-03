@@ -243,6 +243,23 @@ class MockDataSourceClient():
         # pretend it just succeeds
         pass
 
+class MockDataSrcClientsMgr():
+    def __init__(self):
+        # Default faked result of get_client_list, customizable by tests
+        self.found_datasrc_client_list = self
+
+        # Default faked result of find(), customizable by tests
+        self.found_datasrc_client = MockDataSourceClient()
+
+    def get_client_list(self, rrclass):
+        return self.found_datasrc_client_list
+
+    def find(self, zone_name, want_exact_match, want_finder):
+        """Pretending find method on the object returned by get_clinet_list"""
+        if issubclass(type(self.found_datasrc_client), Exception):
+            raise self.found_datasrc_client
+        return self.found_datasrc_client, None, None
+
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
     # default behavior triggered in _cc_check_command().  Specific test methods
@@ -2447,6 +2464,9 @@ class TestXfrin(unittest.TestCase):
         # redirect output
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
+        self.__orig_DataSrcClientsMgr = xfrin.DataSrcClientsMgr
+        xfrin.DataSrcClientsMgr = MockDataSrcClientsMgr
+
         self.xfr = MockXfrin()
         self.args = {}
         self.args['zone_name'] = TEST_ZONE_NAME_STR
@@ -2457,6 +2477,7 @@ class TestXfrin(unittest.TestCase):
         self.args['tsig_key'] = ''
 
     def tearDown(self):
+        xfrin.DataSrcClientsMgr = self.__orig_DataSrcClientsMgr
         self.assertFalse(self.xfr._module_cc.stopped);
         self.xfr.shutdown()
         self.assertTrue(self.xfr._module_cc.stopped);
@@ -2543,9 +2564,11 @@ class TestXfrin(unittest.TestCase):
     def test_command_handler_retransfer(self):
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
-        self.assertEqual(self.args['master'], self.xfr.xfrin_started_master_addr)
-        self.assertEqual(int(self.args['port']), self.xfr.xfrin_started_master_port)
-        # By default we use AXFR (for now)
+        self.assertEqual(self.args['master'],
+                         self.xfr.xfrin_started_master_addr)
+        self.assertEqual(int(self.args['port']),
+                         self.xfr.xfrin_started_master_port)
+        # retransfer always uses AXFR
         self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
                          self.xfr.xfrin_started_request_ixfr)
 
@@ -2649,6 +2672,37 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 1)
         # sys.modules is global, so we must recover it
         sys.modules['pydnspp'] = dns_module
+
+    def test_command_handler_retransfer_datasrc_error(self):
+        # Failure cases due to various errors at the data source (config/data)
+        # level
+
+        # No data source client list for the RR class
+        self.xfr._datasrc_clients_mgr.found_datasrc_client_list = None
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # No  data source client for the zone name
+        self.xfr._datasrc_clients_mgr.found_datasrc_client_list = \
+            self.xfr._datasrc_clients_mgr # restore the original
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = None
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # list.find() raises an exception
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = \
+            isc.datasrc.Error('test exception')
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # datasrc.find() raises an exception
+        class RaisingkDataSourceClient(MockDataSourceClient):
+            def find_zone(self, zone_name):
+                raise isc.datasrc.Error('test exception')
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = \
+            RaisingkDataSourceClient()
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
 
     def test_command_handler_refresh(self):
         # at this level, refresh is no different than retransfer.
