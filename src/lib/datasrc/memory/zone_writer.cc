@@ -17,6 +17,8 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/segment_object_holder.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <dns/rrclass.h>
 
 #include <memory>
@@ -45,9 +47,16 @@ struct ZoneWriter::Impl {
         load_action_(load_action),
         origin_(origin),
         rrclass_(rrclass),
-        state_(ZW_UNUSED),
-        data_holder_(segment.getMemorySegment(), rrclass_)
-    {}
+        state_(ZW_UNUSED)
+    {
+        while (true) {
+            try {
+                data_holder_.reset(
+                    new ZoneDataHolder(segment.getMemorySegment(), rrclass_));
+                break;
+            } catch (const isc::util::MemorySegmentGrown&) {}
+        }
+    }
 
     ZoneTableSegment& segment_;
     const LoadAction load_action_;
@@ -60,7 +69,8 @@ struct ZoneWriter::Impl {
         ZW_CLEANED
     };
     State state_;
-    detail::SegmentObjectHolder<ZoneData, dns::RRClass> data_holder_;
+    typedef detail::SegmentObjectHolder<ZoneData, dns::RRClass> ZoneDataHolder;
+    boost::scoped_ptr<ZoneDataHolder> data_holder_;
 };
 
 ZoneWriter::ZoneWriter(ZoneTableSegment& segment,
@@ -90,7 +100,7 @@ ZoneWriter::load() {
         // Bug inside load_action_.
         isc_throw(isc::InvalidOperation, "No data returned from load action");
     }
-    impl_->data_holder_.set(zone_data);
+    impl_->data_holder_->set(zone_data);
 
     impl_->state_ = Impl::ZW_LOADED;
 }
@@ -118,8 +128,8 @@ ZoneWriter::install() {
             const ZoneTable::AddResult result(
                 table->addZone(impl_->segment_.getMemorySegment(),
                                impl_->rrclass_, impl_->origin_,
-                               impl_->data_holder_.get()));
-            impl_->data_holder_.set(result.zone_data);
+                               impl_->data_holder_->get()));
+            impl_->data_holder_->set(result.zone_data);
             impl_->state_ = Impl::ZW_INSTALLED;
         } catch (const isc::util::MemorySegmentGrown&) {}
     }
@@ -129,7 +139,7 @@ void
 ZoneWriter::cleanup() {
     // We eat the data (if any) now.
 
-    ZoneData* zone_data = impl_->data_holder_.release();
+    ZoneData* zone_data = impl_->data_holder_->release();
     if (zone_data) {
         ZoneData::destroy(impl_->segment_.getMemorySegment(), zone_data,
                           impl_->rrclass_);
