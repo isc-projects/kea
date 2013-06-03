@@ -37,6 +37,7 @@ import isc.net.parse
 from isc.xfrin.diff import Diff
 from isc.server_common.auth_command import auth_loadzone_command
 from isc.server_common.tsig_keyring import init_keyring, get_keyring
+from isc.server_common.datasrc_clients_mgr import DataSrcClientsMgr, ConfigError
 from isc.log_messages.xfrin_messages import *
 from isc.dns import *
 
@@ -1383,6 +1384,8 @@ class Xfrin:
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
         self._counters = Counters(SPECFILE_LOCATION)
+        # This is essentially private, but we allow tests to customize it.
+        self._datasrc_clients_mgr = DataSrcClientsMgr()
 
         # Initial configuration
         self._cc_setup()
@@ -1439,7 +1442,8 @@ class Xfrin:
         old_max_transfers_in = self._max_transfers_in
         old_zones = self._zones
 
-        self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
+        self._max_transfers_in = \
+            new_config.get("transfers_in") or self._max_transfers_in
 
         if 'zones' in new_config:
             self._clear_zone_info()
@@ -1459,7 +1463,7 @@ class Xfrin:
         self._set_db_file()
 
     def _datasrc_config_handler(self, new_config, config_data):
-        pass
+        self._datasrc_clients_mgr.reconfigure(new_config)
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
@@ -1732,24 +1736,24 @@ class Xfrin:
         if self.recorder.xfrin_in_progress(zone_name):
             return (1, 'zone xfrin is in progress')
 
-        # Create a data source client used in this XFR session.  Right now we
-        # still assume an sqlite3-based data source, and use both the old and
-        # new data source APIs.  We also need to use a mock client for tests.
-        # For a temporary workaround to deal with these situations, we skip the
-        # creation when the given file is none (the test case).  Eventually
-        # this code will be much cleaner.
+        # Identify the data source to which the zone content is transferred,
+        # and get the current zone SOA from the data source (if available).
         datasrc_client = None
-        if db_file is not None:
-            # temporary hardcoded sqlite initialization. Once we decide on
-            # the config specification, we need to update this (TODO)
-            # this may depend on #1207, or any follow-up ticket created for
-            # #1207
-            datasrc_type = "sqlite3"
-            datasrc_config = "{ \"database_file\": \"" + db_file + "\"}"
-            datasrc_client = DataSourceClient(datasrc_type, datasrc_config)
+        clist = self._datasrc_clients_mgr.get_client_list(rrclass)
+        if clist is None:
+            return (1, 'no data source is configured for class %s' % rrclass)
 
-        # Get the current zone SOA (if available).
-        zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+        try:
+            datasrc_client = clist.find(zone_name, True, False)[0]
+            if datasrc_client is None: # can happen, so log it separately.
+                logger.error(XFRIN_NO_DATASRC,
+                             format_zone_str(zone_name, rrclass))
+                return (1, 'no data source for transferring %s' %
+                        format_zone_str(zone_name, rrclass))
+            zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
+        except isc.datasrc.Error as ex: # rare case error, convert (so logged)
+            raise XfrinException('unexpected failure in datasrc module: ' +
+                                 str(ex))
 
         xfrin_thread = threading.Thread(target=process_xfrin,
                                         args=(self, self.recorder,
@@ -1790,6 +1794,7 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     """
     # datasrc_client should never be None in production case (only tests could
     # specify None)
+    # TBD: this CAN NOW BE CLEANED UP
     if datasrc_client is None:
         return None
 
