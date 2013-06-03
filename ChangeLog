@@ -1,3 +1,13 @@
+624.	[bug]		jinmei
+	logging: prevented multiple BIND 10 processes from generating
+	multiple small log files when they dumped logs to files and try
+	to roll over them simultaneously.  This fix relies on a feature of
+	underling logging library (log4cplus) version 1.1.0 or higher,
+	so the problem can still happen if BIND 10 is built with an older
+	version of log4cplus. (But this is expected to happen rarely in
+	any case unless a verbose debug level is specified).
+	(Trac #1622, git 5da8f8131b1224c99603852e1574b2a1adace236)
+
 623.	[func]		tmark
 	Created the initial, bare-bones implementation of DHCP-DDNS service
 	process class, D2Process, and the abstract class from which it derives,
