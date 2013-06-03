@@ -1773,6 +1773,10 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     be called (or tweaked) from tests; no one else should use this
     function directly.
 
+    The specified zone is expected to exist in the data source referenced
+    by the given datasrc_client at the point of the call to this function.
+    If this is not met XfrinException exception will be raised.
+
     It will be used for various purposes in subsequent xfr protocol
     processing.   It is validly possible that the zone is currently
     empty and therefore doesn't have an SOA, so this method doesn't
@@ -1784,34 +1788,15 @@ def _get_zone_soa(datasrc_client, zone_name, zone_class):
     valid, i.e., it has exactly one RDATA; if it is not the case
     this method returns None.
 
-    If the underlying data source doesn't even know the zone, this method
-    tries to provide backward compatible behavior where xfrin is
-    responsible for creating zone in the corresponding DB table.
-    For a longer term we should deprecate this behavior by introducing
-    more generic zone management framework, but at the moment we try
-    to not surprise existing users.
-
     """
-    # datasrc_client should never be None in production case (only tests could
-    # specify None)
-    # TBD: this CAN NOW BE CLEANED UP
-    if datasrc_client is None:
-        return None
-
     # get the zone finder.  this must be SUCCESS (not even
     # PARTIALMATCH) because we are specifying the zone origin name.
     result, finder = datasrc_client.find_zone(zone_name)
     if result != DataSourceClient.SUCCESS:
-        # The data source doesn't know the zone.  For now, we provide
-        # backward compatibility and creates a new one ourselves.
-        # For longer term, we should probably separate this level of zone
-        # management outside of xfrin.
-        datasrc_client.create_zone(zone_name)
-        logger.warn(XFRIN_ZONE_CREATED, format_zone_str(zone_name, zone_class))
-        # try again
-        result, finder = datasrc_client.find_zone(zone_name)
-    if result != DataSourceClient.SUCCESS:
-        return None
+        # The data source doesn't know the zone.  In the context of this
+        # function is called, this shouldn't happen.
+        raise XfrinException("unexpected result: zone %s doesn't exist" %
+                             format_zone_str(zone_name, zone_class))
     result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
     if result != ZoneFinder.SUCCESS:
         logger.info(XFRIN_ZONE_NO_SOA, format_zone_str(zone_name, zone_class))
