@@ -267,6 +267,14 @@ TEST_F(ZoneTableSegmentMappedTest, reset) {
     EXPECT_FALSE(ztable_segment_->isUsable());
     EXPECT_FALSE(ztable_segment_->isWritable());
 
+    // If a Python binding passes an invalid integer as the mode,
+    // reset() should reject it.
+    EXPECT_THROW({
+        ztable_segment_->reset
+            (static_cast<ZoneTableSegment::MemorySegmentOpenMode>(1234),
+             config_params_);
+    }, isc::InvalidParameter);
+
     // READ_WRITE mode must create the mapped file if it doesn't exist
     // (and must not result in an exception).
     ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
@@ -553,38 +561,6 @@ TEST_F(ZoneTableSegmentMappedTest, resetCreateOverCorruptedFile) {
     // Check for the old data in the segment. It should not be present
     // (as we opened the segment in CREATE mode).
     EXPECT_FALSE(verifyData(ztable_segment_->getMemorySegment()));
-}
-
-TEST_F(ZoneTableSegmentMappedTest, resetHeaderUninitialized) {
-    // This should throw as we haven't called reset() yet.
-    EXPECT_THROW(ztable_segment_->resetHeader(), isc::InvalidOperation);
-}
-
-TEST_F(ZoneTableSegmentMappedTest, resetHeader) {
-    // First, open an underlying mapped file in read+write mode (doesn't
-    // exist yet)
-    ztable_segment_->reset(ZoneTableSegment::READ_WRITE, config_params_);
-
-    // Check if a valid ZoneTable is found.
-    {
-        const ZoneTableHeader& header = ztable_segment_->getHeader();
-        const ZoneTable* table = header.getTable();
-        EXPECT_EQ(0, table->getZoneCount());
-    }
-
-    // Grow the segment by allocating something large.
-    EXPECT_THROW(ztable_segment_->getMemorySegment().allocate(1<<16),
-                 MemorySegmentGrown);
-
-    // Reset the header address. This should not throw now.
-    EXPECT_NO_THROW(ztable_segment_->resetHeader());
-
-    // Check if a valid ZoneTable is found.
-    {
-        const ZoneTableHeader& header = ztable_segment_->getHeader();
-        const ZoneTable* table = header.getTable();
-        EXPECT_EQ(0, table->getZoneCount());
-    }
 }
 
 } // anonymous namespace

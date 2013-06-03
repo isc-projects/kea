@@ -15,6 +15,11 @@
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/memory/segment_object_holder.h>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <dns/rrclass.h>
 
 #include <datasrc/exceptions.h>
 
@@ -26,87 +31,133 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+ZoneTableSegment&
+checkZoneTableSegment(ZoneTableSegment& segment) {
+    if (!segment.isWritable()) {
+        isc_throw(isc::InvalidOperation,
+                  "Attempt to construct ZoneWriter for a read-only segment");
+    }
+    return (segment);
+}
+
+struct ZoneWriter::Impl {
+    Impl(ZoneTableSegment& segment, const LoadAction& load_action,
+         const dns::Name& origin, const dns::RRClass& rrclass,
+         bool throw_on_load_error) :
+        // We validate segment first so we can use it to initialize
+        // data_holder_ safely.
+        segment_(checkZoneTableSegment(segment)),
+        load_action_(load_action),
+        origin_(origin),
+        rrclass_(rrclass),
+        state_(ZW_UNUSED),
+        catch_load_error_(throw_on_load_error)
+    {
+        while (true) {
+            try {
+                data_holder_.reset(
+                    new ZoneDataHolder(segment.getMemorySegment(), rrclass_));
+                break;
+            } catch (const isc::util::MemorySegmentGrown&) {}
+        }
+    }
+
+    ZoneTableSegment& segment_;
+    const LoadAction load_action_;
+    const dns::Name origin_;
+    const dns::RRClass rrclass_;
+    enum State {
+        ZW_UNUSED,
+        ZW_LOADED,
+        ZW_INSTALLED,
+        ZW_CLEANED
+    };
+    State state_;
+    const bool catch_load_error_;
+    typedef detail::SegmentObjectHolder<ZoneData, dns::RRClass> ZoneDataHolder;
+    boost::scoped_ptr<ZoneDataHolder> data_holder_;
+};
+
 ZoneWriter::ZoneWriter(ZoneTableSegment& segment,
                        const LoadAction& load_action,
                        const dns::Name& origin,
                        const dns::RRClass& rrclass,
                        bool throw_on_load_error) :
-    segment_(segment),
-    load_action_(load_action),
-    origin_(origin),
-    rrclass_(rrclass),
-    zone_data_(NULL),
-    state_(ZW_UNUSED),
-    catch_load_error_(throw_on_load_error)
+    impl_(new Impl(segment, load_action, origin, rrclass, throw_on_load_error))
 {
-    if (!segment.isWritable()) {
-        isc_throw(isc::InvalidOperation,
-                  "Attempt to construct ZoneWriter for a read-only segment");
-    }
 }
 
 ZoneWriter::~ZoneWriter() {
     // Clean up everything there might be left if someone forgot, just
     // in case.
     cleanup();
+    delete impl_;
 }
 
 void
 ZoneWriter::load(std::string* error_msg) {
-    if (state_ != ZW_UNUSED) {
+    if (impl_->state_ != Impl::ZW_UNUSED) {
         isc_throw(isc::InvalidOperation, "Trying to load twice");
     }
 
     try {
-        zone_data_ = load_action_(segment_.getMemorySegment());
-        segment_.resetHeader();
+        ZoneData* zone_data =
+            impl_->load_action_(impl_->segment_.getMemorySegment());
 
-        if (!zone_data_) {
-            // Bug inside load_action_.
+        if (!zone_data) {
+            // Bug inside impl_->load_action_.
             isc_throw(isc::InvalidOperation,
                       "No data returned from load action");
         }
+
+        impl_->data_holder_->set(zone_data);
+
     } catch (const ZoneLoaderException& ex) {
-        if (!catch_load_error_) {
+        if (!impl_->catch_load_error_) {
             throw;
         }
         if (error_msg) {
             *error_msg = ex.what();
         }
-        segment_.resetHeader();
     }
 
-    state_ = ZW_LOADED;
+    impl_->state_ = Impl::ZW_LOADED;
 }
 
 void
 ZoneWriter::install() {
-    if (state_ != ZW_LOADED) {
+    if (impl_->state_ != Impl::ZW_LOADED) {
         isc_throw(isc::InvalidOperation, "No data to install");
     }
 
     // Check the internal integrity assumption: we should have non NULL
     // zone data or we've allowed load error to create an empty zone.
-    assert(zone_data_ || catch_load_error_);
+    assert(impl_->data_holder_.get() || impl_->catch_load_error_);
 
     // FIXME: This retry is currently untested, as there seems to be no
     // reasonable way to create a zone table segment with non-local memory
     // segment. Once there is, we should provide the test.
-    while (state_ != ZW_INSTALLED) {
+    while (impl_->state_ != Impl::ZW_INSTALLED) {
         try {
-            ZoneTable* table(segment_.getHeader().getTable());
-            if (table == NULL) {
+            ZoneTable* table(impl_->segment_.getHeader().getTable());
+            if (!table) {
                 isc_throw(isc::Unexpected, "No zone table present");
             }
+            // We still need to hold the zone data until we return from
+            // addZone in case it throws, but we then need to immediately
+            // release it as the ownership is transferred to the zone table.
+            // we release this by (re)set it to the old data; that way we can
+            // use the holder for the final cleanup.
             const ZoneTable::AddResult result(
-                zone_data_ ? table->addZone(segment_.getMemorySegment(),
-                                            rrclass_, origin_, zone_data_) :
-                table->addEmptyZone(segment_.getMemorySegment(), origin_));
-            state_ = ZW_INSTALLED;
-            zone_data_ = result.zone_data;
+                impl_->data_holder_->get() ?
+                table->addZone(impl_->segment_.getMemorySegment(),
+                               impl_->rrclass_, impl_->origin_,
+                               impl_->data_holder_->get()) :
+                table->addEmptyZone(impl_->segment_.getMemorySegment(),
+                                    impl_->origin_));
+            impl_->data_holder_->set(result.zone_data);
+            impl_->state_ = Impl::ZW_INSTALLED;
         } catch (const isc::util::MemorySegmentGrown&) {}
-
-        segment_.resetHeader();
     }
 }
 
@@ -114,10 +165,11 @@ void
 ZoneWriter::cleanup() {
     // We eat the data (if any) now.
 
-    if (zone_data_ != NULL) {
-        ZoneData::destroy(segment_.getMemorySegment(), zone_data_, rrclass_);
-        zone_data_ = NULL;
-        state_ = ZW_CLEANED;
+    ZoneData* zone_data = impl_->data_holder_->release();
+    if (zone_data) {
+        ZoneData::destroy(impl_->segment_.getMemorySegment(), zone_data,
+                          impl_->rrclass_);
+        impl_->state_ = Impl::ZW_CLEANED;
     }
 }
 
