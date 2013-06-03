@@ -33,6 +33,11 @@ an old version of the zone in the data source, it is now deleted.
 It also prints the number of RRs that have been loaded
 and the time spent for the loading.
 
+% LOADZONE_EMPTY_DONE Completed emptying zone %1/%2
+b10-loadzone has successfully emptied content of the specified zone.
+This includes the case where the content didn't previously exist, in which
+case it just still reamins empty.
+
 % LOADZONE_LOAD_ERROR Failed to load zone %1/%2: %3
 Loading a zone by b10-loadzone fails for some reason in the middle of
 the loading.  This is most likely due to an error in the specified
