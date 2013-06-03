@@ -153,6 +153,17 @@ from does not match the master address in the Xfrin configuration. The notify
 is ignored. This may indicate that the configuration for the master is wrong,
 that a wrong machine is sending notifies, or that fake notifies are being sent.
 
+% XFRIN_NO_DATASRC no data source for transferring %1
+The xfrin daemon received a command that would trigger a transfer,
+but could not find a data source where the specified zone belong.
+There can be several reasons for this error: it may be a simple
+misspelling in the xfrin or zonemgr configuration, or in the user
+supplied parameter if it is triggered by an external command (such as
+from bindctl).  Another possibility is that this is the initial transfer
+for newly setup secondary zone.  In this case at least an initial empty zone
+must be created in one of configured data sources.  This can be done by
+the -e option of b10-loadzone.
+
 % XFRIN_RECEIVED_COMMAND received command: %1
 The xfrin daemon received a command on the command channel.
 
