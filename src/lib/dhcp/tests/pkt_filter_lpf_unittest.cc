@@ -41,11 +41,26 @@ const size_t RECV_BUF_SIZE = 2048;
 /// its index.
 class PktFilterLPFTest : public ::testing::Test {
 public:
-    PktFilterLPFTest() {
+
+    /// @brief Constructor
+    ///
+    /// This constructor initializes socket_ member to the value of 0.
+    /// Explcit initialization is performed here because some of the
+    /// tests do not initialize this value. In such cases, destructor
+    /// could invoke close() on uninitialized socket descriptor which
+    /// would result in errors being reported by Valgrind. Note that
+    /// by initializing the class member to a valid socket descriptor
+    /// value (non-negative) we avoid Valgrind warning about trying to
+    /// close the invalid socket descriptor.
+    PktFilterLPFTest()
+        : socket_(0) {
         // Initialize ifname_ and ifindex_.
         loInit();
     }
 
+    /// @brief Destructor
+    ///
+    /// Closes open socket (if any).
     ~PktFilterLPFTest() {
         // Cleanup after each test. This guarantees
         // that the socket does not hang after a test.
