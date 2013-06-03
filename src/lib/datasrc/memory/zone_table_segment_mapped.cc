@@ -13,12 +13,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/memory/zone_table_segment_mapped.h>
+#include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/segment_object_holder.h>
 
 #include <memory>
 
 using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::datasrc::memory::detail::SegmentObjectHolder;
 
 namespace isc {
 namespace datasrc {
@@ -37,8 +40,7 @@ const char* const ZONE_TABLE_HEADER_NAME = "zone_table_header";
 ZoneTableSegmentMapped::ZoneTableSegmentMapped(const RRClass& rrclass) :
     ZoneTableSegment(rrclass),
     impl_type_("mapped"),
-    rrclass_(rrclass),
-    cached_header_(NULL)
+    rrclass_(rrclass)
 {
 }
 
@@ -53,7 +55,7 @@ ZoneTableSegmentMapped::getImplType() const {
 
 bool
 ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
-                                        bool create,
+                                        bool create, bool has_allocations,
                                         std::string& error_msg)
 {
     const MemorySegment::NamedAddressResult result =
@@ -80,6 +82,14 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             }
         }
     } else {
+        if ((!create) && has_allocations) {
+            // If we are resetting in READ_WRITE mode, and some memory
+            // was already allocated but there is no checksum name, that
+            // indicates that the segment is corrupted.
+            error_msg = "Existing segment is missing a checksum name";
+            return (false);
+        }
+
         // Allocate space for a checksum (which is saved during close).
         void* checksum = NULL;
         while (!checksum) {
@@ -90,9 +100,7 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
             }
         }
         *static_cast<size_t*>(checksum) = 0;
-        const bool grew = segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME,
-                                                  checksum);
-        assert(!grew);
+        segment.setNamedAddress(ZONE_TABLE_CHECKSUM_NAME, checksum);
     }
 
     return (true);
@@ -100,14 +108,14 @@ ZoneTableSegmentMapped::processChecksum(MemorySegmentMapped& segment,
 
 bool
 ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
-                                      bool create,
+                                      bool create, bool has_allocations,
                                       std::string& error_msg)
 {
     const MemorySegment::NamedAddressResult result =
         segment.getNamedAddress(ZONE_TABLE_HEADER_NAME);
     if (result.first) {
         if (create) {
-            // There must be no previously saved checksum.
+            // There must be no previously saved header.
             error_msg = "There is already a saved ZoneTableHeader in the "
                  "segment opened in create mode";
             return (false);
@@ -115,25 +123,24 @@ ZoneTableSegmentMapped::processHeader(MemorySegmentMapped& segment,
             assert(result.second);
         }
     } else {
-        void* ptr = NULL;
-        while (!ptr) {
-            try {
-                ptr = segment.allocate(sizeof(ZoneTableHeader));
-            } catch (const MemorySegmentGrown&) {
-                // Do nothing and try again.
-            }
+        if ((!create) && has_allocations) {
+            // If we are resetting in READ_WRITE mode, and some memory
+            // was already allocated but there is no header name, that
+            // indicates that the segment is corrupted.
+            error_msg = "Existing segment is missing a ZoneTableHeader name";
+            return (false);
         }
-        try {
-            ZoneTableHeader* new_header = new(ptr)
-                ZoneTableHeader(ZoneTable::create(segment, rrclass_));
-            const bool grew = segment.setNamedAddress(ZONE_TABLE_HEADER_NAME,
-                                                      new_header);
-            assert(!grew);
-        } catch (const MemorySegmentGrown&) {
-            // This is extremely unlikely and we just throw a fatal
-            // exception here without attempting to recover.
 
-            throw std::bad_alloc();
+        while (true) {
+            try {
+                SegmentObjectHolder<ZoneTable, int> zt_holder(segment, 0);
+                zt_holder.set(ZoneTable::create(segment, rrclass_));
+                void* ptr = segment.allocate(sizeof(ZoneTableHeader));
+                ZoneTableHeader* new_header = new(ptr)
+                    ZoneTableHeader(zt_holder.release());
+                segment.setNamedAddress(ZONE_TABLE_HEADER_NAME, new_header);
+                break;
+            } catch (const MemorySegmentGrown&) {}
         }
     }
 
@@ -152,9 +159,13 @@ ZoneTableSegmentMapped::openReadWrite(const std::string& filename,
     std::auto_ptr<MemorySegmentMapped> segment
         (new MemorySegmentMapped(filename, mode));
 
+    // This flag is used inside processCheckSum() and processHeader(),
+    // and must be initialized before we make any further allocations.
+    const bool has_allocations = !segment->allMemoryDeallocated();
+
     std::string error_msg;
-    if ((!processChecksum(*segment, create, error_msg)) ||
-        (!processHeader(*segment, create, error_msg))) {
+    if ((!processChecksum(*segment, create, has_allocations, error_msg)) ||
+        (!processHeader(*segment, create, has_allocations, error_msg))) {
          if (mem_sgmt_) {
               isc_throw(ResetFailed,
                         "Error in resetting zone table segment to use "
@@ -268,7 +279,7 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
         break;
 
     default:
-        isc_throw(isc::InvalidOperation,
+        isc_throw(isc::InvalidParameter,
                   "Invalid MemorySegmentOpenMode passed to reset()");
     }
 
@@ -276,9 +287,11 @@ ZoneTableSegmentMapped::reset(MemorySegmentOpenMode mode,
     current_mode_ = mode;
     mem_sgmt_.reset(segment.release());
 
-    // Given what we setup above, resetHeader() must not throw at this
-    // point. If it does, all bets are off.
-    resetHeader();
+    if (!isWritable()) {
+        // Given what we setup above, the following must not throw at
+        // this point. If it does, all bets are off.
+        cached_ro_header_ = getHeaderHelper<ZoneTableHeader>(true);
+    }
 }
 
 void
@@ -310,15 +323,18 @@ ZoneTableSegmentMapped::clear() {
     }
 }
 
-void
-ZoneTableSegmentMapped::resetHeader() {
-    // We cannot perform resetHeader() lazily during getHeader() as
-    // getHeader() has to work on const objects too. So we do it here
-    // now.
-
+template<typename T>
+T*
+ZoneTableSegmentMapped::getHeaderHelper(bool initial) const {
     if (!isUsable()) {
         isc_throw(isc::InvalidOperation,
-                  "resetHeader() called without calling reset() first");
+                  "getHeader() called without calling reset() first");
+    }
+
+    if (!isWritable() && !initial) {
+        // The header address would not have changed since reset() for
+        // READ_ONLY segments.
+        return (cached_ro_header_);
     }
 
     const MemorySegment::NamedAddressResult result =
@@ -329,29 +345,19 @@ ZoneTableSegmentMapped::resetHeader() {
                   "getHeader()");
     }
 
-    cached_header_ = static_cast<ZoneTableHeader*>(result.second);
-}
-
-template<typename T>
-T*
-ZoneTableSegmentMapped::getHeaderHelper() const {
-    if (!isUsable()) {
-        isc_throw(isc::InvalidOperation,
-                  "getHeader() called without calling reset() first");
-    }
-
-    assert(cached_header_);
-    return (cached_header_);
+    T* header = static_cast<ZoneTableHeader*>(result.second);
+    assert(header);
+    return (header);
 }
 
 ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() {
-    return (*getHeaderHelper<ZoneTableHeader>());
+    return (*getHeaderHelper<ZoneTableHeader>(false));
 }
 
 const ZoneTableHeader&
 ZoneTableSegmentMapped::getHeader() const {
-    return (*getHeaderHelper<const ZoneTableHeader>());
+    return (*getHeaderHelper<const ZoneTableHeader>(false));
 }
 
 MemorySegment&
@@ -373,8 +379,8 @@ bool
 ZoneTableSegmentMapped::isWritable() const {
     if (!isUsable()) {
         // If reset() was never performed for this segment, or if the
-        // most recent reset() had failed, then the segment is not
-        // writable.
+        // most recent reset() had failed, or if the segment had been
+        // cleared, then the segment is not writable.
         return (false);
     }
 

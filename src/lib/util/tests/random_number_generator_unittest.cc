@@ -20,10 +20,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
-#include <climits>
 
-#include <sys/types.h>
-#include <unistd.h>
 
 namespace isc {
 namespace util {
@@ -85,21 +82,6 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
 
     // make sure the numbers are in range [min, max]
     ASSERT_EQ(it - numbers.begin(), max() - min() + 1);
-}
-
-TEST_F(UniformRandomIntegerGeneratorTest, withSeed) {
-    // Test that two generators with the same seed return the same
-    // sequence.
-    UniformRandomIntegerGenerator gen1(0, INT_MAX, getpid());
-    vector<int> numbers;
-    for (int i = 0; i < 1024; ++i) {
-        numbers.push_back(gen1());
-    }
-
-    UniformRandomIntegerGenerator gen2(0, INT_MAX, getpid());
-    for (int i = 0; i < 1024; ++i) {
-        EXPECT_EQ(numbers[i], gen2());
-    }
 }
 
 /// \brief Test Fixture Class for weighted random number generator

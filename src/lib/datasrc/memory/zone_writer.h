@@ -15,15 +15,16 @@
 #ifndef MEM_ZONE_WRITER_H
 #define MEM_ZONE_WRITER_H
 
-#include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/memory/load_action.h>
 
-#include <dns/rrclass.h>
-#include <dns/name.h>
+#include <boost/noncopyable.hpp>
+
+#include <dns/dns_fwd.h>
 
 namespace isc {
 namespace datasrc {
 namespace memory {
+class ZoneTableSegment;
 
 /// \brief Does an update to a zone.
 ///
@@ -38,7 +39,7 @@ namespace memory {
 /// This class provides strong exception guarantee for each public
 /// method. That is, when any of the methods throws, the entire state
 /// stays the same as before the call.
-class ZoneWriter {
+class ZoneWriter : boost::noncopyable {
 public:
     /// \brief Constructor
     ///
@@ -127,19 +128,10 @@ public:
     void cleanup();
 
 private:
-    ZoneTableSegment& segment_;
-    const LoadAction load_action_;
-    const dns::Name origin_;
-    const dns::RRClass rrclass_;
-    ZoneData* zone_data_;
-    enum State {
-        ZW_UNUSED,
-        ZW_LOADED,
-        ZW_INSTALLED,
-        ZW_CLEANED
-    };
-    State state_;
-    const bool catch_load_error_;
+    // We hide details as this class will be used by various applications
+    // and we use some internal data structures in the implementation.
+    struct Impl;
+    Impl* impl_;
 };
 
 }

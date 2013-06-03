@@ -72,7 +72,8 @@ ZoneTable::create(util::MemorySegment& mem_sgmt, const RRClass& zone_class) {
 }
 
 void
-ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
+ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable, int)
+{
     ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get(),
                            boost::bind(deleteZoneData, &mem_sgmt, _1,
                                        ztable->rrclass_));
