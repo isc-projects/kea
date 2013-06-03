@@ -82,6 +82,7 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(RRClass.IN, self.__runner._zone_class) # default
         self.assertEqual('INFO', self.__runner._log_severity) # default
         self.assertEqual(0, self.__runner._log_debuglevel)
+        self.assertFalse(self.__runner._empty_zone)
 
     def test_set_loglevel(self):
         runner = LoadZoneRunner(['-d', '1'] + self.__args)
@@ -90,12 +91,18 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertEqual(1, runner._log_debuglevel)
 
     def test_parse_bad_args(self):
-        # There must be exactly 2 non-option arguments: zone name and zone file
+        # There must usually be exactly 2 non-option arguments: zone name and
+        # zone file.
         self.assertRaises(BadArgument, LoadZoneRunner([])._parse_args)
         self.assertRaises(BadArgument, LoadZoneRunner(['example']).
                           _parse_args)
         self.assertRaises(BadArgument, LoadZoneRunner(self.__args + ['0']).
                           _parse_args)
+
+        # With -e it must be only zone name
+        self.assertRaises(BadArgument, LoadZoneRunner(
+                ['-e', 'example', 'example.zone'])._parse_args)
+        self.assertRaises(BadArgument, LoadZoneRunner(['-e'])._parse_args)
 
         # Bad zone name
         args = ['example.org', 'example.zone'] # otherwise valid args
@@ -134,22 +141,24 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertRaises(BadArgument, self.__runner._get_datasrc_config,
                           'memory')
 
-    def __common_load_setup(self):
+    def __common_load_setup(self, empty=False):
         self.__runner._zone_class = RRClass.IN
         self.__runner._zone_name = TEST_ZONE_NAME
         self.__runner._zone_file = NEW_ZONE_TXT_FILE
         self.__runner._datasrc_type = 'sqlite3'
         self.__runner._datasrc_config = DATASRC_CONFIG
         self.__runner._report_interval = 1
+        self.__runner._empty_zone = empty
         self.__reports = []
         self.__runner._report_progress = lambda x, _: self.__reports.append(x)
 
     def __check_zone_soa(self, soa_txt, zone_name=TEST_ZONE_NAME):
         """Check that the given SOA RR exists and matches the expected string
 
-        If soa_txt is None, the zone is expected to be non-existent.
-        Otherwise, if soa_txt is False, the zone should exist but SOA is
-        expected to be missing.
+        If soa_txt is None, the zone is expected to be non-existent;
+        if it's 'empty', the zone should exist but is expected to be empty;
+        if soa_txt is False, the zone should exist but SOA is expected to be
+        missing.
 
         """
 
@@ -160,7 +169,10 @@ class TestLoadZoneRunner(unittest.TestCase):
             return
         self.assertEqual(client.SUCCESS, result)
         result, rrset, _ = finder.find(zone_name, RRType.SOA)
-        if soa_txt:
+        if soa_txt == 'empty':
+            self.assertEqual(finder.NXDOMAIN, result)
+            self.assertIsNone(rrset)
+        elif soa_txt:
             self.assertEqual(finder.SUCCESS, result)
             self.assertEqual(soa_txt, rrset.to_text())
         else:
@@ -268,6 +280,19 @@ class TestLoadZoneRunner(unittest.TestCase):
         self.assertRaises(LoadFailure, self.__runner._do_load)
         # _do_load() should have once created the zone but then canceled it.
         self.__check_zone_soa(None, zone_name=Name('example.com'))
+
+    def test_create_and_empty(self):
+        self.__common_load_setup(True)
+        self.__runner._zone_name = Name('example.com')
+        self.__check_zone_soa(None, zone_name=Name('example.com'))
+        self.__runner._do_load()
+        self.__check_zone_soa('empty', zone_name=Name('example.com'))
+
+    def test_empty(self):
+        self.__common_load_setup(True)
+        self.__check_zone_soa(ORIG_SOA_TXT)
+        self.__runner._do_load()
+        self.__check_zone_soa('empty')
 
     def __common_post_load_setup(self, zone_file):
         '''Common setup procedure for post load tests which should fail.'''
