@@ -107,7 +107,18 @@ const char* ds_zones[][3] = {
 
 const size_t ds_count = (sizeof(ds_zones) / sizeof(*ds_zones));
 
-class ListTest : public ::testing::Test {
+class SegmentType {
+public:
+    virtual ~SegmentType() {}
+    virtual ConstElementPtr getCacheConfig(bool enabled, const Name& zone)
+        const = 0;
+    virtual void reset(ConfigurableClientList& list,
+                       const std::string& datasrc_name,
+                       ZoneTableSegment::MemorySegmentOpenMode mode,
+                       ConstElementPtr config_params) = 0;
+};
+
+class ListTest : public ::testing::TestWithParam<SegmentType*> {
 public:
     ListTest() :
         rrclass_(RRClass::IN()),
@@ -171,12 +182,7 @@ public:
         // Build new cache config to load the specified zone, and replace
         // the data source info with the new config.
         ConstElementPtr cache_conf_elem =
-            Element::fromJSON("{\"type\": \"mock\","
-                              " \"cache-enable\": " +
-                              string(enabled ? "true," : "false,") +
-                              " \"cache-type\": \"mapped\"," +
-                              " \"cache-zones\": "
-                              "   [\"" + zone.toText() + "\"]}");
+            GetParam()->getCacheConfig(enabled, zone);
         boost::shared_ptr<internal::CacheConfig> cache_conf(
             new internal::CacheConfig("mock", mock_client, *cache_conf_elem,
                                       true));
@@ -192,9 +198,9 @@ public:
                                   getMappedFilename(index) +
                                   "\"}"));
 
-            list_->resetMemorySegment(dsrc_info.name_,
-                                      memory::ZoneTableSegment::CREATE,
-                                      config_ztable_segment);
+            GetParam()->reset(*list_, dsrc_info.name_,
+                              memory::ZoneTableSegment::CREATE,
+                              config_ztable_segment);
 
             boost::scoped_ptr<memory::ZoneWriter> writer(
                 new memory::ZoneWriter(
@@ -205,9 +211,9 @@ public:
             writer->install();
             writer->cleanup(); // not absolutely necessary, but just in case
 
-            list_->resetMemorySegment(dsrc_info.name_,
-                                      memory::ZoneTableSegment::READ_WRITE,
-                                      config_ztable_segment);
+            GetParam()->reset(*list_, dsrc_info.name_,
+                              memory::ZoneTableSegment::READ_WRITE,
+                              config_ztable_segment);
         }
 
         // On completion of load revert to the previous state of underlying
@@ -296,8 +302,62 @@ public:
     const ConstElementPtr config_elem_, config_elem_zones_;
 };
 
+class LocalSegmentType : public SegmentType {
+public:
+    virtual ConstElementPtr getCacheConfig(bool enabled, const Name& zone)
+        const
+    {
+        return (Element::fromJSON("{\"type\": \"mock\","
+                                  " \"cache-enable\": " +
+                                  string(enabled ? "true," : "false,") +
+                                  " \"cache-zones\": "
+                                  "   [\"" + zone.toText() + "\"]}"));
+    }
+    virtual void reset(ConfigurableClientList&, const std::string&,
+                       ZoneTableSegment::MemorySegmentOpenMode,
+                       ConstElementPtr) {
+        // We must not call reset on local ZoneTableSegments.
+    }
+};
+
+LocalSegmentType local_segment_type;
+
+INSTANTIATE_TEST_CASE_P(ListTestLocal, ListTest,
+                        ::testing::Values(static_cast<SegmentType*>(
+                                              &local_segment_type)));
+
+#ifdef USE_SHARED_MEMORY
+
+class MappedSegmentType : public SegmentType {
+public:
+    virtual ConstElementPtr getCacheConfig(bool enabled, const Name& zone)
+        const
+    {
+        return (Element::fromJSON("{\"type\": \"mock\","
+                                  " \"cache-enable\": " +
+                                  string(enabled ? "true," : "false,") +
+                                  " \"cache-type\": \"mapped\"," +
+                                  " \"cache-zones\": "
+                                  "   [\"" + zone.toText() + "\"]}"));
+    }
+    virtual void reset(ConfigurableClientList& list,
+                       const std::string& datasrc_name,
+                       ZoneTableSegment::MemorySegmentOpenMode mode,
+                       ConstElementPtr config_params) {
+        list.resetMemorySegment(datasrc_name, mode, config_params);
+    }
+};
+
+MappedSegmentType mapped_segment_type;
+
+INSTANTIATE_TEST_CASE_P(ListTestMapped, ListTest,
+                        ::testing::Values(static_cast<SegmentType*>(
+                                              &mapped_segment_type)));
+
+#endif
+
 // Test the test itself
-TEST_F(ListTest, selfTest) {
+TEST_P(ListTest, selfTest) {
     EXPECT_EQ(result::SUCCESS, ds_[0]->findZone(Name("example.org")).code);
     EXPECT_EQ(result::PARTIALMATCH,
               ds_[0]->findZone(Name("sub.example.org")).code);
@@ -311,14 +371,14 @@ TEST_F(ListTest, selfTest) {
 }
 
 // Test the list we create with empty configuration is, in fact, empty
-TEST_F(ListTest, emptyList) {
+TEST_P(ListTest, emptyList) {
     EXPECT_TRUE(list_->getDataSources().empty());
 }
 
 // Check the values returned by a find on an empty list. It should be
 // a negative answer (nothing found) no matter if we want an exact or inexact
 // match.
-TEST_F(ListTest, emptySearch) {
+TEST_P(ListTest, emptySearch) {
     // No matter what we try, we don't get an answer.
 
     // Note: we don't have operator<< for the result class, so we cannot use
@@ -335,7 +395,7 @@ TEST_F(ListTest, emptySearch) {
 
 // Put a single data source inside the list and check it can find an
 // exact match if there's one.
-TEST_F(ListTest, singleDSExactMatch) {
+TEST_P(ListTest, singleDSExactMatch) {
     list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_TRUE(negative_result_ == list_->find(Name("org."), true));
@@ -349,7 +409,7 @@ TEST_F(ListTest, singleDSExactMatch) {
 }
 
 // When asking for a partial match, we get all that the exact one, but more.
-TEST_F(ListTest, singleDSBestMatch) {
+TEST_P(ListTest, singleDSBestMatch) {
     list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_TRUE(negative_result_ == list_->find(Name("org.")));
@@ -369,7 +429,7 @@ const char* const test_names[] = {
     "With a duplicity"
 };
 
-TEST_F(ListTest, multiExactMatch) {
+TEST_P(ListTest, multiExactMatch) {
     // Run through all the multi-configurations
     for (size_t i(0); i < sizeof(test_names) / sizeof(*test_names); ++i) {
         SCOPED_TRACE(test_names[i]);
@@ -388,7 +448,7 @@ TEST_F(ListTest, multiExactMatch) {
     }
 }
 
-TEST_F(ListTest, multiBestMatch) {
+TEST_P(ListTest, multiBestMatch) {
     // Run through all the multi-configurations
     for (size_t i(0); i < 4; ++ i) {
         SCOPED_TRACE(test_names[i]);
@@ -409,7 +469,7 @@ TEST_F(ListTest, multiBestMatch) {
 }
 
 // Check the configuration is empty when the list is empty
-TEST_F(ListTest, configureEmpty) {
+TEST_P(ListTest, configureEmpty) {
     const ConstElementPtr elem(new ListElement);
     list_->configure(elem, true);
     EXPECT_TRUE(list_->getDataSources().empty());
@@ -418,7 +478,7 @@ TEST_F(ListTest, configureEmpty) {
 }
 
 // Check we can get multiple data sources and they are in the right order.
-TEST_F(ListTest, configureMulti) {
+TEST_P(ListTest, configureMulti) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
@@ -440,7 +500,7 @@ TEST_F(ListTest, configureMulti) {
 }
 
 // Check we can pass whatever we want to the params
-TEST_F(ListTest, configureParams) {
+TEST_P(ListTest, configureParams) {
     const char* params[] = {
         "true",
         "false",
@@ -465,7 +525,7 @@ TEST_F(ListTest, configureParams) {
     }
 }
 
-TEST_F(ListTest, status) {
+TEST_P(ListTest, status) {
     EXPECT_TRUE(list_->getStatus().empty());
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
@@ -492,7 +552,7 @@ TEST_F(ListTest, status) {
     EXPECT_EQ("local", statuses[1].getSegmentType());
 }
 
-TEST_F(ListTest, wrongConfig) {
+TEST_P(ListTest, wrongConfig) {
     const char* configs[] = {
         // A lot of stuff missing from there
         "[{\"type\": \"test_type\", \"params\": 13}, {}]",
@@ -590,7 +650,7 @@ TEST_F(ListTest, wrongConfig) {
 }
 
 // The param thing defaults to null. Cache is not used yet.
-TEST_F(ListTest, defaults) {
+TEST_P(ListTest, defaults) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\""
@@ -601,7 +661,7 @@ TEST_F(ListTest, defaults) {
 }
 
 // Check we can call the configure multiple times, to change the configuration
-TEST_F(ListTest, reconfigure) {
+TEST_P(ListTest, reconfigure) {
     const ConstElementPtr empty(new ListElement);
     list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
@@ -612,7 +672,7 @@ TEST_F(ListTest, reconfigure) {
 }
 
 // Make sure the data source error exception from the factory is propagated
-TEST_F(ListTest, dataSrcError) {
+TEST_P(ListTest, dataSrcError) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"error\""
@@ -624,7 +684,7 @@ TEST_F(ListTest, dataSrcError) {
 }
 
 // Check we can get the cache
-TEST_F(ListTest, configureCacheEmpty) {
+TEST_P(ListTest, configureCacheEmpty) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
@@ -646,7 +706,7 @@ TEST_F(ListTest, configureCacheEmpty) {
 }
 
 // But no cache if we disallow it globally
-TEST_F(ListTest, configureCacheDisabled) {
+TEST_P(ListTest, configureCacheDisabled) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
@@ -668,7 +728,7 @@ TEST_F(ListTest, configureCacheDisabled) {
 }
 
 // Put some zones into the cache
-TEST_F(ListTest, cacheZones) {
+TEST_P(ListTest, cacheZones) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
@@ -702,7 +762,7 @@ TEST_F(ListTest, cacheZones) {
 
 // Check the caching handles misbehaviour from the data source and
 // misconfiguration gracefully
-TEST_F(ListTest, badCache) {
+TEST_P(ListTest, badCache) {
     list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
     // First, the zone is not in the data source. configure() should still
@@ -751,7 +811,7 @@ TEST_F(ListTest, badCache) {
 }
 
 // This test relies on the property of mapped type of cache.
-TEST_F(ListTest,
+TEST_P(ListTest,
 #ifdef USE_SHARED_MEMORY
        cacheInNonWritableSegment
 #else
@@ -778,7 +838,7 @@ TEST_F(ListTest,
               doReload(Name("example.org")));
 }
 
-TEST_F(ListTest, masterFiles) {
+TEST_P(ListTest, masterFiles) {
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"MasterFiles\","
@@ -803,7 +863,7 @@ TEST_F(ListTest, masterFiles) {
 }
 
 // Test the names are set correctly and collission is detected.
-TEST_F(ListTest, names) {
+TEST_P(ListTest, names) {
     // Explicit name
     const ConstElementPtr elem1(Element::fromJSON("["
         "{"
@@ -850,7 +910,7 @@ TEST_F(ListTest, names) {
                  ConfigurableClientList::ConfigurationError);
 }
 
-TEST_F(ListTest, BadMasterFile) {
+TEST_P(ListTest, BadMasterFile) {
     // Configuration should succeed, and the good zones in the list
     // below should be loaded. No bad zones should be loaded.
     const ConstElementPtr elem(Element::fromJSON("["
@@ -919,7 +979,7 @@ ListTest::doReload(const Name& origin, const string& datasrc_name) {
 }
 
 // Test we can reload a zone
-TEST_F(ListTest, reloadSuccess) {
+TEST_P(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     prepareCache(0, name);
@@ -939,7 +999,7 @@ TEST_F(ListTest, reloadSuccess) {
 }
 
 // The cache is not enabled. The load should be rejected.
-TEST_F(ListTest, reloadNotAllowed) {
+TEST_P(ListTest, reloadNotAllowed) {
     list_->configure(config_elem_zones_, false);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
@@ -959,7 +1019,7 @@ TEST_F(ListTest, reloadNotAllowed) {
 }
 
 // Similar to the previous case, but the cache is disabled in config.
-TEST_F(ListTest, reloadNotEnabled) {
+TEST_P(ListTest, reloadNotEnabled) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put the cache, actually disabling it.
@@ -970,7 +1030,7 @@ TEST_F(ListTest, reloadNotEnabled) {
 }
 
 // Test several cases when the zone does not exist
-TEST_F(ListTest, reloadNoSuchZone) {
+TEST_P(ListTest, reloadNoSuchZone) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the
@@ -1001,7 +1061,7 @@ TEST_F(ListTest, reloadNoSuchZone) {
 
 // Check we gracefully reject reloading (i.e. no exception) when a zone
 // disappeared in the underlying data source when we want to reload it
-TEST_F(ListTest, reloadZoneGone) {
+TEST_P(ListTest, reloadZoneGone) {
     list_->configure(config_elem_zones_, true);
     const Name name("example.org");
     // We put in a cache for non-existent zone. This emulates being loaded
@@ -1022,7 +1082,7 @@ TEST_F(ListTest, reloadZoneGone) {
               list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
-TEST_F(ListTest, reloadNewZone) {
+TEST_P(ListTest, reloadNewZone) {
     // Test the case where a zone to be cached originally doesn't exist
     // in the underlying data source and is added later.  reload() will
     // succeed once it's available in the data source.
@@ -1049,7 +1109,7 @@ TEST_F(ListTest, reloadNewZone) {
 }
 
 // The underlying data source throws. Check we don't modify the state.
-TEST_F(ListTest, reloadZoneThrow) {
+TEST_P(ListTest, reloadZoneThrow) {
     list_->configure(config_elem_zones_, true);
     const Name name("noiter.org");
     prepareCache(0, name);
@@ -1063,7 +1123,7 @@ TEST_F(ListTest, reloadZoneThrow) {
               list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
-TEST_F(ListTest, reloadNullIterator) {
+TEST_P(ListTest, reloadNullIterator) {
     list_->configure(config_elem_zones_, true);
     const Name name("null.org");
     prepareCache(0, name);
@@ -1078,7 +1138,7 @@ TEST_F(ListTest, reloadNullIterator) {
 }
 
 // Test we can reload the master files too (special-cased)
-TEST_F(ListTest, reloadMasterFile) {
+TEST_P(ListTest, reloadMasterFile) {
     const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
         "/root.zone " TEST_DATA_BUILDDIR "/root.zone.copied";
     if (system(install_cmd) != 0) {
@@ -1113,7 +1173,7 @@ TEST_F(ListTest, reloadMasterFile) {
                                                    RRType::TXT())->code);
 }
 
-TEST_F(ListTest, reloadByDataSourceName) {
+TEST_P(ListTest, reloadByDataSourceName) {
     // We use three data sources (and their clients).  2nd and 3rd have
     // the same name of the zones.
     const ConstElementPtr config_elem = Element::fromJSON(
