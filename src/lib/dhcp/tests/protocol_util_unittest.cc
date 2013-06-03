@@ -220,8 +220,10 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
     HWAddrPtr local_hw_addr(new HWAddr(src_hw_addr, 6, 1));
     ASSERT_NO_THROW(pkt->setLocalHWAddr(local_hw_addr));
 
-    // Set invalid length (7) of the hw address.
-    HWAddrPtr remote_hw_addr(new HWAddr(&std::vector<uint8_t>(1, 7)[0], 7, 1));
+    // Set invalid length (7) of the hw address. Fill it with
+    // values of 1.
+    std::vector<uint8_t> invalid_length_addr(7, 1);
+    HWAddrPtr remote_hw_addr(new HWAddr(invalid_length_addr, 1));
     ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
     // HW address is too long, so it should fail.
     EXPECT_THROW(writeEthernetHeader(pkt, buf), BadValue);
