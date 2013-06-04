@@ -21,7 +21,7 @@
 #include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include "memory/zone_table_segment.h"
+#include <datasrc/memory/zone_table_segment.h>
 #include <datasrc/zone_table_accessor.h>
 
 #include <vector>
@@ -363,6 +363,21 @@ public:
     const isc::data::ConstElementPtr& getConfiguration() const {
         return (configuration_);
     }
+
+    /// \brief Resets the zone table segment for a datasource with a new
+    /// memory segment.
+    ///
+    /// See documentation of \c ZoneTableSegment interface
+    /// implementations (such as \c ZoneTableSegmentMapped) for the
+    /// syntax of \c config_params.
+    ///
+    /// \param datasrc_name The name of the data source whose segment to reset
+    /// \param mode The open mode for the new memory segment
+    /// \param config_params The configuration for the new memory segment.
+    void resetMemorySegment
+        (const std::string& datasrc_name,
+         memory::ZoneTableSegment::MemorySegmentOpenMode mode,
+         isc::data::ConstElementPtr config_params);
 
 private:
     /// \brief Convenience type shortcut
