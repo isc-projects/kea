@@ -1454,7 +1454,7 @@ class Xfrin:
         The actual handling is deletegated to the DataSrcClientsMgr class;
         this method is a simple wrapper.
 
-        This is essentially private, but implemented as 'private' so tests
+        This is essentially private, but implemented as 'protected' so tests
         can refer to it; other external use is prohibited.
 
         """
