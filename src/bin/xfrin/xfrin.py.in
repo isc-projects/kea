@@ -1728,7 +1728,9 @@ class Xfrin:
                 return (1, 'data source to transfer %s to is unknown' %
                         format_zone_str(zone_name, rrclass))
             zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
-        except isc.datasrc.Error as ex: # rare case error, convert (so logged)
+        except isc.datasrc.Error as ex:
+            # rare case error. re-raise as XfrinException so it'll be logged
+            # in command_handler().
             raise XfrinException('unexpected failure in datasrc module: ' +
                                  str(ex))
 
