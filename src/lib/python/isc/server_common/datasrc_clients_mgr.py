@@ -32,7 +32,7 @@ class DataSrcClientsMgr:
     It is intended to be used by applications that refer to the global
     'data_sources' module.  The reconfigure() method can be called from
     a configuration callback for the module of the application.  The
-    get_client_list() is a simple search method to get the configured
+    get_client_list() method is a simple search method to get the configured
     ConfigurableClientList object for a specified RR class (if any),
     while still allowing a separate thread to reconfigure the entire lists.
 
@@ -73,7 +73,7 @@ class DataSrcClientsMgr:
         to use the returned list even if reconfigure() is called while or
         after the call to this thread.
 
-        Note that this class does not protect furtther access to the returned
+        Note that this class does not protect further access to the returned
         list from multiple threads; it's the caller's responsbility to make
         such access thread safe.  In general, the find() method on the list
         and the use of ZoneFinder created by a DataSourceClient in the list
@@ -105,7 +105,13 @@ class DataSrcClientsMgr:
         strong exception safety: unless building a new set for the new
         configuration is fully completed, the old set is intact.
 
-        See the description of get_client_list() for thread considerations.
+        This method can be called from a thread while some other thread
+        is calling get_client_list() and using the result (see
+        the description of get_client_list()).  In general, however,
+        only one thread can call this method at one time; while data
+        integrity will still be preserved, the ordering of the change
+        will not be guaranteed if multiple threads call this method
+        at the same time.
 
         Parameter:
           config (dict): configuration data for the data_sources module.
