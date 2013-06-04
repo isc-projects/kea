@@ -57,13 +57,9 @@ isc.util.process.rename()
 SPECFILE_PATH = "@datadir@/@PACKAGE@"\
     .replace("${datarootdir}", "@datarootdir@")\
     .replace("${prefix}", "@prefix@")
-AUTH_SPECFILE_PATH = SPECFILE_PATH
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrin"
-if "B10_FROM_BUILD" in os.environ:
-    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
-AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 AUTH_MODULE_NAME = 'Auth'
 XFROUT_MODULE_NAME = 'Xfrout'
@@ -1410,10 +1406,6 @@ class Xfrin:
                                                      self.config_handler,
                                                      self.command_handler)
         self._module_cc.start()
-        # TBD: this will be removed in this branch
-        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
-                                          self._auth_config_handler)
-        # END_OF_TBD
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -1461,10 +1453,6 @@ class Xfrin:
 
         return create_answer(0)
 
-    def _auth_config_handler(self, new_config, config_data):
-        # Config handler for changes in Auth configuration
-        self._set_db_file()
-
     def _datasrc_config_handler(self, new_config, config_data):
         """Configuration handler of the 'data_sources' module.
 
@@ -1484,7 +1472,6 @@ class Xfrin:
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
         terminated.
         '''
-        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
         self._module_cc.send_stopping()
         self._shutdown_event.set()
         main_thread = threading.currentThread()
@@ -1665,18 +1652,6 @@ class Xfrin:
 
     def _get_db_file(self):
         return self._db_file
-
-    def _set_db_file(self):
-        db_file, is_default =\
-            self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "database_file")
-        if is_default and "B10_FROM_BUILD" in os.environ:
-            # override the local database setting if it is default and we
-            # are running from the source tree
-            # This should be hidden inside the data source library and/or
-            # done as a configuration, and this special case should be gone).
-            db_file = os.environ["B10_FROM_BUILD"] + os.sep +\
-                      "bind10_zones.sqlite3"
-        self._db_file = db_file
 
     def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
