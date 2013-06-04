@@ -251,8 +251,18 @@ class MockDataSrcClientsMgr():
         # Default faked result of find(), customizable by tests
         self.found_datasrc_client = MockDataSourceClient()
 
+        self.reconfigure_param = [] # for inspection
+
     def get_client_list(self, rrclass):
         return self.found_datasrc_client_list
+
+    def reconfigure(self, arg1):
+        # the only current test simply needs to know this is called with
+        # the expected argument and exceptions are handled.  if we need more
+        # variations in tests, this mock method should be extended.
+        self.reconfigure_param.append(arg1)
+        raise isc.server_common.datasrc_clients_mgr.ConfigError(
+            'reconfigure failure')
 
     def find(self, zone_name, want_exact_match, want_finder):
         """Pretending find method on the object returned by get_clinet_list"""
@@ -3036,6 +3046,15 @@ class TestXfrin(unittest.TestCase):
         self.common_ixfr_setup('refresh', 'no')
         self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
                          self.xfr.xfrin_started_request_ixfr)
+
+    def test_datasrc_config_handler(self):
+        """Check datasrc config handler works expectedly."""
+        # This is a simple wrapper of DataSrcClientsMgr.reconfigure(), so
+        # we just check it's called as expected, and the only possible
+        # exception doesn't cause disruption.
+        self.xfr._datasrc_config_handler(True, False)
+        self.assertEqual([True],
+                         self.xfr._datasrc_clients_mgr.reconfigure_param)
 
 def raise_interrupt():
     raise KeyboardInterrupt()

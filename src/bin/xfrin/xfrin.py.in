@@ -1391,6 +1391,9 @@ class Xfrin:
         self._cc_setup()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
+        # data_sources configuration should be ready with cfgmgr, so this
+        # shouldn't fail; if it ever does we simply propagate the exception
+        # to terminate the program.
         self._module_cc.add_remote_config_by_name('data_sources',
                                                   self._datasrc_config_handler)
         init_keyring(self._module_cc)
@@ -1463,7 +1466,19 @@ class Xfrin:
         self._set_db_file()
 
     def _datasrc_config_handler(self, new_config, config_data):
-        self._datasrc_clients_mgr.reconfigure(new_config)
+        """Configuration handler of the 'data_sources' module.
+
+        The actual handling is deletegated to the DataSrcClientsMgr class;
+        this method is a simple wrapper.
+
+        This is essentially private, but implemented as 'private' so tests
+        can refer to it; other external use is prohibited.
+
+        """
+        try:
+            self._datasrc_clients_mgr.reconfigure(new_config)
+        except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
+            logger.error(XFRIN_DATASRC_CONFIG_ERROR, ex)
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
