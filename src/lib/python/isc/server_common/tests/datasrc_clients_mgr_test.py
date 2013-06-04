@@ -20,8 +20,9 @@ import unittest
 import isc.config
 import os
 
+# A (slightly tweaked) local copy of the default data source spec
 DATASRC_SPECFILE = os.environ["B10_FROM_BUILD"] + \
-    "/src/bin/cfgmgr/plugins/datasrc.spec"
+    "/src/lib/python/isc/server_common/tests/datasrc.spec"
 DEFAULT_CONFIG = \
     isc.config.ConfigData(isc.config.module_spec_from_file(DATASRC_SPECFILE)).\
     get_full_config()
