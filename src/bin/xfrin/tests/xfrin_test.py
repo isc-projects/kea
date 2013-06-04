@@ -281,24 +281,20 @@ class MockXfrin(Xfrin):
     def _cc_setup(self):
         self._module_cc = MockCC()
 
-    def _get_db_file(self):
-        pass
-
     def _cc_check_command(self):
         self._shutdown_event.set()
         if MockXfrin.check_command_hook:
             MockXfrin.check_command_hook()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
+    def xfrin_start(self, zone_name, rrclass, master_addrinfo,
                     tsig_key, request_ixfr, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
         self.xfrin_started_request_ixfr = request_ixfr
-        return Xfrin.xfrin_start(self, zone_name, rrclass, None,
-                                 master_addrinfo, tsig_key,
-                                 request_ixfr, check_soa)
+        return Xfrin.xfrin_start(self, zone_name, rrclass, master_addrinfo,
+                                 tsig_key, request_ixfr, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
@@ -2459,7 +2455,6 @@ class TestXfrin(unittest.TestCase):
         self.args['class'] = TEST_RRCLASS_STR
         self.args['port'] = TEST_MASTER_PORT
         self.args['master'] = TEST_MASTER_IPV4_ADDRESS
-        self.args['db_file'] = TEST_DB_FILE
         self.args['tsig_key'] = ''
 
     def tearDown(self):
@@ -2487,12 +2482,10 @@ class TestXfrin(unittest.TestCase):
     def test_parse_cmd_params(self):
         name, rrclass = self._do_parse_zone_name_class()
         master_addrinfo = self._do_parse_master_port()
-        db_file = self.args.get('db_file')
         self.assertEqual(master_addrinfo[2][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
         self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV4_ADDRESS)
-        self.assertEqual(db_file, TEST_DB_FILE)
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
