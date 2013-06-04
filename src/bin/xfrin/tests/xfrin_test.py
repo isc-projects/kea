@@ -1005,7 +1005,7 @@ class TestAXFR(TestXfrinConnection):
         def message_has_tsig(data):
             # a simple check if the actual data contains a TSIG RR.
             # At our level this simple check should suffice; other detailed
-            # tests regarding the TSIG protocol are done in pydnspp.
+            # tests regarding the TSIG protocol are done in the isc.dns module.
             msg = Message(Message.PARSE)
             msg.from_wire(data)
             return msg.get_tsig_record() is not None
@@ -2643,14 +2643,6 @@ class TestXfrin(unittest.TestCase):
         self.xfr.recorder.increment(TEST_ZONE_NAME)
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 1)
-
-    def test_command_handler_retransfer_nomodule(self):
-        dns_module = sys.modules['pydnspp'] # this must exist
-        del sys.modules['pydnspp']
-        self.assertEqual(self.xfr.command_handler("retransfer",
-                                                  self.args)['result'][0], 1)
-        # sys.modules is global, so we must recover it
-        sys.modules['pydnspp'] = dns_module
 
     def test_command_handler_retransfer_datasrc_error(self):
         # Failure cases due to various errors at the data source (config/data)
