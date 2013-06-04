@@ -322,6 +322,21 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
+void
+ConfigurableClientList::resetMemorySegment
+    (const std::string& datasrc_name,
+     ZoneTableSegment::MemorySegmentOpenMode mode,
+     ConstElementPtr config_params)
+{
+    BOOST_FOREACH(DataSourceInfo& info, data_sources_) {
+        if (info.name_ == datasrc_name) {
+            ZoneTableSegment& segment = *info.ztable_segment_;
+            segment.reset(mode, config_params);
+            break;
+        }
+    }
+}
+
 ConfigurableClientList::ZoneWriterPair
 ConfigurableClientList::getCachedZoneWriter(const Name& name,
                                             const std::string& datasrc_name)
