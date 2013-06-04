@@ -67,10 +67,9 @@
       in a BIND 10 ready data source format.
       Master files are text files that contain DNS Resource Records
       in text form.
-      This utility can also be used to empty current content, if any,
-      of the specified zone from the specified data source so the
-      existence of the zone is recognized in the data source without
-      any content (resource records).
+      This utility can also be used to create an empty zone on the
+      specified data source so the existence of the zone is recognized
+      in the data source without any content (resource records).
     </para>
     <note><simpara>Currently only the SQLITE3 data source is supported.
     </simpara></note>
@@ -118,13 +117,12 @@
       If the <command>-e</command> command line option is specified,
       <command>b10-loadzone</command> does not take the zone name
       argument.
-      In this case it empties any existing content of the specified
-      zone from the specified data source while the data source still
-      recognizes the existence of the zone.  If the zone originally
-      didn't exist in the zone, it effectively creates the zone without
-      any content.
-      This mode of operation can be used for setting up a secondary
-      zone before transferring zone content from a primary server.
+      In this case it creates an empty zone without any content
+      while the data source still recognizes the existence of the
+      zone.
+      If the specified zone already has some content, this mode of
+      operation will remove it (but the existence of the zone in the
+      data source will be still recognized).
     </para>
 
   </refsect1>
@@ -167,7 +165,8 @@
       <varlistentry>
         <term>-e</term>
         <listitem><para>
-	    Empty any existing zone content instead of loading new one.
+	    Create an empty zone, or empty existing zone content
+	    instead of loading new one.
 	    When this option is specified, the zone file command line
 	    argument must not be provided.
 	    The <command>-i</command> option has no effect, but it
