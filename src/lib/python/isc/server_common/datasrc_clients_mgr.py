@@ -54,8 +54,10 @@ class DataSrcClientsMgr:
 
         # Map from RRClass to ConfigurableClientList.  Resetting this map
         # is protected by __map_lock.  Note that this lock doesn't protect
-        # "updates" of the map content.  __clients_map shouldn't be accessed
-        # by class users directly.
+        # "updates" of the map content (currently it's not a problem, but
+        # if and when we support more operations such as reloading
+        # particular zones in in-memory cache, remember that there will have
+        # to be an additional layer of protection).
         self.__clients_map = {}
         self.__map_lock = threading.Lock()
 
