@@ -60,6 +60,16 @@ error is given in the log message.
 There was an error opening a connection to the master. The error is
 shown in the log message.
 
+% XFRIN_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
+Configuration for the global data sources is updated, but the update
+cannot be applied to xfrin.  The xfrin module will still keep running
+with the previous configuration, but the cause of the failure and
+other log messages must be carefully examined because if only xfrin
+rejects the new configuration then the entire BIND 10 system will have
+inconsistent state among different modules.  If other modules accept
+the update but xfrin produces this error, the xfrin module should
+probably be restarted.
+
 % XFRIN_EXITING exiting
 The xfrin daemon is exiting.
 
