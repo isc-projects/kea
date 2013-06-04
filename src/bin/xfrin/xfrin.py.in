@@ -1708,11 +1708,6 @@ class Xfrin:
 
     def xfrin_start(self, zone_name, rrclass, master_addrinfo, tsig_key,
                     request_ixfr, check_soa=True):
-        if "pydnspp" not in sys.modules:
-            return (1,
-                    "xfrin failed, can't load dns message python library: " +
-                    "'pydnspp'")
-
         # check max_transfer_in, else return quota error
         if self.recorder.count() >= self._max_transfers_in:
             return (1, 'xfrin quota error')
