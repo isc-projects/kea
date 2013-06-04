@@ -1524,7 +1524,7 @@ class Xfrin:
             self._module_cc.get_default_value("zones/request_ixfr")
         return ZoneInfo.REQUEST_IXFR_CFG_TO_VAL[request_ixfr_def]
 
-    def __handle_xfr_command(self, args, arg_db, check_soa, addr_validator,
+    def __handle_xfr_command(self, args, check_soa, addr_validator,
                              request_ixfr):
         """Common subroutine for handling transfer commands.
 
@@ -1550,14 +1550,13 @@ class Xfrin:
         master_addr = self._parse_master_and_port(args, zone_name, rrclass)
         zone_info = self._get_zone_info(zone_name, rrclass)
         tsig_key = None if zone_info is None else zone_info.get_tsig_key()
-        db_file = arg_db or self._get_db_file()
         zone_str = format_zone_str(zone_name, rrclass) # for logging
         answer = addr_validator(master_addr, zone_str, zone_info)
         if answer is not None:
             return answer
         request_ixfr = self.__get_running_request_ixfr(request_ixfr, zone_info)
-        ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
-                               tsig_key, request_ixfr, check_soa)
+        ret = self.xfrin_start(zone_name, rrclass, master_addr, tsig_key,
+                               request_ixfr, check_soa)
         return create_answer(ret[0], ret[1])
 
     def command_handler(self, command, args):
@@ -1568,25 +1567,23 @@ class Xfrin:
                 self._shutdown_event.set()
             elif command == 'notify' or command == REFRESH_FROM_ZONEMGR:
                 # refresh/notify command from zone manager.
-                # The address has to be validated, db_file is local only,
-                # and always perform SOA check.
+                # The address has to be validated and always perform SOA check.
                 addr_validator = \
                     lambda x, y, z: self.__validate_notify_addr(x, y, z)
-                answer = self.__handle_xfr_command(args, None, True,
-                                                   addr_validator, None)
+                answer = self.__handle_xfr_command(args, True, addr_validator,
+                                                   None)
             elif command == 'retransfer':
                 # retransfer from cmdctl (sent by bindctl).
-                # No need for address validation, db_file may be specified
-                # with the command, and skip SOA check, always use AXFR.
+                # No need for address validation, skip SOA check, and always
+                # use AXFR.
                 answer = self.__handle_xfr_command(
-                    args, args.get('db_file'), False, lambda x, y, z: None,
+                    args, False, lambda x, y, z: None,
                     ZoneInfo.REQUEST_IXFR_DISABLED)
             elif command == 'refresh':
                 # retransfer from cmdctl (sent by bindctl).  similar to
                 # retransfer, but do SOA check, and honor request_ixfr config.
                 answer = self.__handle_xfr_command(
-                    args, args.get('db_file'), True, lambda x, y, z: None,
-                    None)
+                    args, True, lambda x, y, z: None, None)
             # return statistics data to the stats daemon
             elif command == "getstats":
                 # The log level is here set to debug in order to avoid
@@ -1650,9 +1647,6 @@ class Xfrin:
 
         return (addr.family, socket.SOCK_STREAM, (str(addr), port))
 
-    def _get_db_file(self):
-        return self._db_file
-
     def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
         If xfrin has finished successfully for one zone, tell the good
@@ -1712,8 +1706,8 @@ class Xfrin:
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, request_ixfr, check_soa=True):
+    def xfrin_start(self, zone_name, rrclass, master_addrinfo, tsig_key,
+                    request_ixfr, check_soa=True):
         if "pydnspp" not in sys.modules:
             return (1,
                     "xfrin failed, can't load dns message python library: " +
