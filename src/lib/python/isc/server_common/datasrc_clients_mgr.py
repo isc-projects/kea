@@ -80,8 +80,8 @@ class DataSrcClientsMgr:
         such access thread safe.  In general, the find() method on the list
         and the use of ZoneFinder created by a DataSourceClient in the list
         cannot be done by multiple threads without explicit synchronization.
-        On the other hand, multiple threads can create and use ZoneUpdater
-        or ZoneIterator on a DataSourceClient in parallel.
+        On the other hand, multiple threads can create and use ZoneUpdater,
+        ZoneIterator, or ZoneJournalReader on a DataSourceClient in parallel.
 
         Parameter:
           rrclass (isc.dns.RRClass): the RR class of the ConfigurableClientList
