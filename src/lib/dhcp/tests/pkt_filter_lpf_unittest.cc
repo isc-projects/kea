@@ -44,16 +44,13 @@ public:
 
     /// @brief Constructor
     ///
-    /// This constructor initializes socket_ member to the value of 0.
+    /// This constructor initializes socket_ member to a negative value.
     /// Explcit initialization is performed here because some of the
     /// tests do not initialize this value. In such cases, destructor
     /// could invoke close() on uninitialized socket descriptor which
-    /// would result in errors being reported by Valgrind. Note that
-    /// by initializing the class member to a valid socket descriptor
-    /// value (non-negative) we avoid Valgrind warning about trying to
-    /// close the invalid socket descriptor.
+    /// would result in errors being reported by Valgrind.
     PktFilterLPFTest()
-        : socket_(0) {
+        : socket_(-1) {
         // Initialize ifname_ and ifindex_.
         loInit();
     }
@@ -64,7 +61,9 @@ public:
     ~PktFilterLPFTest() {
         // Cleanup after each test. This guarantees
         // that the socket does not hang after a test.
-        close(socket_);
+        if (socket_ >= 0) {
+            close(socket_);
+        }
     }
 
     /// @brief Detect loopback interface.
