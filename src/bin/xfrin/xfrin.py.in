@@ -1372,11 +1372,6 @@ class Xfrin:
     def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
-        # This is a set of (zone/class) tuples (both as strings),
-        # representing the in-memory zones maintaned by Xfrin. It
-        # is used to trigger Auth/in-memory so that it reloads
-        # zones when they have been transfered in
-        self._memory_zones = set()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
         self._counters = Counters(SPECFILE_LOCATION)
