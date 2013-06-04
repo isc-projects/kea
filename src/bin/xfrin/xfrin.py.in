@@ -1712,6 +1712,9 @@ class Xfrin:
 
         # Identify the data source to which the zone content is transferred,
         # and get the current zone SOA from the data source (if available).
+        # Note that we do this before spawning the xfrin session thread.
+        # find() on the client list and use of ZoneFinder (in _get_zone_soa())
+        # should be completed within the same single thread.
         datasrc_client = None
         clist = self._datasrc_clients_mgr.get_client_list(rrclass)
         if clist is None:
