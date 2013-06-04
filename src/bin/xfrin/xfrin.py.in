@@ -1723,9 +1723,9 @@ class Xfrin:
         try:
             datasrc_client = clist.find(zone_name, True, False)[0]
             if datasrc_client is None: # can happen, so log it separately.
-                logger.error(XFRIN_NO_DATASRC,
+                logger.error(XFRIN_DATASRC_UNKNOWN,
                              format_zone_str(zone_name, rrclass))
-                return (1, 'no data source for transferring %s' %
+                return (1, 'data source to transfer %s to is unknown' %
                         format_zone_str(zone_name, rrclass))
             zone_soa = _get_zone_soa(datasrc_client, zone_name, rrclass)
         except isc.datasrc.Error as ex: # rare case error, convert (so logged)
