@@ -28,11 +28,13 @@
 #include <datasrc/memory/zone_writer.h>
 
 #include "zonewriter_python.h"
+#include "datasrc.h"
 
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::python;
 using namespace isc::datasrc::memory::python;
 
 //
@@ -79,6 +81,51 @@ ZoneWriter_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
+PyObject*
+ZoneWriter_load(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
+    try {
+        self->cppobj->load();
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+ZoneWriter_install(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
+    try {
+        self->cppobj->install();
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
+    try {
+        self->cppobj->cleanup();
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -86,6 +133,29 @@ ZoneWriter_destroy(PyObject* po_self) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneWriter_methods[] = {
+    { "load", ZoneWriter_load, METH_NOARGS,
+        "load() -> None\n\
+\n\
+Get the zone data into memory.\n\
+\n\
+This is the part that does the time-consuming loading into the memory.\n\
+This can be run in a separate thread, for example. It has no effect on\n\
+the data actually served, it only prepares them for future use." },
+    { "install", ZoneWriter_install, METH_NOARGS,
+        "install() -> None\n\
+\n\
+Put the changes to effect.\n\
+\n\
+This replaces the old version of zone with the one previously prepared\n\
+by load(). It takes ownership of the old zone data, if any." },
+    { "cleanup", ZoneWriter_cleanup, METH_NOARGS,
+        "cleanup() -> None\n\
+\n\
+Clean up resources.\n\
+\n\
+This releases all resources held by owned zone data. That means the\n\
+one loaded by load() in case install() was not called or was not\n\
+successful, or the one replaced in install()." },
     { NULL, NULL, 0, NULL }
 };
 
