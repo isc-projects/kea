@@ -81,7 +81,9 @@ TEST_F(D2ControllerTest, basicInstanceTesting) {
 /// 1. Standard command line options are supported.
 /// 2. Invalid options are detected.
 TEST_F(D2ControllerTest, commandLineArgs) {
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"), 
+                     const_cast<char*>("-s"), 
+                     const_cast<char*>("-v") };
     int argc = 3;
 
     // Verify that both flags are false initially.
@@ -96,9 +98,10 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(true));
 
     // Verify that an unknown option is detected.
-    char* argv2[] = { (char*)"progName", (char*)"-x" };
+    char* argv2[] = { const_cast<char*>("progName"), 
+                      const_cast<char*>("-x") };
     argc = 2;
-    EXPECT_THROW (parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
 }
 
 /// @brief Tests application process creation and initialization.
@@ -111,10 +114,11 @@ TEST_F(D2ControllerTest, initProcessTesting) {
 /// @brief Tests launch and normal shutdown (stand alone mode).
 /// This creates an interval timer to generate a normal shutdown and then
 /// launches with a valid, stand-alone command line and no simulated errors.
-/// Launch exit code should be d2::NORMAL_EXIT.
 TEST_F(D2ControllerTest, launchNormalShutdown) {
     // command line to run standalone
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"), 
+                     const_cast<char*>("-s"), 
+                     const_cast<char*>("-v") };
     int argc = 3;
 
     // Use an asiolink IntervalTimer and callback to generate the
@@ -124,13 +128,10 @@ TEST_F(D2ControllerTest, launchNormalShutdown) {
 
     // Record start time, and invoke launch().
     ptime start = microsec_clock::universal_time();
-    int rcode = launch(argc, argv);
+    EXPECT_NO_THROW(launch(argc, argv));
 
     // Record stop time.
     ptime stop = microsec_clock::universal_time();
-
-    // Verify normal shutdown status.
-    EXPECT_EQ(d2::NORMAL_EXIT, rcode);
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven

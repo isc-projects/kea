@@ -45,7 +45,7 @@ D2Process::run() {
         } catch (const std::exception& ex) {
             LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
             isc_throw (DProcessBaseError,
-                std::string("Process run method failed:") + ex.what());
+                       "Process run method failed:" << ex.what());
         }
     }
 
