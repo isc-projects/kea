@@ -23,10 +23,11 @@ DControllerBasePtr&
 D2Controller::instance() {
     // If the instance hasn't been created yet, create it.  Note this method
     // must use the base class singleton instance methods.  The base class
-    // must own the singleton in order to use it within BIND10 static function
-    // callbacks.
+    // must have access to the singleton in order to use it within BIND10 
+    // static function callbacks.
     if (!getController()) {
-        setController(new D2Controller());
+        DControllerBasePtr controller_ptr(new D2Controller());
+        setController(controller_ptr);
     }
 
     return (getController());

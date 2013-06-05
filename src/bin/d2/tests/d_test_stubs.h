@@ -96,7 +96,7 @@ class DStubProcess : public DProcessBase {
 public:
 
     /// @brief Static constant that defines a custom process command string.
-    static const std::string stub_proc_command_;
+    static const char* stub_proc_command_;
 
     /// @brief Constructor
     ///
@@ -184,7 +184,7 @@ public:
 
     /// @brief Defines a custom controller command string. This is a
     /// custom command supported by DStubController.
-    static const std::string stub_ctl_command_;
+    static const char* stub_ctl_command_;
 
     /// @brief Defines a custom command line option supported by
     /// DStubController.
@@ -234,7 +234,7 @@ protected:
     /// addition option, stub_option_x_.
     ///
     /// @return returns a string containing the option letters.
-    virtual const std::string getCustomOpts();
+    virtual const std::string getCustomOpts() const;
 
 private:
     /// @brief Constructor is private to protect singleton integrity.
@@ -378,9 +378,9 @@ public:
 
     /// @Wrapper to invoke the Controller's launch method.  Please refer to
     /// DControllerBase::launch for details.
-    int launch(int argc, char* argv[]) {
+    void launch(int argc, char* argv[]) {
         optind = 1;
-        return (getController()->launch(argc, argv));
+        getController()->launch(argc, argv);
     }
 
     /// @Wrapper to invoke the Controller's disconnectSession method.  Please

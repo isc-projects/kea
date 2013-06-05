@@ -78,7 +78,9 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(false));
 
     // Verify that standard options can be parsed without error.
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
+                     const_cast<char*>("-v") };
     int argc = 3;
     EXPECT_NO_THROW(parseArgs(argc, argv));
 
@@ -87,23 +89,24 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(true));
 
     // Verify that the custom command line option is parsed without error.
-    char xopt[3]="";
-    sprintf (xopt, "-%c", *DStubController::stub_option_x_);
-    char* argv1[] = { (char*)"progName", xopt};
+    char xopt[3] = "- ";
+    xopt[1] =  *DStubController::stub_option_x_;
+    char* argv1[] = { const_cast<char*>("progName"), xopt};
     argc = 2;
     EXPECT_NO_THROW (parseArgs(argc, argv1));
 
     // Verify that an unknown option is detected.
-    char* argv2[] = { (char*)"progName", (char*)"-bs" };
+    char* argv2[] = { const_cast<char*>("progName"),
+                      const_cast<char*>("-bs") };
     argc = 2;
     EXPECT_THROW (parseArgs(argc, argv2), InvalidUsage);
 
     // Verify that extraneous information is detected.
-    char* argv3[] = { (char*)"progName", (char*)"extra", (char*)"information" };
+    char* argv3[] = { const_cast<char*>("progName"),
+                      const_cast<char*>("extra"),
+                      const_cast<char*>("information") };
     argc = 3;
     EXPECT_THROW (parseArgs(argc, argv3), InvalidUsage);
-
-
 }
 
 /// @brief Tests application process creation and initialization.
@@ -141,44 +144,42 @@ TEST_F(DStubControllerTest, initProcessTesting) {
 }
 
 /// @brief Tests launch handling of invalid command line.
-/// This test launches with an invalid command line which should exit with
-/// an status of d2::INVALID_USAGE.
+/// This test launches with an invalid command line which should throw
+/// an InvalidUsage.
 TEST_F(DStubControllerTest, launchInvalidUsage) {
     // Command line to run integrated
-    char* argv[] = { (char*)"progName",(char*) "-z" };
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-z") };
     int argc = 2;
 
     // Launch the controller in integrated mode.
-    int rcode = launch(argc, argv);
-
-    // Verify session failure exit status.
-    EXPECT_EQ(d2::INVALID_USAGE, rcode);
+    EXPECT_THROW(launch(argc, argv), InvalidUsage);
 }
 
 /// @brief Tests launch handling of failure in application process
 /// initialization.  This test launches with a valid command line but with
-/// SimFailure set to fail during process creation.  Launch exit code should
-/// be d2::PROCESS_INIT_ERROR.
+/// SimFailure set to fail during process creation.  Launch should throw
+/// ProcessInitError.
 TEST_F(DStubControllerTest, launchProcessInitError) {
     // Command line to run integrated
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
+                     const_cast<char*>("-v") };
     int argc = 3;
 
     // Launch the controller in stand alone mode.
     SimFailure::set(SimFailure::ftCreateProcessException);
-    int rcode = launch(argc, argv);
-
-    // Verify session failure exit status.
-    EXPECT_EQ(d2::PROCESS_INIT_ERROR, rcode);
+    EXPECT_THROW(launch(argc, argv), ProcessInitError);
 }
 
 /// @brief Tests launch and normal shutdown (stand alone mode).
 /// This creates an interval timer to generate a normal shutdown and then
 /// launches with a valid, stand-alone command line and no simulated errors.
-/// Launch exit code should be d2::NORMAL_EXIT.
 TEST_F(DStubControllerTest, launchNormalShutdown) {
     // command line to run standalone
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
+                     const_cast<char*>("-v") };
     int argc = 3;
 
     // Use an asiolink IntervalTimer and callback to generate the
@@ -188,13 +189,10 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
 
     // Record start time, and invoke launch().
     ptime start = microsec_clock::universal_time();
-    int rcode = launch(argc, argv);
+    EXPECT_NO_THROW(launch(argc, argv));
 
     // Record stop time.
     ptime stop = microsec_clock::universal_time();
-
-    // Verify normal shutdown status.
-    EXPECT_EQ(d2::NORMAL_EXIT, rcode);
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven
@@ -207,10 +205,12 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
 /// @brief Tests launch with an operational error during application execution.
 /// This test creates an interval timer to generate a runtime exception during
 /// the process event loop. It launches wih a valid, stand-alone command line
-/// and no simulated errors.  Launch exit code should be d2::RUN_ERROR.
+/// and no simulated errors.  Launch should throw ProcessRunError.
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // command line to run standalone
-    char* argv[] = { (char*)"progName", (char*)"-s", (char*)"-v" };
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
+                     const_cast<char*>("-v") };
     int argc = 3;
 
     // Use an asiolink IntervalTimer and callback to generate the
@@ -220,13 +220,10 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
 
     // Record start time, and invoke launch().
     ptime start = microsec_clock::universal_time();
-    int rcode = launch(argc, argv);
+    EXPECT_THROW(launch(argc, argv), ProcessRunError);
 
     // Record stop time.
     ptime stop = microsec_clock::universal_time();
-
-    // Verify abnormal shutdown status.
-    EXPECT_EQ(d2::RUN_ERROR, rcode);
 
     // Verify that duration of the run invocation is the same as the
     // timer duration.  This demonstrates that the shutdown was driven
@@ -239,18 +236,14 @@ TEST_F(DStubControllerTest, launchRuntimeError) {
 /// @brief Tests launch with a session establishment failure.
 /// This test launches with a valid command line for integrated mode and no.
 /// Attempting to connect to BIND10 should fail, even if BIND10 is running
-/// UNLESS the test is run as root.  Launch exit code should be
-/// d2::SESSION_START_ERROR.
+/// UNLESS the test is run as root.  Launch should throw SessionStartError.
 TEST_F(DStubControllerTest, launchSessionFailure) {
     // Command line to run integrated
     char* argv[] = { (char*)"progName" };
     int argc = 1;
 
     // Launch the controller in integrated mode.
-    int rcode = launch(argc, argv);
-
-    // Verify session failure exit status.
-    EXPECT_EQ(d2::SESSION_START_ERROR, rcode);
+    EXPECT_THROW(launch(argc, argv), SessionStartError);
 }
 
 /// @brief Configuration update event testing.

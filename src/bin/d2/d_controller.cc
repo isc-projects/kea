@@ -32,7 +32,7 @@ DControllerBase::DControllerBase(const char* name)
 }
 
 void
-DControllerBase::setController(DControllerBase* controller) {
+DControllerBase::setController(const DControllerBasePtr& controller) {
     if (controller_) {
         // This shouldn't happen, but let's make sure it can't be done.
         // It represents a programmatic error.
@@ -40,41 +40,34 @@ DControllerBase::setController(DControllerBase* controller) {
                 "Multiple controller instances attempted.");
     }
 
-    controller_ = DControllerBasePtr(controller);
+    controller_ = controller;
 }
 
-int
+void
 DControllerBase::launch(int argc, char* argv[]) {
-    int ret = d2::NORMAL_EXIT;
-
     // Step 1 is to parse the command line arguments.
     try {
         parseArgs(argc, argv);
     } catch (const InvalidUsage& ex) {
         usage(ex.what());
-        return (d2::INVALID_USAGE);
+        throw; // rethrow it
     }
 
-#if 1
-    //@TODO During initial development default to max log, no buffer
-    isc::log::initLogger(name_, isc::log::DEBUG,
-                         isc::log::MAX_DEBUG_LEVEL, NULL, false);
-#else
     // Now that we know what the mode flags are, we can init logging.
     // If standalone is enabled, do not buffer initial log messages
     isc::log::initLogger(name_,
                          ((verbose_ && stand_alone_)
                           ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
-#endif
 
     LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STARTING).arg(getpid());
     try {
-        // Step 2 is to create and initialize the application process.
+        // Step 2 is to create and initialize the application process object.
         initProcess();
     } catch (const std::exception& ex) {
-        LOG_ERROR(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
-        return (PROCESS_INIT_ERROR);
+        LOG_FATAL(d2_logger, D2CTL_INIT_PROCESS).arg(ex.what());
+        isc_throw (ProcessInitError, 
+                   "Application Process initialization failed:" << ex.what());
     }
 
     // Next we connect if we are running integrated.
@@ -84,8 +77,9 @@ DControllerBase::launch(int argc, char* argv[]) {
         try {
             establishSession();
         } catch (const std::exception& ex) {
-            LOG_ERROR(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
-            return (d2::SESSION_START_ERROR);
+            LOG_FATAL(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
+            isc_throw (SessionStartError, 
+                       "Session start up failed:" << ex.what());
         }
     }
 
@@ -95,23 +89,24 @@ DControllerBase::launch(int argc, char* argv[]) {
         runProcess();
     } catch (const std::exception& ex) {
         LOG_FATAL(d2_logger, D2CTL_FAILED).arg(ex.what());
-        ret = d2::RUN_ERROR;
+        isc_throw (ProcessRunError, 
+                   "Application process event loop failed:" << ex.what());
     }
 
-    // If running integrated, always try to disconnect.
+    // If running integrated, disconnect.
     if (!stand_alone_) {
         try {
             disconnectSession();
         } catch (const std::exception& ex) {
             LOG_ERROR(d2_logger, D2CTL_DISCONNECT_FAIL).arg(ex.what());
-            ret = d2::SESSION_END_ERROR;
+            isc_throw (SessionEndError, "Session end failed:" << ex.what());
         }
     }
 
     // All done, so bail out.
     LOG_INFO(d2_logger, D2CTL_STOPPING);
-    return (ret);
 }
+
 
 void
 DControllerBase::parseArgs(int argc, char* argv[])
@@ -137,11 +132,10 @@ DControllerBase::parseArgs(int argc, char* argv[])
 
         case '?': {
             // We hit an invalid option.
-            std::stringstream tmp;
-            tmp << " unsupported option: [" << (char)optopt << "] "
-                << (!optarg ? "" : optarg);
+            isc_throw(InvalidUsage, "unsupported option: [" 
+                      << static_cast<char>(optopt) << "] "
+                      << (!optarg ? "" : optarg));
 
-            isc_throw(InvalidUsage,tmp.str());
             break;
             }
 
@@ -149,10 +143,9 @@ DControllerBase::parseArgs(int argc, char* argv[])
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
                 // This would be a programmatic error.
-                std::stringstream tmp;
-                tmp << " Option listed but implemented?: [" <<
-                        (char)ch << "] " << (!optarg ? "" : optarg);
-                isc_throw(InvalidUsage,tmp.str());
+                isc_throw(InvalidUsage, " Option listed but implemented?: [" 
+                          << static_cast<char>(ch) << "] "
+                          << (!optarg ? "" : optarg));
             }
             break;
         }
@@ -160,9 +153,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
 
     // There was too much information on the command line.
     if (argc > optind) {
-        std::stringstream tmp;
-        tmp << "extraneous command line information";
-        isc_throw(InvalidUsage,tmp.str());
+        isc_throw(InvalidUsage, "extraneous command line information");
     }
 }
 
@@ -181,13 +172,13 @@ DControllerBase::initProcess() {
     try {
         process_.reset(createProcess());
     } catch (const std::exception& ex) {
-        isc_throw (DControllerBaseError, std::string("createProcess failed:")
-                    + ex.what());
+        isc_throw(DControllerBaseError, std::string("createProcess failed:")
+                  + ex.what());
     }
 
     // This is pretty unlikely, but will test for it just to be safe..
     if (!process_) {
-        isc_throw (DControllerBaseError, "createProcess returned NULL");
+        isc_throw(DControllerBaseError, "createProcess returned NULL");
     }
 
     // Invoke application's init method (Note this call should throw
@@ -300,7 +291,7 @@ DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
 // Static callback which invokes non-static handler on singleton
 isc::data::ConstElementPtr
 DControllerBase::commandHandler(const std::string& command,
-                            isc::data::ConstElementPtr args) {
+                                isc::data::ConstElementPtr args) {
 
     LOG_DEBUG(d2_logger, DBGLVL_COMMAND, D2CTL_COMMAND_RECEIVED)
               .arg(command).arg(args->str());
@@ -403,14 +394,6 @@ DControllerBase::customControllerCommand(const std::string& command,
 
 isc::data::ConstElementPtr
 DControllerBase::shutdown() {
-    // @TODO (tmark) - not sure about io_service_->stop here
-    // IF application is using this service for all of its IO, stopping
-    // here would mean, no more work by the application.. UNLESS it resets
-    // it. People have discussed letting the application finish any in-progress
-    // updates before shutting down.  If we don't stop it here, then
-    // application can't use io_service_->run(), it will never "see" the
-    // shutdown.
-    io_service_->stop();
     if (process_) {
         process_->shutdown();
     } else {

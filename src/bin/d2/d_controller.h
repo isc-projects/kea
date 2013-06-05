@@ -35,25 +35,42 @@ namespace d2 {
 /// normal or otherwise, the Controller's launch method will return one of
 /// these values.
 
-/// @brief Indicates normal shutdown.
-static const int NORMAL_EXIT = 0;
-/// @brief Indicates invalid command line.
-static const int INVALID_USAGE = 1;
-/// @brief Failed to create and initialize application process.
-static const int PROCESS_INIT_ERROR = 2;
-/// @brief Could not connect to BIND10 (integrated mode only).
-static const int SESSION_START_ERROR = 3;
-/// @brief A fatal error occurred in the application process.
-static const int RUN_ERROR = 4;
-/// @brief Error occurred disconnecting from BIND10 (integrated mode only).
-static const int SESSION_END_ERROR = 5;
-
 /// @brief Exception thrown when the command line is invalid.
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Exception thrown when the application process fails.
+class ProcessInitError: public isc::Exception {
+public:
+    ProcessInitError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception thrown when the session start up fails.
+class SessionStartError: public isc::Exception {
+public:
+    SessionStartError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception thrown when the application process encounters an 
+/// operation in its event loop (i.e. run method).
+class ProcessRunError: public isc::Exception {
+public:
+    ProcessRunError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception thrown when the session end fails.
+class SessionEndError: public isc::Exception {
+public:
+    SessionEndError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Exception thrown when the controller encounters an operational error.
 class DControllerBaseError : public isc::Exception {
@@ -82,15 +99,24 @@ typedef boost::shared_ptr<isc::config::ModuleCCSession> ModuleCCSessionPtr;
 /// integrated mode as a BIND10 module or stand-alone. It coordinates command
 /// line argument parsing, process instantiation and initialization, and runtime
 /// control through external command and configuration event handling.
-/// It creates the io_service_ instance which is used for runtime control
-/// events and passes the io_service into the application process at process
+/// It creates the IOService instance which is used for runtime control
+/// events and passes the IOService into the application process at process
 /// creation.  In integrated mode it is responsible for establishing BIND10
-/// session(s) and passes this io_service_ into the session creation method(s).
-/// It also provides the callback handlers for command and configuration events.
+/// session(s) and passes this IOService into the session creation method(s).
+/// It also provides the callback handlers for command and configuration events
+/// received from the external framework (aka BIND10).  For example, when 
+/// running in integrated mode and a user alters the configuration with the
+/// bindctl tool, BIND10 will emit a configuration message which is sensed by
+/// the controller's IOService. The IOService in turn invokes the configuration
+/// callback, DControllerBase::configHandler().  If the user issues a command
+/// such as shutdown via bindctl,  BIND10 will emit a command message, which is
+/// sensed by controller's IOService which invokes the command callback, 
+/// DControllerBase::commandHandler().
+///
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
 /// member in order for it to be available for BIND10 callback functions. This
-/// would not be required if BIND10 supported instance method callbacks.
+/// would not be required if BIND10 supported instance method callbacks.   
 class DControllerBase : public boost::noncopyable {
 public:
     /// @brief Constructor
@@ -119,16 +145,16 @@ public:
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
     ///
-    /// @return returns one of the following integer values:
-    /// d2::NORMAL_EXIT - Indicates normal shutdown.
-    /// d2::INVALID_USAGE - Indicates invalid command line.
-    /// d2::PROCESS_INIT_ERROR  - Failed to create and initialize application
-    /// process
-    /// d2::SESSION_START_ERROR  - Could not connect to BIND10 (integrated mode
+    /// @throw throws one of the following exceptions:
+    /// InvalidUsage - Indicates invalid command line.
+    /// ProcessInitError  - Failed to create and initialize application
+    /// process object.
+    /// SessionStartError  - Could not connect to BIND10 (integrated mode only).
+    /// ProcessRunError - A fatal error occurred while in the application 
+    /// process event loop.
+    /// SessionEndError - Could not disconnect from BIND10 (integrated mode 
     /// only).
-    /// d2::RUN_ERROR - An fatal error occurred in the application process
-    /// d2::SESSION_END_ERROR = 4;
-    int launch(int argc, char* argv[]);
+    void launch(int argc, char* argv[]);
 
     /// @brief A dummy configuration handler that always returns success.
     ///
@@ -240,11 +266,11 @@ protected:
     virtual bool customOption(int option, char *optarg);
 
     /// @brief Abstract method that is responsible for instantiating the
-    /// application process instance. It is invoked by the controller after
+    /// application process object. It is invoked by the controller after
     /// command line argument parsing as part of the process initialization
     /// (see initProcess method).
     ///
-    /// @return returns a pointer to the new process instance (DProcessBase*)
+    /// @return returns a pointer to the new process object (DProcessBase*)
     /// or NULL if the create fails.
     /// Note this value is subsequently wrapped in a smart pointer.
     virtual DProcessBase* createProcess() = 0;
@@ -294,7 +320,7 @@ protected:
     /// invalid usage conditions.
     ///
     /// @return returns the desired text.
-    virtual const std::string getUsageText() {
+    virtual const std::string getUsageText() const {
         return ("");
     }
 
@@ -304,21 +330,21 @@ protected:
     /// line interpretation.
     ///
     /// @return returns a string containing the custom option letters.
-    virtual const std::string getCustomOpts() {
+    virtual const std::string getCustomOpts() const {
         return ("");
     }
 
     /// @brief Supplies the controller name.
     ///
     /// @return returns the controller name string
-    const std::string& getName() {
+    const std::string getName() const {
         return (name_);
     }
 
     /// @brief Supplies whether or not the controller is in stand alone mode.
     ///
     /// @return returns true if in stand alone mode, false otherwise
-    bool isStandAlone() {
+    const bool isStandAlone() const {
         return (stand_alone_);
     }
 
@@ -332,7 +358,7 @@ protected:
     /// @brief Supplies whether or not verbose logging is enabled.
     ///
     /// @return returns true if verbose logging is enabled.
-    bool isVerbose() {
+    const bool isVerbose() const {
         return (verbose_);
     }
 
@@ -354,7 +380,7 @@ protected:
     /// file.
     ///
     /// @return returns the file name string.
-    const std::string& getSpecFileName() {
+    const std::string getSpecFileName() const {
         return (spec_file_name_);
     }
 
@@ -373,13 +399,13 @@ protected:
         return (controller_);
     }
 
-    /// @brief Static setter which returns the singleton instance.
+    /// @brief Static setter which sets the singleton instance.
     ///
-    /// @return returns a pointer reference to the private singleton instance
-    /// member.
+    /// @param controller is a pointer to the singleton instance.
+    ///
     /// @throw throws DControllerBase error if an attempt is made to set the
     /// instance a second time.
-    static void setController(DControllerBase* controller);
+    static void setController(const DControllerBasePtr& controller);
 
 private:
     /// @brief Processes the command line arguments. It is the first step
@@ -452,7 +478,7 @@ private:
     ///
     /// @param text is a string message which will preceded the usage text.
     /// This is intended to be used for specific usage violation messages.
-    void usage(const std::string & text);
+    void usage(const std::string& text);
 
 private:
     /// @brief Text label for the controller. Typically this would be the
@@ -462,9 +488,10 @@ private:
     /// @brief Indicates if the controller stand alone mode is enabled. When
     /// enabled, the controller will not establish connectivity with BIND10.
     bool stand_alone_;
-    /// @brief Indicates if the verbose logging mode is enabled.
 
+    /// @brief Indicates if the verbose logging mode is enabled.
     bool verbose_;
+
     /// @brief The absolute file name of the BIND10 spec file.
     std::string spec_file_name_;
 
