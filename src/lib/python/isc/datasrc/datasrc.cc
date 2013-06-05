@@ -33,6 +33,7 @@
 #include "journal_reader_python.h"
 #include "configurableclientlist_python.h"
 #include "zone_loader_python.h"
+#include "zonewriter_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -42,6 +43,7 @@
 
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
+using namespace isc::datasrc::memory::python;
 using namespace isc::util::python;
 using namespace isc::dns::python;
 
@@ -336,6 +338,11 @@ PyInit_datasrc(void) {
     }
 
     if (!initModulePart_ZoneLoader(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ZoneWriter(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }
