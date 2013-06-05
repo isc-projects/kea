@@ -31,6 +31,7 @@
 
 using namespace std;
 using namespace isc::util::python;
+using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc::memory::python;
 
@@ -38,11 +39,24 @@ using namespace isc::datasrc::memory::python;
 // ZoneWriter
 //
 
-// Trivial constructor.
-s_ZoneWriter::s_ZoneWriter() : cppobj(NULL) {
-}
-
 namespace {
+
+// The s_* Class simply covers one instantiation of the object
+class s_ZoneWriter : public PyObject {
+public:
+    s_ZoneWriter() :
+        cppobj(ConfigurableClientList::ZoneWriterPtr()),
+        base_obj(NULL)
+    {}
+
+    ConfigurableClientList::ZoneWriterPtr cppobj;
+    // This is a reference to a base object; if the object of this class
+    // depends on another object to be in scope during its lifetime,
+    // we use INCREF the base object upon creation, and DECREF it at
+    // the end of the destructor
+    // This is an optional argument to createXXX(). If NULL, it is ignored.
+    PyObject* base_obj;
+};
 
 int
 ZoneWriter_init(PyObject*, PyObject*, PyObject*) {
@@ -56,8 +70,12 @@ ZoneWriter_init(PyObject*, PyObject*, PyObject*) {
 void
 ZoneWriter_destroy(PyObject* po_self) {
     s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
-    delete self->cppobj;
-    self->cppobj = NULL;
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
+    if (self->base_obj != NULL) {
+        Py_DECREF(self->base_obj);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -154,6 +172,22 @@ initModulePart_ZoneWriter(PyObject* mod) {
     Py_INCREF(&zonewriter_type);
 
     return (true);
+}
+
+PyObject*
+createZoneWriterObject(ConfigurableClientList::ZoneWriterPtr source,
+                       PyObject* base_obj)
+{
+    s_ZoneWriter* py_zf = static_cast<s_ZoneWriter*>(
+        zonewriter_type.tp_alloc(&zonewriter_type, 0));
+    if (py_zf != NULL) {
+        py_zf->cppobj = source;
+        py_zf->base_obj = base_obj;
+        if (base_obj != NULL) {
+            Py_INCREF(base_obj);
+        }
+    }
+    return (py_zf);
 }
 
 } // namespace python
