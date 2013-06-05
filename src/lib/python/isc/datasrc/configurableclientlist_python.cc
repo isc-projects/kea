@@ -243,9 +243,9 @@ you don't need it, but if you do need it, it is better to set it to True\
 instead of getting it from the datasrc_client later.\n\
 \n\
 If no answer is found, the datasrc_client and zone_finder are None." },
-    { "get_accessor", ConfigurableClientList_getZoneTableAccessor,
+    { "get_zone_table", ConfigurableClientList_getZoneTableAccessor,
       METH_VARARGS,
-"get_accessor(datasrc_name, use_cache) -> isc.datasrc.ZoneTableAccessor\n\
+"get_zone_table(datasrc_name, use_cache) -> isc.datasrc.ZoneTableAccessor\n\
 \n\
 Create a ZoneTableAccessor object for the specified data source.\n\
 \n\
