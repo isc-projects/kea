@@ -151,7 +151,7 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, self.clist.find, "example.org")
         self.assertRaises(TypeError, self.clist.find)
 
-    def test_get_accessor(self):
+    def test_get_zone_table(self):
         """
        Test that we can get the zone table accessor and, thereby,
         the zone table iterator.
@@ -160,8 +160,7 @@ class ClientListTest(unittest.TestCase):
 
         # null configuration
         self.clist.configure("[]", True)
-        accessor = self.clist.get_accessor("", True)
-        self.assertIsNone(accessor)
+        self.assertIsNone(self.clist.get_zone_table("", True))
 
         # empty configuration
         self.clist.configure('''[{
@@ -169,15 +168,16 @@ class ClientListTest(unittest.TestCase):
             "params": {},
             "cache-enable": true
         }]''', True)
-        accessor = self.clist.get_accessor("bogus", True)
-        self.assertIsNone(accessor)
-        accessor = self.clist.get_accessor("", True)
-        self.assertIsNotNone(accessor)
-        iterator = accessor.get_iterator()
-        self.assertIsNotNone(iterator)
-        self.assertTrue(iterator.is_last())
-        self.assertRaises(isc.datasrc.Error, iterator.get_current)
-        self.assertRaises(isc.datasrc.Error, iterator.next)
+        # bogus datasrc
+        self.assertIsNone(self.clist.get_zone_table("bogus", True))
+        # first datasrc - empty zone table
+        table = self.clist.get_zone_table("", True)
+        self.assertIsNotNone(table)
+        zones = table.get_zones()
+        self.assertIsNotNone(zones)
+        self.assertTrue(zones.is_last())
+        self.assertRaises(isc.datasrc.Error, zones.get_current)
+        self.assertRaises(isc.datasrc.Error, zones.next)
 
         # normal configuration
         self.clist.configure('''[{
@@ -187,35 +187,31 @@ class ClientListTest(unittest.TestCase):
             },
             "cache-enable": true
         }]''', True)
-
         # use_cache = false
         self.assertRaises(isc.datasrc.Error,
-                          self.clist.get_accessor, "", False)
-
+                          self.clist.get_zone_table, "", False)
         # bogus datasrc
-        accessor = self.clist.get_accessor("bogus", True)
-        self.assertIsNone(accessor)
+        self.assertIsNone(self.clist.get_zone_table("bogus", True))
 
         # first datasrc
-        accessor = self.clist.get_accessor("", True)
-        self.assertIsNotNone(accessor)
-        iterator = accessor.get_iterator()
-        self.assertIsNotNone(iterator)
-        self.assertFalse(iterator.is_last())
-        index, origin = iterator.get_current()
+        table = self.clist.get_zone_table("", True)
+        self.assertIsNotNone(table)
+        zones = table.get_zones()
+        self.assertIsNotNone(zones)
+        self.assertFalse(zones.is_last())
+        index, origin = zones.get_current()
         self.assertEqual(origin, "example.org.")
-        iterator.next()
-        self.assertTrue(iterator.is_last())
+        zones.next()
+        self.assertTrue(zones.is_last())
         # reset iterator and count zones
-        iterator = accessor.get_iterator()
-        self.assertEqual(1, len(list(iterator)))
+        zones = table.get_zones()
+        self.assertEqual(1, len(list(zones)))
 
         # named datasrc
-        accessor = self.clist.get_accessor("MasterFiles", True)
-        iterator = accessor.get_iterator()
-        index, origin = iterator.get_current()
+        zones = self.clist.get_zone_table("MasterFiles", True).get_zones()
+        index, origin = zones.get_current()
         self.assertEqual(origin, "example.org.")
-        self.assertEqual(1, len(list(iterator)))
+        self.assertEqual(1, len(list(zones)))
 
         # longer zone list for non-trivial iteration
         self.clist.configure('''[{
@@ -229,15 +225,9 @@ class ClientListTest(unittest.TestCase):
             },
             "cache-enable": true
         }]''', True)
-        accessor = self.clist.get_accessor("", True)
-        iterator = accessor.get_iterator()
-        self.assertEqual(5, len(list(iterator)))
-        iterator = accessor.get_iterator()
-        found = False
-        for index, origin in iterator:
-            if origin == "example.net.":
-                found = True
-        self.assertTrue(found)
+        zonelist = list(self.clist.get_zone_table("", True).get_zones())
+        self.assertEqual(5, len(zonelist))
+        self.assertTrue((0, "example.net.") in zonelist)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
