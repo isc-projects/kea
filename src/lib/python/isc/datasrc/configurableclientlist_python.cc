@@ -67,7 +67,8 @@ ConfigurableClientList_init(PyObject* po_self, PyObject* args, PyObject*) {
             return (0);
         }
     } catch (const exception& ex) {
-        const string ex_what = "Failed to construct ConfigurableClientList object: " +
+        const string ex_what =
+            "Failed to construct ConfigurableClientList object: " +
             string(ex.what());
         PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
         return (-1);
