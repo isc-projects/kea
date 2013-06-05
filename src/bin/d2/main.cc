@@ -15,6 +15,7 @@
 #include <config.h>
 #include <d2/d2_log.h>
 #include <d2/d2_controller.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 
@@ -26,23 +27,22 @@ using namespace std;
 /// This file contains entry point (main() function) for standard DHCP-DDNS
 /// process, b10-dhcp-ddns, component for BIND10 framework.  It fetches
 /// the D2Controller singleton instance and invokes its launch method.
-/// The exit value of the program will the return value of launch:
-/// d2::NORMAL_EXIT - Indicates normal shutdown.
-/// d2::INVALID_USAGE - Indicates invalid command line.
-/// d2::PROCESS_INIT_ERROR  - Failed to create and initialize application
-/// process
-/// d2::SESSION_START_ERROR  - Could not connect to BIND10 (integrated mode
-/// only).
-/// d2::RUN_ERROR - A fatal error occurred in the application process
-/// d2::SESSION_END_ERROR - Error occurred disconnecting from BIND10 (integrated
-/// mode only).
-int
-main(int argc, char* argv[]) {
+/// The exit value of the program will be EXIT_SUCCESS if there were no
+/// errors, EXIT_FAILURE otherwise.
+int main(int argc, char* argv[]) {
+    int ret = EXIT_SUCCESS;
 
     // Instantiate/fetch the DHCP-DDNS application controller singleton.
     DControllerBasePtr& controller = D2Controller::instance();
 
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
-    return (controller->launch(argc, argv));
+    try  {
+        controller->launch(argc, argv);
+    } catch (const isc::Exception& ex) {
+        std::cerr << "Service failed:" << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
+    }
+
+    return (ret);
 }

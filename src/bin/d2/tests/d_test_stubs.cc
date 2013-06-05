@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <d2/d2_log.h>
 #include <d2/spec_config.h>
 #include <d2/tests/d_test_stubs.h>
 
@@ -24,7 +25,7 @@ namespace d2 {
 SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 
 // Define custom process command supported by DStubProcess.
-const std::string DStubProcess::stub_proc_command_("cool_proc_cmd");
+const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
 
 DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
     : DProcessBase(name, io_service) {
@@ -69,7 +70,8 @@ DStubProcess::shutdown() {
         // Simulates a failure during shutdown process.
         isc_throw(DProcessBaseError, "DStubProcess simulated shutdown failure");
     }
-    setShutdownFlag(true);
+
+    DProcessBase::shutdown();
 }
 
 isc::data::ConstElementPtr
@@ -113,7 +115,7 @@ DStubProcess::~DStubProcess() {
 //************************** DStubController *************************
 
 // Define custom controller command supported by DStubController.
-const std::string DStubController::stub_ctl_command_("spiffy");
+const char* DStubController::stub_ctl_command_("spiffy");
 
 // Define custom command line option command supported by DStubController.
 const char* DStubController::stub_option_x_ = "x";
@@ -122,7 +124,9 @@ DControllerBasePtr&
 DStubController::instance() {
     // If the singleton hasn't been created, do it now.
     if (!getController()) {
-        setController(new DStubController());
+        //setController(new DStubController());
+        DControllerBasePtr p(new DStubController());
+        setController(p);
     }
 
     return (getController());
@@ -143,7 +147,7 @@ bool
 DStubController::customOption(int option, char* /* optarg */)
 {
     // Check for the custom option supported by DStubController.
-    if ((char)(option) == *stub_option_x_) {
+    if (static_cast<char>(option) == *stub_option_x_) {
         return (true);
     }
 
@@ -183,7 +187,7 @@ DStubController::customControllerCommand(const std::string& command,
     return (answer);
 }
 
-const std::string DStubController::getCustomOpts(){
+const std::string DStubController::getCustomOpts() const {
     // Return the "list" of custom options supported by DStubController.
     return (std::string(stub_option_x_));
 }

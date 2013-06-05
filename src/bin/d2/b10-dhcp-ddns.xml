@@ -24,13 +24,13 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-d2</refentrytitle>
+    <refentrytitle>b10-dhcp-ddns</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-d2</refname>
+    <refname>b10-dhcp-ddns</refname>
     <refpurpose>D2 process in BIND 10 architecture</refpurpose>
   </refnamediv>
 
@@ -43,14 +43,14 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-d2</command>
+      <command>b10-dhcp-ddns</command>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-d2</command>
+      <command>b10-dhcp-ddns</command>
       <arg><option>-s</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -59,7 +59,7 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-d2</command> daemon processes requests to
+      The <command>b10-dhcp-ddns</command> daemon processes requests to
       to update DNS mapping based on DHCP lease change events.
     </para>
 
@@ -95,7 +95,7 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-d2</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-dhcp-ddns</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
@@ -106,7 +106,7 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-d2</command> process was first coded in
+      The <command>b10-dhcp-ddns</command> process was first coded in
       May 2013 by the ISC Kea/Dhcp team.
     </para>
   </refsect1>

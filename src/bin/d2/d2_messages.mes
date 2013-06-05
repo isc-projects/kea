@@ -27,11 +27,11 @@ This is a debug message issued when the service process has been instructed
 to shut down by the controller.
 
 % D2PRC_PROCESS_INIT DHCP-DDNS application init invoked
-This is a debug message issued when the D2 process enters it's
+This is a debug message issued when the D2 process enters its
 init method. 
 
 % D2PRC_RUN_ENTER process has entered the event loop 
-This is a debug message issued when the D2 process enters it's
+This is a debug message issued when the D2 process enters its
 run method. 
 
 % D2PRC_RUN_EXIT process is exiting the event loop
@@ -52,15 +52,17 @@ has been invoked.
 
 % D2CTL_INIT_PROCESS initializing application proces 
 This debug message is issued just before the controller attempts
-to create and initialize it's process instance.
+to create and initialize its process instance.
 
 % D2CTL_SESSION_FAIL failed to establish BIND 10 session: %1
 The controller has failed to establish communication with the rest of BIND
 10 and will exit. 
 
 % D2CTL_DISCONNECT_FAIL failed to disconnect from BIND 10 session: %1
-The controller has failed to terminate communication with the rest of BIND
-10. 
+This message indicates that while shutting down, the DHCP-DDNS controller 
+encountered an error terminating communication with the BIND10. The service 
+will still exit.  While theoretically possible, this situation is rather 
+unlikely. 
 
 % D2CTL_STANDALONE skipping message queue, running standalone
 This is a debug message indicating that the controller is running in the

@@ -7,7 +7,7 @@
     "commands": [
       {
         "command_name": "shutdown",
-        "command_description": "Shut down the stats httpd",
+        "command_description": "Shut down the DHCP-DDNS service",
         "command_args": [
           {
             "item_name": "pid",

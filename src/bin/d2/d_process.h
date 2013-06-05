@@ -72,20 +72,24 @@ public:
     /// to application. It must be invoked prior to invoking run. This would
     /// likely include the creation of additional IO sources and their
     /// integration into the io_service.
-    /// @throw throws a DProcessBaseError if the initialization fails.
+    /// @throw throws DProcessBaseError if the initialization fails.
     virtual void init() = 0;
 
     /// @brief Implements the process's event loop. In its simplest form it
     /// would an invocation io_service_->run().  This method should not exit
     /// until the process itself is exiting due to a request to shutdown or
     /// some anomaly is forcing an exit.
-    /// @throw throws a DProcessBaseError if an operational error is encountered.
+    /// @throw throws DProcessBaseError if an operational error is encountered.
     virtual void run() = 0;
 
     /// @brief Implements the process's shutdown processing. When invoked, it
     /// should ensure that the process gracefully exits the run method.
-    /// @throw throws a DProcessBaseError if an operational error is encountered.
-    virtual void shutdown() = 0;
+    /// The default implementation sets the shutdown flag and stops IOService.
+    /// @throw throws DProcessBaseError if an operational error is encountered.
+    virtual void shutdown() {
+        setShutdownFlag(true);
+        stopIOService();
+    };
 
     /// @brief Processes the given configuration.
     ///
@@ -123,7 +127,7 @@ public:
     /// @brief Checks if the process has been instructed to shut down.
     ///
     /// @return returns true if process shutdown flag is true.
-    bool shouldShutdown() {
+    const bool shouldShutdown() const {
         return (shut_down_flag_);
     }
 
@@ -137,7 +141,7 @@ public:
     /// @brief Fetches the name of the controller.
     ///
     /// @return returns a reference the controller's name string.
-    const std::string& getName() const {
+    const std::string getName() const {
         return (name_);
     }
 
@@ -146,6 +150,14 @@ public:
     /// @return returns a reference to the controller's IOService.
     IOServicePtr& getIoService() {
         return (io_service_);
+    }
+
+    /// @brief Convenience method for stopping IOservice processing.
+    /// Invoking this will cause the process to exit any blocking 
+    /// IOService method such as run().  No further IO events will be
+    /// processed.
+    void stopIOService() {
+        io_service_->stop();
     }
 
 private:
