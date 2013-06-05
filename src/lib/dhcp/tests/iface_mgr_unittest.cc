@@ -79,13 +79,18 @@ public:
     }
 
     /// Pretends to open socket. Only records a call to this function.
+    /// This function returns fake socket descriptor (always the same).
+    /// Note that the returned value has been selected to be unique
+    /// (because real values are rather less than 255). Values greater
+    /// than 255 are not recommended because they cause warnings to be
+    /// reported by Valgrind when invoking close() on them.
     virtual int openSocket(const Iface&,
                            const isc::asiolink::IOAddress&,
                            const uint16_t,
                            const bool,
                            const bool) {
         open_socket_called_ = true;
-        return (1024);
+        return (255);
     }
 
     /// Does nothing
@@ -917,8 +922,8 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 
     // Check that openSocket function was called.
     EXPECT_TRUE(custom_packet_filter->open_socket_called_);
-    // This function always returns fake socket descriptor equal to 1024.
-    EXPECT_EQ(1024, socket1);
+    // This function always returns fake socket descriptor equal to 255.
+    EXPECT_EQ(255, socket1);
 
     // Replacing current packet filter object while there are IPv4
     // sockets open is not allowed!
