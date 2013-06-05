@@ -64,9 +64,9 @@ ZoneTableAccessor_getIterator(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneTableAccessor_methods[] = {
-    { "get_iterator",
+    { "get_zones",
       ZoneTableAccessor_getIterator, METH_NOARGS,
-"getIterator() -> isc.datasrc.ZoneTableIterator\n\
+"get_zones() -> isc.datasrc.ZoneTableIterator\n\
 \n\
 Return a zone table iterator.\n\
 \n" },
