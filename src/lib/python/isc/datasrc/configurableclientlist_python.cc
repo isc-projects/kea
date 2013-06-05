@@ -35,12 +35,14 @@
 #include "datasrc.h"
 #include "finder_python.h"
 #include "client_python.h"
+#include "zonewriter_python.h"
 
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc::python;
+using namespace isc::datasrc::memory::python;
 using namespace isc::dns::python;
 
 //
@@ -153,6 +155,47 @@ ConfigurableClientList_resetMemorySegment(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        PyObject* name_obj;
+        const char* datasrc_name_p = "";
+        if (PyArg_ParseTuple(args, "O!|s", &isc::dns::python::name_type,
+                             &name_obj, &datasrc_name_p)) {
+            const isc::dns::Name
+                name(isc::dns::python::PyName_ToName(name_obj));
+            const std::string datasrc_name(datasrc_name_p);
+
+            const ConfigurableClientList::ZoneWriterPair result =
+                self->cppobj->getCachedZoneWriter(name, datasrc_name);
+
+            PyObjectContainer writer;
+            if (!result.second) {
+                // Use the Py_BuildValue, as it takes care of the
+                // reference counts correctly.
+                writer.reset(Py_BuildValue(""));
+            } else {
+                // Make sure it keeps the writer alive.
+                writer.reset(createZoneWriterObject(result.second,
+                                                    writer.get()));
+            }
+
+            return (Py_BuildValue("IO", result.first, writer.get()));
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
 ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
     s_ConfigurableClientList* self =
         static_cast<s_ConfigurableClientList*>(po_self);
@@ -241,6 +284,17 @@ Parameters:\n\
   datasrc_name      The name of the data source whose segment to reset.\
   mode              The open mode for the new memory segment.\
   config_params     The configuration for the new memory segment, as a JSON encoded string." },
+    { "get_cached_zone_writer", ConfigurableClientList_getCachedZoneWriter,
+      METH_VARARGS,
+        "get_cached_zone_writer(zone, datasrc_name) -> status, zone_writer\n\
+\n\
+Wrapper around C++ ConfigurableClientList::getCachedZoneWriter\n\
+\n\
+This returns a ZoneWriter that can be used to (re)load a zone.\n\
+\n\
+Parameters:\n\
+  zone              The name of the zone to (re)load.\
+  datasrc_name      The name of the data source where the zone is to be loaded." },
     { "find", ConfigurableClientList_find, METH_VARARGS,
 "find(zone, want_exact_match=False, want_finder=True) -> datasrc_client,\
 zone_finder, exact_match\n\
@@ -350,11 +404,31 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
     }
     Py_INCREF(&configurableclientlist_type);
 
-    // FIXME: These should eventually be moved to the ZoneTableSegment
-    // class when we add Python bindings for the memory data source
-    // specific bits. But for now, we add these enums here to support
-    // reloading a zone table segment.
     try {
+        // ConfigurableClientList::CacheStatus enum
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_CACHE_DISABLED",
+                             Py_BuildValue("I", ConfigurableClientList::CACHE_DISABLED));
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_ZONE_NOT_CACHED",
+                             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_CACHED));
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_ZONE_NOT_FOUND",
+                             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_FOUND));
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_CACHE_NOT_WRITABLE",
+                             Py_BuildValue("I", ConfigurableClientList::CACHE_NOT_WRITABLE));
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_DATASRC_NOT_FOUND",
+                             Py_BuildValue("I", ConfigurableClientList::DATASRC_NOT_FOUND));
+        installClassVariable(configurableclientlist_type,
+                             "CACHE_STATUS_ZONE_SUCCESS",
+                             Py_BuildValue("I", ConfigurableClientList::ZONE_SUCCESS));
+
+        // FIXME: These should eventually be moved to the
+        // ZoneTableSegment class when we add Python bindings for the
+        // memory data source specific bits. But for now, we add these
+        // enums here to support reloading a zone table segment.
         installClassVariable(configurableclientlist_type, "CREATE",
                              Py_BuildValue("I", ZoneTableSegment::CREATE));
         installClassVariable(configurableclientlist_type, "READ_WRITE",

@@ -379,10 +379,9 @@ public:
          memory::ZoneTableSegment::MemorySegmentOpenMode mode,
          isc::data::ConstElementPtr config_params);
 
-private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
-public:
+
     /// \brief Codes indicating in-memory cache status for a given zone name.
     ///
     /// This is used as a result of the getCachedZoneWriter() method.
