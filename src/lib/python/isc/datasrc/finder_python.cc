@@ -64,7 +64,7 @@ getFindResultFlags(const ZoneFinder::Context& context) {
 
 namespace isc_datasrc_internal {
 // This is the shared code for the find() call in the finder and the updater
-// Is is intentionally not available through any header, nor at our standard
+// It is intentionally not available through any header, nor at our standard
 // namespace, as it is not supposed to be called anywhere but from finder and
 // updater
 PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
@@ -184,7 +184,7 @@ public:
     ZoneFinderPtr cppobj;
     // This is a reference to a base object; if the object of this class
     // depends on another object to be in scope during its lifetime,
-    // we use INCREF the base object upon creation, and DECREF it at
+    // we INCREF the base object upon creation, and DECREF it at
     // the end of the destructor
     // This is an optional argument to createXXX(). If NULL, it is ignored.
     PyObject* base_obj;

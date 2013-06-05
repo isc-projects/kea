@@ -121,8 +121,6 @@ private:
     MemorySegmentState state_;
 };
 
-typedef boost::shared_ptr<const ZoneTableAccessor> ConstZoneTableAccessorPtr;
-
 /// \brief The list of data source clients.
 ///
 /// The purpose of this class is to hold several data source clients and search

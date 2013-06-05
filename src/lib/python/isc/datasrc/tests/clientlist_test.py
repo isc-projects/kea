@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2012-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -57,7 +57,7 @@ class ClientListTest(unittest.TestCase):
     def test_configure(self):
         """
         Test we can configure the client list. This tests if the valid
-        ones are acceptend and invalid rejected. We check the changes
+        ones are accepted and invalid rejected. We check the changes
         have effect.
         """
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
@@ -150,6 +150,94 @@ class ClientListTest(unittest.TestCase):
         # Some invalid inputs
         self.assertRaises(TypeError, self.clist.find, "example.org")
         self.assertRaises(TypeError, self.clist.find)
+
+    def test_get_accessor(self):
+        """
+       Test that we can get the zone table accessor and, thereby,
+        the zone table iterator.
+        """
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+
+        # null configuration
+        self.clist.configure("[]", True)
+        accessor = self.clist.get_accessor("", True)
+        self.assertIsNone(accessor)
+
+        # empty configuration
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {},
+            "cache-enable": true
+        }]''', True)
+        accessor = self.clist.get_accessor("bogus", True)
+        self.assertIsNone(accessor)
+        accessor = self.clist.get_accessor("", True)
+        self.assertIsNotNone(accessor)
+        iterator = accessor.get_iterator()
+        self.assertIsNotNone(iterator)
+        self.assertTrue(iterator.is_last())
+        self.assertRaises(isc.datasrc.Error, iterator.get_current)
+        self.assertRaises(isc.datasrc.Error, iterator.next)
+
+        # normal configuration
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+
+        # use_cache = false
+        self.assertRaises(isc.datasrc.Error,
+                          self.clist.get_accessor, "", False)
+
+        # bogus datasrc
+        accessor = self.clist.get_accessor("bogus", True)
+        self.assertIsNone(accessor)
+
+        # first datasrc
+        accessor = self.clist.get_accessor("", True)
+        self.assertIsNotNone(accessor)
+        iterator = accessor.get_iterator()
+        self.assertIsNotNone(iterator)
+        self.assertFalse(iterator.is_last())
+        index, origin = iterator.get_current()
+        self.assertEqual(origin, "example.org.")
+        iterator.next()
+        self.assertTrue(iterator.is_last())
+        # reset iterator and count zones
+        iterator = accessor.get_iterator()
+        self.assertEqual(1, len(list(iterator)))
+
+        # named datasrc
+        accessor = self.clist.get_accessor("MasterFiles", True)
+        iterator = accessor.get_iterator()
+        index, origin = iterator.get_current()
+        self.assertEqual(origin, "example.org.")
+        self.assertEqual(1, len(list(iterator)))
+
+        # longer zone list for non-trivial iteration
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone",
+                "example.com": "''' + TESTDATA_PATH + '''example.com.zone",
+                "example.net": "''' + TESTDATA_PATH + '''example.net.zone",
+                "example.biz": "''' + TESTDATA_PATH + '''example.biz.zone",
+                "example.edu": "''' + TESTDATA_PATH + '''example.edu.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+        accessor = self.clist.get_accessor("", True)
+        iterator = accessor.get_iterator()
+        self.assertEqual(5, len(list(iterator)))
+        iterator = accessor.get_iterator()
+        found = False
+        for index, origin in iterator:
+            if origin == "example.net.":
+                found = True
+        self.assertTrue(found)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
