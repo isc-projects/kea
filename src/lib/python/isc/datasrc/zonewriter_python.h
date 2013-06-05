@@ -16,29 +16,33 @@
 #define PYTHON_ZONEWRITER_H 1
 
 #include <Python.h>
+#include <datasrc/client_list.h>
 
 namespace isc {
 namespace datasrc {
 namespace memory {
-class ZoneWriter;
-
 namespace python {
-
-// The s_* Class simply covers one instantiation of the object
-class s_ZoneWriter : public PyObject {
-public:
-    s_ZoneWriter();
-    ZoneWriter* cppobj;
-};
 
 extern PyTypeObject zonewriter_type;
 
 bool initModulePart_ZoneWriter(PyObject* mod);
 
+/// \brief Create a ZoneWriter python object
+///
+/// \param source The zone writer pointer to wrap
+/// \param base_obj An optional PyObject that this ZoneWriter depends on
+///                 Its refcount is increased, and will be decreased when
+///                 this zone iterator is destroyed, making sure that the
+///                 base object is never destroyed before this ZoneWriter.
+PyObject* createZoneWriterObject(
+    isc::datasrc::ConfigurableClientList::ZoneWriterPtr source,
+    PyObject* base_obj = NULL);
+
 } // namespace python
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
+
 #endif // PYTHON_ZONEWRITER_H
 
 // Local Variables:
