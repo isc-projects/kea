@@ -37,6 +37,12 @@ class ClientListTest(unittest.TestCase):
         # last.
         self.dsrc = None
         self.finder = None
+
+        # If a test created a ZoneWriter with a mapped memory segment,
+        # the writer will need the file to exist until it's destroyed.
+        # So we'll make sure to destroy the writer (by resetting it)
+        # before removing the file below.
+        self.__zone_writer = None
         self.clist = None
 
         if os.path.exists(MAPFILE_PATH):
@@ -177,19 +183,19 @@ class ClientListTest(unittest.TestCase):
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.CREATE,
                                         map_params)
-        result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
-                         result[0])
-        result[1].load()
-        result[1].install()
-        result[1].cleanup()
+                         result)
+        self.__zone_writer.load()
+        self.__zone_writer.install()
+        self.__zone_writer.cleanup()
 
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.READ_ONLY,
                                         map_params)
-        result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_CACHE_NOT_WRITABLE,
-                         result[0])
+                         result)
 
         # The segment is still in READ_ONLY mode.
         self.find_helper()
