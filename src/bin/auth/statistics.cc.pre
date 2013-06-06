@@ -138,11 +138,9 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     // if a short message which does not contain DNS header is received, or
     // a response message (i.e. QR bit is set) is received.
     if (opcode) {
-        const int code = opcode.get().getCode();
-        server_msg_counter_.inc(opcode_to_msgcounter[code]);
+        server_msg_counter_.inc(opcode_to_msgcounter[opcode->getCode()]);
 
-        // Opcode = 0: Query
-        if (code == Opcode::QUERY_CODE) {
+        if (opcode.get() == Opcode::QUERY()) {
             // Recursion Desired bit
             if (msgattrs.requestHasRD()) {
                 server_msg_counter_.inc(MSG_QRYRECURSION);
