@@ -45,7 +45,7 @@ D2Process::run() {
         } catch (const std::exception& ex) {
             LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
             isc_throw (DProcessBaseError,
-                       "Process run method failed:" << ex.what());
+                       "Process run method failed: " << ex.what());
         }
     }
 
@@ -78,7 +78,7 @@ D2Process::command(const std::string& command, isc::data::ConstElementPtr args){
     LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
               D2PRC_COMMAND).arg(command).arg(args->str());
 
-    return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command:"
+    return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
                                       + command));
 }
 

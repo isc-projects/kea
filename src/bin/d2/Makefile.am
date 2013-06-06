@@ -26,7 +26,7 @@ if GENERATE_DOCS
 b10-dhcp-ddns.8: b10-dhcp-ddns.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/b10-dchdp-ddns.xml
+	$(srcdir)/b10-dhcp-ddns.xml
 
 else
 
