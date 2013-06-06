@@ -151,6 +151,67 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, self.clist.find, "example.org")
         self.assertRaises(TypeError, self.clist.find)
 
+    def test_find_mapped(self):
+        """
+        Test find on a mapped segment.
+        """
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true,
+            "cache-type": "mapped"
+        }]''', True)
+
+        self.clist.reset_memory_segment("MasterFiles", isc.datasrc.ConfigurableClientList.CREATE, '''{"mapped-file": "''' + os.environ['TESTDATA_WRITE_PATH'] + os.sep + '''testmappedx.mapped"}''')
+        result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result[1].load()
+        result[1].install()
+        result[1].cleanup()
+
+        dsrc, finder, exact = self.clist.find(isc.dns.Name("sub.example.org"))
+        self.assertIsNotNone(dsrc)
+        self.assertTrue(isinstance(dsrc, isc.datasrc.DataSourceClient))
+        self.assertIsNotNone(finder)
+        self.assertTrue(isinstance(finder, isc.datasrc.ZoneFinder))
+        # Check the finder holds a reference to the data source
+        # Note that one reference is kept in the parameter list
+        # of getrefcount
+        self.assertEqual(3, sys.getrefcount(dsrc))
+        finder = None
+        self.assertEqual(2, sys.getrefcount(dsrc))
+        # We check an exact match in test_configure already
+        self.assertFalse(exact)
+        self.dsrc, self.finder, exact = \
+            self.clist.find(isc.dns.Name("sub.example.org"), False)
+        self.assertIsNotNone(self.dsrc)
+        self.assertTrue(isinstance(self.dsrc, isc.datasrc.DataSourceClient))
+        self.assertIsNotNone(self.finder)
+        self.assertTrue(isinstance(self.finder, isc.datasrc.ZoneFinder))
+        self.assertFalse(exact)
+        self.dsrc, self.finder, exact = \
+            self.clist.find(isc.dns.Name("sub.example.org"), True)
+        self.assertIsNone(self.dsrc)
+        self.assertIsNone(self.finder)
+        self.assertFalse(exact)
+        self.dsrc, self.finder, exact = \
+            self.clist.find(isc.dns.Name("sub.example.org"), False, False)
+        self.assertIsNotNone(self.dsrc)
+        self.assertTrue(isinstance(self.dsrc, isc.datasrc.DataSourceClient))
+        self.assertIsNotNone(self.finder)
+        self.assertTrue(isinstance(self.finder, isc.datasrc.ZoneFinder))
+        self.assertFalse(exact)
+        self.dsrc, self.finder, exact = \
+            self.clist.find(isc.dns.Name("sub.example.org"), True, False)
+        self.assertIsNone(self.dsrc)
+        self.assertIsNone(self.finder)
+        self.assertFalse(exact)
+        # Some invalid inputs
+        self.assertRaises(TypeError, self.clist.find, "example.org")
+        self.assertRaises(TypeError, self.clist.find)
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
