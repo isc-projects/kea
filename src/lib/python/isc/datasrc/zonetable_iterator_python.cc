@@ -20,8 +20,8 @@
 // http://docs.python.org/py3k/extending/extending.html#a-simple-example
 #include <Python.h>
 
-//#include <util/python/pycppwrapper_util.h>
 #include <datasrc/zone_table_accessor.h>
+#include <dns/python/name_python.h>
 
 #include "datasrc.h"
 #include "zonetable_iterator_python.h"
@@ -73,38 +73,12 @@ ZoneTableIterator_destroy(s_ZoneTableIterator* const self) {
 // the type definition of the object, since both can use the other
 //
 PyObject*
-ZoneTableIterator_isLast(PyObject* po_self, PyObject*) {
-    s_ZoneTableIterator* self = static_cast<s_ZoneTableIterator*>(po_self);
-    try {
-        return (Py_BuildValue("i", self->cppobj->isLast()));
-    } catch (...) {
-        return (NULL);
-    }
-}
-
-PyObject*
-ZoneTableIterator_next(PyObject* po_self, PyObject*) {
-    s_ZoneTableIterator* self = static_cast<s_ZoneTableIterator*>(po_self);
-    try {
-        self->cppobj->next();
-        return (Py_BuildValue(""));
-    } catch (const std::exception& ex) {
-        // isc::InvalidOperation is thrown when we call next()
-        // when we are already done iterating ('iterating past end')
-        // We could also simply return None again
-        PyErr_SetString(getDataSourceException("Error"), ex.what());
-        return (NULL);
-    } catch (...) {
-        return (NULL);
-    }
-}
-
-PyObject*
 ZoneTableIterator_getCurrent(PyObject* po_self, PyObject*) {
     s_ZoneTableIterator* self = static_cast<s_ZoneTableIterator*>(po_self);
     try {
         const isc::datasrc::ZoneSpec& zs = self->cppobj->getCurrent();
-        return (Py_BuildValue("is", zs.index, zs.origin.toText().c_str()));
+        return (Py_BuildValue("iO", zs.index,
+                              isc::dns::python::createNameObject(zs.origin)));
     } catch (const std::exception& ex) {
         // isc::InvalidOperation is thrown when we call getCurrent()
         // when we are already done iterating ('iterating past end')
@@ -119,13 +93,13 @@ ZoneTableIterator_getCurrent(PyObject* po_self, PyObject*) {
 }
 
 PyObject*
-ZoneTableIterator_piter(PyObject *self) {
+ZoneTableIterator_iter(PyObject *self) {
     Py_INCREF(self);
     return (self);
 }
 
 PyObject*
-ZoneTableIterator_pnext(PyObject* po_self) {
+ZoneTableIterator_next(PyObject* po_self) {
     s_ZoneTableIterator* self = static_cast<s_ZoneTableIterator*>(po_self);
     if (!self->cppobj || self->cppobj->isLast()) {
         return (NULL);
@@ -145,14 +119,6 @@ ZoneTableIterator_pnext(PyObject* po_self) {
 }
 
 PyMethodDef ZoneTableIterator_methods[] = {
-    { "is_last", ZoneTableIterator_isLast, METH_NOARGS,
-"is_last() -> bool\n\
-\n\
-Return whether the iterator is at the end of the zone table.\n" },
-    { "next", ZoneTableIterator_next, METH_NOARGS,
-"next()\n\
-\n\
-Move the iterator to the next zone of the table.\n" },
     { "get_current", ZoneTableIterator_getCurrent, METH_NOARGS,
 "get_current() -> isc.datasrc.ZoneSpec\n\
 \n\
@@ -168,9 +134,7 @@ const char* const ZoneTableIterator_doc = "\
 Read-only iterator to a zone table.\n\
 \n\
 You can get an instance of the ZoneTableIterator from the\
-ZoneTableAccessor.get_iterator() method. The actual concrete\
-C++ implementation will be different depending on the actual data source\
-used. This is the abstract interface.\n\
+ZoneTableAccessor.get_iterator() method.\n\
 \n\
 There's no way to start iterating from the beginning again or return.\n\
 \n\
@@ -209,8 +173,8 @@ PyTypeObject zonetableiterator_type = {
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
-    ZoneTableIterator_piter,            // tp_iter
-    ZoneTableIterator_pnext,            // tp_iternext
+    ZoneTableIterator_iter,             // tp_iter
+    ZoneTableIterator_next,             // tp_iternext
     ZoneTableIterator_methods,          // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset

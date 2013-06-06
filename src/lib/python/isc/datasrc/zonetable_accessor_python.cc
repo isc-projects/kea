@@ -20,8 +20,6 @@
 // http://docs.python.org/py3k/extending/extending.html#a-simple-example
 #include <Python.h>
 
-//#include <util/python/pycppwrapper_util.h>
-//#include <datasrc/exceptions.h>
 #include <datasrc/zone_table_accessor.h>
 
 #include "datasrc.h"
@@ -38,7 +36,35 @@ class s_ZoneTableAccessor : public PyObject {
 public:
     s_ZoneTableAccessor() : cppobj(ConstZoneTableAccessorPtr()) {};
     ConstZoneTableAccessorPtr cppobj;
+    // This is a reference to a base object; if the object of this class
+    // depends on another object to be in scope during its lifetime,
+    // we use INCREF the base object upon creation, and DECREF it at
+    // the end of the destructor
+    // This is an optional argument to createXXX(). If NULL, it is ignored.
+    PyObject* base_obj;
 };
+
+int
+ZoneTableAccessor_init(PyObject*, PyObject*, PyObject*) {
+    // can't be called directly
+    PyErr_SetString(PyExc_TypeError,
+                    "ZoneTableAccessor cannot be constructed directly");
+
+    return (-1);
+}
+
+void
+ZoneTableAccessor_destroy(PyObject* po_self) {
+    s_ZoneTableAccessor* const self =
+        static_cast<s_ZoneTableAccessor*>(po_self);
+    // cppobj is a shared ptr, but to make sure things are not destroyed in
+    // the wrong order, we reset it here.
+    self->cppobj.reset();
+    if (self->base_obj != NULL) {
+        Py_DECREF(self->base_obj);
+    }
+    Py_TYPE(self)->tp_free(self);
+}
 
 PyObject*
 ZoneTableAccessor_getIterator(PyObject* po_self, PyObject* args) {
@@ -64,9 +90,9 @@ ZoneTableAccessor_getIterator(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneTableAccessor_methods[] = {
-    { "get_zones",
+    { "get_iterator",
       ZoneTableAccessor_getIterator, METH_NOARGS,
-"get_zones() -> isc.datasrc.ZoneTableIterator\n\
+"get_iterator() -> isc.datasrc.ZoneTableIterator\n\
 \n\
 Return a zone table iterator.\n\
 \n" },
@@ -78,25 +104,6 @@ An accessor to a zone table for a data source.\n\
 \n\
 This class object is intended to be used by applications that load zones\
 into memory, so that the application can get a list of zones to be loaded.";
-
-int
-ZoneTableAccessor_init(PyObject*, PyObject*, PyObject*) {
-    // can't be called directly
-    PyErr_SetString(PyExc_TypeError,
-                    "ZoneTableAccessor cannot be constructed directly");
-
-    return (-1);
-}
-
-void
-ZoneTableAccessor_destroy(PyObject* po_self) {
-    s_ZoneTableAccessor* const self =
-        static_cast<s_ZoneTableAccessor*>(po_self);
-    // cppobj is a shared ptr, but to make sure things are not destroyed in
-    // the wrong order, we reset it here.
-    self->cppobj.reset();
-    Py_TYPE(self)->tp_free(self);
-}
 
 } // end anonymous namespace
 
@@ -157,11 +164,17 @@ PyTypeObject zonetableaccessor_type = {
 };
 
 PyObject*
-createZoneTableAccessorObject(isc::datasrc::ConstZoneTableAccessorPtr source) {
+createZoneTableAccessorObject(isc::datasrc::ConstZoneTableAccessorPtr source,
+                              PyObject* base_obj)
+{
     s_ZoneTableAccessor* py_zt = static_cast<s_ZoneTableAccessor*>(
         zonetableaccessor_type.tp_alloc(&zonetableaccessor_type, 0));
     if (py_zt != NULL) {
         py_zt->cppobj = source;
+        py_zt->base_obj = base_obj;
+        if (base_obj != NULL) {
+            Py_INCREF(base_obj);
+        }
     }
     return (py_zt);
 }

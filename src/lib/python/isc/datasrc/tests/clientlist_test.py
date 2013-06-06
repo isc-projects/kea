@@ -151,16 +151,16 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, self.clist.find, "example.org")
         self.assertRaises(TypeError, self.clist.find)
 
-    def test_get_zone_table(self):
+    def test_get_zone_table_accessor(self):
         """
-       Test that we can get the zone table accessor and, thereby,
+        Test that we can get the zone table accessor and, thereby,
         the zone table iterator.
         """
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
 
         # null configuration
         self.clist.configure("[]", True)
-        self.assertIsNone(self.clist.get_zone_table("", True))
+        self.assertIsNone(self.clist.get_zone_table_accessor(None, True))
 
         # empty configuration
         self.clist.configure('''[{
@@ -169,15 +169,13 @@ class ClientListTest(unittest.TestCase):
             "cache-enable": true
         }]''', True)
         # bogus datasrc
-        self.assertIsNone(self.clist.get_zone_table("bogus", True))
+        self.assertIsNone(self.clist.get_zone_table_accessor("bogus", True))
         # first datasrc - empty zone table
-        table = self.clist.get_zone_table("", True)
+        table = self.clist.get_zone_table_accessor(None, True)
         self.assertIsNotNone(table)
-        zones = table.get_zones()
-        self.assertIsNotNone(zones)
-        self.assertTrue(zones.is_last())
-        self.assertRaises(isc.datasrc.Error, zones.get_current)
-        self.assertRaises(isc.datasrc.Error, zones.next)
+        iterator = table.get_iterator()
+        self.assertIsNotNone(iterator)
+        self.assertRaises(isc.datasrc.Error, iterator.get_current)
 
         # normal configuration
         self.clist.configure('''[{
@@ -187,31 +185,27 @@ class ClientListTest(unittest.TestCase):
             },
             "cache-enable": true
         }]''', True)
-        # use_cache = false
+        # !use_cache => NotImplemented
         self.assertRaises(isc.datasrc.Error,
-                          self.clist.get_zone_table, "", False)
+                          self.clist.get_zone_table_accessor, None, False)
         # bogus datasrc
-        self.assertIsNone(self.clist.get_zone_table("bogus", True))
+        self.assertIsNone(self.clist.get_zone_table_accessor("bogus", True))
 
         # first datasrc
-        table = self.clist.get_zone_table("", True)
+        table = self.clist.get_zone_table_accessor(None, True)
         self.assertIsNotNone(table)
-        zones = table.get_zones()
-        self.assertIsNotNone(zones)
-        self.assertFalse(zones.is_last())
-        index, origin = zones.get_current()
-        self.assertEqual(origin, "example.org.")
-        zones.next()
-        self.assertTrue(zones.is_last())
-        # reset iterator and count zones
-        zones = table.get_zones()
-        self.assertEqual(1, len(list(zones)))
+        iterator = table.get_iterator()
+        self.assertIsNotNone(iterator)
+        index, origin = iterator.get_current()
+        self.assertEqual(origin.to_text(), "example.org.")
+        self.assertEqual(1, len(list(iterator)))
 
         # named datasrc
-        zones = self.clist.get_zone_table("MasterFiles", True).get_zones()
-        index, origin = zones.get_current()
-        self.assertEqual(origin, "example.org.")
-        self.assertEqual(1, len(list(zones)))
+        table = self.clist.get_zone_table_accessor("MasterFiles", True)
+        iterator = table.get_iterator()
+        index, origin = iterator.get_current()
+        self.assertEqual(origin.to_text(), "example.org.")
+        self.assertEqual(1, len(list(iterator)))
 
         # longer zone list for non-trivial iteration
         self.clist.configure('''[{
@@ -225,9 +219,23 @@ class ClientListTest(unittest.TestCase):
             },
             "cache-enable": true
         }]''', True)
-        zonelist = list(self.clist.get_zone_table("", True).get_zones())
+        zonelist = list(self.clist.get_zone_table_accessor(None, True).
+                        get_iterator())
         self.assertEqual(5, len(zonelist))
-        self.assertTrue((0, "example.net.") in zonelist)
+        self.assertTrue((0, isc.dns.Name("example.net.")) in zonelist)
+
+        # ensure the iterator returns exactly and only the zones we expect
+        zonelist = [
+            isc.dns.Name("example.org"),
+            isc.dns.Name("example.com"),
+            isc.dns.Name("example.net"),
+            isc.dns.Name("example.biz"),
+            isc.dns.Name("example.edu")]
+        table = self.clist.get_zone_table_accessor("MasterFiles", True)
+        for index, zone in table.get_iterator():
+            self.assertTrue(zone in zonelist)
+            zonelist.remove(zone)
+        self.assertEqual(0, len(zonelist))                
 
 if __name__ == "__main__":
     isc.log.init("bind10")
