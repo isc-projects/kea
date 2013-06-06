@@ -78,9 +78,12 @@ HOW TO USE IT
 
     namespace {
     #ifdef COPY_THIS_TO_MAIN_CC
-        { "cleanup", ZoneWriter_cleanup, METH_NOARGS, ZoneWriter_cleanup_doc },
-        { "install", ZoneWriter_install, METH_NOARGS, ZoneWriter_install_doc },
-        { "load", ZoneWriter_load, METH_VARARGS, ZoneWriter_load_doc },
+        { "cleanup", ZoneWriter_cleanup, METH_NOARGS,
+          ZoneWriter_cleanup_doc },
+        { "install", ZoneWriter_install, METH_NOARGS,
+          ZoneWriter_install_doc },
+        { "load", ZoneWriter_load, METH_VARARGS,
+          ZoneWriter_load_doc },
     #endif // COPY_THIS_TO_MAIN_CC
 
     const char* const ZoneWriter_doc = "\
@@ -373,8 +376,8 @@ class FunctionDefinition:
             f.write("\\n\\\n")
 
     def dump_pymethod_def(self, f, class_name):
-        f.write('    { "' + self.pyname + '", reinterpret_cast<PyCFunction>(')
-        f.write(class_name + '_' + self.name + '), ')
+        f.write('    { "' + self.pyname + '", ')
+        f.write(class_name + '_' + self.name + ', ')
         if len(self.parameters) == 0:
             f.write('METH_NOARGS,\n')
         else:
