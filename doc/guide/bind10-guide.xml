@@ -2624,7 +2624,7 @@ can use various data source backends.
         There's also <varname>Auth/database_file</varname> configuration
         variable, pointing to a SQLite3 database file. This is no longer
         used by <command>b10-auth</command>, but it is left in place for
-        now, since other modules use it. Once <command>b10-xfrin</command>,
+        now, since other modules use it. Once <command>b10-zonemgr</command>,
         <command>b10-xfrout</command> and <command>b10-ddns</command>
         are ported to the new configuration, this will disappear. But for
         now, make sure that if you use any of these modules, the new
@@ -2731,10 +2731,23 @@ TODO
     <section>
       <title>Configuration for Incoming Zone Transfers</title>
       <para>
-        In practice, you need to specify a list of secondary zones to
-        enable incoming zone transfers for these zones (you can still
-        trigger a zone transfer manually, without a prior configuration
-        (see below)).
+	In order to enable incoming zone transfers for a secondary
+	zone, you will first need to make the zone "exist" in some
+	data source.
+	One easy way to do this is to create an empty zone using the
+	<command>b10-loadzone</command> utility.
+	For example, this makes an empty zone (or empties any existing
+	content of the zone) "example.com" in the default data source
+	for <command>b10-loadzone</command> (which is SQLite3-based
+	data source):
+            <screen>$ <userinput>b10-loadzone <replaceable>-e</replaceable> <replaceable>example.com</replaceable></userinput></screen>
+      </para>
+
+      <para>
+        Next, you need to specify a list of secondary zones to
+        enable incoming zone transfers for these zones in most
+        practical cases (you can still trigger a zone transfer
+        manually, without a prior configuration (see below)).
       </para>
 
       <para>
@@ -2749,6 +2762,17 @@ TODO
 
       (We assume there has been no zone configuration before).
       </para>
+
+      <note>
+        <simpara>
+	  There is a plan to revise overall zone management
+	  configuration (which are primary and secondary zones, which
+	  data source they are stored, etc) so it can be configured
+	  more consistently and in a unified way among various BIND 10 modules.
+	  When it's done, part or all of the initial configuration
+	  setup described in this section may be deprecated.
+	</simpara>
+      </note>
     </section>
 
     <section>
