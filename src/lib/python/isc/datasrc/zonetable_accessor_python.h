@@ -31,7 +31,7 @@ extern PyTypeObject zonetableaccessor_type;
 ///                 this zone iterator is destroyed, making sure that the
 ///                 base object is never destroyed before this zonefinder.
 PyObject* createZoneTableAccessorObject(
-    isc::datasrc::ConstZoneTableAccessorPtr source);
+    isc::datasrc::ConstZoneTableAccessorPtr source, PyObject* base_obj);
 
 } // namespace python
 } // namespace datasrc

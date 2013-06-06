@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -178,16 +178,17 @@ ConfigurableClientList_getZoneTableAccessor(PyObject* po_self, PyObject* args) {
     try {
         const char* datasrc_name;
         int use_cache;
-        if (PyArg_ParseTuple(args, "si", &datasrc_name, &use_cache)) {
+        if (PyArg_ParseTuple(args, "zi", &datasrc_name, &use_cache)) {
+            // python 'None' will be read as NULL, which we convert to an
+            // empty string, meaning "any data source"
+            const std::string name(datasrc_name ? datasrc_name : "");
             const ConstZoneTableAccessorPtr
-                z(self->cppobj->getZoneTableAccessor(datasrc_name, use_cache));
-            PyObjectContainer accessor;
+                z(self->cppobj->getZoneTableAccessor(name, use_cache));
             if (z == NULL) {
-                accessor.reset(Py_BuildValue(""));
+                Py_RETURN_NONE;
             } else {
-                accessor.reset(createZoneTableAccessorObject(z));
+                return (createZoneTableAccessorObject(z, po_self));
             }
-            return (Py_BuildValue("O", accessor.get()));
         } else {
             return (NULL);
         }
@@ -243,9 +244,10 @@ you don't need it, but if you do need it, it is better to set it to True\
 instead of getting it from the datasrc_client later.\n\
 \n\
 If no answer is found, the datasrc_client and zone_finder are None." },
-    { "get_zone_table", ConfigurableClientList_getZoneTableAccessor,
+    { "get_zone_table_accessor", ConfigurableClientList_getZoneTableAccessor,
       METH_VARARGS,
-"get_zone_table(datasrc_name, use_cache) -> isc.datasrc.ZoneTableAccessor\n\
+"get_zone_table_accessor(datasrc_name, use_cache) -> \
+isc.datasrc.ZoneTableAccessor\n\
 \n\
 Create a ZoneTableAccessor object for the specified data source.\n\
 \n\
