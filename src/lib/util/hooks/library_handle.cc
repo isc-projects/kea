@@ -140,20 +140,6 @@ LibraryHandle::deregisterAll(const std::string& name) {
     hook_vector_[index].clear();
 }
 
-// Return the name of all items in the library's context.
-
-vector<string>
-LibraryHandle::getContextNames() const {
-
-    vector<string> names;
-    ContextCollection::const_iterator i;
-    for (i = context_.begin(); i != context_.end(); ++i) {
-        names.push_back(i->first);
-    }
-
-    return (names);
-}
-
 // LibraryHandleCollection methods.
 
 // Return pointer to the current library handle.
