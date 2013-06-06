@@ -39,9 +39,10 @@ class ClientListTest(unittest.TestCase):
         self.finder = None
 
         # If a test created a ZoneWriter with a mapped memory segment,
-        # the writer will need the file to exist until it's destroyed.
-        # So we'll make sure to destroy the writer (by resetting it)
-        # before removing the file below.
+        # the writer will hold a reference to the client list which will
+        # need the mapfile to exist until it's destroyed.  So we'll make
+        # sure to destroy the writer (by resetting it) before removing
+        # the mapfile below.
         self.__zone_writer = None
         self.clist = None
 
