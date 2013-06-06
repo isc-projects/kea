@@ -178,7 +178,7 @@ ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
             } else {
                 // Make sure it keeps the writer alive.
                 writer.reset(createZoneWriterObject(result.second,
-                                                    NULL));
+                                                    po_self));
             }
 
             return (Py_BuildValue("IO", result.first, writer.get()));
