@@ -23,17 +23,14 @@
 #include <string>
 
 /// @file
-/// CalloutHandle/LibraryCalloutHandle interaction tests
+/// CalloutHandle/LibraryHandle interaction tests
 ///
 /// This file holds unit tests checking the interaction between the
-/// CalloutHandle and LibraryCalloutHandle[Collection] classes.  In particular,
+/// CalloutHandle and LibraryHandle[Collection] classes.  In particular,
 /// they check that:
 ///
 /// - A CalloutHandle's context is shared between callouts from the same
 ///   library, but there is a separate context for each library.
-///
-/// - The LibraryHandle retrieved by the CalloutHandle is the same for each
-///   callout in the library, but different for different libraries.
 ///
 /// - The various methods manipulating the items in the CalloutHandle's context
 ///   work correctly.
@@ -49,32 +46,17 @@ namespace {
 // The next set of functions define the callouts used by the tests.  They
 // manipulate the data in such a way that callouts called - and the order in
 // which they were called - can be determined.  The functions also check that
-// the "callout context" and "library context" data areas are separate.
+// the "callout context" data areas are separate.
 //
 // Three libraries are assumed, and each supplies four callouts.  All callouts
-// manipulate four context elements - two in the CalloutHandle and two in the
-// LibraryHandle, the elements being called "string" and "int" (which describe
-// the type of data manipulated).
+// manipulate two context elements the CalloutHandle, the elements being called
+// "string" and "int" (which describe the type of data manipulated).
 //
 // For the string item, each callout shifts data to the left and inserts its own
-// data.  The data is a string of the form "nmwc", where "n" is the number of
-// the library, "m" is the callout number and "w" is an indication of what is
-// being altered (library context ["x"] or callout context ["c"]) and "y" is the
-// indication of what callout was passed as an argument ("a" or "b" - "" is
-// entered if no argument is supplied). ("x" is used instead of "l" to indicate
-// that library context is being altered since in the results, these single
-// characters will be mixed with digits and "l" " looks too much like "1".)
-// Hence we have:
-//
-// - "xa" if library context is being altered from a callout made with the
-//        first callout handle indicator passed as argument.
-// - "xb" if library context is being altered from a callout made with the
-//        second callout handle indicator passed as argument.
-// - "x"  if library context is being altered and no argument is set.
-// - "ca" if the first callout handle's context is being manipulated.
-// - "cb" if the second callout handle's context is being manipulated.
-// - "c"  if the a callout handle's context is being manipulated and it is not
-//        possible to identify the callout handle.
+// data.  The data is a string of the form "nmc", where "n" is the number of
+// the library, "m" is the callout number and "y" is the indication of what
+// callout handle was passed as an argument ("1" or "2": "0" is used when no
+// identification has been set in the callout handle).
 //
 // For simplicity, and to cut down the number of functions actually written,
 // the callout indicator ("a" or "b") ) used in the in the CalloutHandle
@@ -85,14 +67,7 @@ namespace {
 // For integer data, the value starts at zero and an increment is added on each
 // call.  This increment is equal to:
 //
-// 1000 * library number + 100 * callout_number + 10 * lib/callout + indicator
-//
-// where "lib/callout" is 1 if a library context is updated and 2 if a
-// callout context is changed. "indicator" is 1 for callout a, 2 for callout
-// b and 0 if unknown.  This scheme gives a direct correspondence between the
-// characters appended to the string context item and the amount by which the
-// integer context item is incremented.  For example, the string "21cb"
-// corresponds to a value of 2122.
+// 100 * library number + 10 * callout number + callout handle
 //
 // Although this gives less information than the string value, the reasons for
 // using it are:
@@ -102,19 +77,6 @@ namespace {
 // - It provides an item that can be deleted by the context deletion
 //   methods.
 
-// Values set in the LibraryHandle context.  There are three libraries, so
-// there are three sets of library context.  To avoid a static initialization
-// fiasco, encapsulate these in a function.
-
-std::string& resultLibraryString(int index) {
-    static std::string result_library_string[3];
-    return (result_library_string[index]);
-}
-
-int& resultLibraryInt(int index) {
-    static int result_library_int[3];
-    return (result_library_int[index]);
-}
 
 // Values set in the CalloutHandle context.  There are three libraries, so
 // there are three contexts for the callout, one for each library.
@@ -133,8 +95,6 @@ int& resultCalloutInt(int index) {
 
 static void zero_results() {
     for (int i = 0; i < 3; ++i) {
-        resultLibraryString(i) = "";
-        resultLibraryInt(i) = 0;
         resultCalloutString(i) = "";
         resultCalloutInt(i) = 0;
     }
@@ -143,79 +103,54 @@ static void zero_results() {
 
 // Library callouts.
 
-// Common code for setting the callout and library context values.
+// Common code for setting the callout context values.
 
 int
 execute(CalloutHandle& callout_handle, int library_num, int callout_num) {
 
-    // Obtain the callout handle indicator and set a number for it.
-    string sindicator = "";
-    int indicator = 0;
+    // Obtain the callout handle number
+    int handle_num = 0;
     try  {
-        callout_handle.getArgument("string", sindicator);
-        indicator = (sindicator == "a") ? 1 : 2;
+        callout_handle.getArgument("handle_num", handle_num);
     } catch (const NoSuchArgument&) {
-        indicator = 0;
+        // handle_num argument not set: this is the case in the tests where
+        // the context_create hook check is tested.
+        handle_num = 0;
     }
 
     // Create the basic data to be appended to the context value.
-    int idata = 1000 * library_num + 100 * callout_num;
-    string sdata = boost::lexical_cast<string>(10 * library_num + callout_num);
-
-    // Get the library context data.  As the context will not exist on the
-    // first call, catch the exception and create it. (In real life, the context
-    // should have been created by the libraries' "load()" function.)
-    string string_value = "";
-    try {
-        callout_handle.getLibraryHandle().getContext("string", string_value);
-    } catch (const NoSuchLibraryContext&) {
-        string_value = "";
-    }
-
-    int int_value = 0;
-    try {
-        callout_handle.getLibraryHandle().getContext("int", int_value);
-    } catch (const NoSuchLibraryContext&) {
-        int_value = 0;
-    }
-
-    // Update the context value with the library/callout indication (and the
-    // suffix "x" to denote library) and set it.
-    string_value += (sdata + string("x") + sindicator);
-    callout_handle.getLibraryHandle().setContext("string", string_value);
-
-    int_value += (idata + 10 + indicator);
-    callout_handle.getLibraryHandle().setContext("int", int_value);
+    int idata = 100 * library_num + 10 * callout_num + handle_num;
+    string sdata = boost::lexical_cast<string>(idata);
 
     // Get the context data. As before, this will not exist for the first
     // callout called. (In real life, the library should create it when the
     // "context_create" hook gets called before any packet processing takes
     // place.)
-    string_value = "";
-    try {
-        callout_handle.getContext("string", string_value);
-    } catch (const NoSuchCalloutContext&) {
-        string_value = "";
-    }
-
-    int_value = 0;
+    int int_value = 0;
     try {
         callout_handle.getContext("int", int_value);
     } catch (const NoSuchCalloutContext&) {
         int_value = 0;
     }
 
-    // Update the values and set them.
-    string_value += (sdata + string("c") + sindicator);
-    callout_handle.setContext("string", string_value);
+    string string_value = "";
+    try {
+        callout_handle.getContext("string", string_value);
+    } catch (const NoSuchCalloutContext&) {
+        string_value = "";
+    }
 
-    int_value += (idata + 20 + indicator);
+    // Update the values and set them.
+    int_value += idata;
     callout_handle.setContext("int", int_value);
+
+    string_value += sdata;
+    callout_handle.setContext("string", string_value);
 
     return (0);
 }
 
-// The following functions are the actual callouts - ther name is of the
+// The following functions are the actual callouts - the name is of the
 // form "callout_<library number>_<callout number>"
 
 int
@@ -268,15 +203,6 @@ callout33(CalloutHandle& callout_handle) {
 // variables.
 
 int printExecute(CalloutHandle& callout_handle, int library_num) {
-
-    // Print per-library context values.
-    callout_handle.getLibraryHandle()
-                  .getContext("string", resultLibraryString(library_num - 1));
-    callout_handle.getLibraryHandle()
-                  .getContext("int", resultLibraryInt(library_num - 1));
-
-
-    // Print callout context.
     callout_handle.getContext("string", resultCalloutString(library_num - 1));
     callout_handle.getContext("int", resultCalloutInt(library_num - 1));
 
@@ -300,12 +226,11 @@ print3(CalloutHandle& callout_handle) {
     return (printExecute(callout_handle, 3));
 }
 
-// This test checks the many-faced nature of the context for both the
-// CalloutContext and the LibraryContext.
+// This test checks the many-faced nature of the context for the CalloutContext.
 
 TEST(HandlesTest, ContextAccessCheck) {
-    // Create the LibraryHandleCollection with a set of four callouts
-    // (the test does not use the context_create and context_destroy callouts.)
+    // Create the LibraryHandleCollection with a set of four callouts (the test
+    // does not use the context_create and context_destroy callouts).
 
     boost::shared_ptr<ServerHooks> server_hooks(new ServerHooks());
     const int one_index = server_hooks->registerHook("one");
@@ -338,113 +263,81 @@ TEST(HandlesTest, ContextAccessCheck) {
     handle->registerCallout("four", print3);
     collection->addLibraryHandle(handle);
 
-    // Create the callout handles and distinguish them by setting the "long"
-    // argument.
-    CalloutHandle callout_handle_a(collection);
-    callout_handle_a.setArgument("string", string("a"));
+    // Create the callout handles and distinguish them by setting the
+    // "handle_num" argument.
+    CalloutHandle callout_handle_1(collection);
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
 
-    CalloutHandle callout_handle_b(collection);
-    callout_handle_b.setArgument("string", string("b"));
+    CalloutHandle callout_handle_2(collection);
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
 
     // Now call the callouts attached to the first three hooks.  Each hook is
     // called twice (once for each callout handle) before the next hook is
     // called.
-    collection->callCallouts(one_index, callout_handle_a);
-    collection->callCallouts(one_index, callout_handle_b);
-    collection->callCallouts(two_index, callout_handle_a);
-    collection->callCallouts(two_index, callout_handle_b);
-    collection->callCallouts(three_index, callout_handle_a);
-    collection->callCallouts(three_index, callout_handle_b);
+    collection->callCallouts(one_index, callout_handle_1);
+    collection->callCallouts(one_index, callout_handle_2);
+    collection->callCallouts(two_index, callout_handle_1);
+    collection->callCallouts(two_index, callout_handle_2);
+    collection->callCallouts(three_index, callout_handle_1);
+    collection->callCallouts(three_index, callout_handle_2);
 
     // Get the results for each callout.  Explicitly zero the variables before
     // getting the results so we are certain that the values are the results
     // of the callouts.
 
     zero_results();
-    collection->callCallouts(four_index, callout_handle_a);
-
-    // To explain the expected library context results:
-    //
-    // The first callCallouts() call above calls the callouts for hook "one"
-    // with callout handle "a".  This calls the callout attached to hook "one"
-    // from library 1, then that attached to hook "one" from library 2, then
-    // from library 3.  The callout in library 1 appends "11xa" to the first
-    // library's context. The callout in library 2 appends "21xa" to its
-    // library's context.  Finally, the third library's context gets "31xa"
-    // appended to it.
-    //
-    // The next callCallouts() call repeats the calls to the callouts attached
-    // to hook "one", which result in "11xb", "21xb", "31xb" being appended to
-    // the context of libraries 1, 2, and 3 respectively.
-    //
-    // The process is then repeated for hooks "two" and "three", leading to
-    // the expected context values listed below.
-    //
-    // The expected integer values can be found by summing up the values
-    // corresponding to the elements of the strings.
-
-    EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
-    EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));
-    EXPECT_EQ("31xa31xb32xa32xb33xa33xb", resultLibraryString(2));
-
-    EXPECT_EQ((1111 + 1112 + 1211 + 1212 + 1311 + 1312), resultLibraryInt(0));
-    EXPECT_EQ((2111 + 2112 + 2211 + 2212 + 2311 + 2312), resultLibraryInt(1));
-    EXPECT_EQ((3111 + 3112 + 3211 + 3212 + 3311 + 3312), resultLibraryInt(2));
+    collection->callCallouts(four_index, callout_handle_1);
 
     // To explain the expected callout context results.
     //
     // The callout handle maintains a separate context for each library.  When
-    // the first call to callCallouts() is made, "11ca" gets appended to
-    // the context for library 1 maintained by by the callout handle, "21ca"
-    // gets appended to the context maintained for library 2, and "31ca" to
-    // the context maintained for library 3.
+    // the first call to callCallouts() is made, "111" gets appended to
+    // the context for library 1 maintained by by the callout handle, "211"
+    // gets appended to the context maintained for library 2, and "311" to
+    // the context maintained for library 3.  In each case, the first digit
+    // corresponds to the library number, the second to the callout number and
+    // the third to the "handle_num" of the callout handle. For the first call
+    // to callCallouts, handle 1 is used, so the last digit is always 1.
     //
-    // The next call to callCallouts() calls the same callouts but for a
-    // different callout handle.  It also maintains three contexts (one for
-    // each library) and they will get "11cb", "21cb", "31cb" appended to
-    // them.  These don't affect the contexts maintained  by callout handle a.
+    // The next call to callCallouts() calls the same callouts but for the
+    // second callout handle.  It also maintains three contexts (one for
+    // each library) and they will get "112", "212", "312" appended to
+    // them. The explanation for the digits is the same as before, except that
+    // in this case, the callout handle is number 2, so the third digit is
+    // always 2.  These additions don't affect the contexts maintained by
+    // callout handle 1.
     //
-    // The process is then repeated for hooks "two" and "three", which append
-    // "12ca", "22ca" and "32ca" for hook "two" and "31ca", "32ca" and "33ca"
-    // for hook "three".
+    // The process is then repeated for hooks "two" and "three" which, for
+    // callout handle 1, append "121", "221" and "321" for hook "two" and "311",
+    // "321" and "331" for hook "three".
     //
     // The expected integer values can be found by summing up the values
     // corresponding to the elements of the strings.
 
     // At this point, we have only called the "print" function for callout
-    // handle "a", so the following results are checking the context values
+    // handle "1", so the following results are checking the context values
     // maintained in that callout handle.
 
-    EXPECT_EQ("11ca12ca13ca", resultCalloutString(0));
-    EXPECT_EQ("21ca22ca23ca", resultCalloutString(1));
-    EXPECT_EQ("31ca32ca33ca", resultCalloutString(2));
+    EXPECT_EQ("111121131", resultCalloutString(0));
+    EXPECT_EQ("211221231", resultCalloutString(1));
+    EXPECT_EQ("311321331", resultCalloutString(2));
 
-    EXPECT_EQ((1121 + 1221 + 1321), resultCalloutInt(0));
-    EXPECT_EQ((2121 + 2221 + 2321), resultCalloutInt(1));
-    EXPECT_EQ((3121 + 3221 + 3321), resultCalloutInt(2));
+    EXPECT_EQ((111 + 121 + 131), resultCalloutInt(0));
+    EXPECT_EQ((211 + 221 + 231), resultCalloutInt(1));
+    EXPECT_EQ((311 + 321 + 331), resultCalloutInt(2));
 
-    // Repeat the checks for callout b.  The library handle context values
-    // should not change, but the context maintained by the callout handle
-    // should.
+    // Repeat the checks for callout 2.
 
     zero_results();
-    collection->callCallouts(four_index, callout_handle_b);
+    collection->callCallouts(four_index, callout_handle_2);
 
-    EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
-    EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));
-    EXPECT_EQ("31xa31xb32xa32xb33xa33xb", resultLibraryString(2));
+    EXPECT_EQ((112 + 122 + 132), resultCalloutInt(0));
+    EXPECT_EQ((212 + 222 + 232), resultCalloutInt(1));
+    EXPECT_EQ((312 + 322 + 332), resultCalloutInt(2));
 
-    EXPECT_EQ((1111 + 1112 + 1211 + 1212 + 1311 + 1312), resultLibraryInt(0));
-    EXPECT_EQ((2111 + 2112 + 2211 + 2212 + 2311 + 2312), resultLibraryInt(1));
-    EXPECT_EQ((3111 + 3112 + 3211 + 3212 + 3311 + 3312), resultLibraryInt(2));
-
-    EXPECT_EQ("11cb12cb13cb", resultCalloutString(0));
-    EXPECT_EQ("21cb22cb23cb", resultCalloutString(1));
-    EXPECT_EQ("31cb32cb33cb", resultCalloutString(2));
-
-    EXPECT_EQ((1122 + 1222 + 1322), resultCalloutInt(0));
-    EXPECT_EQ((2122 + 2222 + 2322), resultCalloutInt(1));
-    EXPECT_EQ((3122 + 3222 + 3322), resultCalloutInt(2));
+    EXPECT_EQ("112122132", resultCalloutString(0));
+    EXPECT_EQ("212222232", resultCalloutString(1));
+    EXPECT_EQ("312322332", resultCalloutString(2));
 }
 
 // Now repeat the test, but add a deletion callout to the list.  The "two"
@@ -544,76 +437,53 @@ TEST(HandlesTest, ContextDeletionCheck) {
 
     // Create the callout handles and distinguish them by setting the "long"
     // argument.
-    CalloutHandle callout_handle_a(collection);
-    callout_handle_a.setArgument("string", string("a"));
+    CalloutHandle callout_handle_1(collection);
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
 
-    CalloutHandle callout_handle_b(collection);
-    callout_handle_b.setArgument("string", string("b"));
+    CalloutHandle callout_handle_2(collection);
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
 
     // Now call the callouts attached to the first three hooks.  Each hook is
     // called twice (once for each callout handle) before the next hook is
     // called.
-    collection->callCallouts(one_index, callout_handle_a);
-    collection->callCallouts(one_index, callout_handle_b);
-    collection->callCallouts(two_index, callout_handle_a);
-    collection->callCallouts(two_index, callout_handle_b);
-    collection->callCallouts(three_index, callout_handle_a);
-    collection->callCallouts(three_index, callout_handle_b);
+    collection->callCallouts(one_index, callout_handle_1);
+    collection->callCallouts(one_index, callout_handle_2);
+    collection->callCallouts(two_index, callout_handle_1);
+    collection->callCallouts(two_index, callout_handle_2);
+    collection->callCallouts(three_index, callout_handle_1);
+    collection->callCallouts(three_index, callout_handle_2);
 
     // Get the results for each callout.  Explicitly zero the variables before
     // getting the results so we are certain that the values are the results
     // of the callouts.
 
     zero_results();
-    collection->callCallouts(four_index, callout_handle_a);
+    collection->callCallouts(four_index, callout_handle_1);
 
     // The logic by which the expected results are arrived at is described
     // in the ContextAccessCheck test.  The results here are different
     // because context items have been modified along the way.
-    //
-    // As only the ContextHandle context is modified, the LibraryHandle
-    // context is unaltered from the values obtained in the previous test.
 
-    EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
-    EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));
-    EXPECT_EQ("31xa31xb32xa32xb33xa33xb", resultLibraryString(2));
+    EXPECT_EQ((111 + 121 + 131), resultCalloutInt(0));
+    EXPECT_EQ((            231), resultCalloutInt(1));
+    EXPECT_EQ((            331), resultCalloutInt(2));
 
-    EXPECT_EQ((1111 + 1112 + 1211 + 1212 + 1311 + 1312), resultLibraryInt(0));
-    EXPECT_EQ((2111 + 2112 + 2211 + 2212 + 2311 + 2312), resultLibraryInt(1));
-    EXPECT_EQ((3111 + 3112 + 3211 + 3212 + 3311 + 3312), resultLibraryInt(2));
+    EXPECT_EQ("111121131", resultCalloutString(0));
+    EXPECT_EQ("211221231", resultCalloutString(1));
+    EXPECT_EQ(      "331", resultCalloutString(2));
 
-    // ContextHandle context results.
-
-    EXPECT_EQ("11ca12ca13ca", resultCalloutString(0));
-    EXPECT_EQ("21ca22ca23ca", resultCalloutString(1));
-    EXPECT_EQ(        "33ca", resultCalloutString(2));
-
-    EXPECT_EQ((1121 + 1221 + 1321), resultCalloutInt(0));
-    EXPECT_EQ((              2321), resultCalloutInt(1));
-    EXPECT_EQ((              3321), resultCalloutInt(2));
-
-    // Repeat the checks for callout b.  The library handle context values
-    // should not change, but the context maintained by the callout handle
-    // should.
+    // Repeat the checks for callout handle 2.
 
     zero_results();
-    collection->callCallouts(four_index, callout_handle_b);
+    collection->callCallouts(four_index, callout_handle_2);
 
-    EXPECT_EQ("11xa11xb12xa12xb13xa13xb", resultLibraryString(0));
-    EXPECT_EQ("21xa21xb22xa22xb23xa23xb", resultLibraryString(1));
-    EXPECT_EQ("31xa31xb32xa32xb33xa33xb", resultLibraryString(2));
+    EXPECT_EQ((112 + 122 + 132), resultCalloutInt(0));
+    EXPECT_EQ((            232), resultCalloutInt(1));
+    EXPECT_EQ((            332), resultCalloutInt(2));
 
-    EXPECT_EQ((1111 + 1112 + 1211 + 1212 + 1311 + 1312), resultLibraryInt(0));
-    EXPECT_EQ((2111 + 2112 + 2211 + 2212 + 2311 + 2312), resultLibraryInt(1));
-    EXPECT_EQ((3111 + 3112 + 3211 + 3212 + 3311 + 3312), resultLibraryInt(2));
-
-    EXPECT_EQ("11cb12cb13cb", resultCalloutString(0));
-    EXPECT_EQ("21cb22cb23cb", resultCalloutString(1));
-    EXPECT_EQ(        "33cb", resultCalloutString(2));
-
-    EXPECT_EQ((1122 + 1222 + 1322), resultCalloutInt(0));
-    EXPECT_EQ((              2322), resultCalloutInt(1));
-    EXPECT_EQ((              3322), resultCalloutInt(2));
+    EXPECT_EQ("112122132", resultCalloutString(0));
+    EXPECT_EQ("212222232", resultCalloutString(1));
+    EXPECT_EQ(      "332", resultCalloutString(2));
 
     // ... and check what the names of the context items are after the callouts
     // for hook "two".  We know they are in sorted order.
@@ -660,8 +530,8 @@ TEST(HandlesTest, ConstructionDestructionCallouts) {
     boost::shared_ptr<CalloutHandle>
         callout_handle(new CalloutHandle(collection));
 
-    EXPECT_EQ("11x", resultLibraryString(0));
-    EXPECT_EQ(1110, resultLibraryInt(0));
+    EXPECT_EQ("110", resultCalloutString(0));
+    EXPECT_EQ(110, resultCalloutInt(0));
 
     // Check that the destructor callout runs.  Note that the "print1" callout
     // didn't destroy the library context - it only copied it to where it
@@ -670,8 +540,8 @@ TEST(HandlesTest, ConstructionDestructionCallouts) {
     zero_results();
     callout_handle.reset();
 
-    EXPECT_EQ("11x12x", resultLibraryString(0));
-    EXPECT_EQ((1110 + 1210), resultLibraryInt(0));
+    EXPECT_EQ("110120", resultCalloutString(0));
+    EXPECT_EQ((110 + 120), resultCalloutInt(0));
 
     // Test that the destructor throws an error if the context_destroy
     // callout returns an error.

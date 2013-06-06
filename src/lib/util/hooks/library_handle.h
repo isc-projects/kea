@@ -18,7 +18,6 @@
 #include <exceptions/exceptions.h>
 #include <util/hooks/server_hooks.h>
 
-#include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <map>
@@ -72,8 +71,7 @@ extern "C" {
 /// @brief Library handle
 ///
 /// This class is used to manage a loaded library.  It is used by the user
-/// library to register callouts and by the HookManager to call them.  The
-/// class also contains storage for library-specific context.
+/// library to register callouts and by the HookManager to call them.
 ///
 /// The functions related to loading and unloading the asssociated library are
 /// handled in the related LibraryManager class - there is a 1:1 correspondence
@@ -82,11 +80,6 @@ extern "C" {
 /// unloading of libraries.
 
 class LibraryHandle {
-private:
-
-    /// Typedef to allow abbreviation of iterator specification in methods
-    typedef std::map<std::string, boost::any> ContextCollection;
-
 public:
 
     /// @brief Constructor
@@ -96,74 +89,8 @@ public:
     ///
     /// @param hooks Pointer to the hooks registered by the server.
     LibraryHandle(boost::shared_ptr<ServerHooks>& hooks)
-        : context_(), hooks_(hooks), hook_vector_(hooks->getCount())
+        : hooks_(hooks), hook_vector_(hooks->getCount())
     {}
-
-    /// @brief Set context
-    ///
-    /// Sets an element in the library context.  If an element of the name
-    /// is already present, it is replaced.
-    ///
-    /// @param name Name of the element in the context to set
-    /// @param value Value to set
-    template <typename T>
-    void setContext(const std::string& name, T value) {
-        context_[name] = value;
-    }
-
-    /// @brief Get context
-    ///
-    /// Gets an element in the library context.
-    ///
-    /// @param name Name of the element in the context to get.
-    /// @param value [out] retrieved value.  The type of "value" is important:
-    ///        it must match the type of the value set.
-    ///
-    /// @throw NoSuchLibraryContext No context element with the given name
-    ///        is present.
-    /// @throw boost::bad_any_cast The context element is present, but the
-    ///        type of the element does not match the type of the variable
-    ///        specified to receive it.
-    template <typename T>
-    void getContext(const std::string& name, T& value) const {
-        ContextCollection::const_iterator element_ptr = context_.find(name);
-        if (element_ptr == context_.end()) {
-            isc_throw(NoSuchLibraryContext, "unable to find library context "
-                      "item " << name << " in library handle");
-        }
-
-        value = boost::any_cast<T>(element_ptr->second);
-    }
-    
-    /// @brief Get context names
-    ///
-    /// Returns a vector holding the names of context items.
-    ///
-    /// @return Vector of strings reflecting argument names
-    std::vector<std::string> getContextNames() const;
-
-    /// @brief Delete context element
-    ///
-    /// Deletes context item of the given name.  If an item of that name
-    /// does not exist, the method is a no-op.
-    ///
-    /// N.B. If the element is a raw pointer, the pointed-to data is NOT deleted
-    /// by this method.
-    ///
-    /// @param name Name of the element in the argument list to set.
-    void deleteContext(const std::string& name) {
-        static_cast<void>(context_.erase(name));
-    }
-
-    /// @brief Delete all arguments
-    ///
-    /// Deletes all arguments associated with this context.
-    ///
-    /// N.B. If any elements are raw pointers, the pointed-to data is NOT
-    /// deleted by this method.
-    void deleteAllContext() {
-        context_.clear();
-    }
 
     /// @brief Register a callout on a hook
     ///
@@ -255,9 +182,6 @@ private:
     int getHookIndex(const std::string& name) const;
 
     // Member variables
-
-    /// Context - mapping of names variables that can be of different types.
-    ContextCollection context_;
 
     /// Pointer to the list of hooks registered by the server
     boost::shared_ptr<ServerHooks> hooks_;
