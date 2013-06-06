@@ -194,29 +194,6 @@ class ClientListTest(unittest.TestCase):
         # The segment is still in READ_ONLY mode.
         self.find_helper()
 
-    def test_find_mapped2(self):
-        """
-        Test find on a mapped segment.
-        """
-        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''no-example.org.zone"
-            },
-            "cache-enable": true,
-            "cache-type": "mapped"
-        }]''', True)
-
-        map_params = '{"mapped-file": "' + MAPFILE_PATH + '"}'
-        self.clist.reset_memory_segment("MasterFiles",
-                                        isc.datasrc.ConfigurableClientList.CREATE,
-                                        map_params)
-        result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
-        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
-                         result[0])
-        result[1].load()
-
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
