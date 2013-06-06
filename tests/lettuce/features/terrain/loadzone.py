@@ -25,12 +25,16 @@ def run_loadzone(zone, zone_file, db_file):
 
     Parameters:
     zone (str): the zone name
-    zone_file (str): master zone file for the zone
+    zone_file (str): master zone file for the zone; can be None to make an
+                     empty zone.
     db_file (str): SQLite3 DB file to load the zone into
 
     """
     sqlite_datasrc_cfg = '{"database_file": "' + db_file + '"}'
-    args = ['b10-loadzone', '-c', sqlite_datasrc_cfg, zone, zone_file]
+    if zone_file is not None:
+        args = ['b10-loadzone', '-c', sqlite_datasrc_cfg, zone, zone_file]
+    else:
+        args = ['b10-loadzone', '-c', sqlite_datasrc_cfg, '-e', zone]
     loadzone = subprocess.Popen(args, 1, None, None,
                                 subprocess.PIPE, subprocess.PIPE)
     (stdout, stderr) = loadzone.communicate()
@@ -53,6 +57,22 @@ def load_zone_to_dbfile(step, zone, db_file, zone_file):
 
     """
     run_loadzone(zone, zone_file, db_file)
+
+@step('make empty zone (\S+) in DB file (\S+)')
+def make_empty_zone_to_dbfile(step, zone, db_file):
+    """Make an empty zone into a data source.
+
+    If a non-empty zone already exists in the data source, it will be emptied;
+    otherwise, a new empty zone will be created.
+
+    It currently only works for an SQLite3-based data source.  Its
+    DB file name should be specified.
+
+    Step definition:
+    make empty zone <zone_name> to DB file <db_file>
+
+    """
+    run_loadzone(zone, None, db_file)
 
 @step('load (\d+) records for zone (\S+) to DB file (\S+)')
 def load_zone_rr_to_dbfile(step, num_records, zone, db_file):
