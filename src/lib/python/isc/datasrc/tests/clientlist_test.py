@@ -170,6 +170,9 @@ class ClientListTest(unittest.TestCase):
         """
         Test find on a mapped segment.
         """
+        if os.environ['HAVE_SHARED_MEMORY'] != 'yes':
+            return
+
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.clist.configure('''[{
             "type": "MasterFiles",
