@@ -37,15 +37,29 @@ const size_t RECV_BUF_SIZE = 2048;
 /// its index.
 class PktFilterInetTest : public ::testing::Test {
 public:
-    PktFilterInetTest() {
+
+    /// @brief Constructor
+    ///
+    /// This constructor initializes socket_ member to a negative value.
+    /// Explcit initialization is performed here because some of the
+    /// tests do not initialize this value. In such cases, destructor
+    /// could invoke close() on uninitialized socket descriptor which
+    /// would result in errors being reported by Valgrind.
+    PktFilterInetTest()
+        : socket_(-1) {
         // Initialize ifname_ and ifindex_.
         loInit();
     }
 
+    /// @brief Destructor
+    ///
+    /// Closes open socket (if any).
     ~PktFilterInetTest() {
         // Cleanup after each test. This guarantees
         // that the socket does not hang after a test.
-        close(socket_);
+        if (socket_ >= 0) {
+            close(socket_);
+        }
     }
 
     /// @brief Detect loopback interface.

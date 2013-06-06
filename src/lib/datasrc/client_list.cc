@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/logger.h>
+#include <datasrc/zone_table_accessor_cache.h>
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
 
@@ -321,6 +322,21 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
+void
+ConfigurableClientList::resetMemorySegment
+    (const std::string& datasrc_name,
+     ZoneTableSegment::MemorySegmentOpenMode mode,
+     ConstElementPtr config_params)
+{
+    BOOST_FOREACH(DataSourceInfo& info, data_sources_) {
+        if (info.name_ == datasrc_name) {
+            ZoneTableSegment& segment = *info.ztable_segment_;
+            segment.reset(mode, config_params);
+            break;
+        }
+    }
+}
+
 ConfigurableClientList::ZoneWriterPair
 ConfigurableClientList::getCachedZoneWriter(const Name& name,
                                             const std::string& datasrc_name)
@@ -401,6 +417,31 @@ ConfigurableClientList::getStatus() const {
                                           "local"));
     }
     return (result);
+}
+
+ConstZoneTableAccessorPtr
+ConfigurableClientList::getZoneTableAccessor(const std::string& datasrc_name,
+                                             bool use_cache) const
+{
+    if (!use_cache) {
+        isc_throw(isc::NotImplemented,
+              "getZoneTableAccessor only implemented for cache");
+    }
+
+    // Find the matching data source
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        if (!datasrc_name.empty() && datasrc_name != info.name_) {
+            continue;
+        }
+
+        const internal::CacheConfig* config(info.getCacheConfig());
+        // If caching is disabled for the named data source, this will
+        // return an accessor to an effectivley empty table.
+        return (ConstZoneTableAccessorPtr
+                (new internal::ZoneTableAccessorCache(*config)));
+    }
+
+    return (ConstZoneTableAccessorPtr());
 }
 
 }

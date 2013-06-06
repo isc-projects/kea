@@ -48,6 +48,11 @@
             "item_type": "boolean",
             "item_optional": false,
             "item_default": false
+          },
+          { "item_name": "request_ixfr",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "yes"
           }
           ]
         }
@@ -56,7 +61,36 @@
     "commands": [
      {
         "command_name": "retransfer",
-        "command_description": "retransfer a single zone without checking zone serial number",
+        "command_description": "retransfer a single zone without checking zone serial number, always using AXFR",
+        "command_args": [ {
+            "item_name": "zone_name",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": ""
+          },
+          {
+            "item_name": "zone_class",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "IN"
+          },
+          {
+            "item_name": "master",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": ""
+          },
+          {
+            "item_name": "port",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": 53
+          }
+        ]
+      },
+     {
+        "command_name": "refresh",
+        "command_description": "transfer a single zone with checking zone serial number and honoring the request_ixfr policy",
         "command_args": [ {
             "item_name": "zone_name",
             "item_type": "string",
@@ -102,16 +136,16 @@
         "item_optional": false,
         "item_default": {
           "_SERVER_" : {
-	    "soaoutv4": 0,
-	    "soaoutv6": 0,
-	    "axfrreqv4": 0,
-	    "axfrreqv6": 0,
-	    "ixfrreqv4": 0,
-	    "ixfrreqv6": 0,
-	    "xfrsuccess": 0,
-	    "xfrfail": 0,
-	    "last_ixfr_duration": 0.0,
-	    "last_axfr_duration": 0.0
+            "soaoutv4": 0,
+            "soaoutv6": 0,
+            "axfrreqv4": 0,
+            "axfrreqv6": 0,
+            "ixfrreqv4": 0,
+            "ixfrreqv6": 0,
+            "xfrsuccess": 0,
+            "xfrfail": 0,
+            "last_ixfr_duration": 0.0,
+            "last_axfr_duration": 0.0
           }
         },
         "item_title": "Zone names",
