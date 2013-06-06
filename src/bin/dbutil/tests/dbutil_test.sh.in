@@ -141,7 +141,8 @@ get_schema() {
     copy_file $1 $db1
 
     db_schema=`sqlite3 $db1 '.schema' | \
-               sed -e ':a' -e 'N' -e '$!ba' -e 's/,[\ ]*\n/, /g' | sort | \
+               sed -e ':a' -e 'N' -e '$!ba' -e 's/,[\ ]*\n/, /g' | \
+               sort | \
                awk '{line = line $0} END {print line}' | \
                sed -e 's/ //g' | \
                tr [:upper:] [:lower:]`
