@@ -50,12 +50,6 @@ public:
     /// \brief Returns "mapped" as the implementation type.
     virtual const std::string& getImplType() const;
 
-    /// \brief Resets the \c ZoneTableHeader address from the named
-    /// address in the mapped file. This method should be called once
-    /// before calls to \c getHeader() if the mapped \c MemorySegment
-    /// has grown.
-    virtual void resetHeader();
-
     /// \brief Return the \c ZoneTableHeader for this mapped zone table
     /// segment.
     ///
@@ -122,15 +116,15 @@ private:
     void sync();
 
     bool processChecksum(isc::util::MemorySegmentMapped& segment, bool create,
-                         std::string& error_msg);
+                         bool has_allocations, std::string& error_msg);
     bool processHeader(isc::util::MemorySegmentMapped& segment, bool create,
-                       std::string& error_msg);
+                       bool has_allocations, std::string& error_msg);
 
     isc::util::MemorySegmentMapped* openReadWrite(const std::string& filename,
                                                   bool create);
     isc::util::MemorySegmentMapped* openReadOnly(const std::string& filename);
 
-    template<typename T> T* getHeaderHelper() const;
+    template<typename T> T* getHeaderHelper(bool initial) const;
 
 private:
     std::string impl_type_;
@@ -140,7 +134,7 @@ private:
     // Internally holds a MemorySegmentMapped. This is NULL on
     // construction, and is set by the \c reset() method.
     boost::scoped_ptr<isc::util::MemorySegmentMapped> mem_sgmt_;
-    ZoneTableHeader* cached_header_;
+    ZoneTableHeader* cached_ro_header_;
 };
 
 } // namespace memory
