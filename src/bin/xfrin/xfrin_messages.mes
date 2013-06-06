@@ -60,6 +60,27 @@ error is given in the log message.
 There was an error opening a connection to the master. The error is
 shown in the log message.
 
+% XFRIN_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
+Configuration for the global data sources is updated, but the update
+cannot be applied to xfrin.  The xfrin module will still keep running
+with the previous configuration, but the cause of the failure and
+other log messages must be carefully examined because if only xfrin
+rejects the new configuration then the entire BIND 10 system will have
+inconsistent state among different modules.  If other modules accept
+the update but xfrin produces this error, the xfrin module should
+probably be restarted.
+
+% XFRIN_DATASRC_UNKNOWN data source to transfer %1 to is unknown
+The xfrin daemon received a command that would trigger a transfer,
+but could not find a data source where the specified zone belongs.
+There can be several reasons for this error: it may be a simple
+misspelling in the xfrin or zonemgr configuration, or in the user
+supplied parameter if it is triggered by an external command (such as
+from bindctl).  Another possibility is that this is the initial transfer
+for a newly setup secondary zone.  In this case at least an initial empty zone
+must be created in one of configured data sources.  This can be done by
+the -e option of b10-loadzone.
+
 % XFRIN_EXITING exiting
 The xfrin daemon is exiting.
 
@@ -254,19 +275,6 @@ is recommended to check the primary server configuration.
 % XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started
 A connection to the master server has been made, the serial value in
 the SOA record has been checked, and a zone transfer has been started.
-
-% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
-On starting an xfrin session, it is identified that the zone to be
-transferred is not found in the data source.  This can happen if a
-secondary DNS server first tries to perform AXFR from a primary server
-without creating the zone image beforehand (e.g. by b10-loadzone).  As
-of this writing the xfrin process provides backward compatible
-behavior to previous versions: creating a new one in the data source
-not to surprise existing users too much.  This is probably not a good
-idea, however, in terms of who should be responsible for managing
-zones at a higher level.  In future it is more likely that a separate
-zone management framework is provided, and the situation where the
-given zone isn't found in xfrout will be treated as an error.
 
 % XFRIN_ZONE_INVALID Newly received zone %1/%2 fails validation: %3
 The zone was received successfully, but it failed validation. The problem
