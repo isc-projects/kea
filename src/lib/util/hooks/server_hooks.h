@@ -113,6 +113,87 @@ private:
     HookCollection  hooks_;     ///< Hook name/index collection
 };
 
+
+/// @brief Hooks Registration
+///
+/// All hooks must be registered before libraries are loaded and callouts
+/// assigned to them.  One way of doing this is to have a global list of hooks:
+/// the addition of any hook anywhere would require updating the list.  The
+/// other way, chosen here, is to have each component in BIND 10 register the
+/// hooks they are using.
+///
+/// The chosen method requires that each component create a hook registration
+/// function of the form:
+///
+/// @code
+/// static int hook1_num = -1;  // Initialize number for hook 1
+/// static int hook2_num = -1;  // Initialize number for hook 2
+///
+/// void myModuleRegisterHooks(ServerHooks& hooks) {
+///     hook1_num = hooks.registerHook("hook1");
+///     hook2_num = hooks.registerHook("hook2");
+/// }
+/// @endcode
+///
+/// The server then calls each of these hook registration functions during its
+/// initialization before loading the libraries.
+///
+/// It is to avoid the need to add an explicit call to each of the hook
+/// registration functions to the server initialization code that this class
+/// has been created.  Declaring an object of this class in the same file as
+/// the registration function and  passing the registration function as an
+/// argument, e.g.
+///
+/// @code
+/// HookRegistrationFunction f(myModuleRegisterHooks);
+/// @code
+///
+/// is sufficient to add the registration function to a list of such functions.
+/// The server will execute all functions in the list wh3en it starts.
+
+class HookRegistrationFunction {
+public:
+    /// @brief Pointer to a hook registration function
+    typedef void (*RegistrationFunctionPtr)(ServerHooks&);
+
+    /// @brief Constructor
+    ///
+    /// For variables declared outside functions or methods, the constructors
+    /// are run after the program is loaded and before main() is called. This
+    /// constructor adds the passed pointer to a vector of such pointers.
+    HookRegistrationFunction(RegistrationFunctionPtr reg_func);
+
+    /// @brief Access registration function vector
+    ///
+    /// One of the problems with functions run prior to starting main() is the
+    /// "static initialization fiasco".  This occurs because the order in which
+    /// objects outside functions is not defined.  So if this constructor were
+    /// to depend on a vector declared externally, we would not be able to
+    /// guarantee that the vector had been initialised proerly before we used
+    /// it.
+    ///
+    /// To get round this situation, the vector is declared statically within
+    /// a function.  The first time the function is called, the object is
+    /// initialized.
+    ///
+    /// This function returns a reference to the vector used to hold the
+    /// pointers.
+    ///
+    /// @return Reference to the (static) list of registration functions
+    static std::vector<RegistrationFunctionPtr>& getFunctionVector();
+
+    /// @brief Execute registration functions
+    ///
+    /// Called by the server initialization code, this function executes all
+    /// registered hook registration functions.
+    ///
+    /// @param hooks ServerHooks object to which hook information will be added.
+    static void execute(ServerHooks& hooks);
+};
+/// to the constructor
+/// any function 
+/// 
+
 } // namespace util
 } // namespace isc
 

@@ -16,6 +16,7 @@
 #include <util/hooks/server_hooks.h>
 
 #include <utility>
+#include <vector>
 
 using namespace std;
 using namespace isc;
@@ -88,6 +89,34 @@ ServerHooks::getHookNames() const {
 
     return (names);
 }
+
+// Hook registration function methods
+
+// Constructor - add a registration function to the function vector
+
+HookRegistrationFunction::HookRegistrationFunction(
+    HookRegistrationFunction::RegistrationFunctionPtr reg_func) {
+    getFunctionVector().push_back(reg_func);
+}
+
+// Access the hook registration function vector itself
+
+std::vector<HookRegistrationFunction::RegistrationFunctionPtr>&
+HookRegistrationFunction::getFunctionVector() {
+    static std::vector<RegistrationFunctionPtr> reg_functions;
+    return (reg_functions);
+}
+
+// Execute all registered registration functions
+
+void
+HookRegistrationFunction::execute(ServerHooks& hooks) {
+    std::vector<RegistrationFunctionPtr>& reg_functions = getFunctionVector();
+    for (int i = 0; i < reg_functions.size(); ++i) {
+        (*reg_functions[i])(hooks);
+    }
+}
+
 
 
 } // namespace util
