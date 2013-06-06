@@ -168,10 +168,16 @@ class ClientListTest(unittest.TestCase):
         map_params = '{"mapped-file": "' + os.environ['TESTDATA_WRITE_PATH'] + os.sep + 'testmapped.mapped"}'
         self.clist.reset_memory_segment("MasterFiles", isc.datasrc.ConfigurableClientList.CREATE, map_params)
         result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS, result[0])
         result[1].load()
         result[1].install()
         result[1].cleanup()
+
         self.clist.reset_memory_segment("MasterFiles", isc.datasrc.ConfigurableClientList.READ_ONLY, map_params)
+        result = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_CACHE_NOT_WRITABLE, result[0])
+
+        # The segment is still in READ_ONLY mode.
 
         dsrc, finder, exact = self.clist.find(isc.dns.Name("sub.example.org"))
         self.assertIsNotNone(dsrc)
