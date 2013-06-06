@@ -94,6 +94,8 @@ ZoneWriter_load(PyObject* po_self, PyObject*) {
                         "Unknown C++ exception");
         return (NULL);
     }
+
+    return (Py_None);
 }
 
 PyObject*
@@ -109,6 +111,8 @@ ZoneWriter_install(PyObject* po_self, PyObject*) {
                         "Unknown C++ exception");
         return (NULL);
     }
+
+    return (Py_None);
 }
 
 PyObject*
@@ -124,6 +128,8 @@ ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
                         "Unknown C++ exception");
         return (NULL);
     }
+
+    return (Py_None);
 }
 
 // This list contains the actual set of functions we have in
