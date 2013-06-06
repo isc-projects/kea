@@ -15,11 +15,137 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-r'''
-How to use it
+r"""
+A helper to semi-auto generate Python docstring text from C++ Doxygen
+documentation.
 
-Use the "xmlonly" doxygen command to generate a special XML tag in the
-XML output.  The block enclosed by \xmlonly and \endxmlonly should contain
+This script converts an XML-format doxygen documentation for C++ library
+into a template Python docstring for the corresponding Python version
+of the library.  While it's not perfect and you'll still need to edit the
+output by hand, but past experiments showed the script produces a pretty
+good template.  It will help provide more compatible documentation for
+both C++ and Python versions of library from a unified source (C++ Doxygen
+documentation) with minimizing error-prone and boring manual conversion.
+
+HOW TO USE IT
+
+1. Generate XML output by doxygen.  Use bind10/doc/Doxyfile-xml:
+
+  % cd bind10/doc
+  % doxygen Doxyfile-xml
+  (XML files will be generated under bind10/doc/html/xml)
+
+2. Identify the xml file of the conversion target (C++ class, function, etc)
+
+  This is a bit tricky.  You'll probably need to do manual search.
+  For example, to identify the xml file for a C++ class
+  isc::datasrc::memory::ZoneWriter, you might do:
+
+  % cd bind10/doc/html/xml
+  % grep ZoneWriter *.xml | grep 'kind="class"'
+  index.xml:  <compound refid="d4/d3c/classisc_1_1datasrc_1_1memory_1_1ZoneWriter" kind="class"><name>isc::datasrc::memory::ZoneWriter</name>
+
+  In this case the file under the d4/d3c directory (with .xml suffix) would
+  be the file you're looking for.
+
+3. Run this script for the xml file:
+
+  % python3 doxygen2pydoc.py <top_srcdir>/doc/html/xml/d4/d3c/classisc_1_1datasrc_1_1memory_1_1ZoneWriter.xml > output.cc
+
+  The template content is dumped to standard out (redirected to file
+  "output.cc" in this example).
+
+  Sometimes the script produces additional output to standard error,
+  like this:
+
+    Replaced camelCased terms:
+    resetMemorySegment => reset_memory_segment
+    getConfiguration => get_configuration
+
+  In BIND 10 naming convention for methods is different for C++ and
+  Python.  This script uses some heuristic guess to convert the
+  C++-style method names to likely Python-style ones, and the converted
+  method names are used in the dumped template.  In many cases the guessed
+  names are correct, but you should check this list and make adjustments
+  by hand if necessary.
+
+  If there's no standard error output, this type of conversion didn't
+  happen.
+
+4. Edit and copy the template
+
+  The dumped template has the following organization:
+
+    namespace {
+    #ifdef COPY_THIS_TO_MAIN_CC
+        { "cleanup", ZoneWriter_cleanup, METH_NOARGS, ZoneWriter_cleanup_doc },
+        { "install", ZoneWriter_install, METH_NOARGS, ZoneWriter_install_doc },
+        { "load", ZoneWriter_load, METH_VARARGS, ZoneWriter_load_doc },
+    #endif // COPY_THIS_TO_MAIN_CC
+
+    const char* const ZoneWriter_doc = "\
+      ...
+    ";
+
+    const char* const ZoneWriter_install_doc = "\
+      ...
+    ";
+
+    ...
+    }
+
+  The ifdef-ed block is a template for class methods information
+  to be added to the corresponding PyMethodDef structure array
+  (your wrapper C++ source would have something like ZoneWriter_methods
+  of this type).  These lines should be copied there.  As long as
+  the method names and corresponding wrapper function (such as
+  ZoneWriter_cleanup) are correct you shouldn't have to edit this part
+  (and they would be normally correct, unless the guessed method name
+  conversion was needed).
+
+  The rest of the content is a sequence of constant C-string variables.
+  Usually the first variable corresponds to the class description, and
+  the rest are method descriptions (note that ZoneWriter_install_doc
+  is referenced from the ifdef-ed block).  The content of this part
+  would generally make sense, but you'll often need to make some
+  adjsutments by hand.  A common examples of such adjustment is to
+  replace "NULL" with "None".  Also, it's not uncommon that some part
+  of the description simply doesn't apply to the Python version or
+  that Python specific notes are needed.  So go through the description
+  carefully and make necessary changes.  A common practice is to add
+  comments for a summary of adjustments like this:
+
+    // Modifications:
+    // NULL->None
+    //  - removed notes about derived classes (which doesn't apply for python)
+    const char* const ZoneWriter_doc = "\
+      ...
+    ";
+  This note will help next time you need to auto-generate and edit the
+  template (probably because the original C++ document is updated).
+
+  You can simply copy this part to the main C++ wrapper file, but since
+  it's relatively large a common practice is to maintain it in a separate
+  file that is exclusively included from the main file: if the name of
+  the main file is zonewriter_python.cc, the pydoc strings would be copied
+  in zonewriter_python_inc.cc, and the main file would have this line:
+
+      #include "zonewriter_inc.cc"
+
+  (In case you are C++ language police: it's okay to use the unnamed
+  name space for a file to be included because it's essentially a part
+  of the single .cc file, not expected to be included by others).
+
+  In either case, the ifdef-ed part should be removed.
+
+ADVANCED FEATURES
+
+You can use a special "xmlonly" doxygen command in C++ doxygent document
+in order to include Python code excerpt (while hiding it from the doxygen
+output for the C++ version).  This command will be converted to
+a special XML tag in the XML output.
+
+The block enclosed by \xmlonly and \endxmlonly should contain
 a verbatim XML tag named "pythonlisting", in which the python code should
 be placed.
 /// \code
@@ -37,10 +163,7 @@ doxygen2pydoc assume the pythonlisting tag is in a separate <para> node.
 This blank ensures doxygen will produce the XML file that meets the
 assumption.
 
-generate XML output by doxygen.  Use bind10/doc/Doxyfile-xml:
-% cd bind10/doc
-% doxygen Doxyfile-xml
-(XML files will be generated under bind10/doc/html/xml)
+INTERNAL MEMO (incomplete, and not very unredable yet)
 
 This simplified utility assumes the following structure:
 ...
@@ -100,7 +223,7 @@ This simplified utility assumes the following structure:
       class's detailed description
     </detaileddescription>
   </compounddef>
-'''
+"""
 
 import re, string, sys, textwrap
 from xml.dom.minidom import parse
