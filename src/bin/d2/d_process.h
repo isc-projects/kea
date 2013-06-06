@@ -127,7 +127,7 @@ public:
     /// @brief Checks if the process has been instructed to shut down.
     ///
     /// @return returns true if process shutdown flag is true.
-    const bool shouldShutdown() const {
+    bool shouldShutdown() {
         return (shut_down_flag_);
     }
 
