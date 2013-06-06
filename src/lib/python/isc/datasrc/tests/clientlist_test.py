@@ -21,6 +21,7 @@ import os
 import sys
 
 TESTDATA_PATH = os.environ['GLOBAL_TESTDATA_PATH'] + os.sep
+MAPFILE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep + 'test.mapped'
 
 class ClientListTest(unittest.TestCase):
     """
@@ -37,6 +38,9 @@ class ClientListTest(unittest.TestCase):
         self.dsrc = None
         self.finder = None
         self.clist = None
+
+        if os.path.exists(MAPFILE_PATH):
+            os.unlink(MAPFILE_PATH)
 
     def test_constructors(self):
         """
@@ -169,8 +173,7 @@ class ClientListTest(unittest.TestCase):
             "cache-type": "mapped"
         }]''', True)
 
-        map_params = '{"mapped-file": "' + os.environ['TESTDATA_WRITE_PATH'] + \
-            os.sep + 'testmapped.mapped"}'
+        map_params = '{"mapped-file": "' + MAPFILE_PATH + '"}'
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.CREATE,
                                         map_params)
