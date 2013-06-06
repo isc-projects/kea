@@ -274,15 +274,15 @@ bind10-1.1.0beta1 released on April 4, 2013
 
 587.	[bug]		jelte
 	When used from python, the dynamic datasource factory now
-	explicitely loads the logging messages dictionary, so that correct
+	explicitly loads the logging messages dictionary, so that correct
 	logging messages does not depend on incidental earlier import
 	statements. Also, the sqlite3-specific log messages have been moved
 	from the general datasource library to the sqlite3 datasource
-	(which also explicitely loads its messages).
+	(which also explicitly loads its messages).
 	(Trac #2746, git 1c004d95a8b715500af448683e4a07e9b66ea926)
 
 586.	[func]		marcin
-	libdhcp++: Removed unnecesary calls to the function which
+	libdhcp++: Removed unnecessary calls to the function which
 	validates option definitions used to create instances of options
 	being decoded in the received packets. Eliminating these calls
 	lowered the CPU utilization by the server by approximately 10%.
@@ -702,7 +702,7 @@ bind10-1.0.0-beta released on December 20, 2012
 531.	[func]		tomek
 	b10-dhcp6: Added support for expired leases. Leases for IPv6
 	addresses that are past their valid lifetime may be recycled, i.e.
-	rellocated to other clients if needed.
+	relocated to other clients if needed.
 	(Trac #2327, git 62a23854f619349d319d02c3a385d9bc55442d5e)
 
 530.	[func]*		team
