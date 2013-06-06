@@ -1,3 +1,13 @@
+625.	[bug]*		jinmei
+	b10-xfrin/b10-loadzone: b10-xfrin now refers to the unified
+	"data_sources" module configuration instead of almost-deprecated
+	the Auth/database_file configuration (Note: zonemgr still uses the
+	latter, so a secondary server would still need it for the moment).
+	Due to this change, b10-xfrin does not auto-generate an initial
+	zone for the very first transfer anymore; b10-loadzone has been
+	extended with a new -e option for the initial setup.
+	(Trac #2946, git 8191aec04c5279c199909f00f0a0b2b8f7bede94)
+
 624.	[bug]		jinmei
 	logging: prevented multiple BIND 10 processes from generating
 	multiple small log files when they dumped logs to files and try
