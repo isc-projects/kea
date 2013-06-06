@@ -67,7 +67,7 @@ DControllerBase::launch(int argc, char* argv[]) {
     } catch (const std::exception& ex) {
         LOG_FATAL(d2_logger, D2CTL_INIT_PROCESS).arg(ex.what());
         isc_throw (ProcessInitError, 
-                   "Application Process initialization failed:" << ex.what());
+                   "Application Process initialization failed: " << ex.what());
     }
 
     // Next we connect if we are running integrated.
@@ -79,7 +79,7 @@ DControllerBase::launch(int argc, char* argv[]) {
         } catch (const std::exception& ex) {
             LOG_FATAL(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
             isc_throw (SessionStartError, 
-                       "Session start up failed:" << ex.what());
+                       "Session start up failed: " << ex.what());
         }
     }
 
@@ -90,7 +90,7 @@ DControllerBase::launch(int argc, char* argv[]) {
     } catch (const std::exception& ex) {
         LOG_FATAL(d2_logger, D2CTL_FAILED).arg(ex.what());
         isc_throw (ProcessRunError, 
-                   "Application process event loop failed:" << ex.what());
+                   "Application process event loop failed: " << ex.what());
     }
 
     // If running integrated, disconnect.
@@ -99,7 +99,7 @@ DControllerBase::launch(int argc, char* argv[]) {
             disconnectSession();
         } catch (const std::exception& ex) {
             LOG_ERROR(d2_logger, D2CTL_DISCONNECT_FAIL).arg(ex.what());
-            isc_throw (SessionEndError, "Session end failed:" << ex.what());
+            isc_throw (SessionEndError, "Session end failed: " << ex.what());
         }
     }
 
@@ -172,7 +172,7 @@ DControllerBase::initProcess() {
     try {
         process_.reset(createProcess());
     } catch (const std::exception& ex) {
-        isc_throw(DControllerBaseError, std::string("createProcess failed:")
+        isc_throw(DControllerBaseError, std::string("createProcess failed: ")
                   + ex.what());
     }
 
@@ -389,7 +389,7 @@ DControllerBase::customControllerCommand(const std::string& command,
 
     // Default implementation always returns invalid command.
     return (isc::config::createAnswer(COMMAND_INVALID,
-                                      "Unrecognized command:" + command));
+                                      "Unrecognized command: " + command));
 }
 
 isc::data::ConstElementPtr
@@ -409,7 +409,7 @@ void
 DControllerBase::usage(const std::string & text)
 {
     if (text != "") {
-        std::cerr << "Usage error:" << text << std::endl;
+        std::cerr << "Usage error: " << text << std::endl;
     }
 
     std::cerr << "Usage: " << name_ <<  std::endl;
