@@ -14,15 +14,35 @@
 
 $NAMESPACE isc::d2
 
-% D2_STARTING : process starting
-This is a debug message issued during a D2 process startup.
+% D2CTL_STARTING DHCP-DDNS controller starting, pid: %1
+This is an informational message issued when controller for DHCP-DDNS 
+service first starts.
 
-% D2_START_INFO pid: %1, verbose: %2, standalone: %3
-This is a debug message issued during the D2 process startup.
-It lists some information about the parameters with which the
-process is running.
+% D2CTL_STOPPING DHCP-DDNS controller is exiting
+This is an informational message issued when the controller is exiting 
+following a shut down (normal or otherwise) of the DDHCP-DDNS process.
 
-% D2_SHUTDOWN : process is performing a normal shutting down
-This is a debug message issued when a D2 process shuts down
-normally in response to command to stop.
+% D2PRC_SHUTDOWN DHCP-DDNS process is performing a normal shut down
+This is a debug message issued when the service process has been instructed
+to shut down by the controller.
+
+% D2PRC_RUN_ENTER process has entered the event loop
+This is a debug message issued when the D2 process enters it's
+run method. 
+
+% D2PRC_RUN_EXIT process is exiting the event loop
+This is a debug message issued when the D2 process exits the
+in event loop. 
+
+% D2PRC_FAILED process experienced a fatal error: %1
+This is a debug message issued when the D2 process encounters an
+unrecoverable error from within the event loop.
+
+% D2PRC_CONFIGURE new configuration received: %1
+This is a debug message issued when the D2 process configure method
+has been invoked.
+
+% D2PRC_COMMAND command directive received, command: %1 - args: %2
+This is a debug message issued when the D2 process command method
+has been invoked.
 

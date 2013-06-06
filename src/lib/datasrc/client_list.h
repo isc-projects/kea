@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,8 @@
 #include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include "memory/zone_table_segment.h"
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/zone_table_accessor.h>
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -119,6 +120,8 @@ private:
     std::string type_;
     MemorySegmentState state_;
 };
+
+typedef boost::shared_ptr<const ZoneTableAccessor> ConstZoneTableAccessorPtr;
 
 /// \brief The list of data source clients.
 ///
@@ -281,6 +284,19 @@ public:
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
                             bool want_finder = true) const = 0;
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source.
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \throw NotImplemented if this method is not implemented.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found.
+    virtual ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const = 0;
+
 };
 
 /// \brief Shared pointer to the list.
@@ -288,8 +304,8 @@ typedef boost::shared_ptr<ClientList> ClientListPtr;
 /// \brief Shared const pointer to the list.
 typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 
-/// \Concrete implementation of the ClientList, which is constructed based on
-///     configuration.
+/// \brief Concrete implementation of the ClientList, which is constructed
+/// based on configuration.
 ///
 /// This is the implementation which is expected to be used in the servers.
 /// However, it is expected most of the code will use it as the ClientList,
@@ -347,6 +363,21 @@ public:
     const isc::data::ConstElementPtr& getConfiguration() const {
         return (configuration_);
     }
+
+    /// \brief Resets the zone table segment for a datasource with a new
+    /// memory segment.
+    ///
+    /// See documentation of \c ZoneTableSegment interface
+    /// implementations (such as \c ZoneTableSegmentMapped) for the
+    /// syntax of \c config_params.
+    ///
+    /// \param datasrc_name The name of the data source whose segment to reset
+    /// \param mode The open mode for the new memory segment
+    /// \param config_params The configuration for the new memory segment.
+    void resetMemorySegment
+        (const std::string& datasrc_name,
+         memory::ZoneTableSegment::MemorySegmentOpenMode mode,
+         isc::data::ConstElementPtr config_params);
 
 private:
     /// \brief Convenience type shortcut
@@ -490,6 +521,22 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \note At present, the only concrete implementation of
+    /// ZoneTableAccessor is ZoneTableAccessorCache, so \c use_cache must be
+    /// true.
+    /// \throw NotImplemented if \c use_cache is false.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found.
+    ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const;
+
 private:
     struct MutableResult;
     /// \brief Internal implementation of find.
