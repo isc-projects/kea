@@ -70,9 +70,11 @@ ServerHooks::getIndex(const string& name) const {
 
     // Get iterator to matching element.
     HookCollection::const_iterator i = hooks_.find(name);
+    if (i == hooks_.end()) {
+        isc_throw(NoSuchHook, "hook name " << name << " is not recognised");
+    }
 
-    // ... and convert this into a return value.
-    return ((i == hooks_.end()) ? -1 : i->second);
+    return (i->second);
 }
 
 // Return vector of hook names.  The names are not sorted - it is up to the
