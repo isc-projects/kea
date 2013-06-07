@@ -33,12 +33,11 @@ public:
     ///
     /// Sets up an appropriate number of server hooks to pass to the
     /// constructed callout handle objects.
-    LibraryHandleTest()
-        : hooks_(new ServerHooks()),
-          collection_(new LibraryHandleCollection()) {
+    LibraryHandleTest() : hooks_(new ServerHooks()) {
         hooks_->registerHook("alpha");
         hooks_->registerHook("beta");
         hooks_->registerHook("gamma");
+        collection_.reset(new LibraryHandleCollection(hooks_));
 
         // Also initialize the variable used to pass information back from the
         // callouts to the tests.
@@ -63,6 +62,8 @@ public:
 private:
     boost::shared_ptr<ServerHooks> hooks_;
     boost::shared_ptr<LibraryHandleCollection> collection_;
+    boost::shared_ptr<LibraryHandle> handle_0_;
+    boost::shared_ptr<LibraryHandle> handle_1_;
 };
 
 // Definition of the static variable.

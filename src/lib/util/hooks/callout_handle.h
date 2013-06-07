@@ -73,8 +73,8 @@ public:
 
 // Forward declaration of the library handle and related collection classes.
 
+class CalloutManager;
 class LibraryHandle;
-class LibraryHandleCollection;
 
 /// @brief Per-packet callout handle
 ///
@@ -135,13 +135,13 @@ public:
     /// Creates the object and calls the callouts on the "context_create"
     /// hook.
     ///
-    /// @param manager Pointer to the collection of library handles.
-    CalloutHandle(boost::shared_ptr<LibraryHandleCollection>& collection);
+    /// @param manager Pointer to the callout manager object.
+    CalloutHandle(boost::shared_ptr<CalloutManager>& /* manager */) {}
 
     /// @brief Destructor
     ///
     /// Calls the context_destroy callback to release any per-packet context.
-    ~CalloutHandle();
+    ~CalloutHandle() {}
 
     /// @brief Set argument
     ///
@@ -364,9 +364,8 @@ private:
     /// Context collection - there is one entry per library context.
     ContextCollection context_collection_;
 
-    /// Library handle collection, used to obtain the correct library handle
-    /// during a call to a callout.
-    boost::shared_ptr<LibraryHandleCollection> library_collection_;
+    /// Callout manager.
+    boost::shared_ptr<CalloutManager> manager_;
 
     /// "Skip" flag, indicating if the caller should bypass remaining callouts.
     bool skip_;
