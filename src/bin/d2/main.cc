@@ -14,6 +14,8 @@
 
 #include <config.h>
 #include <d2/d2_log.h>
+#include <d2/d2_controller.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 
@@ -22,74 +24,25 @@
 using namespace isc::d2;
 using namespace std;
 
-/// This file contains entry point (main() function) for standard DHCP-DDNS 
-/// process, b10-d2, component for BIND10 framework. It parses command-line
-/// arguments and instantiates D2Controller class that is responsible for
-/// establishing connection with msgq (receiving commands and configuration)
-/// and also creating D2Server object as well.
-///
-/// For detailed explanation or relations between main(), D2Controller,
-/// D2Server and other classes, see \ref d2Session.
+/// This file contains entry point (main() function) for standard DHCP-DDNS
+/// process, b10-dhcp-ddns, component for BIND10 framework.  It fetches
+/// the D2Controller singleton instance and invokes its launch method.
+/// The exit value of the program will be EXIT_SUCCESS if there were no
+/// errors, EXIT_FAILURE otherwise.
+int main(int argc, char* argv[]) {
+    int ret = EXIT_SUCCESS;
 
-namespace {
+    // Instantiate/fetch the DHCP-DDNS application controller singleton.
+    DControllerBasePtr& controller = D2Controller::instance();
 
-const char* const D2_NAME = "b10-d2";
-
-void
-usage() {
-    cerr << "Usage: " << D2_NAME << " [-v] [-s]" << endl;
-    cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
-    cerr << "  -v: verbose output (only when in stand-alone mode" << endl;
-    exit(EXIT_FAILURE);
-}
-} // end of anonymous namespace
-
-int
-main(int argc, char* argv[]) {
-    int ch;
-
-    // @TODO NOTE these parameters are preliminary only. They are here to
-    // for symmetry with the DHCP servers.  They may or may not
-    // become part of the eventual implementation.
-
-    bool stand_alone = false;  // Should be connect to BIND10 msgq?
-    bool verbose_mode = false; // Should server be verbose?
-
-    while ((ch = getopt(argc, argv, "vsp:")) != -1) {
-        switch (ch) {
-        case 'v':
-            verbose_mode = true;
-            break;
-
-        case 's':
-            stand_alone = true;
-            break;
-
-        default:
-            usage();
-        }
+    // Launch the controller passing in command line arguments.
+    // Exit program with the controller's return code.
+    try  {
+        controller->launch(argc, argv);
+    } catch (const isc::Exception& ex) {
+        std::cerr << "Service failed:" << ex.what() << std::endl;
+        ret = EXIT_FAILURE;
     }
 
-    // Check for extraneous parameters.
-    if (argc > optind) {
-        usage();
-    }
-
-    // Initialize logging.  If verbose, we'll use maximum verbosity.
-    // If standalone is enabled, do not buffer initial log messages
-    // Verbose logging is only enabled when in stand alone mode.
-    isc::log::initLogger(D2_NAME,
-                         ((verbose_mode && stand_alone)
-                           ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
-
-    LOG_INFO(d2_logger, D2CTL_STARTING);
-
-    // For now we will sleep awhile to simulate doing something.
-    // Without at least a sleep, the process will start, exit and be
-    // restarted by Bind10/Init endlessley in a rapid succession.
-    sleep(1000);
-    LOG_INFO(d2_logger, D2CTL_STOPPING);
-    return (EXIT_SUCCESS);
+    return (ret);
 }
-
