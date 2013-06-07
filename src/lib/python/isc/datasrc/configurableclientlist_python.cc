@@ -196,6 +196,44 @@ ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const std::vector<DataSourceStatus> status = self->cppobj->getStatus();
+        if (status.empty()) {
+            Py_RETURN_NONE;
+        }
+
+        PyObject *slist = PyList_New(status.size());
+        if (!slist) {
+            return (NULL);
+        }
+
+        for (size_t i = 0; i < status.size(); ++i) {
+            PyObject *tup = Py_BuildValue("(ssI)",
+                                          status[i].getName().c_str(),
+                                          status[i].getSegmentType().c_str(),
+                                          status[i].getSegmentState());
+            if (!tup) {
+                Py_DECREF(slist);
+                return (NULL);
+            }
+            PyList_SET_ITEM(slist, i, tup);
+        }
+
+        return (slist);
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
 ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
     s_ConfigurableClientList* self =
         static_cast<s_ConfigurableClientList*>(po_self);
@@ -295,6 +333,13 @@ This returns a ZoneWriter that can be used to (re)load a zone.\n\
 Parameters:\n\
   zone              The name of the zone to (re)load.\
   datasrc_name      The name of the data source where the zone is to be loaded." },
+    { "get_status", ConfigurableClientList_getStatus,
+      METH_NOARGS,
+        "get_status() -> list\n\
+\n\
+Wrapper around C++ ConfigurableClientList::getStatus\n\
+\n\
+This returns a list of tuples, each containing the status of a data source client." },
     { "find", ConfigurableClientList_find, METH_VARARGS,
 "find(zone, want_exact_match=False, want_finder=True) -> datasrc_client,\
 zone_finder, exact_match\n\
@@ -424,6 +469,17 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
         installClassVariable(configurableclientlist_type,
                              "CACHE_STATUS_ZONE_SUCCESS",
                              Py_BuildValue("I", ConfigurableClientList::ZONE_SUCCESS));
+
+        // MemorySegmentState enum
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_UNUSED",
+                             Py_BuildValue("I", SEGMENT_UNUSED));
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_WAITING",
+                             Py_BuildValue("I", SEGMENT_WAITING));
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_INUSE",
+                             Py_BuildValue("I", SEGMENT_INUSE));
 
         // FIXME: These should eventually be moved to the
         // ZoneTableSegment class when we add Python bindings for the

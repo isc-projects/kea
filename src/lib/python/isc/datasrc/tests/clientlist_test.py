@@ -205,6 +205,29 @@ class ClientListTest(unittest.TestCase):
         # The segment is still in READ_ONLY mode.
         self.find_helper()
 
+    def test_get_status(self):
+        """
+        Test getting status of various data sources.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+
+        status = self.clist.get_status()
+        self.assertIsNone(status)
+
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+
+        status = self.clist.get_status()
+        self.assertEqual(1, len(status))
+        self.assertTupleEqual(('MasterFiles', 'local', isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
+                              status[0])
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
