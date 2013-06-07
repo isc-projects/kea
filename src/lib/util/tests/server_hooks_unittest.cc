@@ -60,7 +60,7 @@ TEST(ServerHooksTest, RegisterHooks) {
     EXPECT_EQ(4, hooks.getCount());
 }
 
-// Check that duplcate names cannot be registered.
+// Check that duplicate names cannot be registered.
 
 TEST(ServerHooksTest, DuplicateHooks) {
     ServerHooks hooks;
@@ -102,6 +102,14 @@ TEST(ServerHooksTest, GetHookNames) {
     sort(actual_names.begin(), actual_names.end());
 
     EXPECT_TRUE(expected_names == actual_names);
+}
+
+// Check that getting an unknown name throws an exception.
+
+TEST(ServerHooksTest, UnknownHookName) {
+    ServerHooks hooks;
+
+    EXPECT_THROW(static_cast<void>(hooks.getIndex("unknown")), NoSuchHook);
 }
 
 // Check that the count of hooks is correct.

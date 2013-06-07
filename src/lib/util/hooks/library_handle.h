@@ -26,16 +26,6 @@
 namespace isc {
 namespace util {
 
-/// @brief No such hook
-///
-/// Thrown if an attempt is made to use an invalid hook name or hook index.
-
-class NoSuchHook : public Exception {
-public:
-    NoSuchHook(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 /// @brief No Such Context
 ///
 /// Thrown if an attempt is made to obtain context that has not been previously
@@ -162,24 +152,6 @@ private:
     ///        less than zero or equal to or greater than the size of the
     ///        vector).
     void checkHookIndex(int index) const;
-
-    /// @brief Get hook index
-    ///
-    /// Utility function to return the index associated with a hook name. It
-    /// also checks for validity of the index: if the name is valid, the
-    /// index should be valid.  However, as the class only keeps a pointer to
-    /// a shared ServerHooks object, it is possible that the object was modified
-    /// after the hook_vector_ was sized: in this case the name could be valid
-    /// but the index is invalid.
-    ///
-    /// @param name Name of the hook to check
-    ///
-    /// @return Index of the hook in the hook_vector_
-    ///
-    /// @throw NoSuchHook The hook name is unrecognised.
-    /// @throw Unexpected Index of the hook name is not valid for the hook
-    ///        vector.
-    int getHookIndex(const std::string& name) const;
 
     // Member variables
 
