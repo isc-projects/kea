@@ -95,7 +95,7 @@ ZoneWriter_load(PyObject* po_self, PyObject*) {
         return (NULL);
     }
 
-    return (Py_None);
+    Py_RETURN_NONE;
 }
 
 PyObject*
@@ -112,7 +112,7 @@ ZoneWriter_install(PyObject* po_self, PyObject*) {
         return (NULL);
     }
 
-    return (Py_None);
+    Py_RETURN_NONE;
 }
 
 PyObject*
@@ -129,7 +129,7 @@ ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
         return (NULL);
     }
 
-    return (Py_None);
+    Py_RETURN_NONE;
 }
 
 // This list contains the actual set of functions we have in
