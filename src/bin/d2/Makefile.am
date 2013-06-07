@@ -18,15 +18,15 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc
 
-man_MANS = b10-d2.8
+man_MANS = b10-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) b10-d2.xml d2.spec
+EXTRA_DIST = $(man_MANS) b10-dhcp-ddns.xml dhcp-ddns.spec
 
 if GENERATE_DOCS
-b10-d2.8: b10-d2.xml
+b10-dhcp-ddns.8: b10-dhcp-ddns.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/b10-d2.xml
+	$(srcdir)/b10-dhcp-ddns.xml
 
 else
 
@@ -44,21 +44,23 @@ d2_messages.h d2_messages.cc: d2_messages.mes
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 
-pkglibexec_PROGRAMS = b10-d2
+pkglibexec_PROGRAMS = b10-dhcp-ddns
 
-b10_d2_SOURCES  = main.cc
-b10_d2_SOURCES += d2_log.cc d2_log.h
-b10_d2_SOURCES += d_process.h 
-b10_d2_SOURCES += d2_process.cc d2_process.h
+b10_dhcp_ddns_SOURCES  = main.cc
+b10_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
+b10_dhcp_ddns_SOURCES += d_process.h
+b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
+b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
+b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
 
-nodist_b10_d2_SOURCES = d2_messages.h d2_messages.cc
+nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
 
-b10_d2_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
-b10_d2_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-b10_d2_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-b10_d2_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-b10_d2_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+b10_dhcp_ddns_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 
-b10_d2dir = $(pkgdatadir)
-b10_d2_DATA = d2.spec
+b10_dhcp_ddnsdir = $(pkgdatadir)
+b10_dhcp_ddns_DATA = dhcp-ddns.spec
