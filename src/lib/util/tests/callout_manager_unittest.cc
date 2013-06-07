@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <util/hooks/callout_handle.h>
 #include <util/hooks/callout_manager.h>
+#include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
 #include <gtest/gtest.h>
