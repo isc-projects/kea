@@ -85,7 +85,11 @@ PyObject*
 ZoneWriter_load(PyObject* po_self, PyObject*) {
     s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
     try {
-        self->cppobj->load();
+        std::string error_msg;
+        self->cppobj->load(&error_msg);
+        if (!error_msg.empty()) {
+            return (Py_BuildValue("s", error_msg.c_str()));
+        }
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);

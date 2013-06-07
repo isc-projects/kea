@@ -190,7 +190,8 @@ class ClientListTest(unittest.TestCase):
         result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
-        self.__zone_writer.load()
+        err_msg = self.__zone_writer.load()
+        self.assertIsNone(err_msg)
         self.__zone_writer.install()
         self.__zone_writer.cleanup()
 
