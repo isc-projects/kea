@@ -45,7 +45,7 @@ D2Controller::D2Controller()
     // use the production value.
     if (getenv("B10_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/d2/d2.spec");
+            "/src/bin/d2/dhcp-ddns.spec");
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);
     }
