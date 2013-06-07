@@ -20,79 +20,82 @@
 namespace isc {
 namespace d2 {
 
-/// @brief @TODO DHCP-DDNS Application Process 
+/// @brief DHCP-DDNS Application Process
 ///
-/// D2Process provides the top level application logic for DHCP-driven DDNS 
-/// update processing.  It provides the asynchronous event processing required 
-/// to receive DNS mapping change requests and carry them out.   
+/// D2Process provides the top level application logic for DHCP-driven DDNS
+/// update processing.  It provides the asynchronous event processing required
+/// to receive DNS mapping change requests and carry them out.
 /// It implements the DProcessBase interface, which structures it such that it
-/// is a managed "application", controlled by a management layer. 
+/// is a managed "application", controlled by a management layer.
 
 class D2Process : public DProcessBase {
 public:
     /// @brief Constructor
     ///
     /// @param name name is a text label for the process. Generally used
-    /// in log statements, but otherwise arbitrary. 
+    /// in log statements, but otherwise arbitrary.
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
-    /// @throw DProcessBaseError is io_service is NULL. 
+    /// @throw DProcessBaseError is io_service is NULL.
     D2Process(const char* name, IOServicePtr io_service);
 
-    /// @brief Will be used after instantiation to perform initialization 
-    /// unique to D2. This will likely include interactions with QueueMgr and 
-    /// UpdateMgr, to prepare for request receipt and processing.
+    /// @brief Will be used after instantiation to perform initialization
+    /// unique to D2. @TODO This will likely include interactions with
+    /// QueueMgr and UpdateMgr, to prepare for request receipt and processing.
+    /// Current implementation successfully does nothing.
+    /// @throw throws a DProcessBaseError if the initialization fails.
     virtual void init();
 
-    /// @brief Implements the process's event loop. 
-    /// The initial implementation is quite basic, surrounding calls to 
+    /// @brief Implements the process's event loop.
+    /// The initial implementation is quite basic, surrounding calls to
     /// io_service->runOne() with a test of the shutdown flag.
-    /// Once invoked, the method will continue until the process itself is 
-    /// exiting due to a request to shutdown or some anomaly forces an exit.   
-    /// @return  returns 0 upon a successful, "normal" termination, non
-    /// zero to indicate an abnormal termination.    
-    virtual int run();
+    /// Once invoked, the method will continue until the process itself is
+    /// exiting due to a request to shutdown or some anomaly forces an exit.
+    /// @throw throws a DProcessBaseError if an error is encountered.
+    virtual void run();
 
-    // @TODO need brief
-    virtual int shutdown();
+    /// @brief Implements the process's shutdown processing. When invoked, it
+    /// should ensure that the process gracefully exits the run method.
+    /// Current implementation simply sets the shutdown flag monitored by the
+    /// run method. @TODO this may need to expand as the implementation evolves.
+    /// @throw throws a DProcessBaseError if an error is encountered.
+    virtual void shutdown();
 
-    // @TODO need brief
-    /// @brief Processes the given configuration. 
-    /// 
+    /// @brief Processes the given configuration.
+    ///
     /// This method may be called multiple times during the process lifetime.
     /// Certainly once during process startup, and possibly later if the user
     /// alters configuration. This method must not throw, it should catch any
     /// processing errors and return a success or failure answer as described
-    /// below. 
+    /// below.
     ///
     /// @param config_set a new configuration (JSON) for the process
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
-    /// and a string explanation of the outcome. 
+    /// and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr configure(isc::data::ConstElementPtr
                                                  config_set);
 
-    // @TODO need brief
-    /// @brief Processes the given command. 
-    /// 
-    /// This method is called to execute any custom commands supported by the 
-    /// process. This method must not throw, it should catch any processing 
+    /// @brief Processes the given command.
+    ///
+    /// This method is called to execute any custom commands supported by the
+    /// process. This method must not throw, it should catch any processing
     /// errors and return a success or failure answer as described below.
     ///
     /// @param command is a string label representing the command to execute.
     /// @param args is a set of arguments (if any) required for the given
-    /// command. 
+    /// command.
     /// @return an Element that contains the results of command composed
     /// of an integer status value (0 means successful, non-zero means failure),
-    /// and a string explanation of the outcome.  
-    virtual isc::data::ConstElementPtr command(const std::string& command, 
+    /// and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr command(const std::string& command,
                                                isc::data::ConstElementPtr args);
-    // @TODO need brief
+    /// @brief Destructor
     virtual ~D2Process();
 };
 
-}; // namespace isc::d2 
+}; // namespace isc::d2
 }; // namespace isc
 
 #endif

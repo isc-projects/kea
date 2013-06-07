@@ -52,10 +52,15 @@ if HAVE_GTEST
 TESTS += d2_unittests
 
 d2_unittests_SOURCES = ../d2_log.h ../d2_log.cc
-d2_unittests_SOURCES += ../d_process.h 
+d2_unittests_SOURCES += ../d_process.h
+d2_unittests_SOURCES += ../d_controller.cc ../d2_controller.h
 d2_unittests_SOURCES += ../d2_process.cc ../d2_process.h
+d2_unittests_SOURCES += ../d2_controller.cc ../d2_controller.h
+d2_unittests_SOURCES += d_test_stubs.cc d_test_stubs.h
 d2_unittests_SOURCES += d2_unittests.cc
 d2_unittests_SOURCES += d2_process_unittests.cc
+d2_unittests_SOURCES += d_controller_unittests.cc
+d2_unittests_SOURCES += d2_controller_unittests.cc
 nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
