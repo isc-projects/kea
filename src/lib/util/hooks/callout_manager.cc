@@ -25,23 +25,6 @@ using namespace isc::util;
 namespace isc {
 namespace util {
 
-// Callout manipulation - all deferred to the CalloutManager.
-
-void
-LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
-    callout_manager_->registerCallout(library_index_, name, callout);
-}
-
-bool
-LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
-    return (callout_manager_->deregisterCallout(library_index_, name, callout));
-}
-
-bool
-LibraryHandle::deregisterAllCallouts(const std::string& name) {
-    return (callout_manager_->deregisterAllCallouts(library_index_, name));
-}
-
 // Register a callout for a particular library.
 
 void
@@ -147,7 +130,7 @@ CalloutManager::deregisterCallout(int library_index, const std::string& name,
 
 bool
 CalloutManager::deregisterAllCallouts(int library_index,
-                                               const std::string& name) {
+                                      const std::string& name) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
