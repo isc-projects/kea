@@ -1,6 +1,6 @@
 {
   "module_spec": {
-    "module_name": "D2",
+    "module_name": "DhcpDdns",
     "module_description": "DHPC-DDNS Service",
     "config_data": [
     ],
