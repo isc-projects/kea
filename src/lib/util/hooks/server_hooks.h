@@ -34,13 +34,22 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid hook
+///
+/// Thrown if an attempt is made to get the index for an invalid hook.
+class NoSuchHook : public Exception {
+public:
+    NoSuchHook(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 /// @brief Server hook collection
 ///
-/// This class is used by the server-side code to register hooks - points at
-/// in the server processing at which libraries can register functions
-/// (callouts) that the server will call.  These functions can modify data and
-/// so affect the processing of the server.
+/// This class is used by the server-side code to register hooks - points in the
+/// server processing at which libraries can register functions (callouts) that
+/// the server will call.  These functions can modify data and so affect the
+/// processing of the server.
 ///
 /// The ServerHooks class is little more than a wrapper around the std::map
 /// class.  It stores a hook, assigning to it a unique index number.  This
@@ -87,8 +96,9 @@ public:
     ///
     /// @param name Name of the hook
     ///
-    /// @return Index of the hook, to be used in subsequent calls. A value of
-    ///         -1 is returned if no hook of the given name is found.
+    /// @return Index of the hook, to be used in subsequent calls.
+    ///
+    /// @throw NoSuchHook if the hook name is unknown to the caller.
     int getIndex(const std::string& name) const;
 
     /// @brief Return number of hooks

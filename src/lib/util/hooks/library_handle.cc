@@ -34,25 +34,6 @@ LibraryHandle::checkHookIndex(int index) const {
     }
 }
 
-// Get index for named hook.
-
-int
-LibraryHandle::getHookIndex(const std::string& name) const {
-
-    // Get index of hook in the hook vector.
-    int index = hooks_->getIndex(name);
-    if (index < 0) {
-        isc_throw(NoSuchHook, "unknown hook: " << name);
-    } else if (index >= hook_vector_.size()) {
-        isc_throw(Unexpected, "hook name " << name << " is valid, but the "
-                  "index returned (" << index << ") is invalid for the size of "
-                  "the LibraryHandle::hook_vector_ (" << hook_vector_.size() <<
-                  ")");
-    }
-
-    return (index);
-}
-
 // Register a callout for a hook, adding it to run after any previously
 // registered callouts on that hook.
 
@@ -61,7 +42,7 @@ LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
 
     // Get index of hook in the hook vector, validating the hook name as we
     // do so.
-    int index = getHookIndex(name);
+    int index = hooks_->getIndex(name);
 
     // Index valid, so add the callout to the end of the list of callouts.
     hook_vector_[index].push_back(callout);
@@ -71,7 +52,6 @@ LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
 
 bool
 LibraryHandle::calloutsPresent(int index) const {
-
     // Validate the hook index.
     checkHookIndex(index);
 
@@ -83,7 +63,6 @@ LibraryHandle::calloutsPresent(int index) const {
 
 int
 LibraryHandle::callCallouts(int index, CalloutHandle& callout_handle) {
-
     // Validate the hook index.
     checkHookIndex(index);
 
@@ -107,7 +86,7 @@ LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int index = getHookIndex(name);
+    int index = hooks_->getIndex(name);
 
     if (!hook_vector_[index].empty()) {
         // The next bit is standard STL (see "Item 33" in "Effective STL" by
@@ -134,7 +113,7 @@ LibraryHandle::deregisterAll(const std::string& name) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int index = getHookIndex(name);
+    int index = hooks_->getIndex(name);
 
     // Get rid of everything.
     hook_vector_[index].clear();
