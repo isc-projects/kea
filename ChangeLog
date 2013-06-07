@@ -1,3 +1,12 @@
+626.	[func]		tmark
+	Created the initial implementation of DHCP-DDNS service
+	controller class, D2Controller, and the abstract class from
+	which it derives,DControllerBase. D2Controller manages the
+	lifecycle and BIND10 integration of the DHCP-DDNS application
+	process, D2Process. Alos note, module name is now 
+	b10-dhcp-ddns.
+	(Trac #2956, git a41cac582e46213c120b19928e4162535ba5fe76)
+
 625.	[bug]*		jinmei
 	b10-xfrin/b10-loadzone: b10-xfrin now refers to the unified
 	"data_sources" module configuration instead of almost-deprecated
