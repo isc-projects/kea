@@ -19,11 +19,19 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Defines the application name, this is passed into base class
+/// and appears in log statements.
+const char* D2Controller::d2_app_name_ = "Dhcp-Ddns";
+
+/// @brief Defines the executable name. This is passed into the base class
+/// by convention this should match the BIND10 module name.
+const char* D2Controller::d2_bin_name_ = "b10-dhcp-ddns";
+
 DControllerBasePtr&
 D2Controller::instance() {
     // If the instance hasn't been created yet, create it.  Note this method
     // must use the base class singleton instance methods.  The base class
-    // must have access to the singleton in order to use it within BIND10 
+    // must have access to the singleton in order to use it within BIND10
     // static function callbacks.
     if (!getController()) {
         DControllerBasePtr controller_ptr(new D2Controller());
@@ -36,11 +44,11 @@ D2Controller::instance() {
 DProcessBase* D2Controller::createProcess() {
     // Instantiate and return an instance of the D2 application process. Note
     // that the process is passed the controller's io_service.
-    return (new D2Process(getName().c_str(), getIOService()));
+    return (new D2Process(getAppName().c_str(), getIOService()));
 }
 
 D2Controller::D2Controller()
-    : DControllerBase(D2_MODULE_NAME) {
+    : DControllerBase(d2_app_name_, d2_bin_name_) {
     // set the BIND10 spec file either from the environment or
     // use the production value.
     if (getenv("B10_FROM_BUILD")) {

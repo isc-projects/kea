@@ -54,15 +54,14 @@ class DProcessBase {
 public:
     /// @brief Constructor
     ///
-    /// @param name name is a text label for the process. Generally used
+    /// @param app_name is a text label for the process. Generally used
     /// in log statements, but otherwise arbitrary.
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DProcessBase(const char* name, IOServicePtr io_service) : name_(name),
-        io_service_(io_service), shut_down_flag_(false) {
-
+    DProcessBase(const char* app_name, IOServicePtr io_service)
+        : app_name_(app_name), io_service_(io_service), shut_down_flag_(false) {
         if (!io_service_) {
             isc_throw (DProcessBaseError, "IO Service cannot be null");
         }
@@ -138,11 +137,11 @@ public:
         shut_down_flag_ = value;
     }
 
-    /// @brief Fetches the name of the controller.
+    /// @brief Fetches the application name.
     ///
-    /// @return returns a reference the controller's name string.
-    const std::string getName() const {
-        return (name_);
+    /// @return returns a the application name string.
+    const std::string getAppName() const {
+        return (app_name_);
     }
 
     /// @brief Fetches the controller's IOService.
@@ -153,7 +152,7 @@ public:
     }
 
     /// @brief Convenience method for stopping IOservice processing.
-    /// Invoking this will cause the process to exit any blocking 
+    /// Invoking this will cause the process to exit any blocking
     /// IOService method such as run().  No further IO events will be
     /// processed.
     void stopIOService() {
@@ -163,7 +162,7 @@ public:
 private:
     /// @brief Text label for the process. Generally used in log statements,
     /// but otherwise can be arbitrary.
-    std::string name_;
+    std::string app_name_;
 
     /// @brief The IOService to be used for asynchronous event handling.
     IOServicePtr io_service_;

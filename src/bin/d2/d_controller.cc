@@ -26,10 +26,12 @@ namespace d2 {
 DControllerBasePtr DControllerBase::controller_;
 
 // Note that the constructor instantiates the controller's primary IOService.
-DControllerBase::DControllerBase(const char* name)
-    : name_(name), stand_alone_(false), verbose_(false),
-    spec_file_name_(""), io_service_(new isc::asiolink::IOService()){
+DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
+    : app_name_(app_name), bin_name_(bin_name), stand_alone_(false),
+      verbose_(false), spec_file_name_(""),
+      io_service_(new isc::asiolink::IOService()){
 }
+
 
 void
 DControllerBase::setController(const DControllerBasePtr& controller) {
@@ -55,30 +57,33 @@ DControllerBase::launch(int argc, char* argv[]) {
 
     // Now that we know what the mode flags are, we can init logging.
     // If standalone is enabled, do not buffer initial log messages
-    isc::log::initLogger(name_,
+    isc::log::initLogger(bin_name_,
                          ((verbose_ && stand_alone_)
                           ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
 
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STARTING).arg(getpid());
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STARTING)
+              .arg(app_name_).arg(getpid());
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
     } catch (const std::exception& ex) {
-        LOG_FATAL(d2_logger, D2CTL_INIT_PROCESS).arg(ex.what());
-        isc_throw (ProcessInitError, 
+        LOG_FATAL(dctl_logger, DCTL_INIT_PROCESS_FAIL)
+                  .arg(app_name_).arg(ex.what());
+        isc_throw (ProcessInitError,
                    "Application Process initialization failed: " << ex.what());
     }
 
     // Next we connect if we are running integrated.
     if (stand_alone_) {
-        LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_STANDALONE);
+        LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE)
+                  .arg(app_name_);
     } else {
         try {
             establishSession();
         } catch (const std::exception& ex) {
-            LOG_FATAL(d2_logger, D2CTL_SESSION_FAIL).arg(ex.what());
-            isc_throw (SessionStartError, 
+            LOG_FATAL(dctl_logger, DCTL_SESSION_FAIL).arg(ex.what());
+            isc_throw (SessionStartError,
                        "Session start up failed: " << ex.what());
         }
     }
@@ -88,8 +93,9 @@ DControllerBase::launch(int argc, char* argv[]) {
     try {
         runProcess();
     } catch (const std::exception& ex) {
-        LOG_FATAL(d2_logger, D2CTL_FAILED).arg(ex.what());
-        isc_throw (ProcessRunError, 
+        LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
+                  .arg(app_name_).arg(ex.what());
+        isc_throw (ProcessRunError,
                    "Application process event loop failed: " << ex.what());
     }
 
@@ -98,13 +104,14 @@ DControllerBase::launch(int argc, char* argv[]) {
         try {
             disconnectSession();
         } catch (const std::exception& ex) {
-            LOG_ERROR(d2_logger, D2CTL_DISCONNECT_FAIL).arg(ex.what());
+            LOG_ERROR(dctl_logger, DCTL_DISCONNECT_FAIL)
+                      .arg(app_name_).arg(ex.what());
             isc_throw (SessionEndError, "Session end failed: " << ex.what());
         }
     }
 
     // All done, so bail out.
-    LOG_INFO(d2_logger, D2CTL_STOPPING);
+    LOG_INFO(dctl_logger, DCTL_STOPPING).arg(app_name_);
 }
 
 
@@ -132,7 +139,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
 
         case '?': {
             // We hit an invalid option.
-            isc_throw(InvalidUsage, "unsupported option: [" 
+            isc_throw(InvalidUsage, "unsupported option: ["
                       << static_cast<char>(optopt) << "] "
                       << (!optarg ? "" : optarg));
 
@@ -143,7 +150,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
                 // This would be a programmatic error.
-                isc_throw(InvalidUsage, " Option listed but implemented?: [" 
+                isc_throw(InvalidUsage, " Option listed but implemented?: ["
                           << static_cast<char>(ch) << "] "
                           << (!optarg ? "" : optarg));
             }
@@ -166,7 +173,7 @@ DControllerBase::customOption(int /* option */, char* /*optarg*/)
 
 void
 DControllerBase::initProcess() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_INIT_PROCESS);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_INIT_PROCESS).arg(app_name_);
 
     // Invoke virtual method to instantiate the application process.
     try {
@@ -188,8 +195,8 @@ DControllerBase::initProcess() {
 
 void
 DControllerBase::establishSession() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_CCSESSION_STARTING)
-              .arg(spec_file_name_);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_STARTING)
+              .arg(app_name_).arg(spec_file_name_);
 
     // Create the BIND10 command control session with the our IOService.
     cc_session_ = SessionPtr(new isc::cc::Session(
@@ -223,7 +230,8 @@ DControllerBase::establishSession() {
     int ret = 0;
     isc::data::ConstElementPtr comment = isc::config::parseAnswer(ret, answer);
     if (ret) {
-        LOG_ERROR(d2_logger, D2CTL_CONFIG_LOAD_FAIL).arg(comment->str());
+        LOG_ERROR(dctl_logger, DCTL_CONFIG_LOAD_FAIL)
+                  .arg(app_name_).arg(comment->str());
     }
 
     // Lastly, call onConnect. This allows deriving class to execute custom
@@ -233,7 +241,7 @@ DControllerBase::establishSession() {
 
 void
 DControllerBase::runProcess() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_RUN_PROCESS);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_RUN_PROCESS).arg(app_name_);
     if (!process_) {
         // This should not be possible.
         isc_throw(DControllerBaseError, "Process not initialized");
@@ -245,7 +253,8 @@ DControllerBase::runProcess() {
 }
 
 void DControllerBase::disconnectSession() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_CCSESSION_ENDING);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CCSESSION_ENDING)
+              .arg(app_name_);
 
     // Call virtual onDisconnect. Allows deriving class to execute custom
     // logic prior to session loss.
@@ -265,24 +274,16 @@ void DControllerBase::disconnectSession() {
 
 isc::data::ConstElementPtr
 DControllerBase::dummyConfigHandler(isc::data::ConstElementPtr) {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2CTL_CONFIG_STUB);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_CONFIG_STUB)
+             .arg(controller_->getAppName());
     return (isc::config::createAnswer(0, "Configuration accepted."));
 }
 
 isc::data::ConstElementPtr
 DControllerBase::configHandler(isc::data::ConstElementPtr new_config) {
 
-    LOG_DEBUG(d2_logger, DBGLVL_COMMAND, D2CTL_CONFIG_UPDATE)
-            .arg(new_config->str());
-
-    if (!controller_) {
-        // This should never happen as we install the handler after we
-        // instantiate the server.
-        isc::data::ConstElementPtr answer =
-            isc::config::createAnswer(1, "Configuration rejected,"
-                                   " Controller has not been initialized.");
-        return (answer);
-    }
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_CONFIG_UPDATE)
+              .arg(controller_->getAppName()).arg(new_config->str());
 
     // Invoke the instance method on the controller singleton.
     return (controller_->updateConfig(new_config));
@@ -293,17 +294,8 @@ isc::data::ConstElementPtr
 DControllerBase::commandHandler(const std::string& command,
                                 isc::data::ConstElementPtr args) {
 
-    LOG_DEBUG(d2_logger, DBGLVL_COMMAND, D2CTL_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
-
-    if (!controller_ )  {
-        // This should never happen as we install the handler after we
-        // instantiate the server.
-        isc::data::ConstElementPtr answer =
-            isc::config::createAnswer(1, "Command rejected,"
-                                   " Controller has not been initialized.");
-        return (answer);
-    }
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
+              .arg(controller_->getAppName()).arg(command).arg(args->str());
 
     // Invoke the instance method on the controller singleton.
     return (controller_->executeCommand(command, args));
@@ -399,7 +391,7 @@ DControllerBase::shutdown() {
     } else {
         // Not really a failure, but this condition is worth noting. In reality
         // it should be pretty hard to cause this.
-        LOG_WARN(d2_logger, D2CTL_NOT_RUNNING);
+        LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
     }
 
     return (isc::config::createAnswer(0, "Shutting down."));
@@ -412,7 +404,7 @@ DControllerBase::usage(const std::string & text)
         std::cerr << "Usage error: " << text << std::endl;
     }
 
-    std::cerr << "Usage: " << name_ <<  std::endl;
+    std::cerr << "Usage: " << bin_name_ <<  std::endl;
     std::cerr << "  -v: verbose output" << std::endl;
     std::cerr << "  -s: stand-alone mode (don't connect to BIND10)"
               << std::endl;
