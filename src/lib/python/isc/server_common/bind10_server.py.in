@@ -1,0 +1,115 @@
+# Copyright (C) 2013  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import os
+import signal
+
+import isc.log
+from isc.server_common.logger import logger
+from isc.log_messages.server_common_messages import *
+
+class BIND10Server:
+    """A mixin class for common BIND 10 server implementations.
+
+    Methods to be implemented in the actual class:
+
+    """
+    # Will be set to True when the server should stop and shut down.
+    # Can be read via accessor method 'shutdown', mainly for testing.
+    __shutdown = False
+    __module_name = None
+
+    @property
+    def shutdown(self):
+        return self.__shutdown
+
+    def _setup_ccsession(self):
+        self._cc = isc.config.ModuleCCSession(self._get_specfile_location(),
+                                              self._config_handler,
+                                              self._command_handler)
+
+    def _get_specfile_location(self):
+        """Return the path to the module spec file following common convetion.
+
+        This method generates the path commonly used by most BIND 10 modules,
+        determined by a well known prefix and the module name.
+
+        A specific module can override this method if it uses a different
+        path for the spec file.
+
+        """
+        if 'B10_FROM_SOURCE' in os.environ:
+            specfile_path = os.environ['B10_FROM_SOURCE'] + '/src/bin/' + \
+                self.__module_name
+        else:
+            specfile_path = '@datadir@/@PACKAGE@'\
+                .replace('${datarootdir}', '@datarootdir@')\
+                .replace('${prefix}', '@prefix@')
+        return specfile_path + '/' + self.__module_name
+
+    def _trigger_shutdown(self):
+        """Initiate a shutdown sequence.
+
+        This method is expected to be called in various ways including
+        in the middle of a signal handler, and is designed to be as simple
+        as possible to minimize side effects.  Actual shutdown will take
+        place in a normal control flow.
+
+        This method is defined as 'protected' so tests can call it; otherwise
+        it's private.
+
+        """
+        self.__shutdown = True
+
+    def _run_internal(self):
+        while not self.__shutdown:
+            pass
+
+    def _config_handler(self):
+        pass
+
+    def _command_handler(self):
+        pass
+
+    def run(self, module_name):
+        """Start the server and let it run until it's told to stop.
+
+        Usually this must be the first method of this class that is called
+        from its user.
+
+        Parameter:
+          module_name (str): the Python module name for the actual server
+            implementation.  Often identical to the directory name in which
+            the implementation files are placed.
+
+        Returns: values expected to be used as program's exit code.
+          0: server has run and finished successfully.
+          1: some error happens
+
+          """
+        try:
+            self.__module_name = module_name
+            shutdown_sighandler = \
+                lambda signal, frame: self._trigger_shutdown()
+            signal.signal(signal.SIGTERM, shutdown_sighandler)
+            signal.signal(signal.SIGINT, shutdown_sighandler)
+            self._setup_ccsession()
+            self._run_internal()
+            return 0
+        except Exception as ex:
+            logger.error(PYSERVER_COMMON_UNCAUGHT_EXCEPTION, type(ex).__name__,
+                         str(ex))
+
+        return 1
