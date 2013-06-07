@@ -1192,6 +1192,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/Makefile
                  src/bin/loadzone/tests/correct/Makefile
+		 src/bin/memmgr/Makefile
+		 src/bin/memmgr/tests/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -1379,6 +1381,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/loadzone/loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
+           src/bin/memmgr/memmgr.py
            src/bin/msgq/msgq.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
