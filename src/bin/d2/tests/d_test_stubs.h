@@ -190,6 +190,12 @@ public:
     /// DStubController.
     static const char* stub_option_x_;
 
+    /// @brief Defines the app name used to construct the controller
+    static const char* stub_app_name_;
+
+    /// @brief Defines the executable name used to construct the controller
+    static const char* stub_bin_name_;
+
 protected:
     /// @brief Handles additional command line options that are supported
     /// by DStubController.  This implementation supports an option "-x".
@@ -291,13 +297,24 @@ public:
         return ((*instanceGetter_)());
     }
 
-    /// @brief Returns true if the Controller's name matches the given value.
+    /// @brief Returns true if the Controller's app name matches the
+    /// given value.
     ///
     /// @param should_be is the value to compare against.
     ///
     /// @return returns true if the values are equal.
-    bool checkName(const std::string& should_be) {
-        return (getController()->getName().compare(should_be) == 0);
+    bool checkAppName(const std::string& should_be) {
+        return (getController()->getAppName().compare(should_be) == 0);
+    }
+
+    /// @brief Returns true if the Controller's service name matches the
+    /// given value.
+    ///
+    /// @param should_be is the value to compare against.
+    ///
+    /// @return returns true if the values are equal.
+    bool checkBinName(const std::string& should_be) {
+        return (getController()->getBinName().compare(should_be) == 0);
     }
 
     /// @brief Returns true if the Controller's spec file name matches the
