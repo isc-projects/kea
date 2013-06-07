@@ -15,8 +15,24 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import os
+import sys
+import signal
 
-import sys; sys.path.append('@@PYTHONPATH@@')
+sys.path.append('@@PYTHONPATH@@')
+import isc.log
+from isc.log_messages.memmgr_messages import *
+from isc.server_common.bind10_server import BIND10Server
+
+MODULE_NAME = 'memmgr'
+
+isc.log.init('b10-memmgr', buffer=True)
+logger = isc.log.Logger(MODULE_NAME)
+
+class Memmgr(BIND10Server):
+    def _config_handler(self, new_config):
+        pass
 
 if '__main__' == __name__:
-    pass
+    mgr = Memmgr()
+    sys.exit(mgr.run(MODULE_NAME))

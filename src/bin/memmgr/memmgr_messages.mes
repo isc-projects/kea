@@ -15,3 +15,5 @@
 # When you add a message to this file, it is a good idea to run
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
+
+% MEMMGR_CONFIG_UPDATE received new configuration: %1

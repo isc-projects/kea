@@ -13,8 +13,18 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import isc.log
 import unittest
+
+import isc.log
+import isc.config
+import memmgr
+
+class MockMemmgr(memmgr.Memmgr):
+    pass
+
+class TestMemmgr(unittest.TestCase):
+    def setUp(self):
+        self.__mgr = MockMemmgr()
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
