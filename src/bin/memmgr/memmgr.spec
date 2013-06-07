@@ -2,8 +2,6 @@
   "module_spec": {
     "module_name": "Memmgr",
     "config_data": [
-      {
-      }
     ],
     "commands": [
       {
@@ -20,4 +18,3 @@
     ]
   }
 }
-
