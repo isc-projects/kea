@@ -344,7 +344,7 @@ protected:
     /// @brief Supplies whether or not the controller is in stand alone mode.
     ///
     /// @return returns true if in stand alone mode, false otherwise
-    bool isStandAlone() {
+    bool isStandAlone() const {
         return (stand_alone_);
     }
 
@@ -358,7 +358,7 @@ protected:
     /// @brief Supplies whether or not verbose logging is enabled.
     ///
     /// @return returns true if verbose logging is enabled.
-    bool isVerbose() {
+    bool isVerbose() const {
         return (verbose_);
     }
 
