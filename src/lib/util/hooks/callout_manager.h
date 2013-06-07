@@ -12,10 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef LIBRARY_HANDLE_H
-#define LIBRARY_HANDLE_H
+#ifndef CALLOUT_MANAGER_H
+#define CALLOUT_MANAGER_H
 
 #include <exceptions/exceptions.h>
+#include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
 #include <boost/shared_ptr.hpp>
@@ -25,127 +26,6 @@
 
 namespace isc {
 namespace util {
-
-/// @brief No Such Context
-///
-/// Thrown if an attempt is made to obtain context that has not been previously
-/// set.
-
-class NoSuchLibraryContext : public Exception {
-public:
-    NoSuchLibraryContext(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Invalid index
-///
-/// Thrown if an attempt is made to obtain a library handle but the current
-/// library handle index is invalid.  This will occur if the method
-/// CalloutManager::getHandleVector() is called outside of a callout.
-
-class InvalidIndex : public Exception {
-public:
-    InvalidIndex(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-// Forward declarations
-class CalloutHandle;
-class CalloutManager;
-
-/// Typedef for a callout pointer.  (Callouts must have "C" linkage.)
-extern "C" {
-    typedef int (*CalloutPtr)(CalloutHandle&);
-};
-
-
-
-
-/// @brief Library handle
-///
-/// This class is used to manage a loaded library.  It is used by the user
-/// library to register callouts.
-///
-/// The main processing is done by the CalloutManager class.  By
-/// presenting this object to the user-library callouts, they can manage the
-/// callout list for their own library, but cannot affect the callouts registered
-/// by other libraries.
-
-class LibraryHandle {
-public:
-
-    /// @brief Constructor
-    ///
-    /// @param hooks Library index.  A number (starting at 0) that represents
-    ///        the index of the library in the list of libraries loaded by the
-    ///        server.
-    /// @param collection Back pointer to the containing CalloutManager.
-    ///        This pointer is used to access appropriate methods in the collection
-    ///        object.
-    LibraryHandle(int library_index, CalloutManager* collection)
-        : library_index_(library_index), callout_manager_(collection)
-    {}
-
-    /// @brief Register a callout on a hook
-    ///
-    /// Registers a callout function with a given hook.  The callout is added
-    /// to the end of the callouts for this library that are associated with
-    /// that hook.
-    ///
-    /// @param name Name of the hook to which the callout is added.
-    /// @param callout Pointer to the callout function to be registered.
-    ///
-    /// @throw NoSuchHook The hook name is unrecognised.
-    /// @throw Unexpected The hook name is valid but an internal data structure
-    ///        is of the wrong size.
-    void registerCallout(const std::string& name, CalloutPtr callout);
-
-    /// @brief De-Register a callout on a hook
-    ///
-    /// Searches through the functions registered by this library with the named
-    /// hook and removes all entries matching the callout.  It does not affect
-    /// callouts registered by other libraries.
-    ///
-    /// @param name Name of the hook from which the callout is removed.
-    /// @param callout Pointer to the callout function to be removed.
-    ///
-    /// @return true if a one or more callouts were deregistered.
-    ///
-    /// @throw NoSuchHook The hook name is unrecognised.
-    /// @throw Unexpected The hook name is valid but an internal data structure
-    ///        is of the wrong size.
-    bool deregisterCallout(const std::string& name, CalloutPtr callout);
-
-    /// @brief Removes all callouts on a hook
-    ///
-    /// Removes all callouts associated with a given hook that were registered.
-    /// by this library.  It does not affect callouts that were registered by
-    /// other libraries.
-    ///
-    /// @param name Name of the hook from which the callouts are removed.
-    ///
-    /// @return true if one or more callouts were deregistered.
-    ///
-    /// @throw NoSuchHook Thrown if the hook name is unrecognised.
-    bool deregisterAllCallouts(const std::string& name);
-
-    /// @brief Return handle index
-    ///
-    /// For test purposes only, this returns the index allocated to this
-    /// LibraryHandle.
-    ///
-    /// @return Handle index
-    int getIndex() const {
-        return (library_index_);
-    }
-
-private:
-    /// Index of this handle in the library handle list
-    int library_index_;
-
-    /// Back pointer to the collection object for the library
-    CalloutManager* callout_manager_;
-};
 
 
 /// @brief Callout Manager
@@ -284,7 +164,8 @@ private:
 
     /// @brief Compare two callout entries for library equality
     ///
-    /// This is used in callout removal code.
+    /// This is used in callout removal code.  It just checks whether two
+    /// entries have the same library element.
     ///
     /// @param ent1 First callout entry to check
     /// @param ent2 Second callout entry to check
@@ -312,4 +193,4 @@ private:
 } // namespace util
 } // namespace isc
 
-#endif // LIBRARY_HANDLE_H
+#endif // CALLOUT_MANAGER_H
