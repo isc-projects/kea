@@ -145,6 +145,16 @@ class TestBIND10Server(unittest.TestCase):
         self.assertEqual(self.__server.mod_ccsession.command_handler_param,
                          self.__server._command_handler)
 
+    def test_run_with_setup_module(self):
+        """Check run() with module specific setup method."""
+        self.setup_called = False
+        def check_called():
+            self.setup_called = True
+        self.__server._run_internal = lambda: None
+        self.__server._setup_module = check_called
+        self.assertEqual(0, self.__server.run('test'))
+        self.assertTrue(self.setup_called)
+
     def test_shutdown_command(self):
         answer = self.__server._command_handler('shutdown', None)
         self.assertTrue(self.__server.shutdown)
