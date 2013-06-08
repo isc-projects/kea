@@ -13,32 +13,77 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import errno
 import os
+import select
 import signal
 
 import isc.log
+import isc.config
 from isc.server_common.logger import logger
 from isc.log_messages.server_common_messages import *
+
+class BIND10ServerFatal(Exception):
+    """Exception raised when the server program encounters a fatal error."""
+    pass
 
 class BIND10Server:
     """A mixin class for common BIND 10 server implementations.
 
+    It takes care of common initialization such as setting up a module CC
+    session, and running main event loop.  It also handles the "shutdown"
+    command for its normal behavior.  If a specific server class wants to
+    handle this command differently or if it does not support the command,
+    it should override the _command_handler method.
+
+    Specific modules can define module-specific class inheriting this class,
+    instantiate it, and call run() with the module name.
+
     Methods to be implemented in the actual class:
+      _config_handler: config handler method as specified in ModuleCCSession.
+                       must be exception free; errors should be signaled by
+                       the return value.
+      _mod_command_handler: can be optionally defined to handle
+                            module-specific commands.  should conform to
+                            command handlers as specified in ModuleCCSession.
+                            must be exception free; errors should be signaled
+                            by the return value.
 
     """
     # Will be set to True when the server should stop and shut down.
     # Can be read via accessor method 'shutdown', mainly for testing.
     __shutdown = False
-    __module_name = None
+
+    # ModuleCCSession used in the server.  Defined as 'protectd' so tests
+    # can refer to it directly; others should access it via the
+    # 'mod_ccsession' accessor.
+    _mod_cc = None
+
+    # Will be set in run().  Define a tentative value so other methods can
+    # be tested directly.
+    __module_name = ''
+
+    # Basically constant, but allow tests to override it.
+    _select_fn = select.select
 
     @property
     def shutdown(self):
         return self.__shutdown
 
+    @property
+    def mod_ccsession(self):
+        return self._mod_cc
+
     def _setup_ccsession(self):
-        self._cc = isc.config.ModuleCCSession(self._get_specfile_location(),
-                                              self._config_handler,
-                                              self._command_handler)
+        """Create and start module CC session.
+
+        This is essentially private, but allows tests to override it.
+
+        """
+        self._mod_cc = isc.config.ModuleCCSession(
+            self._get_specfile_location(), self._config_handler,
+            self._command_handler)
+        self._mod_cc.start()
 
     def _get_specfile_location(self):
         """Return the path to the module spec file following common convetion.
@@ -54,10 +99,10 @@ class BIND10Server:
             specfile_path = os.environ['B10_FROM_SOURCE'] + '/src/bin/' + \
                 self.__module_name
         else:
-            specfile_path = '@datadir@/@PACKAGE@'\
-                .replace('${datarootdir}', '@datarootdir@')\
-                .replace('${prefix}', '@prefix@')
-        return specfile_path + '/' + self.__module_name
+            specfile_path = '${datarootdir}/bind10'\
+                .replace('${datarootdir}', '${prefix}/share')\
+                .replace('${prefix}', '/Users/jinmei/opt')
+        return specfile_path + '/' + self.__module_name + '.spec'
 
     def _trigger_shutdown(self):
         """Initiate a shutdown sequence.
@@ -67,21 +112,53 @@ class BIND10Server:
         as possible to minimize side effects.  Actual shutdown will take
         place in a normal control flow.
 
-        This method is defined as 'protected' so tests can call it; otherwise
-        it's private.
+        This method is defined as 'protected'.  User classes can use it
+        to shut down the server.
 
         """
         self.__shutdown = True
 
     def _run_internal(self):
+        """Main event loop.
+
+        This method is essentially private, but allows tests to override it.
+
+        """
+
+        logger.info(PYSERVER_COMMON_SERVER_STARTED, self.__module_name)
+        cc_fileno = self._mod_cc.get_socket().fileno()
         while not self.__shutdown:
-            pass
+            try:
+                (reads, _, _) = self._select_fn([cc_fileno], [], [])
+            except select.error as ex:
+                # ignore intterruption by signal; regard other select errors
+                # fatal.
+                if ex.args[0] == errno.EINTR:
+                    continue
+                else:
+                    raise
+            for fileno in reads:
+                if fileno == cc_fileno:
+                    # this shouldn't raise an exception (if it does, we'll
+                    # propagate it)
+                    self._mod_cc.check_command(True)
 
-    def _config_handler(self):
-        pass
+        self._mod_cc.send_stopping()
 
-    def _command_handler(self):
-        pass
+    def _command_handler(self, cmd, args):
+        logger.debug(logger.DBGLVL_TRACE_BASIC, PYSERVER_COMMON_COMMAND,
+                     self.__module_name, cmd)
+        if cmd == 'shutdown':
+            self._trigger_shutdown()
+            answer = isc.config.create_answer(0)
+        else:
+            answer = self._mod_command_handler(cmd, args)
+
+        return answer
+
+    def _mod_command_handler(self, cmd, args):
+        """The default implementation of the module specific command handler"""
+        return isc.config.create_answer(1, "Unknown command: " + str(cmd))
 
     def run(self, module_name):
         """Start the server and let it run until it's told to stop.
@@ -107,9 +184,13 @@ class BIND10Server:
             signal.signal(signal.SIGINT, shutdown_sighandler)
             self._setup_ccsession()
             self._run_internal()
+            logger.info(PYSERVER_COMMON_SERVER_STOPPED, self.__module_name)
             return 0
+        except BIND10ServerFatal as ex:
+            logger.error(PYSERVER_COMMON_SERVER_FATAL, self.__module_name,
+                         ex)
         except Exception as ex:
             logger.error(PYSERVER_COMMON_UNCAUGHT_EXCEPTION, type(ex).__name__,
-                         str(ex))
+                         ex)
 
         return 1
