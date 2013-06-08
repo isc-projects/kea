@@ -101,13 +101,19 @@ class BIND10Server:
         path for the spec file.
 
         """
-        if 'B10_FROM_SOURCE' in os.environ:
-            specfile_path = os.environ['B10_FROM_SOURCE'] + '/src/bin/' + \
-                self.__module_name
-        else:
-            specfile_path = '${datarootdir}/bind10'\
-                .replace('${datarootdir}', '${prefix}/share')\
-                .replace('${prefix}', '/Users/jinmei/opt')
+        # First check if it's running under an 'in-source' environment,
+        # then try commonly used paths and file names.  If found, use it.
+        for ev in ['B10_FROM_SOURCE', 'B10_FROM_BUILD']:
+            if ev in os.environ:
+                specfile = os.environ[ev] + '/src/bin/' + self.__module_name +\
+                    '/' + self.__module_name + '.spec'
+                if os.path.exists(specfile):
+                    return specfile
+        # Otherwise, just use the installed path, whether or not it really
+        # exists; leave error handling to the caller.
+        specfile_path = '${datarootdir}/bind10'\
+            .replace('${datarootdir}', '${prefix}/share')\
+            .replace('${prefix}', '/Users/jinmei/opt')
         return specfile_path + '/' + self.__module_name + '.spec'
 
     def _trigger_shutdown(self):

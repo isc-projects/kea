@@ -137,9 +137,11 @@ class TestBIND10Server(unittest.TestCase):
         self.__server._run_internal = lambda: None # prevent looping
         self.assertEqual(0, self.__server.run('test'))
         # module CC session should have been setup.
-        self.assertEqual(self.__server.mod_ccsession.specfile_param,
-                         os.environ['B10_FROM_SOURCE'] +
-                         '/src/bin/test/test.spec')
+        # The exact path to the spec file can vary, so we simply check
+        # it works and it's the expected name stripping the path.
+        self.assertEqual(
+            self.__server.mod_ccsession.specfile_param.split('/')[-1],
+            'test.spec')
         self.assertEqual(self.__server.mod_ccsession.config_handler_param,
                          self.__server._config_handler)
         self.assertEqual(self.__server.mod_ccsession.command_handler_param,
