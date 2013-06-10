@@ -1382,6 +1382,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/memmgr/memmgr.py
+           src/bin/memmgr/memmgr.spec.pre
            src/bin/msgq/msgq.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre

@@ -14,7 +14,7 @@ CLEANFILES = b10-memmgr memmgr.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.pyc
 
-EXTRA_DIST =  memmgr_messages.mes memmgr.spec
+EXTRA_DIST =  memmgr_messages.mes
 
 man_MANS = b10-memmgr.8
 DISTCLEANFILES = $(man_MANS)
@@ -37,6 +37,9 @@ endif
 $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.py : memmgr_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message \
 	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/memmgr_messages.mes
+
+memmgr.spec: memmgr.spec.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" memmgr.spec.pre > $@
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-memmgr: memmgr.py $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.py
