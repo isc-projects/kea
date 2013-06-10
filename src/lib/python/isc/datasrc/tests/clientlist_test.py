@@ -214,6 +214,7 @@ class ClientListTest(unittest.TestCase):
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
         self.assertEqual(0, len(status))
 
         self.clist.configure('''[{
@@ -226,7 +227,9 @@ class ClientListTest(unittest.TestCase):
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
         self.assertEqual(1, len(status))
+        self.assertIsInstance(status[0], tuple)
         self.assertTupleEqual(('MasterFiles', 'local', isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
 
