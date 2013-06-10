@@ -79,12 +79,11 @@ class DataSrcClientsMgrTest(unittest.TestCase):
                           self.__mgr.reconfigure, {"classes": {"IN": 42}})
         self.assertIsNotNone(self.__mgr.get_client_list(RRClass.CH))
 
-    def test_reconfig_while_using_old(self):
-        """Check datasrc client and finder can work even after list is gone."""
-        self.__mgr.reconfigure(DEFAULT_CONFIG)
-        clist = self.__mgr.get_client_list(RRClass.CH)
-        self.__mgr.reconfigure({"classes": {"IN": []}})
+    def check_client_list_content(self, clist):
+        """Some set of checks on given data source client list.
 
+        Used by a couple of tests below.
+        """
         datasrc_client, finder, exact = clist.find(Name('bind'))
         self.assertTrue(exact)
 
@@ -103,6 +102,24 @@ class DataSrcClientsMgrTest(unittest.TestCase):
         # iterator should produce some non empty set of RRsets
         rrsets = datasrc_client.get_iterator(Name('bind'))
         self.assertNotEqual(0, len(list(rrsets)))
+
+    def test_reconfig_while_using_old(self):
+        """Check datasrc client and finder can work even after list is gone."""
+        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        clist = self.__mgr.get_client_list(RRClass.CH)
+        self.__mgr.reconfigure({"classes": {"IN": []}})
+        self.check_client_list_content(clist)
+
+    def test_get_clients_map(self):
+        # This is basically a trivial getter, so it should be sufficient
+        # to check we can call it as we expect.
+        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        clients_map = self.__mgr.get_clients_map()
+        self.assertEqual(2, len(clients_map)) # should contain 'IN' and 'CH'
+
+        # Check the retrieved map is usable even after further reconfig().
+        self.__mgr.reconfigure({"classes": {"IN": []}})
+        self.check_client_list_content(clients_map[RRClass.CH])
 
 if __name__ == "__main__":
     isc.log.init("bind10")

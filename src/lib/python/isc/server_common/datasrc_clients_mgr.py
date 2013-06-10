@@ -61,6 +61,25 @@ class DataSrcClientsMgr:
         self.__clients_map = {}
         self.__map_lock = threading.Lock()
 
+    def get_clients_map(self):
+        """Returns a dict from RR class to ConfigurableClientList.
+
+        It corresponds to the generation of data source configuration at the
+        time of the call.  It can be safely called while reconfigure() is
+        called from another thread.
+
+        The mapping of the dict should be considered "frozen"; the caller
+        shouldn't modify the mapping (it can use the mapped objects in a
+        way modifying its internal state).
+
+        Note: in a future version we may also need to return the
+        "generation ID" of the corresponding configuration so the caller
+        application can handle migration between generations gradually.
+
+        """
+        with self.__map_lock:
+            return self.__clients_map
+
     def get_client_list(self, rrclass):
         """Return the configured ConfigurableClientList for the RR class.
 
