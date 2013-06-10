@@ -30,6 +30,8 @@
 #include "zonewriter_python.h"
 #include "datasrc.h"
 
+#include "zonewriter_inc.cc"
+
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
@@ -143,39 +145,14 @@ ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneWriter_methods[] = {
-    { "load", ZoneWriter_load, METH_NOARGS,
-        "load() -> None\n\
-\n\
-Get the zone data into memory.\n\
-\n\
-This is the part that does the time-consuming loading into the memory.\n\
-This can be run in a separate thread, for example. It has no effect on\n\
-the data actually served, it only prepares them for future use." },
+    { "load", ZoneWriter_load, METH_VARARGS,
+      ZoneWriter_load_doc },
     { "install", ZoneWriter_install, METH_NOARGS,
-        "install() -> None\n\
-\n\
-Put the changes to effect.\n\
-\n\
-This replaces the old version of zone with the one previously prepared\n\
-by load(). It takes ownership of the old zone data, if any." },
+      ZoneWriter_install_doc },
     { "cleanup", ZoneWriter_cleanup, METH_NOARGS,
-        "cleanup() -> None\n\
-\n\
-Clean up resources.\n\
-\n\
-This releases all resources held by owned zone data. That means the\n\
-one loaded by load() in case install() was not called or was not\n\
-successful, or the one replaced in install()." },
+      ZoneWriter_cleanup_doc },
     { NULL, NULL, 0, NULL }
 };
-
-const char* const ZoneWriter_doc = "\
-Does an update to a zone\n\
-\n\
-This represents the work of a (re)load of a zone.  The work is divided\n\
-into three stages -- load(), install() and cleanup().  They should\n\
-be called in this order for the effect to take place.\n\
-";
 
 } // end of unnamed namespace
 
