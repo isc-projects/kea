@@ -15,6 +15,8 @@
 #include <util/hooks/callout_handle.h>
 #include <util/hooks/callout_manager.h>
 
+#include <boost/static_assert.hpp>
+
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -25,7 +27,7 @@ using namespace isc::util;
 namespace isc {
 namespace util {
 
-// Register a callout for a particular library.
+// Register a callout for the current library.
 
 void
 CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
@@ -42,17 +44,17 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     for (CalloutVector::iterator i = hook_vector_[hook_index].begin();
          i != hook_vector_[hook_index].end(); ++i) {
         if (i->first > current_library_) {
-            // Found an element whose library number is greater than ours,
-            // so insert the new element ahead of this one.
+            // Found an element whose library index number is greater than the
+            // current index, so insert the new element ahead of this one.
             hook_vector_[hook_index].insert(i, make_pair(current_library_,
                                                          callout));
             return;
         }
     }
 
-    // Reach the end of the vector, so no element in the (possibly empty)
-    // set of callouts with a library index greater that the one related to
-    // this callout, insert at the end.
+    // Reached the end of the vector, so there is no element in the (possibly
+    // empty) set of callouts with a library index greater than the current
+    // library index.  Inset the callout at the end of the list.
     hook_vector_[hook_index].push_back(make_pair(current_library_, callout));
 }
 
@@ -74,8 +76,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     // Validate the hook index.
     checkHookIndex(hook_index);
 
-    // Clear the "skip" flag so we don't carry state from a previous
-    // call.
+    // Clear the "skip" flag so we don't carry state from a previous call.
     callout_handle.setSkip(false);
 
     // Duplicate the callout vector for this hook and work through that.
@@ -85,14 +86,13 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     // potentially affect the iteration through that vector.
     CalloutVector callouts(hook_vector_[hook_index]);
 
-    // Call all the callouts, stopping if a non-zero status is returned.
-    int status = 0;
-
+    // Call all the callouts, stopping if a non SUCCESS status is returned.
+    int status = CalloutHandle::SUCCESS;
     for (CalloutVector::const_iterator i = callouts.begin();
-         i != callouts.end() && (status == 0); ++i) {
+         i != callouts.end() && (status == CalloutHandle::SUCCESS); ++i) {
         // In case the callout tries to register or deregister a callout, set
-        // the current library index to the index associated with the callout
-        // being called.
+        // the current library index to the index associated with library
+        // that registered the callout being called.
         current_library_ = i->first;
 
         // Call the callout
@@ -107,7 +107,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     return (status);
 }
 
-// Deregister a callout registered by a library on a particular hook.
+// Deregister a callout registered by the current library on a particular hook.
 
 bool
 CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {

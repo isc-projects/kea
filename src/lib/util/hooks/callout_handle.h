@@ -109,6 +109,14 @@ class LibraryHandle;
 
 class CalloutHandle {
 public:
+    /// Callout success return status - the next callout in the list for the
+    /// hook will be called.
+    static const int SUCCESS = 0;
+
+    /// Callout complete return status - the callout has succeeded, but
+    /// remaining callouts on this hook (including any from other libraries)
+    /// should not be run.
+    static const int COMPLETE = 1;
 
     /// Typedef to allow abbreviation of iterator specification in methods.
     /// The std::string is the argument name and the "boost::any" is the
@@ -118,8 +126,8 @@ public:
     /// Typedef to allow abbreviations in specifications when accessing
     /// context.  The ElementCollection is the name/value collection for
     /// a particular context.  The "int" corresponds to the index of an
-    /// associated library handle - there is a 1:1 correspondence between
-    /// library handles and a name.value collection.
+    /// associated library - there is a 1:1 correspondence between libraries
+    /// and a name.value collection.
     ///
     /// The collection of contexts is stored in a map, as not every library
     /// will require creation of a context associated with each packet.  In
@@ -147,7 +155,7 @@ public:
     /// already exist.
     ///
     /// @param name Name of the argument.
-    /// @param value Value to set
+    /// @param value Value to set.  That can be of any data type.
     template <typename T>
     void setArgument(const std::string& name, T value) {
         arguments_[name] = value;
@@ -181,7 +189,7 @@ public:
     /// Returns a vector holding the names of arguments in the argument
     /// vector.
     ///
-    /// @return Vector of strings reflecting argument names
+    /// @return Vector of strings reflecting argument names.
     std::vector<std::string> getArgumentNames() const;
 
     /// @brief Delete argument
@@ -232,15 +240,14 @@ public:
     /// Returns a reference to the current library handle.  This function is
     /// only available when called by a callout (which in turn is called
     /// through the "callCallouts" method), as it is only then that the current
-    /// library index is valid.  A callout would use this method to get to
-    /// the context associated with the library in which it resides.
+    /// library index is valid.  A callout uses the library handle to
+    /// dynamically register or deregister callouts.
     ///
-    /// @return Reference to the current library handle.
+    /// @return Reference to the library handle.
     ///
-    /// @throw InvalidIndex thrown if this method is called outside of the
-    ///        "callCallouts() method. (Exception is so-named because the
-    ///        index used to access the library handle in the collection
-    ///        is not valid at that point.)
+    /// @throw InvalidIndex thrown if this method is called when the current
+    ///        library index is invalid (typically if it is called outside of
+    ///        the active callout).
     LibraryHandle& getLibraryHandle() const;
 
     /// @brief Set context
@@ -276,7 +283,7 @@ public:
         if (element_ptr == lib_context.end()) {
             isc_throw(NoSuchCalloutContext, "unable to find callout context "
                       "item " << name << " in the context associated with "
-                      "current library handle");
+                      "current library");
         }
 
         value = boost::any_cast<T>(element_ptr->second);

@@ -26,6 +26,12 @@ using namespace std;
 
 namespace {
 
+/// @file
+/// @brief Holds the CalloutHandle argument tests
+///
+/// Additional testing of the CalloutHandle - together with the interaction
+/// of the LibraryHandle - is done in the handles_unittests set of tests.
+
 class CalloutHandleTest : public ::testing::Test {
 public:
 
