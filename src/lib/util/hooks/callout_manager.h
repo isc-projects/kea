@@ -86,11 +86,22 @@ public:
     ///
     /// @param hooks Collection of known hook names.
     /// @param num_libraries Number of loaded libraries.
+    ///
+    /// @throw isc::BadValue if the number of libraries is less than or equal
+    ///        to 0, or if the pointer to the server hooks object is empty.
     CalloutManager(const boost::shared_ptr<ServerHooks>& hooks,
                    int num_libraries)
         : current_library_(-1), hooks_(hooks), hook_vector_(hooks->getCount()),
           library_handle_(this), num_libraries_(num_libraries)
-    {}
+    {
+        if (!hooks) {
+            isc_throw(isc::BadValue, "must pass a pointer to a valid server "
+                      "hooks object to the CalloutManager");
+        } else if (num_libraries <= 0) {
+            isc_throw(isc::BadValue, "number of libraries passed to the "
+                      "CalloutManager must be >= 0");
+        }
+    }
 
     /// @brief Register a callout on a hook
     ///
@@ -160,6 +171,16 @@ public:
     ///
     /// @return Status return.
     int callCallouts(int hook_index, CalloutHandle& callout_handle);
+
+    /// @brief Get number of libraries
+    ///
+    /// Returns the number of libraries that this CalloutManager is expected
+    /// to serve.  This is the number passed to its constructor.
+    ///
+    /// @return Number of libraries server by this CalloutManager.
+    int getNumLibraries() const {
+        return (num_libraries_);
+    }
 
     /// @brief Get current library index
     ///
