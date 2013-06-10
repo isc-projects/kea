@@ -48,5 +48,14 @@ b10-memmgr: memmgr.py $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.py
 
 CLEANDIRS = __pycache__
 
+# install the default directory for memory-mapped files.  Note that the
+# path must be identical to the default value in memmgr.spec.  We'll make
+# it readable only for the owner to minimize the risk of accidents.
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)@localstatedir@/@PACKAGE@/mapped_files
+
+install-data-hook:
+	-chmod 700 $(DESTDIR)@localstatedir@/@PACKAGE@/mapped_files
+
 clean-local:
 	rm -rf $(CLEANDIRS)
