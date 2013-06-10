@@ -113,13 +113,21 @@ class DataSrcClientsMgrTest(unittest.TestCase):
     def test_get_clients_map(self):
         # This is basically a trivial getter, so it should be sufficient
         # to check we can call it as we expect.
+
+        # Initially map iss empty, the generation ID is 0.
+        self.assertEqual((0, {}), self.__mgr.get_clients_map())
+
         self.__mgr.reconfigure(DEFAULT_CONFIG)
-        clients_map = self.__mgr.get_clients_map()
+        genid, clients_map = self.__mgr.get_clients_map()
+        self.assertEqual(1, genid)
         self.assertEqual(2, len(clients_map)) # should contain 'IN' and 'CH'
 
         # Check the retrieved map is usable even after further reconfig().
         self.__mgr.reconfigure({"classes": {"IN": []}})
         self.check_client_list_content(clients_map[RRClass.CH])
+
+        # generation ID should be incremented again
+        self.assertEqual(2, self.__mgr.get_clients_map()[0])
 
 if __name__ == "__main__":
     isc.log.init("bind10")
