@@ -235,7 +235,7 @@ class ClientListTest(unittest.TestCase):
         for index, zone in table.get_iterator():
             self.assertTrue(zone in zonelist)
             zonelist.remove(zone)
-        self.assertEqual(0, len(zonelist))                
+        self.assertEqual(0, len(zonelist))
 
 if __name__ == "__main__":
     isc.log.init("bind10")
