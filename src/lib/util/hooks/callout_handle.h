@@ -16,6 +16,7 @@
 #define CALLOUT_HANDLE_H
 
 #include <exceptions/exceptions.h>
+#include <util/hooks/library_handle.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
@@ -100,14 +101,11 @@ class LibraryHandle;
 ///   "context_destroy" callout.  The information is accessed through the
 ///   {get,set}Context() methods.
 ///
-/// - Per-library context.  Each library has a context associated with it that
-///   is independent of the packet.  All callouts in the library share the
-///   information in the context, regardless of the packet being processed.
-///   The context is typically created in the library's "load()" method and
-///   destroyed in its "unload()" method.  The information is available by
-///   obtaining the handle to the library through this class's
-///   getLibraryHandle() method, then calling {get,set}Context() on the
-///   object returned.
+/// - Per-library handle.  Allows the callout to dynamically register and
+///   deregister callouts. (In the latter case, only functions registered by
+///   functions in the same library as the callout doing the deregistration
+///   can be removed: callouts registered by other libraries cannot be
+///   modified.)
 
 class CalloutHandle {
 public:
@@ -136,12 +134,12 @@ public:
     /// hook.
     ///
     /// @param manager Pointer to the callout manager object.
-    CalloutHandle(boost::shared_ptr<CalloutManager>& /* manager */) {}
+    CalloutHandle(const boost::shared_ptr<CalloutManager>& manager);
 
     /// @brief Destructor
     ///
     /// Calls the context_destroy callback to release any per-packet context.
-    ~CalloutHandle() {}
+    ~CalloutHandle();
 
     /// @brief Set argument
     ///
