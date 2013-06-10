@@ -24,6 +24,14 @@
 #include <string>
 #include <vector>
 
+/// @file
+/// @brief CalloutManager and LibraryHandle tests
+///
+/// These set of tests check the CalloutManager and LibraryHandle.  They are
+/// together in the same file because the LibraryHandle is little more than a
+/// restricted interface to the CalloutManager, and a lot of the support
+/// structure for the tests is common.
+
 using namespace isc;
 using namespace isc::util;
 using namespace std;
@@ -43,14 +51,9 @@ public:
         gamma_index_ = hooks_->registerHook("gamma");
         delta_index_ = hooks_->registerHook("delta");
 
-        // Set up the callout manager with these hooks
-        callout_manager_.reset(new CalloutManager(hooks_));
-
-        // Set up four library handles.
-        library_handle_.push_back(callout_manager_->createHandle());
-        library_handle_.push_back(callout_manager_->createHandle());
-        library_handle_.push_back(callout_manager_->createHandle());
-        library_handle_.push_back(callout_manager_->createHandle());
+        // Set up the callout manager with these hooks.  Assume a maximum of
+        // four libraries.
+        callout_manager_.reset(new CalloutManager(hooks_, 4));
 
         // Set up the callout handle.
         callout_handle_.reset(new CalloutHandle(callout_manager_));
@@ -83,11 +86,9 @@ private:
     /// Server hooks
     boost::shared_ptr<ServerHooks> hooks_;
 
-    /// Set up three library handles.
-    std::vector<boost::shared_ptr<LibraryHandle> > library_handle_;
-
     /// Callout handle used in calls
     boost::shared_ptr<CalloutHandle> callout_handle_;
+
 
 };
 
@@ -166,6 +167,29 @@ int manager_four_error(CalloutHandle& handle) {
 
 };  // extern "C"
 
+// Check that we can only set the current library index to the correct values.
+
+TEST_F(CalloutManagerTest, CheckLibraryIndex) {
+    // Check valid indexes
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_NO_THROW(getCalloutManager()->setLibraryIndex(i));
+    }
+
+    // Check invalid ones
+    EXPECT_THROW(getCalloutManager()->setLibraryIndex(-1), NoSuchLibrary);
+    EXPECT_THROW(getCalloutManager()->setLibraryIndex(5), NoSuchLibrary);
+}
+
+// Check that we can only register callouts on valid hook names.
+
+TEST_F(CalloutManagerTest, ValidHookNames) {
+    getCalloutManager()->setLibraryIndex(0);
+    EXPECT_NO_THROW(getCalloutManager()->registerCallout("alpha", manager_one));
+    EXPECT_THROW(getCalloutManager()->registerCallout("unknown", manager_one),
+                                                      NoSuchHook);
+}
+
+
 // Check we can register callouts appropriately.
 
 TEST_F(CalloutManagerTest, RegisterCallout) {
@@ -174,9 +198,11 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(beta_index_));
 
     // Set up so that hooks "alpha" and "beta" have callouts attached from a
-    // single library.
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(1, "beta", manager_two);
+    // different libraries.
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("beta", manager_two);
 
     // Check all is as expected.
     EXPECT_TRUE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -200,9 +226,11 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
     EXPECT_EQ(2, callout_value_);
 
     // Register some more callouts from different libraries on hook "alpha".
-    getCalloutManager()->registerCallout(2, "alpha", manager_three);
-    getCalloutManager()->registerCallout(2, "alpha", manager_four);
-    getCalloutManager()->registerCallout(3, "alpha", manager_five);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("alpha", manager_five);
 
     // Check it is as expected.
     callout_value_ = 0;
@@ -216,9 +244,10 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(2, callout_value_);
 
-    // Add another callout to hook "alpha" from library iindex 2 - this should
+    // Add another callout to hook "alpha" from library index 2 - this should
     // appear at the end of the callout list for that library.
-    getCalloutManager()->registerCallout(2, "alpha", manager_six);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_six);
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -227,14 +256,13 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
 
     // Add a callout from library index 1 - this should appear between the
     // callouts from library index 0 and linrary index 2.
-    getCalloutManager()->registerCallout(1, "alpha", manager_seven);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_seven);
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
     EXPECT_EQ(173465, callout_value_);
-
-
 }
 
 // Check the "calloutsPresent()" method.
@@ -252,13 +280,16 @@ TEST_F(CalloutManagerTest, CalloutsPresent) {
     // that some callouts are).  Chose the libraries for which the callouts
     // are registered randomly.
 
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
 
-    getCalloutManager()->registerCallout(1, "alpha", manager_two);
-    getCalloutManager()->registerCallout(1, "beta", manager_two);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->registerCallout("beta", manager_two);
 
-    getCalloutManager()->registerCallout(3, "alpha", manager_three);
-    getCalloutManager()->registerCallout(3, "delta", manager_four);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("delta", manager_four);
 
     // Check all is as expected.
     EXPECT_TRUE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -303,10 +334,14 @@ TEST_F(CalloutManagerTest, CallCalloutsSuccess) {
 
     // Each library contributes one callout on hook "alpha".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(1, "alpha", manager_two);
-    getCalloutManager()->registerCallout(2, "alpha", manager_three);
-    getCalloutManager()->registerCallout(3, "alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("alpha", manager_four);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
@@ -314,10 +349,13 @@ TEST_F(CalloutManagerTest, CallCalloutsSuccess) {
 
     // Do a random selection of callouts on hook "beta".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "beta", manager_one);
-    getCalloutManager()->registerCallout(0, "beta", manager_three);
-    getCalloutManager()->registerCallout(1, "beta", manager_two);
-    getCalloutManager()->registerCallout(3, "beta", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("beta", manager_one);
+    getCalloutManager()->registerCallout("beta", manager_three);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("beta", manager_two);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("beta", manager_four);
     status = getCalloutManager()->callCallouts(beta_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
@@ -349,10 +387,14 @@ TEST_F(CalloutManagerTest, CallCalloutsError) {
     // Each library contributing one callout on hook "alpha". The first callout
     // returns an error (after adding its value to the result).
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one_error);
-    getCalloutManager()->registerCallout(1, "alpha", manager_two);
-    getCalloutManager()->registerCallout(2, "alpha", manager_three);
-    getCalloutManager()->registerCallout(3, "alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one_error);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("alpha", manager_four);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(1, status);
@@ -361,14 +403,17 @@ TEST_F(CalloutManagerTest, CallCalloutsError) {
     // Each library contributing multiple callouts on hook "beta". The last
     // callout on the first library returns an error.
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "beta", manager_one);
-    getCalloutManager()->registerCallout(0, "beta", manager_one_error);
-    getCalloutManager()->registerCallout(1, "beta", manager_two);
-    getCalloutManager()->registerCallout(1, "beta", manager_two);
-    getCalloutManager()->registerCallout(1, "beta", manager_three);
-    getCalloutManager()->registerCallout(1, "beta", manager_three);
-    getCalloutManager()->registerCallout(3, "beta", manager_four);
-    getCalloutManager()->registerCallout(3, "beta", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("beta", manager_one);
+    getCalloutManager()->registerCallout("beta", manager_one_error);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("beta", manager_two);
+    getCalloutManager()->registerCallout("beta", manager_two);
+    getCalloutManager()->registerCallout("beta", manager_three);
+    getCalloutManager()->registerCallout("beta", manager_three);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("beta", manager_four);
+    getCalloutManager()->registerCallout("beta", manager_four);
     status = getCalloutManager()->callCallouts(beta_index_,
                                                getCalloutHandle());
     EXPECT_EQ(1, status);
@@ -376,12 +421,15 @@ TEST_F(CalloutManagerTest, CallCalloutsError) {
 
     // A callout in a random position in the callout list returns an error.
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "gamma", manager_one);
-    getCalloutManager()->registerCallout(0, "gamma", manager_one);
-    getCalloutManager()->registerCallout(1, "gamma", manager_two);
-    getCalloutManager()->registerCallout(1, "gamma", manager_two);
-    getCalloutManager()->registerCallout(3, "gamma", manager_four_error);
-    getCalloutManager()->registerCallout(3, "gamma", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("gamma", manager_one);
+    getCalloutManager()->registerCallout("gamma", manager_one);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("gamma", manager_two);
+    getCalloutManager()->registerCallout("gamma", manager_two);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("gamma", manager_four_error);
+    getCalloutManager()->registerCallout("gamma", manager_four);
     status = getCalloutManager()->callCallouts(gamma_index_,
                                                getCalloutHandle());
     EXPECT_EQ(1, status);
@@ -389,14 +437,18 @@ TEST_F(CalloutManagerTest, CallCalloutsError) {
 
     // The last callout on a hook returns an error.
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "delta", manager_one);
-    getCalloutManager()->registerCallout(0, "delta", manager_one);
-    getCalloutManager()->registerCallout(1, "delta", manager_two);
-    getCalloutManager()->registerCallout(1, "delta", manager_two);
-    getCalloutManager()->registerCallout(2, "delta", manager_three);
-    getCalloutManager()->registerCallout(2, "delta", manager_three);
-    getCalloutManager()->registerCallout(3, "delta", manager_four);
-    getCalloutManager()->registerCallout(3, "delta", manager_four_error);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("delta", manager_one);
+    getCalloutManager()->registerCallout("delta", manager_one);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("delta", manager_two);
+    getCalloutManager()->registerCallout("delta", manager_two);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("delta", manager_three);
+    getCalloutManager()->registerCallout("delta", manager_three);
+    getCalloutManager()->setLibraryIndex(3);
+    getCalloutManager()->registerCallout("delta", manager_four);
+    getCalloutManager()->registerCallout("delta", manager_four_error);
     status = getCalloutManager()->callCallouts(delta_index_,
                                                getCalloutHandle());
     EXPECT_EQ(1, status);
@@ -416,7 +468,8 @@ TEST_F(CalloutManagerTest, DeregisterSingleCallout) {
 
     // Add a callout to hook "alpha" and check it is added correctly.
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_two);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
@@ -424,8 +477,7 @@ TEST_F(CalloutManagerTest, DeregisterSingleCallout) {
 
     // Remove it and check that the no callouts are present.
     EXPECT_TRUE(getCalloutManager()->calloutsPresent(alpha_index_));
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_two));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
 }
 
@@ -443,18 +495,18 @@ TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
 
     // Add multiple callouts to hook "alpha".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
-    getCalloutManager()->registerCallout(0, "alpha", manager_three);
-    getCalloutManager()->registerCallout(0, "alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
     EXPECT_EQ(1234, callout_value_);
 
     // Remove the manager_two callout.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_two));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -462,8 +514,7 @@ TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
     EXPECT_EQ(134, callout_value_);
 
     // Try removing it again.
-    EXPECT_FALSE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                        manager_two));
+    EXPECT_FALSE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -485,22 +536,22 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
 
     // Each library contributes one callout on hook "alpha".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
-    getCalloutManager()->registerCallout(0, "alpha", manager_three);
-    getCalloutManager()->registerCallout(0, "alpha", manager_four);
-    getCalloutManager()->registerCallout(0, "alpha", manager_three);
-    getCalloutManager()->registerCallout(0, "alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
     EXPECT_EQ(12123434, callout_value_);
 
     // Remove the manager_two callouts.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_two));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -509,8 +560,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
 
     // Try removing multiple callouts that includes one at the end of the
     // list of callouts.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_four));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_four));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -518,8 +568,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     EXPECT_EQ(1133, callout_value_);
 
     // ... and from the start.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_one));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_one));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -527,8 +576,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     EXPECT_EQ(33, callout_value_);
 
     // ... and the remaining callouts.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_three));
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_three));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -551,12 +599,15 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsMultipleLibraries) {
 
     // Each library contributes two callouts to hook "alpha".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
-    getCalloutManager()->registerCallout(1, "alpha", manager_three);
-    getCalloutManager()->registerCallout(1, "alpha", manager_four);
-    getCalloutManager()->registerCallout(2, "alpha", manager_five);
-    getCalloutManager()->registerCallout(2, "alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_five);
+    getCalloutManager()->registerCallout("alpha", manager_two);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
@@ -564,8 +615,8 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsMultipleLibraries) {
 
     // Remove the manager_two callout from library 0.  It should not affect
     // the second manager_two callout registered by library 2.
-    EXPECT_TRUE(getCalloutManager()->deregisterCallout(0, "alpha",
-                                                       manager_two));
+    getCalloutManager()->setLibraryIndex(0);
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -583,19 +634,23 @@ TEST_F(CalloutManagerTest, DeregisterAllCallouts) {
 
     // Each library contributes two callouts to hook "alpha".
     callout_value_ = 0;
-    getCalloutManager()->registerCallout(0, "alpha", manager_one);
-    getCalloutManager()->registerCallout(0, "alpha", manager_two);
-    getCalloutManager()->registerCallout(1, "alpha", manager_three);
-    getCalloutManager()->registerCallout(1, "alpha", manager_four);
-    getCalloutManager()->registerCallout(2, "alpha", manager_five);
-    getCalloutManager()->registerCallout(2, "alpha", manager_six);
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", manager_one);
+    getCalloutManager()->registerCallout("alpha", manager_two);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", manager_three);
+    getCalloutManager()->registerCallout("alpha", manager_four);
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", manager_five);
+    getCalloutManager()->registerCallout("alpha", manager_six);
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
     EXPECT_EQ(123456, callout_value_);
 
     // Remove all callouts from library index 1.
-    EXPECT_TRUE(getCalloutManager()->deregisterAllCallouts(1, "alpha"));
+    getCalloutManager()->setLibraryIndex(1);
+    EXPECT_TRUE(getCalloutManager()->deregisterAllCallouts("alpha"));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
@@ -603,13 +658,85 @@ TEST_F(CalloutManagerTest, DeregisterAllCallouts) {
     EXPECT_EQ(1256, callout_value_);
 
     // Remove all callouts from library index 2.
-    EXPECT_TRUE(getCalloutManager()->deregisterAllCallouts(2, "alpha"));
+    getCalloutManager()->setLibraryIndex(2);
+    EXPECT_TRUE(getCalloutManager()->deregisterAllCallouts("alpha"));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
                                                getCalloutHandle());
     EXPECT_EQ(0, status);
     EXPECT_EQ(12, callout_value_);
 }
+
+// Library handle tests.  As by inspection the LibraryHandle can be seen to be
+// little more than shell around CalloutManager, only a basic set of tests
+// is done concerning registration and deregistration of functions.
+//
+// More extensive tests (i.e. checking that when a callout is called it can
+// only register and deregister callouts within its library) require that
+// the CalloutHandle object pass the appropriate LibraryHandle to the
+// callout.  These tests are done in the CalloutHandle tests.
+
+TEST_F(CalloutManagerTest, LibraryHandleRegistration) {
+    // Ensure that no callouts are attached to any of the hooks.
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
+
+    // Set up so that hooks "alpha" and "beta" have callouts attached from a
+    // different libraries.
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->getLibraryHandle().registerCallout("alpha",
+                                                            manager_one);
+    getCalloutManager()->getLibraryHandle().registerCallout("alpha",
+                                                            manager_two);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->getLibraryHandle().registerCallout("alpha",
+                                                            manager_three);
+    getCalloutManager()->getLibraryHandle().registerCallout("alpha",
+                                                            manager_four);
+
+    // Check all is as expected.
+    EXPECT_TRUE(getCalloutManager()->calloutsPresent(alpha_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(beta_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(gamma_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(delta_index_));
+                 
+    int status = 0;
+
+    // Check that calling the callouts returns as expected. (This is also a
+    // test of the callCallouts method.)
+    callout_value_ = 0;
+    status = getCalloutManager()->callCallouts(alpha_index_,
+                                               getCalloutHandle());
+    EXPECT_EQ(0, status);
+    EXPECT_EQ(1234, callout_value_);
+
+    // Deregister a callout on library index 0 (after we check we can't
+    // deregister it through library index 1).
+    getCalloutManager()->setLibraryIndex(1);
+    EXPECT_FALSE(getCalloutManager()->deregisterCallout("alpha", manager_two));
+    callout_value_ = 0;
+    status = getCalloutManager()->callCallouts(alpha_index_,
+                                               getCalloutHandle());
+    EXPECT_EQ(0, status);
+    EXPECT_EQ(1234, callout_value_);
+
+    getCalloutManager()->setLibraryIndex(0);
+    EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
+    callout_value_ = 0;
+    status = getCalloutManager()->callCallouts(alpha_index_,
+                                               getCalloutHandle());
+    EXPECT_EQ(0, status);
+    EXPECT_EQ(134, callout_value_);
+
+    // Deregister all callouts on library index 1.
+    getCalloutManager()->setLibraryIndex(1);
+    EXPECT_TRUE(getCalloutManager()->deregisterAllCallouts("alpha"));
+    callout_value_ = 0;
+    status = getCalloutManager()->callCallouts(alpha_index_,
+                                               getCalloutHandle());
+    EXPECT_EQ(0, status);
+    EXPECT_EQ(1, callout_value_);
+}
+
 
 
 } // Anonymous namespace
