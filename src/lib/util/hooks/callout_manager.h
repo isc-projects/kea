@@ -91,7 +91,7 @@ public:
     ///        to 0, or if the pointer to the server hooks object is empty.
     CalloutManager(const boost::shared_ptr<ServerHooks>& hooks,
                    int num_libraries)
-        : current_library_(-1), hooks_(hooks), hook_vector_(hooks->getCount()),
+        : current_library_(-1), hooks_(hooks), hook_vector_(),
           library_handle_(this), num_libraries_(num_libraries)
     {
         if (!hooks) {
@@ -101,6 +101,9 @@ public:
             isc_throw(isc::BadValue, "number of libraries passed to the "
                       "CalloutManager must be >= 0");
         }
+
+        // Parameters OK, do operations that depend on them.
+        hook_vector_.resize(hooks_->getCount());
     }
 
     /// @brief Register a callout on a hook

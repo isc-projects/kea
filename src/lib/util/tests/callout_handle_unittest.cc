@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/hooks/callout_handle.h>
+#include <util/hooks/callout_manager.h>
 #include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
@@ -30,18 +31,24 @@ public:
 
     /// @brief Constructor
     ///
-    /// Sets up an appropriate number of server hooks to pass to the
-    /// constructed callout handle objects.
-    CalloutHandleTest() : collection_(new LibraryHandleCollection()) {
-    }
+    /// Sets up a callout manager to be referenced by the CalloutHandle in
+    /// these tests. (The "4" for the number of libraries in the
+    /// CalloutManager is arbitrary - it is not used in these tests.)
+    CalloutHandleTest()
+        : hooks_(new ServerHooks()), manager_(new CalloutManager(hooks_, 4))
+    {}
 
     /// Obtain hook manager
-    boost::shared_ptr<LibraryHandleCollection>& getLibraryHandleCollection() {
-        return (collection_);
+    boost::shared_ptr<CalloutManager>& getCalloutManager() {
+        return (manager_);
     }
 
 private:
-    boost::shared_ptr<LibraryHandleCollection> collection_;
+    /// List of server hooks
+    boost::shared_ptr<ServerHooks> hooks_;
+
+    /// Callout manager accessed by this CalloutHandle.
+    boost::shared_ptr<CalloutManager> manager_;
 };
 
 // *** Argument Tests ***
@@ -53,7 +60,7 @@ private:
 // are distinct.
 
 TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Store and retrieve an int (random value).
     int a = 42;
@@ -86,7 +93,7 @@ TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
 // Test that trying to get an unknown argument throws an exception.
 
 TEST_F(CalloutHandleTest, ArgumentUnknownName) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Set an integer
     int a = 42;
@@ -107,7 +114,7 @@ TEST_F(CalloutHandleTest, ArgumentUnknownName) {
 // exception.
 
 TEST_F(CalloutHandleTest, ArgumentIncorrectType) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Set an integer
     int a = 42;
@@ -136,7 +143,7 @@ struct Beta {
 };
 
 TEST_F(CalloutHandleTest, ComplexTypes) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Declare two variables of different (complex) types. (Note as to the
     // variable names: aleph and beth are the first two letters of the Hebrew
@@ -175,7 +182,7 @@ TEST_F(CalloutHandleTest, ComplexTypes) {
 // that a "pointer to X" is not the same as a "pointer to const X".
 
 TEST_F(CalloutHandleTest, PointerTypes) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Declare a couple of variables, const and non-const.
     Alpha aleph(5, 10);
@@ -209,7 +216,7 @@ TEST_F(CalloutHandleTest, PointerTypes) {
 // Check that we can get the names of the arguments.
 
 TEST_F(CalloutHandleTest, ContextItemNames) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     vector<string> expected_names;
     int value = 42;
@@ -233,7 +240,7 @@ TEST_F(CalloutHandleTest, ContextItemNames) {
 // Test that we can delete an argument.
 
 TEST_F(CalloutHandleTest, DeleteArgument) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     int one = 1;
     int two = 2;
@@ -275,7 +282,7 @@ TEST_F(CalloutHandleTest, DeleteArgument) {
 // Test that we can delete all arguments.
 
 TEST_F(CalloutHandleTest, DeleteAllArguments) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     int one = 1;
     int two = 2;
@@ -302,7 +309,7 @@ TEST_F(CalloutHandleTest, DeleteAllArguments) {
 // Test the "skip" flag.
 
 TEST_F(CalloutHandleTest, SkipFlag) {
-    CalloutHandle handle(getLibraryHandleCollection());
+    CalloutHandle handle(getCalloutManager());
 
     // Should be false on construction.
     EXPECT_FALSE(handle.getSkip());
