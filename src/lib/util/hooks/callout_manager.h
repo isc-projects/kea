@@ -43,27 +43,33 @@ public:
 /// This class manages the registration, deregistration and execution of the
 /// library callouts.
 ///
-/// In operation, the class need to know two items of data:
+/// In operation, the class needs to know two items of data:
 ///
-/// - The list of server hooks.  This is used in two ways.  Firstly, when a
+/// - The list of server hooks, which is used in two ways.  Firstly, when a
 ///   callout registers or deregisters a hook, it does so by name: the
 ///   @ref isc::util::ServerHooks object supplies the names of registered
 ///   hooks.  Secondly, when the callouts associated with a hook are called by
-///   the server, it supplies the index of the relevant hook: this is validated
-///   hook vector (which holds the callouts associated with each hook).
+///   the server, the server supplies the index of the relevant hook: this is
+///   validated by reference to the list of hook.
 ///
 /// - The number of loaded libraries.  Each callout registered by a user
 ///   library is associated with that library, the callout manager storing both
 ///   a pointer to the callout and the index of the library in the list of
 ///   loaded libraries.  Callouts are allowed to dynamically register and
-///   deregister callouts (including themselves), but only callouts in the
-///   same library.  When calling a callout, the callout manager maintains
-///   the idea of a "current library index": if the callout calls one of the
-///   callout registration functions in the callout manager (it can do this
-///   indirectly via the @ref LibraryHandle object), the registration functions
-///   use the "current library index" in their processing.
+///   deregister callouts in the same library (including themselves): they
+///   cannot affect callouts registered by another library.  When calling a
+///   callout, the callout manager maintains the idea of a "current library
+///   index": if the callout calls one of the callout registration functions 
+///   (indirectly via the @ref LibraryHandle object), the registration
+///   functions use the "current library index" in their processing.
 ///
-/// These two items of data are supplied when the class is constructed.
+/// These two items of data are supplied when an object of this class is
+/// constructed.
+///
+/// Note that the callout function do not access the library manager: instead,
+/// they use a LibraryHandle object.  This contains an internal pointer to
+/// the CalloutManager, but provides a restricted interface.  In that way,
+/// callouts are unable to affect callouts supplied by other libraries.
 
 class CalloutManager {
 private:
@@ -71,10 +77,12 @@ private:
     // Private typedefs
 
     /// Element in the vector of callouts.  The elements in the pair are the
-    /// library index and the pointer to the callout.
+    /// index of the library from which this callout was registered, and a#
+    /// pointer to the callout itself.
     typedef std::pair<int, CalloutPtr> CalloutEntry;
 
-    /// Entry in the list of callouts for an individual hook.
+    /// An element in the hook vector. Each element is a vector of callouts
+    /// associated with a given hook.
     typedef std::vector<CalloutEntry> CalloutVector;
 
 public:
@@ -82,7 +90,7 @@ public:
     /// @brief Constructor
     ///
     /// Initializes member variables, in particular sizing the hook vector
-    /// (the vector of callouts) to the appropriate size.
+    /// (the vector of callout vectors) to the appropriate size.
     ///
     /// @param hooks Collection of known hook names.
     /// @param num_libraries Number of loaded libraries.
@@ -106,7 +114,7 @@ public:
         hook_vector_.resize(hooks_->getCount());
     }
 
-    /// @brief Register a callout on a hook
+    /// @brief Register a callout on a hook for the current library
     ///
     /// Registers a callout function for the current library with a given hook
     /// (the index of the "current library" being given by the current_library_
@@ -121,7 +129,7 @@ public:
     ///        is of the wrong size.
     void registerCallout(const std::string& name, CalloutPtr callout);
 
-    /// @brief De-Register a callout on a hook
+    /// @brief De-Register a callout on a hook for the current library
     ///
     /// Searches through the functions registered by the the current library
     /// (the index of the "current library" being given by the current_library_
@@ -138,7 +146,7 @@ public:
     ///        is of the wrong size.
     bool deregisterCallout(const std::string& name, CalloutPtr callout);
 
-    /// @brief Removes all callouts on a hook
+    /// @brief Removes all callouts on a hook for the current library
     ///
     /// Removes all callouts associated with a given hook that were registered
     /// by the current library (the index of the "current library" being given
@@ -194,7 +202,10 @@ public:
     /// with the currently executing callout when callCallouts is executing.
     /// When callCallouts() is not executing (as is the case when the load()
     /// function in a user-library is called during the library load process),
-    /// the index is the value set by setLibraryIndex().
+    /// the index can be set by setLibraryIndex().
+    ///
+    /// @note The value set by this method is lost after a call to
+    ///       callCallouts.
     ///
     /// @return Current library index.
     int getLibraryIndex() const {
@@ -204,8 +215,8 @@ public:
     /// @brief Set current library index
     ///
     /// Sets the current library index.  This must be in the range 0 to
-    /// (numlib - 1), where "numlib" is the number of libraries loaded and is
-    /// passed to this object at construction time.
+    /// (numlib - 1), where "numlib" is the number of libraries loaded in the
+    /// system, this figure being passed to this object at construction time.
     ///
     /// @param library_index New library index.
     ///
@@ -220,9 +231,10 @@ public:
     /// The library handle is available to the user callout via the callout
     /// handle object.  It provides a cut-down view of the CalloutManager,
     /// allowing the callout to register and deregister callouts in the
-    /// library of which it is part.
+    /// library of which it is part, whilst denying access to anything that
+    /// may affect other libraries.
     ///
-    /// @return reference to callout handle for this manager
+    /// @return Reference to callout handle for this manager
     LibraryHandle& getLibraryHandle() {
         return (library_handle_);
     }
@@ -249,7 +261,7 @@ private:
     ///
     /// @param library_index Value to check for validity as a library index.
     ///
-    /// @throw NoSuchLibrary Library index is not 
+    /// @throw NoSuchLibrary Library index is not valid.
     void checkLibraryIndex(int library_index) const {
         if ((library_index < 0) || (library_index >= num_libraries_)) {
             isc_throw(NoSuchLibrary, "library index " << library_index <<
@@ -271,17 +283,18 @@ private:
     class CalloutLibraryEqual :
         public std::binary_function<CalloutEntry, CalloutEntry, bool> {
     public:
-        bool operator()(const CalloutEntry& ent1, const CalloutEntry& ent2) const {
+        bool operator()(const CalloutEntry& ent1,
+                        const CalloutEntry& ent2) const {
             return (ent1.first == ent2.first);
         }
     };
 
     /// Current library index.  When a call is made to any of the callout
     /// registration methods, this variable indicates the index of the user
-    /// library that is calling the methods.
+    /// library that should be associated with the call.
     int current_library_;
 
-    /// List of server hooks.  This is used 
+    /// List of server hooks.
     boost::shared_ptr<ServerHooks>  hooks_;
 
     /// Vector of callout vectors.  There is one entry in this outer vector for
@@ -293,7 +306,7 @@ private:
     /// registration methods on this CalloutManager object.
     LibraryHandle library_handle_;
 
-    /// Number of libraries.  libindex_ can vary between 0 and numlib_ - 1.
+    /// Number of libraries.
     int num_libraries_;
 
 };

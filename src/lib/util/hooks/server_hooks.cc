@@ -42,7 +42,7 @@ ServerHooks::ServerHooks() {
 
 // Register a hook.  The index assigned to the hook is the current number
 // of entries in the collection, so ensuring that hook indexes are unique
-// (and non-negative).
+// and non-negative.
 
 int
 ServerHooks::registerHook(const string& name) {
@@ -63,7 +63,7 @@ ServerHooks::registerHook(const string& name) {
     return (index);
 }
 
-// Find the index associated with a hook name or return -1 if not found
+// Find the index associated with a hook name.
 
 int
 ServerHooks::getIndex(const string& name) const {
@@ -94,19 +94,19 @@ ServerHooks::getHookNames() const {
 
 // Hook registration function methods
 
-// Constructor - add a registration function to the function vector
-
-HookRegistrationFunction::HookRegistrationFunction(
-    HookRegistrationFunction::RegistrationFunctionPtr reg_func) {
-    getFunctionVector().push_back(reg_func);
-}
-
 // Access the hook registration function vector itself
 
 std::vector<HookRegistrationFunction::RegistrationFunctionPtr>&
 HookRegistrationFunction::getFunctionVector() {
     static std::vector<RegistrationFunctionPtr> reg_functions;
     return (reg_functions);
+}
+
+// Constructor - add a registration function to the function vector
+
+HookRegistrationFunction::HookRegistrationFunction(
+    HookRegistrationFunction::RegistrationFunctionPtr reg_func) {
+    getFunctionVector().push_back(reg_func);
 }
 
 // Execute all registered registration functions

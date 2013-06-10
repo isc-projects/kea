@@ -128,12 +128,12 @@ private:
 ///
 /// All hooks must be registered before libraries are loaded and callouts
 /// assigned to them.  One way of doing this is to have a global list of hooks:
-/// the addition of any hook anywhere would require updating the list.  The
-/// other way, chosen here, is to have each component in BIND 10 register the
-/// hooks they are using.
+/// the addition of any hook anywhere would require updating the list. This
+/// is possible and, if desired, the author of a server can do it.
 ///
-/// The chosen method requires that each component create a hook registration
-/// function of the form:
+/// An alternative is the option provided here, where each component of BIND 10
+/// registers the hooks they are using.  To do this, the component should
+/// create a hook registration function of the form:
 ///
 /// @code
 /// static int hook1_num = -1;  // Initialize number for hook 1
@@ -145,21 +145,21 @@ private:
 /// }
 /// @endcode
 ///
-/// The server then calls each of these hook registration functions during its
-/// initialization before loading the libraries.
-///
-/// It is to avoid the need to add an explicit call to each of the hook
-/// registration functions to the server initialization code that this class
-/// has been created.  Declaring an object of this class in the same file as
-/// the registration function and  passing the registration function as an
-/// argument, e.g.
+/// ... which registers the hooks and stores the associated hook index. To
+/// avoid the need to add an explicit call to each of the hook registration
+/// functions to the server initialization code, the component should declare
+/// an object of this class in the same file as the registration function,
+/// but outside of any function.  The declaration should include the name
+/// of the registration function, i.e.
 ///
 /// @code
 /// HookRegistrationFunction f(myModuleRegisterHooks);
 /// @code
 ///
-/// is sufficient to add the registration function to a list of such functions.
-/// The server will execute all functions in the list wh3en it starts.
+/// The constructor of this object will run prior to main() getting called and
+/// will add the registration function to a list of such functions.  The server
+/// then calls the static class method "execute()" to run all the declared
+/// registration functions.
 
 class HookRegistrationFunction {
 public:
@@ -177,14 +177,14 @@ public:
     ///
     /// One of the problems with functions run prior to starting main() is the
     /// "static initialization fiasco".  This occurs because the order in which
-    /// objects outside functions is not defined.  So if this constructor were
-    /// to depend on a vector declared externally, we would not be able to
-    /// guarantee that the vector had been initialised proerly before we used
-    /// it.
+    /// objects outside functions are constructed is not defined.  So if this
+    /// constructor were to depend on a vector declared externally, we would
+    /// not be able to guarantee that the vector had been initialised properly
+    /// before we used it.
     ///
     /// To get round this situation, the vector is declared statically within
-    /// a function.  The first time the function is called, the object is
-    /// initialized.
+    /// a static function.  The first time the function is called, the vector
+    /// is initialized before it is used.
     ///
     /// This function returns a reference to the vector used to hold the
     /// pointers.
@@ -200,9 +200,6 @@ public:
     /// @param hooks ServerHooks object to which hook information will be added.
     static void execute(ServerHooks& hooks);
 };
-/// to the constructor
-/// any function 
-/// 
 
 } // namespace util
 } // namespace isc

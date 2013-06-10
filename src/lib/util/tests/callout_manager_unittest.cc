@@ -98,10 +98,8 @@ private:
 // Definition of the static variable.
 int CalloutManagerTest::callout_value_ = 0;
 
-// *** Callout Tests ***
+// Callout definitions
 //
-// The next set of tests check that callouts can be called.
-
 // The callouts defined here are structured in such a way that it is possible
 // to determine the order in which they are called and whether they are called
 // at all. The method used is simple - after a sequence of callouts, the digits
@@ -169,6 +167,10 @@ int manager_four_error(CalloutHandle& handle) {
 }
 
 };  // extern "C"
+
+// *** Callout Tests ***
+//
+// The next set of tests check that callouts can be called.
 
 // Constructor - check that we trap bad parameters.
 
@@ -270,6 +272,8 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(1345, callout_value_);
 
+    // ... and check the additional callouts were not registered on the "beta"
+    // hook.
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(beta_index_, getCalloutHandle());
     EXPECT_EQ(0, status);
@@ -310,7 +314,6 @@ TEST_F(CalloutManagerTest, CalloutsPresent) {
     // exact callouts attached to a hook are not relevant - only the fact
     // that some callouts are).  Chose the libraries for which the callouts
     // are registered randomly.
-
     getCalloutManager()->setLibraryIndex(0);
     getCalloutManager()->registerCallout("alpha", manager_one);
 
@@ -716,7 +719,7 @@ TEST_F(CalloutManagerTest, DeregisterAllCallouts) {
 // More extensive tests (i.e. checking that when a callout is called it can
 // only register and deregister callouts within its library) require that
 // the CalloutHandle object pass the appropriate LibraryHandle to the
-// callout.  These tests are done in the CalloutHandle tests.
+// callout.  These tests are done in the handles_unittest tests.
 
 TEST_F(CalloutManagerTest, LibraryHandleRegistration) {
     // Ensure that no callouts are attached to any of the hooks.
