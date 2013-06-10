@@ -18,6 +18,7 @@
 #include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -69,6 +70,10 @@ public:
         return (callout_manager_);
     }
 
+    boost::shared_ptr<ServerHooks> getServerHooks() {
+        return (hooks_);
+    }
+
     /// Static variable used for accumulating information
     static int callout_value_;
 
@@ -80,16 +85,14 @@ public:
     int delta_index_;
 
 private:
+    /// Callout handle used in calls
+    boost::shared_ptr<CalloutHandle> callout_handle_;
+
     /// Callout manager used for the test
     boost::shared_ptr<CalloutManager> callout_manager_;
 
     /// Server hooks
     boost::shared_ptr<ServerHooks> hooks_;
-
-    /// Callout handle used in calls
-    boost::shared_ptr<CalloutHandle> callout_handle_;
-
-
 };
 
 // Definition of the static variable.
@@ -166,6 +169,34 @@ int manager_four_error(CalloutHandle& handle) {
 }
 
 };  // extern "C"
+
+// Constructor - check that we trap bad parameters.
+
+TEST_F(CalloutManagerTest, BadConstructorParameters) {
+    boost::scoped_ptr<CalloutManager> cm;
+
+    // Invalid number of libraries
+    EXPECT_THROW(cm.reset(new CalloutManager(getServerHooks(), 0)), BadValue);
+    EXPECT_THROW(cm.reset(new CalloutManager(getServerHooks(), -1)), BadValue);
+
+    // Invalid server hooks pointer.
+    boost::shared_ptr<ServerHooks> sh;
+    EXPECT_THROW(cm.reset(new CalloutManager(sh, 4)), BadValue);
+}
+
+// Check the number of libraries is reported successfully.
+
+TEST_F(CalloutManagerTest, GetNumLibraries) {
+    boost::scoped_ptr<CalloutManager> cm;
+
+    // Check two valid values of number of libraries to ensure that the
+    // GetNumLibraries() returns the value set.
+    EXPECT_NO_THROW(cm.reset(new CalloutManager(getServerHooks(), 4)));
+    EXPECT_EQ(4, cm->getNumLibraries());
+
+    EXPECT_NO_THROW(cm.reset(new CalloutManager(getServerHooks(), 42)));
+    EXPECT_EQ(42, cm->getNumLibraries());
+}
 
 // Check that we can only set the current library index to the correct values.
 
