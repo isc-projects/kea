@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/hooks/callout_handle.h>
+#include <util/hooks/callout_manager.h>
 #include <util/hooks/library_handle.h>
 #include <util/hooks/server_hooks.h>
 
@@ -27,16 +28,13 @@ namespace isc {
 namespace util {
 
 // Constructor.
-CalloutHandle::CalloutHandle(
-    boost::shared_ptr<LibraryHandleCollection>& collection)
-    : arguments_(), context_collection_(), library_collection_(collection),
-      skip_(false) {
+CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager)
+    : arguments_(), context_collection_(), manager_(manager), skip_(false) {
 
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables
     // have been created.
-    int status = library_collection_->callCallouts(ServerHooks::CONTEXT_CREATE,
-                                                   *this);
+    int status = manager_->callCallouts(ServerHooks::CONTEXT_CREATE, *this);
     if (status > 0) {
         isc_throw(ContextCreateFail, "error code of " << status << " returned "
                   "from context_create callout during the creation of a "
@@ -50,11 +48,10 @@ CalloutHandle::~CalloutHandle() {
     // Call the "context_destroy" hook.  We should be OK doing this - although
     // the destructor is being called, all the member variables are still in
     // existence.
-    int status = library_collection_->callCallouts(ServerHooks::CONTEXT_DESTROY,
-                                                   *this);
+    int status = manager_->callCallouts(ServerHooks::CONTEXT_DESTROY, *this);
     if (status > 0) {
         // An exception is thrown on failure.  This may be severe, but if
-        // none is thrown a resoucre leak in a library (signalled by the
+        // none is thrown a resource leak in a library (signalled by the
         // context_destroy callout returning an error) may be difficult to
         // trace.
         isc_throw(ContextDestroyFail, "error code of " << status << " returned "
@@ -77,30 +74,12 @@ CalloutHandle::getArgumentNames() const {
     return (names);
 }
 
-// Return the "current" library handle.
+// Return the library handle allowing the callout to access the CalloutManager
+// registration/deregistration functions.
 
 LibraryHandle&
 CalloutHandle::getLibraryHandle() const {
-    boost::shared_ptr<LibraryHandle> handle =
-        library_collection_->getLibraryHandle();
-
-    // Return refernce to this library handle.  This remains valid even
-    // after this method returns, because this object maintains a shared
-    // pointer to the LibraryHandleCollection, which in turn maintains
-    // a shared pointer to the LibraryHandle in question.
-    return (*handle);
-}
-
-// Check the current library index.
-
-int
-CalloutHandle::getLibraryIndex() const {
-    int curidx = library_collection_->getLibraryIndex();
-    if (curidx < 0) {
-        isc_throw(InvalidIndex, "current library handle index is not valid");
-    }
-
-    return (curidx);
+    return (manager_->getLibraryHandle());
 }
 
 // Return the context for the currently pointed-to library.  This version is
@@ -109,7 +88,7 @@ CalloutHandle::getLibraryIndex() const {
 
 CalloutHandle::ElementCollection&
 CalloutHandle::getContextForLibrary() {
-    int libindex = getLibraryIndex();
+    int libindex = manager_->getLibraryIndex();
 
     // Access a reference to the element collection for the given index,
     // creating a new element collection if necessary, and return it.
@@ -121,7 +100,7 @@ CalloutHandle::getContextForLibrary() {
 
 const CalloutHandle::ElementCollection&
 CalloutHandle::getContextForLibrary() const {
-    int libindex = getLibraryIndex();
+    int libindex = manager_->getLibraryIndex();
 
     ContextCollection::const_iterator libcontext =
         context_collection_.find(libindex);
