@@ -206,7 +206,7 @@ class MsgQ:
         Thin wrapper around ccs's notify. Send a notification about change
         of some list that can be requested by the members command.
 
-        The event is either one of:
+        The event is one of:
         - connected (client connected to MsgQ)
         - disconected (client disconnected from MsgQ)
         - subscribed (client subscribed to a group)
@@ -214,12 +214,12 @@ class MsgQ:
 
         The params is dict containing:
         - client: The lname of the client in question.
-        - group (only the 3rd and 4th): The group the client subscribed
-          or unsubscribed from.
+        - group (for 'subscribed' and 'unsubscribed' events):
+          The group the client subscribed or unsubscribed from.
 
-        It is expected to happen after the event (so client subscribing for these
-        notifications gets a notification about itself, but not in the case
-        of unsubscribing).
+        The notification occurs after the event, so client a subscribing for
+        notifications will get a notification about its own subscription, but
+	will not get a notification when it unsubscribes.
         """
         # Due to the interaction between threads (and fear it might influence
         # sending stuff), we test this method in msgq_run_test, instead of
@@ -850,9 +850,7 @@ class MsgQ:
             return isc.config.create_answer(0)
 
     def command_handler(self, command, args):
-        """The command handler (run in a separate thread).
-           Not tested, currently effectively empty.
-        """
+        """The command handler (run in a separate thread)."""
         config_logger.debug(TRACE_DETAIL, MSGQ_COMMAND, command, args)
 
         with self.__lock:
