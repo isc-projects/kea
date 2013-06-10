@@ -179,14 +179,14 @@ TEST(HookRegistrationFunction, Registration) {
     // Should have two hook registration functions registered.
     EXPECT_EQ(2, HookRegistrationFunction::getFunctionVector().size());
 
-    // Execute the functions and check that four new hooks were defined.
-
+    // Execute the functions and check that four new hooks were defined (two
+    // from each function).
     ServerHooks hooks;
     EXPECT_EQ(2, hooks.getCount());
     HookRegistrationFunction::execute(hooks);
     EXPECT_EQ(6, hooks.getCount());
 
-    // Check the hook names
+    // Check the hook names are as expected.
     vector<string> names = hooks.getHookNames();
     ASSERT_EQ(6, names.size());
     sort(names.begin(), names.end());
@@ -222,13 +222,13 @@ TEST(HookRegistrationFunction, Registration) {
     HookRegistrationFunction f3(registerEpsilon);
     EXPECT_EQ(1, HookRegistrationFunction::getFunctionVector().size());
 
-    // Execute it and check that the hook was registered.
+    // Execute it...
     ServerHooks hooks2;
     EXPECT_EQ(0, epsilon);
     EXPECT_EQ(2, hooks2.getCount());
     HookRegistrationFunction::execute(hooks2);
 
-    // Should be three hooks, with the new one assigned an index of 2.
+    // There should be three hooks, with the new one assigned an index of 2.
     names = hooks2.getHookNames();
     ASSERT_EQ(3, names.size());
     sort(names.begin(), names.end());
