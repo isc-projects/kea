@@ -62,8 +62,14 @@ class DataSrcClientsMgr:
         self.__clients_map = {}
         self.__map_lock = threading.Lock()
 
+        # The generation ID of the configuration corresponding to
+        # current __clinets_map.  Until we support the concept of generations
+        # in the configuration framework, we tentatively maintain it within
+        # this class.
+        self.__gen_id = 0
+
     def get_clients_map(self):
-        """Returns a dict from RR class to ConfigurableClientList.
+        """Returns a dict from RR class to ConfigurableClientList with gen ID.
 
         It corresponds to the generation of data source configuration at the
         time of the call.  It can be safely called while reconfigure() is
@@ -79,7 +85,7 @@ class DataSrcClientsMgr:
 
         """
         with self.__map_lock:
-            return self.__clients_map
+            return (self.__gen_id, self.__clients_map)
 
     def get_client_list(self, rrclass):
         """Return the configured ConfigurableClientList for the RR class.
@@ -149,6 +155,10 @@ class DataSrcClientsMgr:
                 new_map[rrclass] = new_client_list
             with self.__map_lock:
                 self.__clients_map = new_map
+
+                # NOTE: when we support the concept of generations this should
+                # be retrieved from the configuration
+                self.__gen_id += 1
         except Exception as ex:
             # Catch all types of exceptions as a whole: there won't be much
             # granularity for exceptions raised from the C++ module anyway.
