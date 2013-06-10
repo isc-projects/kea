@@ -201,9 +201,6 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
         static_cast<s_ConfigurableClientList*>(po_self);
     try {
         const std::vector<DataSourceStatus> status = self->cppobj->getStatus();
-        if (status.empty()) {
-            Py_RETURN_NONE;
-        }
 
         PyObject *slist = PyList_New(status.size());
         if (!slist) {
