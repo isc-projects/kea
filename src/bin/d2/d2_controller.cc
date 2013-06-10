@@ -16,6 +16,8 @@
 #include <d2/d2_process.h>
 #include <d2/spec_config.h>
 
+#include <stdlib.h>
+
 namespace isc {
 namespace d2 {
 
