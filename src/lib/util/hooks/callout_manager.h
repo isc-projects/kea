@@ -168,6 +168,9 @@ public:
     /// Iterates through the libray handles and calls the callouts associated
     /// with the given hook index.
     ///
+    /// @note This method invalidates the current library index set with
+    ///       setLibraryIndex().
+    ///
     /// @param hook_index Index of the hook to call.
     /// @param callout_handle Reference to the CalloutHandle object for the
     ///        current object being processed.

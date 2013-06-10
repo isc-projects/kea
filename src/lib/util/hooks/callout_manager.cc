@@ -78,13 +78,31 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     // call.
     callout_handle.setSkip(false);
 
-    // Call all the callouts, stopping if the "skip" flag is set or if a
-    // non-zero status is returned.
+    // Duplicate the callout vector for this hook and work through that.
+    // This step is needed because we allow dynamic registration and
+    // deregistration of callouts.  If a callout attached to a hook modified
+    // the list of callouts, the underlying CalloutVector would change and
+    // potentially affect the iteration through that vector.
+    CalloutVector callouts(hook_vector_[hook_index]);
+
+    // Call all the callouts, stopping if a non-zero status is returned.
     int status = 0;
-    for (CalloutVector::const_iterator i = hook_vector_[hook_index].begin();
-         i != hook_vector_[hook_index].end() && (status == 0); ++i) {
+
+    for (CalloutVector::const_iterator i = callouts.begin();
+         i != callouts.end() && (status == 0); ++i) {
+        // In case the callout tries to register or deregister a callout, set
+        // the current library index to the index associated with the callout
+        // being called.
+        current_library_ = i->first;
+
+        // Call the callout
         status = (*i->second)(callout_handle);
     }
+
+    // Reset the current library index to an invalid value to catch any
+    // programming errors.
+    current_library_ = -1;
+
 
     return (status);
 }
