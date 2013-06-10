@@ -213,7 +213,8 @@ class ClientListTest(unittest.TestCase):
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
 
         status = self.clist.get_status()
-        self.assertIsNone(status)
+        self.assertIsNotNone(status)
+        self.assertEqual(0, len(status))
 
         self.clist.configure('''[{
             "type": "MasterFiles",
@@ -224,6 +225,7 @@ class ClientListTest(unittest.TestCase):
         }]''', True)
 
         status = self.clist.get_status()
+        self.assertIsNotNone(status)
         self.assertEqual(1, len(status))
         self.assertTupleEqual(('MasterFiles', 'local', isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
