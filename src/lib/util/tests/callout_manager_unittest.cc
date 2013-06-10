@@ -506,7 +506,10 @@ TEST_F(CalloutManagerTest, DeregisterSingleCallout) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(2, callout_value_);
 
-    // Remove it and check that the no callouts are present.
+    // Remove it and check that the no callouts are present.  We have to reset
+    // the current library index here as it was invalidated by the call
+    // to callCallouts().
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->calloutsPresent(alpha_index_));
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -536,7 +539,9 @@ TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(1234, callout_value_);
 
-    // Remove the manager_two callout.
+    // Remove the manager_two callout.  We have to reset the current library
+    // index here as it was invalidated by the call to callCallouts().
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
@@ -545,6 +550,7 @@ TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
     EXPECT_EQ(134, callout_value_);
 
     // Try removing it again.
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_FALSE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
@@ -581,7 +587,9 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     EXPECT_EQ(0, status);
     EXPECT_EQ(12123434, callout_value_);
 
-    // Remove the manager_two callouts.
+    // Remove the manager_two callouts.  We have to reset the current library
+    // index here as it was invalidated by the call to callCallouts().
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_two));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
@@ -591,6 +599,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
 
     // Try removing multiple callouts that includes one at the end of the
     // list of callouts.
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_four));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
@@ -599,6 +608,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     EXPECT_EQ(1133, callout_value_);
 
     // ... and from the start.
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_one));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,
@@ -607,6 +617,7 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     EXPECT_EQ(33, callout_value_);
 
     // ... and the remaining callouts.
+    getCalloutManager()->setLibraryIndex(0);
     EXPECT_TRUE(getCalloutManager()->deregisterCallout("alpha", manager_three));
     callout_value_ = 0;
     status = getCalloutManager()->callCallouts(alpha_index_,

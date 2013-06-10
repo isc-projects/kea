@@ -106,7 +106,8 @@ CalloutHandle::getContextForLibrary() const {
         context_collection_.find(libindex);
     if (libcontext == context_collection_.end()) {
         isc_throw(NoSuchCalloutContext, "unable to find callout context "
-                  "associated with the current library handle");
+                  "associated with the current library index (" << libindex <<
+                  ")");
     }
 
     // Return a reference to the context's element collection.
