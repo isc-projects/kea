@@ -21,6 +21,7 @@ import signal
 
 sys.path.append('@@PYTHONPATH@@')
 import isc.log
+#from isc.log import DBGLVL_TRACE_BASIC
 from isc.log_messages.memmgr_messages import *
 from isc.server_common.bind10_server import BIND10Server
 
@@ -29,8 +30,71 @@ MODULE_NAME = 'memmgr'
 isc.log.init('b10-memmgr', buffer=True)
 logger = isc.log.Logger(MODULE_NAME)
 
+class ConfigError(Exception):
+    """An exception class raised for configuration errors of Memmgr."""
+    pass
+
 class Memmgr(BIND10Server):
+    def __init__(self):
+        # configurable parameter: initially this is the only param, so
+        # we only maintain as a single attribute.  As the class is extended
+        # and more configurable, consider introducing a compound type or
+        # class.
+        # This is defined as "protected" so tests can inspect it; others
+        # shouldn't use it directly.
+        self._mapped_file_dir = None
+
     def _config_handler(self, new_config):
+        """Configuration handler, called via BIND10Server.
+
+        This method must be exception free.  We assume minimum validity
+        about the parameter, though: it should be a valid dict, and conform
+        to the type specification of the spec file.
+
+        """
+        logger.debug(logger.DBGLVL_TRACE_BASIC, MEMMGR_CONFIG_UPDATE)
+
+        # Default answer:
+        answer = isc.config.create_answer(0)
+
+        # If this is the first time, initialize the local attributes with the
+        # latest full config data, which consist of the defaults with
+        # possibly overridden by user config.  Otherwise, just apply the latest
+        # diff.
+        if self._mapped_file_dir is None:
+            new_config = self.mod_ccsession.get_full_config()
+        try:
+            self.__update_config(new_config)
+        except Exception as ex:
+            logger.error(MEMMGR_CONFIG_FAIL, ex)
+            answer = isc.config.create_answer(
+                1, 'Memmgr failed to apply configuration updates: ' + str(ex))
+
+        return answer
+
+    def __update_config(self, new_config):
+        """Apply config changes to local attributes.
+
+        This is a subroutine of _config_handler.  It's supposed to provide
+        strong exception guarantee: either all changes successfully apply
+        or, if any error is found, none applies.  In the latter case the
+        entire original configuration should be kept.
+
+        Errors are to be reported as an exception.
+
+        """
+        new_mapped_file_dir = new_config.get('mapped_file_dir')
+        if new_mapped_file_dir is not None:
+            if not os.path.isdir(new_mapped_file_dir):
+                raise ConfigError('mapped_file_dir is not a directory: ' +
+                                  new_mapped_file_dir)
+            if not os.access(new_mapped_file_dir, os.W_OK):
+                raise ConfigError('mapped_file_dir is not writable: ' +
+                                  new_mapped_file_dir)
+            self._mapped_file_dir = new_mapped_file_dir
+
+    def _setup_module(self):
+        """Module specific initialization for BIND10Server."""
         pass
 
 if '__main__' == __name__:
