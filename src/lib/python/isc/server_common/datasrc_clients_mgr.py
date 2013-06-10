@@ -40,10 +40,11 @@ class DataSrcClientsMgr:
     def __init__(self, use_cache=False):
         """Constructor.
 
-        In the initial implementation, user applications of this class are
-        generally expected to NOT use in-memory cache; use_cache would be
-        set to True only for tests.  In future, some applications such as
-        outbound zone transfer may want to set it to True.
+        In the initial implementation, most user applications of this class
+        are generally expected to NOT use in-memory cache; the only expected
+        exception is the memory (cache) manager, which, by definition,
+        needs to deal with in-memory data.  In future, some more applications
+        such as outbound zone transfer may want to set it to True.
 
         Parameter:
           use_cache (bool): If set to True, enable in-memory cache on
