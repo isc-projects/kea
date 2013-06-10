@@ -16,4 +16,11 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
-% MEMMGR_CONFIG_UPDATE received new configuration: %1
+% MEMMGR_CONFIG_FAIL failed to apply configuration updates: %1
+The memmgr daemon tried to apply configuration updates but found an error.
+The cause of the error is included in the message.  None of the received
+updates applied, and the daemon keeps running with the previous configuration.
+
+% MEMMGR_CONFIG_UPDATE received new configuration
+A debug message.  The memmgr daemon receives configuratiopn updates
+and is now applying them to its running configurations.
