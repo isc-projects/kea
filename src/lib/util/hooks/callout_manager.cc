@@ -28,8 +28,10 @@ namespace util {
 // Register a callout for a particular library.
 
 void
-CalloutManager::registerCallout(int libindex, const std::string& name,
-                                CalloutPtr callout) {
+CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
+    // Sanity check that the current library index is set to a valid value.
+    checkLibraryIndex(current_library_);
+
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = hooks_->getIndex(name);
@@ -39,11 +41,11 @@ CalloutManager::registerCallout(int libindex, const std::string& name,
     // the present index.
     for (CalloutVector::iterator i = hook_vector_[hook_index].begin();
          i != hook_vector_[hook_index].end(); ++i) {
-        if (i->first > libindex) {
+        if (i->first > current_library_) {
             // Found an element whose library number is greater than ours,
             // so insert the new element ahead of this one.
-            hook_vector_[hook_index].insert(i,
-                                            std::make_pair(libindex, callout));
+            hook_vector_[hook_index].insert(i, make_pair(current_library_,
+                                                         callout));
             return;
         }
     }
@@ -51,7 +53,7 @@ CalloutManager::registerCallout(int libindex, const std::string& name,
     // Reach the end of the vector, so no element in the (possibly empty)
     // set of callouts with a library index greater that the one related to
     // this callout, insert at the end.
-    hook_vector_[hook_index].push_back(std::make_pair(libindex, callout));
+    hook_vector_[hook_index].push_back(make_pair(current_library_, callout));
 }
 
 // Check if callouts are present for a given hook index.
@@ -90,16 +92,17 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 // Deregister a callout registered by a library on a particular hook.
 
 bool
-CalloutManager::deregisterCallout(int library_index, const std::string& name,
-                                  CalloutPtr callout) {
+CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
+    // Sanity check that the current library index is set to a valid value.
+    checkLibraryIndex(current_library_);
 
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = hooks_->getIndex(name);
 
-    /// Construct a CalloutEntry matching the specified library and the callout
+    /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
-    CalloutEntry target(library_index, callout);
+    CalloutEntry target(current_library_, callout);
 
     /// To decide if any entries were removed, we'll record the initial size
     /// of the callout vector for the hook, and compare it with the size after
@@ -128,16 +131,15 @@ CalloutManager::deregisterCallout(int library_index, const std::string& name,
 // Deregister all callouts on a given hook.
 
 bool
-CalloutManager::deregisterAllCallouts(int library_index,
-                                      const std::string& name) {
+CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = hooks_->getIndex(name);
 
-    /// Construct a CalloutEntry matching the specified library we want to
-    /// remove (the callout pointer is NULL as we are not checking that).
-    CalloutEntry target(library_index, NULL);
+    /// Construct a CalloutEntry matching the current library (the callout
+    /// pointer is NULL as we are not checking that).
+    CalloutEntry target(current_library_, NULL);
 
     /// To decide if any entries were removed, we'll record the initial size
     /// of the callout vector for the hook, and compare it with the size after
@@ -153,24 +155,6 @@ CalloutManager::deregisterAllCallouts(int library_index,
 
     // Return an indication of whether anything was removed.
     return (initial_size != hook_vector_[hook_index].size());
-}
-
-// CalloutManager methods.
-
-// Return pointer to the current library handle.
-
-boost::shared_ptr<LibraryHandle>
-CalloutManager::createHandle() {
-    // Index is equal to the size of the current collection of handles
-    // (guarantees that every handle has a unique index, and that index
-    // is a pointer to the handle in the collection of handles.)
-    boost::shared_ptr<LibraryHandle> handle(new LibraryHandle(handles_.size(),
-                                                              this));
-
-    // Add to the current collection of handles.
-    handles_.push_back(handle);
-
-    return (handle);
 }
 
 } // namespace util
