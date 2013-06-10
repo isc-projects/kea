@@ -171,9 +171,10 @@ private:
     /// @param ent2 Second callout entry to check
     ///
     /// @return bool true if the library entries are the same
-    class CalloutLibraryEqual {
+    class CalloutLibraryEqual :
+        public std::binary_function<CalloutEntry, CalloutEntry, bool> {
     public:
-        bool operator()(const CalloutEntry& ent1, const CalloutEntry& ent2) {
+        bool operator()(const CalloutEntry& ent1, const CalloutEntry& ent2) const {
             return (ent1.first == ent2.first);
         }
     };

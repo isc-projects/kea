@@ -54,7 +54,6 @@ CalloutManager::registerCallout(int libindex, const std::string& name,
     hook_vector_[hook_index].push_back(std::make_pair(libindex, callout));
 }
 
-
 // Check if callouts are present for a given hook index.
 
 bool
@@ -144,7 +143,7 @@ CalloutManager::deregisterAllCallouts(int library_index,
     /// of the callout vector for the hook, and compare it with the size after
     /// the removal.
     size_t initial_size = hook_vector_[hook_index].size();
-/*
+
     // Remove all callouts matching this library.
     hook_vector_[hook_index].erase(remove_if(hook_vector_[hook_index].begin(),
                                              hook_vector_[hook_index].end(),
@@ -152,7 +151,7 @@ CalloutManager::deregisterAllCallouts(int library_index,
                                                      target)),
                                    hook_vector_[hook_index].end());
 
-    // Return an indication of whether anything was removed. */
+    // Return an indication of whether anything was removed.
     return (initial_size != hook_vector_[hook_index].size());
 }
 
