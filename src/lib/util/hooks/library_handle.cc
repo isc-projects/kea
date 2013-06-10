@@ -22,17 +22,17 @@ namespace util {
 
 void
 LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
-    callout_manager_->registerCallout(library_index_, name, callout);
+    callout_manager_->registerCallout(name, callout);
 }
 
 bool
 LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
-    return (callout_manager_->deregisterCallout(library_index_, name, callout));
+    return (callout_manager_->deregisterCallout(name, callout));
 }
 
 bool
 LibraryHandle::deregisterAllCallouts(const std::string& name) {
-    return (callout_manager_->deregisterAllCallouts(library_index_, name));
+    return (callout_manager_->deregisterAllCallouts(name));
 }
 
 } // namespace util

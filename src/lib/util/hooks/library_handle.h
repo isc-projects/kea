@@ -45,14 +45,10 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param hooks Library index.  A number (starting at 0) that represents
-    ///        the index of the library in the list of libraries loaded by the
-    ///        server.
     /// @param collection Back pointer to the containing CalloutManager.
     ///        This pointer is used to access appropriate methods in that
     ///        object.
-    LibraryHandle(int library_index, CalloutManager* collection)
-        : library_index_(library_index), callout_manager_(collection)
+    LibraryHandle(CalloutManager* collection) : callout_manager_(collection)
     {}
 
     /// @brief Register a callout on a hook
@@ -98,20 +94,7 @@ public:
     /// @throw NoSuchHook Thrown if the hook name is unrecognised.
     bool deregisterAllCallouts(const std::string& name);
 
-    /// @brief Return handle index
-    ///
-    /// For test purposes only, this returns the index allocated to this
-    /// LibraryHandle.
-    ///
-    /// @return Handle index
-    int getIndex() const {
-        return (library_index_);
-    }
-
 private:
-    /// Index of this handle in the library handle list
-    int library_index_;
-
     /// Back pointer to the collection object for the library
     CalloutManager* callout_manager_;
 };
