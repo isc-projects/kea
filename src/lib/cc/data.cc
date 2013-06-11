@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cerrno>
 
 #include <boost/algorithm/string.hpp> // for iequals
 
@@ -395,22 +396,25 @@ fromStringstreamNumber(std::istream& in, int& pos) {
     double d = 0.0;
     bool is_double = false;
     char* endptr;
+    const char* ptr;
 
     std::string number = numberFromStringstream(in, pos);
 
+    errno = 0;
     i = strtol(number.c_str(), &endptr, 10);
     if (*endptr != '\0') {
-        d = strtod(number.c_str(), &endptr);
+        errno = 0;
+        d = strtod(ptr = number.c_str(), &endptr);
         is_double = true;
-        if (*endptr != '\0') {
+        if (*endptr != '\0' || ptr == endptr) {
             isc_throw(JSONError, std::string("Bad number: ") + number);
         } else {
-            if (d == HUGE_VAL || d == -HUGE_VAL) {
+            if (errno != 0) {
                 isc_throw(JSONError, std::string("Number overflow: ") + number);
             }
         }
     } else {
-        if (i == LONG_MAX || i == LONG_MIN) {
+        if ((i == LONG_MAX || i == LONG_MIN) && errno != 0) {
             isc_throw(JSONError, std::string("Number overflow: ") + number);
         }
     }
