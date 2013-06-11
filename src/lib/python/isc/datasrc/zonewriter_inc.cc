@@ -53,7 +53,7 @@ returned. In all other cases, None is returned.\n\
 Exceptions:\n\
   isc.InvalidOperation if called second time.\n\
   DataSourceError load related error (not thrown if constructed with\n\
-             catch_load_error being False).\n\
+             catch_load_error being True).\n\
 \n\
 ";
 
