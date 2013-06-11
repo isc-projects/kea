@@ -173,7 +173,7 @@ class ClientListTest(unittest.TestCase):
         # first datasrc - empty zone table
         table = self.clist.get_zone_table_accessor(None, True)
         self.assertIsNotNone(table)
-        iterator = table.get_iterator()
+        iterator = iter(table)
         self.assertIsNotNone(iterator)
         self.assertEqual(0, len(list(iterator)))
 
@@ -194,16 +194,13 @@ class ClientListTest(unittest.TestCase):
         # first datasrc
         table = self.clist.get_zone_table_accessor(None, True)
         self.assertIsNotNone(table)
-        iterator = table.get_iterator()
-        self.assertIsNotNone(iterator)
-        zonelist = list(iterator)
+        zonelist = list(table)
         self.assertEqual(1, len(zonelist))
         self.assertEqual(zonelist[0][1], isc.dns.Name("example.org"))
 
         # named datasrc
         table = self.clist.get_zone_table_accessor("MasterFiles", True)
-        iterator = table.get_iterator()
-        self.assertEqual(zonelist, list(iterator))
+        self.assertEqual(zonelist, list(table))
 
         # longer zone list for non-trivial iteration
         self.clist.configure('''[{
@@ -217,8 +214,7 @@ class ClientListTest(unittest.TestCase):
             },
             "cache-enable": true
         }]''', True)
-        zonelist = list(self.clist.get_zone_table_accessor(None, True).
-                        get_iterator())
+        zonelist = list(self.clist.get_zone_table_accessor(None, True))
         self.assertEqual(5, len(zonelist))
         self.assertTrue((0, isc.dns.Name("example.net.")) in zonelist)
 
@@ -230,7 +226,7 @@ class ClientListTest(unittest.TestCase):
             isc.dns.Name("example.biz"),
             isc.dns.Name("example.edu")]
         table = self.clist.get_zone_table_accessor("MasterFiles", True)
-        for index, zone in table.get_iterator():
+        for index, zone in table:
             self.assertTrue(zone in zonelist)
             zonelist.remove(zone)
         self.assertEqual(0, len(zonelist))
