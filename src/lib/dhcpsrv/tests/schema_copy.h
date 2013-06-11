@@ -42,6 +42,7 @@ const char* destroy_statement[] = {
 // Creation of the new tables.
 
 const char* create_statement[] = {
+    "START TRANSACTION",
     "CREATE TABLE lease4 ("
         "address INT UNSIGNED PRIMARY KEY NOT NULL,"
         "hwaddr VARBINARY(20),"
@@ -84,6 +85,7 @@ const char* create_statement[] = {
         ")",
 
     "INSERT INTO schema_version VALUES (1, 0)",
+    "COMMIT",
 
     NULL
 };
