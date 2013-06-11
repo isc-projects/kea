@@ -20,7 +20,7 @@ namespace isc {
 namespace d2 {
 
 /// @brief Defines the logger used within D2.
-isc::log::Logger dctl_logger("dctl");
+isc::log::Logger dctl_logger("dhcpddns");
 
 } // namespace d2
 } // namespace isc
