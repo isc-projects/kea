@@ -67,7 +67,7 @@ ZoneTableAccessor_destroy(PyObject* po_self) {
 }
 
 PyObject*
-ZoneTableAccessor_getIterator(PyObject* po_self, PyObject* args) {
+ZoneTableAccessor_iter(PyObject* po_self) {
     s_ZoneTableAccessor* const self =
         static_cast<s_ZoneTableAccessor*>(po_self);
     try {
@@ -90,12 +90,6 @@ ZoneTableAccessor_getIterator(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneTableAccessor_methods[] = {
-    { "get_iterator",
-      ZoneTableAccessor_getIterator, METH_NOARGS,
-"get_iterator() -> isc.datasrc.ZoneTableIterator\n\
-\n\
-Return a zone table iterator.\n\
-\n" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -139,9 +133,9 @@ PyTypeObject zonetableaccessor_type = {
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
-    NULL,                               // tp_iter
+    ZoneTableAccessor_iter,             // tp_iter
     NULL,                               // tp_iternext
-    ZoneTableAccessor_methods,           // tp_methods
+    ZoneTableAccessor_methods,          // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
