@@ -248,6 +248,13 @@
         but remember that if there's any error related to TSIG, some
         of the counted opcode may not be trustworthy.
       </para>
+
+      <para>
+        RD bit is not specific to queries (requests of opcode 0), but
+	<quote>qryrecursion</quote> is limited to queries because RD bit is
+	meaningless for the other opcodes and they are passed to another
+	BIND 10 module such as <command>b10-ddns</command>.
+      </para>
     </note>
 
   </refsect1>
