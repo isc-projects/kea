@@ -21,7 +21,7 @@ namespace d2 {
 
 /// @brief Defines the application name, this is passed into base class
 /// and appears in log statements.
-const char* D2Controller::d2_app_name_ = "Dhcp-Ddns";
+const char* D2Controller::d2_app_name_ = "DHCP-DDNS";
 
 /// @brief Defines the executable name. This is passed into the base class
 /// by convention this should match the BIND10 module name.
