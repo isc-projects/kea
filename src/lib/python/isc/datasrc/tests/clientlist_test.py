@@ -166,13 +166,12 @@ class ClientListTest(unittest.TestCase):
 
         self.find_helper()
 
+    @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
+                     'shared memory is not available')
     def test_find_mapped(self):
         """
         Test find on a mapped segment.
         """
-        if os.environ['HAVE_SHARED_MEMORY'] != 'yes':
-            return
-
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.clist.configure('''[{
             "type": "MasterFiles",
