@@ -3,7 +3,7 @@
 	controller class, D2Controller, and the abstract class from
 	which it derives,DControllerBase. D2Controller manages the
 	lifecycle and BIND10 integration of the DHCP-DDNS application
-	process, D2Process. Alos note, module name is now 
+	process, D2Process. Also note, module name is now
 	b10-dhcp-ddns.
 	(Trac #2956, git a41cac582e46213c120b19928e4162535ba5fe76)
 
@@ -124,6 +124,7 @@
 
 612.	[func]		tomek
 	b10-dhcp6: Support for relayed DHCPv6 traffic has been added.
+	(Trac #2898, git c3f6b67fa16a07f7f7ede24dd85feaa7c157e1cb)
 
 611.	[func]		naokikambe
 	Added Xfrin statistics items such as the number of successful
