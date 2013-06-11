@@ -66,7 +66,9 @@ if "B10_FROM_BUILD" in os.environ:
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}",
+                                                  DATAROOTDIR). \
+                                                  replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
@@ -354,7 +356,8 @@ class MsgQ:
 
     def register_socket(self, newsocket):
         """
-        Internal function to insert a socket. Used by process_accept and some tests.
+        Internal function to insert a socket. Used by process_accept and some
+        tests.
         """
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
@@ -610,7 +613,8 @@ class MsgQ:
         This is done by using an increasing counter and the current
         time."""
         self.connection_counter += 1
-        return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
+        return "%x_%x@%s" % (time.time(), self.connection_counter,
+                             self.hostname)
 
     def process_command_ping(self, sock, routing, data):
         self.sendmsg(sock, { CC_HEADER_TYPE : CC_COMMAND_PONG }, data)
@@ -885,7 +889,8 @@ if __name__ == "__main__":
         a valid port number. Used by OptionParser() on startup."""
         intval = int(value)
         if (intval < 0) or (intval > 65535):
-            raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
+            raise OptionValueError("%s requires a port number (0-65535)" %
+                                   opt_str)
         parser.values.msgq_port = intval
 
     # Parse any command-line options.
