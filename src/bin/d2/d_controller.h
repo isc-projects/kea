@@ -56,7 +56,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown when the application process encounters an 
+/// @brief Exception thrown when the application process encounters an
 /// operation in its event loop (i.e. run method).
 class ProcessRunError: public isc::Exception {
 public:
@@ -104,26 +104,28 @@ typedef boost::shared_ptr<isc::config::ModuleCCSession> ModuleCCSessionPtr;
 /// creation.  In integrated mode it is responsible for establishing BIND10
 /// session(s) and passes this IOService into the session creation method(s).
 /// It also provides the callback handlers for command and configuration events
-/// received from the external framework (aka BIND10).  For example, when 
+/// received from the external framework (aka BIND10).  For example, when
 /// running in integrated mode and a user alters the configuration with the
 /// bindctl tool, BIND10 will emit a configuration message which is sensed by
 /// the controller's IOService. The IOService in turn invokes the configuration
 /// callback, DControllerBase::configHandler().  If the user issues a command
 /// such as shutdown via bindctl,  BIND10 will emit a command message, which is
-/// sensed by controller's IOService which invokes the command callback, 
+/// sensed by controller's IOService which invokes the command callback,
 /// DControllerBase::commandHandler().
 ///
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
 /// member in order for it to be available for BIND10 callback functions. This
-/// would not be required if BIND10 supported instance method callbacks.   
+/// would not be required if BIND10 supported instance method callbacks.
 class DControllerBase : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
-    /// @param name name is a text label for the controller. Typically this
-    /// would be the BIND10 module name.
-    DControllerBase(const char* name);
+    /// @param app_name is display name of the application under control. This
+    /// name appears in log statements.
+    /// @param bin_name is the name of the application executable. Typically
+    /// this matches the BIND10 module name.
+    DControllerBase(const char* app_name, const char* bin_name);
 
     /// @brief Destructor
     virtual ~DControllerBase();
@@ -150,9 +152,9 @@ public:
     /// ProcessInitError  - Failed to create and initialize application
     /// process object.
     /// SessionStartError  - Could not connect to BIND10 (integrated mode only).
-    /// ProcessRunError - A fatal error occurred while in the application 
+    /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
-    /// SessionEndError - Could not disconnect from BIND10 (integrated mode 
+    /// SessionEndError - Could not disconnect from BIND10 (integrated mode
     /// only).
     void launch(int argc, char* argv[]);
 
@@ -334,11 +336,18 @@ protected:
         return ("");
     }
 
-    /// @brief Supplies the controller name.
+    /// @brief Fetches the name of the application under control.
     ///
-    /// @return returns the controller name string
-    const std::string getName() const {
-        return (name_);
+    /// @return returns the controller service name string
+    const std::string getAppName() const {
+        return (app_name_);
+    }
+
+    /// @brief Fetches the name of the application executable.
+    ///
+    /// @return returns the controller logger name string
+    const std::string getBinName() const {
+        return (bin_name_);
     }
 
     /// @brief Supplies whether or not the controller is in stand alone mode.
@@ -481,9 +490,14 @@ private:
     void usage(const std::string& text);
 
 private:
-    /// @brief Text label for the controller. Typically this would be the
-    /// BIND10 module name.
-    std::string name_;
+    /// @brief Display name of the service under control. This name
+    /// appears in log statements.
+    std::string app_name_;
+
+    /// @brief Name of the service executable. By convention this matches
+    /// the BIND10 module name. It is also used to establish the logger
+    /// name.
+    std::string bin_name_;
 
     /// @brief Indicates if the controller stand alone mode is enabled. When
     /// enabled, the controller will not establish connectivity with BIND10.

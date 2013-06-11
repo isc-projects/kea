@@ -33,7 +33,6 @@ DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
 
 void
 DStubProcess::init() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_PROCESS_INIT);
     if (SimFailure::shouldFailOn(SimFailure::ftProcessInit)) {
         // Simulates a failure to instantiate the process.
         isc_throw(DProcessBaseError, "DStubProcess simulated init() failure");
@@ -48,24 +47,19 @@ DStubProcess::run() {
     // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_ENTER);
     IOServicePtr& io_service = getIoService();
     while (!shouldShutdown()) {
         try {
             io_service->run_one();
         } catch (const std::exception& ex) {
-            LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
             isc_throw (DProcessBaseError,
                 std::string("Process run method failed:") + ex.what());
         }
     }
-
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_EXIT);
 };
 
 void
 DStubProcess::shutdown() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_SHUTDOWN);
     if (SimFailure::shouldFailOn(SimFailure::ftProcessShutdown)) {
         // Simulates a failure during shutdown process.
         isc_throw(DProcessBaseError, "DStubProcess simulated shutdown failure");
@@ -75,10 +69,7 @@ DStubProcess::shutdown() {
 }
 
 isc::data::ConstElementPtr
-DStubProcess::configure(isc::data::ConstElementPtr config_set) {
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
-              D2PRC_CONFIGURE).arg(config_set->str());
-
+DStubProcess::configure(isc::data::ConstElementPtr /*config_set*/) {
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
         return (isc::config::createAnswer(1,
@@ -90,10 +81,7 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set) {
 
 isc::data::ConstElementPtr
 DStubProcess::command(const std::string& command,
-                      isc::data::ConstElementPtr args) {
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
-              D2PRC_COMMAND).arg(command).arg(args->str());
-
+                      isc::data::ConstElementPtr /* args */) {
     isc::data::ConstElementPtr answer;
     if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
         // Simulates a process command execution failure.
@@ -120,11 +108,16 @@ const char* DStubController::stub_ctl_command_("spiffy");
 // Define custom command line option command supported by DStubController.
 const char* DStubController::stub_option_x_ = "x";
 
+/// @brief Defines the app name used to construct the controller
+const char* DStubController::stub_app_name_ = "TestService";
+
+/// @brief Defines the bin name used to construct the controller
+const char* DStubController::stub_bin_name_ = "TestBin";
+
 DControllerBasePtr&
 DStubController::instance() {
     // If the singleton hasn't been created, do it now.
     if (!getController()) {
-        //setController(new DStubController());
         DControllerBasePtr p(new DStubController());
         setController(p);
     }
@@ -133,7 +126,7 @@ DStubController::instance() {
 }
 
 DStubController::DStubController()
-    : DControllerBase(D2_MODULE_NAME) {
+    : DControllerBase(stub_app_name_, stub_bin_name_) {
 
     if (getenv("B10_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
@@ -166,7 +159,7 @@ DProcessBase* DStubController::createProcess() {
     }
 
     // This should be a successful instantiation.
-    return (new DStubProcess(getName().c_str(), getIOService()));
+    return (new DStubProcess(getAppName().c_str(), getIOService()));
 }
 
 isc::data::ConstElementPtr
