@@ -1,3 +1,10 @@
+627		[func]		tmark
+	Logger name for DHCP-DDNS has been changed from "d2_logger" to "dhcpddns".
+	In addition, its log messages now use two suffixes, DCTL_ for logs the
+	emanate from the underlying base classes, and DHCP_DDNS_ for logs which
+	emanate from DHCP-DDNS specific code
+	(trac #2978 git 5aec5fb20b0486574226f89bd877267cb9116921) 
+
 626.	[func]		tmark
 	Created the initial implementation of DHCP-DDNS service
 	controller class, D2Controller, and the abstract class from
