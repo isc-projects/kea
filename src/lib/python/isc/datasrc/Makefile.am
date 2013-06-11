@@ -34,6 +34,7 @@ datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/python/libb10-pydnspp.la
 datasrc_la_LIBADD += $(PYTHON_LIB)
 
 EXTRA_DIST = client_inc.cc
+EXTRA_DIST += configurableclientlist_inc.cc
 EXTRA_DIST += finder_inc.cc
 EXTRA_DIST += iterator_inc.cc
 EXTRA_DIST += updater_inc.cc
