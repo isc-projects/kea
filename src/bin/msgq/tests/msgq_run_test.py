@@ -312,12 +312,13 @@ class MsgqRunTest(unittest.TestCase):
         # do so manually.
         synchronised = False
         attempts = 100
-        while not synchronised:
+        while not synchronised and attempts > 0:
             time.sleep(0.1)
             seq = conn.group_sendmsg({'command': ['Are you running?']},
                                      'Msgq', want_answer=True)
             msg = conn.group_recvmsg(nonblock=False, seq=seq)
             synchronised = msg[0] != -1
+            attempts -= 1
         self.assertTrue(synchronised)
         # The actual test
         conn.group_subscribe("notifications/cc_members")
