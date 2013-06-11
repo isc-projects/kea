@@ -48,12 +48,12 @@ multiple times.\n\
 \n\
 If the ZoneWriter was constructed with catch_load_error being True, then\n\
 in case a load error happens, a string with the error message will be\n\
-returned. In all other cases, None is returned..\n\
+returned. In all other cases, None is returned.\n\
 \n\
 Exceptions:\n\
   isc.InvalidOperation if called second time.\n\
   DataSourceError load related error (not thrown if constructed with\n\
-             catch_load_error being false).\n\
+             catch_load_error being False).\n\
 \n\
 ";
 
