@@ -37,24 +37,24 @@ D2Process::run() {
     // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_ENTER);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_ENTER);
     IOServicePtr& io_service = getIoService();
     while (!shouldShutdown()) {
         try {
             io_service->run_one();
         } catch (const std::exception& ex) {
-            LOG_FATAL(d2_logger, D2PRC_FAILED).arg(ex.what());
+            LOG_FATAL(dctl_logger, DHCP_DDNS_FAILED).arg(ex.what());
             isc_throw (DProcessBaseError,
                        "Process run method failed: " << ex.what());
         }
     }
 
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_RUN_EXIT);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 };
 
 void
 D2Process::shutdown() {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, D2PRC_SHUTDOWN);
+    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN);
     setShutdownFlag(true);
 }
 
@@ -64,8 +64,8 @@ D2Process::configure(isc::data::ConstElementPtr config_set) {
     // any content in config_set as valid.  This is sufficient to
     // allow participation as a BIND10 module, while D2 configuration support
     // is being developed.
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
-              D2PRC_CONFIGURE).arg(config_set->str());
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
+              DHCP_DDNS_CONFIGURE).arg(config_set->str());
 
     return (isc::config::createAnswer(0, "Configuration accepted."));
 }
@@ -75,8 +75,8 @@ D2Process::command(const std::string& command, isc::data::ConstElementPtr args){
     // @TODO This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise
     // it should reject all commands as it does now.
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
-              D2PRC_COMMAND).arg(command).arg(args->str());
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
+              DHCP_DDNS_COMMAND).arg(command).arg(args->str());
 
     return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
                                       + command));
