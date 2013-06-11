@@ -175,7 +175,7 @@ class ClientListTest(unittest.TestCase):
         self.assertIsNotNone(table)
         iterator = table.get_iterator()
         self.assertIsNotNone(iterator)
-        self.assertRaises(isc.datasrc.Error, iterator.get_current)
+        self.assertEqual(0, len(list(iterator)))
 
         # normal configuration
         self.clist.configure('''[{
@@ -196,16 +196,14 @@ class ClientListTest(unittest.TestCase):
         self.assertIsNotNone(table)
         iterator = table.get_iterator()
         self.assertIsNotNone(iterator)
-        index, origin = iterator.get_current()
-        self.assertEqual(origin.to_text(), "example.org.")
-        self.assertEqual(1, len(list(iterator)))
+        zonelist = list(iterator)
+        self.assertEqual(1, len(zonelist))
+        self.assertEqual(zonelist[0][1], isc.dns.Name("example.org"))
 
         # named datasrc
         table = self.clist.get_zone_table_accessor("MasterFiles", True)
         iterator = table.get_iterator()
-        index, origin = iterator.get_current()
-        self.assertEqual(origin.to_text(), "example.org.")
-        self.assertEqual(1, len(list(iterator)))
+        self.assertEqual(zonelist, list(iterator))
 
         # longer zone list for non-trivial iteration
         self.clist.configure('''[{
