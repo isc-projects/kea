@@ -145,7 +145,7 @@ ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ZoneWriter_methods[] = {
-    { "load", ZoneWriter_load, METH_VARARGS,
+    { "load", ZoneWriter_load, METH_NOARGS,
       ZoneWriter_load_doc },
     { "install", ZoneWriter_install, METH_NOARGS,
       ZoneWriter_install_doc },
