@@ -282,7 +282,10 @@ class MsgqRunTest(unittest.TestCase):
         common unit tests in msgq_test.py.
 
         The test is here, because there might be some trouble with multiple
-        threads in msgq which would be hard to test using pure unit tests.
+        threads in msgq (see the note about locking on the module CC session
+        when sending message from one thread and listening for commands in the
+        other) which would be hard to test using pure unit tests. Testing
+        runnig whole msgq tests that implicitly.
         """
         conn = self.__get_connection()
         # Activate the session, pretend to be the config manager.
