@@ -289,7 +289,7 @@ class MsgqRunTest(unittest.TestCase):
         """
         conn = self.__get_connection()
         # Activate the session, pretend to be the config manager.
-        conn.group_subscribe("ConfigManager")
+        conn.group_subscribe('ConfigManager')
         # Answer request for logging config
         (msg, env) = conn.group_recvmsg(nonblock=False)
         self.assertEqual({'command': ['get_config',
@@ -321,7 +321,7 @@ class MsgqRunTest(unittest.TestCase):
             attempts -= 1
         self.assertTrue(synchronised)
         # The actual test
-        conn.group_subscribe("notifications/cc_members")
+        conn.group_subscribe('notifications/cc_members')
         (msg, env) = conn.group_recvmsg(nonblock=False)
         self.assertEqual({'notification': ['subscribed', {
             'client': conn.lname,

@@ -199,19 +199,19 @@ class MsgQTest(unittest.TestCase):
         class Sock:
             def __init__(self, fileno):
                 self.fileno = lambda: fileno
-        self.__msgq.lnames["first"] = Sock(1)
-        self.__msgq.lnames["second"] = Sock(2)
-        self.__msgq.fd_to_lname[1] = "first"
-        self.__msgq.fd_to_lname[2] = "second"
+        self.__msgq.lnames['first'] = Sock(1)
+        self.__msgq.lnames['second'] = Sock(2)
+        self.__msgq.fd_to_lname[1] = 'first'
+        self.__msgq.fd_to_lname[2] = 'second'
         # Subscribe them to some groups
-        self.__msgq.process_command_subscribe(self.__msgq.lnames["first"],
-                                              {'group': "G1", 'instance': "*"},
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['first'],
+                                              {'group': 'G1', 'instance': '*'},
                                               None)
-        self.__msgq.process_command_subscribe(self.__msgq.lnames["second"],
-                                              {'group': "G1", 'instance': "*"},
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['second'],
+                                              {'group': 'G1', 'instance': '*'},
                                               None)
-        self.__msgq.process_command_subscribe(self.__msgq.lnames["second"],
-                                              {'group': "G2", 'instance': "*"},
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['second'],
+                                              {'group': 'G2', 'instance': '*'},
                                               None)
         # Now query content of some groups through the command handler.
         self.__msgq.running = True # Enable the command handler
@@ -228,16 +228,16 @@ class MsgQTest(unittest.TestCase):
             # on them)
             json.dumps(result)
         # Members of the G1 and G2
-        self.assertEqual({'result': [0, ["second"]]},
+        self.assertEqual({'result': [0, ['second']]},
                          self.__msgq.command_handler('members',
-                                                     {'group': "G2"}))
+                                                     {'group': 'G2'}))
         check_both(self.__msgq.command_handler('members', {'group': 'G1'}))
         # We pretend that all the possible groups exist, just that most
-        # of them are empty. So requesting for G3 is request for an empty
+        # of them are empty. So requesting for Empty is request for an empty
         # group and should not fail.
         self.assertEqual({'result': [0, []]},
                          self.__msgq.command_handler('members',
-                                                     {'group': "Empty"}))
+                                                     {'group': 'Empty'}))
         # Without the name of the group, we just get all the clients.
         check_both(self.__msgq.command_handler('members', {}))
         # Omitting the parameters completely in such case is OK
