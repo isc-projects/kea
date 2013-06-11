@@ -14,95 +14,100 @@
 
 $NAMESPACE isc::d2
 
-% D2CTL_STARTING DHCP-DDNS controller starting, pid: %1
-This is an informational message issued when controller for DHCP-DDNS
-service first starts.
-
-% D2CTL_STOPPING DHCP-DDNS controller is exiting
-This is an informational message issued when the controller is exiting
-following a shut down (normal or otherwise) of the DDHCP-DDNS process.
-
-% D2PRC_SHUTDOWN DHCP-DDNS process is performing a normal shut down
-This is a debug message issued when the service process has been instructed
-to shut down by the controller.
-
-% D2PRC_PROCESS_INIT DHCP-DDNS application init invoked
-This is a debug message issued when the D2 process enters its
-init method. 
-
-% D2PRC_RUN_ENTER process has entered the event loop 
-This is a debug message issued when the D2 process enters its
-run method. 
-
-% D2PRC_RUN_EXIT process is exiting the event loop
-This is a debug message issued when the D2 process exits the
-in event loop. 
-
-% D2PRC_FAILED process experienced a fatal error: %1
-This is a debug message issued when the D2 process encounters an
-unrecoverable error from within the event loop.
-
-% D2PRC_CONFIGURE new configuration received: %1
-This is a debug message issued when the D2 process configure method
-has been invoked.
-
-% D2PRC_COMMAND command directive received, command: %1 - args: %2
-This is a debug message issued when the D2 process command method
-has been invoked.
-
-% D2CTL_INIT_PROCESS initializing application proces 
+% DCTL_CCSESSION_ENDING %1 ending control channel session
 This debug message is issued just before the controller attempts
-to create and initialize its process instance.
+to disconnect from its session with the BIND10 control channel.
 
-% D2CTL_SESSION_FAIL failed to establish BIND 10 session: %1
-The controller has failed to establish communication with the rest of BIND
-10 and will exit. 
-
-% D2CTL_DISCONNECT_FAIL failed to disconnect from BIND 10 session: %1
-This message indicates that while shutting down, the DHCP-DDNS controller 
-encountered an error terminating communication with the BIND10. The service 
-will still exit.  While theoretically possible, this situation is rather 
-unlikely. 
-
-% D2CTL_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the controller is running in the
-process in standalone mode. This means it will not connected to the BIND10 
-message queue. Standalone mode is only useful during program development, 
-and should not be used in a production environment.
-
-% D2CTL_RUN_PROCESS starting application proces event loop 
-This debug message is issued just before the controller invokes 
-the application process run method.
-
-% D2CTL_FAILED process failed: %1
-The controller has encountered a fatal error and is terminating.
-The reason for the failure is included in the message.
-
-% D2CTL_CCSESSION_STARTING starting control channel session, specfile: %1
+% DCTL_CCSESSION_STARTING %1 starting control channel session, specfile: %2
 This debug message is issued just before the controller attempts
-to establish a session with the BIND 10 control channel.
+to establish a session with the BIND10 control channel.
 
-% D2CTL_CCSESSION_ENDING ending control channel session
-This debug message is issued just before the controller attempts
-to disconnect from its session with the BIND 10 control channel.
+% DCTL_COMMAND_RECEIVED %1 received command %2, arguments: %3
+A debug message listing the command (and possible arguments) received
+from the BIND10 control system by the controller.
 
-% D2CTL_CONFIG_STUB configuration stub handler called 
-This debug message is issued when the dummy handler for configuration
-events is called.  This only happens during intial startup.
-
-% D2CTL_CONFIG_LOAD_FAIL failed to load configuration: %1
-This critical error message indicates that the initial process 
+% DCTL_CONFIG_LOAD_FAIL %1 configuration failed to load: %2
+This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
 
-% D2CTL_COMMAND_RECEIVED received command %1, arguments: %2
-A debug message listing the command (and possible arguments) received
-from the BIND 10 control system by the controller.
+% DCTL_CONFIG_STUB %1 configuration stub handler called
+This debug message is issued when the dummy handler for configuration
+events is called.  This only happens during initial startup.
 
-% D2CTL_NOT_RUNNING The application process instance is not running
-A warning message is issued when an attempt is made to shut down the
-the process when it is not running.
-
-% D2CTL_CONFIG_UPDATE updated configuration received: %1
+% DCTL_CONFIG_UPDATE %1 updated configuration received: %2
 A debug message indicating that the controller has received an
-updated configuration from the BIND 10 configuration system.
+updated configuration from the BIND10 configuration system.
+
+% DCTL_DISCONNECT_FAIL %1 controller failed to end session with BIND10: %2
+This message indicates that while shutting down, the Dhcp-Ddns controller
+encountered an error terminating communication with the BIND10. The service
+will still exit.  While theoretically possible, this situation is rather
+unlikely.
+
+% DCTL_INIT_PROCESS %1 initializing the application
+This debug message is issued just before the controller attempts
+to create and initialize its application instance.
+
+% DCTL_INIT_PROCESS_FAIL %1 application initialization failed: %2
+This error message is issued if the controller could not initialize the
+application and will exit.
+
+% DCTL_NOT_RUNNING %1 application instance is not running
+A warning message is issued when an attempt is made to shut down the
+the application when it is not running.
+
+% DCTL_PROCESS_FAILED %1 application execution failed: %2
+The controller has encountered a fatal error while running the
+application and is terminating. The reason for the failure is
+included in the message.
+
+% DCTL_RUN_PROCESS %1 starting application event loop
+This debug message is issued just before the controller invokes
+the application run method.
+
+% DCTL_SESSION_FAIL %1 controller failed to establish BIND10 session: %1
+The controller has failed to establish communication with the rest of BIND
+10 and will exit.
+
+% DCTL_STANDALONE %1 skipping message queue, running standalone
+This is a debug message indicating that the controller is running in the
+application in standalone mode. This means it will not connected to the BIND10
+message queue. Standalone mode is only useful during program development,
+and should not be used in a production environment.
+
+% DCTL_STARTING %1 controller starting, pid: %2
+This is an informational message issued when controller for the
+service first starts.
+
+% DCTL_STOPPING %1 controller is exiting
+This is an informational message issued when the controller is exiting
+following a shut down (normal or otherwise) of the service.
+
+% DHCP_DDNS_COMMAND command directive received, command: %1 - args: %2
+This is a debug message issued when the Dhcp-Ddns application command method
+has been invoked.
+
+% DHCP_DDNS_CONFIGURE configuration update received: %1
+This is a debug message issued when the Dhcp-Ddns application configure method
+has been invoked.
+
+% DHCP_DDNS_FAILED application experienced a fatal error: %1
+This is a debug message issued when the Dhcp-Ddns application encounters an
+unrecoverable error from within the event loop.
+
+% DHCP_DDNS_PROCESS_INIT application init invoked
+This is a debug message issued when the Dhcp-Ddns application enters
+its init method.
+
+% DHCP_DDNS_RUN_ENTER application has entered the event loop
+This is a debug message issued when the Dhcp-Ddns application enters
+its run method.
+
+% DHCP_DDNS_RUN_EXIT application is exiting the event loop
+This is a debug message issued when the Dhcp-Ddns exits the
+in event loop.
+
+% DHCP_DDNS_SHUTDOWN application is performing a normal shut down
+This is a debug message issued when the application has been instructed
+to shut down by the controller.
