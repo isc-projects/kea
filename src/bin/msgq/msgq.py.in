@@ -219,7 +219,7 @@ class MsgQ:
 
         The notification occurs after the event, so client a subscribing for
         notifications will get a notification about its own subscription, but
-	will not get a notification when it unsubscribes.
+        will not get a notification when it unsubscribes.
         """
         # Due to the interaction between threads (and fear it might influence
         # sending stuff), we test this method in msgq_run_test, instead of
