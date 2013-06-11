@@ -280,7 +280,7 @@ class MsgQTest(unittest.TestCase):
 
         # We should notify about new cliend when we register it
         self.__msgq.register_socket(sock)
-        lname = list(self.__msgq.lnames.keys())[0] # Steal the lname
+        lname = self.__msgq.fd_to_lname[1] # Steal the lname
         self.assertEqual([('connected', {'client': lname})], notifications)
         notifications.clear()
 
@@ -313,7 +313,7 @@ class MsgQTest(unittest.TestCase):
 
         # Register and subscribe. Notifications for these are in above test.
         self.__msgq.register_socket(sock)
-        lname = list(self.__msgq.lnames.keys())[0] # Steal the lname
+        lname = self.__msgq.fd_to_lname[1] # Steal the lname
         self.__msgq.process_command_subscribe(sock, {'group': 'G',
                                                      'instance': '*'},
                                               None)
