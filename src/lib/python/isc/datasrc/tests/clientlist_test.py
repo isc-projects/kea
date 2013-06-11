@@ -65,6 +65,15 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList,
                          isc.dns.RRClass.IN, isc.dns.RRClass.IN)
 
+    def configure_helper(self):
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+
     def test_configure(self):
         """
         Test we can configure the client list. This tests if the valid
@@ -80,13 +89,7 @@ class ClientListTest(unittest.TestCase):
         self.assertIsNone(finder)
         self.assertFalse(exact)
         # We can use this type, as it is not loaded dynamically.
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
-            },
-            "cache-enable": true
-        }]''', True)
+        self.configure_helper()
         # Check the zone is there now. Proper tests of find are in other
         # test methods.
         self.dsrc, self.finder, exact = \
@@ -156,14 +159,7 @@ class ClientListTest(unittest.TestCase):
         etc.
         """
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
-            },
-            "cache-enable": true
-        }]''', True)
-
+        self.configure_helper()
         self.find_helper()
 
     @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
@@ -204,6 +200,38 @@ class ClientListTest(unittest.TestCase):
         # The segment is still in READ_ONLY mode.
         self.find_helper()
 
+    def test_zone_writer_load_twice(self):
+        """
+        Test that the zone writer throws when load() is called more than
+        once.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.configure_helper()
+
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        err_msg = self.__zone_writer.load()
+        self.assertIsNone(err_msg)
+        self.assertRaises(isc.datasrc.Error, self.__zone_writer.load)
+        self.__zone_writer.cleanup()
+
+    def test_zone_writer_install_without_load(self):
+        """
+        Test that the zone writer throws when install() is called
+        without calling load() first.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.configure_helper()
+
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        self.assertRaises(isc.datasrc.Error, self.__zone_writer.install)
+        self.__zone_writer.cleanup()
+
     def test_get_status(self):
         """
         Test getting status of various data sources.
@@ -216,13 +244,7 @@ class ClientListTest(unittest.TestCase):
         self.assertIsInstance(status, list)
         self.assertEqual(0, len(status))
 
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
-            },
-            "cache-enable": true
-        }]''', True)
+        self.configure_helper()
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
