@@ -44,35 +44,54 @@ Parameters:\n\
 const char* const ConfigurableClientList_reset_memory_segment_doc = "\
 reset_memory_segment(datasrc_name, mode, config_params) -> None\n\
 \n\
-Wrapper around C++ ConfigurableClientList::resetMemorySegment\n\
-\n\
-This resets the zone table segment for a datasource with a new\n\
+This method resets the zone table segment for a datasource with a new\n\
 memory segment.\n\
 \n\
 Parameters:\n\
-  datasrc_name      The name of the data source whose segment to reset.\
-  mode              The open mode for the new memory segment.\
-  config_params     The configuration for the new memory segment, as a JSON encoded string.\
+  datasrc_name      The name of the data source whose segment to reset.\n\
+  mode              The open mode for the new memory segment.\n\
+  config_params     The configuration for the new memory segment, as a JSON encoded string.\n\
 ";
 
 const char* const ConfigurableClientList_get_cached_zone_writer_doc = "\
 get_cached_zone_writer(zone, datasrc_name) -> status, zone_writer\n\
 \n\
-Wrapper around C++ ConfigurableClientList::getCachedZoneWriter\n\
+This method returns a ZoneWriter that can be used to (re)load a zone.\n\
 \n\
-This returns a ZoneWriter that can be used to (re)load a zone.\n\
+By default this method identifies the first data source in the list\n\
+that should serve the zone of the given name, and returns a ZoneWriter\n\
+object that can be used to load the content of the zone, in a specific\n\
+way for that data source.\n\
+\n\
+If the optional datasrc_name parameter is provided with a non empty\n\
+string, this method only tries to load the specified zone into or with\n\
+the data source which has the given name, regardless where in the list\n\
+that data source is placed.  Even if the given name of zone doesn't\n\
+exist in the data source, other data sources are not searched and\n\
+this method simply returns ZONE_NOT_FOUND in the first element\n\
+of the pair.\n\
+\n\
+Two elements are returned. The first element is a status\n\
+indicating if it worked or not (and in case it didn't, also why). If the\n\
+status is ZONE_SUCCESS, the second element contains a ZoneWriter object. If\n\
+the status is anything else, the second element is None.\n\
 \n\
 Parameters:\n\
-  zone              The name of the zone to (re)load.\
-  datasrc_name      The name of the data source where the zone is to be loaded.\
+  zone              The origin of the zone to (re)load.\n\
+  datasrc_name      The name of the data source where the zone is to be loaded (optional).\n\
 ";
 
 const char* const ConfigurableClientList_get_status_doc = "\
-get_status() -> list\n\
+get_status() -> list of tuples\n\
 \n\
-Wrapper around C++ ConfigurableClientList::getStatus\n\
+This method returns a list of tuples, with each tuple containing the\n\
+status of a data source client. If there are no data source clients\n\
+present, an empty list is returned.\n\
 \n\
-This returns a list of tuples, each containing the status of a data source client.\
+The tuples contain (name, segment_type, segment_state):\n\
+  name              The name of the data source.\n\
+  segment_type      A string indicating the type of memory segment in use.\n\
+  segment_state     The state of the memory segment.\n\
 ";
 
 const char* const ConfigurableClientList_find_doc = "\
