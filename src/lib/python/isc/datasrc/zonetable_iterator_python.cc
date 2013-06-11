@@ -73,26 +73,6 @@ ZoneTableIterator_destroy(s_ZoneTableIterator* const self) {
 // the type definition of the object, since both can use the other
 //
 PyObject*
-ZoneTableIterator_getCurrent(PyObject* po_self, PyObject*) {
-    s_ZoneTableIterator* self = static_cast<s_ZoneTableIterator*>(po_self);
-    try {
-        const isc::datasrc::ZoneSpec& zs = self->cppobj->getCurrent();
-        return (Py_BuildValue("iO", zs.index,
-                              isc::dns::python::createNameObject(zs.origin)));
-    } catch (const std::exception& ex) {
-        // isc::InvalidOperation is thrown when we call getCurrent()
-        // when we are already done iterating ('iterating past end')
-        // We could also simply return None again
-        PyErr_SetString(getDataSourceException("Error"), ex.what());
-        return (NULL);
-    } catch (...) {
-        PyErr_SetString(getDataSourceException("Error"),
-                        "Unexpected exception");
-        return (NULL);
-    }
-}
-
-PyObject*
 ZoneTableIterator_iter(PyObject *self) {
     Py_INCREF(self);
     return (self);
@@ -105,10 +85,16 @@ ZoneTableIterator_next(PyObject* po_self) {
         return (NULL);
     }
     try {
-        PyObject* result = ZoneTableIterator_getCurrent(po_self, NULL);
+        const isc::datasrc::ZoneSpec& zs = self->cppobj->getCurrent();
+        PyObject* result =
+            Py_BuildValue("iO", zs.index,
+                          isc::dns::python::createNameObject(zs.origin));
         self->cppobj->next();
         return (result);
     } catch (const std::exception& exc) {
+        // isc::InvalidOperation is thrown when we call getCurrent()
+        // when we are already done iterating ('iterating past end')
+        // We could also simply return None again
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
@@ -119,14 +105,6 @@ ZoneTableIterator_next(PyObject* po_self) {
 }
 
 PyMethodDef ZoneTableIterator_methods[] = {
-    { "get_current", ZoneTableIterator_getCurrent, METH_NOARGS,
-"get_current() -> isc.datasrc.ZoneSpec\n\
-\n\
-Return the information of the zone at which the iterator is\
-currently located\n\
-\n\
-This method must not be called once the iterator reaches the end\
-of the zone table.\n" },
     { NULL, NULL, 0, NULL }
 };
 
