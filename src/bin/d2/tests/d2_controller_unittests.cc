@@ -63,8 +63,11 @@ TEST_F(D2ControllerTest, basicInstanceTesting) {
     ASSERT_TRUE(controller);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<D2Controller>(controller));
 
-    // Verify that controller's name is correct.
-    EXPECT_TRUE(checkName(D2_MODULE_NAME));
+    // Verify that controller's app name is correct.
+    EXPECT_TRUE(checkAppName(D2Controller::d2_app_name_));
+
+    // Verify that controller's bin name is correct.
+    EXPECT_TRUE(checkBinName(D2Controller::d2_bin_name_));
 
     // Verify that controller's spec file name is correct.
     EXPECT_TRUE(checkSpecFileName(D2_SPECFILE_LOCATION));

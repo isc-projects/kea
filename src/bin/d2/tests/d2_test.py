@@ -162,7 +162,7 @@ class TestD2Daemon(unittest.TestCase):
         (returncode, output, error) = self.runCommand(["../b10-dhcp-ddns", 
                                                        "-s", "-v"])
         output_text = str(output) + str(error)
-        self.assertEqual(output_text.count("D2CTL_STARTING"), 1)
+        self.assertEqual(output_text.count("DCTL_STARTING"), 1)
 
 if __name__ == '__main__':
     unittest.main()
