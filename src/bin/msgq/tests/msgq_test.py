@@ -64,7 +64,8 @@ class TestSubscriptionManager(unittest.TestCase):
         for s in socks:
             self.sm.subscribe("a", "*", s)
         self.sm.unsubscribe("a", "*", 's3')
-        self.assertEqual(self.sm.find_sub("a", "*"), [ 's1', 's2', 's4', 's5' ])
+        self.assertEqual(self.sm.find_sub("a", "*"),
+                         [ 's1', 's2', 's4', 's5' ])
 
     def test_unsubscribe_all(self):
         self.sm.subscribe('g1', 'i1', 's1')
@@ -799,9 +800,11 @@ class SendNonblock(unittest.TestCase):
                                send_exception is raised by BadSocket.
         """
         (write, read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        (control_write, control_read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        (control_write, control_read) = socket.socketpair(socket.AF_UNIX,
+                                                          socket.SOCK_STREAM)
         badwrite = BadSocket(write, raise_on_send, send_exception)
-        self.do_send(badwrite, read, control_write, control_read, expect_answer, expect_send_exception)
+        self.do_send(badwrite, read, control_write, control_read,
+                     expect_answer, expect_send_exception)
         write.close()
         read.close()
         control_write.close()
