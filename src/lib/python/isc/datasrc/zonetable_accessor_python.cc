@@ -110,9 +110,9 @@ namespace python {
 PyTypeObject zonetableaccessor_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ZoneTableAccessor",
-    sizeof(s_ZoneTableAccessor),         // tp_basicsize
+    sizeof(s_ZoneTableAccessor),        // tp_basicsize
     0,                                  // tp_itemsize
-    ZoneTableAccessor_destroy,           // tp_dealloc
+    ZoneTableAccessor_destroy,          // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -128,7 +128,7 @@ PyTypeObject zonetableaccessor_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    ZoneTableAccessor_doc,
+    ZoneTableAccessor_doc,              // tp_doc
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
