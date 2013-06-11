@@ -63,7 +63,9 @@ class TestSubscriptionManager(unittest.TestCase):
         socks = [ 's1', 's2', 's3', 's4', 's5' ]
         for s in socks:
             self.sm.subscribe("a", "*", s)
-        self.sm.unsubscribe("a", "*", 's3')
+        self.assertTrue(self.sm.unsubscribe("a", "*", 's3'))
+        # Unsubscribe from group it is not in
+        self.assertFalse(self.sm.unsubscribe("a", "*", 's42'))
         self.assertEqual(self.sm.find_sub("a", "*"),
                          [ 's1', 's2', 's4', 's5' ])
 
@@ -299,6 +301,12 @@ class MsgQTest(unittest.TestCase):
         self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'})],
                          notifications)
         notifications.clear()
+
+        # Unsubscription from a group it isn't subscribed to
+        self.__msgq.process_command_unsubscribe(sock, {'group': 'H',
+                                                       'instance': '*'},
+                                                None)
+        self.assertEqual([], notifications)
 
         # And, finally, for removal of client
         self.__msgq.kill_socket(sock.fileno(), sock)
