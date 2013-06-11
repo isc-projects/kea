@@ -124,6 +124,8 @@ class SubscriptionManager:
         if target in self.subscriptions:
             if socket in self.subscriptions[target]:
                 self.subscriptions[target].remove(socket)
+                return True
+        return False
 
     def unsubscribe_all(self, socket):
         """Remove the socket from all subscriptions."""
@@ -703,13 +705,13 @@ class MsgQ:
         instance = routing[CC_HEADER_INSTANCE]
         if group == None or instance == None:
             return  # ignore invalid packets entirely
-        self.subs.unsubscribe(group, instance, sock)
-        lname = self.fd_to_lname[sock.fileno()]
-        self.members_notify('unsubscribed',
-                            {
-                                'client': lname,
-                                'group': group
-                            })
+        if self.subs.unsubscribe(group, instance, sock):
+            lname = self.fd_to_lname[sock.fileno()]
+            self.members_notify('unsubscribed',
+                                {
+                                    'client': lname,
+                                    'group': group
+                                })
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
