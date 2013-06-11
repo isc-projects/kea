@@ -230,7 +230,8 @@ class ClientListTest(unittest.TestCase):
         self.assertIsInstance(status, list)
         self.assertEqual(1, len(status))
         self.assertIsInstance(status[0], tuple)
-        self.assertTupleEqual(('MasterFiles', 'local', isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
+        self.assertTupleEqual(('MasterFiles', 'local',
+                               isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
 
 if __name__ == "__main__":
