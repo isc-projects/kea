@@ -146,7 +146,7 @@ PyTypeObject zonetableiterator_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    ZoneTableIterator_doc,
+    ZoneTableIterator_doc,              // tp_doc
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
