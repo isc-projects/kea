@@ -29,9 +29,16 @@ class MyCCSession(MockModuleCCSession, isc.config.ConfigData):
         specfile = os.environ['B10_FROM_BUILD'] + '/src/bin/memmgr/memmgr.spec'
         module_spec = isc.config.module_spec_from_file(specfile)
         isc.config.ConfigData.__init__(self, module_spec)
+        self.add_remote_params = [] # for inspection
+        self.add_remote_exception = None # to raise exception from the method
 
     def start(self):
         pass
+
+    def add_remote_config_by_name(self, mod_name, handler):
+        if self.add_remote_exception is not None:
+            raise self.add_remote_exception
+        self.add_remote_params.append((mod_name, handler))
 
 class MockMemmgr(memmgr.Memmgr):
     def _setup_ccsession(self):
@@ -105,6 +112,27 @@ class TestMemmgr(unittest.TestCase):
         answer = parse_answer(self.__mgr._config_handler(user_cfg))
         self.assertEqual(1, answer[0])
         self.assertIsNotNone(re.search('not writable', answer[1]))
+
+    def test_setup_module(self):
+        # _setup_module should add data_sources remote module with
+        # expected parameters.
+        self.__mgr._setup_ccsession()
+        self.assertEqual([], self.__mgr.mod_ccsession.add_remote_params)
+        self.__mgr._setup_module()
+        self.assertEqual([('data_sources',
+                           self.__mgr._datasrc_config_handler)],
+                         self.__mgr.mod_ccsession.add_remote_params)
+
+        # If data source isn't configured it's considered fatal.
+        self.__mgr.mod_ccsession.add_remote_exception = \
+            isc.config.ModuleCCSessionError('faked exception')
+        self.assertRaises(isc.server_common.bind10_server.BIND10ServerFatal,
+                          self.__mgr._setup_module)
+
+        self.__mgr.mod_ccsession.add_remote_exception = \
+            isc.config.ModuleSpecError('faked exception')
+        self.assertRaises(isc.server_common.bind10_server.BIND10ServerFatal,
+                          self.__mgr._setup_module)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
