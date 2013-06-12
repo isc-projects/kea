@@ -117,7 +117,7 @@ class DataSrcClientsMgr:
             client_list = self.__clients_map.get(rrclass)
         return client_list
 
-    def reconfigure(self, config):
+    def reconfigure(self, new_config, config_data):
         """(Re)configure the set of client lists.
 
         This method takes a new set of data source configuration, builds
@@ -142,12 +142,20 @@ class DataSrcClientsMgr:
         at the same time.
 
         Parameter:
-          config (dict): configuration data for the data_sources module.
+          new_config (dict): configuration data for the data_sources module
+            (actually unused in this method).
+          config_data (isc.config.ConfigData): the latest full config data
+            for the data_sources module.  Usually the second parameter of
+            the (remote) configuration update callback for the module.
 
         """
         try:
             new_map = {}
-            for rrclass_cfg, class_cfg in config.get('classes').items():
+            # We only refer to config_data, not new_config (diff from the
+            # previous).  the latter may be empty for the initial default
+            # configuration while the former works for all cases.
+            for rrclass_cfg, class_cfg in \
+                    config_data.get_value('classes')[0].items():
                 rrclass = isc.dns.RRClass(rrclass_cfg)
                 new_client_list = isc.datasrc.ConfigurableClientList(rrclass)
                 new_client_list.configure(json.dumps(class_cfg),
