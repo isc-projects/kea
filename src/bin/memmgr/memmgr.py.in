@@ -15,6 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import copy
 import os
 import sys
 import signal
@@ -43,13 +44,11 @@ class ConfigError(Exception):
 
 class Memmgr(BIND10Server):
     def __init__(self):
-        # configurable parameter: initially this is the only param, so
-        # we only maintain as a single attribute.  As the class is extended
-        # and more configurable, consider introducing a compound type or
-        # class.
+        # Running configurable parameters: on initial configuration this will
+        # be a dict: str=>config_value.
         # This is defined as "protected" so tests can inspect it; others
         # shouldn't use it directly.
-        self._mapped_file_dir = None
+        self._config_params = None
 
         # The manager to keep track of data source configuration.  Allow
         # tests to inspect/tweak it.
@@ -76,7 +75,7 @@ class Memmgr(BIND10Server):
         # latest full config data, which consist of the defaults with
         # possibly overridden by user config.  Otherwise, just apply the latest
         # diff.
-        if self._mapped_file_dir is None:
+        if self._config_params is None:
             new_config = self.mod_ccsession.get_full_config()
         try:
             self.__update_config(new_config)
@@ -98,6 +97,13 @@ class Memmgr(BIND10Server):
         Errors are to be reported as an exception.
 
         """
+        # If this is the first time, build everything from the scratch.
+        # Otherwise, make a full local copy and update it.
+        if self._config_params is None:
+            new_config_params = {}
+        else:
+            new_config_params = copy.deepcopy(self._config_params)
+
         new_mapped_file_dir = new_config.get('mapped_file_dir')
         if new_mapped_file_dir is not None:
             if not os.path.isdir(new_mapped_file_dir):
@@ -106,7 +112,10 @@ class Memmgr(BIND10Server):
             if not os.access(new_mapped_file_dir, os.W_OK):
                 raise ConfigError('mapped_file_dir is not writable: ' +
                                   new_mapped_file_dir)
-            self._mapped_file_dir = new_mapped_file_dir
+            new_config_params['mapped_file_dir'] = new_mapped_file_dir
+
+        # All copy, switch to the new configuration.
+        self._config_params = new_config_params
 
     def _setup_module(self):
         """Module specific initialization for BIND10Server."""
@@ -132,9 +141,7 @@ class Memmgr(BIND10Server):
         try:
             self._datasrc_clients_mgr.reconfigure(new_config, config_data)
             genid, clients_map = self._datasrc_clients_mgr.get_clients_map()
-            datasrc_info = DataSrcInfo(genid, clients_map,
-                                       {'mapped_file_dir':
-                                            self._mapped_file_dir})
+            datasrc_info = DataSrcInfo(genid, clients_map, self._config_params)
             self._datasrc_info_list.append(datasrc_info)
         except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
             logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
