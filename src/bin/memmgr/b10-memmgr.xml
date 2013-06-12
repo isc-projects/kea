@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>June 4, 2012</date>
+    <date>June 11, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -49,29 +49,39 @@
 
   <refsect1>
     <title>DESCRIPTION</title>
+    <para>The <command>b10-memmgr</command> daemon manages sharable
+      memory segments storing in-memory DNS zone data, and
+      communicates with other BIND 10 modules about the segment
+      information so the entire system will use these segments
+      in a consistent manner.
+    </para>
   </refsect1>
 
   <refsect1>
     <title>ARGUMENTS</title>
 
-    <para>The arguments are as follows:</para>
-
-    <variablelist>
-
-      <varlistentry>
-        <term>
-          <option>-h</option>,
-          <option>--help</option>
-        </term>
-        <listitem>
-          <para>
-            Print the command line arguments and exit.
-          </para>
-        </listitem>
-      </varlistentry>
+    <para>The <command>b10-memmgr</command> daemon does not take
+      any command line arguments.
+    </para>
+  </refsect1>
 
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
+    <para>
+      The configurable settings are:
+    </para>
+    <para>
+      <varname>mapped_file_dir</varname>
+      A path to store files to be mapped to memory.  This must be
+      writable to the <command>b10-memmgr</command> daemon.
+    </para>
+
+    <para>
+      The module commands are:
+    </para>
+    <para>
+      <command>shutdown</command> exits <command>b10-memmgr</command>.
+    </para>
   </refsect1>
 
 
@@ -87,6 +97,10 @@
 
   <refsect1>
     <title>HISTORY</title>
+    <para>
+      The <command>b10-memmgr</command> daemon was first implemented
+      in 2013 for the ISC BIND 10 project.
+    </para>
   </refsect1>
 </refentry><!--
  - Local variables:
