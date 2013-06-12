@@ -33,6 +33,8 @@
 #include "journal_reader_python.h"
 #include "configurableclientlist_python.h"
 #include "zone_loader_python.h"
+#include "zonetable_accessor_python.h"
+#include "zonetable_iterator_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -255,6 +257,42 @@ initModulePart_ZoneJournalReader(PyObject* mod) {
     return (true);
 }
 
+bool
+initModulePart_ZoneTableAccessor(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zonetableaccessor_type) < 0) {
+        return (false);
+    }
+    void* p = &zonetableaccessor_type;
+    if (PyModule_AddObject(mod, "ZoneTableAccessor",
+                           static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zonetableaccessor_type);
+
+    return (true);
+}
+
+bool
+initModulePart_ZoneTableIterator(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zonetableiterator_type) < 0) {
+        return (false);
+    }
+    void* p = &zonetableiterator_type;
+    if (PyModule_AddObject(mod, "ZoneTableIterator",
+                           static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zonetableiterator_type);
+
+    return (true);
+}
+
 PyObject* po_DataSourceError;
 PyObject* po_MasterFileError;
 PyObject* po_NotImplemented;
@@ -336,6 +374,16 @@ PyInit_datasrc(void) {
     }
 
     if (!initModulePart_ZoneLoader(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ZoneTableAccessor(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ZoneTableIterator(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }
