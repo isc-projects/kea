@@ -25,11 +25,17 @@ import isc.log
 from isc.config import ModuleSpecError, ModuleCCSessionError
 from isc.log_messages.memmgr_messages import *
 from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
+from isc.server_common.datasrc_clients_mgr \
+    import DataSrcClientsMgr, ConfigError
+from isc.memmgr.datasrc_info import DataSrcInfo
+import isc.util.process
 
 MODULE_NAME = 'memmgr'
 
 isc.log.init('b10-memmgr', buffer=True)
 logger = isc.log.Logger(MODULE_NAME)
+
+isc.util.process.rename()
 
 class ConfigError(Exception):
     """An exception class raised for configuration errors of Memmgr."""
@@ -44,6 +50,14 @@ class Memmgr(BIND10Server):
         # This is defined as "protected" so tests can inspect it; others
         # shouldn't use it directly.
         self._mapped_file_dir = None
+
+        # The manager to keep track of data source configuration.  Allow
+        # tests to inspect/tweak it.
+        self._datasrc_clients_mgr = DataSrcClientsMgr(use_cache=True)
+
+        # List of DataSrcInfo.  Used as a queue to maintain info for all
+        # active configuration generations.  Allow tests to inspec it.
+        self._datasrc_info_list = []
 
     def _config_handler(self, new_config):
         """Configuration handler, called via BIND10Server.
@@ -108,7 +122,22 @@ class Memmgr(BIND10Server):
             raise BIND10ServerFatal('failed to setup memmgr module')
 
     def _datasrc_config_handler(self, new_config, config_data):
-        return
+        """Callback of data_sources configuration update.
+
+        This method must be exception free, so we catch all expected
+        exceptions internally; unexpected ones should mean a programming
+        error and will terminate the program.
+
+        """
+        try:
+            self._datasrc_clients_mgr.reconfigure(new_config, config_data)
+            genid, clients_map = self._datasrc_clients_mgr.get_clients_map()
+            datasrc_info = DataSrcInfo(genid, clients_map,
+                                       {'mapped_file_dir':
+                                            self._mapped_file_dir})
+            self._datasrc_info_list.append(datasrc_info)
+        except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
+            logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
 
 if '__main__' == __name__:
     mgr = Memmgr()
