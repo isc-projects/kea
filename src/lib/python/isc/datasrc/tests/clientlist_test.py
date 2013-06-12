@@ -255,6 +255,31 @@ class ClientListTest(unittest.TestCase):
                                isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
 
+    def test_get_status_waiting(self):
+        """
+        Test getting status when segment type is mapped and it has not
+        been reset yet.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true,
+            "cache-type": "mapped"
+        }]''', True)
+
+        status = self.clist.get_status()
+        self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
+        self.assertEqual(1, len(status))
+        self.assertIsInstance(status[0], tuple)
+        self.assertTupleEqual(('MasterFiles', 'mapped',
+                               isc.datasrc.ConfigurableClientList.SEGMENT_WAITING),
+                              status[0])
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
