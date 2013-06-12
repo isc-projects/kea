@@ -210,7 +210,7 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
         }
 
         for (size_t i = 0; i < status.size(); ++i) {
-            PyObject *segment_type = NULL;
+            PyObject* segment_type = NULL;
             try {
                 segment_type = Py_BuildValue(
                     "s", status[i].getSegmentType().c_str());
@@ -219,7 +219,7 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
                 segment_type = Py_None;
             }
 
-            PyObject *tup = Py_BuildValue("(sOI)",
+            PyObject* tup = Py_BuildValue("(sOI)",
                                           status[i].getName().c_str(),
                                           segment_type,
                                           status[i].getSegmentState());
