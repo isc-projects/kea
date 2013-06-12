@@ -342,15 +342,17 @@ public:
 
     /// \brief Assignment operator
     OutputBuffer& operator =(const OutputBuffer& other) {
-        uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
-        if (newbuff == NULL && other.allocated_ != 0) {
-            throw std::bad_alloc();
+        if (this != &other) {
+            uint8_t* newbuff(static_cast<uint8_t*>(malloc(other.allocated_)));
+            if (newbuff == NULL && other.allocated_ != 0) {
+                throw std::bad_alloc();
+            }
+            free(buffer_);
+            buffer_ = newbuff;
+            size_ = other.size_;
+            allocated_ = other.allocated_;
+            std::memcpy(buffer_, other.buffer_, size_);
         }
-        free(buffer_);
-        buffer_ = newbuff;
-        size_ = other.size_;
-        allocated_ = other.allocated_;
-        std::memcpy(buffer_, other.buffer_, size_);
         return (*this);
     }
 
