@@ -214,7 +214,7 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
             try {
                 segment_type = Py_BuildValue(
                     "s", status[i].getSegmentType().c_str());
-            } catch (const isc::InvalidOperation& e) {
+            } catch (const isc::InvalidOperation&) {
                 Py_INCREF(Py_None);
                 segment_type = Py_None;
             }
