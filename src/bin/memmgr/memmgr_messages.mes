@@ -24,3 +24,10 @@ updates applied, and the daemon keeps running with the previous configuration.
 % MEMMGR_CONFIG_UPDATE received new configuration
 A debug message.  The memmgr daemon receives configuratiopn updates
 and is now applying them to its running configurations.
+
+% MEMMGR_NO_DATASRC_CONF failed to add data source configuration: %1
+The memmgr daemon tried to incorporate data source configuration
+on its startup but failed to do so.  The most likely cause of this
+is that data sources are not simply configured.  If so, they must be.
+The memmgr daemon cannot do any meaningful work without data sources,
+so it immediately terminates itself.
