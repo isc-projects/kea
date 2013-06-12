@@ -25,6 +25,17 @@ updates applied, and the daemon keeps running with the previous configuration.
 A debug message.  The memmgr daemon receives configuratiopn updates
 and is now applying them to its running configurations.
 
+% MEMMGR_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
+Configuration for the global data sources is updated, but the update
+cannot be applied to memmgr.  The memmgr module will still keep running
+with the previous configuration, but the cause of the failure and
+other log messages must be carefully examined because if only memmgr
+rejects the new configuration then the entire BIND 10 system will have
+inconsistent state among different modules.  If other modules accept
+the update but memmgr produces this error, it's quite likely that the
+system isn't working as expected, and is probably better to be shut down
+to figure out and fix the cause.
+
 % MEMMGR_NO_DATASRC_CONF failed to add data source configuration: %1
 The memmgr daemon tried to incorporate data source configuration
 on its startup but failed to do so.  The most likely cause of this
