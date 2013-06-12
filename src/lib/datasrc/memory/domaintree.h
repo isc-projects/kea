@@ -834,6 +834,7 @@ private:
     /// the top node
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void pop() {
         assert(!isEmpty());
         --level_count_;
@@ -846,6 +847,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void push(const DomainTreeNode<T>* node) {
         assert(level_count_ < RBT_MAX_LEVEL);
         nodes_[level_count_++] = node;
