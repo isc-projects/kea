@@ -21,6 +21,7 @@ import os
 import sys
 
 TESTDATA_PATH = os.environ['GLOBAL_TESTDATA_PATH'] + os.sep
+MAPFILE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep + 'test.mapped'
 
 class ClientListTest(unittest.TestCase):
     """
@@ -36,7 +37,17 @@ class ClientListTest(unittest.TestCase):
         # last.
         self.dsrc = None
         self.finder = None
+
+        # If a test created a ZoneWriter with a mapped memory segment,
+        # the writer will hold a reference to the client list which will
+        # need the mapfile to exist until it's destroyed.  So we'll make
+        # sure to destroy the writer (by resetting it) before removing
+        # the mapfile below.
+        self.__zone_writer = None
         self.clist = None
+
+        if os.path.exists(MAPFILE_PATH):
+            os.unlink(MAPFILE_PATH)
 
     def test_constructors(self):
         """
@@ -54,6 +65,15 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList,
                          isc.dns.RRClass.IN, isc.dns.RRClass.IN)
 
+    def configure_helper(self):
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+
     def test_configure(self):
         """
         Test we can configure the client list. This tests if the valid
@@ -69,13 +89,7 @@ class ClientListTest(unittest.TestCase):
         self.assertIsNone(finder)
         self.assertFalse(exact)
         # We can use this type, as it is not loaded dynamically.
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
-            },
-            "cache-enable": true
-        }]''', True)
+        self.configure_helper()
         # Check the zone is there now. Proper tests of find are in other
         # test methods.
         self.dsrc, self.finder, exact = \
@@ -97,19 +111,7 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, self.clist.configure, "[]")
         self.assertRaises(TypeError, self.clist.configure, "[]", "true")
 
-    def test_find(self):
-        """
-        Test the find accepts the right arguments, some of them can be omitted,
-        etc.
-        """
-        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
-        self.clist.configure('''[{
-            "type": "MasterFiles",
-            "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
-            },
-            "cache-enable": true
-        }]''', True)
+    def find_helper(self):
         dsrc, finder, exact = self.clist.find(isc.dns.Name("sub.example.org"))
         self.assertIsNotNone(dsrc)
         self.assertTrue(isinstance(dsrc, isc.datasrc.DataSourceClient))
@@ -150,6 +152,133 @@ class ClientListTest(unittest.TestCase):
         # Some invalid inputs
         self.assertRaises(TypeError, self.clist.find, "example.org")
         self.assertRaises(TypeError, self.clist.find)
+
+    def test_find(self):
+        """
+        Test the find accepts the right arguments, some of them can be omitted,
+        etc.
+        """
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.configure_helper()
+        self.find_helper()
+
+    @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
+                     'shared memory is not available')
+    def test_find_mapped(self):
+        """
+        Test find on a mapped segment.
+        """
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true,
+            "cache-type": "mapped"
+        }]''', True)
+
+        map_params = '{"mapped-file": "' + MAPFILE_PATH + '"}'
+        self.clist.reset_memory_segment("MasterFiles",
+                                        isc.datasrc.ConfigurableClientList.CREATE,
+                                        map_params)
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        err_msg = self.__zone_writer.load()
+        self.assertIsNone(err_msg)
+        self.__zone_writer.install()
+        self.__zone_writer.cleanup()
+
+        self.clist.reset_memory_segment("MasterFiles",
+                                        isc.datasrc.ConfigurableClientList.READ_ONLY,
+                                        map_params)
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_CACHE_NOT_WRITABLE,
+                         result)
+
+        # The segment is still in READ_ONLY mode.
+        self.find_helper()
+
+    def test_zone_writer_load_twice(self):
+        """
+        Test that the zone writer throws when load() is called more than
+        once.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.configure_helper()
+
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        err_msg = self.__zone_writer.load()
+        self.assertIsNone(err_msg)
+        self.assertRaises(isc.datasrc.Error, self.__zone_writer.load)
+        self.__zone_writer.cleanup()
+
+    def test_zone_writer_install_without_load(self):
+        """
+        Test that the zone writer throws when install() is called
+        without calling load() first.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.configure_helper()
+
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        self.assertRaises(isc.datasrc.Error, self.__zone_writer.install)
+        self.__zone_writer.cleanup()
+
+    def test_get_status(self):
+        """
+        Test getting status of various data sources.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+
+        status = self.clist.get_status()
+        self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
+        self.assertEqual(0, len(status))
+
+        self.configure_helper()
+
+        status = self.clist.get_status()
+        self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
+        self.assertEqual(1, len(status))
+        self.assertIsInstance(status[0], tuple)
+        self.assertTupleEqual(('MasterFiles', 'local',
+                               isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
+                              status[0])
+
+    def test_get_status_waiting(self):
+        """
+        Test getting status when segment type is mapped and it has not
+        been reset yet.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true,
+            "cache-type": "mapped"
+        }]''', True)
+
+        status = self.clist.get_status()
+        self.assertIsNotNone(status)
+        self.assertIsInstance(status, list)
+        self.assertEqual(1, len(status))
+        self.assertIsInstance(status[0], tuple)
+        self.assertTupleEqual(('MasterFiles', 'mapped',
+                               isc.datasrc.ConfigurableClientList.SEGMENT_WAITING),
+                              status[0])
 
 if __name__ == "__main__":
     isc.log.init("bind10")
