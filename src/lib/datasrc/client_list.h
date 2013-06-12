@@ -84,7 +84,7 @@ public:
     /// Sets initial values. It doesn't matter what is provided for the type
     /// if state is SEGMENT_UNUSED, the value is effectively ignored.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
-                     const std::string& type) :
+                     const std::string& type = std::string()) :
         name_(name),
         type_(type),
         state_(state)
