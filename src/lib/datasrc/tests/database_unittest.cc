@@ -1137,6 +1137,9 @@ const char* TEST_NSEC3_RECORDS[][5] = {
 };
 
 DatabaseClientTest::DatabaseClientTest() :
+    // We need to initialize to something, and not being mock is safer
+    // until we know for sure.
+    is_mock_(false),
     zname_("example.org"), qname_("www.example.org"),
     qclass_(dns::RRClass::IN()),
     qtype_(dns::RRType::A()),
