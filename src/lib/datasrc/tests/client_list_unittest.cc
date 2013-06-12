@@ -116,6 +116,7 @@ public:
                        const std::string& datasrc_name,
                        ZoneTableSegment::MemorySegmentOpenMode mode,
                        ConstElementPtr config_params) = 0;
+    virtual std::string getType() = 0;
 };
 
 class ListTest : public ::testing::TestWithParam<SegmentType*> {
@@ -332,6 +333,9 @@ public:
                        ConstElementPtr) {
         // We must not call reset on local ZoneTableSegments.
     }
+    virtual std::string getType() {
+        return ("local");
+    }
 };
 
 LocalSegmentType local_segment_type;
@@ -359,6 +363,9 @@ public:
                        ZoneTableSegment::MemorySegmentOpenMode mode,
                        ConstElementPtr config_params) {
         list.resetMemorySegment(datasrc_name, mode, config_params);
+    }
+    virtual std::string getType() {
+        return ("mapped");
     }
 };
 
@@ -1002,6 +1009,13 @@ ListTest::doReload(const Name& origin, const string& datasrc_name) {
 // Test we can reload a zone
 TEST_P(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
+
+    const vector<DataSourceStatus> statii_before(list_->getStatus());
+    ASSERT_EQ(1, statii_before.size());
+    EXPECT_EQ("test_type", statii_before[0].getName());
+    EXPECT_EQ(SEGMENT_UNUSED, statii_before[0].getSegmentState());
+    EXPECT_THROW(statii_before[0].getSegmentType(), isc::InvalidOperation);
+
     const Name name("example.org");
     prepareCache(0, name);
     // The cache currently contains a tweaked version of zone, which
@@ -1017,6 +1031,12 @@ TEST_P(ListTest, reloadSuccess) {
               list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
+
+    const vector<DataSourceStatus> statii_after(list_->getStatus());
+    ASSERT_EQ(1, statii_after.size());
+    EXPECT_EQ("test_type", statii_after[0].getName());
+    EXPECT_EQ(SEGMENT_INUSE, statii_after[0].getSegmentState());
+    EXPECT_EQ(GetParam()->getType(), statii_after[0].getSegmentType());
 }
 
 // The cache is not enabled. The load should be rejected.
