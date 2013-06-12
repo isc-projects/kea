@@ -32,6 +32,8 @@ class DataSrcClientsMgrTest(unittest.TestCase):
         # We construct the manager with enabling in-memory cache for easier
         # tests.  There should be no risk of inter-thread issues in the tests.
         self.__mgr = DataSrcClientsMgr(use_cache=True)
+        self.__datasrc_cfg = isc.config.ConfigData(
+            isc.config.module_spec_from_file(DATASRC_SPECFILE))
 
     def test_init(self):
         """Check some initial state.
@@ -52,31 +54,33 @@ class DataSrcClientsMgrTest(unittest.TestCase):
         # There should be at least in-memory only data for the static
         # bind/CH zone. (We don't assume the existence of SQLite3 datasrc,
         # so it'll still work if and when we make the default DB-independent).
-        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         clist = self.__mgr.get_client_list(RRClass.CH)
         self.assertIsNotNone(clist)
         self.assertTrue(clist.find(Name('bind'), True, False)[2])
 
         # Reconfigure it with a simple new config: the list for CH will be
         # gone, and and an empty list for IN will be installed.
-        self.__mgr.reconfigure({"classes": {"IN": []}})
+        self.__datasrc_cfg.set_local_config({"classes": {"IN": []}})
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         self.assertIsNone(self.__mgr.get_client_list(RRClass.CH))
         self.assertIsNotNone(self.__mgr.get_client_list(RRClass.IN))
 
     def test_reconfigure_error(self):
         """Check reconfigure failure preserves the old config."""
         # Configure it with the default
-        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         self.assertIsNotNone(self.__mgr.get_client_list(RRClass.CH))
 
         # Then try invalid configuration
-        self.assertRaises(ConfigError, self.__mgr.reconfigure, 42)
+        self.assertRaises(ConfigError, self.__mgr.reconfigure, {}, 42)
         self.assertIsNotNone(self.__mgr.get_client_list(RRClass.CH))
 
         # Another type of invalid configuration: exception would come from
         # the C++ wrapper.
+        self.__datasrc_cfg.set_local_config({"classes": {"IN": 42}})
         self.assertRaises(ConfigError,
-                          self.__mgr.reconfigure, {"classes": {"IN": 42}})
+                          self.__mgr.reconfigure, {}, self.__datasrc_cfg)
         self.assertIsNotNone(self.__mgr.get_client_list(RRClass.CH))
 
     def check_client_list_content(self, clist):
@@ -105,9 +109,11 @@ class DataSrcClientsMgrTest(unittest.TestCase):
 
     def test_reconfig_while_using_old(self):
         """Check datasrc client and finder can work even after list is gone."""
-        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         clist = self.__mgr.get_client_list(RRClass.CH)
-        self.__mgr.reconfigure({"classes": {"IN": []}})
+
+        self.__datasrc_cfg.set_local_config({"classes": {"IN": []}})
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         self.check_client_list_content(clist)
 
     def test_get_clients_map(self):
@@ -117,13 +123,14 @@ class DataSrcClientsMgrTest(unittest.TestCase):
         # Initially map iss empty, the generation ID is 0.
         self.assertEqual((0, {}), self.__mgr.get_clients_map())
 
-        self.__mgr.reconfigure(DEFAULT_CONFIG)
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         genid, clients_map = self.__mgr.get_clients_map()
         self.assertEqual(1, genid)
         self.assertEqual(2, len(clients_map)) # should contain 'IN' and 'CH'
 
         # Check the retrieved map is usable even after further reconfig().
-        self.__mgr.reconfigure({"classes": {"IN": []}})
+        self.__datasrc_cfg.set_local_config({"classes": {"IN": []}})
+        self.__mgr.reconfigure({}, self.__datasrc_cfg)
         self.check_client_list_content(clients_map[RRClass.CH])
 
         # generation ID should be incremented again
