@@ -410,22 +410,15 @@ vector<DataSourceStatus>
 ConfigurableClientList::getStatus() const {
     vector<DataSourceStatus> result;
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        MemorySegmentState segment_state = SEGMENT_UNUSED;
-        if (info.cache_) {
-            if (info.ztable_segment_ && info.ztable_segment_->isUsable()) {
-                segment_state = SEGMENT_INUSE;
-            } else {
-                segment_state = SEGMENT_WAITING;
-            }
-        }
-
-        std::string segment_type;
         if (info.ztable_segment_) {
-            segment_type = info.ztable_segment_->getImplType();
+            result.push_back(DataSourceStatus(
+                info.name_,
+                (info.ztable_segment_->isUsable() ?
+                 SEGMENT_INUSE : SEGMENT_WAITING),
+                info.ztable_segment_->getImplType()));
+        } else {
+            result.push_back(DataSourceStatus(info.name_, SEGMENT_UNUSED));
         }
-
-        result.push_back(DataSourceStatus(info.name_, segment_state,
-                                          segment_type));
     }
     return (result);
 }
