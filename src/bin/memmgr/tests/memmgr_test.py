@@ -86,7 +86,7 @@ class TestMemmgr(unittest.TestCase):
 
     def test_init(self):
         """Check some initial conditions"""
-        self.assertIsNone(self.__mgr._mapped_file_dir)
+        self.assertIsNone(self.__mgr._config_params)
         self.assertEqual([], self.__mgr._datasrc_info_list)
 
         # Try to configure a data source clients with the manager.  This
@@ -112,13 +112,15 @@ class TestMemmgr(unittest.TestCase):
         self.assertEqual((0, None),
                          parse_answer(self.__mgr._config_handler({})))
         self.assertEqual('mapped_files',
-                         self.__mgr._mapped_file_dir.split('/')[-1])
+                         self.__mgr._config_params['mapped_file_dir'].
+                         split('/')[-1])
 
         # Update the configuration.
         user_cfg = {'mapped_file_dir': '/some/path/dir'}
         self.assertEqual((0, None),
                          parse_answer(self.__mgr._config_handler(user_cfg)))
-        self.assertEqual('/some/path/dir', self.__mgr._mapped_file_dir)
+        self.assertEqual('/some/path/dir',
+                         self.__mgr._config_params['mapped_file_dir'])
 
         # Bad update: diretory doesn't exist (we assume it really doesn't
         # exist in the tested environment).  Update won't be made.
@@ -158,7 +160,7 @@ class TestMemmgr(unittest.TestCase):
                           self.__mgr._setup_module)
 
     def test_datasrc_config_handler(self):
-        self.__mgr._mapped_file_dir = '/some/path'
+        self.__mgr._config_params = {'mapped_file_dir': '/some/path'}
 
         # A simple (boring) case with real class implementations.  This
         # confirms the methods are called as expected.
