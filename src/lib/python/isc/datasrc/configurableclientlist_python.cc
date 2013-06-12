@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,6 +35,7 @@
 #include "datasrc.h"
 #include "finder_python.h"
 #include "client_python.h"
+#include "zonetable_accessor_python.h"
 
 using namespace std;
 using namespace isc::util::python;
@@ -206,6 +207,37 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
     }
 }
 
+PyObject*
+ConfigurableClientList_getZoneTableAccessor(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const char* datasrc_name;
+        int use_cache;
+        if (PyArg_ParseTuple(args, "zi", &datasrc_name, &use_cache)) {
+            // python 'None' will be read as NULL, which we convert to an
+            // empty string, meaning "any data source"
+            const std::string name(datasrc_name ? datasrc_name : "");
+            const ConstZoneTableAccessorPtr
+                z(self->cppobj->getZoneTableAccessor(name, use_cache));
+            if (z == NULL) {
+                Py_RETURN_NONE;
+            } else {
+                return (createZoneTableAccessorObject(z, po_self));
+            }
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -261,6 +293,16 @@ you don't need it, but if you do need it, it is better to set it to True\
 instead of getting it from the datasrc_client later.\n\
 \n\
 If no answer is found, the datasrc_client and zone_finder are None." },
+    { "get_zone_table_accessor", ConfigurableClientList_getZoneTableAccessor,
+      METH_VARARGS,
+"get_zone_table_accessor(datasrc_name, use_cache) -> \
+isc.datasrc.ZoneTableAccessor\n\
+\n\
+Create a ZoneTableAccessor object for the specified data source.\n\
+\n\
+Parameters:\n\
+  datasrc_name      If not empty, the name of the data source\
+  use_cache         If true, create a zone table for in-memory cache." },
     { NULL, NULL, 0, NULL }
 };
 
@@ -286,9 +328,9 @@ namespace python {
 PyTypeObject configurableclientlist_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ConfigurableClientList",
-    sizeof(s_ConfigurableClientList),                 // tp_basicsize
+    sizeof(s_ConfigurableClientList),   // tp_basicsize
     0,                                  // tp_itemsize
-    ConfigurableClientList_destroy,                 // tp_dealloc
+    ConfigurableClientList_destroy,     // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -311,7 +353,7 @@ PyTypeObject configurableclientlist_type = {
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    ConfigurableClientList_methods,                   // tp_methods
+    ConfigurableClientList_methods,     // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -319,7 +361,7 @@ PyTypeObject configurableclientlist_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    ConfigurableClientList_init,                    // tp_init
+    ConfigurableClientList_init,        // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
