@@ -28,7 +28,7 @@ SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
 
 DStubProcess::DStubProcess(const char* name, IOServicePtr io_service)
-    : DProcessBase(name, io_service) {
+    : DProcessBase(name, io_service, DCfgMgrBasePtr(new DStubCfgMgr())) {
 };
 
 void
@@ -130,7 +130,7 @@ DStubController::DStubController()
 
     if (getenv("B10_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/d2/d2.spec");
+            "/src/bin/d2/dhcp-ddns.spec");
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);
     }
@@ -190,6 +190,103 @@ DStubController::~DStubController() {
 
 // Initialize controller wrapper's static instance getter member.
 DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
+
+//************************** TestParser *************************
+
+TestParser::TestParser(const std::string& param_name):param_name_(param_name) {
+}
+
+TestParser::~TestParser(){
+}
+
+void
+TestParser::build(isc::data::ConstElementPtr new_config) {
+    if (SimFailure::shouldFailOn(SimFailure::ftElementBuild)) {
+        // Simulates an error during element data parsing.
+        isc_throw (DCfgMgrBaseError, "Simulated build exception");
+    }
+
+    value_ = new_config;
+}
+
+void
+TestParser::commit() {
+    if (SimFailure::shouldFailOn(SimFailure::ftElementCommit)) {
+        // Simulates an error while committing the parsed element data.
+        throw std::runtime_error("Simulated commit exception");
+    }
+}
+
+//************************** DStubContext *************************
+
+DStubContext::DStubContext(): extra_values_(new isc::dhcp::Uint32Storage()) {
+}
+
+DStubContext::~DStubContext() {
+}
+
+void
+DStubContext::getExtraParam(const std::string& name, uint32_t& value) {
+    value = extra_values_->getParam(name);
+}
+
+isc::dhcp::Uint32StoragePtr
+DStubContext::getExtraStorage() {
+    return (extra_values_);
+}
+
+DStubContext*
+DStubContext::clone() {
+    return (new DStubContext(*this));
+}
+
+DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
+    extra_values_(new isc::dhcp::Uint32Storage(*(rhs.extra_values_))) {
+}
+
+//************************** DStubCfgMgr *************************
+
+DStubCfgMgr::DStubCfgMgr()
+    : DCfgMgrBase(DCfgContextBasePtr(new DStubContext())) {
+}
+
+DStubCfgMgr::~DStubCfgMgr() {
+}
+
+isc::dhcp::ParserPtr
+DStubCfgMgr::createConfigParser(const std::string& element_id) {
+    isc::dhcp::DhcpConfigParser* parser = NULL;
+    DStubContextPtr context =
+                    boost::dynamic_pointer_cast<DStubContext>(getContext());
+
+    if (element_id == "bool_test") {
+        parser = new isc::dhcp::BooleanParser(element_id,
+                                              context->getBooleanStorage());
+    } else if (element_id == "uint32_test") {
+        parser = new isc::dhcp::Uint32Parser(element_id,
+                                             context->getUint32Storage());
+    } else if (element_id == "string_test") {
+        parser = new isc::dhcp::StringParser(element_id,
+                                             context->getStringStorage());
+    } else if (element_id == "extra_test") {
+        parser = new isc::dhcp::Uint32Parser(element_id,
+                                             context->getExtraStorage());
+    } else {
+        // Fail only if SimFailure dictates we should.  This makes it easier
+        // to test parse ordering, by permitting a wide range of element ids
+        // to "succeed" without specifically supporting them.
+        if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
+            isc_throw(DCfgMgrBaseError, "Configuration parameter not supported"
+                      << element_id);
+        }
+
+        parsed_order_.push_back(element_id);
+        parser = new TestParser(element_id);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
 
 }; // namespace isc::d2
 }; // namespace isc

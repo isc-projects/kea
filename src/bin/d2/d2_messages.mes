@@ -26,10 +26,21 @@ to establish a session with the BIND10 control channel.
 A debug message listing the command (and possible arguments) received
 from the BIND10 control system by the controller.
 
+% DCTL_CONFIG_COMPLETE server has completed configuration: %1
+This is an informational message announcing the successful processing of a
+new configuration. It is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
 % DCTL_CONFIG_LOAD_FAIL %1 configuration failed to load: %2
 This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
+
+% DCTL_CONFIG_START parsing new configuration: %1
+A debug message indicating that the application process has received an
+updated configuration and has passed it to its configuration manager
+for parsing.
 
 % DCTL_CONFIG_STUB %1 configuration stub handler called
 This debug message is issued when the dummy handler for configuration
@@ -56,6 +67,18 @@ application and will exit.
 % DCTL_NOT_RUNNING %1 application instance is not running
 A warning message is issued when an attempt is made to shut down the
 the application when it is not running.
+
+% DCTL_ORDER_ERROR Configuration contains more elements than the parsing order
+A debug message which indicates that configuration being parsed includes
+element ids not specified the configuration manager's parse order list. This is
+programming logic error.
+
+% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1
+On receipt of message containing details to a change of its configuration,
+the server failed to create a parser to decode the contents of the named
+configuration element, or the creation succeeded but the parsing actions
+and committal of changes failed.  The reason for the failure is given in
+the message.
 
 % DCTL_PROCESS_FAILED %1 application execution failed: %2
 The controller has encountered a fatal error while running the
