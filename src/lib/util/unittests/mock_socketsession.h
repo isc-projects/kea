@@ -42,7 +42,12 @@ class MockSocketSessionForwarder :
 public:
     MockSocketSessionForwarder() :
         is_connected_(false), connect_ok_(true), push_ok_(true),
-        close_ok_(true)
+        close_ok_(true),
+        // These are not used until set, but we set them anyway here,
+        // partly to silence cppcheck, and partly to be cleaner. Put some
+        // invalid values in.
+        pushed_sock_(-1), pushed_family_(-1), pushed_type_(-1),
+        pushed_protocol_(-1)
     {}
 
     virtual void connectToReceiver() {
