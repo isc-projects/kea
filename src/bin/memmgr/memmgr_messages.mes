@@ -36,6 +36,11 @@ the update but memmgr produces this error, it's quite likely that the
 system isn't working as expected, and is probably better to be shut down
 to figure out and fix the cause.
 
+% MEMMGR_DATASRC_RECONFIGURED data source configuration has been updated, generation ID %1
+The memmgr daemon received a new version of data source configuration,
+and has successfully applied it to the local state.  Loading of new zone
+data into memory will possibly take place.
+
 % MEMMGR_NO_DATASRC_CONF failed to add data source configuration: %1
 The memmgr daemon tried to incorporate data source configuration
 on its startup but failed to do so.  The most likely cause of this
