@@ -91,7 +91,7 @@ public:
     ///     later.
     /// \throw isc::InvalidOperation if called second time.
     /// \throw DataSourceError load related error (not thrown if constructed
-    /// with catch_load_error being false).
+    /// with catch_load_error being \c true).
     ///
     /// \param error_msg If non NULL, used as a placeholder to store load error
     /// messages.

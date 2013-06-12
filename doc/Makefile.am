@@ -1,6 +1,6 @@
 SUBDIRS = guide
 
-EXTRA_DIST = version.ent.in differences.txt
+EXTRA_DIST = version.ent.in differences.txt Doxyfile Doxyfile-xml
 
 devel:
 	mkdir -p html

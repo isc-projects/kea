@@ -379,10 +379,9 @@ public:
          memory::ZoneTableSegment::MemorySegmentOpenMode mode,
          isc::data::ConstElementPtr config_params);
 
-private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
-public:
+
     /// \brief Codes indicating in-memory cache status for a given zone name.
     ///
     /// This is used as a result of the getCachedZoneWriter() method.
@@ -424,7 +423,7 @@ public:
     /// \param zone The origin of the zone to load.
     /// \param datasrc_name If not empty, the name of the data source
     /// to be used for loading the zone (see above).
-    /// \return The result has two parts. The first one is a status describing
+    /// \return The result has two parts. The first one is a status indicating
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
     ///     to the writer. If the status is anything else, the second part is
