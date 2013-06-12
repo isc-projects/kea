@@ -705,7 +705,13 @@ public:
                         // XXX: meaningless initial values:
                         last_comparison_(0, 0,
                                          isc::dns::NameComparisonResult::EQUAL)
-    {}
+    {
+        // To silence cppcheck. We don't really use the values before
+        // initialization, but this is cleaner anyway.
+        for (size_t i = 0; i < RBT_MAX_LEVEL; ++i) {
+            nodes_[0] = NULL;
+        }
+    }
 
     /// \brief Copy constructor.
     ///
