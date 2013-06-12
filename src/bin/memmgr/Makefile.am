@@ -13,6 +13,7 @@ pylogmessagedir = $(pyexecdir)/isc/log_messages/
 CLEANFILES = b10-memmgr memmgr.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/memmgr_messages.pyc
+CLEANFILES += memmgr.spec
 
 EXTRA_DIST =  memmgr_messages.mes
 
