@@ -22,8 +22,9 @@ import signal
 sys.path.append('@@PYTHONPATH@@')
 import isc.log
 #from isc.log import DBGLVL_TRACE_BASIC
+from isc.config import ModuleSpecError, ModuleCCSessionError
 from isc.log_messages.memmgr_messages import *
-from isc.server_common.bind10_server import BIND10Server
+from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
 
 MODULE_NAME = 'memmgr'
 
@@ -95,7 +96,19 @@ class Memmgr(BIND10Server):
 
     def _setup_module(self):
         """Module specific initialization for BIND10Server."""
-        pass
+        try:
+            # memmgr isn't usable if data source is not configured, and
+            # as long as cfgmgr is ready there's no timing issue.  So we
+            # immediately shut it down if it's missing.  See ddns.py.in
+            # about exceptions to catch.
+            self.mod_ccsession.add_remote_config_by_name(
+                'data_sources', self._datasrc_config_handler)
+        except (ModuleSpecError, ModuleCCSessionError) as ex:
+            logger.error(MEMMGR_NO_DATASRC_CONF, ex)
+            raise BIND10ServerFatal('failed to setup memmgr module')
+
+    def _datasrc_config_handler(self, new_config, config_data):
+        return
 
 if '__main__' == __name__:
     mgr = Memmgr()
