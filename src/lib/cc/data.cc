@@ -25,6 +25,7 @@
 #include <string>
 #include <sstream>
 #include <cerrno>
+#include <climits>
 
 #include <boost/algorithm/string.hpp> // for iequals
 
