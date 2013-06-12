@@ -39,6 +39,8 @@ void
 pathtestHelper(const std::string& file, const std::string& expected_error) {
     std::string error;
     try {
+        // cppcheck-suppress unusedScopedObject We just check if it throws
+        // to create, not use it. That's OK.
         DataSourceClientContainer(file, ElementPtr());
     } catch (const DataSourceLibraryError& dsle) {
         error = dsle.what();
