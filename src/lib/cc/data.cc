@@ -688,10 +688,9 @@ NullElement::toJSON(std::ostream& ss) const {
 void
 StringElement::toJSON(std::ostream& ss) const {
     ss << "\"";
-    char c;
     const std::string& str = stringValue();
     for (size_t i = 0; i < str.size(); ++i) {
-        c = str[i];
+        char c = str[i];
         // Escape characters as defined in JSON spec
         // Note that we do not escape forward slash; this
         // is allowed, but not mandatory.
