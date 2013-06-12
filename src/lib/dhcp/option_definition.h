@@ -501,15 +501,6 @@ private:
     void writeToBuffer(const std::string& value, const OptionDataType type,
                        OptionBuffer& buf) const;
 
-    /// @brief Sanity check universe value.
-    ///
-    /// @param expected_universe expected universe value.
-    /// @param actual_universe actual universe value.
-    ///
-    /// @throw isc::BadValue if expected universe and actual universe don't match.
-   static inline void sanityCheckUniverse(const Option::Universe expected_universe,
-                                          const Option::Universe actual_universe);
-
     /// Option name.
     std::string name_;
     /// Option code.
