@@ -17,7 +17,7 @@
 # we want to be explicit about what we do, like when hijacking a library
 # call used by the b10-init.
 from init import Init, ProcessInfo, parse_args, dump_pid, unlink_pid_file, \
-    _BASETIME, ProcessStartError
+    _BASETIME
 import init
 
 # XXX: environment tests are currently disabled, due to the preprocessor
@@ -1815,11 +1815,11 @@ class TestInitComponents(unittest.TestCase):
                 self.called += 1
                 raise isc.config.RPCRecipientMissing("Not yet")
 
-        init = MockInitSimple()
-        init.wait_time = 1
-        init.ccs = RpcSession()
-        self.assertRaises(ProcessStartError, init.wait_msgq)
-        self.assertEqual(10, init.ccs.called)
+        b10init = MockInitSimple()
+        b10init.wait_time = 1
+        b10init.ccs = RpcSession()
+        self.assertRaises(init.ProcessStartError, b10init.wait_msgq)
+        self.assertEqual(10, b10init.ccs.called)
 
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''
