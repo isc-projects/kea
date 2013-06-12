@@ -1459,7 +1459,7 @@ class Xfrin:
 
         """
         try:
-            self._datasrc_clients_mgr.reconfigure(new_config)
+            self._datasrc_clients_mgr.reconfigure(new_config, config_data)
         except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
             logger.error(XFRIN_DATASRC_CONFIG_ERROR, ex)
 
