@@ -210,10 +210,24 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
         }
 
         for (size_t i = 0; i < status.size(); ++i) {
-            PyObject *tup = Py_BuildValue("(ssI)",
+            PyObject *segment_type = NULL;
+            try {
+                segment_type = Py_BuildValue(
+                    "s", status[i].getSegmentType().c_str());
+            } catch (const isc::InvalidOperation& e) {
+                Py_INCREF(Py_None);
+                segment_type = Py_None;
+            }
+
+            PyObject *tup = Py_BuildValue("(sOI)",
                                           status[i].getName().c_str(),
-                                          status[i].getSegmentType().c_str(),
+                                          segment_type,
                                           status[i].getSegmentState());
+            if (segment_type) {
+                // The Py_BuildValue() above increments its refcount,
+                // so we drop our reference.
+                Py_DECREF(segment_type);
+            }
             if (!tup) {
                 Py_DECREF(slist);
                 return (NULL);

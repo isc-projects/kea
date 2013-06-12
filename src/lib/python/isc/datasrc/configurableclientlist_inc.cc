@@ -92,6 +92,8 @@ The tuples contain (name, segment_type, segment_state):\n\
   name              The name of the data source.\n\
   segment_type      A string indicating the type of memory segment in use.\n\
   segment_state     The state of the memory segment.\n\
+\n\
+If segment_state is SEGMENT_UNUSED, None is returned for the segment_type.\n\
 ";
 
 const char* const ConfigurableClientList_find_doc = "\
