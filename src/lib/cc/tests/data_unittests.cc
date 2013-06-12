@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <climits>
 
 #include <cc/data.h>
 
