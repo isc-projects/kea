@@ -115,6 +115,8 @@ private:
 // to addServerXXX methods so the test code subsequently checks the parameters.
 class MockDNSService : public isc::asiodns::DNSServiceBase {
 public:
+    MockDNSService() : tcp_recv_timeout_(0) {}
+
     // A helper tuple of parameters passed to addServerUDPFromFD().
     struct UDPFdParams {
         int fd;
