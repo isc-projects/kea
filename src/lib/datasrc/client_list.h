@@ -81,13 +81,25 @@ class DataSourceStatus {
 public:
     /// \brief Constructor
     ///
-    /// Sets initial values. It doesn't matter what is provided for the type
-    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    /// Sets initial values.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
-                     const std::string& type = std::string()) :
+                     const std::string& type) :
         name_(name),
         type_(type),
         state_(state)
+    {
+        assert (state != SEGMENT_UNUSED);
+        assert (!type.empty());
+    }
+
+    /// \brief Constructor
+    ///
+    /// Sets initial values. The state is set as SEGMENT_UNUSED and the
+    /// type is effectively unspecified.
+    DataSourceStatus(const std::string& name) :
+        name_(name),
+        type_(""),
+        state_(SEGMENT_UNUSED)
     {}
 
     /// \brief Get the segment state

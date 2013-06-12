@@ -417,7 +417,7 @@ ConfigurableClientList::getStatus() const {
                  SEGMENT_INUSE : SEGMENT_WAITING),
                 info.ztable_segment_->getImplType()));
         } else {
-            result.push_back(DataSourceStatus(info.name_, SEGMENT_UNUSED));
+            result.push_back(DataSourceStatus(info.name_));
         }
     }
     return (result);
