@@ -21,6 +21,8 @@
 #include <config/ccsession.h>
 
 #include <d2/d_controller.h>
+#include <d2/d_cfg_mgr.h>
+
 #include <gtest/gtest.h>
 
 namespace isc {
@@ -43,7 +45,10 @@ public:
         ftProcessConfigure,
         ftControllerCommand,
         ftProcessCommand,
-        ftProcessShutdown
+        ftProcessShutdown,
+        ftElementBuild,
+        ftElementCommit,
+        ftElementUnknown
     };
 
     /// @brief Sets the SimFailure value to the given value.
@@ -432,6 +437,144 @@ public:
         isc_throw (DProcessBaseError, "simulated fatal error");
     }
 };
+
+/// @brief Simple parser derivation for testing the basics of configuration
+/// parsing.
+class TestParser : public isc::dhcp::DhcpConfigParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// See @ref DhcpConfigParser class for details.
+    ///
+    /// @param param_name name of the parsed parameter
+    TestParser(const std::string& param_name);
+
+    /// @brief Destructor
+    virtual ~TestParser();
+
+    /// @brief Builds parameter value.
+    ///
+    /// See @ref DhcpConfigParser class for details.
+    ///
+    /// @param new_config pointer to the new configuration
+    /// @throw throws DCfgMgrBaseError if the SimFailure is set to
+    /// ftElementBuild. This allows for the simulation of an
+    /// exception during the build portion of parsing an element.
+    virtual void build(isc::data::ConstElementPtr new_config);
+
+    /// @brief Commits the parsed value to storage.
+    ///
+    /// See @ref DhcpConfigParser class for details.
+    ///
+    /// @throw throws DCfgMgrBaseError if SimFailure is set to ftElementCommit.
+    /// This allows for the simulation of an exception during the commit
+    /// portion of parsing an element.
+    virtual void commit();
+
+private:
+    /// name of the parsed parameter
+    std::string param_name_;
+
+    /// pointer to the parsed value of the parameter
+    isc::data::ConstElementPtr value_;
+};
+
+/// @brief Test Derivation of the DCfgContextBase class.
+///
+/// This class is used to test basic functionality of configuration context.
+/// It adds an additional storage container "extra values" to mimic an
+/// application extension of configuration storage.  This permits testing that
+/// both the base class content as well as the application content is
+/// correctly copied during cloning.  This is vital to configuration backup
+/// and rollback during configuration parsing.
+class DStubContext : public DCfgContextBase {
+public:
+
+    /// @brief Constructor
+    DStubContext();
+
+    /// @brief Destructor
+    virtual ~DStubContext();
+
+    /// @brief Fetches the value for a given "extra" configuration parameter
+    /// from the context.
+    ///
+    /// @param name is the name of the parameter to retrieve.
+    /// @param value is an output parameter in which to return the retrieved
+    /// value.
+    /// @throw throws DhcpConfigError if the context does not contain the
+    /// parameter.
+    void getExtraParam(const std::string& name, uint32_t& value);
+
+    /// @brief Fetches the extra storage.
+    ///
+    /// @return returns a pointer to the extra storage.
+    isc::dhcp::Uint32StoragePtr getExtraStorage();
+
+    /// @brief Creates a clone of a DStubContext.
+    ///
+    /// @return returns a raw pointer to the new clone.
+    virtual DStubContext* clone();
+
+protected:
+    /// @brief Copy constructor
+    DStubContext(const DStubContext& rhs);
+
+private:
+    /// @brief Private assignment operator, not implemented.
+    DStubContext& operator=(const DStubContext& rhs);
+
+    /// @brief Extra storage for uint32 parameters.
+    isc::dhcp::Uint32StoragePtr extra_values_;
+};
+
+/// @brief Defines a pointer to DStubContext.
+typedef boost::shared_ptr<DStubContext> DStubContextPtr;
+
+/// @brief Test Derivation of the DCfgMgrBase class.
+///
+/// This class is used to test basic functionality of configuration management.
+/// It supports the following configuration elements:
+///
+/// "bool_test" - Boolean element, tests parsing and committing a boolean
+///               configuration parameter.
+/// "uint32_test" - Uint32 element, tests parsing and committing a uint32_t
+///               configuration parameter.
+/// "string_test" - String element, tests parsing and committing a string
+///               configuration parameter.
+/// "extra_test" - "Extra" element, tests parsing and committing an extra
+///               configuration parameter. (This is used to demonstrate
+///               derivation's addition of storage to configuration context.
+///
+/// It also keeps track of the element ids that are parsed in the order they
+/// are parsed.  This is used to test ordered and non-ordered parsing.
+class DStubCfgMgr : public DCfgMgrBase {
+public:
+    /// @brief Constructor
+    DStubCfgMgr();
+
+    /// @brief Destructor
+    virtual ~DStubCfgMgr();
+
+    /// @brief Given an element_id returns an instance of the appropriate
+    /// parser. It supports the element ids as described in the class brief.
+    ///
+    /// @param element_id is the string name of the element as it will appear
+    /// in the configuration set.
+    ///
+    /// @return returns a ParserPtr to the parser instance.
+    /// @throw throws DCfgMgrBaseError if SimFailure is ftElementUnknown.
+    virtual isc::dhcp::ParserPtr
+    createConfigParser(const std::string& element_id);
+
+    /// @brief A list for remembering the element ids in the order they were
+    /// parsed.
+    ElementIdList parsed_order_;
+};
+
+/// @brief Defines a pointer to DStubCfgMgr.
+typedef boost::shared_ptr<DStubCfgMgr> DStubCfgMgrPtr;
 
 }; // namespace isc::d2
 }; // namespace isc
