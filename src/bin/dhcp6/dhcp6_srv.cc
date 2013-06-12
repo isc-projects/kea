@@ -134,7 +134,8 @@ bool Dhcpv6Srv::run() {
         /// For now, we are just calling select for 1000 seconds. There
         /// were some issues reported on some systems when calling select()
         /// with too large values. Unfortunately, I don't recall the details.
-        int timeout = 1000;
+        //cppcheck-suppress variableScope This is temporary anyway
+        const int timeout = 1000;
 
         // client's message and server's response
         Pkt6Ptr query;
