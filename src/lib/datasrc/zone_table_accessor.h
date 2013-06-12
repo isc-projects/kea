@@ -202,6 +202,9 @@ public:
     virtual IteratorPtr getIterator() const = 0;
 };
 
+typedef boost::shared_ptr<ZoneTableAccessor> ZoneTableAccessorPtr;
+typedef boost::shared_ptr<const ZoneTableAccessor> ConstZoneTableAccessorPtr;
+
 }
 }
 
