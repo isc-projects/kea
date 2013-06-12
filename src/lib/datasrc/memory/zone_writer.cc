@@ -139,7 +139,8 @@ ZoneWriter::install() {
     // segment. Once there is, we should provide the test.
     while (impl_->state_ != Impl::ZW_INSTALLED) {
         try {
-            ZoneTable* table(impl_->segment_.getHeader().getTable());
+            ZoneTableHeader& header = impl_->segment_.getHeader();
+            ZoneTable* table(header.getTable());
             if (!table) {
                 isc_throw(isc::Unexpected, "No zone table present");
             }

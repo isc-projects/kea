@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,33 +20,40 @@
 // http://docs.python.org/py3k/extending/extending.html#a-simple-example
 #include <Python.h>
 
+#include <string>
+#include <stdexcept>
+
 #include <util/python/pycppwrapper_util.h>
 
-#include <datasrc/client.h>
-#include <datasrc/database.h>
-#include <datasrc/sqlite3_accessor.h>
-#include <datasrc/zone_iterator.h>
+#include <datasrc/memory/zone_writer.h>
 
-#include <dns/python/name_python.h>
-#include <dns/python/rrset_python.h>
-
+#include "zonewriter_python.h"
 #include "datasrc.h"
-#include "iterator_python.h"
 
-#include "iterator_inc.cc"
+#include "zonewriter_inc.cc"
 
 using namespace std;
 using namespace isc::util::python;
-using namespace isc::dns::python;
 using namespace isc::datasrc;
+using namespace isc::datasrc::memory;
 using namespace isc::datasrc::python;
+using namespace isc::datasrc::memory::python;
+
+//
+// ZoneWriter
+//
 
 namespace {
+
 // The s_* Class simply covers one instantiation of the object
-class s_ZoneIterator : public PyObject {
+class s_ZoneWriter : public PyObject {
 public:
-    s_ZoneIterator() : cppobj(ZoneIteratorPtr()), base_obj(NULL) {};
-    ZoneIteratorPtr cppobj;
+    s_ZoneWriter() :
+        cppobj(ConfigurableClientList::ZoneWriterPtr()),
+        base_obj(NULL)
+    {}
+
+    ConfigurableClientList::ZoneWriterPtr cppobj;
     // This is a reference to a base object; if the object of this class
     // depends on another object to be in scope during its lifetime,
     // we use INCREF the base object upon creation, and DECREF it at
@@ -55,22 +62,18 @@ public:
     PyObject* base_obj;
 };
 
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator>
-    ZoneIteratorContainer;
-
-// General creation and destruction
 int
-ZoneIterator_init(s_ZoneIterator*, PyObject*) {
+ZoneWriter_init(PyObject*, PyObject*, PyObject*) {
     // can't be called directly
     PyErr_SetString(PyExc_TypeError,
-                    "ZoneIterator cannot be constructed directly");
+                    "ZoneWriter cannot be constructed directly");
 
     return (-1);
 }
 
 void
-ZoneIterator_destroy(s_ZoneIterator* const self) {
+ZoneWriter_destroy(PyObject* po_self) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
     // cppobj is a shared ptr, but to make sure things are not destroyed in
     // the wrong order, we reset it here.
     self->cppobj.reset();
@@ -80,102 +83,92 @@ ZoneIterator_destroy(s_ZoneIterator* const self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-//
-// We declare the functions here, the definitions are below
-// the type definition of the object, since both can use the other
-//
 PyObject*
-ZoneIterator_getNextRRset(PyObject* po_self, PyObject*) {
-    s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
-    if (!self->cppobj) {
-        PyErr_SetString(getDataSourceException("Error"),
-                        "get_next_rrset() called past end of iterator");
-        return (NULL);
-    }
+ZoneWriter_load(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
     try {
-        isc::dns::ConstRRsetPtr rrset = self->cppobj->getNextRRset();
-        if (!rrset) {
-            Py_RETURN_NONE;
+        std::string error_msg;
+        self->cppobj->load(&error_msg);
+        if (!error_msg.empty()) {
+            return (Py_BuildValue("s", error_msg.c_str()));
         }
-        return (createRRsetObject(*rrset));
-    } catch (const isc::Exception& isce) {
-        // isc::Unexpected is thrown when we call getNextRRset() when we are
-        // already done iterating ('iterating past end')
-        // We could also simply return None again
-        PyErr_SetString(getDataSourceException("Error"), isce.what());
-        return (NULL);
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
         PyErr_SetString(getDataSourceException("Error"),
-                        "Unexpected exception");
+                        "Unknown C++ exception");
         return (NULL);
     }
+
+    Py_RETURN_NONE;
 }
 
 PyObject*
-ZoneIterator_iter(PyObject *self) {
-    Py_INCREF(self);
-    return (self);
-}
-
-PyObject*
-ZoneIterator_next(PyObject* self) {
-    PyObject *result = ZoneIterator_getNextRRset(self, NULL);
-    // iter_next must return NULL without error instead of Py_None
-    if (result == Py_None) {
-        Py_DECREF(result);
-        return (NULL);
-    } else {
-        return (result);
-    }
-}
-
-PyObject*
-ZoneIterator_getSOA(PyObject* po_self, PyObject*) {
-    s_ZoneIterator* self = static_cast<s_ZoneIterator*>(po_self);
+ZoneWriter_install(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
     try {
-        isc::dns::ConstRRsetPtr rrset = self->cppobj->getSOA();
-        if (!rrset) {
-            Py_RETURN_NONE;
-        }
-        return (createRRsetObject(*rrset));
-    } catch (const isc::Exception& isce) {
-        // isc::Unexpected is thrown when we call getNextRRset() when we are
-        // already done iterating ('iterating past end')
-        // We could also simply return None again
-        PyErr_SetString(getDataSourceException("Error"), isce.what());
-        return (NULL);
+        self->cppobj->install();
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
     } catch (...) {
         PyErr_SetString(getDataSourceException("Error"),
-                        "Unexpected exception");
+                        "Unknown C++ exception");
         return (NULL);
     }
+
+    Py_RETURN_NONE;
 }
 
-PyMethodDef ZoneIterator_methods[] = {
-    { "get_next_rrset", ZoneIterator_getNextRRset, METH_NOARGS,
-      ZoneIterator_getNextRRset_doc },
-    { "get_soa", ZoneIterator_getSOA, METH_NOARGS, ZoneIterator_getSOA_doc },
+PyObject*
+ZoneWriter_cleanup(PyObject* po_self, PyObject*) {
+    s_ZoneWriter* self = static_cast<s_ZoneWriter*>(po_self);
+    try {
+        self->cppobj->cleanup();
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+
+    Py_RETURN_NONE;
+}
+
+// This list contains the actual set of functions we have in
+// python. Each entry has
+// 1. Python method name
+// 2. Our static function here
+// 3. Argument type
+// 4. Documentation
+PyMethodDef ZoneWriter_methods[] = {
+    { "load", ZoneWriter_load, METH_NOARGS,
+      ZoneWriter_load_doc },
+    { "install", ZoneWriter_install, METH_NOARGS,
+      ZoneWriter_install_doc },
+    { "cleanup", ZoneWriter_cleanup, METH_NOARGS,
+      ZoneWriter_cleanup_doc },
     { NULL, NULL, 0, NULL }
 };
-
 
 } // end of unnamed namespace
 
 namespace isc {
 namespace datasrc {
+namespace memory {
 namespace python {
-PyTypeObject zoneiterator_type = {
+// This defines the complete type for reflection in python and
+// parsing of PyObject* to s_ZoneWriter
+// Most of the functions are not actually implemented and NULL here.
+PyTypeObject zonewriter_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "datasrc.ZoneIterator",
-    sizeof(s_ZoneIterator),             // tp_basicsize
+    "datasrc.ZoneWriter",
+    sizeof(s_ZoneWriter),               // tp_basicsize
     0,                                  // tp_itemsize
-    reinterpret_cast<destructor>(ZoneIterator_destroy),// tp_dealloc
+    ZoneWriter_destroy,                 // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -191,14 +184,14 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_setattro
     NULL,                               // tp_as_buffer
     Py_TPFLAGS_DEFAULT,                 // tp_flags
-    ZoneIterator_doc,
+    ZoneWriter_doc,
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
     NULL,                               // tp_richcompare
     0,                                  // tp_weaklistoffset
-    ZoneIterator_iter,                  // tp_iter
-    ZoneIterator_next,                  // tp_iternext
-    ZoneIterator_methods,               // tp_methods
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    ZoneWriter_methods,                 // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -206,7 +199,7 @@ PyTypeObject zoneiterator_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    reinterpret_cast<initproc>(ZoneIterator_init),// tp_init
+    ZoneWriter_init,                    // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -220,23 +213,41 @@ PyTypeObject zoneiterator_type = {
     0                                   // tp_version_tag
 };
 
+// Module Initialization, all statics are initialized here
+bool
+initModulePart_ZoneWriter(PyObject* mod) {
+    // We initialize the static description object with PyType_Ready(),
+    // then add it to the module. This is not just a check! (leaving
+    // this out results in segmentation faults)
+    if (PyType_Ready(&zonewriter_type) < 0) {
+        return (false);
+    }
+    void* p = &zonewriter_type;
+    if (PyModule_AddObject(mod, "ZoneWriter", static_cast<PyObject*>(p)) < 0) {
+        return (false);
+    }
+    Py_INCREF(&zonewriter_type);
+
+    return (true);
+}
+
 PyObject*
-createZoneIteratorObject(isc::datasrc::ZoneIteratorPtr source,
-                         PyObject* base_obj)
+createZoneWriterObject(ConfigurableClientList::ZoneWriterPtr source,
+                       PyObject* base_obj)
 {
-    s_ZoneIterator* py_zi = static_cast<s_ZoneIterator*>(
-        zoneiterator_type.tp_alloc(&zoneiterator_type, 0));
-    if (py_zi != NULL) {
-        py_zi->cppobj = source;
-        py_zi->base_obj = base_obj;
+    s_ZoneWriter* py_zf = static_cast<s_ZoneWriter*>(
+        zonewriter_type.tp_alloc(&zonewriter_type, 0));
+    if (py_zf != NULL) {
+        py_zf->cppobj = source;
+        py_zf->base_obj = base_obj;
         if (base_obj != NULL) {
             Py_INCREF(base_obj);
         }
     }
-    return (py_zi);
+    return (py_zf);
 }
 
 } // namespace python
+} // namespace memory
 } // namespace datasrc
 } // namespace isc
-

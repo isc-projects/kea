@@ -1408,6 +1408,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
+           src/lib/util/python/doxygen2pydoc.py
            src/lib/util/python/mkpywrapper.py
            src/lib/util/python/gen_wiredata.py
            src/lib/server_common/tests/data_path.h
@@ -1439,6 +1440,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
+           chmod +x src/lib/util/python/doxygen2pydoc.py
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
