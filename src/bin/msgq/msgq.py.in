@@ -61,8 +61,8 @@ VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/msgq"
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/msgq"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
