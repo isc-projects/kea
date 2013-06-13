@@ -36,7 +36,6 @@ import re
 import ssl, socket
 import isc
 import pprint
-import select
 import csv
 import random
 import time
