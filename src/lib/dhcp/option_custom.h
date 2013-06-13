@@ -309,9 +309,8 @@ private:
     /// @tparam data type to be validated.
     ///
     /// @throw isc::dhcp::InvalidDataType if the type is invalid.
-    //cppcheck-suppress unusedPrivateFunction It's used, confusion because of
-    //templates
     template<typename T>
+    // cppcheck-suppress unusedPrivateFunction
     void checkDataType(const uint32_t index) const;
 
     /// @brief Check if data field index is valid.
