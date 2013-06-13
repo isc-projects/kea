@@ -81,19 +81,31 @@ def _add_counter(element, spec, identifier):
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
         pass
-    # check whether spec and identifier are correct
-    isc.config.find_spec_part(spec, identifier)
-    # examine spec of the top-level item first
-    spec_ = isc.config.find_spec_part(spec, identifier.split('/')[0])
-    if spec_['item_type'] == 'named_set' and \
-            spec_['named_set_item_spec']['item_type'] ==  'map':
-        map_spec = spec_['named_set_item_spec']['map_item_spec']
-        for name in isc.config.spec_name_list(map_spec):
-            spec_ = isc.config.find_spec_part(map_spec, name)
-            id_str = '%s/%s/%s' % \
-                tuple(identifier.split('/')[0:2] + [name])
-            isc.cc.data.set(element, id_str, spec_['item_default'])
-    else:
+    # examine spec from the top-level item and know whether
+    # has_named_set, and check whether spec and identifier are correct
+    pidr = ''
+    has_named_set = False
+    for idr in identifier.split('/'):
+        if len(pidr) > 0:
+            idr = pidr + '/' + idr
+        spec_ = isc.config.find_spec_part(spec, idr)
+        if isc.config.spec_part_is_named_set(spec_):
+            has_named_set = True
+            break
+        pidr = idr
+    # add all elements in map type if has_named_set
+    has_map = False
+    if has_named_set:
+        p_idr = identifier.rsplit('/', 1)[0]
+        p_spec = isc.config.find_spec_part(spec, p_idr)
+        if isc.config.spec_part_is_map(p_spec):
+            has_map = True
+            for name in isc.config.spec_name_list(p_spec['map_item_spec']):
+                idr_ = p_idr + '/' + name
+                spc_ = isc.config.find_spec_part(spec, idr_)
+                isc.cc.data.set(element, idr_, spc_['item_default'])
+    # otherwise add a specific element
+    if not has_map:
         spec_ = isc.config.find_spec_part(spec, identifier)
         isc.cc.data.set(element, identifier, spec_['item_default'])
     return isc.cc.data.find(element, identifier)
