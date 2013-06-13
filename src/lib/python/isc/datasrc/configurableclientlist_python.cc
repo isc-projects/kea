@@ -219,6 +219,7 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
                 segment_type = Py_None;
             }
 
+            // Py_BuildValue() is a C function and will not throw.
             PyObject* tup = Py_BuildValue("(sOI)",
                                           status[i].getName().c_str(),
                                           segment_type,
