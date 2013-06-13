@@ -1,3 +1,9 @@
+628.	[func]		y-aharen
+	b10-auth: A new statistics item 'qryrecursion' has been introduced.
+	The counter is for the number of queries (OpCode=Query) with Recursion
+	Desired (RD) bit on.
+	(Trac #2796, git 3d291f42cdb186682983aa833a1a67cb9e6a8434)
+
 627.	[func]		tmark
 	Logger name for DHCP-DDNS has been changed from "d2_logger" to "dhcpddns".
 	In addition, its log messages now use two suffixes, DCTL_ for logs the
