@@ -34,12 +34,7 @@ CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager)
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables
     // have been created.
-    int status = manager_->callCallouts(ServerHooks::CONTEXT_CREATE, *this);
-    if (status > 0) {
-        isc_throw(ContextCreateFail, "error code of " << status << " returned "
-                  "from context_create callout during the creation of a "
-                  "ContextHandle object");
-    }
+    manager_->callCallouts(ServerHooks::CONTEXT_CREATE, *this);
 }
 
 // Destructor
@@ -48,16 +43,7 @@ CalloutHandle::~CalloutHandle() {
     // Call the "context_destroy" hook.  We should be OK doing this - although
     // the destructor is being called, all the member variables are still in
     // existence.
-    int status = manager_->callCallouts(ServerHooks::CONTEXT_DESTROY, *this);
-    if (status > 0) {
-        // An exception is thrown on failure.  This may be severe, but if
-        // none is thrown a resource leak in a library (signalled by the
-        // context_destroy callout returning an error) may be difficult to
-        // trace.
-        isc_throw(ContextDestroyFail, "error code of " << status << " returned "
-                  "from context_destroy callout during the destruction of a "
-                  "ContextHandle object");
-    }
+    manager_->callCallouts(ServerHooks::CONTEXT_DESTROY, *this);
 }
 
 // Return the name of all argument items.
