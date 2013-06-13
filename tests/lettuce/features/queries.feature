@@ -75,7 +75,7 @@ Feature: Querying feature
         The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A query for www.example.org should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have ancount 1
         The last query response should have nscount 2
         The last query response should have adcount 2
@@ -121,7 +121,7 @@ Feature: Querying feature
 
         # Repeat of the above
         A query for www.example.org should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have ancount 1
         The last query response should have nscount 2
         The last query response should have adcount 2
@@ -165,7 +165,7 @@ Feature: Querying feature
           | rcode.noerror |          2 |
 
         # And now query something completely different
-        A query for nosuchname.example.org should have rcode NXDOMAIN
+        A recursive query for nosuchname.example.org should have rcode NXDOMAIN
         The last query response should have flags qr aa rd
         The last query response should have ancount 0
         The last query response should have nscount 1
@@ -196,6 +196,7 @@ Feature: Querying feature
           | responses      |          3 |
           | qrysuccess     |          2 |
           | qryauthans     |          3 |
+          | qryrecursion   |          1 |
           | rcode.noerror  |          2 |
           | rcode.nxdomain |          1 |
 
@@ -225,7 +226,7 @@ Feature: Querying feature
         The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A query for example.org type ANY should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have ancount 4
         The last query response should have nscount 0
         The last query response should have adcount 3
@@ -284,7 +285,7 @@ Feature: Querying feature
         The statistics counters are 0 in category .Auth.zones._SERVER_
 
         A dnssec query for www.sub.example.org type AAAA should have rcode NOERROR
-        The last query response should have flags qr rd
+        The last query response should have flags qr
         The last query response should have edns_flags do
         The last query response should have ancount 0
         The last query response should have nscount 1
