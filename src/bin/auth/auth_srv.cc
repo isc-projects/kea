@@ -521,6 +521,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
+    stats_attrs.setRequestRD(message.getHeaderFlag(Message::HEADERFLAG_RD));
+
     const Opcode& opcode = message.getOpcode();
     // Get opcode at this point; for all requests regardless of message body
     // sanity check.
