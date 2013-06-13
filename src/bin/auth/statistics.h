@@ -66,6 +66,8 @@ private:
     enum BitAttributes {
         REQ_WITH_EDNS_0,            // request with EDNS ver.0
         REQ_WITH_DNSSEC_OK,         // DNSSEC OK (DO) bit is set in request
+        REQ_WITH_RD,                // Recursion Desired (RD) bit is set in
+                                    // request
         REQ_TSIG_SIGNED,            // request is signed with valid TSIG
         REQ_BADSIG,                 // request is signed but bad signature
         RES_IS_TRUNCATED,           // response is truncated
@@ -168,6 +170,22 @@ public:
     /// \throw None
     void setRequestDO(const bool with_dnssec_ok) {
         bit_attributes_[REQ_WITH_DNSSEC_OK] = with_dnssec_ok;
+    }
+
+    /// \brief Return Recursion Desired (RD) bit of the request.
+    ///
+    /// \return true if Recursion Desired (RD) bit of the request is set
+    /// \throw None
+    bool requestHasRD() const {
+        return (bit_attributes_[REQ_WITH_RD]);
+    }
+
+    /// \brief Set Recursion Desired (RD) bit of the request.
+    ///
+    /// \param with_rd true if Recursion Desired (RD)bit of the request is set
+    /// \throw None
+    void setRequestRD(const bool with_rd) {
+        bit_attributes_[REQ_WITH_RD] = with_rd;
     }
 
     /// \brief Return whether the request is TSIG signed or not.

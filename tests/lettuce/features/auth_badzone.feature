@@ -24,7 +24,7 @@ Feature: Authoritative DNS server with a bad zone
         And bind10 module Resolver should not be running
 
         A query for www.example.org should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have ancount 1
         The last query response should have nscount 2
         The last query response should have adcount 2
