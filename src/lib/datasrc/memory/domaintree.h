@@ -709,7 +709,7 @@ public:
         // To silence cppcheck. We don't really use the values before
         // initialization, but this is cleaner anyway.
         for (size_t i = 0; i < RBT_MAX_LEVEL; ++i) {
-            nodes_[0] = NULL;
+            nodes_[i] = NULL;
         }
     }
 
