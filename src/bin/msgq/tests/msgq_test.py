@@ -284,7 +284,7 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.register_socket(sock)
         lname = self.__msgq.fd_to_lname[1] # Steal the lname
         self.assertEqual([('connected', {'client': lname})], notifications)
-        notifications.clear()
+        del notifications[:]
 
         # A notification should happen for a subscription to a group
         self.__msgq.process_command_subscribe(sock, {'group': 'G',
@@ -292,7 +292,7 @@ class MsgQTest(unittest.TestCase):
                                               None)
         self.assertEqual([('subscribed', {'client': lname, 'group': 'G'})],
                          notifications)
-        notifications.clear()
+        del notifications[:]
 
         # As well for unsubscription
         self.__msgq.process_command_unsubscribe(sock, {'group': 'G',
@@ -300,7 +300,7 @@ class MsgQTest(unittest.TestCase):
                                                 None)
         self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'})],
                          notifications)
-        notifications.clear()
+        del notifications[:]
 
         # Unsubscription from a group it isn't subscribed to
         self.__msgq.process_command_unsubscribe(sock, {'group': 'H',
@@ -325,7 +325,7 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.process_command_subscribe(sock, {'group': 'G',
                                                      'instance': '*'},
                                               None)
-        notifications.clear()
+        del notifications[:]
 
         self.__msgq.kill_socket(sock.fileno(), sock)
         # Now, the notification for unsubscribe should be first, second for
