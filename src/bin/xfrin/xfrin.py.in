@@ -875,8 +875,9 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._send_query(RRType.SOA)
         # count soaoutv4 or soaoutv6 requests
-        self._counters.inc('zones', self._zone_name.to_text(),
-                           'soaout' + self._get_ipver_str())
+        self._counters.inc('zones', self._rrclass.to_text(),
+                           self._zone_name.to_text(), 'soaout' +
+                           self._get_ipver_str())
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -918,12 +919,17 @@ class XfrinConnection(asyncore.dispatcher):
             # Note: If the timer for the zone is already started but
             # not yet stopped due to some error, the last start time
             # is overwritten at this point.
-            self._counters.start_timer('zones', self._zone_name.to_text(),
-                                       'last_' + req_str.lower() + '_duration')
+            self._counters.start_timer('zones',
+                                       self._rrclass.to_text(),
+                                       self._zone_name.to_text(),
+                                       'last_' + req_str.lower() +
+                                       '_duration')
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             # An AXFR or IXFR is being requested.
-            self._counters.inc('zones', self._zone_name.to_text(),
-                               req_str.lower() + 'req' + self._get_ipver_str())
+            self._counters.inc('zones', self._rrclass.to_text(),
+                               self._zone_name.to_text(),
+                               req_str.lower() + 'req' +
+                               self._get_ipver_str())
             self._send_query(self._request_type)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
@@ -988,11 +994,13 @@ class XfrinConnection(asyncore.dispatcher):
             # A xfrsuccess or xfrfail counter is incremented depending on
             # the result.
             result = {XFRIN_OK: 'xfrsuccess', XFRIN_FAIL: 'xfrfail'}[ret]
-            self._counters.inc('zones', self._zone_name.to_text(), result)
+            self._counters.inc('zones', self._rrclass.to_text(),
+                               self._zone_name.to_text(), result)
             # The started statistics timer is finally stopped only in
             # a successful case.
             if ret == XFRIN_OK:
                 self._counters.stop_timer('zones',
+                                          self._rrclass.to_text(),
                                           self._zone_name.to_text(),
                                           'last_' + req_str.lower() +
                                           '_duration')

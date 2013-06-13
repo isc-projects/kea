@@ -301,7 +301,8 @@ class XfroutSession():
             return None, None
         elif acl_result == REJECT:
             # count rejected Xfr request by each zone name
-            self._counters.inc('zones', zone_name.to_text(), 'xfrrej')
+            self._counters.inc('zones', zone_class.to_text(),
+                               zone_name.to_text(), 'xfrrej')
             logger.debug(DBG_XFROUT_TRACE, XFROUT_QUERY_REJECTED,
                          self._request_type, format_addrinfo(self._remote),
                          format_zone_str(zone_name, zone_class))
@@ -571,7 +572,8 @@ class XfroutSession():
             else:
                 self._counters.dec('ixfr_running')
         # count done Xfr requests by each zone name
-        self._counters.inc('zones', zone_name.to_text(), 'xfrreqdone')
+        self._counters.inc('zones', zone_class.to_text(),
+                           zone_name.to_text(), 'xfrreqdone')
         logger.info(XFROUT_XFR_TRANSFER_DONE, self._request_typestr,
                     format_addrinfo(self._remote), zone_str)
 

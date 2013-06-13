@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2012-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@ import imp
 import isc.config
 
 TEST_ZONE_NAME_STR = "example.com."
+TEST_ZONE_CLASS_STR = "IN"
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 
 from isc.statistics import counters
@@ -196,7 +197,8 @@ class BaseTestCounters():
     def test_perzone_counters(self):
         # for per-zone counters
         for name in self.counters._zones_item_list:
-            args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
+            args = (self._perzone_prefix, TEST_ZONE_CLASS_STR,
+                    TEST_ZONE_NAME_STR, name)
             if name.find('last_') == 0 and name.endswith('_duration'):
                 self.counters.start_timer(*args)
                 self.counters.stop_timer(*args)
@@ -204,7 +206,8 @@ class BaseTestCounters():
                 sec = self.counters.get(*args)
                 for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                     isc.cc.data.set(self._statistics_data,
-                                    '%s/%s/%s' % (args[0], zone_str, name), sec)
+                                    '%s/%s/%s/%s' % (args[0], args[1],
+                                                     zone_str, name), sec)
                 # twice exec stopper, then second is not changed
                 self.counters.stop_timer(*args)
                 self.assertEqual(self.counters.get(*args), sec)
@@ -220,7 +223,8 @@ class BaseTestCounters():
                 self.assertEqual(self.counters.get(*args), 2)
                 for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                     isc.cc.data.set(self._statistics_data,
-                                    '%s/%s/%s' % (args[0], zone_str, name), 2)
+                                    '%s/%s/%s/%s' % (args[0], args[1],
+                                                     zone_str, name), 2)
         self.check_get_statistics()
 
     def test_xfrrunning_counters(self):
@@ -277,7 +281,8 @@ class BaseTestCounters():
     def test_perzone_zero_counters(self):
         # setting all counters to zero
         for name in self.counters._zones_item_list:
-            args = (self._perzone_prefix, TEST_ZONE_NAME_STR, name)
+            args = (self._perzone_prefix, TEST_ZONE_CLASS_STR,
+                    TEST_ZONE_NAME_STR, name)
             if name.find('last_') == 0 and name.endswith('_duration'):
                 zero = 0.0
             else:
@@ -286,7 +291,8 @@ class BaseTestCounters():
             self.counters._incdec(*args, step=zero)
             for zone_str in (self._entire_server, TEST_ZONE_NAME_STR):
                 isc.cc.data.set(self._statistics_data,
-                                '%s/%s/%s' % (args[0], zone_str, name), zero)
+                                '%s/%s/%s/%s' % (args[0], args[1],
+                                                 zone_str, name), zero)
         self.check_get_statistics()
 
     def test_undefined_item(self):
@@ -352,15 +358,19 @@ class DummyNotifyOut(BaseDummyModule):
 
     def inc_counters(self):
         """increments counters"""
-        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'notifyoutv4')
-        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'notifyoutv6')
+        self.counters.inc('zones', TEST_ZONE_CLASS_STR,
+                          TEST_ZONE_NAME_STR, 'notifyoutv4')
+        self.counters.inc('zones', TEST_ZONE_CLASS_STR,
+                          TEST_ZONE_NAME_STR, 'notifyoutv6')
 
 class DummyXfroutSession(BaseDummyModule):
     """A dummy class equivalent to XfroutSession in b10-xfrout"""
     def inc_counters(self):
         """increments counters"""
-        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'xfrreqdone')
-        self.counters.inc('zones', TEST_ZONE_NAME_STR, 'xfrrej')
+        self.counters.inc('zones', TEST_ZONE_CLASS_STR,
+                          TEST_ZONE_NAME_STR, 'xfrreqdone')
+        self.counters.inc('zones', TEST_ZONE_CLASS_STR,
+                          TEST_ZONE_NAME_STR, 'xfrrej')
         self.counters.inc('axfr_running')
         self.counters.inc('ixfr_running')
         self.counters.dec('axfr_running')
