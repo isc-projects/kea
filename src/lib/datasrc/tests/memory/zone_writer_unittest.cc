@@ -12,10 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <datasrc/memory/zone_writer.h>
 #include <datasrc/memory/zone_table_segment_local.h>
 #include <datasrc/memory/zone_data.h>
+#include <datasrc/memory/zone_data_loader.h>
+#include <datasrc/memory/load_action.h>
+#include <datasrc/memory/zone_table.h>
 #include <datasrc/exceptions.h>
+#include <datasrc/result.h>
+
+#include <util/memory_segment_mapped.h>
+
+#include <cc/data.h>
 
 #include <dns/rrclass.h>
 #include <dns/name.h>
@@ -27,8 +37,10 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 
 #include <string>
+#include <unistd.h>
 
 using boost::scoped_ptr;
 using boost::bind;
@@ -323,6 +335,81 @@ TEST_F(ZoneWriterTest, autoCleanUp) {
     // Load data and forget about it. It should get released
     // when the writer itself is destroyed.
     EXPECT_NO_THROW(writer_->load());
+}
+
+// Used in the manyWrites test, encapsulating loadZoneData() to avoid
+// its signature ambiguity.
+ZoneData*
+loadZoneDataWrapper(isc::util::MemorySegment& segment, const RRClass& rrclass,
+                    const Name& name, const std::string& filename)
+{
+    return (loadZoneData(segment, rrclass, name, filename));
+}
+
+// Check the behavior of creating many small zones.  The main purpose of
+// test is to trigger MemorySegmentGrown exception in ZoneWriter::install.
+// There's no easy (if any) way to cause that reliably as it's highly
+// dependent on details of the underlying boost implementation and probably
+// also on the system behavior, but we'll try some promising scenario (it
+// in fact triggered the intended result at least on one environment).
+TEST_F(ZoneWriterTest, manyWrites) {
+#ifdef USE_SHARED_MEMORY
+    // First, make a fresh mapped file of a small size (so it'll be more likely
+    // to grow in the test.
+    const char* const mapped_file = TEST_DATA_BUILDDIR "/test.mapped";
+    unlink(mapped_file);
+    boost::scoped_ptr<isc::util::MemorySegmentMapped> segment(
+        new isc::util::MemorySegmentMapped(
+            mapped_file, isc::util::MemorySegmentMapped::CREATE_ONLY, 4096));
+    segment.reset();
+
+    // Then prepare a ZoneTableSegment of the 'mapped' type specifying the
+    // file we just created.
+    boost::scoped_ptr<ZoneTableSegment> zt_segment(
+        ZoneTableSegment::create(RRClass::IN(), "mapped"));
+    const isc::data::ConstElementPtr params =
+        isc::data::Element::fromJSON(
+            "{\"mapped-file\": \"" + std::string(mapped_file) + "\"}");
+    zt_segment->reset(ZoneTableSegment::READ_WRITE, params);
+#else
+    // Do the same test for the local segment, although there shouldn't be
+    // anything tricky in that case.
+    boost::scoped_ptr<ZoneTableSegment> zt_segment(
+        ZoneTableSegment::create(RRClass::IN(), "local"));
+#endif
+
+    // Now, create many small zones in the zone table with a ZoneWriter.
+    // We use larger origin names so it'll (hopefully) require the memory
+    // segment to grow while adding the name into the internal table.
+    const size_t zone_count = 10000; // arbitrary choice
+    for (size_t i = 0; i < zone_count; ++i) {
+        const Name origin(
+            boost::str(boost::format("%063u.%063u.%063u.example.org")
+                       % i % i % i));
+        const LoadAction action = boost::bind(loadZoneDataWrapper, _1,
+                                              RRClass::IN(), origin,
+                                              TEST_DATA_DIR
+                                              "/template.zone");
+        ZoneWriter writer(*zt_segment, action, origin, RRClass::IN(), false);
+        writer.load();
+        writer.install();
+        writer.cleanup();
+
+        // Confirm it's been successfully added and can be actually found.
+        const ZoneTable::FindResult result =
+            zt_segment->getHeader().getTable()->findZone(origin);
+        EXPECT_EQ(isc::datasrc::result::SUCCESS, result.code);
+        EXPECT_NE(static_cast<const ZoneData*>(NULL), result.zone_data) <<
+            "unexpected find result: " + origin.toText();
+    }
+
+    // Make sure to close the segment before (possibly) removing the mapped
+    // file.
+    zt_segment.reset();
+
+#ifdef USE_SHARED_MEMORY
+    unlink(mapped_file);
+#endif
 }
 
 }
