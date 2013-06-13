@@ -250,10 +250,15 @@
       </para>
 
       <para>
-        RD bit is not specific to queries (requests of opcode 0), but
-	<quote>qryrecursion</quote> is limited to queries because RD bit is
-	meaningless for the other opcodes and they are passed to another
-	BIND 10 module such as <command>b10-ddns</command>.
+	The <quote>qryrecursion</quote> counter is limited to queries
+	(requests of opcode 0) even though the RD bit is not specific
+	to queries.  In practice, this bit is generally just ignored for
+	other types of requests, while DNS servers behave differently
+	for queries depending on this bit.  It is also known that
+	some authoritative-only servers receive a non negligible
+	number of queries with the RD bit being set, so it would be
+	of particular interest to have a specific counters for such
+	requests.
       </para>
     </note>
 
