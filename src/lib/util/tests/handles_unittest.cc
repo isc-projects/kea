@@ -60,6 +60,9 @@ public:
 
         // Set up for three libraries.
         manager_.reset(new CalloutManager(hooks_, 3));
+
+        // Initialize remaining variables.
+        common_string_ = "";
     }
 
     /// @brief Return callout manager
@@ -73,6 +76,9 @@ public:
     int gamma_index_;
     int delta_index_;
 
+    /// String accessible by all callouts whatever the library
+    static std::string common_string_;
+
 private:
     /// Server hooks 
     boost::shared_ptr<ServerHooks> hooks_;
@@ -80,8 +86,11 @@ private:
     /// Callout manager.  Declared static so that the callout functions can
     /// access it.
     boost::shared_ptr<CalloutManager> manager_;
-
 };
+
+/// Define the common string
+std::string HandlesTest::common_string_;
+
 
 // The next set of functions define the callouts used by the tests.  They
 // manipulate the data in such a way that callouts called - and the order in
@@ -547,24 +556,6 @@ TEST_F(HandlesTest, ConstructionDestructionCallouts) {
 
     EXPECT_EQ("110120", resultCalloutString(0));
     EXPECT_EQ((110 + 120), resultCalloutInt(0));
-
-    // Test that the destructor throws an error if the context_destroy
-    // callout returns an error. (As the constructor and destructor will
-    // have implicitly run the CalloutManager's callCallouts method, we need
-    // to set the library index again.)
-    getCalloutManager()->setLibraryIndex(0);
-    getCalloutManager()->registerCallout("context_destroy", returnError);
-    callout_handle.reset(new CalloutHandle(getCalloutManager()));
-    EXPECT_THROW(callout_handle.reset(), ContextDestroyFail);
-
-    // We don't know what callout_handle is pointing to - it could be to a
-    // half-destroyed object - so use a new CalloutHandle to test construction
-    // failure.
-    getCalloutManager()->setLibraryIndex(0);
-    getCalloutManager()->registerCallout("context_create", returnError);
-    boost::scoped_ptr<CalloutHandle> callout_handle2;
-    EXPECT_THROW(callout_handle2.reset(new CalloutHandle(getCalloutManager())),
-                 ContextCreateFail);
 }
 
 // Dynamic callout registration and deregistration.
@@ -763,6 +754,167 @@ TEST_F(HandlesTest, DynamicDeregistrationSameHook) {
     getCalloutManager()->callCallouts(delta_index_, callout_handle_2);
     EXPECT_EQ("112", resultCalloutString(0));
     EXPECT_EQ("212782", resultCalloutString(1));
+}
+
+// Testing the operation of the "skip" flag.  Callouts print the value
+// they see in the flag and either leave it unchanged, set it or clear it.
+
+int
+calloutPrintSkip(CalloutHandle& handle) {
+    static const std::string YES("Y");
+    static const std::string NO("N");
+
+    HandlesTest::common_string_ = HandlesTest::common_string_ +
+        (handle.getSkip() ? YES : NO);
+    return (0);
+}
+
+int
+calloutSetSkip(CalloutHandle& handle) {
+    static_cast<void>(calloutPrintSkip(handle));
+    handle.setSkip(true);
+    return (0);
+}
+
+int
+calloutClearSkip(CalloutHandle& handle) {
+    static_cast<void>(calloutPrintSkip(handle));
+    handle.setSkip(false);
+    return (0);
+}
+
+// Do a series of tests, returning with the skip flag set "true".
+
+TEST_F(HandlesTest, ReturnSkipSet) {
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", calloutPrintSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", calloutPrintSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", calloutPrintSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+
+    CalloutHandle callout_handle(getCalloutManager());
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+
+    // Check result.  For each of visual checking, the expected string is
+    // divided into sections corresponding to the blocks of callouts above.
+    EXPECT_EQ(std::string("NNYY" "NNYYN" "NNYN"), common_string_);
+
+    // ... and check that the skip flag on exit from callCallouts is set.
+    EXPECT_TRUE(callout_handle.getSkip());
+}
+
+// Repeat the test, returning with the skip flag clear.
+TEST_F(HandlesTest, ReturnSkipClear) {
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", calloutPrintSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+    getCalloutManager()->registerCallout("alpha", calloutPrintSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetSkip);
+    getCalloutManager()->registerCallout("alpha", calloutClearSkip);
+
+    CalloutHandle callout_handle(getCalloutManager());
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+
+    // Check result.  For each of visual checking, the expected string is
+    // divided into sections corresponding to the blocks of callouts above.
+    EXPECT_EQ(std::string("NYY" "NNYNYN" "NNNY"), common_string_);
+
+    // ... and check that the skip flag on exit from callCallouts is set.
+    EXPECT_FALSE(callout_handle.getSkip());
+}
+
+// The next set of callouts do a similar thing to the above "skip" tests,
+// but alter the value of a string argument.  This is for testing that the
+// a callout is able to change an argument and return it to the caller.
+
+const char* MODIFIED_ARG = "modified_arg";
+
+int
+calloutSetArgumentCommon(CalloutHandle& handle, const char* what) {
+    std::string modified_arg = "";
+
+    handle.getArgument(MODIFIED_ARG, modified_arg);
+    modified_arg = modified_arg + std::string(what);
+    handle.setArgument(MODIFIED_ARG, modified_arg);
+    return (0);
+}
+
+int
+calloutSetArgumentYes(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "Y"));
+}
+
+int
+calloutSetArgumentNo(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "N"));
+}
+
+// ... and a callout to just copy the argument to the "common_string_" variable
+// but otherwise not alter it.
+
+int
+calloutPrintArgument(CalloutHandle& handle) {
+    handle.getArgument(MODIFIED_ARG, HandlesTest::common_string_);
+    return (0);
+}
+
+TEST_F(HandlesTest, CheckModifiedArgument) {
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutPrintArgument);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+
+    getCalloutManager()->setLibraryIndex(2);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentNo);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentYes);
+
+    // Create the argument with an initial empty string value.  Then call the
+    // sequence of callouts above.
+    CalloutHandle callout_handle(getCalloutManager());
+    std::string modified_arg = "";
+    callout_handle.setArgument(MODIFIED_ARG, modified_arg);
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+
+    // Check the intermediate and results.  For visual checking, the expected
+    // string is divided into sections corresponding to the blocks of callouts
+    // above.
+    EXPECT_EQ(std::string("YNN" "YY"), common_string_);
+
+    callout_handle.getArgument(MODIFIED_ARG, modified_arg);
+    EXPECT_EQ(std::string("YNN" "YYNN" "YNY"), modified_arg);
 }
 
 

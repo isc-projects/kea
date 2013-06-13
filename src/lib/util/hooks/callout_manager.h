@@ -182,9 +182,7 @@ public:
     /// @param hook_index Index of the hook to call.
     /// @param callout_handle Reference to the CalloutHandle object for the
     ///        current object being processed.
-    ///
-    /// @return Status return.
-    int callCallouts(int hook_index, CalloutHandle& callout_handle);
+    void callCallouts(int hook_index, CalloutHandle& callout_handle);
 
     /// @brief Get number of libraries
     ///
@@ -240,20 +238,6 @@ public:
     }
 
 private:
-    /// @brief Check hook index
-    ///
-    /// Ensures that the passed hook index is valid.
-    ///
-    /// @param index Hook index to test
-    ///
-    /// @throw NoSuchHook Hooks does not exist.
-    void checkHookIndex(int hook_index) const {
-        if ((hook_index < 0) || (hook_index >= hook_vector_.size())) {
-            isc_throw(NoSuchHook, "hook index " << hook_index <<
-                      " is not valid for the list of registered hooks");
-        }
-    }
-
     /// @brief Check library index
     ///
     /// Ensures that the current library index is valid.  This is called by
