@@ -397,13 +397,13 @@ fromStringstreamNumber(std::istream& in, int& pos) {
     double d = 0.0;
     bool is_double = false;
     char* endptr;
-    const char* ptr;
 
     std::string number = numberFromStringstream(in, pos);
 
     errno = 0;
     i = strtol(number.c_str(), &endptr, 10);
     if (*endptr != '\0') {
+        const char* ptr;
         errno = 0;
         d = strtod(ptr = number.c_str(), &endptr);
         is_double = true;
