@@ -50,28 +50,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Context creation failure
-///
-/// Thrown if, during the running of the constructor, the call to the
-/// context_create hook returns an error.
-
-class ContextCreateFail : public Exception {
-public:
-    ContextCreateFail(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-/// @brief Context destruction failure
-///
-/// Thrown if, during the running of the desstructor, the call to the
-/// context_destroy hook returns an error.
-
-class ContextDestroyFail : public Exception {
-public:
-    ContextDestroyFail(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 // Forward declaration of the library handle and related collection classes.
 
 class CalloutManager;
@@ -109,14 +87,6 @@ class LibraryHandle;
 
 class CalloutHandle {
 public:
-    /// Callout success return status - the next callout in the list for the
-    /// hook will be called.
-    static const int SUCCESS = 0;
-
-    /// Callout complete return status - the callout has succeeded, but
-    /// remaining callouts on this hook (including any from other libraries)
-    /// should not be run.
-    static const int COMPLETE = 1;
 
     /// Typedef to allow abbreviation of iterator specification in methods.
     /// The std::string is the argument name and the "boost::any" is the

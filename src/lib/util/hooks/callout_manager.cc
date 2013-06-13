@@ -63,7 +63,10 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
 bool
 CalloutManager::calloutsPresent(int hook_index) const {
     // Validate the hook index.
-    checkHookIndex(hook_index);
+    if ((hook_index < 0) || (hook_index >= hook_vector_.size())) {
+        isc_throw(NoSuchHook, "hook index " << hook_index <<
+                  " is not valid for the list of registered hooks");
+    }
 
     // Valid, so are there any callouts associated with that hook?
     return (!hook_vector_[hook_index].empty());
@@ -71,40 +74,40 @@ CalloutManager::calloutsPresent(int hook_index) const {
 
 // Call all the callouts for a given hook.
 
-int
+void
 CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
-    // Validate the hook index.
-    checkHookIndex(hook_index);
 
-    // Clear the "skip" flag so we don't carry state from a previous call.
-    callout_handle.setSkip(false);
+    // Only initialize and iterate if there are callouts present.  This check
+    // also catches the case of an invalid index.
+    if (calloutsPresent(hook_index)) {
 
-    // Duplicate the callout vector for this hook and work through that.
-    // This step is needed because we allow dynamic registration and
-    // deregistration of callouts.  If a callout attached to a hook modified
-    // the list of callouts, the underlying CalloutVector would change and
-    // potentially affect the iteration through that vector.
-    CalloutVector callouts(hook_vector_[hook_index]);
+        // Clear the "skip" flag so we don't carry state from a previous call.
+        callout_handle.setSkip(false);
 
-    // Call all the callouts, stopping if a non SUCCESS status is returned.
-    int status = CalloutHandle::SUCCESS;
-    for (CalloutVector::const_iterator i = callouts.begin();
-         i != callouts.end() && (status == CalloutHandle::SUCCESS); ++i) {
-        // In case the callout tries to register or deregister a callout, set
-        // the current library index to the index associated with library
-        // that registered the callout being called.
-        current_library_ = i->first;
+        // Duplicate the callout vector for this hook and work through that.
+        // This step is needed because we allow dynamic registration and
+        // deregistration of callouts.  If a callout attached to a hook modified
+        // the list of callouts on that hook, the underlying CalloutVector would
+        // change and potentially affect the iteration through that vector.
+        CalloutVector callouts(hook_vector_[hook_index]);
 
-        // Call the callout
-        status = (*i->second)(callout_handle);
+        // Call all the callouts.
+        for (CalloutVector::const_iterator i = callouts.begin();
+             i != callouts.end(); ++i) {
+            // In case the callout tries to register or deregister a callout,
+            // set the current library index to the index associated with the
+            // library that registered the callout being called.
+            current_library_ = i->first;
+
+            // Call the callout
+            // @todo Log the return status if non-zero
+            static_cast<void>((*i->second)(callout_handle));
+        }
+
+        // Reset the current library index to an invalid value to catch any
+        // programming errors.
+        current_library_ = -1;
     }
-
-    // Reset the current library index to an invalid value to catch any
-    // programming errors.
-    current_library_ = -1;
-
-
-    return (status);
 }
 
 // Deregister a callout registered by the current library on a particular hook.

@@ -225,14 +225,13 @@ TEST_F(CalloutHandleTest, ContextItemNames) {
     CalloutHandle handle(getCalloutManager());
 
     vector<string> expected_names;
-    int value = 42;
 
     expected_names.push_back("faith");
-    handle.setArgument("faith", value++);
+    handle.setArgument("faith", 42);
     expected_names.push_back("hope");
-    handle.setArgument("hope", value++);
+    handle.setArgument("hope", 43);
     expected_names.push_back("charity");
-    handle.setArgument("charity", value++);
+    handle.setArgument("charity", 44);
 
     // Get the names and check against the expected names.  We'll sort
     // both arrays to simplify the checking.
