@@ -59,7 +59,7 @@ public:
     /// \brief Direct assignment from other Serial
     ///
     /// \param other The Serial to assign the value from
-    Serial &operator=(const Serial& other) {
+    Serial& operator=(const Serial& other) {
         value_ = other.getValue();
         return (*this);
     }
