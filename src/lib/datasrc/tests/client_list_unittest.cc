@@ -1357,7 +1357,7 @@ TEST(DataSourceStatus, status) {
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(SEGMENT_INUSE, status.getSegmentState());
     EXPECT_EQ("local", status.getSegmentType());
-    const DataSourceStatus status_unused("Unused", SEGMENT_UNUSED, "");
+    const DataSourceStatus status_unused("Unused");
     EXPECT_EQ("Unused", status_unused.getName());
     EXPECT_EQ(SEGMENT_UNUSED, status_unused.getSegmentState());
     EXPECT_THROW(status_unused.getSegmentType(), isc::InvalidOperation);
