@@ -61,12 +61,14 @@ VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/msgq"
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/msgq"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}",
+                                                  DATAROOTDIR). \
+                                                  replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
@@ -122,12 +124,17 @@ class SubscriptionManager:
         if target in self.subscriptions:
             if socket in self.subscriptions[target]:
                 self.subscriptions[target].remove(socket)
+                return True
+        return False
 
     def unsubscribe_all(self, socket):
         """Remove the socket from all subscriptions."""
-        for socklist in self.subscriptions.values():
+        removed_from = []
+        for subs, socklist in self.subscriptions.items():
             if socket in socklist:
                 socklist.remove(socket)
+                removed_from.append(subs)
+        return removed_from
 
     def find_sub(self, group, instance):
         """Return an array of sockets which want this specific group,
@@ -184,6 +191,7 @@ class MsgQ:
         self.hostname = socket.gethostname()
         self.subs = SubscriptionManager(self.cfgmgr_ready)
         self.lnames = {}
+        self.fd_to_lname = {}
         self.sendbuffs = {}
         self.running = False
         self.__cfgmgr_ready = None
@@ -195,6 +203,33 @@ class MsgQ:
         # not for performance, so we use wide lock scopes to be on the safe
         # side.
         self.__lock = threading.Lock()
+        self._session = None
+
+    def members_notify(self, event, params):
+        """
+        Thin wrapper around ccs's notify. Send a notification about change
+        of some list that can be requested by the members command.
+
+        The event is one of:
+        - connected (client connected to MsgQ)
+        - disconected (client disconnected from MsgQ)
+        - subscribed (client subscribed to a group)
+        - unsubscribed (client unsubscribed from a group)
+
+        The params is dict containing:
+        - client: The lname of the client in question.
+        - group (for 'subscribed' and 'unsubscribed' events):
+          The group the client subscribed or unsubscribed from.
+
+        The notification occurs after the event, so client a subscribing for
+        notifications will get a notification about its own subscription, but
+        will not get a notification when it unsubscribes.
+        """
+        # Due to the interaction between threads (and fear it might influence
+        # sending stuff), we test this method in msgq_run_test, instead of
+        # mocking the ccs.
+        if self._session: # Don't send before we have started up
+            self._session.notify('cc_members', event, params)
 
     def cfgmgr_ready(self, ready=True):
         """Notify that the config manager is either subscribed, or
@@ -323,11 +358,13 @@ class MsgQ:
 
     def register_socket(self, newsocket):
         """
-        Internal function to insert a socket. Used by process_accept and some tests.
+        Internal function to insert a socket. Used by process_accept and some
+        tests.
         """
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
+        self.fd_to_lname[newsocket.fileno()] = lname
 
         logger.debug(TRACE_BASIC, MSGQ_SOCKET_REGISTERED, newsocket.fileno(),
                      lname)
@@ -337,6 +374,8 @@ class MsgQ:
         else:
             self.add_kqueue_socket(newsocket)
 
+        self.members_notify('connected', {'client': lname})
+
     def kill_socket(self, fd, sock):
         """Fully close down the socket."""
         # Unregister events on the socket.  Note that we don't have to do
@@ -345,14 +384,23 @@ class MsgQ:
         if self.poller:
             self.poller.unregister(sock)
 
-        self.subs.unsubscribe_all(sock)
-        lname = [ k for k, v in self.lnames.items() if v == sock ][0]
+        unsubscribed_from = self.subs.unsubscribe_all(sock)
+        lname = self.fd_to_lname[fd]
+        del self.fd_to_lname[fd]
         del self.lnames[lname]
         sock.close()
         del self.sockets[fd]
         if fd in self.sendbuffs:
             del self.sendbuffs[fd]
         logger.debug(TRACE_BASIC, MSGQ_SOCK_CLOSE, fd)
+        # Filter out just the groups.
+        unsubscribed_from_groups = set(map(lambda x: x[0], unsubscribed_from))
+        for group in unsubscribed_from_groups:
+            self.members_notify('unsubscribed', {
+                                    'client': lname,
+                                    'group': group
+                                })
+        self.members_notify('disconnected', {'client': lname})
 
     def __getbytes(self, fd, sock, length, continued):
         """Get exactly the requested bytes, or raise an exception if
@@ -567,7 +615,8 @@ class MsgQ:
         This is done by using an increasing counter and the current
         time."""
         self.connection_counter += 1
-        return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
+        return "%x_%x@%s" % (time.time(), self.connection_counter,
+                             self.hostname)
 
     def process_command_ping(self, sock, routing, data):
         self.sendmsg(sock, { CC_HEADER_TYPE : CC_COMMAND_PONG }, data)
@@ -644,13 +693,25 @@ class MsgQ:
         if group == None or instance == None:
             return  # ignore invalid packets entirely
         self.subs.subscribe(group, instance, sock)
+        lname = self.fd_to_lname[sock.fileno()]
+        self.members_notify('subscribed',
+                            {
+                                'client': lname,
+                                'group': group
+                            })
 
     def process_command_unsubscribe(self, sock, routing, data):
         group = routing[CC_HEADER_GROUP]
         instance = routing[CC_HEADER_INSTANCE]
         if group == None or instance == None:
             return  # ignore invalid packets entirely
-        self.subs.unsubscribe(group, instance, sock)
+        if self.subs.unsubscribe(group, instance, sock):
+            lname = self.fd_to_lname[sock.fileno()]
+            self.members_notify('unsubscribed',
+                                {
+                                    'client': lname,
+                                    'group': group
+                                })
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
@@ -795,16 +856,27 @@ class MsgQ:
             return isc.config.create_answer(0)
 
     def command_handler(self, command, args):
-        """The command handler (run in a separate thread).
-           Not tested, currently effectively empty.
-        """
+        """The command handler (run in a separate thread)."""
         config_logger.debug(TRACE_DETAIL, MSGQ_COMMAND, command, args)
 
         with self.__lock:
             if not self.running:
                 return
 
-            # TODO: Any commands go here
+            # TODO: Who does validation? The ModuleCCSession or must we?
+
+            if command == 'members':
+                # List all members of MsgQ or of a group.
+                if args is None:
+                    args = {}
+                group = args.get('group')
+                if group:
+                    return isc.config.create_answer(0,
+                        list(map(lambda sock: self.fd_to_lname[sock.fileno()],
+                                 self.subs.find(group, ''))))
+                else:
+                    return isc.config.create_answer(0,
+                                                    list(self.lnames.keys()))
 
             config_logger.error(MSGQ_COMMAND_UNKNOWN, command)
             return isc.config.create_answer(1, 'unknown command: ' + command)
@@ -819,7 +891,8 @@ if __name__ == "__main__":
         a valid port number. Used by OptionParser() on startup."""
         intval = int(value)
         if (intval < 0) or (intval > 65535):
-            raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
+            raise OptionValueError("%s requires a port number (0-65535)" %
+                                   opt_str)
         parser.values.msgq_port = intval
 
     # Parse any command-line options.
@@ -861,13 +934,23 @@ if __name__ == "__main__":
                                                  msgq.command_handler,
                                                  None, True,
                                                  msgq.socket_file)
+            msgq._session = session
             session.start()
             # And we create a thread that'll just wait for commands and
             # handle them. We don't terminate the thread, we set it to
             # daemon. Once the main thread terminates, it'll just die.
             def run_session():
                 while True:
-                    session.check_command(False)
+                    # As the check_command has internal mutex that is shared
+                    # with sending part (which includes notify). So we don't
+                    # want to hold it long-term and block using select.
+                    fileno = session.get_socket().fileno()
+                    try:
+                        (reads, _, _) = select.select([fileno], [], [])
+                    except select.error as se:
+                        if se.args[0] != errno.EINTR:
+                            raise
+                    session.check_command(True)
             background_thread = threading.Thread(target=run_session)
             background_thread.daemon = True
             background_thread.start()
