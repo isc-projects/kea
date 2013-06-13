@@ -81,7 +81,8 @@ class DataSourceStatus {
 public:
     /// \brief Constructor
     ///
-    /// Sets initial values.
+    /// Sets initial values. If you want to use \c SEGMENT_UNUSED as the
+    /// state, please use the other constructor.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
                      const std::string& type) :
         name_(name),
@@ -94,8 +95,8 @@ public:
 
     /// \brief Constructor
     ///
-    /// Sets initial values. The state is set as SEGMENT_UNUSED and the
-    /// type is effectively unspecified.
+    /// Sets initial values. The state is set as \c SEGMENT_UNUSED and
+    /// the type is effectively unspecified.
     DataSourceStatus(const std::string& name) :
         name_(name),
         type_(""),
