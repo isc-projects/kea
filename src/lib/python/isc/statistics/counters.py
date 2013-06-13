@@ -396,15 +396,15 @@ class Counters():
         # Start calculation for '_SERVER_' counts
         zones_spec = isc.config.find_spec_part(self._statistics._spec,
                                                self._perzone_prefix)
-        zones_attrs = zones_spec['item_default'][self._entire_server]
         zones_data = {}
-        for attr in zones_attrs:
-            id_str = '%s/%s' % (self._entire_server, attr)
-            sum_ = 0
-            for name in zones:
-                if attr in zones[name]:
-                    sum_ += zones[name][attr]
-            _set_counter(zones_data, zones_spec, id_str, sum_)
+        for cls in zones.keys():
+            for zone in zones[cls].keys():
+                for (attr, val) in zones[cls][zone].items():
+                    id_str = '%s/%%s/%s' % (cls, attr)
+                    id_str1 = id_str % zone
+                    id_str2 = id_str % self._entire_server
+                    _set_counter(zones_data, zones_spec, id_str1, val)
+                    _inc_counter(zones_data, zones_spec, id_str2, val)
         # insert entire-server counts
         statistics_data[self._perzone_prefix] = dict(
             statistics_data[self._perzone_prefix],
