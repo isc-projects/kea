@@ -28,7 +28,7 @@
 /// CalloutHandle/LibraryHandle interaction tests
 ///
 /// This file holds unit tests checking the interaction between the
-/// CalloutHandle and LibraryHandle[Collection] classes.  In particular,
+/// CalloutHandle/LibraryHandle and CalloutManager classes.  In particular,
 /// they check that:
 ///
 /// - A CalloutHandle's context is shared between callouts from the same
