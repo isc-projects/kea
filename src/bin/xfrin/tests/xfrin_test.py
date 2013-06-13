@@ -2182,6 +2182,7 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         name2count.update(overwrite)
         for (name, exp) in name2count.items():
             act = self.conn._counters.get(self.__zones,
+                                          TEST_RRCLASS_STR,
                                           TEST_ZONE_NAME_STR,
                                           name)
             msg = '%s is expected %s but actually %s' % (name, exp, act)
