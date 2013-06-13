@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2012  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -441,7 +441,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         # check the 'xfrrej' counter initially
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.xfrsess._counters.get, 'zones',
-                          TEST_ZONE_NAME_STR, 'xfrrej')
+                          TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                          'xfrrej')
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -457,7 +458,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 1)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 1)
 
         # TSIG signed request
         request_data = self.create_request_data(with_tsig=True)
@@ -488,7 +490,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 2)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 2)
 
         # ACL using TSIG: no TSIG; should be rejected
         acl_setter(isc.acl.dns.REQUEST_LOADER.load([
@@ -498,7 +501,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 3)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 3)
 
         #
         # ACL using IP + TSIG: both should match
@@ -520,7 +524,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 4)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 4)
         # Address matches, but TSIG doesn't (not included)
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.1', 12345))
@@ -528,7 +533,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 5)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 5)
         # Neither address nor TSIG matches
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.2', 12345))
@@ -536,7 +542,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 6)
+                'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+                'xfrrej'), 6)
 
     def test_transfer_acl(self):
         # ACL checks only with the default ACL
@@ -936,12 +943,14 @@ class TestXfroutSession(TestXfroutSessionBase):
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.xfrsess._counters.get,
-                          'zones', TEST_ZONE_NAME_STR, 'xfrreqdone')
+                          'zones', TEST_RRCLASS.to_text(),
+                          TEST_ZONE_NAME_STR, 'xfrreqdone')
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
         self.assertGreater(self.xfrsess._counters.get(
-            'zones', TEST_ZONE_NAME_STR, 'xfrreqdone'), 0)
+            'zones', TEST_RRCLASS.to_text(), TEST_ZONE_NAME_STR,
+            'xfrreqdone'), 0)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
