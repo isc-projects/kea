@@ -134,9 +134,6 @@ ZoneWriter::install() {
     // zone data or we've allowed load error to create an empty zone.
     assert(impl_->data_holder_.get() || impl_->catch_load_error_);
 
-    // FIXME: This retry is currently untested, as there seems to be no
-    // reasonable way to create a zone table segment with non-local memory
-    // segment. Once there is, we should provide the test.
     while (impl_->state_ != Impl::ZW_INSTALLED) {
         try {
             ZoneTable* table(impl_->segment_.getHeader().getTable());

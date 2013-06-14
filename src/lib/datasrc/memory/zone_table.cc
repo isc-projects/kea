@@ -83,7 +83,7 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable, int)
 }
 
 ZoneTable::AddResult
-ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass,
                    const Name& zone_name, ZoneData* content)
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
@@ -94,13 +94,8 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
                   (content ? "empty data" : "NULL") <<
                   " is passed to Zone::addZone");
     }
-    SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, zone_class);
-    holder.set(content);
 
-    const AddResult result =
-        addZoneInternal(mem_sgmt, zone_name, holder.get());
-    holder.release();
-    return (result);
+    return (addZoneInternal(mem_sgmt, zone_name, content));
 }
 
 ZoneTable::AddResult
