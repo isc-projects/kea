@@ -62,7 +62,7 @@ public:
     /// \param lineno Line number on which error occurred (if > 0).
     MessageException(const char* file, size_t line, const char* what,
                      MessageID id, const std::string& arg1, int lineno)
-        : isc::Exception(file, line, what), id_(id)
+        : isc::Exception(file, line, what), id_(id), lineno_(lineno)
     {
         if (lineno > 0) {
             args_.push_back(boost::lexical_cast<std::string>(lineno));
@@ -82,7 +82,7 @@ public:
     MessageException(const char* file, size_t line, const char *what,
                      MessageID id, const std::string& arg1,
                      const std::string& arg2, int lineno)
-        : isc::Exception(file, line, what), id_(id)
+        : isc::Exception(file, line, what), id_(id), lineno_(lineno)
     {
         if (lineno > 0) {
             args_.push_back(boost::lexical_cast<std::string>(lineno));
