@@ -204,39 +204,29 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
     try {
         const std::vector<DataSourceStatus> status = self->cppobj->getStatus();
 
-        PyObject* slist = PyList_New(status.size());
-        if (!slist) {
-            return (NULL);
-        }
+        PyObjectContainer slist(PyList_New(status.size()));
 
         for (size_t i = 0; i < status.size(); ++i) {
-            PyObject* segment_type = NULL;
-            try {
-                segment_type = Py_BuildValue(
-                    "s", status[i].getSegmentType().c_str());
-            } catch (const isc::InvalidOperation&) {
-                Py_INCREF(Py_None);
-                segment_type = Py_None;
+            PyObjectContainer segment_type;
+
+            if (status[i].getSegmentState() != SEGMENT_UNUSED) {
+                segment_type.reset(Py_BuildValue(
+                    "s", status[i].getSegmentType().c_str()));
+            } else {
+                 Py_INCREF(Py_None);
+                segment_type.reset(Py_None);
             }
 
-            // Py_BuildValue() is a C function and will not throw.
-            PyObject* tup = Py_BuildValue("(sOI)",
-                                          status[i].getName().c_str(),
-                                          segment_type,
-                                          status[i].getSegmentState());
-            if (segment_type) {
-                // The Py_BuildValue() above increments its refcount,
-                // so we drop our reference.
-                Py_DECREF(segment_type);
-            }
-            if (!tup) {
-                Py_DECREF(slist);
-                return (NULL);
-            }
-            PyList_SET_ITEM(slist, i, tup);
+            PyObjectContainer tup(Py_BuildValue("(sOI)",
+                                                status[i].getName().c_str(),
+                                                segment_type.get(),
+                                                status[i].getSegmentState()));
+            // The following "steals" our reference on tup, so we must
+            // not decref.
+            PyList_SET_ITEM(slist.get(), i, tup.release());
         }
 
-        return (slist);
+        return (slist.release());
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
