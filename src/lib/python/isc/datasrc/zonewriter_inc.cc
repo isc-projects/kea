@@ -46,14 +46,15 @@ the data actually served, it only prepares them for future use.\n\
 This is the first method you should call on the object. Never call it\n\
 multiple times.\n\
 \n\
-If the ZoneWriter was constructed with catch_load_error being True, then\n\
-in case a load error happens, a string with the error message will be\n\
-returned. In all other cases, None is returned.\n\
+Depending on how the ZoneWriter was constructed, in case a load error\n\
+happens, a string with the error message may be returned. When\n\
+ZoneWriter is not constructed to do that, in case of a load error, a\n\
+DataSourceError exception is raised. In all other cases, this method\n\
+returns None.\n\
 \n\
 Exceptions:\n\
   isc.InvalidOperation if called second time.\n\
-  DataSourceError load related error (not thrown if constructed with\n\
-             catch_load_error being True).\n\
+  DataSourceError load related error (not thrown if constructed not to).\n\
 \n\
 ";
 
@@ -66,9 +67,9 @@ This replaces the old version of zone with the one previously prepared\n\
 by load(). It takes ownership of the old zone data, if any.\n\
 \n\
 You may call it only after successful load() and at most once. It\n\
-includes the case the writer is constructed with catch_load_error\n\
-being true and load() encountered and caught a DataSourceError\n\
-exception. In this case this method installs a special empty zone to\n\
+includes the case the writer is constructed to allow load errors,\n\
+and load() encountered and caught a DataSourceError exception.\n\
+In this case this method installs a special empty zone to\n\
 the table.\n\
 \n\
 The operation is expected to be fast and is meant to be used inside a\n\
