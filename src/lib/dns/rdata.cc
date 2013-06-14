@@ -309,9 +309,10 @@ Generic::Generic(const Generic& source) :
     Rdata(), impl_(new GenericImpl(*source.impl_))
 {}
 
-// cppcheck-suppress operatorEqToSelf this check is better than
-// this == &source, just that cppcheck doesn't understand it.
 Generic&
+// Our check is better than the usual if (this == &source),
+// but cppcheck doesn't recognize it.
+// cppcheck-suppress operatorEqToSelf
 Generic::operator=(const Generic& source) {
     if (impl_ == source.impl_) {
         return (*this);
