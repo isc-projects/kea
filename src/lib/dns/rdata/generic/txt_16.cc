@@ -33,7 +33,7 @@ using namespace isc::util;
 
 TXT&
 TXT::operator=(const TXT& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

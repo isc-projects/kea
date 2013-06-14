@@ -50,7 +50,7 @@ DS::DS(const DS& source) :
 
 DS&
 DS::operator=(const DS& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

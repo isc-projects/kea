@@ -199,7 +199,7 @@ SSHFP::SSHFP(const SSHFP& other) :
 
 SSHFP&
 SSHFP::operator=(const SSHFP& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 
