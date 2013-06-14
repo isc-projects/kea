@@ -83,7 +83,7 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable, int)
 }
 
 ZoneTable::AddResult
-ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass,
+ZoneTable::addZone(util::MemorySegment& mem_sgmt,
                    const Name& zone_name, ZoneData* content)
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
