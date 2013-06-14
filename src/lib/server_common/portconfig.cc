@@ -49,6 +49,8 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                         "address and port");
                 }
                 try {
+                    // Just check, don't use the address for anything yet
+                    // cppcheck-suppress unusedScopedObject
                     IOAddress(addr->stringValue());
                     if (port->intValue() < 0 ||
                         port->intValue() > 0xffff) {
