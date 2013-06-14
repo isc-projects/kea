@@ -388,7 +388,8 @@ private:
 };
 
 AuthSrv::AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
-                 isc::util::io::BaseSocketSessionForwarder& ddns_forwarder)
+                 isc::util::io::BaseSocketSessionForwarder& ddns_forwarder) :
+    dnss_(NULL)
 {
     impl_ = new AuthSrvImpl(xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);
