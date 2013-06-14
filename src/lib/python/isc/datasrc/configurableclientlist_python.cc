@@ -161,7 +161,7 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
         int want_finder = 1;
         if (PyArg_ParseTuple(args, "O!|ii", &isc::dns::python::name_type,
                              &name_obj, &want_exact_match, &want_finder)) {
-            const isc::dns::Name
+            const isc::dns::Name&
                 name(isc::dns::python::PyName_ToName(name_obj));
             const ClientList::FindResult
                 result(self->cppobj->find(name, want_exact_match,
