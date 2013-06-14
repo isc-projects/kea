@@ -188,12 +188,12 @@ public:
     /// \brief The copy constructor.
     ///
     /// Trivial for now, we could've used the default one.
-    DSLikeImpl(const DSLikeImpl& source) {
-        digest_ = source.digest_;
-        tag_ = source.tag_;
-        algorithm_ = source.algorithm_;
-        digest_type_ = source.digest_type_;
-    }
+    DSLikeImpl(const DSLikeImpl& source) :
+        tag_(source.tag_),
+        algorithm_(source.algorithm_),
+        digest_type_(source.digest_type_),
+        digest_(source.digest_)
+    {}
 
     /// \brief Convert the DS-like data to a string.
     ///
