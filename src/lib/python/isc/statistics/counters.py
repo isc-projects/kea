@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2012-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -161,30 +161,38 @@ class _Statistics():
         "item_title": "Zone names",
         "item_description": "Zone names",
         "named_set_item_spec": {
-          "item_name": "zonename",
-          "item_type": "map",
+          "item_name": "classname",
+          "item_type": "named_set",
           "item_optional": False,
           "item_default": {},
-          "item_title": "Zone name",
-          "item_description": "Zone name",
-          "map_item_spec": [
-            {
-              "item_name": "notifyoutv4",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv4 notifies",
-              "item_description": "Number of IPv4 notifies per zone name sent out"
-            },
-            {
-              "item_name": "notifyoutv6",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv6 notifies",
-              "item_description": "Number of IPv6 notifies per zone name sent out"
-            }
-          ]
+          "item_title": "Class name",
+          "item_description": "Class name",
+          "named_set_item_spec": {
+            "item_name": "zonename",
+            "item_type": "map",
+            "item_optional": False,
+            "item_default": {},
+            "item_title": "Zone name",
+            "item_description": "Zone name",
+            "map_item_spec": [
+              {
+                "item_name": "notifyoutv4",
+                "item_type": "integer",
+                "item_optional": False,
+                "item_default": 0,
+                "item_title": "IPv4 notifies",
+                "item_description": "Number of IPv4 notifies per zone name sent out"
+              },
+              {
+                "item_name": "notifyoutv6",
+                "item_type": "integer",
+                "item_optional": False,
+                "item_default": 0,
+                "item_title": "IPv6 notifies",
+                "item_description": "Number of IPv6 notifies per zone name sent out"
+              }
+            ]
+          }
         }
       }
     ]
@@ -205,20 +213,20 @@ class Counters():
     per-zone counters, a list of counters which can be handled in the
     class are like the following:
 
-        zones/example.com./notifyoutv4
-        zones/example.com./notifyoutv6
-        zones/example.com./xfrrej
-        zones/example.com./xfrreqdone
-        zones/example.com./soaoutv4
-        zones/example.com./soaoutv6
-        zones/example.com./axfrreqv4
-        zones/example.com./axfrreqv6
-        zones/example.com./ixfrreqv4
-        zones/example.com./ixfrreqv6
-        zones/example.com./xfrsuccess
-        zones/example.com./xfrfail
-        zones/example.com./last_ixfr_duration
-        zones/example.com./last_axfr_duration
+        zones/IN/example.com./notifyoutv4
+        zones/IN/example.com./notifyoutv6
+        zones/IN/example.com./xfrrej
+        zones/IN/example.com./xfrreqdone
+        zones/IN/example.com./soaoutv4
+        zones/IN/example.com./soaoutv6
+        zones/IN/example.com./axfrreqv4
+        zones/IN/example.com./axfrreqv6
+        zones/IN/example.com./ixfrreqv4
+        zones/IN/example.com./ixfrreqv6
+        zones/IN/example.com./xfrsuccess
+        zones/IN/example.com./xfrfail
+        zones/IN/example.com./last_ixfr_duration
+        zones/IN/example.com./last_axfr_duration
         ixfr_running
         axfr_running
         socket/unixdomain/open
