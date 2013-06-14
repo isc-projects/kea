@@ -283,8 +283,9 @@ class Counters():
                 isc.config.spec_name_list(self._statistics._spec):
             self._zones_item_list = isc.config.spec_name_list(
                 isc.config.find_spec_part(
-                    self._statistics._spec, self._perzone_prefix)\
-                    ['named_set_item_spec']['map_item_spec'])
+                    self._statistics._spec,
+                    '%s/%s/%s' % (self._perzone_prefix,
+                                  '_CLASS_', self._entire_server)))
 
     def clear_all(self):
         """clears all statistics data"""
