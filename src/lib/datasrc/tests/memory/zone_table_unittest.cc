@@ -141,14 +141,13 @@ TEST_F(ZoneTableTest, addZone) {
     EXPECT_EQ(3, zone_table->getZoneCount());
 
     // Have the memory segment throw an exception in extending the internal
-    // tree.  It still shouldn't cause memory leak (which would be detected
-    // in TearDown()).
+    // tree.  We'll destroy it after that via SegmentObjectHolder.
     SegmentObjectHolder<ZoneData, RRClass> holder6(
         mem_sgmt_, zclass_);
     holder6.set(ZoneData::create(mem_sgmt_, Name("example.org")));
     mem_sgmt_.setThrowCount(1);
     EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org"),
-                                     holder6.release()),
+                                     holder6.get()),
                  std::bad_alloc);
 }
 
