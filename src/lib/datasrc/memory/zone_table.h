@@ -191,8 +191,6 @@ public:
     ///     created.  It must be the same segment that was used to create
     ///     the zone table at the time of create().
     /// \param zone_name The name of the zone to be added.
-    /// \param zone_class The RR class of the zone.  It must be the RR class
-    ///     that is supposed to be associated to the zone table.
     /// \param content This one should hold the zone content (the ZoneData).
     ///     The ownership is passed onto the zone table. Must not be null or
     ///     empty. Must correspond to the name and class and must be allocated
@@ -204,7 +202,6 @@ public:
     ///     inside the result unless it's empty; if the zone was previously
     ///     added by \c addEmptyZone(), the data returned is NULL.
     AddResult addZone(util::MemorySegment& mem_sgmt,
-                      dns::RRClass zone_class,
                       const dns::Name& zone_name,
                       ZoneData* content);
 

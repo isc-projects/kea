@@ -148,8 +148,7 @@ ZoneWriter::install() {
             const ZoneTable::AddResult result(
                 impl_->data_holder_->get() ?
                 table->addZone(impl_->segment_.getMemorySegment(),
-                               impl_->rrclass_, impl_->origin_,
-                               impl_->data_holder_->get()) :
+                               impl_->origin_, impl_->data_holder_->get()) :
                 table->addEmptyZone(impl_->segment_.getMemorySegment(),
                                     impl_->origin_));
             impl_->data_holder_->set(result.zone_data);
