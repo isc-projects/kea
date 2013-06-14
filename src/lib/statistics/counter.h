@@ -55,7 +55,7 @@ public:
     /// \param type %Counter item to increment
     ///
     /// \throw isc::OutOfRange \a type is invalid
-    void inc(const Counter::Type type) {
+    void inc(const Counter::Type& type) {
         if (type >= counters_.size()) {
             isc_throw(isc::OutOfRange, "Counter type is out of range");
         }
@@ -68,7 +68,7 @@ public:
     /// \param type %Counter item to get the value of
     ///
     /// \throw isc::OutOfRange \a type is invalid
-    const Counter::Value& get(const Counter::Type type) const {
+    const Counter::Value& get(const Counter::Type& type) const {
         if (type >= counters_.size()) {
             isc_throw(isc::OutOfRange, "Counter type is out of range");
         }
