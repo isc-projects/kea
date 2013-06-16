@@ -378,13 +378,6 @@ class ZonemgrRefresh:
                     }
             self._send_command(XFRIN_MODULE_NAME, ZONE_REFRESH_COMMAND, param)
 
-    def _zone_mgr_is_empty(self):
-        """Does zone manager has no zone?"""
-        if not len(self._zonemgr_refresh_info):
-            return True
-
-        return False
-
     def _run_timer(self, start_event):
         while self._running:
             # Notify run_timer that we already started and are inside the loop.
@@ -394,14 +387,13 @@ class ZonemgrRefresh:
             if start_event:
                 start_event.set()
                 start_event = None
-            # If zonemgr has no zone, set timer timeout to
-            # self._lowerbound_retry.
-            if self._zone_mgr_is_empty():
+            # If zonemgr has no zone, set timeout to minimum
+            if not len(self._zonemgr_refresh_info):
                 timeout = self._lowerbound_retry
             else:
                 zone_need_refresh = self._find_need_do_refresh_zone()
-                # If don't get zone with minimum next refresh time, set timer
-                # timeout to self._lowerbound_retry.
+                # If don't get zone with minimum next refresh time, set
+                # timeout to minimum
                 if not zone_need_refresh:
                     timeout = self._lowerbound_retry
                 else:

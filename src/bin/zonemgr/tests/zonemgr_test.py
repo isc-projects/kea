@@ -275,11 +275,6 @@ class TestZonemgrRefresh(unittest.TestCase):
     def test_send_command(self):
         self.assertRaises(ZonemgrTestException, self.zone_refresh._send_command, "Unknown", "Notify", None)
 
-    def test_zone_mgr_is_empty(self):
-        self.assertFalse(self.zone_refresh._zone_mgr_is_empty())
-        self.zone_refresh._zonemgr_refresh_info = {}
-        self.assertTrue(self.zone_refresh._zone_mgr_is_empty())
-
     def test_zonemgr_add_zone(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
         # This needs to be restored. The following test actually failed if we left
