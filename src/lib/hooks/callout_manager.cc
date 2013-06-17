@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/hooks/callout_handle.h>
-#include <util/hooks/callout_manager.h>
+#include <hooks/callout_handle.h>
+#include <hooks/callout_manager.h>
 
 #include <boost/static_assert.hpp>
 

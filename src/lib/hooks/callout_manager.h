@@ -16,8 +16,8 @@
 #define CALLOUT_MANAGER_H
 
 #include <exceptions/exceptions.h>
-#include <util/hooks/library_handle.h>
-#include <util/hooks/server_hooks.h>
+#include <hooks/library_handle.h>
+#include <hooks/server_hooks.h>
 
 #include <boost/shared_ptr.hpp>
 
