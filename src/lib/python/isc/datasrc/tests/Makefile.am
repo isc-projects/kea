@@ -47,7 +47,6 @@ endif
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
 	TESTDATA_WRITE_PATH=$(abs_builddir) \
 	HAVE_SHARED_MEMORY=$(HAVE_SHARED_MEMORY) \
-	GLOBAL_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
