@@ -81,13 +81,26 @@ class DataSourceStatus {
 public:
     /// \brief Constructor
     ///
-    /// Sets initial values. It doesn't matter what is provided for the type
-    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    /// Sets initial values. If you want to use \c SEGMENT_UNUSED as the
+    /// state, please use the other constructor.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
                      const std::string& type) :
         name_(name),
         type_(type),
         state_(state)
+    {
+        assert (state != SEGMENT_UNUSED);
+        assert (!type.empty());
+    }
+
+    /// \brief Constructor
+    ///
+    /// Sets initial values. The state is set as \c SEGMENT_UNUSED and
+    /// the type is effectively unspecified.
+    DataSourceStatus(const std::string& name) :
+        name_(name),
+        type_(""),
+        state_(SEGMENT_UNUSED)
     {}
 
     /// \brief Get the segment state
@@ -377,10 +390,9 @@ public:
          memory::ZoneTableSegment::MemorySegmentOpenMode mode,
          isc::data::ConstElementPtr config_params);
 
-private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
-public:
+
     /// \brief Codes indicating in-memory cache status for a given zone name.
     ///
     /// This is used as a result of the getCachedZoneWriter() method.
@@ -422,7 +434,7 @@ public:
     /// \param zone The origin of the zone to load.
     /// \param datasrc_name If not empty, the name of the data source
     /// to be used for loading the zone (see above).
-    /// \return The result has two parts. The first one is a status describing
+    /// \return The result has two parts. The first one is a status indicating
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
     ///     to the writer. If the status is anything else, the second part is

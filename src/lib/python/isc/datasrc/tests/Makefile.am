@@ -35,13 +35,18 @@ if ENABLE_PYTHON_COVERAGE
 	rm -f .coverage
 	${LN_S} $(abs_top_srcdir)/.coverage .coverage
 endif
+if USE_SHARED_MEMORY
+HAVE_SHARED_MEMORY=yes
+else
+HAVE_SHARED_MEMORY=no
+endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=:$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/python/isc/log:$(abs_top_builddir)/src/lib/python/isc/datasrc/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_srcdir)/testdata \
 	TESTDATA_WRITE_PATH=$(abs_builddir) \
-	GLOBAL_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
+	HAVE_SHARED_MEMORY=$(HAVE_SHARED_MEMORY) \
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
