@@ -1,0 +1,78 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include <hooks/callout_handle.h>
+#include <hooks/callout_manager.h>
+#include <hooks/library_manager.h>
+#include <hooks/server_hooks.h>
+
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
+using namespace isc;
+using namespace isc::hooks;
+using namespace std;
+
+// Names of the libraries used in these tests
+static const char* BASIC_CALLOUT_LIBRARY = "@builddir@/.libs/libbco.so";
+
+
+namespace {
+
+// Checks the basic functionality - loads a library where the callouts are
+// named after the hooks, calls the callouts and checks the results.
+
+TEST(LibraryManagerTest, BasicCalloutTest) {
+    // Set up the hooks we expect.
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+    int one_index = hooks.registerHook("basic_one");
+    int two_index = hooks.registerHook("basic_two");
+    int three_index = hooks.registerHook("basic_three");
+
+    // Set up the callout manager with one library.
+    boost::shared_ptr<CalloutManager> co_manager(new CalloutManager(1));
+
+    // Load the only library, specifying the index of 0 as it's the only
+    // library.  This should load all callouts.
+    LibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                               0, co_manager);
+    EXPECT_NO_THROW(lib_manager.loadLibrary());
+
+    // Create the callout handle...
+    CalloutHandle callout_handle(co_manager);
+
+    // Now execute the callouts in the order expected.  context_create
+    // always comes first.  This sets the context value to 10.
+    co_manager->callCallouts(ServerHooks::CONTEXT_CREATE, callout_handle);
+
+    // First callout adds 5 to the context value.
+    callout_handle.setArgument("data_1", static_cast<int>(5));
+    co_manager->callCallouts(one_index, callout_handle);
+
+    // Second callout multiples the context value by 7
+    callout_handle.setArgument("data_2", static_cast<int>(7));
+    co_manager->callCallouts(two_index, callout_handle);
+
+    // Third callour retrieves the context value.
+    co_manager->callCallouts(three_index, callout_handle);
+    int result;
+    callout_handle.getArgument("result", result);
+    EXPECT_EQ(105, result);
+}
+
+} // Anonymous namespace
