@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/hooks/callout_manager.h>
-#include <util/hooks/library_handle.h>
+#include <hooks/callout_manager.h>
+#include <hooks/library_handle.h>
 
 namespace isc {
 namespace util {

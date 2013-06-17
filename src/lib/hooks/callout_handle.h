@@ -16,7 +16,7 @@
 #define CALLOUT_HANDLE_H
 
 #include <exceptions/exceptions.h>
-#include <util/hooks/library_handle.h>
+#include <hooks/library_handle.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
