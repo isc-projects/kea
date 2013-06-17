@@ -20,7 +20,7 @@ import unittest
 import os
 import sys
 
-TESTDATA_PATH = os.environ['GLOBAL_TESTDATA_PATH'] + os.sep
+TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
 MAPFILE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep + 'test.mapped'
 
 class ClientListTest(unittest.TestCase):
@@ -69,7 +69,7 @@ class ClientListTest(unittest.TestCase):
         self.clist.configure('''[{
             "type": "MasterFiles",
             "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+                "example.com": "''' + TESTDATA_PATH + '''example.com"
             },
             "cache-enable": true
         }]''', True)
@@ -84,7 +84,7 @@ class ClientListTest(unittest.TestCase):
         # This should be NOP now
         self.clist.configure("[]", True)
         # Check the zone is not there yet
-        dsrc, finder, exact = self.clist.find(isc.dns.Name("example.org"))
+        dsrc, finder, exact = self.clist.find(isc.dns.Name("example.com"))
         self.assertIsNone(dsrc)
         self.assertIsNone(finder)
         self.assertFalse(exact)
@@ -93,7 +93,7 @@ class ClientListTest(unittest.TestCase):
         # Check the zone is there now. Proper tests of find are in other
         # test methods.
         self.dsrc, self.finder, exact = \
-            self.clist.find(isc.dns.Name("example.org"))
+            self.clist.find(isc.dns.Name("example.com"))
         self.assertIsNotNone(self.dsrc)
         self.assertTrue(isinstance(self.dsrc, isc.datasrc.DataSourceClient))
         self.assertIsNotNone(self.finder)
@@ -112,7 +112,7 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(TypeError, self.clist.configure, "[]", "true")
 
     def find_helper(self):
-        dsrc, finder, exact = self.clist.find(isc.dns.Name("sub.example.org"))
+        dsrc, finder, exact = self.clist.find(isc.dns.Name("sub.example.com"))
         self.assertIsNotNone(dsrc)
         self.assertTrue(isinstance(dsrc, isc.datasrc.DataSourceClient))
         self.assertIsNotNone(finder)
@@ -126,31 +126,31 @@ class ClientListTest(unittest.TestCase):
         # We check an exact match in test_configure already
         self.assertFalse(exact)
         self.dsrc, self.finder, exact = \
-            self.clist.find(isc.dns.Name("sub.example.org"), False)
+            self.clist.find(isc.dns.Name("sub.example.com"), False)
         self.assertIsNotNone(self.dsrc)
         self.assertTrue(isinstance(self.dsrc, isc.datasrc.DataSourceClient))
         self.assertIsNotNone(self.finder)
         self.assertTrue(isinstance(self.finder, isc.datasrc.ZoneFinder))
         self.assertFalse(exact)
         self.dsrc, self.finder, exact = \
-            self.clist.find(isc.dns.Name("sub.example.org"), True)
+            self.clist.find(isc.dns.Name("sub.example.com"), True)
         self.assertIsNone(self.dsrc)
         self.assertIsNone(self.finder)
         self.assertFalse(exact)
         self.dsrc, self.finder, exact = \
-            self.clist.find(isc.dns.Name("sub.example.org"), False, False)
+            self.clist.find(isc.dns.Name("sub.example.com"), False, False)
         self.assertIsNotNone(self.dsrc)
         self.assertTrue(isinstance(self.dsrc, isc.datasrc.DataSourceClient))
         self.assertIsNotNone(self.finder)
         self.assertTrue(isinstance(self.finder, isc.datasrc.ZoneFinder))
         self.assertFalse(exact)
         self.dsrc, self.finder, exact = \
-            self.clist.find(isc.dns.Name("sub.example.org"), True, False)
+            self.clist.find(isc.dns.Name("sub.example.com"), True, False)
         self.assertIsNone(self.dsrc)
         self.assertIsNone(self.finder)
         self.assertFalse(exact)
         # Some invalid inputs
-        self.assertRaises(TypeError, self.clist.find, "example.org")
+        self.assertRaises(TypeError, self.clist.find, "example.com")
         self.assertRaises(TypeError, self.clist.find)
 
     def test_find(self):
@@ -172,7 +172,7 @@ class ClientListTest(unittest.TestCase):
         self.clist.configure('''[{
             "type": "MasterFiles",
             "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+                "example.com": "''' + TESTDATA_PATH + '''example.com"
             },
             "cache-enable": true,
             "cache-type": "mapped"
@@ -182,7 +182,7 @@ class ClientListTest(unittest.TestCase):
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.CREATE,
                                         map_params)
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         err_msg = self.__zone_writer.load()
@@ -193,7 +193,7 @@ class ClientListTest(unittest.TestCase):
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.READ_ONLY,
                                         map_params)
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_CACHE_NOT_WRITABLE,
                          result)
 
@@ -209,7 +209,7 @@ class ClientListTest(unittest.TestCase):
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.configure_helper()
 
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         err_msg = self.__zone_writer.load()
@@ -226,7 +226,7 @@ class ClientListTest(unittest.TestCase):
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.configure_helper()
 
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.org"))
+        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         self.assertRaises(isc.datasrc.Error, self.__zone_writer.install)
@@ -265,9 +265,9 @@ class ClientListTest(unittest.TestCase):
         self.clist.configure('''[{
             "type": "sqlite3",
             "params": {
-                "database_file": "''' + TESTDATA_PATH + '''example.org.sqlite3"
+                "database_file": "''' + TESTDATA_PATH + '''example.com.sqlite3"
             },
-            "cache-zones" : ["example.org"],
+            "cache-zones" : ["example.com"],
             "cache-type": "mapped",
             "cache-enable": false
         }]''', True)
@@ -291,7 +291,7 @@ class ClientListTest(unittest.TestCase):
         self.clist.configure('''[{
             "type": "MasterFiles",
             "params": {
-                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+                "example.com": "''' + TESTDATA_PATH + '''example.com"
             },
             "cache-enable": true,
             "cache-type": "mapped"
