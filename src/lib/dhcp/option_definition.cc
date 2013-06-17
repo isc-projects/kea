@@ -228,14 +228,6 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 }
 
 void
-OptionDefinition::sanityCheckUniverse(const Option::Universe expected_universe,
-                                      const Option::Universe actual_universe) {
-    if (expected_universe != actual_universe) {
-        isc_throw(isc::BadValue, "invalid universe specified for the option");
-    }
-}
-
-void
 OptionDefinition::validate() const {
 
     using namespace boost::algorithm;

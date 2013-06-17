@@ -42,7 +42,7 @@ using namespace isc::util;
 /// This method never throws an exception otherwise.
 SPF&
 SPF::operator=(const SPF& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

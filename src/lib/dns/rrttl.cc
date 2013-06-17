@@ -74,10 +74,10 @@ parseTTLString(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
     const string::const_iterator end = ttlstr.end();
     string::const_iterator pos = ttlstr.begin();
 
-    // When we detect we have some units
-    bool units_mode = false;
-
     try {
+        // When we detect we have some units
+        bool units_mode = false;
+
         while (pos != end) {
             // Find the first unit, if there's any.
             const string::const_iterator unit = find_if(pos, end, myIsalpha);

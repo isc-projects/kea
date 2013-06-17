@@ -126,7 +126,8 @@ bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
         /// @todo: calculate actual timeout once we have lease database
-        int timeout = 1000;
+        //cppcheck-suppress variableScope This is temporary anyway
+        const int timeout = 1000;
 
         // client's message and server's response
         Pkt4Ptr query;
