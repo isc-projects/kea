@@ -1,3 +1,7 @@
+629.	[func]		stephen
+	Added first part of the hooks framework.
+	(Trac #2794, git d2b107586db7c2deaecba212c891d231d7e54a07)
+
 628.	[func]		y-aharen
 	b10-auth: A new statistics item 'qryrecursion' has been introduced.
 	The counter is for the number of queries (OpCode=Query) with Recursion
