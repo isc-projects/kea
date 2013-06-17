@@ -257,8 +257,8 @@ class ClientListTest(unittest.TestCase):
 
     def test_get_status_unused(self):
         """
-        Test getting status when segment type is mapped and it has not
-        been reset yet.
+        Test getting status when segment type is mapped, but the cache
+        is disabled.
         """
 
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
