@@ -24,6 +24,17 @@ CLEANFILES = *.gcno *.gcda
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
+# Build shared libraries for testing.  The Basic Callout Library
+lib_LTLIBRARIES = libbco.la
+libbco_la_SOURCES  = basic_callout_library.cc
+libbco_la_CXXFLAGS = $(AM_CXXFLAGS)
+libbco_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libbco_la_LIBADD  =
+libbco_la_LIBADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+libbco_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
+libbco_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
+libbco_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
@@ -31,6 +42,7 @@ run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
 run_unittests_SOURCES += callout_manager_unittest.cc
 run_unittests_SOURCES += handles_unittest.cc
+run_unittests_SOURCES += library_manager_unittest.cc
 run_unittests_SOURCES += server_hooks_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

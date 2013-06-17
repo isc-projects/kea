@@ -16,7 +16,9 @@ lib_LTLIBRARIES = libb10-hooks.la
 libb10_hooks_la_SOURCES  =
 libb10_hooks_la_SOURCES += callout_handle.cc callout_handle.h
 libb10_hooks_la_SOURCES += callout_manager.cc callout_manager.h
+libb10_hooks_la_SOURCES += hooks.h
 libb10_hooks_la_SOURCES += library_handle.cc library_handle.h
+libb10_hooks_la_SOURCES += library_manager.h
 libb10_hooks_la_SOURCES += server_hooks.cc server_hooks.h
 
 libb10_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
