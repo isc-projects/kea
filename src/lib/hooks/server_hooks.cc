@@ -22,7 +22,7 @@ using namespace std;
 using namespace isc;
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Constructor - register the pre-defined hooks and check that the indexes
 // assigned to them are as expected.

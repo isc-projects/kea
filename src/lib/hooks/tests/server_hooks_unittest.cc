@@ -21,7 +21,7 @@
 #include <vector>
 
 using namespace isc;
-using namespace isc::util;
+using namespace isc::hooks;
 using namespace std;
 
 namespace {

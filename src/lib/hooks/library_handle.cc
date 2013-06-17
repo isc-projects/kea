@@ -16,7 +16,7 @@
 #include <hooks/library_handle.h>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Callout manipulation - all deferred to the CalloutManager.
 
