@@ -200,7 +200,7 @@ NSEC3::NSEC3(const NSEC3& source) :
 
 NSEC3&
 NSEC3::operator=(const NSEC3& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

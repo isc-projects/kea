@@ -148,7 +148,7 @@ TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_))
 
 TSIGKey&
 TSIGKey::operator=(const TSIGKey& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 
