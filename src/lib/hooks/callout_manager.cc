@@ -36,7 +36,7 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = hooks_->getIndex(name);
+    int hook_index = ServerHooks::getServerHooks().getIndex(name);
 
     // Iterate through the callout vector for the hook from start to end,
     // looking for the first entry where the library index is greater than
@@ -84,6 +84,10 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
         // Clear the "skip" flag so we don't carry state from a previous call.
         callout_handle.setSkip(false);
 
+        // Set the current hook index.  This is used should a callout wish to
+        // determine to what hook it is attached.
+        current_hook_ = hook_index;
+
         // Duplicate the callout vector for this hook and work through that.
         // This step is needed because we allow dynamic registration and
         // deregistration of callouts.  If a callout attached to a hook modified
@@ -104,8 +108,9 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             static_cast<void>((*i->second)(callout_handle));
         }
 
-        // Reset the current library index to an invalid value to catch any
-        // programming errors.
+        // Reset the current hook and library indexs to an invalid value to
+        // catch any programming errors.
+        current_hook_ = -1;
         current_library_ = -1;
     }
 }
@@ -119,7 +124,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = hooks_->getIndex(name);
+    int hook_index = ServerHooks::getServerHooks().getIndex(name);
 
     /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
@@ -156,7 +161,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = hooks_->getIndex(name);
+    int hook_index = ServerHooks::getServerHooks().getIndex(name);
 
     /// Construct a CalloutEntry matching the current library (the callout
     /// pointer is NULL as we are not checking that).

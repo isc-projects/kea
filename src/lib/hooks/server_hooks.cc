@@ -28,16 +28,7 @@ namespace util {
 // assigned to them are as expected.
 
 ServerHooks::ServerHooks() {
-    int create = registerHook("context_create");
-    int destroy = registerHook("context_destroy");
-
-    if ((create != CONTEXT_CREATE) || (destroy != CONTEXT_DESTROY)) {
-        isc_throw(Unexpected, "pre-defined hook indexes are not as expected. "
-                  "context_create: expected = " << CONTEXT_CREATE <<
-                  ", actual = " << create <<
-                  ". context_destroy: expected = " << CONTEXT_DESTROY <<
-                  ", actual = " << destroy);
-    }
+    reset();
 }
 
 // Register a hook.  The index assigned to the hook is the current number
@@ -59,8 +50,47 @@ ServerHooks::registerHook(const string& name) {
                   " is already registered");
     }
 
-    // New element inserted, return numeric index.
+    // Element was inserted, so add to the inverse hooks collection.
+    inverse_hooks_[index] = name;
+
+    // ... and return numeric index.
     return (index);
+}
+
+// Reset ServerHooks object to initial state.
+
+void
+ServerHooks::reset() {
+    // Clear out the name->index and index->name maps.
+    hooks_.clear();
+    inverse_hooks_.clear();
+
+    // Register the pre-defined hooks.
+    int create = registerHook("context_create");
+    int destroy = registerHook("context_destroy");
+
+    // Check registration went as expected.
+    if ((create != CONTEXT_CREATE) || (destroy != CONTEXT_DESTROY)) {
+        isc_throw(Unexpected, "pre-defined hook indexes are not as expected. "
+                  "context_create: expected = " << CONTEXT_CREATE <<
+                  ", actual = " << create <<
+                  ". context_destroy: expected = " << CONTEXT_DESTROY <<
+                  ", actual = " << destroy);
+    }
+}
+
+// Find the name associated with a hook index.
+
+std::string
+ServerHooks::getName(int index) const {
+
+    // Get iterator to matching element.
+    InverseHookCollection::const_iterator i = inverse_hooks_.find(index);
+    if (i == inverse_hooks_.end()) {
+        isc_throw(NoSuchHook, "hook index " << index << " is not recognised");
+    }
+
+    return (i->second);
 }
 
 // Find the index associated with a hook name.
@@ -119,6 +149,13 @@ HookRegistrationFunction::execute(ServerHooks& hooks) {
     }
 }
 
+// Return global ServerHooks object
+
+ServerHooks&
+ServerHooks::getServerHooks() {
+    static ServerHooks hooks;
+    return (hooks);
+}
 
 
 } // namespace util

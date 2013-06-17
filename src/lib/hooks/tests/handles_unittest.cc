@@ -50,16 +50,17 @@ public:
     /// @brief Constructor
     ///
     /// Sets up the various elements used in each test.
-    HandlesTest() : hooks_(new ServerHooks()), manager_()
-    {
+    HandlesTest() {
         // Set up four hooks, although through gamma
-        alpha_index_ = hooks_->registerHook("alpha");
-        beta_index_ = hooks_->registerHook("beta");
-        gamma_index_ = hooks_->registerHook("gamma");
-        delta_index_ = hooks_->registerHook("delta");
+        ServerHooks& hooks = ServerHooks::getServerHooks();
+        hooks.reset();
+        alpha_index_ = hooks.registerHook("alpha");
+        beta_index_ = hooks.registerHook("beta");
+        gamma_index_ = hooks.registerHook("gamma");
+        delta_index_ = hooks.registerHook("delta");
 
         // Set up for three libraries.
-        manager_.reset(new CalloutManager(hooks_, 3));
+        manager_.reset(new CalloutManager(3));
 
         // Initialize remaining variables.
         common_string_ = "";
@@ -80,9 +81,6 @@ public:
     static std::string common_string_;
 
 private:
-    /// Server hooks 
-    boost::shared_ptr<ServerHooks> hooks_;
-
     /// Callout manager.  Declared static so that the callout functions can
     /// access it.
     boost::shared_ptr<CalloutManager> manager_;
@@ -917,6 +915,47 @@ TEST_F(HandlesTest, CheckModifiedArgument) {
     EXPECT_EQ(std::string("YNN" "YYNN" "YNY"), modified_arg);
 }
 
+// Test that the CalloutHandle provides the name of the hook to which the
+// callout is attached.
+
+int
+callout_hook_name(CalloutHandle& callout_handle) {
+    HandlesTest::common_string_ = callout_handle.getHookName();
+    return (0);
+}
+
+int
+callout_hook_dummy(CalloutHandle&) {
+    return (0);
+}
+
+TEST_F(HandlesTest, HookName) {
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->registerCallout("alpha", callout_hook_name);
+    getCalloutManager()->registerCallout("beta", callout_hook_name);
+
+    // Call alpha abd beta callouts and check the hook to which they belong.
+    CalloutHandle callout_handle(getCalloutManager());
+
+    EXPECT_EQ(std::string(""), HandlesTest::common_string_);
+
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+    EXPECT_EQ(std::string("alpha"), HandlesTest::common_string_);
+
+    getCalloutManager()->callCallouts(beta_index_, callout_handle);
+    EXPECT_EQ(std::string("beta"), HandlesTest::common_string_);
+
+    // Make sure that the callout accesses the name even if it is not the
+    // only callout in the list.
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
+    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
+    getCalloutManager()->registerCallout("gamma", callout_hook_name);
+
+    EXPECT_EQ(std::string("beta"), HandlesTest::common_string_);
+    getCalloutManager()->callCallouts(gamma_index_, callout_handle);
+    EXPECT_EQ(std::string("gamma"), HandlesTest::common_string_);
+}
 
 } // Anonymous namespace
 
