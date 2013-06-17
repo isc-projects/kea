@@ -315,16 +315,16 @@ class ClientListTest(unittest.TestCase):
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
-        self.assertIsInstance(status, list)
+        self.assertTrue(isinstance(status, list))
         self.assertEqual(0, len(status))
 
         self.configure_helper()
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
-        self.assertIsInstance(status, list)
+        self.assertTrue(isinstance(status, list))
         self.assertEqual(1, len(status))
-        self.assertIsInstance(status[0], tuple)
+        self.assertTrue(isinstance(status[0], tuple))
         self.assertTupleEqual(('MasterFiles', 'local',
                                isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
@@ -348,9 +348,9 @@ class ClientListTest(unittest.TestCase):
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
-        self.assertIsInstance(status, list)
+        self.assertTrue(isinstance(status, list))
         self.assertEqual(1, len(status))
-        self.assertIsInstance(status[0], tuple)
+        self.assertTrue(isinstance(status[0], tuple))
         self.assertTupleEqual(('sqlite3', None,
                                isc.datasrc.ConfigurableClientList.SEGMENT_UNUSED),
                               status[0])
@@ -373,9 +373,9 @@ class ClientListTest(unittest.TestCase):
 
         status = self.clist.get_status()
         self.assertIsNotNone(status)
-        self.assertIsInstance(status, list)
+        self.assertTrue(isinstance(status, list))
         self.assertEqual(1, len(status))
-        self.assertIsInstance(status[0], tuple)
+        self.assertTrue(isinstance(status[0], tuple))
         self.assertTupleEqual(('MasterFiles', 'mapped',
                                isc.datasrc.ConfigurableClientList.SEGMENT_WAITING),
                               status[0])
