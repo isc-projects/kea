@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
-#include <util/hooks/server_hooks.h>
+#include <hooks/server_hooks.h>
 
 #include <utility>
 #include <vector>

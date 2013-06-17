@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/hooks/server_hooks.h>
+#include <hooks/server_hooks.h>
 
 #include <gtest/gtest.h>
 
