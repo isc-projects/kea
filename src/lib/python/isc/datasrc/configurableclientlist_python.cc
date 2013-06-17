@@ -213,7 +213,7 @@ ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
                 segment_type.reset(Py_BuildValue(
                     "s", status[i].getSegmentType().c_str()));
             } else {
-                 Py_INCREF(Py_None);
+                Py_INCREF(Py_None);
                 segment_type.reset(Py_None);
             }
 
