@@ -338,7 +338,7 @@ TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_))
 
 TSIG&
 TSIG::operator=(const TSIG& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

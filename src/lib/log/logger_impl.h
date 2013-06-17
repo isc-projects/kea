@@ -23,6 +23,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <boost/noncopyable.hpp>
 
 
 // log4cplus logger header file
@@ -61,7 +62,7 @@ namespace log {
 /// b) The idea of debug levels is implemented.  See logger_level.h and
 /// logger_level_impl.h for more details on this.
 
-class LoggerImpl {
+class LoggerImpl : public boost::noncopyable {
 public:
 
     /// \brief Constructor

@@ -410,10 +410,9 @@ void IOFetch::logIOFailure(asio::error_code ec) {
            (data_->origin == ASIODNS_READ_DATA) ||
            (data_->origin == ASIODNS_UNKNOWN_ORIGIN));
 
-    static const char* PROTOCOL[2] = {"TCP", "UDP"};
     LOG_ERROR(logger, data_->origin).arg(ec.value()).
         arg((data_->remote_snd->getProtocol() == IPPROTO_TCP) ?
-                     PROTOCOL[0] : PROTOCOL[1]).
+                     "TCP" : "UDP").
         arg(data_->remote_snd->getAddress().toText()).
         arg(data_->remote_snd->getPort());
 }

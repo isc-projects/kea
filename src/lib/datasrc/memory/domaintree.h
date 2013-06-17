@@ -705,7 +705,13 @@ public:
                         // XXX: meaningless initial values:
                         last_comparison_(0, 0,
                                          isc::dns::NameComparisonResult::EQUAL)
-    {}
+    {
+        // To silence cppcheck. We don't really use the values before
+        // initialization, but this is cleaner anyway.
+        for (size_t i = 0; i < RBT_MAX_LEVEL; ++i) {
+            nodes_[i] = NULL;
+        }
+    }
 
     /// \brief Copy constructor.
     ///
@@ -828,6 +834,7 @@ private:
     /// the top node
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void pop() {
         assert(!isEmpty());
         --level_count_;
@@ -840,6 +847,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void push(const DomainTreeNode<T>* node) {
         assert(level_count_ < RBT_MAX_LEVEL);
         nodes_[level_count_++] = node;

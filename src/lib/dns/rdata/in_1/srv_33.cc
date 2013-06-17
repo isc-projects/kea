@@ -190,7 +190,7 @@ SRV::SRV(const SRV& source) :
 
 SRV&
 SRV::operator=(const SRV& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

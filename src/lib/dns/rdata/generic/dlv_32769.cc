@@ -62,7 +62,7 @@ DLV::DLV(const DLV& source) :
 /// PIMPL-induced logic
 DLV&
 DLV::operator=(const DLV& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 
