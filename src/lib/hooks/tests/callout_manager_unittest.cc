@@ -44,17 +44,20 @@ public:
     /// @brief Constructor
     ///
     /// Sets up a collection of three LibraryHandle objects to use in the test.
-    CalloutManagerTest() : hooks_(new ServerHooks()) {
+    CalloutManagerTest() {
 
-        // Set up the server hooks
-        alpha_index_ = hooks_->registerHook("alpha");
-        beta_index_ = hooks_->registerHook("beta");
-        gamma_index_ = hooks_->registerHook("gamma");
-        delta_index_ = hooks_->registerHook("delta");
+        // Set up the server hooks.  There is sone singleton for all tests,
+        // so reset it and explicitly set up the hooks for the test.
+        ServerHooks& hooks = ServerHooks::getServerHooks();
+        hooks.reset();
+        alpha_index_ = hooks.registerHook("alpha");
+        beta_index_ = hooks.registerHook("beta");
+        gamma_index_ = hooks.registerHook("gamma");
+        delta_index_ = hooks.registerHook("delta");
 
         // Set up the callout manager with these hooks.  Assume a maximum of
         // four libraries.
-        callout_manager_.reset(new CalloutManager(hooks_, 10));
+        callout_manager_.reset(new CalloutManager(10));
 
         // Set up the callout handle.
         callout_handle_.reset(new CalloutHandle(callout_manager_));
@@ -181,12 +184,8 @@ TEST_F(CalloutManagerTest, BadConstructorParameters) {
     boost::scoped_ptr<CalloutManager> cm;
 
     // Invalid number of libraries
-    EXPECT_THROW(cm.reset(new CalloutManager(getServerHooks(), 0)), BadValue);
-    EXPECT_THROW(cm.reset(new CalloutManager(getServerHooks(), -1)), BadValue);
-
-    // Invalid server hooks pointer.
-    boost::shared_ptr<ServerHooks> sh;
-    EXPECT_THROW(cm.reset(new CalloutManager(sh, 4)), BadValue);
+    EXPECT_THROW(cm.reset(new CalloutManager(0)), BadValue);
+    EXPECT_THROW(cm.reset(new CalloutManager(-1)), BadValue);
 }
 
 // Check the number of libraries is reported successfully.
@@ -196,10 +195,10 @@ TEST_F(CalloutManagerTest, GetNumLibraries) {
 
     // Check two valid values of number of libraries to ensure that the
     // GetNumLibraries() returns the value set.
-    EXPECT_NO_THROW(cm.reset(new CalloutManager(getServerHooks(), 4)));
+    EXPECT_NO_THROW(cm.reset(new CalloutManager(4)));
     EXPECT_EQ(4, cm->getNumLibraries());
 
-    EXPECT_NO_THROW(cm.reset(new CalloutManager(getServerHooks(), 42)));
+    EXPECT_NO_THROW(cm.reset(new CalloutManager(42)));
     EXPECT_EQ(42, cm->getNumLibraries());
 }
 
@@ -760,6 +759,8 @@ TEST_F(CalloutManagerTest, LibraryHandleRegistration) {
     EXPECT_EQ(1, callout_value_);
 }
 
-
+// The setting of the hook index is checked in the handles_unittest
+// set of tests, as access restrictions mean it is not easily tested
+// on its own.
 
 } // Anonymous namespace
