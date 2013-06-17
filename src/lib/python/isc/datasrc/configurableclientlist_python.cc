@@ -388,24 +388,30 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
 
     try {
         // ConfigurableClientList::CacheStatus enum
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_CACHE_DISABLED",
-                             Py_BuildValue("I", ConfigurableClientList::CACHE_DISABLED));
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_ZONE_NOT_CACHED",
-                             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_CACHED));
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_ZONE_NOT_FOUND",
-                             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_FOUND));
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_CACHE_NOT_WRITABLE",
-                             Py_BuildValue("I", ConfigurableClientList::CACHE_NOT_WRITABLE));
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_DATASRC_NOT_FOUND",
-                             Py_BuildValue("I", ConfigurableClientList::DATASRC_NOT_FOUND));
-        installClassVariable(configurableclientlist_type,
-                             "CACHE_STATUS_ZONE_SUCCESS",
-                             Py_BuildValue("I", ConfigurableClientList::ZONE_SUCCESS));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_CACHE_DISABLED",
+             Py_BuildValue("I", ConfigurableClientList::CACHE_DISABLED));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_NOT_CACHED",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_CACHED));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_NOT_FOUND",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_FOUND));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_CACHE_NOT_WRITABLE",
+             Py_BuildValue("I", ConfigurableClientList::CACHE_NOT_WRITABLE));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_DATASRC_NOT_FOUND",
+             Py_BuildValue("I", ConfigurableClientList::DATASRC_NOT_FOUND));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_SUCCESS",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_SUCCESS));
 
         // MemorySegmentState enum
         installClassVariable(configurableclientlist_type,
