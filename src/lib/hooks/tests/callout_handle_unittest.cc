@@ -40,8 +40,7 @@ public:
     /// Sets up a callout manager to be referenced by the CalloutHandle in
     /// these tests. (The "4" for the number of libraries in the
     /// CalloutManager is arbitrary - it is not used in these tests.)
-    CalloutHandleTest()
-        : hooks_(new ServerHooks()), manager_(new CalloutManager(hooks_, 4))
+    CalloutHandleTest() : manager_(new CalloutManager(4))
     {}
 
     /// Obtain hook manager
@@ -50,9 +49,6 @@ public:
     }
 
 private:
-    /// List of server hooks
-    boost::shared_ptr<ServerHooks> hooks_;
-
     /// Callout manager accessed by this CalloutHandle.
     boost::shared_ptr<CalloutManager> manager_;
 };
@@ -325,5 +321,9 @@ TEST_F(CalloutHandleTest, SkipFlag) {
     handle.setSkip(false);
     EXPECT_FALSE(handle.getSkip());
 }
+
+// Further tests of the "skip" flag and tests of getting the name of the
+// hook to which the current callout is attached is in the "handles_unittest"
+// module.
 
 } // Anonymous namespace

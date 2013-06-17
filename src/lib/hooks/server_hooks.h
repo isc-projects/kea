@@ -17,6 +17,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -57,24 +59,27 @@ public:
 /// (Although it would be feasible to use a name as an index, using an integer
 /// will speed up the time taken to locate the callouts, which may make a
 /// difference in a frequently-executed piece of code.)
+///
+/// ServerHooks is a singleton object and is only accessible by the static
+/// method getserverHooks().
 
-class ServerHooks {
+class ServerHooks : public boost::noncopyable {
 public:
 
     /// Index numbers for pre-defined hooks.
     static const int CONTEXT_CREATE = 0;
     static const int CONTEXT_DESTROY = 1;
 
-    /// @brief Constructor
+    /// @brief Reset to Initial State
     ///
-    /// This pre-registers two hooks, context_create and context_destroy, which
-    /// are called by the server before processing a packet and after processing
-    /// for the packet has completed.  They allow the server code to allocate
-    /// and destroy per-packet context.
+    /// Resets the collection of hooks to the initial state, with just the
+    /// context_create and context_destroy hooks set.  This used during
+    /// construction. It is also used during testing to reset the global
+    /// ServerHooks object.
     ///
     /// @throws isc::Unexpected if the registration of the pre-defined hooks
     ///         fails in some way.
-    ServerHooks();
+    void reset();
 
     /// @brief Register a hook
     ///
@@ -89,6 +94,18 @@ public:
     /// @throws DuplicateHook A hook with the same name has already been
     ///         registered.
     int registerHook(const std::string& name);
+
+    /// @brief Get hook name
+    ///
+    /// Returns the name of a hook given the index.  This is most likely to be
+    /// used in log messages.
+    ///
+    /// @param index Index of the hoold
+    ///
+    /// @return Name of the hook.
+    ///
+    /// @throw NoSuchHook if the hook index is invalid.
+    std::string getName(int index) const;
 
     /// @brief Get hook index
     ///
@@ -117,10 +134,37 @@ public:
     /// @return Vector of strings holding hook names.
     std::vector<std::string> getHookNames() const;
 
-private:
-    typedef std::map<std::string, int> HookCollection;
+    /// @brief Return ServerHookms object
+    ///
+    /// Returns the global ServerHooks object.
+    ///
+    /// @return Reference to the global ServerHooks object.
+    static ServerHooks& getServerHooks();
 
-    HookCollection  hooks_;     ///< Hook name/index collection
+private:
+    /// @brief Constructor
+    ///
+    /// This pre-registers two hooks, context_create and context_destroy, which
+    /// are called by the server before processing a packet and after processing
+    /// for the packet has completed.  They allow the server code to allocate
+    /// and destroy per-packet context.
+    ///
+    /// Constructor is declared private to enforce the singleton nature of
+    /// the object.  A reference to the singleton is obtainable through the
+    /// ggetServerHooks() static method.
+    ///
+    /// @throws isc::Unexpected if the registration of the pre-defined hooks
+    ///         fails in some way.
+    ServerHooks();
+
+    /// Useful typedefs.
+    typedef std::map<std::string, int> HookCollection;
+    typedef std::map<int, std::string> InverseHookCollection;
+
+    /// Two maps, one for name->index, the other for index->name.  (This is
+    /// simpler than using a multi-indexed container.)
+    HookCollection  hooks_;                 ///< Hook name/index collection
+    InverseHookCollection inverse_hooks_;   ///< Hook index/name collection
 };
 
 

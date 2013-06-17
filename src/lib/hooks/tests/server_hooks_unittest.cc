@@ -30,7 +30,8 @@ namespace {
 // constructor registers two hooks, this is also a test of the constructor.
 
 TEST(ServerHooksTest, RegisterHooks) {
-    ServerHooks hooks;
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
 
     // There should be two hooks already registered, with indexes 0 and 1.
     EXPECT_EQ(2, hooks.getCount());
@@ -63,7 +64,8 @@ TEST(ServerHooksTest, RegisterHooks) {
 // Check that duplicate names cannot be registered.
 
 TEST(ServerHooksTest, DuplicateHooks) {
-    ServerHooks hooks;
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
 
     // Ensure we can't duplicate one of the existing names.
     EXPECT_THROW(hooks.registerHook("context_create"), DuplicateHook);
@@ -77,8 +79,9 @@ TEST(ServerHooksTest, DuplicateHooks) {
 // Checks that we can get the name of the hooks.
 
 TEST(ServerHooksTest, GetHookNames) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
     vector<string> expected_names;
-    ServerHooks hooks;
 
     // Add names into the hooks object and to the set of expected names.
     expected_names.push_back("alpha");
@@ -104,10 +107,54 @@ TEST(ServerHooksTest, GetHookNames) {
     EXPECT_TRUE(expected_names == actual_names);
 }
 
+// Test the inverse hooks functionality (i.e. given an index, get the name).
+
+TEST(ServerHooksTest, GetHookIndexes) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+
+    int alpha = hooks.registerHook("alpha");
+    int beta = hooks.registerHook("beta");
+    int gamma = hooks.registerHook("gamma");
+
+    EXPECT_EQ(std::string("context_create"),
+              hooks.getName(ServerHooks::CONTEXT_CREATE));
+    EXPECT_EQ(std::string("context_destroy"),
+              hooks.getName(ServerHooks::CONTEXT_DESTROY));
+    EXPECT_EQ(std::string("alpha"), hooks.getName(alpha));
+    EXPECT_EQ(std::string("beta"), hooks.getName(beta));
+    EXPECT_EQ(std::string("gamma"), hooks.getName(gamma));
+
+    // Check for an invalid index
+    EXPECT_THROW(hooks.getName(-1), NoSuchHook);
+    EXPECT_THROW(hooks.getName(42), NoSuchHook);
+}
+
+// Test the reset functionality.
+
+TEST(ServerHooksTest, Reset) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+
+    int alpha = hooks.registerHook("alpha");
+    int beta = hooks.registerHook("beta");
+    int gamma = hooks.registerHook("gamma");
+
+    // Check the counts before and after a reset.
+    EXPECT_EQ(5, hooks.getCount());
+    hooks.reset();
+    EXPECT_EQ(2, hooks.getCount());
+
+    // ... and check that the hooks are as expected.
+    EXPECT_EQ(0, hooks.getIndex("context_create"));
+    EXPECT_EQ(1, hooks.getIndex("context_destroy"));
+}
+
 // Check that getting an unknown name throws an exception.
 
 TEST(ServerHooksTest, UnknownHookName) {
-    ServerHooks hooks;
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
 
     EXPECT_THROW(static_cast<void>(hooks.getIndex("unknown")), NoSuchHook);
 }
@@ -115,7 +162,8 @@ TEST(ServerHooksTest, UnknownHookName) {
 // Check that the count of hooks is correct.
 
 TEST(ServerHooksTest, HookCount) {
-    ServerHooks hooks;
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
 
     // Insert the names into the hooks object
     hooks.registerHook("alpha");
@@ -181,7 +229,9 @@ TEST(HookRegistrationFunction, Registration) {
 
     // Execute the functions and check that four new hooks were defined (two
     // from each function).
-    ServerHooks hooks;
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+
     EXPECT_EQ(2, hooks.getCount());
     HookRegistrationFunction::execute(hooks);
     EXPECT_EQ(6, hooks.getCount());
@@ -223,13 +273,13 @@ TEST(HookRegistrationFunction, Registration) {
     EXPECT_EQ(1, HookRegistrationFunction::getFunctionVector().size());
 
     // Execute it...
-    ServerHooks hooks2;
+    hooks.reset();
     EXPECT_EQ(0, epsilon);
-    EXPECT_EQ(2, hooks2.getCount());
-    HookRegistrationFunction::execute(hooks2);
+    EXPECT_EQ(2, hooks.getCount());
+    HookRegistrationFunction::execute(hooks);
 
     // There should be three hooks, with the new one assigned an index of 2.
-    names = hooks2.getHookNames();
+    names = hooks.getHookNames();
     ASSERT_EQ(3, names.size());
     sort(names.begin(), names.end());
     EXPECT_EQ(string("context_create"), names[0]);

@@ -117,5 +117,26 @@ CalloutHandle::getContextNames() const {
     return (names);
 }
 
+// Return name of current hook (the hook to which the current callout is
+// attached) or the empty string if not called within the context of a
+// callout.
+
+string
+CalloutHandle::getHookName() const {
+    // Get the current hook index.
+    int index = manager_->getHookIndex();
+
+    // ... and look up the hook.
+    string hook = "";
+    try {
+        hook = ServerHooks::getServerHooks().getName(index);
+    } catch (const NoSuchHook&) {
+        // Hook index is invalid, so probably called outside of a callout.
+        // This is a no-op.
+    }
+
+    return (hook);
+}
+
 } // namespace util
 } // namespace isc

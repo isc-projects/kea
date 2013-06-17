@@ -105,7 +105,6 @@ public:
     /// need to be set when the CalloutHandle is constructed.
     typedef std::map<int, ElementCollection> ContextCollection;
 
-
     /// @brief Constructor
     ///
     /// Creates the object and calls the callouts on the "context_create"
@@ -292,6 +291,14 @@ public:
         getContextForLibrary().clear();
     }
 
+    /// @brief Get hook name
+    ///
+    /// Get the name of the hook to which the current callout is attached.
+    /// This can be the null string if the CalloutHandle is being accessed
+    /// outside of the CalloutManager's "callCallouts" method.
+    ///
+    /// @return Name of the current hook or the empty string if none.
+    std::string getHookName() const;
 
 private:
     /// @brief Check index

@@ -92,26 +92,21 @@ public:
     /// Initializes member variables, in particular sizing the hook vector
     /// (the vector of callout vectors) to the appropriate size.
     ///
-    /// @param hooks Collection of known hook names.
     /// @param num_libraries Number of loaded libraries.
     ///
     /// @throw isc::BadValue if the number of libraries is less than or equal
     ///        to 0, or if the pointer to the server hooks object is empty.
-    CalloutManager(const boost::shared_ptr<ServerHooks>& hooks,
-                   int num_libraries)
-        : current_library_(-1), hooks_(hooks), hook_vector_(),
+    CalloutManager(int num_libraries)
+        : current_hook_(-1), current_library_(-1), hook_vector_(),
           library_handle_(this), num_libraries_(num_libraries)
     {
-        if (!hooks) {
-            isc_throw(isc::BadValue, "must pass a pointer to a valid server "
-                      "hooks object to the CalloutManager");
-        } else if (num_libraries <= 0) {
+        if (num_libraries <= 0) {
             isc_throw(isc::BadValue, "number of libraries passed to the "
                       "CalloutManager must be >= 0");
         }
 
         // Parameters OK, do operations that depend on them.
-        hook_vector_.resize(hooks_->getCount());
+        hook_vector_.resize(ServerHooks::getServerHooks().getCount());
     }
 
     /// @brief Register a callout on a hook for the current library
@@ -183,6 +178,14 @@ public:
     /// @param callout_handle Reference to the CalloutHandle object for the
     ///        current object being processed.
     void callCallouts(int hook_index, CalloutHandle& callout_handle);
+
+    /// @brief Get current hook index
+    ///
+    /// Made available during callCallouts, this is the index of the hook
+    /// on which callouts are being called.
+    int getHookIndex() const {
+        return (current_hook_);
+    }
 
     /// @brief Get number of libraries
     ///
@@ -273,13 +276,15 @@ private:
         }
     };
 
+    /// Current hook.  When a call is made to callCallouts, this holds the
+    /// index of the current hook.  It is set to an invalid value (-1)
+    /// otherwise.
+    int current_hook_;
+
     /// Current library index.  When a call is made to any of the callout
     /// registration methods, this variable indicates the index of the user
     /// library that should be associated with the call.
     int current_library_;
-
-    /// List of server hooks.
-    boost::shared_ptr<ServerHooks>  hooks_;
 
     /// Vector of callout vectors.  There is one entry in this outer vector for
     /// each hook. Each element is itself a vector, with one entry for each
@@ -292,7 +297,6 @@ private:
 
     /// Number of libraries.
     int num_libraries_;
-
 };
 
 } // namespace util
