@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 /// @brief Duplicate hook
 ///

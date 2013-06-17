@@ -22,10 +22,9 @@
 #include <utility>
 
 using namespace std;
-using namespace isc::util;
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Register a callout for the current library.
 

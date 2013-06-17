@@ -22,10 +22,9 @@
 #include <vector>
 
 using namespace std;
-using namespace isc::util;
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Constructor.
 CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager)

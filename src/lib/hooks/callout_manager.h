@@ -25,7 +25,7 @@
 #include <string>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 /// @brief No such library
 ///
