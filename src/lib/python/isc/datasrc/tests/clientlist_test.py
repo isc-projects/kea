@@ -329,6 +329,8 @@ class ClientListTest(unittest.TestCase):
                                isc.datasrc.ConfigurableClientList.SEGMENT_INUSE),
                               status[0])
 
+    @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
+                     'shared memory is not available')
     def test_get_status_unused(self):
         """
         Test getting status when segment type is mapped, but the cache
@@ -355,6 +357,8 @@ class ClientListTest(unittest.TestCase):
                                isc.datasrc.ConfigurableClientList.SEGMENT_UNUSED),
                               status[0])
 
+    @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
+                     'shared memory is not available')
     def test_get_status_waiting(self):
         """
         Test getting status when segment type is mapped and it has not
