@@ -410,11 +410,15 @@ vector<DataSourceStatus>
 ConfigurableClientList::getStatus() const {
     vector<DataSourceStatus> result;
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // TODO: Once we support mapped cache, decide when we need the
-        // SEGMENT_WAITING.
-        result.push_back(DataSourceStatus(info.name_, info.cache_ ?
-                                          SEGMENT_INUSE : SEGMENT_UNUSED,
-                                          "local"));
+        if (info.ztable_segment_) {
+            result.push_back(DataSourceStatus(
+                info.name_,
+                (info.ztable_segment_->isUsable() ?
+                 SEGMENT_INUSE : SEGMENT_WAITING),
+                info.ztable_segment_->getImplType()));
+        } else {
+            result.push_back(DataSourceStatus(info.name_));
+        }
     }
     return (result);
 }

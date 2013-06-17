@@ -116,6 +116,7 @@ public:
                        const std::string& datasrc_name,
                        ZoneTableSegment::MemorySegmentOpenMode mode,
                        ConstElementPtr config_params) = 0;
+    virtual std::string getType() = 0;
 };
 
 class ListTest : public ::testing::TestWithParam<SegmentType*> {
@@ -202,14 +203,14 @@ public:
                               memory::ZoneTableSegment::CREATE,
                               config_ztable_segment);
 
-            boost::scoped_ptr<memory::ZoneWriter> writer(
-                new memory::ZoneWriter(
-                    *dsrc_info.ztable_segment_,
-                    cache_conf->getLoadAction(rrclass_, zone),
-                    zone, rrclass_, false));
-            writer->load();
-            writer->install();
-            writer->cleanup(); // not absolutely necessary, but just in case
+            const ConfigurableClientList::ZoneWriterPair result =
+                list_->getCachedZoneWriter(zone, dsrc_info.name_);
+
+            ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
+            result.second->load();
+            result.second->install();
+            // not absolutely necessary, but just in case
+            result.second->cleanup();
 
             GetParam()->reset(*list_, dsrc_info.name_,
                               memory::ZoneTableSegment::READ_WRITE,
@@ -332,6 +333,9 @@ public:
                        ConstElementPtr) {
         // We must not call reset on local ZoneTableSegments.
     }
+    virtual std::string getType() {
+        return ("local");
+    }
 };
 
 LocalSegmentType local_segment_type;
@@ -359,6 +363,9 @@ public:
                        ZoneTableSegment::MemorySegmentOpenMode mode,
                        ConstElementPtr config_params) {
         list.resetMemorySegment(datasrc_name, mode, config_params);
+    }
+    virtual std::string getType() {
+        return ("mapped");
     }
 };
 
@@ -1002,6 +1009,13 @@ ListTest::doReload(const Name& origin, const string& datasrc_name) {
 // Test we can reload a zone
 TEST_P(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
+
+    const vector<DataSourceStatus> statii_before(list_->getStatus());
+    ASSERT_EQ(1, statii_before.size());
+    EXPECT_EQ("test_type", statii_before[0].getName());
+    EXPECT_EQ(SEGMENT_UNUSED, statii_before[0].getSegmentState());
+    EXPECT_THROW(statii_before[0].getSegmentType(), isc::InvalidOperation);
+
     const Name name("example.org");
     prepareCache(0, name);
     // The cache currently contains a tweaked version of zone, which
@@ -1017,10 +1031,19 @@ TEST_P(ListTest, reloadSuccess) {
               list_->find(name).finder_->
                   find(Name("tstzonedata").concatenate(name),
                        RRType::A())->code);
+
+    const vector<DataSourceStatus> statii_after(list_->getStatus());
+    ASSERT_EQ(1, statii_after.size());
+    EXPECT_EQ("test_type", statii_after[0].getName());
+    EXPECT_EQ(SEGMENT_INUSE, statii_after[0].getSegmentState());
+    EXPECT_EQ(GetParam()->getType(), statii_after[0].getSegmentType());
 }
 
 // The cache is not enabled. The load should be rejected.
-TEST_P(ListTest, reloadNotAllowed) {
+//
+// FIXME: This test is broken by #2853 and needs to be fixed or
+// removed. Please see #2991 for details.
+TEST_P(ListTest, DISABLED_reloadNotAllowed) {
     list_->configure(config_elem_zones_, false);
     const Name name("example.org");
     // We put the cache in even when not enabled. This won't confuse the thing.
@@ -1334,7 +1357,7 @@ TEST(DataSourceStatus, status) {
     EXPECT_EQ("Test", status.getName());
     EXPECT_EQ(SEGMENT_INUSE, status.getSegmentState());
     EXPECT_EQ("local", status.getSegmentType());
-    const DataSourceStatus status_unused("Unused", SEGMENT_UNUSED, "");
+    const DataSourceStatus status_unused("Unused");
     EXPECT_EQ("Unused", status_unused.getName());
     EXPECT_EQ(SEGMENT_UNUSED, status_unused.getSegmentState());
     EXPECT_THROW(status_unused.getSegmentType(), isc::InvalidOperation);

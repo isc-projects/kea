@@ -35,6 +35,7 @@
 #include "zone_loader_python.h"
 #include "zonetable_accessor_python.h"
 #include "zonetable_iterator_python.h"
+#include "zonewriter_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -44,6 +45,7 @@
 
 using namespace isc::datasrc;
 using namespace isc::datasrc::python;
+using namespace isc::datasrc::memory::python;
 using namespace isc::util::python;
 using namespace isc::dns::python;
 
@@ -384,6 +386,11 @@ PyInit_datasrc(void) {
     }
 
     if (!initModulePart_ZoneTableIterator(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ZoneWriter(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }

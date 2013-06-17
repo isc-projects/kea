@@ -49,7 +49,7 @@ public:
 
 // General creation and destruction
 int
-ZoneTableIterator_init(s_ZoneTableIterator* self, PyObject* args) {
+ZoneTableIterator_init(s_ZoneTableIterator*, PyObject*) {
     // can't be called directly
     PyErr_SetString(PyExc_TypeError,
                     "ZoneTableIterator cannot be constructed directly");
