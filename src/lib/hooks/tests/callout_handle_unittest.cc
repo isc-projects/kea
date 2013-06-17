@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace isc::util;
+using namespace isc::hooks;
 using namespace std;
 
 namespace {

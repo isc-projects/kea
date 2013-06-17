@@ -18,7 +18,7 @@
 #include <string>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Forward declarations
 class CalloutHandle;
