@@ -75,7 +75,6 @@ parseTTLString(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
     string::const_iterator pos = ttlstr.begin();
 
     try {
-
         // When we detect we have some units
         bool units_mode = false;
 
