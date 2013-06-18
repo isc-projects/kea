@@ -2,6 +2,8 @@
 
 hide members
 
+note "Automatic placement of classes\ndoesn't look good. This diagram\nhas to be improved." as n1
+
 Auth "1" *-d-> "*" ConfigurableClientList
 Auth -d-> DataSourceClient
 Auth -d-> ZoneWriter
