@@ -1,0 +1,140 @@
+@startuml
+
+participant auth as "b10-auth"
+[-> auth: new/initial config\n(datasrc cfg)
+activate auth
+
+participant list as "Configurable\nClientList"
+create list
+auth -> list: <<construct>>
+
+auth -> list: configure(cfg)
+activate list
+
+create CacheConfig
+list -> CacheConfig: <<construct>> (cfg)
+
+participant zt_segment as "ZoneTable\nSegment\n(Local)"
+create zt_segment
+list -> zt_segment: <<construct>>
+activate zt_segment
+
+create ZoneTable
+zt_segment -> ZoneTable: <<construct>>
+
+deactivate zt_segment
+
+list -> zt_segment: isWritable()
+activate zt_segment
+note over zt_segment: Local segments are\nalways writable
+zt_segment --> list: true
+deactivate zt_segment
+
+loop for each zone in CacheConfig
+list -> CacheConfig: getLoadAction()
+activate CacheConfig
+
+create LoadAction
+CacheConfig -> LoadAction: <<construct>>
+
+participant LoadAction.2
+
+CacheConfig --> list : LoadAction
+
+deactivate CacheConfig
+
+create ZoneWriter
+list -> ZoneWriter: <<construct>> (load_action)
+
+participant ZoneWriter.2
+
+list -> ZoneWriter: load()
+activate ZoneWriter
+ZoneWriter -> LoadAction: (funcall)
+activate LoadAction
+
+create ZoneData
+LoadAction -> ZoneData: <<construct>> via helpers
+
+participant ZoneData.2
+
+LoadAction --> ZoneWriter: ZoneData
+deactivate LoadAction
+deactivate ZoneWriter
+
+list -> ZoneWriter: install()
+activate ZoneWriter
+
+ZoneWriter -> ZoneTable: addZone(ZoneData)
+activate ZoneTable
+ZoneTable --> ZoneWriter: NULL (no old data)
+deactivate ZoneTable
+
+deactivate ZoneWriter
+
+end
+
+deactivate list
+deactivate auth
+
+...
+
+[-> auth: reload\n(zonename)
+activate auth
+
+auth -> list: getCachedZoneWriter\n(zone_name)
+activate list
+
+list -> CacheConfig: getLoadAction()
+activate CacheConfig
+
+create LoadAction.2
+CacheConfig -> LoadAction.2: <<construct>>
+
+CacheConfig --> list : LoadAction.2
+
+deactivate CacheConfig
+
+create ZoneWriter.2
+list -> ZoneWriter.2: <<construct>> (load_action)
+
+list --> auth: ZoneWriter.2
+
+deactivate list
+
+
+
+
+
+auth -> ZoneWriter.2: load()
+activate ZoneWriter.2
+ZoneWriter.2 -> LoadAction.2: (funcall)
+activate LoadAction.2
+
+create ZoneData.2
+LoadAction.2 -> ZoneData.2: <<construct>> via helpers
+
+LoadAction.2 --> ZoneWriter.2: ZoneData.2
+deactivate LoadAction.2
+deactivate ZoneWriter.2
+
+auth -> ZoneWriter.2: install()
+activate ZoneWriter.2
+
+ZoneWriter.2 -> ZoneTable: addZone(ZoneData.2)
+activate ZoneTable
+ZoneTable --> ZoneWriter.2: ZoneData (old data)
+deactivate ZoneTable
+
+deactivate ZoneWriter.2
+
+auth -> ZoneWriter.2: cleanup()
+activate ZoneWriter.2
+
+ZoneWriter.2 -> ZoneData: <<destroy>>
+destroy ZoneData
+deactivate ZoneWriter.2
+
+deactivate auth
+
+@enduml
