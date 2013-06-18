@@ -19,7 +19,7 @@ Overall relationships between classes
 The following diagram shows major classes in the data source library
 related to in-memory caches and their relationship.
 
-image::overview.png[]
+image::overview.png[Class diagram showing overview of relationships]
 
 Major design decisions of this architecture are:
 
