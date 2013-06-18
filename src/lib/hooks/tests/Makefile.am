@@ -24,8 +24,21 @@ CLEANFILES = *.gcno *.gcda
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
-# Build shared libraries for testing.  The Basic Callout Library
-lib_LTLIBRARIES = libbco.la
+# Build shared libraries for testing.
+lib_LTLIBRARIES = libnv.la libiv.la libbco.la
+ 
+# No version function
+libnv_la_SOURCES  = no_version_library.cc
+libnv_la_CXXFLAGS = $(AM_CXXFLAGS)
+libnv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+ 
+# Incorrect version function
+libiv_la_SOURCES  = incorrect_version_library.cc
+libiv_la_CXXFLAGS = $(AM_CXXFLAGS)
+libiv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+
+# The basic callout library
 libbco_la_SOURCES  = basic_callout_library.cc
 libbco_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbco_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)

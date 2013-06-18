@@ -141,10 +141,10 @@ public:
 // libtool, so we need to look in the hidden ".libs" directory to locate the
 // .so file.  Note that we access the .so file - libtool creates this as a
 // like to the real shared library.
-static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
-static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnv.so";
-static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/.libs/libiv.so";
-static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbco.so";
+static const char* NOT_PRESENT_LIBRARY = "/home/stephen/bind10/src/lib/hooks/tests/.libs/libnothere.so";
+static const char* NO_VERSION_LIBRARY = "/home/stephen/bind10/src/lib/hooks/tests/.libs/libnv.so";
+static const char* INCORRECT_VERSION_LIBRARY = "/home/stephen/bind10/src/lib/hooks/tests/.libs/libiv.so";
+static const char* BASIC_CALLOUT_LIBRARY = "/home/stephen/bind10/src/lib/hooks/tests/.libs/libbco.so";
 
 
 namespace {
@@ -198,6 +198,9 @@ TEST_F(LibraryManagerTest, OpenClose) {
 
     // Open and close the library
     EXPECT_TRUE(lib_manager.openLibrary());
+    EXPECT_TRUE(lib_manager.closeLibrary());
+
+    // Check that closing an already closed library causes no problems.
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
