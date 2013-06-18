@@ -28,6 +28,11 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Provides a valid DHCP-DDNS configuraiton for testing basic
+/// parsing fundamentals.
+extern const char* valid_d2_config;
+
+
 /// @brief Class is used to set a globally accessible value that indicates
 /// a specific type of failure to simulate.  Test derivations of base classes
 /// can exercise error handling code paths by testing for specific SimFailure
@@ -85,10 +90,12 @@ public:
         return (false);
     }
 
+    /// @brief Resets the failure type to none.
     static void clear() {
        failure_type_ = ftNoFailure;
     }
 
+    /// @brief Static value for holding the failure type to simulate.
     static enum FailureType failure_type_;
 };
 
@@ -575,6 +582,69 @@ public:
 
 /// @brief Defines a pointer to DStubCfgMgr.
 typedef boost::shared_ptr<DStubCfgMgr> DStubCfgMgrPtr;
+
+/// @brief Test fixture base class for any fixtures which test parsing.
+/// It provides methods for converting JSON strings to configuration element
+/// sets and checking parse results
+class ConfigParseTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor
+    ConfigParseTest(){
+    }
+
+    /// @brief Destructor
+    ~ConfigParseTest() {
+    }
+
+    /// @brief Converts a given JSON string into an Element set and stores the
+    /// result the member variable, config_set_.
+    ///
+    /// @param json_text contains the configuration text in JSON format to
+    /// convert.
+    /// @return returns true if the conversion is successful, false otherwise.
+    bool fromJSON(std::string& json_text) {
+        try  {
+            config_set_ = isc::data::Element::fromJSON(json_text);
+        } catch (...) {
+            // This is so we can diagnose parsing mistakes during test
+            // development.
+            std::cerr << "fromJSON failed to parse text" << json_text
+                      << std::endl;
+            return (false);
+        }
+
+        return (true);
+    }
+
+    /// @brief Compares the status in the  parse result stored in member
+    /// variable answer_ to a given value.
+    ///
+    /// @param should_be is an integer against which to compare the status.
+    ///
+    /// @return returns true if the status value is equal to the given value.
+    bool checkAnswer(int should_be) {
+        int rcode = 0;
+        isc::data::ConstElementPtr comment;
+        comment = isc::config::parseAnswer(rcode, answer_);
+        // Handy for diagnostics
+        // if (rcode != 0) {
+        //    std::cout << "checkAnswer rcode:" << rcode << " comment: "
+        //          << *comment << std::endl;
+        //}
+        return (rcode == should_be);
+    }
+
+    /// @brief Configuration set being tested.
+    isc::data::ElementPtr config_set_;
+
+    /// @brief Results of most recent element parsing.
+    isc::data::ConstElementPtr answer_;
+};
+
+/// @brief Defines a small but valid DHCP-DDNS compliant configuration for
+/// testing configuration parsing fundamentals.
+extern const char* valid_d2_config;
 
 }; // namespace isc::d2
 }; // namespace isc

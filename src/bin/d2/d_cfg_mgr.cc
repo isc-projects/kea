@@ -39,6 +39,9 @@ namespace isc {
 namespace d2 {
 
 // *********************** DCfgContextBase  *************************
+
+const bool DCfgContextBase::optional_ = true;
+
 DCfgContextBase::DCfgContextBase():
         boolean_values_(new BooleanStorage()),
         uint32_values_(new Uint32Storage()),
@@ -49,6 +52,45 @@ DCfgContextBase::DCfgContextBase(const DCfgContextBase& rhs):
         boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
         uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
         string_values_(new StringStorage(*(rhs.string_values_))) {
+}
+
+void
+DCfgContextBase::getParam(const std::string& name, bool& value, bool optional) {
+    try {
+        value = boolean_values_->getParam(name);
+    } catch (DhcpConfigError& ex) {
+        // If the parameter is not optional, re-throw the exception.
+        if (!optional) {
+            throw;
+        }
+    }
+}
+
+
+void
+DCfgContextBase::getParam(const std::string& name, uint32_t& value,
+                          bool optional) {
+    try {
+        value = uint32_values_->getParam(name);
+    } catch (DhcpConfigError& ex) {
+        // If the parameter is not optional, re-throw the exception.
+        if (!optional) {
+            throw;
+        }
+    }
+}
+
+void
+DCfgContextBase::getParam(const std::string& name, std::string& value,
+                          bool optional) {
+    try {
+        value = string_values_->getParam(name);
+    } catch (DhcpConfigError& ex) {
+        // If the parameter is not optional, re-throw the exception.
+        if (!optional) {
+            throw;
+        }
+    }
 }
 
 DCfgContextBase::~DCfgContextBase() {
@@ -140,7 +182,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg("");
         answer = isc::config::createAnswer(0, "Configuration committed.");
 
-    } catch (const DCfgMgrBaseError& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(element_id).arg(ex.what());
         answer = isc::config::createAnswer(1,
                      string("Configuration parsing failed:") + ex.what() +
@@ -148,6 +190,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
 
         // An error occurred, so make sure that we restore original context.
         context_ = original_context;
+        return (answer);
     }
 
     return (answer);
@@ -157,7 +200,6 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
     // Call derivation's implementation to create the appropriate parser
     // based on the element id.
-    // ParserPtr parser(createConfigParser(element_id));
     ParserPtr parser = createConfigParser(element_id);
     if (!parser) {
         isc_throw(DCfgMgrBaseError, std::string("Could not create parser"));

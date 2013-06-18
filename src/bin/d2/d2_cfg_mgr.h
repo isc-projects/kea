@@ -12,9 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <d2/d_cfg_mgr.h>
+#include <d2/d2_config.h>
 
 #include <stdint.h>
 #include <string>
@@ -28,11 +30,9 @@ namespace d2 {
 /// @brief  DHCP-DDNS Configuration Context
 /// Implements the storage container for configuration context.
 /// It provides a single enclosure for the storage of configuration parameters
-/// and any other context specific information that needs to be accessible
+/// and any other DHCP-DDNS specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
-/// @TODO - add in storage of D2 specific storage like domain-to-dns_server
-/// mapping.  This is the initial implementation necessary to integrate
-/// configuration management into D2.
+/// It is derived from the context base class, DCfgContextBase.
 class D2CfgContext : public DCfgContextBase {
 public:
     /// @brief Constructor
@@ -42,9 +42,24 @@ public:
     virtual ~D2CfgContext();
 
     /// @brief Creates a clone of this context object.
+    ///
     /// @return returns a raw pointer to the new clone.
     virtual D2CfgContext* clone() {
             return (new D2CfgContext(*this));
+    }
+
+    /// @brief Fetches the forward DNS domain list manager.
+    ///
+    /// @return returns a pointer reference to the forward manager.
+    DdnsDomainListMgrPtr& getForwardMgr() {
+        return (forward_mgr_);
+    }
+
+    /// @brief Fetches the reverse DNS domain list manager.
+    ///
+    /// @return returns a pointer reference to the reverse manager.
+    DdnsDomainListMgrPtr& getReverseMgr() {
+        return (reverse_mgr_);
     }
 
 protected:
@@ -55,8 +70,16 @@ private:
     /// @brief Private assignment operator to avoid potential for slicing.
     D2CfgContext& operator=(const D2CfgContext& rhs);
 
-    /// @TODO storage for DNS domain-server mapping will be added here
+    /// @brief Forward domain list manager.
+    DdnsDomainListMgrPtr forward_mgr_;
+
+    /// @brief Reverse domain list manager.
+    DdnsDomainListMgrPtr reverse_mgr_;
 };
+
+/// @brief Defines a pointer for DdnsDomain instances.
+typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
+
 
 /// @brief Pointer to a configuration context.
 typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
@@ -67,7 +90,6 @@ typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 /// configuration.  This includes services for parsing sets of configuration
 /// values, storing the parsed information in its converted form,
 /// and retrieving the information on demand.
-/// @TODO add in D2 specific parsing
 class D2CfgMgr : public DCfgMgrBase {
 public:
     /// @brief Constructor
@@ -85,13 +107,43 @@ public:
         return (boost::dynamic_pointer_cast<D2CfgContext>(getContext()));
     }
 
+    /// @brief Matches a given FQDN to a forward domain.
+    /// 
+    /// This calls the matchDomain method of the forward domain manager to
+    /// match the given FQDN to a forward domain.  
+    ///
+    /// @param fqdn is the name for which to look.
+    /// @param domain receives the matching domain. Note that it will be reset
+    /// upon entry and only set if a match is subsequently found.
+    ///
+    /// @return returns true if a match is found, false otherwise.
+    /// @throw throws D2CfgError if given an invalid fqdn. 
+    bool matchForward(const std::string& fdqn, DdnsDomainPtr &domain);
+
+    /// @brief Matches a given FQDN to a reverse domain.
+    ///
+    /// This calls the matchDomain method of the reverse domain manager to
+    /// match the given FQDN to a forward domain.  
+    ///
+    /// @param fqdn is the name for which to look.
+    /// @param domain receives the matching domain. Note that it will be reset
+    /// upon entry and only set if a match is subsequently found.
+    ///
+    /// @return returns true if a match is found, false otherwise.
+    /// @throw throws D2CfgError if given an invalid fqdn. 
+    bool matchReverse(const std::string& fdqn, DdnsDomainPtr &domain);
+
 protected:
     /// @brief Given an element_id returns an instance of the appropriate
     /// parser.
-    /// @TODO The initial implementation simply returns a DebugParser for any
-    /// element_id value.  This is sufficient to integrate configuration
-    /// management into D2. Specific parsers will be added as the DHCP-DDNS
-    /// specific configuration is constructed.
+    ///
+    /// It is responsible for top-level or outermost DHCP-DDNS configuration
+    /// elements (see dhcp-ddns.spec):
+    ///     1. interface
+    ///     2. ip_address
+    ///     3. port
+    ///     4. forward_ddns
+    ///     5. reverse_ddns
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.

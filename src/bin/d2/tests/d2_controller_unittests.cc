@@ -54,7 +54,7 @@ public:
 };
 
 /// @brief Basic Controller instantiation testing.
-/// Verfies that the controller singleton gets created and that the
+/// Verifies that the controller singleton gets created and that the
 /// basic derivation from the base class is intact.
 TEST_F(D2ControllerTest, basicInstanceTesting) {
     // Verify the we can the singleton instance can be fetched and that
@@ -80,12 +80,12 @@ TEST_F(D2ControllerTest, basicInstanceTesting) {
 }
 
 /// @brief Tests basic command line processing.
-/// Verfies that:
+/// Verifies that:
 /// 1. Standard command line options are supported.
 /// 2. Invalid options are detected.
 TEST_F(D2ControllerTest, commandLineArgs) {
-    char* argv[] = { const_cast<char*>("progName"), 
-                     const_cast<char*>("-s"), 
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
                      const_cast<char*>("-v") };
     int argc = 3;
 
@@ -101,7 +101,7 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(true));
 
     // Verify that an unknown option is detected.
-    char* argv2[] = { const_cast<char*>("progName"), 
+    char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-x") };
     argc = 2;
     EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
@@ -119,8 +119,8 @@ TEST_F(D2ControllerTest, initProcessTesting) {
 /// launches with a valid, stand-alone command line and no simulated errors.
 TEST_F(D2ControllerTest, launchNormalShutdown) {
     // command line to run standalone
-    char* argv[] = { const_cast<char*>("progName"), 
-                     const_cast<char*>("-s"), 
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-s"),
                      const_cast<char*>("-v") };
     int argc = 3;
 
@@ -165,10 +165,9 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     ASSERT_NO_THROW(initProcess());
     EXPECT_TRUE(checkProcess());
 
-    // Create a configuration set. Content is arbitrary, just needs to be
-    // valid JSON.
-    std::string config = "{ \"test-value\": 1000 } ";
-    isc::data::ElementPtr config_set = isc::data::Element::fromJSON(config);
+    // Create a configuration set using a small, valid D2 configuration.
+    isc::data::ElementPtr config_set =
+                                isc::data::Element::fromJSON(valid_d2_config);
 
     // We are not stand-alone, so configuration should be rejected as there is
     // no session.  This is a pretty contrived situation that shouldn't be
@@ -182,6 +181,13 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     answer = DControllerBase::configHandler(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
+
+    // Use an invalid configuration to verify parsing error return.
+    std::string config = "{ \"bogus\": 1000 } ";
+    config_set = isc::data::Element::fromJSON(config);
+    answer = DControllerBase::configHandler(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
 }
 
 /// @brief Command execution tests.
