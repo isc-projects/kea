@@ -110,12 +110,20 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                           << datasrc_name);
             }
 
-            // Create a client for the underling data source via factory.
-            // If it's our internal type of data source, this is essentially
-            // no-op.  In the latter case, it's of no use unless cache is
-            // allowed; we simply skip building it in that case.
-            const DataSourcePair dsrc_pair = getDataSourceClient(type,
-                                                                 param_conf);
+            DataSourcePair dsrc_pair;
+            try {
+                // Create a client for the underling data source via
+                // factory.  If it's our internal type of data source,
+                // this is essentially no-op.  In the latter case, it's
+                // of no use unless cache is allowed; we simply skip
+                // building it in that case.
+                dsrc_pair = getDataSourceClient(type, param_conf);
+            } catch (const DataSourceLibraryError& ex) {
+                LOG_WARN(logger, DATASRC_LIBRARY_FAILURE).
+                    arg(datasrc_name).arg(rrclass_).arg(ex.what());
+                continue;
+            }
+
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
                     arg(datasrc_name).arg(rrclass_);
