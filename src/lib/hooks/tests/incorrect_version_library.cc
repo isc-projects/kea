@@ -12,13 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef HOOKS_H
-#define HOOKS_H
+/// @file
+/// @brief Incorrect version function test
+/// This is a test file for the LibraryManager test.  It produces a library
+/// that contans a "version" function but which returns an incorrect version
+/// number.
 
-#include <hooks/callout_handle.h>
-#include <hooks/library_handle.h>
+#include <hooks/hooks.h>
 
-// Version 1.0
-static const int BIND10_HOOKS_VERSION = 1;
+extern "C" {
 
-#endif  // HOOKS_H
+int version() {
+    return (BIND10_HOOKS_VERSION + 1);
+}
+
+};

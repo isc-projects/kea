@@ -76,10 +76,6 @@ public:
         return (callout_manager_);
     }
 
-    boost::shared_ptr<ServerHooks> getServerHooks() {
-        return (hooks_);
-    }
-
     /// Static variable used for accumulating information
     static int callout_value_;
 
@@ -96,9 +92,6 @@ private:
 
     /// Callout manager used for the test
     boost::shared_ptr<CalloutManager> callout_manager_;
-
-    /// Server hooks
-    boost::shared_ptr<ServerHooks> hooks_;
 };
 
 // Definition of the static variable.

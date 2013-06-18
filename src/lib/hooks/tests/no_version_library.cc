@@ -12,13 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef HOOKS_H
-#define HOOKS_H
+/// @file
+/// @brief No version function library
+///
+/// This is a test file for the LibraryManager test.  It produces a library
+/// that does not have a "version" function.
 
-#include <hooks/callout_handle.h>
-#include <hooks/library_handle.h>
+extern "C" {
 
-// Version 1.0
-static const int BIND10_HOOKS_VERSION = 1;
+int no_version() {
+    return (0);
+}
 
-#endif  // HOOKS_H
+};
