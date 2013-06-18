@@ -216,26 +216,26 @@ image::auth-mapped.png[Sequence diagram for auth server using mapped memory segm
 1. The sequence is the same to the point of creating `CacheConfig`.
 
 2. But in this case a `ZoneTableSegmentMapped` object is created based
-   on the configuration for the cache type.  This type of
-   `ZoneTableSegment` is initially empty, and isn't even associated
-   with a `MemorySgement` (and therefore considered "non writable").
+   on the configuration of the cache type.  This type of
+   `ZoneTableSegment` is initially empty and isn't even associated
+   with a `MemorySegment` (and therefore considered non-writable).
 
 3. `ConfigurableClientList` checks if the zone table segment is
    writable to know whether to load zones into memory by itself,
-   but since `ZoneTableSegment::isWritable()` returns false, it skips
+   but as `ZoneTableSegment::isWritable()` returns false, it skips
    the loading.
 
-4. the auth module gets the status of each data source, and notices
-   there's a "WAITING" state of segment.  So it subscribes to the
+4. The auth module gets the status of each data source, and notices
+   there's a `WAITING` state of segment. So it subscribes to the
    "Memmgr" group on a command session and waits for an update
    from the memory manager (memmgr) module. (See also the note at the
    end of the section)
 
-5. when the auth module receives an update command from memmgr, it
+5. When the auth module receives an update command from memmgr, it
    calls `ConfigurableClientList::resetMemorySegment()` with the command
-   argument and the segment mode of "READ_ONLY".
+   argument and the segment mode of `READ_ONLY`.
    Note that the auth module handles the command argument as mostly
-   opaque data; it's not expected to be details of segment
+   opaque data; it's not expected to deal with details of segment
    type-specific behavior.
 
 6. `ConfigurableClientList::resetMemorySegment()` subsequently calls
@@ -246,13 +246,13 @@ image::auth-mapped.png[Sequence diagram for auth server using mapped memory segm
    the specific file into memory.
    memmgr is expected to have prepared all necessary data in the file,
    so all the data are immediately ready for use (i.e., there
-   shouldn't be no explicit load operation).
+   shouldn't be any explicit load operation).
 
 7. When a change is made in the mapped data, memmgr will send another
    update command with parameters for new mapping.  The auth module
    calls `ConfigurableClientList::resetMemorySegment()`, and the
    underlying memory segment is swapped with a new one.  The old
-   memory segment object is destroyed at this point.  Note that
+   memory segment object is destroyed.  Note that
    this "destroy" just means unmapping the memory region; the data
    stored in the file are intact.
 
@@ -262,15 +262,15 @@ image::auth-mapped.png[Sequence diagram for auth server using mapped memory segm
    to reload the data by itself, just like in the previous section.
    In this case, however, the writability check of
    `getCachedZoneWriter()` fails (the segment was created as
-   READ_ONLY, so is considered non writable), so loading won't happen.
+   `READ_ONLY` and is non-writable), so loading won't happen.
 
-Note: while less likely in practice, it's possible that the same auth
+NOTE: While less likely in practice, it's possible that the same auth
 module uses both "local" and "mapped" (and even others) type of
 segments for different data sources.  In such cases the sequence is
 either the one in this or previous section depending on the specified
 segment type in the configuration.  The auth module itself isn't aware
-of per segment-type details, but change the behavior depending on the
-segment state of each data source at step 4 above: if it's "WAITING",
+of per segment-type details, but changes the behavior depending on the
+segment state of each data source at step 4 above: if it's `WAITING`,
 it means the auth module needs help from memmgr (that's all the auth
 module should know; it shouldn't be bothered with further details such
 as mapped file names); if it's something else, the auth module doesn't
