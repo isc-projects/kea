@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
+
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/zone_data.h>
