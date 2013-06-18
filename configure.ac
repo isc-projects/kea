@@ -1132,6 +1132,14 @@ AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
+# Check for asciidoc
+AC_PATH_PROG(ASCIIDOC, asciidoc, no)
+AM_CONDITIONAL(HAVE_ASCIIDOC, test "x$ASCIIDOC" != "xno")
+
+# Check for plantuml
+AC_PATH_PROG(PLANTUML, plantuml, no)
+AM_CONDITIONAL(HAVE_PLANTUML, test "x$PLANTUML" != "xno")
+
 # Check for valgrind
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
@@ -1171,6 +1179,8 @@ AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
+                 doc/design/Makefile
+                 doc/design/datasrc/Makefile
                  compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
