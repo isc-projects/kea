@@ -370,6 +370,11 @@ Therefore, the entire data source will not be available for this process. If
 this is a problem, you should configure the zones of that data source to some
 database backend (sqlite3, for example) and use it from there.
 
+% DATASRC_LIBRARY_FAILURE failure loading %1 datasource library for class %2: %3
+There was a problem loading the dynamic library for a data source. This
+backend is hence not available, and any data sources that use this
+backend will not be available.
+
 % DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source '%3': %4
 During data source configuration, an error was found in the zone data
 when it was being loaded in to memory on the shown data source.  This
