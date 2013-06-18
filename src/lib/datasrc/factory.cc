@@ -83,8 +83,8 @@ LibraryContainer::LibraryContainer(const std::string& name) {
     if (ds_lib_ == NULL) {
         // This may cause the filename to appear twice in the actual
         // error, but the output of dlerror is implementation-dependent
-        isc_throw(DataSourceLibraryError, "dlopen failed for " << name <<
-                                          ": " << dlerror());
+        isc_throw(DataSourceLibraryOpenError,
+                  "dlopen failed for " << name << ": " << dlerror());
     }
 }
 
