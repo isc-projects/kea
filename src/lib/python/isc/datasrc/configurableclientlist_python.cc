@@ -166,7 +166,7 @@ ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
         const char* datasrc_name_p = "";
         if (PyArg_ParseTuple(args, "O!|s", &isc::dns::python::name_type,
                              &name_obj, &datasrc_name_p)) {
-            const isc::dns::Name
+            const isc::dns::Name&
                 name(isc::dns::python::PyName_ToName(name_obj));
             const std::string datasrc_name(datasrc_name_p);
 
