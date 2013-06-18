@@ -165,12 +165,22 @@ public:
     ///
     /// This method adds a given zone data to the internal table.
     ///
-    /// This method ensures there'll be no memory leak on exception.
-    /// But addresses allocated from \c mem_sgmt could be relocated if
-    /// \c util::MemorySegmentGrown is thrown; the caller or its upper layer
-    /// must be aware of that possibility and update any such addresses
-    /// accordingly.  On successful return, this method ensures there's no
-    /// address relocation.
+    /// On successful completion (i.e., the method returns without an
+    /// exception), the ownership of \c content will be transferred to
+    /// the \c ZoneTable: the caller should not use the \c content hereafter;
+    /// the \c ZoneTable will be responsible to destroy it when the table
+    /// itself is destroyed.
+    ///
+    /// If this method throws, the caller is responsible to take care of
+    /// the passed \c content, whether to destroy it or use for different
+    /// purposes.  Note that addresses allocated from \c mem_sgmt could be
+    /// relocated if \c util::MemorySegmentGrown is thrown; the caller or its
+    /// upper layer must be aware of that possibility and update any such
+    /// addresses accordingly.  This applies to \c content, as it's expected
+    /// to be created using \c mem_sgmt.
+    ///
+    /// On successful return, this method ensures there's no address
+    /// relocation.
     ///
     /// \throw InvalidParameter content is NULL or empty.
     /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
@@ -181,8 +191,6 @@ public:
     ///     created.  It must be the same segment that was used to create
     ///     the zone table at the time of create().
     /// \param zone_name The name of the zone to be added.
-    /// \param zone_class The RR class of the zone.  It must be the RR class
-    ///     that is supposed to be associated to the zone table.
     /// \param content This one should hold the zone content (the ZoneData).
     ///     The ownership is passed onto the zone table. Must not be null or
     ///     empty. Must correspond to the name and class and must be allocated
@@ -194,7 +202,6 @@ public:
     ///     inside the result unless it's empty; if the zone was previously
     ///     added by \c addEmptyZone(), the data returned is NULL.
     AddResult addZone(util::MemorySegment& mem_sgmt,
-                      dns::RRClass zone_class,
                       const dns::Name& zone_name,
                       ZoneData* content);
 
