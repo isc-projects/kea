@@ -16,6 +16,7 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
+#include <datasrc/factory.h>
 #include <datasrc/cache_config.h>
 #include <datasrc/zone_iterator.h>
 #include <datasrc/exceptions.h>
@@ -70,6 +71,10 @@ public:
     {
         if (type == "error") {
             isc_throw(DataSourceError, "The error data source type");
+        }
+        if (type == "library_error") {
+            isc_throw(DataSourceLibraryError,
+                      "The library error data source type");
         }
         if (type == "MasterFiles") {
             return (DataSourcePair(0, DataSourceClientContainerPtr()));
@@ -703,6 +708,35 @@ TEST_P(ListTest, dataSrcError) {
     checkDS(0, "test_type", "{}", false);
     EXPECT_THROW(list_->configure(elem, true), DataSourceError);
     checkDS(0, "test_type", "{}", false);
+}
+
+// In case of library errors, the rest of the data sources should be
+// unaffected.
+TEST_P(ListTest, dataSrcLibraryError) {
+    EXPECT_EQ(0, list_->getDataSources().size());
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": false,"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"library_error\","
+        "   \"cache-enable\": false,"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(elem, true);
+    EXPECT_EQ(2, list_->getDataSources().size());
+    checkDS(0, "type1", "{}", false);
+    checkDS(1, "type2", "{}", false);
+    // Check the exact configuration is preserved
+    EXPECT_EQ(elem, list_->getConfiguration());
 }
 
 // Check we can get the cache
