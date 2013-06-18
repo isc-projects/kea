@@ -211,7 +211,7 @@ Sequence for auth module using mapped memory segment
 This is an example for the authoritative server module that uses
 mapped type memory segment for in-memory data.
 
-image::auth-mapped.png[]
+image::auth-mapped.png[Sequence diagram for auth server using mapped memory segment]
 
 1. The sequence is the same to the point of creating `CacheConfig`.
 
