@@ -15,8 +15,10 @@
 /// @file
 /// @brief Basic Callout Library
 ///
-/// This file is built into a shared library and is loaded by the LibraryManager
-/// test.  The characteristics of this library are:
+/// This is a test file for the LibraryManager test.  It produces a library
+/// that allows for tests of the basic library manager functions.
+///
+/// The characteristics of this library are:
 ///
 /// - Only the "version" framework function is supplied.  The other callouts
 ///   are assumed to be "standard" callouts.
