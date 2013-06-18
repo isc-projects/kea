@@ -1,0 +1,66 @@
+@startuml
+
+hide members
+
+Auth "1" *-d-> "*" ConfigurableClientList
+Auth -d-> DataSourceClient
+Auth -d-> ZoneWriter
+Auth -d-> ZoneTableAccessor
+Auth -d-> DataSourceStatus
+Auth -d-> ZoneTableIterator
+
+ConfigurableClientList "1" *-d-> "*" DataSourceInfo
+ConfigurableClientList ..> ZoneTableSegment : <<reset>>
+ConfigurableClientList ..d-> DataSourceStatus : <<create>>
+ConfigurableClientList ..> ZoneWriter : <<create>>
+ConfigurableClientList ..> ZoneTableAccessor : <<create>>
+
+DataSourceInfo "1" *-u-> "*" DataSourceClient
+DataSourceInfo "1" *-r-> "*" CacheConfig
+DataSourceInfo "1" *-d-> "*" ZoneTableSegment
+
+ZoneTableAccessor ..> ZoneTableIterator : <<create>>
+
+ZoneTableAccessorCache -> CacheConfig
+ZoneTableAccessorCache ..> ZoneTableIteratorCache : <<create>>
+ZoneTableAccessorCache -u-o ZoneTableAccessor
+
+ZoneTableIteratorCache -u-o ZoneTableIterator
+ZoneTableIteratorCache -u-> CacheConfig
+
+ZoneWriter -d-> ZoneTableSegment
+ZoneWriter ..> ZoneData : add/replace
+
+ZoneTableSegment "1" *-r-> "1" ZoneTableHeader
+ZoneTableSegment "1" *-d-> "1" MemorySegment
+
+CacheConfig ..> LoadAction
+
+LoadAction ..> ZoneData : create
+LoadAction *-> ZoneDataLoader
+
+ZoneDataLoader -> ZoneData
+ZoneDataLoader *-> ZoneDataUpdater
+ZoneDataLoader -> MemorySegment
+
+ZoneDataUpdater -> ZoneData
+ZoneDataUpdater ..> RdataSet : create
+ZoneDataUpdater ..> RdataSet : add
+
+ZoneTableHeader "1" *-d-> "1" ZoneTable
+ZoneTable "1" *-d-> "1" ZoneData
+ZoneData "1" *-d-> "1" RdataSet
+
+loadFromFile -d-o LoadAction
+IteratorLoader -d-o LoadAction
+
+MemorySegmentMapped -d-o MemorySegment
+MemorySegmentLocal -d-o MemorySegment
+
+ZoneTableSegmentMapped -d-o ZoneTableSegment
+ZoneTableSegmentLocal -d-o ZoneTableSegment
+
+ZoneTableSegmentMapped *-d-> MemorySegmentMapped
+ZoneTableSegmentLocal *-d-> MemorySegmentLocal
+
+@enduml
