@@ -53,10 +53,11 @@ public:
 };
 
 /// @brief Test fixture class for testing DCfgMgrBase class.
-/// It maintains an member instance of DStubCfgMgr and provides methods for
-/// converting JSON strings to configuration element sets, checking parse
-/// results, and accessing the configuration context.
-class DStubCfgMgrTest : public ::testing::Test {
+/// It maintains an member instance of DStubCfgMgr and derives from
+/// ConfigParseTest fixture, thus providing methods for converting JSON
+/// strings to configuration element sets, checking parse results, and
+/// accessing the configuration context.
+class DStubCfgMgrTest : public ConfigParseTest {
 public:
 
     /// @brief Constructor
@@ -65,41 +66,6 @@ public:
 
     /// @brief Destructor
     ~DStubCfgMgrTest() {
-    }
-
-    /// @brief Converts a given JSON string into an Element set and stores the
-    /// result the member variable, config_set_.
-    ///
-    /// @param json_text contains the configuration text in JSON format to
-    /// convert.
-    /// @return returns true if the conversion is successful, false otherwise.
-    bool fromJSON(std::string& json_text) {
-        try  {
-            config_set_ = isc::data::Element::fromJSON(json_text);
-        } catch (...) {
-            // This is so we can diagnose parsing mistakes during test
-            // development.
-            std::cerr << "fromJSON failed to parse text" << json_text
-                      << std::endl;
-            return (false);
-        }
-
-        return (true);
-    }
-
-    /// @brief Compares the status in the  parse result stored in member
-    /// variable answer_ to a given value.
-    ///
-    /// @param should_be is an integer against which to compare the status.
-    ///
-    /// @return returns true if the status value is equal to the given value.
-    bool checkAnswer(int should_be) {
-        int rcode = 0;
-        isc::data::ConstElementPtr comment;
-        comment = isc::config::parseAnswer(rcode, answer_);
-        //std::cout << "checkAnswer rcode:" << rcode << " comment: "
-        //          << *comment_ << std::endl;
-        return (rcode == should_be);
     }
 
     /// @brief Convenience method which returns a DStubContextPtr to the
@@ -113,12 +79,6 @@ public:
 
     /// @brief Configuration manager instance.
     DStubCfgMgrPtr cfg_mgr_;
-
-    /// @brief Configuration set being tested.
-    isc::data::ElementPtr config_set_;
-
-    /// @brief Results of most recent elemnt parsing.
-    isc::data::ConstElementPtr answer_;
 };
 
 ///@brief Tests basic construction/destruction of configuration manager.

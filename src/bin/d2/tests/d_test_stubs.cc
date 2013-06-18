@@ -21,6 +21,26 @@ using namespace asio;
 namespace isc {
 namespace d2 {
 
+const char* valid_d2_config = "{ "
+                        "\"interface\" : \"eth1\" , "
+                        "\"ip_address\" : \"192.168.1.33\" , "
+                        "\"port\" : 88 , "
+                        "\"forward_ddns\" : {"
+                        "\"ddns_domains\": [ "
+                        "{ \"name\": \"tmark.org\" , "
+                        "  \"key_name\": \"d2_key.tmark.org\" , "
+                        "  \"dns_servers\" : [ "
+                        "  { \"hostname\": \"one.tmark\" } "
+                        "     ] } ] }, "
+                        "\"reverse_ddns\" : {"
+                        "\"ddns_domains\": [ "
+                        "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
+                        "  \"key_name\": \"d2_key.tmark.org\" , "
+                        "  \"dns_servers\" : [ "
+                        "  { \"ip_address\": \"127.0.0.101\" , "
+                        "    \"port\": 100 } ] } "
+                        "] } }";
+
 // Initialize the static failure flag.
 SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 
