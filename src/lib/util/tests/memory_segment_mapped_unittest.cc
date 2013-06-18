@@ -242,8 +242,10 @@ TEST_F(MemorySegmentMappedTest, badAllocate) {
     const int ret = chmod(mapped_file, 0444);
     ASSERT_EQ(0, ret);
 
-    EXPECT_DEATH_IF_SUPPORTED(
-        {segment_->allocate(DEFAULT_INITIAL_SIZE * 2);}, "");
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED(
+            {segment_->allocate(DEFAULT_INITIAL_SIZE * 2);}, "");
+    }
 }
 
 // XXX: this test can cause too strong side effect (creating a very large
