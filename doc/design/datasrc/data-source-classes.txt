@@ -173,7 +173,7 @@ class) to represent the server application behavior.  For the purpose
 of this document that should be sufficient.  The same note applies to
 all examples below.
 
-image::auth-local.png[]
+image::auth-local.png[Sequence diagram for auth server using local memory segment]
 
 1. On startup, the auth module creates a `ConfigurableClientList`
    for each RR class specified in the configuration for "data_sources"
