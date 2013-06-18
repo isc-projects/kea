@@ -1,4 +1,5 @@
 UML_FILES = \
+	overview.txt \
 	auth-mapped.txt
 
 TEXT_FILES = \
