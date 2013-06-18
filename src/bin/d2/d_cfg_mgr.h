@@ -54,6 +54,9 @@ public:
 ///
 class DCfgContextBase {
 public:
+    /// @brief Indicator that a configuration parameter is optional.
+    static const bool optional_;
+
     /// @brief Constructor
     DCfgContextBase();
 
@@ -66,11 +69,13 @@ public:
     /// @param name is the name of the parameter to retrieve.
     /// @param value is an output parameter in which to return the retrieved
     /// value.
+    /// @param optional if true, the parameter is optional and the method
+    /// will not throw if the parameter is not found in the context. The
+    /// contents of the output parameter, value, will not be altered.
+    /// It defaults to false if not specified.
     /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter.
-    void getParam(const std::string& name, bool& value) {
-        value = boolean_values_->getParam(name);
-    }
+    /// parameter and optional is false.
+    void getParam(const std::string& name, bool& value, bool optional=false);
 
     /// @brief Fetches the value for a given uint32_t configuration parameter
     /// from the context.
@@ -78,11 +83,13 @@ public:
     /// @param name is the name of the parameter to retrieve.
     /// @param value is an output parameter in which to return the retrieved
     /// value.
+    /// @param optional if true, the parameter is optional and the method
+    /// will not throw if the parameter is not found in the context. The
+    /// contents of the output parameter, value, will not be altered.
     /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter.
-    void getParam(const std::string& name, uint32_t& value) {
-        value = uint32_values_->getParam(name);
-    }
+    /// parameter and optional is false.
+    void getParam(const std::string& name, uint32_t& value,
+                 bool optional=false);
 
     /// @brief Fetches the value for a given string configuration parameter
     /// from the context.
@@ -90,11 +97,13 @@ public:
     /// @param name is the name of the parameter to retrieve.
     /// @param value is an output parameter in which to return the retrieved
     /// value.
+    /// @param optional if true, the parameter is optional and the method
+    /// will not throw if the parameter is not found in the context. The
+    /// contents of the output parameter, value, will not be altered.
     /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter.
-    void getParam(const std::string& name, std::string& value) {
-        value = string_values_->getParam(name);
-    }
+    /// parameter and optional is false.
+    void getParam(const std::string& name, std::string& value,
+                  bool optional=false);
 
     /// @brief Fetches the Boolean Storage. Typically used for passing
     /// into parsers.

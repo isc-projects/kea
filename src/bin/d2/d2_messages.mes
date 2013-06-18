@@ -66,7 +66,7 @@ application and will exit.
 
 % DCTL_NOT_RUNNING %1 application instance is not running
 A warning message is issued when an attempt is made to shut down the
-the application when it is not running.
+application when it is not running.
 
 % DCTL_ORDER_ERROR Configuration contains more elements than the parsing order
 A debug message which indicates that configuration being parsed includes
@@ -118,6 +118,11 @@ has been invoked.
 % DHCP_DDNS_FAILED application experienced a fatal error: %1
 This is a debug message issued when the Dhcp-Ddns application encounters an
 unrecoverable error from within the event loop.
+
+% DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
+This is warning message issued when there are no domains in the configuration
+which match the cited FQDN.  The DNS Update request for the FQDN cannot be
+processed.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the Dhcp-Ddns application enters
