@@ -523,12 +523,7 @@ TEST_F(HandlesTest, ContextDeletionCheck) {
 
 // Tests that the CalloutHandle's constructor and destructor call the
 // context_create and context_destroy callbacks (if registered).  For
-// simplicity, we'll use the same callout functions as used above, plus
-// the following that returns an error:
-
-int returnError(CalloutHandle&) {
-    return (1);
-}
+// simplicity, we'll use the same callout functions as used above.
 
 TEST_F(HandlesTest, ConstructionDestructionCallouts) {
 
