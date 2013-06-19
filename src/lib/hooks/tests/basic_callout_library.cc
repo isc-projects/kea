@@ -25,12 +25,12 @@
 ///
 /// - A context_create callout is supplied.
 ///
-/// - Three other callouts are supplied.  Two do some trivial calculations
-///   on the arguments supplied to it and the context variables.  The
-///   third returns the results through the "result" argument, and this is
-///   checked by the test program.
+/// - Three other callouts are supplied.  All do some trivial calculationsll
+///   on the arguments supplied to it and the context variables, returning
+///   intermediate results through the "result" argument.
 
 #include <hooks/hooks.h>
+#include <iostream>
 
 using namespace isc::hooks;
 
@@ -46,13 +46,14 @@ version() {
 int
 context_create(CalloutHandle& handle) {
     handle.setContext("result", static_cast<int>(10));
+    handle.setArgument("result", static_cast<int>(10));
     return (0);
 }
 
 // First callout adds the passed "data_1" argument to the initialized context
 // value of 10.
 
-int basic_one(CalloutHandle& handle) {
+int lm_one(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_1", data);
 
@@ -61,6 +62,7 @@ int basic_one(CalloutHandle& handle) {
 
     result += data;
     handle.setContext("result", result);
+    handle.setArgument("result", result);
 
     return (0);
 }
@@ -69,7 +71,7 @@ int basic_one(CalloutHandle& handle) {
 // argument.
 
 int
-basic_two(CalloutHandle& handle) {
+lm_two(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_2", data);
 
@@ -78,17 +80,22 @@ basic_two(CalloutHandle& handle) {
 
     result *= data;
     handle.setContext("result", result);
+    handle.setArgument("result", result);
 
     return (0);
 }
 
-// Final callout returns the value in the context through the "result"
-// argument.
+// Final callout subtracts the result in "data_3" and.
 
 int
-basic_three(CalloutHandle& handle) {
+lm_three(CalloutHandle& handle) {
+    int data;
+    handle.getArgument("data_3", data);
+
     int result;
     handle.getContext("result", result);
+
+    result -= data;
     handle.setArgument("result", result);
 
     return (0);
