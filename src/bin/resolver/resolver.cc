@@ -524,7 +524,8 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
 {
     const ConstQuestionPtr question = *query_message->beginQuestion();
     const RRType qtype = question->getType();
-    const RRClass qclass = question->getClass();
+    // Make cppcheck happy with the reference.
+    const RRClass& qclass = question->getClass();
 
     // Apply query ACL
     const Client client(io_message);

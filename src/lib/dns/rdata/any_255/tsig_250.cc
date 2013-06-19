@@ -370,13 +370,13 @@ TSIG::toText() const {
         lexical_cast<string>(impl_->time_signed_) + " " +
         lexical_cast<string>(impl_->fudge_) + " " +
         lexical_cast<string>(impl_->mac_.size()) + " ";
-    if (impl_->mac_.size() > 0) {
+    if (!impl_->mac_.empty()) {
         result += encodeBase64(impl_->mac_) + " ";
     }
     result += lexical_cast<string>(impl_->original_id_) + " ";
     result += TSIGError(impl_->error_).toText() + " ";
     result += lexical_cast<string>(impl_->other_data_.size());
-    if (impl_->other_data_.size() > 0) {
+    if (!impl_->other_data_.empty()) {
         result += " " + encodeBase64(impl_->other_data_);
     }
 
@@ -520,7 +520,7 @@ TSIG::getMACSize() const {
 
 const void*
 TSIG::getMAC() const {
-    if (impl_->mac_.size() > 0) {
+    if (!impl_->mac_.empty()) {
         return (&impl_->mac_[0]);
     } else {
         return (NULL);
@@ -544,7 +544,7 @@ TSIG::getOtherLen() const {
 
 const void*
 TSIG::getOtherData() const {
-    if (impl_->other_data_.size() > 0) {
+    if (!impl_->other_data_.empty()) {
         return (&impl_->other_data_[0]);
     } else {
         return (NULL);
