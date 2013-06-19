@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 using namespace isc;
 using namespace isc::hooks;
 using namespace std;
@@ -40,9 +42,9 @@ public:
         // so reset it and explicitly set up the hooks for the test.
         ServerHooks& hooks = ServerHooks::getServerHooks();
         hooks.reset();
-        alpha_index_ = hooks.registerHook("alpha");
-        beta_index_ = hooks.registerHook("beta");
-        gamma_index_ = hooks.registerHook("gamma");
+        lm_one_index_ = hooks.registerHook("lm_one");
+        lm_two_index_ = hooks.registerHook("lm_two");
+        lm_three_index_ = hooks.registerHook("lm_three");
 
         // Set up the callout manager with these hooks.  Assume a maximum of
         // four libraries.
@@ -52,23 +54,12 @@ public:
         callout_handle_.reset(new CalloutHandle(callout_manager_));
     }
 
-    /// @brief Return the callout handle
-    CalloutHandle& getCalloutHandle() {
-        return (*callout_handle_);
-    }
-
-    /// @brief Return the callout manager
-    boost::shared_ptr<CalloutManager> getCalloutManager() {
-        return (callout_manager_);
-    }
-
     /// Hook indexes.  These are somewhat ubiquitous, so are made public for
     /// ease of reference instead of being accessible by a function.
-    int alpha_index_;
-    int beta_index_;
-    int gamma_index_;
+    int lm_one_index_;
+    int lm_two_index_;
+    int lm_three_index_;
 
-private:
     /// Callout handle used in calls
     boost::shared_ptr<CalloutHandle> callout_handle_;
 
@@ -90,51 +81,26 @@ public:
     ///
     /// @param name Name of the library to load.  This should be an absolute
     ///        path name.
-    /// @param index Index of this library
+    /// @param index Index of this library.  For all these tests, it will be
+    ///        zero, as we are only using one library.
     /// @param manager CalloutManager object
     PublicLibraryManager(const std::string& name, int index,
                          const boost::shared_ptr<CalloutManager>& manager)
         : LibraryManager(name, index, manager)
     {}
 
-    /// Public methods that call protected methods on the superclass
-    //@{
-    /// @brief Open library
+    /// @brief Destructor
     ///
-    /// Opens the library associated with this LibraryManager.  A message is
-    /// logged on an error.
-    ///
-    /// @return true if the library opened successfully, false otherwise.
-    bool openLibrary() {
-        return (LibraryManager::openLibrary());
+    /// Ensures that the library is closed after the test.
+    ~PublicLibraryManager() {
+        static_cast<void>(closeLibrary());
     }
 
-    /// @brief Close library
-    ///
-    /// Closes the library associated with this LibraryManager.  A message is
-    /// logged on an error.
-    ///
-    /// @return true if the library closed successfully, false otherwise.
-    bool closeLibrary() {
-        return (LibraryManager::closeLibrary());
-    }
-
-
-    /// @brief Check library version
-    ///
-    /// With the library open, accesses the "version()" function and, if
-    /// present, checks the returned value against the hooks version symbol
-    /// for the currently running BIND 10.
-    ///
-    /// If there is no version() function, or if there is a mismatch in
-    /// version number, a message logged.
-    ///
-    /// @return bool true if the check succeeded
-    bool checkVersion() const {
-        return (LibraryManager::checkVersion());
-    }
-
-    //@}
+    /// Public methods that call protected methods on the superclass.
+    using LibraryManager::openLibrary;
+    using LibraryManager::closeLibrary;
+    using LibraryManager::checkVersion;
+    using LibraryManager::registerStandardCallouts;
 };
 
 // Names of the libraries used in these tests.  These libraries are built using
@@ -152,87 +118,119 @@ namespace {
 // Tests that OpenLibrary reports an error for an unknown library.
 
 TEST_F(LibraryManagerTest, NonExistentLibrary) {
-    // Check that opening a non-existent library fails.
     PublicLibraryManager lib_manager(std::string(NOT_PRESENT_LIBRARY),
-                                     0, getCalloutManager());
+                                     0, callout_manager_);
     EXPECT_FALSE(lib_manager.openLibrary());
-}
-
-// Tests that OpenLibrary handles the case of no version present.
-
-TEST_F(LibraryManagerTest, NoVersionFunction) {
-    PublicLibraryManager lib_manager(std::string(NO_VERSION_LIBRARY),
-                                     0, getCalloutManager());
-    // Open should succeed.
-    EXPECT_TRUE(lib_manager.openLibrary());
-
-    // Version check should fail.
-    EXPECT_FALSE(lib_manager.checkVersion());
-
-    // Tidy up.
-    EXPECT_TRUE(lib_manager.closeLibrary());
-}
-
-// Tests that OpenLibrary reports an error for an unknown library.
-
-TEST_F(LibraryManagerTest, IncorrectVersionReturned) {
-    PublicLibraryManager lib_manager(std::string(INCORRECT_VERSION_LIBRARY),
-                                     0, getCalloutManager());
-    // Open should succeed.
-    EXPECT_TRUE(lib_manager.openLibrary());
-
-    // Version check should fail.
-    EXPECT_FALSE(lib_manager.checkVersion());
-
-    // Tidy up.
-    EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
 // Tests that the openLibrary() and closeLibrary() methods work.
 
 TEST_F(LibraryManagerTest, OpenClose) {
-
-    // Create the library manager.
     PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
-                                     0, getCalloutManager());
+                                     0, callout_manager_);
 
     // Open and close the library
     EXPECT_TRUE(lib_manager.openLibrary());
     EXPECT_TRUE(lib_manager.closeLibrary());
+
+    // Check that a second close does not report an error.
+    EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
-// Checks the basic functionality - loads a library where the callouts are
-// named after the hooks, calls the callouts and checks the results.
+// Check that the code handles the case of a library with no version function.
 
-TEST_F(LibraryManagerTest, BasicCalloutTest) {
+TEST_F(LibraryManagerTest, NoVersionFunction) {
+    PublicLibraryManager lib_manager(std::string(NO_VERSION_LIBRARY),
+                                     0, callout_manager_);
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Version check should fail.
+    EXPECT_FALSE(lib_manager.checkVersion());
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Check that the code handles the case of a library with a version function
+// that returns an incorrect version number.
+
+TEST_F(LibraryManagerTest, IncorrectVersionReturned) {
+    PublicLibraryManager lib_manager(std::string(INCORRECT_VERSION_LIBRARY),
+                                     0, callout_manager_);
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Version check should fail.
+    EXPECT_FALSE(lib_manager.checkVersion());
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Tests that checkVersion() function succeeds in the case of a library with a
+// version function that returns the correct version number.
+
+TEST_F(LibraryManagerTest, CorrectVersionReturned) {
+    PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Version check should succeed.
+    EXPECT_TRUE(lib_manager.checkVersion());
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Checks the registration of standard callouts.
+
+TEST_F(LibraryManagerTest, RegisterStandardCallouts) {
 
     // Load the only library, specifying the index of 0 as it's the only
     // library.  This should load all callouts.
-    LibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
-                               0, getCalloutManager());
-    EXPECT_NO_THROW(lib_manager.loadLibrary());
+    PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                               0, callout_manager_);
+    EXPECT_TRUE(lib_manager.openLibrary());
 
-    // Set up abbreviations...
-    boost::shared_ptr<CalloutManager> co_manager = getCalloutManager();
-    CalloutHandle& callout_handle = getCalloutHandle();
+    // Check the version of the library.
+    EXPECT_TRUE(lib_manager.checkVersion());
+
+    // Load the standard callouts
+    EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
+
+    int result = 0;
 
     // Now execute the callouts in the order expected.  context_create
     // always comes first.  This sets the context value to 10.
-    co_manager->callCallouts(ServerHooks::CONTEXT_CREATE, callout_handle);
+    callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
+                                   *callout_handle_);
 
     // First callout adds 5 to the context value.
-    callout_handle.setArgument("data_1", static_cast<int>(5));
-    co_manager->callCallouts(alpha_index_, callout_handle);
+    callout_handle_->setArgument("data_1", static_cast<int>(5));
+    callout_manager_->callCallouts(lm_one_index_, *callout_handle_);
+    callout_handle_->getArgument("result", result);
+    EXPECT_EQ(15, result);
 
     // Second callout multiples the context value by 7
-    callout_handle.setArgument("data_2", static_cast<int>(7));
-    co_manager->callCallouts(beta_index_, callout_handle);
-
-    // Third callour retrieves the context value.
-    co_manager->callCallouts(gamma_index_, callout_handle);
-    int result;
-    callout_handle.getArgument("result", result);
+    callout_handle_->setArgument("data_2", static_cast<int>(7));
+    callout_manager_->callCallouts(lm_two_index_, *callout_handle_);
+    callout_handle_->getArgument("result", result);
     EXPECT_EQ(105, result);
+
+    // Third callout subtracts 17.
+    callout_handle_->setArgument("data_3", static_cast<int>(17));
+    callout_manager_->callCallouts(lm_three_index_, *callout_handle_);
+    callout_handle_->getArgument("result", result);
+    EXPECT_EQ(88, result);
+
+    // Explicitly clear the callout_handle_ so that we can delete the library.
+    // This is the only object to contain memory allocated by it.
+    callout_handle_.reset();
+
+    // Tidy up
+    EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
 } // Anonymous namespace
