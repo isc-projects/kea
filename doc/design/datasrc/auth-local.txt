@@ -103,9 +103,6 @@ list --> auth: ZoneWriter.2
 deactivate list
 
 
-
-
-
 auth -> ZoneWriter.2: load()
 activate ZoneWriter.2
 ZoneWriter.2 -> LoadAction.2: (funcall)
