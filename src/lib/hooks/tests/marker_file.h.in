@@ -12,40 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef MARKER_FILE_H
+#define MARKER_FILE_H
+
 /// @file
-/// @brief Error Load Library
-///
-/// This is a test file for the LibraryManager test.  It produces a library
-/// that allows for tests of the basic library manager functions.
-///
-/// The characteristics of this library are:
-///
-/// - All framework functions are supplied.  "version" returns the correct
-///   value, but "load" and unload return an error.
+/// Define a marker file that is used in tests to prove that an "unload"
+/// function has been called.
 
-#include <hooks/hooks.h>
-#include <iostream>
-
-using namespace isc::hooks;
-
-extern "C" {
-
-// Framework functions
-
-int
-version() {
-    return (BIND10_HOOKS_VERSION);
+namespace {
+const char* MARKER_FILE = "@abs_builddir@/marker_file.dat";
 }
 
-int
-load(LibraryHandle&) {
-    return (1);
-}
-
-int
-unload() {
-    return (1);
-}
-
-};
+#endif // MARKER_FILE_H
 

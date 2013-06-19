@@ -13,18 +13,21 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /// @file
-/// @brief Error Load Library
+/// @brief Basic unload library
 ///
 /// This is a test file for the LibraryManager test.  It produces a library
 /// that allows for tests of the basic library manager functions.
 ///
 /// The characteristics of this library are:
 ///
-/// - All framework functions are supplied.  "version" returns the correct
-///   value, but "load" and unload return an error.
+/// - The "version" and "unload" framework functions are supplied. "version"
+///   returns a valid value and "unload" creates a marker file and returns
+///   success.
 
 #include <hooks/hooks.h>
-#include <iostream>
+#include <hooks/tests/marker_file.h>
+
+#include <fstream>
 
 using namespace isc::hooks;
 
@@ -37,14 +40,13 @@ version() {
     return (BIND10_HOOKS_VERSION);
 }
 
-int
-load(LibraryHandle&) {
-    return (1);
-}
+int unload() {
+    // Create the marker file.
+    std::fstream marker;
+    marker.open(MARKER_FILE, std::fstream::out);
+    marker.close();
 
-int
-unload() {
-    return (1);
+    return (0);
 }
 
 };
