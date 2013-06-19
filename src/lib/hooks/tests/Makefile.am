@@ -25,28 +25,33 @@ TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Build shared libraries for testing.
-lib_LTLIBRARIES = libnv.la libiv.la libbco.la
+lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la
  
 # No version function
-libnv_la_SOURCES  = no_version_library.cc
-libnv_la_CXXFLAGS = $(AM_CXXFLAGS)
-libnv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libnvl_la_SOURCES  = no_version_library.cc
+libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
  
 # Incorrect version function
-libiv_la_SOURCES  = incorrect_version_library.cc
-libiv_la_CXXFLAGS = $(AM_CXXFLAGS)
-libiv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libivl_la_SOURCES  = incorrect_version_library.cc
+libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libilv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
+# The basic callout library - contains standard callouts
+libbcl_la_SOURCES  = basic_callout_library.cc
+libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
-# The basic callout library
-libbco_la_SOURCES  = basic_callout_library.cc
-libbco_la_CXXFLAGS = $(AM_CXXFLAGS)
-libbco_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libbco_la_LIBADD  =
-libbco_la_LIBADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
-libbco_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
-libbco_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
-libbco_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+# The load callout library - contains a load function
+liblcl_la_SOURCES  = load_callout_library.cc
+liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
+liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+# The load error callout library - contains a load function that returns
+# an error.
+liblecl_la_SOURCES  = load_error_callout_library.cc
+liblecl_la_CXXFLAGS = $(AM_CXXFLAGS)
+liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
 TESTS =
 if HAVE_GTEST
