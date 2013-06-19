@@ -24,8 +24,11 @@ CLEANFILES = *.gcno *.gcda
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
+TESTS =
+if HAVE_GTEST
 # Build shared libraries for testing.
-lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la
+lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la \
+                  libucl.la
  
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
@@ -53,8 +56,12 @@ liblecl_la_SOURCES  = load_error_callout_library.cc
 liblecl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
-TESTS =
-if HAVE_GTEST
+# The unload callout library - contains an unload function that
+# creates a marker file.
+libucl_la_SOURCES  = unload_callout_library.cc
+libucl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libucl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
@@ -75,3 +82,5 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+EXTRA_DIST = library_manager_unittest.cc.in marker_file.h.in

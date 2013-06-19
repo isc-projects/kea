@@ -164,6 +164,15 @@ protected:
     ///         have been output.
     bool runLoad();
 
+    /// @brief Run the unload function if present
+    ///
+    /// Searches for the "unload" framework function and, if present, runs it.
+    ///
+    /// @return bool true if not found or found and run successfully,
+    ///         false on an error.  In this case, an error message will
+    ///         have been output.
+    bool runUnload() {return false;}
+
 private:
     void*       dl_handle_;     ///< Handle returned by dlopen
     int         index_;         ///< Index associated with this library
