@@ -1,0 +1,47 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::hooks
+
+% HOOKS_CLOSE_ERROR failed to close hook library %1: %2
+BIND 10 has failed to close the named hook library for the stated reason.
+Although this is an error, this should not affect the running system other
+than as a loss of resources.  If this error persists, you should restart
+BIND 10.
+
+% HOOKS_INCORRECT_VERSION hook library %1 is at version %2, require version %3
+BIND 10 has detected that the named hook library has been built against
+a version of BIND 10 that is incompatible with the version of BIND 10
+running on your system.  It has not loaded the library.
+
+This is most likely due to the installation of a new version of BIND 10
+without rebuilding the hook library.  A rebuild and re-install of the library
+should fix the problem in most cases.
+
+% HOOKS_NO_VERSION no version() function found in hook library %1
+The shared library named in the message was found and successfully loaded, but
+BIND 10 did not find a function named 'version' in it.  This function is
+required and should return the version of BIND 10 against which the library
+was built.  The value is used to check that the library was built against a
+compatible version of BIND 10.  The library has not been loaded.
+
+% HOOKS_OPEN_ERROR failed to open hook library %1: %2
+BIND 10 failed to open the specified hook library for the stated reason. The
+library has not been loaded.  BIND 10 will continue to function, but without
+the services offered by the library.
+
+% HOOKS_REGISTER_CALLOUT library %1 has registered a callout for hook %2
+This is a debug message, output when the library loading function has located
+a standard callout (a callout with the same name as a hook point) and
+registered it.

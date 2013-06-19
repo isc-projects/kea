@@ -109,7 +109,6 @@ protected:
     ///         when this method was called.
     bool closeLibrary();
 
-
     /// @brief Check library version
     ///
     /// With the library open, accesses the "version()" function and, if
@@ -121,6 +120,13 @@ protected:
     ///
     /// @return bool true if the check succeeded
     bool checkVersion() const;
+
+    /// @brief Register standard callouts
+    ///
+    /// Loops through the list of hook names and searches the library for
+    /// functions with those names.  Any that are found are registered as
+    /// callouts for that hook.
+    void registerStandardCallouts();
 
 private:
     void*       dl_handle_;     ///< Handle returned by dlopen
