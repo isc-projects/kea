@@ -29,9 +29,25 @@ This is most likely due to the installation of a new version of BIND 10
 without rebuilding the hook library.  A rebuild and re-install of the library
 should fix the problem in most cases.
 
-% HOOKS_NO_VERSION no version() function found in hook library %1
+% HOOKS_LOAD 'load' function in hook library %1 found and successfully called
+This is a debug message issued when the "load" function has been found in a
+hook library and has been successfully called.
+
+% HOOKS_LOAD_ERROR hook library %1 has 'load' function returing error code %2
+A "load" function was found in the library named in the message and was
+called.  The function returned a non-zero status (also given in the message)
+which was interpreted as an error.  The library has been unloaded and
+no callouts from it will be installed.
+
+% HOOKS_NO_LOAD no 'load' function found in hook library %1
+This is a debug message saying that the specified library was loaded but
+no function called "load" was found in it.  Providing the library contained
+some "standard" functions (i.e. functions with the names of the hooks for
+the given server), this is not an issue.
+
+% HOOKS_NO_VERSION no 'version' function found in hook library %1
 The shared library named in the message was found and successfully loaded, but
-BIND 10 did not find a function named 'version' in it.  This function is
+BIND 10 did not find a function named "version" in it.  This function is
 required and should return the version of BIND 10 against which the library
 was built.  The value is used to check that the library was built against a
 compatible version of BIND 10.  The library has not been loaded.
@@ -41,7 +57,7 @@ BIND 10 failed to open the specified hook library for the stated reason. The
 library has not been loaded.  BIND 10 will continue to function, but without
 the services offered by the library.
 
-% HOOKS_REGISTER_CALLOUT library %1 has registered a callout for hook %2
+% HOOKS_REGISTER_CALLOUT library %1 has registered a callout for hook '%2'
 This is a debug message, output when the library loading function has located
 a standard callout (a callout with the same name as a hook point) and
 registered it.

@@ -33,17 +33,38 @@ class LibraryManager;
 /// with the "version" method.  If all is OK, it iterates through the list of
 /// known hooks and locates their symbols, registering each callout as it
 /// does so.  Finally it locates the "load" and "unload" functions (if present),
-/// calling the "load" callouts if present.
+/// calling the "load" callout if present.
 ///
 /// On unload, it calls the "unload" method if one was located, clears the
 /// callouts from all hooks and closes the library.
+///
+/// @note Caution needs to be exercised whtn using the unload method. During
+///       use, data will pass between the server and the library.  In this
+///       process, the library may allocate memory and pass it back to the
+///       server.  This could happen by the server setting arguments or context
+///       in the CalloutHandle object, or by the library modifying the content
+///       of pointed-to data. A problem arises when the library is unloaded,
+///       because the addresses of allocated day may lie in the virtual
+///       address space deleted in that process.  If this happens, any
+///       reference to the memory will cause a segmentation fault.  This can
+///       occur in a quite obscure place, for example in the middle of a
+///       destructor of an STL class when it is deleting memory allocated
+///       when the data structure was extended.
+///
+/// @par  The only safe way to run the "unload" function is to ensure that all
+///       possible references to it are removed first.  This means that all
+///       CalloutHandles must be destroyed, as must any data items that were
+///       passed to the callouts.  In practice, it could mean that a server
+///       suspends processing of new requests until all existing ones have
+///       been serviced and all packet/context structures destroyed before
+///       reloading the libraries.
 
 class LibraryManager {
 private:
     /// Useful typedefs for the framework functions
-    typedef int (*version_function_ptr)();          ///< version() signature
-    typedef int (*load_function_ptr)();             ///< load() signature
-    typedef int (*unload_function_ptr)(LibraryHandle&); ///< unload() signature
+    typedef int (*version_function_ptr)();            ///< version() signature
+    typedef int (*load_function_ptr)(LibraryHandle&); ///< load() signature
+    typedef int (*unload_function_ptr)();             ///< unload() signature
 
 public:
     /// @brief Constructor
@@ -57,7 +78,7 @@ public:
     LibraryManager(const std::string& name, int index,
                    const boost::shared_ptr<CalloutManager>& manager)
         : dl_handle_(NULL), index_(index), manager_(manager),
-          library_name_(name), load_func_(NULL), unload_func_(NULL)
+          library_name_(name)
     {}
 
     /// @brief Destructor
@@ -65,21 +86,27 @@ public:
     /// If the library is open, closes it.  This is principally a safety
     /// feature to ensure closure in the case of an exception destroying
     /// this object.
+    ///
+    /// However, see the caveat in the class header about when it is safe
+    /// to unload libraries.
     ~LibraryManager() {
-        static_cast<void>(closeLibrary());
+        static_cast<void>(unloadLibrary());
     }
 
     /// @brief Loads a library
     ///
     /// Open the library and check the version.  If all is OK, load all
     /// standard symbols then call "load" if present.
-    void loadLibrary() {}
+    bool loadLibrary() {return true;}
 
     /// @brief Unloads a library
     ///
     /// Calls the libraries "unload" function if present, the closes the
     /// library.
-    void unloadLibrary() {}
+    ///
+    /// However, see the caveat in the class header about when it is safe
+    /// to unload libraries.
+    bool unloadLibrary() {return false;}
 
     /// @brief Return library name
     ///
@@ -128,6 +155,15 @@ protected:
     /// callouts for that hook.
     void registerStandardCallouts();
 
+    /// @brief Run the load function if present
+    ///
+    /// Searches for the "load" framework function and, if present, runs it.
+    ///
+    /// @return bool true if not found or found and run successfully,
+    ///         false on an error.  In this case, an error message will
+    ///         have been output.
+    bool runLoad();
+
 private:
     void*       dl_handle_;     ///< Handle returned by dlopen
     int         index_;         ///< Index associated with this library
@@ -135,8 +171,6 @@ private:
                                 ///< Callout manager for registration
     std::string library_name_;  ///< Name of the library
 
-    load_function_ptr       load_func_;     ///< Pointer to "load" function
-    unload_function_ptr     unload_func_;   ///< Pointer to "unload" function
 };
 
 } // namespace hooks
