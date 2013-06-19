@@ -78,7 +78,7 @@ deactivate auth
 
 ...
 
-[-> auth: reload\n(arg: zonename)
+[-> auth: reload\n(zonename)
 activate auth
 
 auth -> list: getCachedZoneWriter\n(zone_name)
