@@ -2,7 +2,8 @@ UML_FILES = \
 	overview.txt \
 	auth-local.txt \
 	auth-mapped.txt \
-	memmgr-mapped-init.txt
+	memmgr-mapped-init.txt \
+	memmgr-mapped-reload.txt
 
 TEXT_FILES = \
 	data-source-classes.txt
