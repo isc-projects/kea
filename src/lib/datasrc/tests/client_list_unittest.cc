@@ -125,6 +125,7 @@ public:
         rrclass_(RRClass::IN()),
         // The empty list corresponds to a list with no elements inside
         list_(new TestedList(rrclass_)),
+        negative_result_(),
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","

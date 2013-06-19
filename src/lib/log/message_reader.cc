@@ -127,7 +127,7 @@ void
 MessageReader::parsePrefix(const vector<string>& tokens) {
 
     // Should not get here unless there is something in the tokens array.
-    assert(tokens.size() > 0);
+    assert(!tokens.empty());
 
     // Process $PREFIX.  With no arguments, the prefix is set to the empty
     // string.  One argument sets the prefix to the to its value and more than
