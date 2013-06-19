@@ -399,8 +399,10 @@ class TestDummyNotifyOut(unittest.TestCase):
 
     def test_counters(self):
         self.assertEqual(
-            {'zones': {'_SERVER_': {'notifyoutv4': 1, 'notifyoutv6': 1},
-                       TEST_ZONE_NAME_STR: {'notifyoutv4': 1, 'notifyoutv6': 1}}},
+            {'zones': {TEST_ZONE_CLASS_STR: { '_SERVER_':
+                           {'notifyoutv4': 1, 'notifyoutv6': 1},
+                                              TEST_ZONE_NAME_STR:
+                           {'notifyoutv4': 1, 'notifyoutv6': 1}}}},
             self.notifier.get_counters())
 
 class TestDummyXfroutServer(unittest.TestCase):
@@ -418,13 +420,14 @@ class TestDummyXfroutServer(unittest.TestCase):
         self.assertEqual(
             {'axfr_running': 0, 'ixfr_running': 0,
              'socket': {'unixdomain': {'open': 1, 'close': 1}},
-             'zones': {'_SERVER_': {'notifyoutv4': 1,
+             'zones': {TEST_ZONE_CLASS_STR: {
+                        '_SERVER_': {'notifyoutv4': 1,
                                     'notifyoutv6': 1,
                                     'xfrrej': 1, 'xfrreqdone': 1},
-                       TEST_ZONE_NAME_STR: {'notifyoutv4': 1,
+                        TEST_ZONE_NAME_STR: {'notifyoutv4': 1,
                                         'notifyoutv6': 1,
                                         'xfrrej': 1,
-                                        'xfrreqdone': 1}}},
+                                        'xfrreqdone': 1}}}},
             self.xfrout_server.get_counters())
 
 if __name__== "__main__":
