@@ -16,14 +16,16 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/server_hooks.h>
+#include <hooks/tests/marker_file.h>
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <fstream>
 #include <string>
-#include <vector>
 
-#include <iostream>
+#include <unistd.h>
+
 
 using namespace isc;
 using namespace isc::hooks;
@@ -52,6 +54,16 @@ public:
 
         // Set up the callout handle.
         callout_handle_.reset(new CalloutHandle(callout_manager_));
+
+        // Ensure the marker file is not present
+        static_cast<void>(unlink(MARKER_FILE));
+    }
+
+    /// @brief Destructor
+    ///
+    /// Ensures a marker file is removed after the test.
+    ~LibraryManagerTest() {
+        static_cast<void>(unlink(MARKER_FILE));
     }
 
     /// Hook indexes.  These are somewhat ubiquitous, so are made public for
@@ -102,6 +114,7 @@ public:
     using LibraryManager::checkVersion;
     using LibraryManager::registerStandardCallouts;
     using LibraryManager::runLoad;
+    using LibraryManager::runUnload;
 };
 
 // Names of the libraries used in these tests.  These libraries are built using
@@ -115,6 +128,7 @@ static const char* LOAD_ERROR_CALLOUT_LIBRARY =
     "@abs_builddir@/.libs/liblecl.so";
 static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
 static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnvl.so";
+static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl.so";
 
 
 namespace {
@@ -318,6 +332,86 @@ TEST_F(LibraryManagerTest, CheckLoadError) {
 
     // Check that we catch a load error
     EXPECT_FALSE(lib_manager.runLoad());
+
+    // Explicitly clear the callout_handle_ so that we can delete the library.
+    // This is the only object to contain memory allocated by it.
+    callout_handle_.reset();
+
+    // Tidy up
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// TODO Check that unload is called.  This causes problems with testing
+// in that it can't communicate anything back to the caller.  So we'll
+// test a successful call by checking whether a marker file is created.
+
+// No unload function
+
+TEST_F(LibraryManagerTest, CheckNoUnload) {
+
+    // Load the only library, specifying the index of 0 as it's the only
+    // library.  This should load all callouts.
+    PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Check that no unload function returns true.
+    EXPECT_TRUE(lib_manager.runUnload());
+
+    // Explicitly clear the callout_handle_ so that we can delete the library.
+    // This is the only object to contain memory allocated by it.
+    callout_handle_.reset();
+
+    // Tidy up
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Unload function returns an error
+
+TEST_F(LibraryManagerTest, CheckUnloadError) {
+
+    // Load the only library, specifying the index of 0 as it's the only
+    // library.  This should load all callouts.
+    PublicLibraryManager lib_manager(std::string(LOAD_ERROR_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Check that unload function returning an error returns false.
+    EXPECT_FALSE(lib_manager.runUnload());
+
+    // Explicitly clear the callout_handle_ so that we can delete the library.
+    // This is the only object to contain memory allocated by it.
+    callout_handle_.reset();
+
+    // Tidy up
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Unload function works
+
+TEST_F(LibraryManagerTest, CheckUnload) {
+
+    // Load the only library, specifying the index of 0 as it's the only
+    // library.  This should load all callouts.
+    PublicLibraryManager lib_manager(std::string(UNLOAD_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Check that the marker file is not present (at least that the file
+    // open fails).
+    fstream marker;
+    marker.open(MARKER_FILE, fstream::in);
+    EXPECT_TRUE(marker.fail());
+
+    // Check that unload function runs and returns a success
+    EXPECT_TRUE(lib_manager.runUnload());
+
+    // Check that the open succeeded
+    marker.open(MARKER_FILE, fstream::in);
+    EXPECT_TRUE(marker.is_open());
+
+    // Tidy up
+    marker.close();
 
     // Explicitly clear the callout_handle_ so that we can delete the library.
     // This is the only object to contain memory allocated by it.

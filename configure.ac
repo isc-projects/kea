@@ -1403,6 +1403,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/tests/session_unittests_config.h
            src/lib/datasrc/datasrc_config.h.pre
            src/lib/hooks/tests/library_manager_unittest.cc
+           src/lib/hooks/tests/marker_file.h
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
