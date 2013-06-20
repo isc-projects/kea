@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef D2_CFG_MGR_H
+#define D2_CFG_MGR_H
+
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -20,9 +23,6 @@
 
 #include <stdint.h>
 #include <string>
-
-#ifndef D2_CFG_MGR_H
-#define D2_CFG_MGR_H
 
 namespace isc {
 namespace d2 {
