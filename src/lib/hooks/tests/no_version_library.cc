@@ -15,8 +15,11 @@
 /// @file
 /// @brief No version function library
 ///
-/// This is a test file for the LibraryManager test.  It produces a library
-/// that does not have a "version" function.
+/// This is source of a test library for various test (LibraryManager and
+/// HooksManager).  The characteristics of the library produced from this
+/// file are:
+///
+/// - No version() function is present.
 
 extern "C" {
 

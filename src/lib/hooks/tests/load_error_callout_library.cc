@@ -13,18 +13,16 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /// @file
-/// @brief Error Load Library
+/// @brief Error load library
 ///
-/// This is a test file for the LibraryManager test.  It produces a library
-/// that allows for tests of the basic library manager functions.
-///
-/// The characteristics of this library are:
+/// This is source of a test library for various test (LibraryManager and
+/// HooksManager).  The characteristics of the library produced from this
+/// file are:
 ///
 /// - All framework functions are supplied.  "version" returns the correct
 ///   value, but "load" and unload return an error.
 
 #include <hooks/hooks.h>
-#include <iostream>
 
 using namespace isc::hooks;
 

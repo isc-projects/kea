@@ -13,29 +13,27 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /// @file
-/// @brief Basic Load Library
+/// @brief Basic library with load() function
 ///
-/// This is a test file for the LibraryManager test.  It produces a library
-/// that allows for tests of the basic library manager functions.
-///
-/// The characteristics of this library are:
+/// This is source of a test library for various test (LibraryManager and
+/// HooksManager).  The characteristics of the library produced from this
+/// file are:
 ///
 /// - The "version" and "load" framework functions are supplied.  One "standard"
 ///   callout is supplied ("lm_one") and two non-standard ones which are
 ///   registered during the call to "load" on the hooks "lm_two" and
 ///   "lm_three". 
 ///
-///   All callouts do trivial calculations, the result of the calculation being
+///   All callouts do trivial calculations, the result of all being called in
+///   sequence being
 ///
 ///   @f[ ((5 * data_1) + data_2) * data_3 @f]
 ///
-///   ...where data_1, data_2 and data_3 are the values passed in arguments
-///   of the same name to the three callouts (data_1 passed to lm_one,
-///   data_2 to lm_two etc.) and the result is returned in the argument
-///   "result".
+///   ...where data_1, data_2 and data_3 are the values passed in arguments of
+///   the same name to the three callouts (data_1 passed to lm_one, data_2 to
+///   lm_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
-#include <iostream>
 
 using namespace isc::hooks;
 
@@ -50,8 +48,10 @@ context_create(CalloutHandle& handle) {
     return (0);
 }
 
-// First callout multiples the passed "data_1" argument to the initialized
-// context value of 5.
+// First callout adds the passed "data_1" argument to the initialized context
+// value of 5. (Note that the value set by context_create is accessed through
+// context and not the argument, so checking that context is correctly passed
+// between callouts in the same library.)
 
 int
 lm_one(CalloutHandle& handle) {
@@ -84,7 +84,7 @@ lm_nonstandard_two(CalloutHandle& handle) {
     return (0);
 }
 
-// Final callout adds the result in "data_3" and.
+// Final callout adds "data_3" to the result.
 
 static int
 lm_nonstandard_three(CalloutHandle& handle) {
