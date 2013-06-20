@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <iostream>
 
 #include <unistd.h>
 
@@ -50,7 +51,7 @@ public:
 
         // Set up the callout manager with these hooks.  Assume a maximum of
         // four libraries.
-        callout_manager_.reset(new CalloutManager(1));
+        callout_manager_.reset(new CalloutManager(4));
 
         // Set up the callout handle.
         callout_handle_.reset(new CalloutHandle(callout_manager_));
@@ -61,9 +62,69 @@ public:
 
     /// @brief Destructor
     ///
-    /// Ensures a marker file is removed after the test.
+    /// Ensures a marker file is removed after each test.
     ~LibraryManagerTest() {
         static_cast<void>(unlink(MARKER_FILE));
+    }
+
+    /// @brief Call callouts test
+    ///
+    /// All of the loaded libraries have four callouts: a context_create
+    /// callout and three callouts that are attached to hooks lm_one,
+    /// lm_two and lm_three.
+    ///
+    /// context_create initializes the calculation by setting a seed
+    /// value of r0 say.
+    ///
+    /// Callout lm_one is passed a value d1 and performs a simple arithmetic
+    /// operation on it yielding a result r1.  Hence we can say that
+    /// @f[ r1 = lm1(r0, d1) @f]
+    ///
+    /// Callout lm_two is passed a value d2 and peforms another simple
+    /// arithmetic operation on it and d2, yielding r2, i.e.
+    /// @f[ r2 = lm2(d1, d2) @f]
+    ///
+    /// lm_three does a similar operation giving @f[ r3 = lm3(r2, d3) @f].
+    ///
+    /// The details of the operations lm1, lm2 and lm3 depend on the library.
+    /// However the sequence of calls needed to do this set of calculations
+    /// is identical regardless of the exact functions. This method performs
+    /// those operations and checks the results.
+    ///
+    /// It is assumed that callout_manager_ and callout_handle_ have been
+    /// set up appropriately.
+    ///
+    /// @param r0...r3, d1..d3 Values and intermediate values expected.  They
+    ///        are ordered so that the variables are used in the order left to
+    ///        right.
+    void executeCallCallouts(int r0, int d1, int r1, int d2, int r2, int d3,
+                             int r3) {
+        static const char* COMMON_TEXT = " callout returned the wong value";
+        int result;
+
+        // Seed the calculation.
+        callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
+                                       *callout_handle_);
+        callout_handle_->getArgument("result", result);
+        EXPECT_EQ(r0, result) << "context_create" << COMMON_TEXT;
+
+        // Perform the first calculation.
+        callout_handle_->setArgument("data_1", d1);
+        callout_manager_->callCallouts(lm_one_index_, *callout_handle_);
+        callout_handle_->getArgument("result", result);
+        EXPECT_EQ(r1, result) << "lm_one" << COMMON_TEXT;
+
+        // ... the second ...
+        callout_handle_->setArgument("data_2", d2);
+        callout_manager_->callCallouts(lm_two_index_, *callout_handle_);
+        callout_handle_->getArgument("result", result);
+        EXPECT_EQ(r2, result) << "lm_two" << COMMON_TEXT;
+
+        // ... and the third.
+        callout_handle_->setArgument("data_3", d3);
+        callout_manager_->callCallouts(lm_three_index_, *callout_handle_);
+        callout_handle_->getArgument("result", result);
+        EXPECT_EQ(r3, result) << "lm_three" << COMMON_TEXT;
     }
 
     /// Hook indexes.  These are somewhat ubiquitous, so are made public for
@@ -122,6 +183,7 @@ public:
 // .so file.  Note that we access the .so file - libtool creates this as a
 // like to the real shared library.
 static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbcl.so";
+static const char* FULL_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libfcl.so";
 static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/.libs/libivl.so";
 static const char* LOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/liblcl.so";
 static const char* LOAD_ERROR_CALLOUT_LIBRARY =
@@ -135,7 +197,7 @@ namespace {
 
 // Tests that OpenLibrary reports an error for an unknown library.
 
-TEST_F(LibraryManagerTest, NonExistentLibrary) {
+TEST_F(LibraryManagerTest, NoLibrary) {
     PublicLibraryManager lib_manager(std::string(NOT_PRESENT_LIBRARY),
                                      0, callout_manager_);
     EXPECT_FALSE(lib_manager.openLibrary());
@@ -157,7 +219,7 @@ TEST_F(LibraryManagerTest, OpenClose) {
 
 // Check that the code handles the case of a library with no version function.
 
-TEST_F(LibraryManagerTest, NoVersionFunction) {
+TEST_F(LibraryManagerTest, NoVersion) {
     PublicLibraryManager lib_manager(std::string(NO_VERSION_LIBRARY),
                                      0, callout_manager_);
     // Open should succeed.
@@ -173,7 +235,7 @@ TEST_F(LibraryManagerTest, NoVersionFunction) {
 // Check that the code handles the case of a library with a version function
 // that returns an incorrect version number.
 
-TEST_F(LibraryManagerTest, IncorrectVersionReturned) {
+TEST_F(LibraryManagerTest, WrongVersion) {
     PublicLibraryManager lib_manager(std::string(INCORRECT_VERSION_LIBRARY),
                                      0, callout_manager_);
     // Open should succeed.
@@ -218,30 +280,11 @@ TEST_F(LibraryManagerTest, RegisterStandardCallouts) {
     // Load the standard callouts
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
 
-    int result = 0;
-
-    // Now execute the callouts in the order expected.  context_create
-    // always comes first.  This sets the context value to 10.
-    callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
-                                   *callout_handle_);
-
-    // First callout adds 5 to the context value.
-    callout_handle_->setArgument("data_1", static_cast<int>(5));
-    callout_manager_->callCallouts(lm_one_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(15, result);
-
-    // Second callout multiples the running total by 7
-    callout_handle_->setArgument("data_2", static_cast<int>(7));
-    callout_manager_->callCallouts(lm_two_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(105, result);
-
-    // Third callout subtracts 17 from the running total.
-    callout_handle_->setArgument("data_3", static_cast<int>(17));
-    callout_manager_->callCallouts(lm_three_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(88, result);
+    // Now execute the callouts in the order expected.  The library performs
+    // the calculation:
+    //
+    // r3 = (10 + d1) * d2 - d3
+    executeCallCallouts(10, 5, 15, 7, 105, 17, 88);
 
     // Explicitly clear the callout_handle_ so that we can delete the library.
     // This is the only object to contain memory allocated by it.
@@ -288,29 +331,11 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
-    // Now execute the callouts in the order expected.
-    // only the first callout should be executed and the
-    // always comes first.  This sets the context value to 10.
-    callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
-                                   *callout_handle_);
-
-    // First callout multiplies the passed data by 5.
-    callout_handle_->setArgument("data_1", static_cast<int>(5));
-    callout_manager_->callCallouts(lm_one_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(25, result);
-
-    // Second callout adds 7 to the stored data.
-    callout_handle_->setArgument("data_2", static_cast<int>(7));
-    callout_manager_->callCallouts(lm_two_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(32, result);
-
-    // Third callout multiplies the running total by 10
-    callout_handle_->setArgument("data_3", static_cast<int>(10));
-    callout_manager_->callCallouts(lm_three_index_, *callout_handle_);
-    callout_handle_->getArgument("result", result);
-    EXPECT_EQ(320, result);
+    // Now execute the callouts in the order expected.  The library performs
+    // the calculation:
+    //
+    // r3 = (5 * d1 + d2) * d3
+    executeCallCallouts(5, 5, 25, 7, 32, 10, 320);
 
     // Explicitly clear the callout_handle_ so that we can delete the library.
     // This is the only object to contain memory allocated by it.
@@ -340,10 +365,6 @@ TEST_F(LibraryManagerTest, CheckLoadError) {
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
-
-// TODO Check that unload is called.  This causes problems with testing
-// in that it can't communicate anything back to the caller.  So we'll
-// test a successful call by checking whether a marker file is created.
 
 // No unload function
 
@@ -387,7 +408,8 @@ TEST_F(LibraryManagerTest, CheckUnloadError) {
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
-// Unload function works
+// Check that the case of the library's unload() function returning a
+// success is handled correcty.
 
 TEST_F(LibraryManagerTest, CheckUnload) {
 
@@ -419,6 +441,166 @@ TEST_F(LibraryManagerTest, CheckUnload) {
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Test the operation of unloadLibrary().  We load a library with a set
+// of callouts then unload it.  We need to check that the callouts have been
+// removed.  We'll also check that the library's unload() function was called
+// as well.
+
+TEST_F(LibraryManagerTest, LibUnload) {
+
+    // Load the only library, specifying the index of 0 as it's the only
+    // library.  This should load all callouts.
+    PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY),
+                               0, callout_manager_);
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Check the version of the library.
+    EXPECT_TRUE(lib_manager.checkVersion());
+
+    // No callouts should be registered at the moment.
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_three_index_));
+
+    // Load the single standard callout and check it is registered correctly.
+    EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
+    EXPECT_TRUE(callout_manager_->calloutsPresent(lm_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_three_index_));
+
+    // Call the load function to load the other callouts.
+    EXPECT_TRUE(lib_manager.runLoad());
+    EXPECT_TRUE(callout_manager_->calloutsPresent(lm_one_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(lm_two_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(lm_three_index_));
+
+    // Unload the library and check that the callouts have been removed from
+    // the CalloutManager.
+    lib_manager.unloadLibrary();
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_three_index_));
+}
+
+// Now come the loadLibrary() tests that make use of all the methods tested
+// above.  These tests are really to make sure that the methods have been
+// tied toget correctly.
+
+// First test the basic error cases - no library, no version function, version
+// function returning an error.
+
+TEST_F(LibraryManagerTest, LoadLibraryNoLibrary) {
+    LibraryManager lib_manager(std::string(NOT_PRESENT_LIBRARY), 0,
+                                           callout_manager_);
+    EXPECT_FALSE(lib_manager.loadLibrary());
+}
+
+// Check that the code handles the case of a library with no version function.
+
+TEST_F(LibraryManagerTest, LoadLibraryNoVersion) {
+    LibraryManager lib_manager(std::string(NO_VERSION_LIBRARY), 0,
+                                           callout_manager_);
+    EXPECT_FALSE(lib_manager.loadLibrary());
+}
+
+// Check that the code handles the case of a library with a version function
+// that returns an incorrect version number.
+
+TEST_F(LibraryManagerTest, LoadLibraryWrongVersion) {
+    LibraryManager lib_manager(std::string(INCORRECT_VERSION_LIBRARY), 0,
+                                           callout_manager_);
+    EXPECT_FALSE(lib_manager.loadLibrary());
+}
+
+// Check that the full loadLibrary call works.
+
+TEST_F(LibraryManagerTest, LoadLibrary) {
+    LibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY), 0,
+                                           callout_manager_);
+    EXPECT_TRUE(lib_manager.loadLibrary());
+
+    // Now execute the callouts in the order expected.  The library performs
+    // the calculation:
+    //
+    // r3 = (7 * d1 - d2) * d3
+    executeCallCallouts(7, 5, 35, 9, 26, 3, 78);
+
+    // All done, so unload the library.  First we have to delete the
+    // CalloutHandle as it may contain memory allocated by that library.
+    callout_handle_.reset();
+
+    EXPECT_TRUE(lib_manager.unloadLibrary());
+
+    // Check that the callouts have been removed from the callout manager.
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(lm_three_index_));
+}
+
+// Now test for multiple libraries.  We'll load the full callout library
+// first, then load some of the libraries with missing framework functions.
+// This will check that when searching for framework functions, only the
+// specified library is checked, not other loaded libraries. We will
+// load a second library with suitable callouts and check that the callouts
+// are added correctly. Finally, we'll unload one of the libraries and
+// check that only the callouts belonging to that library were removed.
+
+TEST_F(LibraryManagerTest, LoadMultipleLibraries) {
+    // Load a library with all framework functions.
+    LibraryManager lib_manager_1(std::string(FULL_CALLOUT_LIBRARY), 0,
+                                 callout_manager_);
+    EXPECT_TRUE(lib_manager_1.loadLibrary());
+
+    // Attempt to load a library with no version() function.  We should detect
+    // this and not end up calling the function from the already loaded
+    // library.
+    LibraryManager lib_manager_2(std::string(NO_VERSION_LIBRARY), 1,
+                                 callout_manager_);
+    EXPECT_FALSE(lib_manager_2.loadLibrary());
+
+    // Attempt to load the library with an incorrect version.  This should
+    // be detected.
+    LibraryManager lib_manager_3(std::string(INCORRECT_VERSION_LIBRARY), 1,
+                                 callout_manager_);
+    EXPECT_FALSE(lib_manager_3.loadLibrary());
+
+    // Load the basic callout library.  This only has standard callouts so,
+    // if the first library's load() function gets called, some callouts
+    // will be registered twice and lead to incorrect results.
+    LibraryManager lib_manager_4(std::string(BASIC_CALLOUT_LIBRARY), 1,
+                                 callout_manager_);
+    EXPECT_TRUE(lib_manager_4.loadLibrary());
+
+    // Execute the callouts.  The first library implements the calculation.
+    //
+    // r3 = (7 * d1 - d2) * d3
+    // 
+    // The last-loaded library implements the calculation
+    //
+    // r3 = (10 + d1) * d2 - d3
+    //
+    // Putting the processing for each library together in the appropriate
+    // order, we get:
+    //
+    // r3 = ((10 * d1 + d1) - d2) * d2 * d3 - d3
+    executeCallCallouts(10, 3, 33, 2, 62, 3, 183);
+
+    // All done, so unload the first library.  First we have to delete the
+    // CalloutHandle as it may contain memory allocated by that library.
+    callout_handle_.reset();
+    EXPECT_TRUE(lib_manager_1.unloadLibrary());
+    //EXPECT_TRUE(lib_manager_4.unloadLibrary());
+
+    // Now execute the callouts again and check that the results are as
+    // expected for the new calculation.
+    callout_handle_.reset(new CalloutHandle(callout_manager_));
+    executeCallCallouts(10, 5, 15, 7, 105, 17, 88);
+
+    // ... and tidy up.
+    callout_handle_.reset();
+    EXPECT_TRUE(lib_manager_4.unloadLibrary());
 }
 
 } // Anonymous namespace
