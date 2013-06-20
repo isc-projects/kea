@@ -171,7 +171,7 @@ protected:
     /// @return bool true if not found or found and run successfully,
     ///         false on an error.  In this case, an error message will
     ///         have been output.
-    bool runUnload() {return false;}
+    bool runUnload();
 
 private:
     void*       dl_handle_;     ///< Handle returned by dlopen

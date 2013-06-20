@@ -29,7 +29,7 @@ namespace {
 // String constants
 
 const char* LOAD_FUNCTION_NAME = "load";
-// const char* UNLOAD = "unload";
+const char* UNLOAD_FUNCTION_NAME = "unload";
 const char* VERSION_FUNCTION_NAME = "version";
 }
 
@@ -192,6 +192,46 @@ LibraryManager::runLoad() {
     return (true);
 }
 
+
+// Run the "unload" function if present.
+
+bool
+LibraryManager::runUnload() {
+
+    // Look up the "load" function in the library.  The code here is similar
+    // to that in "checkVersion".
+    union {
+        unload_function_ptr unload_ptr;
+        void*               dlsym_ptr;
+    } pointers;
+
+    // Zero the union, whatever the size of the pointers.
+    pointers.unload_ptr = NULL;
+    pointers.dlsym_ptr = NULL;
+
+    // Get the pointer to the "load" function.
+    pointers.dlsym_ptr = dlsym(dl_handle_, UNLOAD_FUNCTION_NAME);
+    if (pointers.unload_ptr != NULL) {
+
+        // Call the load() function with the library handle.  We need to set
+        // the CalloutManager's index appropriately.  We'll invalidate it
+        // afterwards.
+        int status = (*pointers.unload_ptr)();
+        if (status != 0) {
+            LOG_ERROR(hooks_logger, HOOKS_UNLOAD_ERROR).arg(library_name_)
+                      .arg(status);
+            return (false);
+        } else {
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD)
+            .arg(library_name_);
+        }
+    } else {
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_NO_UNLOAD)
+            .arg(library_name_);
+    }
+
+    return (true);
+}
 
 } // namespace hooks
 } // namespace isc
