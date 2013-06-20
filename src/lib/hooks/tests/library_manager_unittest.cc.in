@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
-#include <iostream>
 
 #include <unistd.h>
 
@@ -31,6 +30,8 @@
 using namespace isc;
 using namespace isc::hooks;
 using namespace std;
+
+namespace {
 
 /// @brief Library manager test class
 
@@ -41,8 +42,8 @@ public:
     /// Sets up a collection of three LibraryHandle objects to use in the test.
     LibraryManagerTest() {
 
-        // Set up the server hooks.  There is sone singleton for all tests,
-        // so reset it and explicitly set up the hooks for the test.
+        // Set up the server hooks.  ServerHooks is a singleton, so we reset it
+        // between each test.
         ServerHooks& hooks = ServerHooks::getServerHooks();
         hooks.reset();
         lm_one_index_ = hooks.registerHook("lm_one");
@@ -53,10 +54,7 @@ public:
         // four libraries.
         callout_manager_.reset(new CalloutManager(4));
 
-        // Set up the callout handle.
-        callout_handle_.reset(new CalloutHandle(callout_manager_));
-
-        // Ensure the marker file is not present
+        // Ensure the marker file is not present at the start of a test.
         static_cast<void>(unlink(MARKER_FILE));
     }
 
@@ -69,15 +67,17 @@ public:
 
     /// @brief Call callouts test
     ///
-    /// All of the loaded libraries have four callouts: a context_create
-    /// callout and three callouts that are attached to hooks lm_one,
-    /// lm_two and lm_three.
+    /// All of the loaded libraries for which callouts are called register four
+    /// callouts: a context_create callout and three callouts that are attached
+    /// to hooks lm_one, lm_two and lm_three.  These four callouts, executed
+    /// in sequence, perform a series of calculations. Data is passed between
+    /// callouts in the argument list, in a variable named "result".
     ///
     /// context_create initializes the calculation by setting a seed
-    /// value of r0 say.
+    /// value, called r0 here.
     ///
     /// Callout lm_one is passed a value d1 and performs a simple arithmetic
-    /// operation on it yielding a result r1.  Hence we can say that
+    /// operation on it and r0 yielding a result r1.  Hence we can say that
     /// @f[ r1 = lm1(r0, d1) @f]
     ///
     /// Callout lm_two is passed a value d2 and peforms another simple
@@ -89,54 +89,57 @@ public:
     /// The details of the operations lm1, lm2 and lm3 depend on the library.
     /// However the sequence of calls needed to do this set of calculations
     /// is identical regardless of the exact functions. This method performs
-    /// those operations and checks the results.
+    /// those operations and checks the results of each step.
     ///
-    /// It is assumed that callout_manager_ and callout_handle_ have been
-    /// set up appropriately.
+    /// It is assumed that callout_manager_ has been set up appropriately.
+    ///
+    /// @note The CalloutHandle used in the calls is declared locally here.
+    ///       The advantage of this (apart from scope reduction) is that on
+    ///       exit, it is destroyed.  This removes any references to memory
+    ///       allocated by loaded libraries while they are still loaded.
     ///
     /// @param r0...r3, d1..d3 Values and intermediate values expected.  They
-    ///        are ordered so that the variables are used in the order left to
-    ///        right.
+    ///        are ordered so that the variables appear in the argument list in
+    ///        the order they are used.
     void executeCallCallouts(int r0, int d1, int r1, int d2, int r2, int d3,
                              int r3) {
         static const char* COMMON_TEXT = " callout returned the wong value";
         int result;
 
+        // Set up a callout handle for the calls.
+        CalloutHandle callout_handle(callout_manager_);
+
         // Seed the calculation.
         callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
-                                       *callout_handle_);
-        callout_handle_->getArgument("result", result);
+                                       callout_handle);
+        callout_handle.getArgument("result", result);
         EXPECT_EQ(r0, result) << "context_create" << COMMON_TEXT;
 
         // Perform the first calculation.
-        callout_handle_->setArgument("data_1", d1);
-        callout_manager_->callCallouts(lm_one_index_, *callout_handle_);
-        callout_handle_->getArgument("result", result);
+        callout_handle.setArgument("data_1", d1);
+        callout_manager_->callCallouts(lm_one_index_, callout_handle);
+        callout_handle.getArgument("result", result);
         EXPECT_EQ(r1, result) << "lm_one" << COMMON_TEXT;
 
         // ... the second ...
-        callout_handle_->setArgument("data_2", d2);
-        callout_manager_->callCallouts(lm_two_index_, *callout_handle_);
-        callout_handle_->getArgument("result", result);
+        callout_handle.setArgument("data_2", d2);
+        callout_manager_->callCallouts(lm_two_index_, callout_handle);
+        callout_handle.getArgument("result", result);
         EXPECT_EQ(r2, result) << "lm_two" << COMMON_TEXT;
 
         // ... and the third.
-        callout_handle_->setArgument("data_3", d3);
-        callout_manager_->callCallouts(lm_three_index_, *callout_handle_);
-        callout_handle_->getArgument("result", result);
+        callout_handle.setArgument("data_3", d3);
+        callout_manager_->callCallouts(lm_three_index_, callout_handle);
+        callout_handle.getArgument("result", result);
         EXPECT_EQ(r3, result) << "lm_three" << COMMON_TEXT;
     }
 
-    /// Hook indexes.  These are somewhat ubiquitous, so are made public for
-    /// ease of reference instead of being accessible by a function.
+    /// Hook indexes.  These are are made public for ease of reference.
     int lm_one_index_;
     int lm_two_index_;
     int lm_three_index_;
 
-    /// Callout handle used in calls
-    boost::shared_ptr<CalloutHandle> callout_handle_;
-
-    /// Callout manager used for the test
+    /// Callout manager used for the test.
     boost::shared_ptr<CalloutManager> callout_manager_;
 };
 
@@ -162,13 +165,6 @@ public:
         : LibraryManager(name, index, manager)
     {}
 
-    /// @brief Destructor
-    ///
-    /// Ensures that the library is closed after the test.
-    ~PublicLibraryManager() {
-        static_cast<void>(closeLibrary());
-    }
-
     /// Public methods that call protected methods on the superclass.
     using LibraryManager::openLibrary;
     using LibraryManager::closeLibrary;
@@ -193,9 +189,8 @@ static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnvl.so";
 static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl.so";
 
 
-namespace {
-
-// Tests that OpenLibrary reports an error for an unknown library.
+// Check that openLibrary() reports an error when it can't find the specified
+// library.
 
 TEST_F(LibraryManagerTest, NoLibrary) {
     PublicLibraryManager lib_manager(std::string(NOT_PRESENT_LIBRARY),
@@ -203,7 +198,7 @@ TEST_F(LibraryManagerTest, NoLibrary) {
     EXPECT_FALSE(lib_manager.openLibrary());
 }
 
-// Tests that the openLibrary() and closeLibrary() methods work.
+// Check that the openLibrary() and closeLibrary() methods work.
 
 TEST_F(LibraryManagerTest, OpenClose) {
     PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
@@ -213,7 +208,8 @@ TEST_F(LibraryManagerTest, OpenClose) {
     EXPECT_TRUE(lib_manager.openLibrary());
     EXPECT_TRUE(lib_manager.closeLibrary());
 
-    // Check that a second close does not report an error.
+    // Check that a second close on an already closed library does not report
+    // an error.
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
 
@@ -286,10 +282,6 @@ TEST_F(LibraryManagerTest, RegisterStandardCallouts) {
     // r3 = (10 + d1) * d2 - d3
     executeCallCallouts(10, 5, 15, 7, 105, 17, 88);
 
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
-
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
@@ -309,8 +301,6 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
 
     // Load the standard callouts
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
-
-    int result = 0;
 
     // Check that only context_create and lm_one have callouts registered.
     EXPECT_TRUE(callout_manager_->calloutsPresent(
@@ -337,10 +327,6 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     // r3 = (5 * d1 + d2) * d3
     executeCallCallouts(5, 5, 25, 7, 32, 10, 320);
 
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
-
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
@@ -357,10 +343,6 @@ TEST_F(LibraryManagerTest, CheckLoadError) {
 
     // Check that we catch a load error
     EXPECT_FALSE(lib_manager.runLoad());
-
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -379,10 +361,6 @@ TEST_F(LibraryManagerTest, CheckNoUnload) {
     // Check that no unload function returns true.
     EXPECT_TRUE(lib_manager.runUnload());
 
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
-
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
 }
@@ -399,10 +377,6 @@ TEST_F(LibraryManagerTest, CheckUnloadError) {
 
     // Check that unload function returning an error returns false.
     EXPECT_FALSE(lib_manager.runUnload());
-
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -434,10 +408,6 @@ TEST_F(LibraryManagerTest, CheckUnload) {
 
     // Tidy up
     marker.close();
-
-    // Explicitly clear the callout_handle_ so that we can delete the library.
-    // This is the only object to contain memory allocated by it.
-    callout_handle_.reset();
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -527,10 +497,6 @@ TEST_F(LibraryManagerTest, LoadLibrary) {
     // r3 = (7 * d1 - d2) * d3
     executeCallCallouts(7, 5, 35, 9, 26, 3, 78);
 
-    // All done, so unload the library.  First we have to delete the
-    // CalloutHandle as it may contain memory allocated by that library.
-    callout_handle_.reset();
-
     EXPECT_TRUE(lib_manager.unloadLibrary());
 
     // Check that the callouts have been removed from the callout manager.
@@ -587,19 +553,14 @@ TEST_F(LibraryManagerTest, LoadMultipleLibraries) {
     // r3 = ((10 * d1 + d1) - d2) * d2 * d3 - d3
     executeCallCallouts(10, 3, 33, 2, 62, 3, 183);
 
-    // All done, so unload the first library.  First we have to delete the
-    // CalloutHandle as it may contain memory allocated by that library.
-    callout_handle_.reset();
+    // All done, so unload the first library.
     EXPECT_TRUE(lib_manager_1.unloadLibrary());
-    //EXPECT_TRUE(lib_manager_4.unloadLibrary());
 
     // Now execute the callouts again and check that the results are as
     // expected for the new calculation.
-    callout_handle_.reset(new CalloutHandle(callout_manager_));
     executeCallCallouts(10, 5, 15, 7, 105, 17, 88);
 
     // ... and tidy up.
-    callout_handle_.reset();
     EXPECT_TRUE(lib_manager_4.unloadLibrary());
 }
 

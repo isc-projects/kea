@@ -14,9 +14,13 @@
 
 /// @file
 /// @brief Incorrect version function test
-/// This is a test file for the LibraryManager test.  It produces a library
-/// that contans a "version" function but which returns an incorrect version
-/// number.
+///
+/// This is source of a test library for various test (LibraryManager and
+/// HooksManager).  The characteristics of the library produced from this
+/// file are:
+///
+/// - It contains the version() framework function only, which returns an
+///   incorrect version number.
 
 #include <hooks/hooks.h>
 

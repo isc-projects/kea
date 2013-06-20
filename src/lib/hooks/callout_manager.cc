@@ -31,6 +31,10 @@ namespace hooks {
 
 void
 CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
+    // Note the registration.
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
+        .arg(current_library_).arg(name);
+
     // Sanity check that the current library index is set to a valid value.
     checkLibraryIndex(current_library_);
 
@@ -48,8 +52,6 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
             // current index, so insert the new element ahead of this one.
             hook_vector_[hook_index].insert(i, make_pair(current_library_,
                                                          callout));
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
-                .arg(current_library_).arg(name);
             return;
         }
     }

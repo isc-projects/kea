@@ -43,10 +43,10 @@ class LibraryManager;
 ///       process, the library may allocate memory and pass it back to the
 ///       server.  This could happen by the server setting arguments or context
 ///       in the CalloutHandle object, or by the library modifying the content
-///       of pointed-to data. A problem arises when the library is unloaded,
-///       because the addresses of allocated day may lie in the virtual
-///       address space deleted in that process.  If this happens, any
-///       reference to the memory will cause a segmentation fault.  This can
+///       of pointed-to data. If the library is unloaded, this memory may lie
+///       in the virtual address space deleted in that process. (The word "may"
+///       is used, as this could be operating-system specific.) If this happens,
+///       any reference to the memory will cause a segmentation fault.  This can
 ///       occur in a quite obscure place, for example in the middle of a
 ///       destructor of an STL class when it is deleting memory allocated
 ///       when the data structure was extended.
