@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef D_CFG_MGR_H
+#define D_CFG_MGR_H
+
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/dhcp_parsers.h>
 
 #include <stdint.h>
 #include <string>
-
-#ifndef D_CFG_MGR_H
-#define D_CFG_MGR_H
 
 namespace isc {
 namespace d2 {

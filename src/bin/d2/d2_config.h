@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef D2_CONFIG_H
+#define D2_CONFIG_H
+
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <d2/d_cfg_mgr.h>
@@ -22,9 +25,6 @@
 
 #include <stdint.h>
 #include <string>
-
-#ifndef D2_CONFIG_H
-#define D2_CONFIG_H
 
 namespace isc {
 namespace d2 {
@@ -69,7 +69,7 @@ namespace d2 {
 /// A DnsServerInfoListParser creates and invokes a DnsServerInfoParser for
 /// each server entry in its list.
 ///
-/// A DdnsServerInfoParser handles the scalars which belong to th server.
+/// A DdnsServerInfoParser handles the scalars which belong to the server.
 
 /// @brief Exception thrown when the error during configuration handling
 /// occurs.
