@@ -16,6 +16,7 @@
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d_test_stubs.h>
+#include <test_data_files_config.h>
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
@@ -25,6 +26,10 @@ using namespace isc;
 using namespace isc::d2;
 
 namespace {
+
+std::string specfile(const std::string& name) {
+    return (std::string(D2_SRC_DIR) + "/" + name);
+}
 
 /// @brief Test fixture class for testing D2CfgMgr class.
 /// It maintains an member instance of D2CfgMgr and provides methods for
@@ -49,7 +54,8 @@ public:
 /// Verifies that the BIND10 DHCP-DDNS configuration specification file
 //  is valid.
 TEST(D2SpecTest, basicSpecTest) {
-    ASSERT_NO_THROW(isc::config::moduleSpecFromFile("../dhcp-ddns.spec"));
+    ASSERT_NO_THROW(isc::config::
+                    moduleSpecFromFile(specfile("dhcp-ddns.spec")));
 }
 
 /// @brief Convenience function which compares the contents of the given
