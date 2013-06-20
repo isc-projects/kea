@@ -28,7 +28,7 @@ TESTS =
 if HAVE_GTEST
 # Build shared libraries for testing.
 lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la \
-                  libucl.la
+                  libucl.la libfcl.la
  
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
@@ -61,6 +61,11 @@ liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libucl_la_SOURCES  = unload_callout_library.cc
 libucl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libucl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+# The full callout library - contains all three framework functions.
+libfcl_la_SOURCES  = full_callout_library.cc
+libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc

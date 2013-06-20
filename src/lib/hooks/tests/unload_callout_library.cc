@@ -40,7 +40,8 @@ version() {
     return (BIND10_HOOKS_VERSION);
 }
 
-int unload() {
+int
+unload() {
     // Create the marker file.
     std::fstream marker;
     marker.open(MARKER_FILE, std::fstream::out);

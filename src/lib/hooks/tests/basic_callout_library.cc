@@ -38,9 +38,10 @@
 ///   "result".
 
 #include <hooks/hooks.h>
-#include <iostream>
+#include <fstream>
 
 using namespace isc::hooks;
+using namespace std;
 
 extern "C" {
 
@@ -62,10 +63,9 @@ lm_one(CalloutHandle& handle) {
     handle.getArgument("data_1", data);
 
     int result;
-    handle.getContext("result", result);
+    handle.getArgument("result", result);
 
     result += data;
-    handle.setContext("result", result);
     handle.setArgument("result", result);
 
     return (0);
@@ -80,10 +80,9 @@ lm_two(CalloutHandle& handle) {
     handle.getArgument("data_2", data);
 
     int result;
-    handle.getContext("result", result);
+    handle.getArgument("result", result);
 
     result *= data;
-    handle.setContext("result", result);
     handle.setArgument("result", result);
 
     return (0);
@@ -97,7 +96,7 @@ lm_three(CalloutHandle& handle) {
     handle.getArgument("data_3", data);
 
     int result;
-    handle.getContext("result", result);
+    handle.getArgument("result", result);
 
     result -= data;
     handle.setArgument("result", result);

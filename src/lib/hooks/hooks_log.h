@@ -21,7 +21,7 @@
 namespace isc {
 namespace hooks {
 
-/// \brief Hooks system Logging
+/// @brief Hooks debug Logging levels
 ///
 /// Defines the levels used to output debug messages in the Hooks framework.
 /// Note that higher numbers equate to more verbose (and detailed) output.
@@ -37,12 +37,12 @@ const int HOOKS_DBG_CALLS = DBGLVL_TRACE_BASIC_DATA;
 const int HOOKS_DBG_EXTENDED_CALLS = DBGLVL_TRACE_DETAIL_DATA;
 
 
-/// \brief HOOKS Logger
+/// @brief Hooks Logger
 ///
 /// Define the logger used to log messages.  We could define it in multiple
 /// modules, but defining in a single module and linking to it saves time and
 /// space.
-extern isc::log::Logger hooks_logger;    // isc::hooks::logger is the HOOKS logger
+extern isc::log::Logger hooks_logger;
 
 } // namespace hooks
 } // namespace isc

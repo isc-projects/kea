@@ -97,7 +97,10 @@ public:
     ///
     /// Open the library and check the version.  If all is OK, load all
     /// standard symbols then call "load" if present.
-    bool loadLibrary() {return true;}
+    ///
+    /// @return true if the library loaded successfully, false otherwise.
+    ///         In the latter case, the library will be unloaded if possible.
+    bool loadLibrary();
 
     /// @brief Unloads a library
     ///
@@ -106,7 +109,12 @@ public:
     ///
     /// However, see the caveat in the class header about when it is safe
     /// to unload libraries.
-    bool unloadLibrary() {return false;}
+    ///
+    /// @return true if the library unloaded successfully, false if an error
+    ///         occurred in the process (most likely the unload() function
+    ///         (if present) returned an error).  Even if an error did occur,
+    ///         the library is closed if possible.
+    bool unloadLibrary();
 
     /// @brief Return library name
     ///
