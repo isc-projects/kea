@@ -119,7 +119,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                 // building it in that case.
                 dsrc_pair = getDataSourceClient(type, param_conf);
             } catch (const DataSourceLibraryError& ex) {
-                LOG_WARN(logger, DATASRC_LIBRARY_FAILURE).
+                LOG_ERROR(logger, DATASRC_LIBRARY_ERROR).
                     arg(datasrc_name).arg(rrclass_).arg(ex.what());
                 continue;
             }
