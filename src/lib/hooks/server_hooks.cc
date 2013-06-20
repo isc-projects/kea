@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_log.h>
 #include <hooks/server_hooks.h>
 
 #include <utility>
@@ -53,6 +54,9 @@ ServerHooks::registerHook(const string& name) {
     // Element was inserted, so add to the inverse hooks collection.
     inverse_hooks_[index] = name;
 
+    // Log it if debug is enabled
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_REGISTER_HOOK).arg(name);
+
     // ... and return numeric index.
     return (index);
 }
@@ -61,6 +65,10 @@ ServerHooks::registerHook(const string& name) {
 
 void
 ServerHooks::reset() {
+    // Log a wanring - although this is done during testing, it should never be
+    // seen in a production system.
+    LOG_WARN(hooks_logger, HOOKS_RESET_HOOK_LIST);
+
     // Clear out the name->index and index->name maps.
     hooks_.clear();
     inverse_hooks_.clear();
