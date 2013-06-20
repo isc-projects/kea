@@ -102,6 +102,8 @@ LibraryManager::checkVersion() const {
         int version = (*pointers.ver_ptr)();
         if (version == BIND10_HOOKS_VERSION) {
             // All OK, version checks out
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_LIBRARY_VERSION)
+                      .arg(library_name_).arg(version);
             return (true);
 
         } else {
@@ -124,7 +126,7 @@ LibraryManager::registerStandardCallouts() {
     manager_->setLibraryIndex(index_);
     LibraryHandle library_handle(manager_.get());
 
-    // Iterate through the list of known hooks
+    // Iterate through the list of known hooksv
     vector<string> hook_names = ServerHooks::getServerHooks().getHookNames();
     for (int i = 0; i < hook_names.size(); ++i) {
 
@@ -141,8 +143,7 @@ LibraryManager::registerStandardCallouts() {
         pointers.dlsym_ptr = dlsym(dl_handle_, hook_names[i].c_str());
         if (pointers.callout_ptr != NULL) {
             // Found a symbol, so register it.
-            //library_handle.registerCallout(hook_names[i], callout_ptr);
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_STD_CALLOUT)
                 .arg(library_name_).arg(hook_names[i]);
             library_handle.registerCallout(hook_names[i], pointers.callout_ptr);
 
@@ -205,7 +206,7 @@ LibraryManager::runUnload() {
         void*               dlsym_ptr;
     } pointers;
 
-    // Zero the union, whatever the size of the pointers.
+    // Zero the union, whatever the relative size of the pointers.
     pointers.unload_ptr = NULL;
     pointers.dlsym_ptr = NULL;
 
@@ -231,6 +232,90 @@ LibraryManager::runUnload() {
     }
 
     return (true);
+}
+
+// The main library loading function.
+
+bool
+LibraryManager::loadLibrary() {
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_LIBRARY)
+        .arg(library_name_);
+
+    // In the following, if a method such as openLibrary() fails, it will
+    // have issued an error message so there is no need to issue another one
+    // here.
+
+    if (openLibrary()) {
+
+        // Library opened OK, see if a version function is present and if so,
+        // check it.
+        if (checkVersion()) {
+
+            // Version OK, so now register the standard callouts and call the
+            // librarie's load() function if present.
+            registerStandardCallouts();
+            if (runLoad()) {
+
+                // Success - the library has been successfully loaded.
+                LOG_INFO(hooks_logger, HOOKS_LIBRARY_LOADED).arg(library_name_);
+                return (true);
+            } else {
+
+                // The load function failed, so back out.  We can't just close
+                // the library as (a) we need to call the library's "unload"
+                // function (if present) in case "load" allocated resources that
+                // need to be freed and (b) - we need to remove any callouts
+                // that have been installed.
+                static_cast<void>(unloadLibrary());
+            }
+        } else {
+
+            // Version check failed so close the library and free up resources.
+            // Ignore the status return here - we already have an error
+            // consition.
+            static_cast<void>(closeLibrary());
+        }
+    }
+
+    return (false);
+}
+
+// The library unloading function.  Call the unload() function (if present),
+// remove callouts from the callout manager, then close the library.
+
+bool
+LibraryManager::unloadLibrary() {
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_LIBRARY)
+        .arg(library_name_);
+
+    // Call the unload() function if present.  Note that this is done first -
+    // operations take place in the reverse order to which they were done when
+    // the library was loaded.
+    bool result = runUnload();
+
+    // Regardless of status, remove all callouts associated with this library
+    // on all hooks.
+    vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
+    manager_->setLibraryIndex(index_);
+    for (int i = 0; i < hooks.size(); ++i) {
+        bool removed = manager_->deregisterAllCallouts(hooks[i]);
+        if (removed) {
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REMOVED)
+                .arg(hooks[i]).arg(library_name_);
+        }
+    }
+
+    // ... and close the library.
+    result = result && closeLibrary();
+    if (result) {
+
+        // Issue the informational message only if the library was unloaded
+        // with no problems.  If there was an issue, an error message would
+        // have been issued.
+        LOG_INFO(hooks_logger, HOOKS_LIBRARY_UNLOADED).arg(library_name_);
+    }
+
+    return (result);
 }
 
 } // namespace hooks

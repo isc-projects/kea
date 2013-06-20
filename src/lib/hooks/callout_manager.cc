@@ -14,6 +14,7 @@
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_log.h>
 
 #include <boost/static_assert.hpp>
 
@@ -47,6 +48,8 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
             // current index, so insert the new element ahead of this one.
             hook_vector_[hook_index].insert(i, make_pair(current_library_,
                                                          callout));
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
+                .arg(current_library_).arg(name);
             return;
         }
     }
@@ -104,7 +107,19 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
             // Call the callout
             // @todo Log the return status if non-zero
-            static_cast<void>((*i->second)(callout_handle));
+            int status = (*i->second)(callout_handle);
+            if (status == 0) {
+                LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS, HOOKS_CALLOUT)
+                    .arg(current_library_)
+                    .arg(ServerHooks::getServerHooks().getName(current_hook_))
+                    .arg(reinterpret_cast<void*>(i->second));
+            } else {
+                LOG_WARN(hooks_logger, HOOKS_CALLOUT_ERROR)
+                    .arg(current_library_)
+                    .arg(ServerHooks::getServerHooks().getName(current_hook_))
+                    .arg(reinterpret_cast<void*>(i->second));
+            }
+
         }
 
         // Reset the current hook and library indexs to an invalid value to
@@ -150,7 +165,13 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
                                    hook_vector_[hook_index].end());
 
     // Return an indication of whether anything was removed.
-    return (initial_size != hook_vector_[hook_index].size());
+    bool removed = initial_size != hook_vector_[hook_index].size();
+    if (removed) {
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+                  HOOKS_DEREGISTER_CALLOUT).arg(current_library_).arg(name);
+    }
+
+    return (removed);
 }
 
 // Deregister all callouts on a given hook.
@@ -179,7 +200,14 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
                                    hook_vector_[hook_index].end());
 
     // Return an indication of whether anything was removed.
-    return (initial_size != hook_vector_[hook_index].size());
+    bool removed = initial_size != hook_vector_[hook_index].size();
+    if (removed) {
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+                  HOOKS_DEREGISTER_ALL_CALLOUTS).arg(current_library_)
+                                                .arg(name);
+    }
+
+    return (removed);
 }
 
 } // namespace util
