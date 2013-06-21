@@ -19,6 +19,8 @@ import copy
 import os
 import sys
 import signal
+import socket
+import threading
 
 sys.path.append('@@PYTHONPATH@@')
 import isc.log
@@ -28,6 +30,7 @@ from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
 from isc.server_common.datasrc_clients_mgr \
     import DataSrcClientsMgr, ConfigError
 from isc.memmgr.datasrc_info import DataSrcInfo
+from isc.memmgr.builder import MemorySegmentBuilder
 import isc.util.process
 
 MODULE_NAME = 'memmgr'
@@ -57,6 +60,10 @@ class Memmgr(BIND10Server):
         # List of DataSrcInfo.  Used as a queue to maintain info for all
         # active configuration generations.  Allow tests to inspec it.
         self._datasrc_info_list = []
+
+        self._builder_setup = False
+        self._builder_command_queue = []
+        self._builder_response_queue = []
 
     def _config_handler(self, new_config):
         """Configuration handler, called via BIND10Server.
@@ -117,6 +124,46 @@ class Memmgr(BIND10Server):
         # All copy, switch to the new configuration.
         self._config_params = new_config_params
 
+    def __notify_from_builder(self):
+        # Nothing is implemented here for now. This method should have
+        # code to handle responses from the builder in
+        # self._builder_response_queue[]. Access must be synchronized
+        # using self._builder_lock.
+        pass
+
+    def __create_builder_thread(self):
+        (self._master_sock, self._builder_sock) = \
+            socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.watch_fileno(self._master_sock, rcallback=self.__notify_from_builder)
+
+        self._builder_cv = threading.Condition()
+        self._builder_lock = threading.Lock()
+
+        self._builder = MemorySegmentBuilder(self._builder_sock,
+                                             self._builder_cv,
+                                             self._builder_lock,
+                                             self._builder_command_queue,
+                                             self._builder_response_queue)
+        self._builder_thread = threading.Thread(target=self._builder.run)
+        self._builder_thread.start()
+
+        self._builder_setup = True
+
+    def __shutdown_builder_thread(self):
+        if not self._builder_setup:
+            return
+
+        self._builder_setup = False
+
+        with self._builder_cv:
+            with self._builder_lock:
+                self._builder_command_queue.append('shutdown')
+            self._builder_cv.notify_all()
+
+        self._builder_thread.join()
+        self._master_sock.close()
+        self._builder_sock.close()
+
     def _setup_module(self):
         """Module specific initialization for BIND10Server."""
         try:
@@ -129,6 +176,12 @@ class Memmgr(BIND10Server):
         except (ModuleSpecError, ModuleCCSessionError) as ex:
             logger.error(MEMMGR_NO_DATASRC_CONF, ex)
             raise BIND10ServerFatal('failed to setup memmgr module')
+
+        self.__create_builder_thread()
+
+    def _shutdown_module(self):
+        """Module specific finalization."""
+        self.__shutdown_builder_thread()
 
     def _datasrc_config_handler(self, new_config, config_data):
         """Callback of data_sources configuration update.
