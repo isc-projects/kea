@@ -89,4 +89,4 @@ endif
 
 noinst_PROGRAMS = $(TESTS)
 
-EXTRA_DIST = library_manager_unittest.cc.in marker_file.h.in
+EXTRA_DIST = marker_file.h.in test_libraries.h.in
