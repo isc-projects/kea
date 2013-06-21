@@ -121,6 +121,12 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
+% DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
+This debug message is printed when a callout installed on lease6_ia_assign
+hook point sets a skip flag. It means that the server was told that no lease6
+should be assigned. Server will not put that lease in its database and the client
+will get a NoAddrsAvail for that IA_NA option.
+
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which

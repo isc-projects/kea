@@ -33,12 +33,16 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
+#include <hooks/server_hooks.h>
+#include <hooks/callout_manager.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <list>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -46,6 +50,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::hooks;
 using namespace std;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
@@ -59,6 +64,26 @@ public:
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile";
         LeaseMgrFactory::create(memfile);
+    }
+
+    virtual Pkt6Ptr receivePacket(int /*timeout*/) {
+
+        // If there is anything prepared as fake incoming
+        // traffic, use it
+        if (!to_be_received_.empty()) {
+            Pkt6Ptr pkt = to_be_received_.front();
+            to_be_received_.pop_front();
+            return (pkt);
+        }
+
+        // If not, just trigger shutdown and
+        // return immediately
+        shutdown();
+        return (Pkt6Ptr());
+    }
+
+    void fakeReceive(const Pkt6Ptr& pkt) {
+        to_be_received_.push_back(pkt);
     }
 
     virtual ~NakedDhcpv6Srv() {
@@ -75,6 +100,8 @@ public:
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
+
+    list<Pkt6Ptr> to_be_received_;
 };
 
 static const char* DUID_FILE = "server-id-test.txt";
@@ -226,6 +253,9 @@ public:
     }
 
     virtual ~NakedDhcpv6SrvTest() {
+        // Remove all registered hook points
+        ServerHooks::getServerHooks().reset();
+
         // Let's clean up if there is such a file.
         unlink(DUID_FILE);
     };
@@ -1755,6 +1785,85 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
 
     EXPECT_EQ(duid1_text, text);
 }
+
+// Checks if hooks are implemented properly.
+TEST_F(Dhcpv6SrvTest, Hooks) {
+    NakedDhcpv6Srv srv(0);
+
+    // check if appropriate hooks are registered
+
+    // check if appropriate indexes are set
+    int hook_index_pkt6_received = ServerHooks::getServerHooks().getIndex("pkt6_receive");
+    int hook_index_select_subnet = ServerHooks::getServerHooks().getIndex("subnet6_select");
+    int hook_index_pkt6_send     = ServerHooks::getServerHooks().getIndex("pkt6_send");
+
+    EXPECT_TRUE(hook_index_pkt6_received > 0);
+    EXPECT_TRUE(hook_index_select_subnet > 0);
+    EXPECT_TRUE(hook_index_pkt6_send > 0);
+}
+
+// This function returns buffer for empty packet (just DHCPv6 header)
+Pkt6* captureEmpty() {
+    Pkt6* pkt;
+    uint8_t data[4];
+    data[0] = 1; // type 1 = SOLICIT
+    data[1] = 0xca; // trans-id = 0xcafe01
+    data[2] = 0xfe;
+    data[3] = 0x01;
+
+    pkt = new Pkt6(data, sizeof(data));
+    pkt->setRemotePort(546);
+    pkt->setRemoteAddr(IOAddress("fe80::1"));
+    pkt->setLocalPort(0);
+    pkt->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt->setIndex(2);
+    pkt->setIface("eth0");
+
+    return (pkt);
+}
+
+string callback_name("");
+
+Pkt6Ptr callback_packet;
+
+int
+pkt6_receive_callout(CalloutHandle& callout_handle) {
+    printf("pkt6_receive_callout called!");
+    callback_name = string("pkt6_receive");
+
+    callout_handle.getArgument("pkt6", callback_packet);
+    return (0);
+}
+
+// Checks if callouts installed on pkt6_received are indeed called
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "pkt6_receive".
+TEST_F(Dhcpv6SrvTest, Hook_pkt6_receive) {
+
+    // This calls Dhcpv6Srv::ctor, which registers hook names
+    NakedDhcpv6Srv srv(0);
+
+    // Let's pretend there will be 3 libraries
+    CalloutManager callout_mgr(3);
+
+    // Let's pretent we're the library 0
+    EXPECT_NO_THROW(callout_mgr.setLibraryIndex(0));
+
+    EXPECT_NO_THROW( callout_mgr.registerCallout("pkt6_receive", pkt6_receive_callout) );
+
+    // Let's create a REQUEST
+    Pkt6Ptr req = Pkt6Ptr(captureEmpty());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(req);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv.run();
+}
+
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
