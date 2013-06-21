@@ -43,6 +43,7 @@ class ConfigError(Exception):
 
 class Memmgr(BIND10Server):
     def __init__(self):
+        BIND10Server.__init__(self)
         # Running configurable parameters: on initial configuration this will
         # be a dict: str=>config_value.
         # This is defined as "protected" so tests can inspect it; others

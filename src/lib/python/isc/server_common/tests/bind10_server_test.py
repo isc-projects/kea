@@ -62,6 +62,7 @@ class MyCCSession(MockModuleCCSession, isc.config.ConfigData):
 
 class MockServer(BIND10Server):
     def __init__(self):
+        BIND10Server.__init__(self)
         self._select_fn = self.select_wrapper
 
     def _setup_ccsession(self):
@@ -90,6 +91,9 @@ class MockServer(BIND10Server):
 class TestBIND10Server(unittest.TestCase):
     def setUp(self):
         self.__server = MockServer()
+        self.__reads = 0
+        self.__writes = 0
+        self.__errors = 0
 
     def test_init(self):
         """Check initial conditions"""
@@ -245,6 +249,34 @@ class TestBIND10Server(unittest.TestCase):
         # in this case module CC session hasn't been stopped explicitly
         # others will notice it due to connection reset.
         self.assertFalse(self.__server.mod_ccsession.stopped)
+
+    def my_read_callback(self):
+        self.__reads += 1
+
+    def my_write_callback(self):
+        self.__writes += 1
+
+    def my_error_callback(self):
+        self.__errors += 1
+
+    def test_watch_fileno(self):
+        """Test watching for fileno."""
+        self.select_params = []
+        self.__server._select_fn = \
+            lambda r, w, e: self.select_wrapper(r, w, e,
+                                                ret=([10, 20, 42, TEST_FILENO], [], [30]))
+        self.__server._setup_ccsession()
+
+        self.__server.watch_fileno(10, rcallback=self.my_read_callback)
+        self.__server.watch_fileno(20, rcallback=self.my_read_callback, \
+                                       wcallback=self.my_write_callback)
+        self.__server.watch_fileno(30, xcallback=self.my_error_callback)
+
+        self.__server._run_internal()
+        self.assertEqual([([10, 20, TEST_FILENO], [20], [30])], self.select_params)
+        self.assertEqual(2, self.__reads)
+        self.assertEqual(0, self.__writes)
+        self.assertEqual(1, self.__errors)
 
 if __name__== "__main__":
     isc.log.init("bind10_server_test")

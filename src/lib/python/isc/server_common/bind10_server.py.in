@@ -72,6 +72,11 @@ class BIND10Server:
     # Basically constant, but allow tests to override it.
     _select_fn = select.select
 
+    def __init__(self):
+        self._read_callbacks = {}
+        self._write_callbacks = {}
+        self._error_callbacks = {}
+
     @property
     def shutdown(self):
         return self.__shutdown
@@ -141,7 +146,13 @@ class BIND10Server:
         cc_fileno = self._mod_cc.get_socket().fileno()
         while not self.__shutdown:
             try:
-                (reads, _, _) = self._select_fn([cc_fileno], [], [])
+                read_fds = list(self._read_callbacks.keys())
+                read_fds.append(cc_fileno)
+                write_fds = list(self._write_callbacks.keys())
+                error_fds = list(self._error_callbacks.keys())
+
+                (reads, writes, errors) = \
+                    self._select_fn(read_fds, write_fds, error_fds)
             except select.error as ex:
                 # ignore intterruption by signal; regard other select errors
                 # fatal.
@@ -149,6 +160,22 @@ class BIND10Server:
                     continue
                 else:
                     raise
+
+            for fileno in reads:
+                if fileno in self._read_callbacks:
+                    for callback in self._read_callbacks[fileno]:
+                        callback()
+
+            for fileno in writes:
+                if fileno in self._write_callbacks:
+                    for callback in self._write_callbacks[fileno]:
+                        callback()
+
+            for fileno in errors:
+                if fileno in self._error_callbacks:
+                    for callback in self._error_callbacks[fileno]:
+                        callback()
+
             if cc_fileno in reads:
                 # this shouldn't raise an exception (if it does, we'll
                 # propagate it)
@@ -174,6 +201,31 @@ class BIND10Server:
     def _setup_module(self):
         """The default implementation of the module specific initilization"""
         pass
+
+    def watch_fileno(self, fileno, rcallback=None, wcallback=None, \
+                         xcallback=None):
+        """Register the fileno for the internal select() call.
+
+        *callback's are callable objects which would be called when
+        read, write, error events occur on the specified fileno.
+        """
+        if rcallback is not None:
+            if fileno in self._read_callbacks:
+                self._read_callbacks[fileno].append(rcallback)
+            else:
+                self._read_callbacks[fileno] = [rcallback]
+
+        if wcallback is not None:
+            if fileno in self._write_callbacks:
+                self._write_callbacks[fileno].append(wcallback)
+            else:
+                self._write_callbacks[fileno] = [wcallback]
+
+        if xcallback is not None:
+            if fileno in self._error_callbacks:
+                self._error_callbacks[fileno].append(xcallback)
+            else:
+                self._error_callbacks[fileno] = [xcallback]
 
     def run(self, module_name):
         """Start the server and let it run until it's told to stop.
