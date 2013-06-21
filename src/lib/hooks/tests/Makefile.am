@@ -71,6 +71,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
 run_unittests_SOURCES += callout_manager_unittest.cc
+run_unittests_SOURCES += common_test_class.h
 run_unittests_SOURCES += handles_unittest.cc
 run_unittests_SOURCES += library_manager_collection_unittest.cc
 run_unittests_SOURCES += library_manager_unittest.cc
