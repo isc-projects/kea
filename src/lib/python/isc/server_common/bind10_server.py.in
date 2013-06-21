@@ -57,8 +57,8 @@ class BIND10Server:
       _shutdown_module: can be optionally defined for module-specific
                         finalization. This is called right before the
                         module CC session is stopped. If it raises an
-                        exception, the server shutdown will still
-                        continue.
+                        exception, the server will be immediately
+                        stopped.
                         Parameter: None, Return: None
 
     """
