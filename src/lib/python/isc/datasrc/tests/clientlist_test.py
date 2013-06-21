@@ -102,9 +102,6 @@ class ClientListTest(unittest.TestCase):
         self.assertRaises(isc.datasrc.Error, self.clist.configure,
                           '"bad type"', True)
         self.assertRaises(isc.datasrc.Error, self.clist.configure, '''[{
-            "type": "bad type"
-        }]''', True)
-        self.assertRaises(isc.datasrc.Error, self.clist.configure, '''[{
             bad JSON,
         }]''', True)
         self.assertRaises(TypeError, self.clist.configure, [], True)

@@ -53,6 +53,7 @@ Feature: Querying feature
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
+        And wait for bind10 stderr message DATASRC_LIBRARY_ERROR
         And wait for bind10 stderr message STATS_STARTING
 
         bind10 module Auth should be running
