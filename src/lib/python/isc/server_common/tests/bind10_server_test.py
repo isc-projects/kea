@@ -166,6 +166,16 @@ class TestBIND10Server(unittest.TestCase):
         self.assertTrue(self.__server.shutdown)
         self.assertEqual((0, None), isc.config.parse_answer(answer))
 
+    def test_run_with_shutdown_module(self):
+        """Check run() with module specific shutdown method."""
+        self.shutdown_called = False
+        def check_called():
+            self.shutdown_called = True
+        self.__server.__shutdown = True
+        self.__server._shutdown_module = check_called
+        self.assertEqual(0, self.__server.run('test'))
+        self.assertTrue(self.shutdown_called)
+
     def test_other_command(self):
         self.__server._mod_command_handler = self.__server.mod_command_handler
         answer = self.__server._command_handler('other command', None)
