@@ -52,7 +52,7 @@ class BIND10Server:
                      initialization.  This is called after the module CC
                      session has started, and can be used for registering
                      interest on remote modules, etc.  If it raises an
-                     exception, the server will be immediatelly stopped.
+                     exception, the server will be immediately stopped.
                      Parameter: None, Return: None
 
     """
@@ -199,7 +199,7 @@ class BIND10Server:
         return isc.config.create_answer(1, "Unknown command: " + str(cmd))
 
     def _setup_module(self):
-        """The default implementation of the module specific initilization"""
+        """The default implementation of the module specific initialization"""
         pass
 
     def watch_fileno(self, fileno, rcallback=None, wcallback=None, \
