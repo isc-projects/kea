@@ -17,6 +17,7 @@
 #include <hooks/library_manager.h>
 #include <hooks/server_hooks.h>
 
+#include <hooks/tests/common_test_class.h>
 #include <hooks/tests/marker_file.h>
 #include <hooks/tests/test_libraries.h>
 
@@ -37,23 +38,15 @@ namespace {
 
 /// @brief Library manager test class
 
-class LibraryManagerTest : public ::testing::Test {
+class LibraryManagerTest : public ::testing::Test,
+                           public HooksCommonTestClass {
 public:
     /// @brief Constructor
     ///
-    /// Sets up a collection of three LibraryHandle objects to use in the test.
+    /// Initializes the CalloutManager object used in the tests.  It sets it
+    /// up with the hooks initialized in the HooksCommonTestClass object and
+    /// with four libraries.
     LibraryManagerTest() {
-
-        // Set up the server hooks.  ServerHooks is a singleton, so we reset it
-        // between each test.
-        ServerHooks& hooks = ServerHooks::getServerHooks();
-        hooks.reset();
-        lm_one_index_ = hooks.registerHook("lm_one");
-        lm_two_index_ = hooks.registerHook("lm_two");
-        lm_three_index_ = hooks.registerHook("lm_three");
-
-        // Set up the callout manager with these hooks.  Assume a maximum of
-        // four libraries.
         callout_manager_.reset(new CalloutManager(4));
 
         // Ensure the marker file is not present at the start of a test.
@@ -67,79 +60,41 @@ public:
         static_cast<void>(unlink(MARKER_FILE));
     }
 
+    /// @brief Marker file present
+    ///
+    /// Convenience function to check whether a marker file is present.  It
+    /// does this by opening the file.
+    ///
+    /// @return true if the marker file is present.
+    bool markerFilePresent() const {
+
+        // Try to open it.
+        std::fstream marker;
+        marker.open(MARKER_FILE, std::fstream::in);
+
+        // Check if it is open and close it if so.
+        bool exists = marker.is_open();
+        if (exists) {
+            marker.close();
+        }
+
+        return (exists);
+    }
+
     /// @brief Call callouts test
     ///
-    /// All of the loaded libraries for which callouts are called register four
-    /// callouts: a context_create callout and three callouts that are attached
-    /// to hooks lm_one, lm_two and lm_three.  These four callouts, executed
-    /// in sequence, perform a series of calculations. Data is passed between
-    /// callouts in the argument list, in a variable named "result".
-    ///
-    /// context_create initializes the calculation by setting a seed
-    /// value, called r0 here.
-    ///
-    /// Callout lm_one is passed a value d1 and performs a simple arithmetic
-    /// operation on it and r0 yielding a result r1.  Hence we can say that
-    /// @f[ r1 = lm1(r0, d1) @f]
-    ///
-    /// Callout lm_two is passed a value d2 and peforms another simple
-    /// arithmetic operation on it and d2, yielding r2, i.e.
-    /// @f[ r2 = lm2(d1, d2) @f]
-    ///
-    /// lm_three does a similar operation giving @f[ r3 = lm3(r2, d3) @f].
-    ///
-    /// The details of the operations lm1, lm2 and lm3 depend on the library.
-    /// However the sequence of calls needed to do this set of calculations
-    /// is identical regardless of the exact functions. This method performs
-    /// those operations and checks the results of each step.
-    ///
-    /// It is assumed that callout_manager_ has been set up appropriately.
-    ///
-    /// @note The CalloutHandle used in the calls is declared locally here.
-    ///       The advantage of this (apart from scope reduction) is that on
-    ///       exit, it is destroyed.  This removes any references to memory
-    ///       allocated by loaded libraries while they are still loaded.
+    /// A wrapper around the method of the same name in the HooksCommonTestClass
+    /// object, this passes this class's CalloutManager to that method.
     ///
     /// @param r0...r3, d1..d3 Values and intermediate values expected.  They
     ///        are ordered so that the variables appear in the argument list in
-    ///        the order they are used.
+    ///        the order they are used.  See HooksCommonTestClass::execute for
+    ///        a full description.
     void executeCallCallouts(int r0, int d1, int r1, int d2, int r2, int d3,
                              int r3) {
-        static const char* COMMON_TEXT = " callout returned the wong value";
-        int result;
-
-        // Set up a callout handle for the calls.
-        CalloutHandle callout_handle(callout_manager_);
-
-        // Seed the calculation.
-        callout_manager_->callCallouts(ServerHooks::CONTEXT_CREATE,
-                                       callout_handle);
-        callout_handle.getArgument("result", result);
-        EXPECT_EQ(r0, result) << "context_create" << COMMON_TEXT;
-
-        // Perform the first calculation.
-        callout_handle.setArgument("data_1", d1);
-        callout_manager_->callCallouts(lm_one_index_, callout_handle);
-        callout_handle.getArgument("result", result);
-        EXPECT_EQ(r1, result) << "lm_one" << COMMON_TEXT;
-
-        // ... the second ...
-        callout_handle.setArgument("data_2", d2);
-        callout_manager_->callCallouts(lm_two_index_, callout_handle);
-        callout_handle.getArgument("result", result);
-        EXPECT_EQ(r2, result) << "lm_two" << COMMON_TEXT;
-
-        // ... and the third.
-        callout_handle.setArgument("data_3", d3);
-        callout_manager_->callCallouts(lm_three_index_, callout_handle);
-        callout_handle.getArgument("result", result);
-        EXPECT_EQ(r3, result) << "lm_three" << COMMON_TEXT;
+        HooksCommonTestClass::executeCallCallouts(callout_manager_, r0, d1,
+                                                  r1, d2, r2, d3, r3);
     }
-
-    /// Hook indexes.  These are are made public for ease of reference.
-    int lm_one_index_;
-    int lm_two_index_;
-    int lm_three_index_;
 
     /// Callout manager used for the test.
     boost::shared_ptr<CalloutManager> callout_manager_;
@@ -380,21 +335,16 @@ TEST_F(LibraryManagerTest, CheckUnload) {
                                      0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
+
     // Check that the marker file is not present (at least that the file
     // open fails).
-    fstream marker;
-    marker.open(MARKER_FILE, fstream::in);
-    EXPECT_TRUE(marker.fail());
+    EXPECT_FALSE(markerFilePresent());
 
     // Check that unload function runs and returns a success
     EXPECT_TRUE(lib_manager.runUnload());
 
-    // Check that the open succeeded
-    marker.open(MARKER_FILE, fstream::in);
-    EXPECT_TRUE(marker.is_open());
-
-    // Tidy up
-    marker.close();
+    // Check that the marker file was created.
+    EXPECT_TRUE(markerFilePresent());
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
