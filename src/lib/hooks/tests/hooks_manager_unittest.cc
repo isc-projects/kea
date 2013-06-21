@@ -13,9 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <hooks/callout_handle.h>
-#include <hooks/callout_manager.h>
-#include <hooks/library_manager.h>
-#include <hooks/library_manager_collection.h>
+#include <hooks/hooks_manager.h>
 
 #include <hooks/tests/common_test_class.h>
 #include <hooks/tests/test_libraries.h>
@@ -33,37 +31,71 @@ using namespace std;
 
 namespace {
 
-/// @brief Library manager collection test class
+/// @brief Hooks manager collection test class
 
-class LibraryManagerCollectionTest : public ::testing::Test,
-                                     public HooksCommonTestClass {
-};
-
-/// @brief Public library manager collection class
-///
-/// This is an instance of the LibraryManagerCollection class but with the
-/// protected methods made public for test purposes.
-
-class PublicLibraryManagerCollection
-                : public isc::hooks::LibraryManagerCollection {
+class HooksManagerTest : public ::testing::Test,
+                         public HooksCommonTestClass {
 public:
     /// @brief Constructor
     ///
-    /// @param List of libraries that this collection will manage.  The order
-    ///        of the libraries is important.
-    PublicLibraryManagerCollection(const std::vector<std::string>& libraries)
-        : LibraryManagerCollection(libraries)
-    {}
+    /// Reset the hooks manager.  The hooks manager is a singleton, so needs
+    /// to be reset for each test.
+    HooksManagerTest() {
+        HooksManager::getHooksManager().reset();
+    }
 
-    /// Public methods that call protected methods on the superclass.
-    using LibraryManagerCollection::unloadLibraries;
+    /// @brief Call callouts test
+    ///
+    /// See the header for HooksCommonTestClass::execute for details.
+    ///
+    /// @param r0...r3, d1..d3 Values and intermediate values expected.  They
+    ///        are ordered so that the variables appear in the argument list in
+    ///        the order they are used.
+    void executeCallCallouts(int r0, int d1, int r1, int d2, int r2, int d3,
+                             int r3) {
+        static const char* COMMON_TEXT = " callout returned the wong value";
+        static const char* RESULT = "result";
+
+        // Get a CalloutHandle for the calculation.
+        CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+
+        // Initialize the argument RESULT.  This simplifies testing by
+        // eliminating the generation of an exception when we try the unload
+        // test.  In that case, RESULT is unchanged.
+        int result = -1;
+        handle->setArgument(RESULT, result);
+
+        // Seed the calculation.
+        HooksManager::callCallouts(isc::hooks::ServerHooks::CONTEXT_CREATE,
+                                   *handle);
+        handle->getArgument(RESULT, result);
+        EXPECT_EQ(r0, result) << "context_create" << COMMON_TEXT;
+
+        // Perform the first calculation.
+        handle->setArgument("data_1", d1);
+        HooksManager::callCallouts(lm_one_index_, *handle);
+        handle->getArgument(RESULT, result);
+        EXPECT_EQ(r1, result) << "lm_one" << COMMON_TEXT;
+
+        // ... the second ...
+        handle->setArgument("data_2", d2);
+        HooksManager::callCallouts(lm_two_index_, *handle);
+        handle->getArgument(RESULT, result);
+        EXPECT_EQ(r2, result) << "lm_two" << COMMON_TEXT;
+
+        // ... and the third.
+        handle->setArgument("data_3", d3);
+        HooksManager::callCallouts(lm_three_index_, *handle);
+        handle->getArgument(RESULT, result);
+        EXPECT_EQ(r3, result) << "lm_three" << COMMON_TEXT;
+    }
+
 };
-
-
+/*
 // This is effectively the same test as for LibraryManager, but using the
 // LibraryManagerCollection object.
 
-TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
+TEST_F(HooksManagerTest, LoadLibraries) {
 
     // Set up the list of libraries to be loaded.
     std::vector<std::string> library_names;
@@ -159,26 +191,19 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
         executeCallCallouts(manager, -1, 3, -1, 22, -1, 83, -1);
     }
 }
+*/
+// Check that everything works even with no libraries loaded.  First that
+// calloutsPresent() always returns false.
 
-// Check that everything works even with no libraries loaded.
+TEST_F(HooksManagerTest, NoLibrariesCalloutsPresent) {
+    // No callouts should be present on any hooks.
+    EXPECT_FALSE(HooksManager::calloutsPresent(lm_one_index_));
+    EXPECT_FALSE(HooksManager::calloutsPresent(lm_two_index_));
+    EXPECT_FALSE(HooksManager::calloutsPresent(lm_three_index_));
+}
 
-TEST_F(LibraryManagerCollectionTest, NoLibrariesLoaded) {
-    // Set up the list of libraries to be loaded.
-    std::vector<std::string> library_names;
-
-    // Set up the library manager collection and get the callout manager we'll
-    // be using.
-    LibraryManagerCollection lm_collection(library_names);
-    EXPECT_TRUE(lm_collection.loadLibraries());
-    boost::shared_ptr<CalloutManager> manager =
-                                      lm_collection.getCalloutManager();
-
-    // Load the libraries.
-    EXPECT_TRUE(lm_collection.loadLibraries());
-
-    // Eecute the calculation - callouts can be called but as nothing
-    // happens, the result should always be -1.
-    executeCallCallouts(manager, -1, 3, -1, 22, -1, 83, -1);
+TEST_F(HooksManagerTest, NoLibrariesCallCallouts) {
+    executeCallCallouts(-1, 3, -1, 22, -1, 83, -1);
 }
 
 } // Anonymous namespace

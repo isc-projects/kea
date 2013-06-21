@@ -73,9 +73,13 @@ run_unittests_SOURCES += callout_handle_unittest.cc
 run_unittests_SOURCES += callout_manager_unittest.cc
 run_unittests_SOURCES += common_test_class.h
 run_unittests_SOURCES += handles_unittest.cc
+run_unittests_SOURCES += hooks_manager_unittest.cc
 run_unittests_SOURCES += library_manager_collection_unittest.cc
 run_unittests_SOURCES += library_manager_unittest.cc
 run_unittests_SOURCES += server_hooks_unittest.cc
+
+nodist_run_unittests_SOURCES  = marker_file.h
+nodist_run_unittests_SOURCES += test_libraries.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

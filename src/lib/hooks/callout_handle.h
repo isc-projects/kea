@@ -356,7 +356,7 @@ private:
 /// A shared pointer to a CalloutHandle object.
 typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
 
-} // namespace util
+} // namespace hooks
 } // namespace isc
 
 
