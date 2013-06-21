@@ -53,7 +53,12 @@ Feature: Querying feature
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        # DATASRC_LIBRARY_ERROR must be generated due to
+        # "broken_libraries_should_be_skipped" in
+        # example.org.inmem.config
         And wait for bind10 stderr message DATASRC_LIBRARY_ERROR
+
         And wait for bind10 stderr message STATS_STARTING
 
         bind10 module Auth should be running
