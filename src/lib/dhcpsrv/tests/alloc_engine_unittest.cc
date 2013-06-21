@@ -25,6 +25,8 @@
 
 #include <dhcpsrv/tests/test_utils.h>
 
+#include <hooks/callout_handle.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -37,6 +39,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -203,7 +206,7 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     ASSERT_TRUE(engine);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               false);
+                                               false, CalloutHandlePtr());
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -226,7 +229,7 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     ASSERT_TRUE(engine);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               true);
+                                               true, CalloutHandlePtr());
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -248,7 +251,7 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
                                                IOAddress("2001:db8:1::15"),
-                                               false);
+                                               false, CalloutHandlePtr());
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -286,7 +289,7 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     // twice.
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
                                                IOAddress("2001:db8:1::1f"),
-                                               false);
+                                               false, CalloutHandlePtr());
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -319,7 +322,7 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     // with the normal allocation
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
                                                IOAddress("3000::abc"),
-                                               false);
+                                               false, CalloutHandlePtr());
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -345,12 +348,12 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
 
     // Allocations without subnet are not allowed
     Lease6Ptr lease = engine->allocateAddress6(Subnet6Ptr(), duid_, iaid_,
-                                               IOAddress("::"), false);
+                                               IOAddress("::"), false, CalloutHandlePtr());
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     lease = engine->allocateAddress6(subnet_, DuidPtr(), iaid_,
-                                     IOAddress("::"), false);
+                                     IOAddress("::"), false, CalloutHandlePtr());
     ASSERT_FALSE(lease);
 }
 
@@ -439,7 +442,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     cfg_mgr.addSubnet6(subnet_);
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               false);
+                                               false, CalloutHandlePtr());
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -485,7 +488,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     // There is just a single address in the pool and allocated it to someone
     // else, so the allocation should fail
     Lease6Ptr lease2 = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                                IOAddress("::"), false);
+                                                IOAddress("::"), false, CalloutHandlePtr());
     EXPECT_FALSE(lease2);
 }
 
@@ -519,7 +522,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // CASE 1: Asking for any address
     lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                     true);
+                                     true, CalloutHandlePtr());
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
@@ -529,7 +532,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // CASE 2: Asking specifically for this address
     lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress(addr.toText()),
-                                     true);
+                                     true, CalloutHandlePtr());
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
@@ -563,7 +566,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     // A client comes along, asking specifically for this address
     lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                     IOAddress(addr.toText()), false);
+                                     IOAddress(addr.toText()), false,
+                                     CalloutHandlePtr());
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);

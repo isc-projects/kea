@@ -23,6 +23,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/subnet.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -86,6 +87,20 @@ public:
 
     /// @brief Instructs the server to shut down.
     void shutdown();
+
+    /// @brief returns ServerHooks object
+    /// @todo: remove this as soon as ServerHooks object is converted
+    /// to a signleton.
+    //static boost::shared_ptr<isc::util::ServerHooks> getServerHooks();
+
+    /// @brief returns Callout Manager object
+    ///
+    /// This manager is used to manage callouts registered on various hook
+    /// points. @todo exact access method for HooksManager manager will change
+    /// when it will be converted to a singleton.
+    ///
+    /// @return CalloutManager instance
+    //static boost::shared_ptr<isc::util::HooksManager> getHooksManager();
 
 protected:
 
@@ -189,7 +204,8 @@ protected:
     OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
                           isc::dhcp::Pkt6Ptr question,
-                          boost::shared_ptr<Option6IA> ia);
+                          boost::shared_ptr<Option6IA> ia,
+                          const Pkt6Ptr& query);
 
     /// @brief Renews specific IA_NA option
     ///
@@ -321,6 +337,13 @@ protected:
     /// @return string representation
     static std::string duidToString(const OptionPtr& opt);
 
+
+    /// @brief dummy wrapper around IfaceMgr::receive6
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual Pkt6Ptr receivePacket(int timeout);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
@@ -334,6 +357,17 @@ private:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
+
+    void packetProcessStart(const Pkt6Ptr& pkt);
+
+    void packetProcessEnd(const Pkt6Ptr& pkt);
+
+    /// Indexes for registered hook points
+    int hook_index_pkt6_receive_;
+    int hook_index_subnet6_select_;
+    int hook_index_pkt6_send_;
 };
 
 }; // namespace isc::dhcp
