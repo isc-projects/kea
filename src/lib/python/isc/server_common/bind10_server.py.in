@@ -149,11 +149,10 @@ class BIND10Server:
                     continue
                 else:
                     raise
-            for fileno in reads:
-                if fileno == cc_fileno:
-                    # this shouldn't raise an exception (if it does, we'll
-                    # propagate it)
-                    self._mod_cc.check_command(True)
+            if cc_fileno in reads:
+                # this shouldn't raise an exception (if it does, we'll
+                # propagate it)
+                self._mod_cc.check_command(True)
 
         self._mod_cc.send_stopping()
 
