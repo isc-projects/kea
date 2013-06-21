@@ -54,6 +54,12 @@ class BIND10Server:
                      interest on remote modules, etc.  If it raises an
                      exception, the server will be immediately stopped.
                      Parameter: None, Return: None
+      _shutdown_module: can be optionally defined for module-specific
+                        finalization. This is called right before the
+                        module CC session is stopped. If it raises an
+                        exception, the server shutdown will still
+                        continue.
+                        Parameter: None, Return: None
 
     """
     # Will be set to True when the server should stop and shut down.
@@ -181,6 +187,7 @@ class BIND10Server:
                 # propagate it)
                 self._mod_cc.check_command(True)
 
+        self._shutdown_module()
         self._mod_cc.send_stopping()
 
     def _command_handler(self, cmd, args):
@@ -200,6 +207,10 @@ class BIND10Server:
 
     def _setup_module(self):
         """The default implementation of the module specific initialization"""
+        pass
+
+    def _shutdown_module(self):
+        """The default implementation of the module specific finalization"""
         pass
 
     def watch_fileno(self, fileno, rcallback=None, wcallback=None, \
