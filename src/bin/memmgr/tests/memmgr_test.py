@@ -74,6 +74,10 @@ class TestMemmgr(unittest.TestCase):
         self.__orig_isdir = os.path.isdir
 
     def tearDown(self):
+        self.__mgr._shutdown_module()
+
+        self.assertEqual(len(self.__mgr._builder_command_queue), 0)
+
         # Restore faked values
         os.access = self.__orig_os_access
         os.path.isdir = self.__orig_isdir
