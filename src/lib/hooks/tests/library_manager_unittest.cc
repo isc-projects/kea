@@ -16,7 +16,9 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/server_hooks.h>
+
 #include <hooks/tests/marker_file.h>
+#include <hooks/tests/test_libraries.h>
 
 #include <gtest/gtest.h>
 
@@ -32,20 +34,6 @@ using namespace isc::hooks;
 using namespace std;
 
 namespace {
-
-// Names of the libraries used in these tests.  These libraries are built using
-// libtool, so we need to look in the hidden ".libs" directory to locate the
-// .so file.  Note that we access the .so file - libtool creates this as a
-// like to the real shared library.
-static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbcl.so";
-static const char* FULL_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libfcl.so";
-static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/.libs/libivl.so";
-static const char* LOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/liblcl.so";
-static const char* LOAD_ERROR_CALLOUT_LIBRARY =
-    "@abs_builddir@/.libs/liblecl.so";
-static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
-static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnvl.so";
-static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl.so";
 
 /// @brief Library manager test class
 
