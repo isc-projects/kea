@@ -73,7 +73,7 @@ D2UpdateMessage::setZone(const Name& zone, const RRClass& rrclass) {
         message_.clearSection(dns::Message::SECTION_QUESTION);
     }
 
-    message_.addQuestion(Questixon(zone, rrclass, RRType::SOA()));
+    message_.addQuestion(Question(zone, rrclass, RRType::SOA()));
 }
 
 void
