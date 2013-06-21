@@ -353,6 +353,9 @@ private:
     bool skip_;
 };
 
+/// a shared pointer to CalloutHandle object
+typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
+
 } // namespace util
 } // namespace isc
 

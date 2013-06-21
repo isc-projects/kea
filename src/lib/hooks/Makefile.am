@@ -34,6 +34,7 @@ libb10_hooks_la_SOURCES += hooks_log.cc hooks_log.h
 libb10_hooks_la_SOURCES += library_handle.cc library_handle.h
 libb10_hooks_la_SOURCES += library_manager.cc library_manager.h
 libb10_hooks_la_SOURCES += server_hooks.cc server_hooks.h
+libb10_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
 
 nodist_libb10_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 

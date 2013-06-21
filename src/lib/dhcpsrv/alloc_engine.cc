@@ -16,11 +16,15 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
+#include <hooks/server_hooks.h>
+#include <hooks/hooks_manager.h>
+
 #include <cstring>
 #include <vector>
 #include <string.h>
 
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 namespace isc {
 namespace dhcp {
@@ -161,6 +165,9 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     default:
         isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
     }
+
+    // Register hook points
+    hook_index_lease6_select_ = ServerHooks::getServerHooks().registerHook("lease6_select");
 }
 
 Lease6Ptr
@@ -168,7 +175,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
                               const IOAddress& hint,
-                              bool fake_allocation /* = false */ ) {
+                              bool fake_allocation,
+                              const isc::hooks::CalloutHandlePtr& callout_handle) {
 
     try {
         // That check is not necessary. We create allocator in AllocEngine
@@ -201,7 +209,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 /// implemented
 
                 // the hint is valid and not currently used, let's create a lease for it
-                Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, fake_allocation);
+                Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, callout_handle,
+                                               fake_allocation);
 
                 // It can happen that the lease allocation failed (we could have lost
                 // the race condition. That means that the hint is lo longer usable and
@@ -212,7 +221,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (existing->expired()) {
                     return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                              fake_allocation));
+                                              callout_handle, fake_allocation));
                 }
 
             }
@@ -246,7 +255,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
                 Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                              fake_allocation);
+                                               callout_handle, fake_allocation);
                 if (lease) {
                     return (lease);
                 }
@@ -257,7 +266,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (existing->expired()) {
                     return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                              fake_allocation));
+                                              callout_handle, fake_allocation));
                 }
             }
 
@@ -438,6 +447,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
                                          const Subnet6Ptr& subnet,
                                          const DuidPtr& duid,
                                          uint32_t iaid,
+                                         const isc::hooks::CalloutHandlePtr& callout_handle,
                                          bool fake_allocation /*= false */ ) {
 
     if (!expired->expired()) {
@@ -460,6 +470,42 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
 
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
+
+    // Let's execute all callouts registered for lease6_ia_added
+    if (callout_handle &&
+        HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setSkip(false);
+
+        // Pass necessary arguments
+
+        // Subnet from which we do the allocation
+        callout_handle->setArgument("subnet6", subnet);
+
+        // Is this solicit (fake = true) or request (fake = false)
+        callout_handle->setArgument("fake_allocation", fake_allocation);
+        callout_handle->setArgument("lease6", expired);
+
+        // This is the first callout, so no need to clear any arguments
+        HooksManager::getHooksManager().callCallouts(hook_index_lease6_select_,
+                                                     *callout_handle);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
+            return (Lease6Ptr());
+        }
+
+        // Let's use whatever callout returned. Hopefully it is the same lease
+        // we handled to it.
+        callout_handle->getArgument("lease6", expired);
+    }
 
     if (!fake_allocation) {
         // for REQUEST we do update the lease
@@ -517,11 +563,48 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const DuidPtr& duid,
                                     uint32_t iaid,
                                     const IOAddress& addr,
+                                    const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
 
     Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID()));
+
+    // Let's execute all callouts registered for lease6_ia_added
+    if (callout_handle &&
+        HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setSkip(false);
+
+        // Pass necessary arguments
+
+        // Subnet from which we do the allocation
+        callout_handle->setArgument("subnet6", subnet);
+
+        // Is this solicit (fake = true) or request (fake = false)
+        callout_handle->setArgument("fake_allocation", fake_allocation);
+        callout_handle->setArgument("lease6", lease);
+
+        // This is the first callout, so no need to clear any arguments
+        HooksManager::getHooksManager().callCallouts(hook_index_lease6_select_,
+                                                     *callout_handle);
+
+        // Callouts decided to skip the action. This means that the lease is not
+        // assigned, so the client will get NoAddrAvail as a result. The lease
+        // won't be inserted into the
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
+            return (Lease6Ptr());
+        }
+
+        // Let's use whatever callout returned. Hopefully it is the same lease
+        // we handled to it.
+        callout_handle->getArgument("lease6", lease);
+    }
 
     if (!fake_allocation) {
         // That is a real (REQUEST) allocation
