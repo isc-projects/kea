@@ -1,3 +1,10 @@
+630.	[bug]		muks
+	If there is a problem loading the backend module for a type of
+	data source, b10-auth would not serve any zones. This behaviour
+	has been changed now so that it serves zones from all other usable
+	data sources that were configured.
+	(Trac #2947, git 9a3ddf1e2bfa2546bfcc7df6d9b11bfbdb5cf35f)
+
 629.	[func]		stephen
 	Added first part of the hooks framework.
 	(Trac #2794, git d2b107586db7c2deaecba212c891d231d7e54a07)
