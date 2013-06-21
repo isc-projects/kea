@@ -27,6 +27,18 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
+// Set the number of libraries handles by the CalloutManager.
+
+void
+CalloutManager::setNumLibraries(int num_libraries) {
+    if (num_libraries < 0) {
+        isc_throw(isc::BadValue, "number of libraries passed to the "
+                  "CalloutManager must be >= 0");
+    }
+
+    num_libraries_ = num_libraries;
+}
+
 // Register a callout for the current library.
 
 void
