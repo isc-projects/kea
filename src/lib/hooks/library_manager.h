@@ -23,6 +23,7 @@ namespace isc {
 namespace hooks {
 
 class CalloutManager;
+class LibraryHandle;
 class LibraryManager;
 
 /// @brief Library manager

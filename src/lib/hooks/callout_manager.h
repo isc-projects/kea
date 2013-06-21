@@ -96,17 +96,15 @@ public:
     ///
     /// @throw isc::BadValue if the number of libraries is less than or equal
     ///        to 0, or if the pointer to the server hooks object is empty.
-    CalloutManager(int num_libraries)
-        : current_hook_(-1), current_library_(-1), hook_vector_(),
+    CalloutManager(int num_libraries = 0)
+        : current_hook_(-1), current_library_(-1),
+          hook_vector_(ServerHooks::getServerHooks().getCount()),
           library_handle_(this), num_libraries_(num_libraries)
     {
-        if (num_libraries <= 0) {
-            isc_throw(isc::BadValue, "number of libraries passed to the "
-                      "CalloutManager must be >= 0");
-        }
-
-        // Parameters OK, do operations that depend on them.
-        hook_vector_.resize(ServerHooks::getServerHooks().getCount());
+        // Check that the number of libraries is OK.  (This does a redundant
+        // set of the number of libraries, but it's only a single assignment
+        // and avoids the need for a separate "check" method.
+        setNumLibraries(num_libraries);
     }
 
     /// @brief Register a callout on a hook for the current library
@@ -187,12 +185,23 @@ public:
         return (current_hook_);
     }
 
+    /// @brief Set number of libraries
+    ///
+    /// Sets the number of libraries.  Although the value is passed to the
+    /// constructor, in some cases that is only an estimate and the number
+    /// can only be determined after the CalloutManager is created.
+    ///
+    /// @param num_libraries Number of libraries served by this CalloutManager.
+    ///
+    /// @throw BadValue Number of libraries must be >= 0.
+    void setNumLibraries(int num_libraries);
+
     /// @brief Get number of libraries
     ///
     /// Returns the number of libraries that this CalloutManager is expected
     /// to serve.  This is the number passed to its constructor.
     ///
-    /// @return Number of libraries server by this CalloutManager.
+    /// @return Number of libraries served by this CalloutManager.
     int getNumLibraries() const {
         return (num_libraries_);
     }

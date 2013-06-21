@@ -177,22 +177,31 @@ TEST_F(CalloutManagerTest, BadConstructorParameters) {
     boost::scoped_ptr<CalloutManager> cm;
 
     // Invalid number of libraries
-    EXPECT_THROW(cm.reset(new CalloutManager(0)), BadValue);
     EXPECT_THROW(cm.reset(new CalloutManager(-1)), BadValue);
 }
 
 // Check the number of libraries is reported successfully.
 
-TEST_F(CalloutManagerTest, GetNumLibraries) {
+TEST_F(CalloutManagerTest, NumberOfLibraries) {
     boost::scoped_ptr<CalloutManager> cm;
 
     // Check two valid values of number of libraries to ensure that the
     // GetNumLibraries() returns the value set.
+    EXPECT_NO_THROW(cm.reset(new CalloutManager()));
+    EXPECT_EQ(0, cm->getNumLibraries());
+
+    EXPECT_NO_THROW(cm.reset(new CalloutManager(0)));
+    EXPECT_EQ(0, cm->getNumLibraries());
+
     EXPECT_NO_THROW(cm.reset(new CalloutManager(4)));
     EXPECT_EQ(4, cm->getNumLibraries());
 
     EXPECT_NO_THROW(cm.reset(new CalloutManager(42)));
     EXPECT_EQ(42, cm->getNumLibraries());
+
+    // Check that setting the number of libraries alterns the number reported.
+    EXPECT_NO_THROW(cm->setNumLibraries(27));
+    EXPECT_EQ(27, cm->getNumLibraries());
 }
 
 // Check that we can only set the current library index to the correct values.
