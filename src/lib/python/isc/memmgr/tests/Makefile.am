@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = datasrc_info_tests.py
+PYTESTS = builder_tests.py datasrc_info_tests.py
 EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
