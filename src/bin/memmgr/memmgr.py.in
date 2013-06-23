@@ -132,10 +132,13 @@ class Memmgr(BIND10Server):
         pass
 
     def __create_builder_thread(self):
+        # We get responses from the builder thread on this socket pair.
         (self._master_sock, self._builder_sock) = \
             socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         self.watch_fileno(self._master_sock, rcallback=self.__notify_from_builder)
 
+        # See the documentation for MemorySegmentBuilder on how the
+        # following are used.
         self._builder_cv = threading.Condition()
         self._builder_lock = threading.Lock()
 
@@ -150,17 +153,22 @@ class Memmgr(BIND10Server):
         self._builder_setup = True
 
     def __shutdown_builder_thread(self):
+        # Some unittests do not create the builder thread, so we check
+        # that.
         if not self._builder_setup:
             return
 
         self._builder_setup = False
 
+        # This makes the MemorySegmentBuilder exit its main loop. It
+        # should make the builder thread joinable.
         with self._builder_cv:
             with self._builder_lock:
                 self._builder_command_queue.append('shutdown')
             self._builder_cv.notify_all()
 
         self._builder_thread.join()
+
         self._master_sock.close()
         self._builder_sock.close()
 
