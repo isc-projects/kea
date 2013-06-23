@@ -20,6 +20,29 @@ class MemorySegmentBuilder:
     """
 
     def __init__(self, sock, cv, lock, command_queue, response_queue):
+        """ The constructor takes the following arguments:
+
+            sock: A socket using which this builder object notifies the
+                  main thread that it has a response waiting for it.
+
+            cv: A condition variable object that is used by the main
+                thread to tell this builder object that new commands are
+                available to it.
+
+            lock: A lock object which should be acquired before using or
+                  modifying the contents of command_queue and
+                  response_queue.
+
+            command_queue: A list of commands sent by the main thread to
+                           this object. Commands should be executed
+                           sequentially in the given order by this
+                           object.
+
+            response_queue: A list of responses sent by this object to
+                            the main thread. The format of this is
+                            currently undefined.
+        """
+
         self._sock = sock
         self._cv = cv
         self._lock = lock
@@ -28,6 +51,16 @@ class MemorySegmentBuilder:
         self._shutdown = False
 
     def run(self):
+        """ This is the method invoked when the builder thread is
+            started.  In this thread, be careful when modifying
+            variables passed-by-reference in the constructor. If they are
+            reassigned, they will not refer to the main thread's objects
+            any longer. Any use of command_queue and response_queue must
+            be synchronized by acquiring the lock. This method must
+            normally terminate only when the 'shutdown' command is sent
+            to it.
+        """
+
         with self._cv:
             while not self._shutdown:
                 while len(self._command_queue) == 0:
