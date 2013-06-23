@@ -49,6 +49,33 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         self._master_sock.close()
         self._builder_sock.close()
 
+    def test_bad_command(self):
+        """Tests what happens when a bad command is passed to the
+        MemorySegmentBuilder.
+        """
+
+        self._builder_thread.start()
+
+        # Now that the builder thread is running, send it the shutdown
+        # command. The thread should exit its main loop and be joinable.
+        with self._builder_cv:
+            with self._builder_lock:
+                self._builder_command_queue.append('bad_command')
+            self._builder_cv.notify_all()
+
+        # Wait 5 seconds at most for the main loop of the builder to
+        # exit.
+        self._builder_thread.join(5)
+        self.assertFalse(self._builder_thread.isAlive())
+
+        # The command queue must be cleared, and the response queue must
+        # be untouched (we don't use it in this test).
+        with self._builder_lock:
+            self.assertEqual(len(self._builder_command_queue), 0)
+            self.assertEqual(len(self._builder_response_queue), 1)
+            self.assertListEqual(self._builder_response_queue, ['bad_command'])
+            self._builder_response_queue.clear()
+
     def test_shutdown(self):
         """Tests that shutdown command exits the MemorySegmentBuilder
         loop.
@@ -61,6 +88,9 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         with self._builder_cv:
             with self._builder_lock:
                 self._builder_command_queue.append('shutdown')
+                # Commands after 'shutdown' must be ignored.
+                self._builder_command_queue.append('bad_command_1')
+                self._builder_command_queue.append('bad_command_2')
             self._builder_cv.notify_all()
 
         # Wait 5 seconds at most for the main loop of the builder to

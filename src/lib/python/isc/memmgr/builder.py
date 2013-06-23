@@ -40,7 +40,9 @@ class MemorySegmentBuilder:
 
             response_queue: A list of responses sent by this object to
                             the main thread. The format of this is
-                            currently undefined.
+                            currently not strictly defined. Future
+                            tickets will be able to define it based on
+                            how it's used.
         """
 
         self._sock = sock
@@ -78,6 +80,21 @@ class MemorySegmentBuilder:
                 for command in local_command_queue:
                     if command == 'shutdown':
                         self._shutdown = True
+                        # When the shutdown command is received, we do
+                        # not process any further commands.
                         break
-                    raise Exception('Unknown command passed to ' +
-                                    'MemorySegmentBuilder: ' + command)
+                    else:
+                        # A bad command was received. Raising an
+                        # exception is not useful in this case as we are
+                        # likely running in a different thread from the
+                        # main thread which would need to be
+                        # notified. Instead return this in the response
+                        # queue.
+                        with self._lock:
+                            self._response_queue.append('bad_command')
+                            # In this case, we do not notify the main
+                            # thread about a response on the socket, as
+                            # we quit the main loop here anyway (and any
+                            # enclosing thread).
+                            self._shutdown = True
+                            break
