@@ -73,7 +73,10 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         with self._builder_lock:
             self.assertEqual(len(self._builder_command_queue), 0)
             self.assertEqual(len(self._builder_response_queue), 1)
-            self.assertListEqual(self._builder_response_queue, ['bad_command'])
+
+            response = self._builder_response_queue[0]
+            self.assertTrue(isinstance(response, tuple))
+            self.assertTupleEqual(response, ('bad_command',))
             self._builder_response_queue.clear()
 
     def test_shutdown(self):
