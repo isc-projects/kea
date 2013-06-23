@@ -61,18 +61,20 @@ class MemorySegmentBuilder:
             to it.
         """
 
+        # Acquire the condition variable while running the loop.
         with self._cv:
             while not self._shutdown:
                 while len(self._command_queue) == 0:
                     self._cv.wait()
-                # move the queue content to a local queue
+                # Move the queue content to a local queue. Be careful of
+                # not making assignments to reference variables.
                 with self._lock:
                     local_command_queue = self._command_queue.copy()
                     self._command_queue.clear()
 
-                # run commands in the queue in the given order.  For
-                # now, it only supports the "shutdown" command, which
-                # just exits the thread.
+                # Run commands passed in the command queue sequentially
+                # in the given order.  For now, it only supports the
+                # "shutdown" command, which just exits the thread.
                 for command in local_command_queue:
                     if command == 'shutdown':
                         self._shutdown = True
