@@ -39,7 +39,7 @@ class LibraryManager;
 /// On unload, it calls the "unload" method if one was located, clears the
 /// callouts from all hooks and closes the library.
 ///
-/// @note Caution needs to be exercised whtn using the unload method. During
+/// @note Caution needs to be exercised when using the unload method. During
 ///       use, data will pass between the server and the library.  In this
 ///       process, the library may allocate memory and pass it back to the
 ///       server.  This could happen by the server setting arguments or context
