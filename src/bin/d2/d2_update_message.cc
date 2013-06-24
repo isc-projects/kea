@@ -26,7 +26,9 @@ using namespace isc::dns;
 
 D2UpdateMessage::D2UpdateMessage(const bool parse)
     : message_(parse ? dns::Message::PARSE : dns::Message::RENDER) {
-    message_.setOpcode(Opcode(Opcode::UPDATE_CODE));
+    if (!parse) {
+        message_.setOpcode(Opcode(Opcode::UPDATE_CODE));
+    }
 }
 
 D2UpdateMessage::QRFlag
@@ -65,6 +67,16 @@ D2UpdateMessage::setRcode(const dns::Rcode& rcode) {
 unsigned int
 D2UpdateMessage::getRRCount(const UpdateMsgSection section) const {
     return (message_.getRRCount(ddnsToDnsSection(section)));
+}
+
+const dns::RRsetIterator
+D2UpdateMessage::beginSection(const UpdateMsgSection section) const {
+    return (message_.beginSection(ddnsToDnsSection(section)));
+}
+
+const dns::RRsetIterator
+D2UpdateMessage::endSection(const UpdateMsgSection section) const {
+    return (message_.endSection(ddnsToDnsSection(section)));
 }
 
 void
