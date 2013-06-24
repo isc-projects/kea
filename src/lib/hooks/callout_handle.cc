@@ -52,14 +52,13 @@ CalloutHandle::~CalloutHandle() {
     context_collection_.clear();
 
     // Normal destruction of the remaining variables will include the
-    // of the reference count on the library manager collection (which holds
-    // the libraries that could have allocated memory in the argument and
-    // context members).  When that goes to zero, the libraries will be
-    // unloaded: however, at that point nothing in the hooks framework will
-    // access memory in the libraries' address space.  It is possible that some
-    // other data structure in the server (the program using the hooks library)
-    // still references address space, but that is outside the scope of this
-    // framework.
+    // decrementing of the reference count on the library manager collection
+    // (which holds the libraries that could have allocated memory in the
+    // argument and context members).  When that goes to zero, the libraries
+    // will be unloaded: however, at that point nothing in the hooks framework
+    // will be accessing memory in the libraries' address space.  It is possible    // that some other data structure in the server (the program using the hooks
+    // library) still references the address space, but that is outside the
+    // scope of this framework.
 }
 
 // Return the name of all argument items.
@@ -147,8 +146,9 @@ CalloutHandle::getHookName() const {
     try {
         hook = ServerHooks::getServerHooks().getName(index);
     } catch (const NoSuchHook&) {
-        // Hook index is invalid, so probably called outside of a callout.
-        // This is a no-op.
+        // Hook index is invalid, so this methods probably called from outside
+        // a callout being executed via a call to CalloutManager::callCallouts.
+        // In this case, the empty string is returned.
     }
 
     return (hook);

@@ -27,7 +27,7 @@
 ///   "lm_one", "lm_two", "lm_three".  All do some trivial calculations
 ///   on the arguments supplied to it and the context variables, returning
 ///   intermediate results through the "result" argument. The result of
-///   the calculation is:
+///   executing all four callouts in order is:
 ///
 ///   @f[ (10 + data_1) * data_2 - data_3 @f]
 ///

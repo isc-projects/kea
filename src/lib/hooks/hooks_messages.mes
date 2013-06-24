@@ -21,10 +21,10 @@ index (in the list of loaded libraries) has been called and returned a
 success state.  The address of the callout is given in the message
 
 % HOOKS_CALLOUT_ERROR error returned by callout on hook %1 registered by library with index %2 (callout address %3)
-If a callout returns an error status when called, this warning message
-is issues.  It identifies the hook to which the callout is attached,
-and the index of the library (in the list of loaded libraries) that
-registered it.  The address of the callout is also given.
+If a callout returns an error status when called, this error message
+is issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
 
 % HOOKS_CALLOUT_REMOVED callout removed from hook %1 for library %2
 This is a debug message issued during library unloading.  It notes that
@@ -36,6 +36,12 @@ BIND 10 has failed to close the named hook library for the stated reason.
 Although this is an error, this should not affect the running system
 other than as a loss of resources.  If this error persists, you should
 restart BIND 10.
+
+% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3)
+If a callout throws an exception when called, this error message is
+issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
 
 % HOOKS_DEREGISTER_ALL_CALLOUTS hook library at index %1 deregistered all callouts on hook %2
 A debug message issued when all callouts on the specified hook registered
