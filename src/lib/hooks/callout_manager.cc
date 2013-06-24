@@ -29,9 +29,9 @@ namespace isc {
 namespace hooks {
 
 // Check that the index of a library is valid.  It can range from 1 - n
-// (n is the number of libraries) or it can be 0 (pre-user library callouts)
-// of INT_MAX (post-user library callouts).  It can also be -1 to indicate
-// an invalid value.
+// (n is the number of libraries), 0 (pre-user library callouts), or INT_MAX
+// (post-user library callouts).  It can also be -1 to indicate an invalid
+// value.
 
 void
 CalloutManager::checkLibraryIndex(int library_index) const {
@@ -138,15 +138,24 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             current_library_ = i->first;
 
             // Call the callout
-            // @todo Log the return status if non-zero
-            int status = (*i->second)(callout_handle);
-            if (status == 0) {
-                LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS, HOOKS_CALLOUT)
-                    .arg(current_library_)
-                    .arg(ServerHooks::getServerHooks().getName(current_hook_))
-                    .arg(reinterpret_cast<void*>(i->second));
-            } else {
-                LOG_WARN(hooks_logger, HOOKS_CALLOUT_ERROR)
+            try {
+                int status = (*i->second)(callout_handle);
+                if (status == 0) {
+                    LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+                              HOOKS_CALLOUT).arg(current_library_)
+                        .arg(ServerHooks::getServerHooks()
+                            .getName(current_hook_))
+                        .arg(reinterpret_cast<void*>(i->second));
+                } else {
+                    LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
+                        .arg(current_library_)
+                        .arg(ServerHooks::getServerHooks()
+                            .getName(current_hook_))
+                        .arg(reinterpret_cast<void*>(i->second));
+                }
+            } catch (...) {
+                // Any exception, not just ones based on isc::Exception
+                LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
                     .arg(ServerHooks::getServerHooks().getName(current_hook_))
                     .arg(reinterpret_cast<void*>(i->second));

@@ -934,7 +934,7 @@ TEST_F(HandlesTest, HookName) {
     getCalloutManager()->registerCallout("alpha", callout_hook_name);
     getCalloutManager()->registerCallout("beta", callout_hook_name);
 
-    // Call alpha abd beta callouts and check the hook to which they belong.
+    // Call alpha and beta callouts and check the hook to which they belong.
     CalloutHandle callout_handle(getCalloutManager());
 
     EXPECT_EQ(std::string(""), HandlesTest::common_string_);
@@ -949,8 +949,8 @@ TEST_F(HandlesTest, HookName) {
     // only callout in the list.
     getCalloutManager()->setLibraryIndex(1);
     getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
-    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
     getCalloutManager()->registerCallout("gamma", callout_hook_name);
+    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
 
     EXPECT_EQ(std::string("beta"), HandlesTest::common_string_);
     getCalloutManager()->callCallouts(gamma_index_, callout_handle);
