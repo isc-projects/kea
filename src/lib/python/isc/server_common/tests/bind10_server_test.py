@@ -227,7 +227,8 @@ class TestBIND10Server(unittest.TestCase):
         # EINTR will be ignored and select() will be called again.
         self.assertEqual([([TEST_FILENO], [], []), ([TEST_FILENO], [], [])],
                           self.select_params)
-        # check_command() shouldn't have been called
+        # check_command() shouldn't have been called (select_wrapper returns
+        # empty lists by default).
         self.assertIsNone(self.__server.mod_ccsession.check_command_param)
         self.assertTrue(self.__server.mod_ccsession.stopped)
 
