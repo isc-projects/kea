@@ -116,16 +116,15 @@ public:
     /// callouts on a hook that are called _before_ any callouts belonging
     /// to a library.
     ///
-    /// @note This library handle is valid only after loadLibraries() is
-    ///       called and before another call to loadLibraries().  Its use
-    ///       at any other time may cause severe problems.
+    /// @note Both the reference returned and the callouts registered with
+    ///       this handle only remain valid until the next loadLibraries() or
+    ///       unloadLibraries() call.  If the callouts are to remain registered
+    ///       after this time, a new handle will need to be obtained and the
+    ///       callouts re-registered.
     ///
-    /// TODO: This is also invalidated by a call to obtaining the
-    ///       post-callout function.
-    ///
-    /// @return Shared pointer to library handle associated with pre-library
-    ///       callout registration.
-    boost::shared_ptr<LibraryHandle> preCalloutLibraryHandle() const;
+    /// @return Reference to library handle associated with pre-library callout
+    ///         registration.
+    static LibraryHandle& preCalloutsLibraryHandle();
 
     /// @brief Return post-callouts library handle
     ///
@@ -133,16 +132,15 @@ public:
     /// callouts on a hook that are called _after any callouts belonging
     /// to a library.
     ///
-    /// @note This library handle is valid only after loadLibraries() is
-    ///       called and before another call to loadLibraries().  Its use
-    ///       at any other time may cause severe problems.
+    /// @note Both the reference returned and the callouts registered with
+    ///       this handle only remain valid until the next loadLibraries() or
+    ///       unloadLibraries() call.  If the callouts are to remain registered
+    ///       after this time, a new handle will need to be obtained and the
+    ///       callouts re-registered.
     ///
-    /// TODO: This is also invalidated by a call to obtaining the
-    ///       pret-callout function.
-    ///
-    /// @return Shared pointer to library handle associated with post-library
-    ///       callout registration.
-    boost::shared_ptr<LibraryHandle> postCalloutLibraryHandle() const;
+    /// @return Reference to library handle associated with post-library callout
+    ///         registration.
+    static LibraryHandle& postCalloutsLibraryHandle();
 
     /// @brief Return callout handle
     ///
@@ -221,11 +219,20 @@ private:
 
     /// @brief Return callout handle
     ///
-    /// @note This handle is valid only after a loadLibraries() call and then
-    ///       only up to the next loadLibraries() call.
-    ///
     /// @return Shared pointer to a CalloutHandle object.
     boost::shared_ptr<CalloutHandle> createCalloutHandleInternal();
+
+    /// @brief Return pre-callouts library handle
+    ///
+    /// @return Reference to library handle associated with pre-library callout
+    ///         registration.
+    LibraryHandle& preCalloutsLibraryHandleInternal();
+
+    /// @brief Return post-callouts library handle
+    ///
+    /// @return Reference to library handle associated with post-library callout
+    ///         registration.
+    LibraryHandle& postCalloutsLibraryHandleInternal();
 
     //@}
 

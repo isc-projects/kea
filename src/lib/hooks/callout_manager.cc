@@ -19,6 +19,7 @@
 #include <boost/static_assert.hpp>
 
 #include <algorithm>
+#include <climits>
 #include <functional>
 #include <utility>
 
@@ -27,7 +28,24 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
-// Set the number of libraries handles by the CalloutManager.
+// Check that the index of a library is valid.  It can range from 1 - n
+// (n is the number of libraries) or it can be 0 (pre-user library callouts)
+// of INT_MAX (post-user library callouts).  It can also be -1 to indicate
+// an invalid value.
+
+void
+CalloutManager::checkLibraryIndex(int library_index) const {
+    if (((library_index >= -1) && (library_index <= num_libraries_)) ||
+        (library_index == INT_MAX)) {
+        return;
+    } else {
+        isc_throw(NoSuchLibrary, "library index " << library_index <<
+                  " is not valid for the number of loaded libraries (" <<
+                  num_libraries_ << ")");
+    }
+}
+
+// Set the number of libraries handled by the CalloutManager.
 
 void
 CalloutManager::setNumLibraries(int num_libraries) {

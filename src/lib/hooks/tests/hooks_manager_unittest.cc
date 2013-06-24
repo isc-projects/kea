@@ -332,6 +332,75 @@ TEST_F(HooksManagerTest, ReloadLibrariesReverseOrder) {
     }
 }
 
+// Local callouts for the test of server-registered callouts.
+
+namespace {
+
+    int
+testPreCallout(CalloutHandle& handle) {
+    handle.setArgument("result", static_cast<int>(1027));
+    return (0);
+}
+
+int
+testPostCallout(CalloutHandle& handle) {
+    int result;
+    handle.getArgument("result", result);
+    result *= 2;
+    handle.setArgument("result", result);
+    return (0);
+}
+
+}
+
+// The next test registers the pre and post- callouts above for hook lm_two,
+// and checks they are called.
+
+TEST_F(HooksManagerTest, PrePostCalloutTest) {
+
+    // Load a single library.
+    std::vector<std::string> library_names;
+    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    // Load the pre- and post- callouts.
+    HooksManager::preCalloutsLibraryHandle().registerCallout("lm_two",
+                                                             testPreCallout);
+    HooksManager::postCalloutsLibraryHandle().registerCallout("lm_two",
+                                                              testPostCallout);
+
+    // Execute the callouts.  lm_two implements the calculation:
+    //
+    //  "result - data_2"
+    //
+    // With the pre- and post- callouts above, the result expected is
+    //
+    // (1027 - data_2) * 2
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(lm_two_index_, *handle);
+
+    int result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(2024, result);
+
+    // ... and check that the pre- and post- callout functions don't survive a
+    // reload.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    handle = HooksManager::createCalloutHandle();
+
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(lm_two_index_, *handle);
+
+    result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(-15, result);
+}
+
 // Check that everything works even with no libraries loaded.  First that
 // calloutsPresent() always returns false.
 
