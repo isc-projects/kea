@@ -24,6 +24,15 @@ import isc.log
 from isc.server_common.datasrc_clients_mgr import DataSrcClientsMgr
 from isc.memmgr.datasrc_info import *
 
+# Defined for easier tests with DataSrcClientsMgr.reconfigure(), which
+# only needs get_value() method
+class MockConfigData:
+    def __init__(self, data):
+        self.__data = data
+
+    def get_value(self, identifier):
+        return self.__data[identifier], False
+
 class TestSegmentInfo(unittest.TestCase):
     def setUp(self):
         self.__mapped_file_dir = os.environ['TESTDATA_PATH']
@@ -160,15 +169,15 @@ class TestDataSrcInfo(unittest.TestCase):
         if os.environ['HAVE_SHARED_MEMORY'] != 'yes':
             return
 
-        datasrc_config = {
-            "classes": {
-                "IN": [{"type": "sqlite3", "cache-enable": True,
-                        "cache-type": "mapped", "cache-zones": [],
-                        "params": {"database_file": self.__sqlite3_dbfile}}]
-                }
-            }
+        cfg_data = MockConfigData(
+            {"classes":
+                 {"IN": [{"type": "sqlite3", "cache-enable": True,
+                          "cache-type": "mapped", "cache-zones": [],
+                          "params": {"database_file": self.__sqlite3_dbfile}}]
+                  }
+             })
         cmgr = DataSrcClientsMgr(use_cache=True)
-        cmgr.reconfigure(datasrc_config)
+        cmgr.reconfigure({}, cfg_data)
 
         genid, clients_map = cmgr.get_clients_map()
         datasrc_info = DataSrcInfo(genid, clients_map, self.__mgr_config)
