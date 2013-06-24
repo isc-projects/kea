@@ -1192,8 +1192,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/Makefile
                  src/bin/loadzone/tests/correct/Makefile
-		 src/bin/memmgr/Makefile
-		 src/bin/memmgr/tests/Makefile
+                 src/bin/memmgr/Makefile
+                 src/bin/memmgr/tests/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
