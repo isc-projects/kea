@@ -12,9 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// TODO - This is a temporary implementation of the hooks manager - it is
-//        likely to be completely rewritte
-
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/callout_manager.h>
@@ -44,34 +41,6 @@ HooksManager&
 HooksManager::getHooksManager() {
     static HooksManager manager;
     return (manager);
-}
-
-// Perform conditional initialization if nothing is loaded.
-
-void
-HooksManager::performConditionalInitialization() {
-
-    // Nothing present, so create the collection with any empty set of
-    // libraries, and get the CalloutManager.
-    vector<string> libraries;
-    lm_collection_.reset(new LibraryManagerCollection(libraries));
-    lm_collection_->loadLibraries();
-
-    callout_manager_ = lm_collection_->getCalloutManager();
-}
-
-// Create a callout handle
-
-boost::shared_ptr<CalloutHandle>
-HooksManager::createCalloutHandleInternal() {
-    conditionallyInitialize();
-    return (boost::shared_ptr<CalloutHandle>(
-                             new CalloutHandle(callout_manager_)));
-}
-
-boost::shared_ptr<CalloutHandle>
-HooksManager::createCalloutHandle() {
-    return (getHooksManager().createCalloutHandleInternal());
 }
 
 // Are callouts present?
@@ -141,7 +110,40 @@ void HooksManager::unloadLibraries() {
     getHooksManager().unloadLibrariesInternal();
 }
 
+// Create a callout handle
 
+boost::shared_ptr<CalloutHandle>
+HooksManager::createCalloutHandleInternal() {
+    conditionallyInitialize();
+    return (boost::shared_ptr<CalloutHandle>(
+            new CalloutHandle(callout_manager_, lm_collection_)));
+}
+
+boost::shared_ptr<CalloutHandle>
+HooksManager::createCalloutHandle() {
+    return (getHooksManager().createCalloutHandleInternal());
+}
+
+// Perform conditional initialization if nothing is loaded.
+
+void
+HooksManager::performConditionalInitialization() {
+
+    // Nothing present, so create the collection with any empty set of
+    // libraries, and get the CalloutManager.
+    vector<string> libraries;
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    lm_collection_->loadLibraries();
+
+    callout_manager_ = lm_collection_->getCalloutManager();
+}
+
+// Shell around ServerHooks::registerHook()
+
+int
+HooksManager::registerHook(const std::string& name) {
+    return (ServerHooks::getServerHooks().registerHook(name));
+}
 
 } // namespace util
 } // namespace isc
