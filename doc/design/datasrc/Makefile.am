@@ -8,9 +8,7 @@ UML_FILES = \
 TEXT_FILES = \
 	data-source-classes.txt
 
-BUILT_SOURCES = \
-	$(UML_FILES:.txt=.png) \
-	$(TEXT_FILES:.txt=.html)
+devel:	$(UML_FILES:.txt=.png) $(TEXT_FILES:.txt=.html)
 
 .txt.html:
 if HAVE_ASCIIDOC
