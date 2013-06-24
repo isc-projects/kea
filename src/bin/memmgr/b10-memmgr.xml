@@ -49,7 +49,7 @@
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para>The <command>b10-memmgr</command> daemon manages sharable
+    <para>The <command>b10-memmgr</command> daemon manages shared
       memory segments storing in-memory DNS zone data, and
       communicates with other BIND 10 modules about the segment
       information so the entire system will use these segments
