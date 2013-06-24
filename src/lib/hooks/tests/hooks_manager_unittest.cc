@@ -41,8 +41,16 @@ public:
     /// Reset the hooks manager.  The hooks manager is a singleton, so needs
     /// to be reset for each test.
     HooksManagerTest() {
-        HooksManager::getHooksManager().reset();
+        HooksManager::unloadLibraries();
     }
+
+    /// @brief Destructor
+    ///
+    /// Unload all libraries.
+    ~HooksManagerTest() {
+        HooksManager::unloadLibraries();
+    }
+
 
     /// @brief Call callouts test
     ///
@@ -91,9 +99,9 @@ public:
     }
 
 };
-/*
+
 // This is effectively the same test as for LibraryManager, but using the
-// LibraryManagerCollection object.
+// HooksManager object.
 
 TEST_F(HooksManagerTest, LoadLibraries) {
 
@@ -102,14 +110,8 @@ TEST_F(HooksManagerTest, LoadLibraries) {
     library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
     library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
 
-    // Set up the library manager collection and get the callout manager we'll
-    // be using.
-    PublicLibraryManagerCollection lm_collection(library_names);
-
     // Load the libraries.
-    EXPECT_TRUE(lm_collection.loadLibraries());
-    boost::shared_ptr<CalloutManager> manager =
-                                      lm_collection.getCalloutManager();
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Execute the callouts.  The first library implements the calculation.
     //
@@ -125,17 +127,17 @@ TEST_F(HooksManagerTest, LoadLibraries) {
     // r3 = ((10 * d1 + d1) - d2) * d2 * d3 - d3
     {
         SCOPED_TRACE("Doing calculation with libraries loaded");
-        executeCallCallouts(manager, 10, 3, 33, 2, 62, 3, 183);
+        executeCallCallouts(10, 3, 33, 2, 62, 3, 183);
     }
 
     // Try unloading the libraries.
-    EXPECT_NO_THROW(lm_collection.unloadLibraries());
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
 
     // Re-execute the calculation - callouts can be called but as nothing
     // happens, the result should always be -1.
     {
         SCOPED_TRACE("Doing calculation with libraries not loaded");
-        executeCallCallouts(manager, -1, 3, -1, 22, -1, 83, -1);
+        executeCallCallouts(-1, 3, -1, 22, -1, 83, -1);
     }
 }
 
@@ -143,7 +145,7 @@ TEST_F(HooksManagerTest, LoadLibraries) {
 // an error when loaded. It is expected that the failing library will not be
 // loaded, but others will be.
 
-TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
+TEST_F(HooksManagerTest, LoadLibrariesWithError) {
 
     // Set up the list of libraries to be loaded.
     std::vector<std::string> library_names;
@@ -151,18 +153,9 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
     library_names.push_back(std::string(INCORRECT_VERSION_LIBRARY));
     library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
 
-    // Set up the library manager collection and get the callout manager we'll
-    // be using.
-    PublicLibraryManagerCollection lm_collection(library_names);
-
-    // Load the libraries.  We expect a failure status to be returned as
-    // one of the libraries failed to load.
-    EXPECT_FALSE(lm_collection.loadLibraries());
-    boost::shared_ptr<CalloutManager> manager =
-                                      lm_collection.getCalloutManager();
-
-    // Expect only two libraries were loaded.
-    EXPECT_EQ(2, manager->getNumLibraries());
+    // Load the libraries.  We expect a failure return because one of the
+    // libraries fails to load.
+    EXPECT_FALSE(HooksManager::loadLibraries(library_names));
 
     // Execute the callouts.  The first library implements the calculation.
     //
@@ -178,20 +171,20 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
     // r3 = ((10 * d1 + d1) - d2) * d2 * d3 - d3
     {
         SCOPED_TRACE("Doing calculation with libraries loaded");
-        executeCallCallouts(manager, 10, 3, 33, 2, 62, 3, 183);
+        executeCallCallouts(10, 3, 33, 2, 62, 3, 183);
     }
 
     // Try unloading the libraries.
-    EXPECT_NO_THROW(lm_collection.unloadLibraries());
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
 
     // Re-execute the calculation - callouts can be called but as nothing
     // happens, the result should always be -1.
     {
         SCOPED_TRACE("Doing calculation with libraries not loaded");
-        executeCallCallouts(manager, -1, 3, -1, 22, -1, 83, -1);
+        executeCallCallouts(-1, 3, -1, 22, -1, 83, -1);
     }
 }
-*/
+
 // Check that everything works even with no libraries loaded.  First that
 // calloutsPresent() always returns false.
 

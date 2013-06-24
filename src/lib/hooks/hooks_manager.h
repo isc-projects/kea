@@ -47,12 +47,6 @@ public:
     /// @return Reference to the singleton hooks manager.
     static HooksManager& getHooksManager();
 
-    /// @brief Reset hooks manager
-    ///
-    /// Resets the hooks manager to the initial state.  This should only be
-    /// called by test functions, so causes a warning message to be output.
-    void reset() {}
-
     /// @brief Load and reload libraries
     ///
     /// Loads the list of libraries into the server address space.  For each
@@ -73,7 +67,7 @@ public:
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
-    bool loadLibraries(const std::vector<std::string>& /* libraries */) {return false;}
+    static bool loadLibraries(const std::vector<std::string>& libraries);
 
     /// @brief Unload libraries
     ///
@@ -88,7 +82,7 @@ public:
     ///
     /// @return true if all libraries unloaded successfully, false on an error.
     ///         In the latter case, an error message will have been output.
-    bool unloadLibraries() {return false;}
+    static void unloadLibraries();
 
     /// @brief Are callouts present?
     ///
@@ -168,8 +162,23 @@ private:
     HooksManager();
 
     //@{
-    /// The following correspond to the each of the static methods above
-    /// but operate on the current instance.
+    /// The following methods correspond to similarly-named static methods,
+    /// but actually do the work on the singleton instance of the HooksManager.
+    /// See the descriptions of the static methods for more details.
+
+    /// @brief Load and reload libraries
+    ///
+    /// @param libraries List of libraries to be loaded.  The order is
+    ///        important, as it determines the order that callouts on the same
+    ///        hook will be called.
+    ///
+    /// @return true if all libraries loaded without a problem, false if one or
+    ///        more libraries failed to load.  In the latter case, message will
+    ///        be logged that give the reason.
+    bool loadLibrariesInternal(const std::vector<std::string>& libraries);
+
+    /// @brief Unload libraries
+    void unloadLibrariesInternal();
 
     /// @brief Are callouts present?
     ///
@@ -196,6 +205,13 @@ private:
 
     //@}
 
+    /// @brief Initialization to No Libraries
+    ///
+    /// Initializes the hooks manager with an "empty set" of libraries.  This
+    /// method is called if conditionallyInitialize() determines that such
+    /// initialization is needed.
+    void performConditionalInitialization();
+
     /// @brief Conditional initialization of the  hooks manager
     ///
     /// loadLibraries() performs the initialization of the HooksManager,
@@ -204,7 +220,15 @@ private:
     /// whenever any hooks execution function is invoked (checking callouts,
     /// calling callouts or returning a callout handle).  If the HooksManager
     /// is unitialised, it will initialize it with an "empty set" of libraries.
-    void conditionallyInitialize();
+    ///
+    /// For speed, the test of whether initialization is required is done
+    /// in-line here.  The actual initialization is performed in
+    /// performConditionalInitialization().
+    void conditionallyInitialize() {
+        if (!lm_collection_) {
+            performConditionalInitialization();
+        }
+    }
 
     // Members
 
