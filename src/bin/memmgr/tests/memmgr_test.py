@@ -47,8 +47,6 @@ class MockMemmgr(memmgr.Memmgr):
         isc.config.ModuleCCSession = MyCCSession
         try:
             super()._setup_ccsession()
-        except Exception:
-            raise
         finally:
             isc.config.ModuleCCSession = orig_cls
 
