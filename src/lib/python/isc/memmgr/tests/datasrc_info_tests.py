@@ -157,6 +157,10 @@ class TestDataSrcInfo(unittest.TestCase):
         self.assertEqual(42, datasrc_info.gen_id)
         self.assertEqual(0, len(datasrc_info.segment_info_map))
 
+    # This test uses real "mmaped" segment and doesn't work without shared
+    # memory support.
+    @unittest.skipIf(os.environ['HAVE_SHARED_MEMORY'] != 'yes',
+                     'shared memory support is not available')
     def test_production(self):
         """Check the behavior closer to a production environment.
 
@@ -164,11 +168,6 @@ class TestDataSrcInfo(unittest.TestCase):
         something.
 
         """
-        # This test uses real "mmaped" segment and doesn't work without
-        # shared memory support
-        if os.environ['HAVE_SHARED_MEMORY'] != 'yes':
-            return
-
         cfg_data = MockConfigData(
             {"classes":
                  {"IN": [{"type": "sqlite3", "cache-enable": True,
