@@ -42,8 +42,10 @@ and has successfully applied it to the local state.  Loading of new zone
 data into memory will possibly take place.
 
 % MEMMGR_NO_DATASRC_CONF failed to add data source configuration: %1
-The memmgr daemon tried to incorporate data source configuration
-on its startup but failed to do so.  The most likely cause of this
-is that data sources are not simply configured.  If so, they must be.
-The memmgr daemon cannot do any meaningful work without data sources,
-so it immediately terminates itself.
+The memmgr daemon tried to incorporate data source configuration on
+its startup but failed to do so.  Due to internal implementation
+details this shouldn't happen as long as the BIND 10 system has been
+installed correctly.  So, if this error message is logged, you should
+probably reinstall the entire system, preferably from the scratch, and
+see if it still happens.  The memmgr daemon cannot do any meaningful
+work without data sources, so it immediately terminates itself.
