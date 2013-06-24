@@ -45,7 +45,7 @@ LibraryManager::openLibrary() {
 
     // Open the library.  We'll resolve names now, so that if there are any
     // issues we don't bugcheck in the middle of apparently unrelated code.
-    dl_handle_ = dlopen(library_name_.c_str(), RTLD_NOW | RTLD_DEEPBIND);
+    dl_handle_ = dlopen(library_name_.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (dl_handle_ == NULL) {
         LOG_ERROR(hooks_logger, HOOKS_OPEN_ERROR).arg(library_name_)
                   .arg(dlerror());
