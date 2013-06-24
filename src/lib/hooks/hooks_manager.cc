@@ -145,5 +145,29 @@ HooksManager::registerHook(const std::string& name) {
     return (ServerHooks::getServerHooks().registerHook(name));
 }
 
+// Return pre- and post- library handles.
+
+isc::hooks::LibraryHandle&
+HooksManager::preCalloutsLibraryHandleInternal() {
+    conditionallyInitialize();
+    return (callout_manager_->getPreLibraryHandle());
+}
+
+isc::hooks::LibraryHandle&
+HooksManager::preCalloutsLibraryHandle() {
+    return (getHooksManager().preCalloutsLibraryHandleInternal());
+}
+
+isc::hooks::LibraryHandle&
+HooksManager::postCalloutsLibraryHandleInternal() {
+    conditionallyInitialize();
+    return (callout_manager_->getPostLibraryHandle());
+}
+
+isc::hooks::LibraryHandle&
+HooksManager::postCalloutsLibraryHandle() {
+    return (getHooksManager().postCalloutsLibraryHandleInternal());
+}
+
 } // namespace util
 } // namespace isc

@@ -21,6 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <climits>
 #include <map>
 #include <string>
 
@@ -36,7 +37,6 @@ public:
     NoSuchLibrary(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
-
 
 /// @brief Callout Manager
 ///
@@ -64,9 +64,47 @@ public:
 ///   functions use the "current library index" in their processing.
 ///
 /// These two items of data are supplied when an object of this class is
-/// constructed.
+/// constructed.  The latter (number of libraries) can be updated after the
+/// class is constructed.  (Such an update is used during library loading where
+/// the CalloutManager has to be constructed before the libraries are loaded,
+/// but one of the libraries subsequently fails to load.)
 ///
-/// Note that the callout function do not access the library manager: instead,
+/// The library index is important because it determines in what order callouts
+/// on a particular hook are called.  For each hook, the CalloutManager
+/// maintains a vector of callouts, ordered by library index.  When a callout
+/// is added to the list, it is added at the end of the callouts associated
+/// with the current library.  To clarify this further, suppose that three
+/// libraries are loaded, A (assigned an index 1), B (assigned an index 2) and
+/// C (assigned an index 3).  Suppose A registers two callouts on a given hook,
+/// A1 and A2 (in that order) B registers B1 and B2 (in that order) and C
+/// registers C1 and C2 (in that order).  Internally, the callouts are stored
+/// in the order A1, A2, B1, B2, C1, and C2: this is also the order in which
+/// the are called.  If B now registers another callout (B3), it is added to
+/// the vector after the list of callouts associated with B: the new order is
+/// therefore A1, A2, B1, B2, B3, C1 and C2.
+///
+/// Indexes range between 1 and n (where n is the number of the libraries
+/// loaded) and are assigned to libraries based on the order the libraries
+/// presented to the hooks framework for loading (something that occurs in the
+/// isc::util::HooksManager) class.  However, two other indexes are recognised,
+/// 0 and n+1.  These are used when the server itself registers callouts - the
+/// server is able to register callouts that get called before any user-library
+/// callouts, and callouts that get called after user-library callouts. In other
+/// words, assuming the callouts on a hook are A1, A2, B1, B2, B3, C2, C2 as
+/// before, and that the server registers Spre (to run before the
+/// user-registered callouts) and Spost (to run after them), the callouts are
+/// stored (and executed) in the order Spre, A1, A2, B1, B2, B3, C2, C2, Spost.
+/// In summary, the index values are:
+///
+/// - < 0: invalid.
+/// - 0: used for server-registered callouts that are called before
+///   user-registered callouts.
+/// - 1 - n: callouts from user-libraries.
+/// - INT_MAX: used for server-registered callouts called after
+///   user-registered callouts.
+/// - > n + 1: invalid
+///
+/// Note that the callout functions do not access the CalloutManager: instead,
 /// they use a LibraryHandle object.  This contains an internal pointer to
 /// the CalloutManager, but provides a restricted interface.  In that way,
 /// callouts are unable to affect callouts supplied by other libraries.
@@ -99,7 +137,8 @@ public:
     CalloutManager(int num_libraries = 0)
         : current_hook_(-1), current_library_(-1),
           hook_vector_(ServerHooks::getServerHooks().getCount()),
-          library_handle_(this), num_libraries_(num_libraries)
+          library_handle_(this), pre_library_handle_(this, 0),
+          post_library_handle_(this, INT_MAX), num_libraries_(num_libraries)
     {
         // Check that the number of libraries is OK.  (This does a redundant
         // set of the number of libraries, but it's only a single assignment
@@ -191,9 +230,14 @@ public:
     /// constructor, in some cases that is only an estimate and the number
     /// can only be determined after the CalloutManager is created.
     ///
+    /// @note If the number if libraries is reset, it must be done *before*
+    ///       any callouts are registered.
+    ///
     /// @param num_libraries Number of libraries served by this CalloutManager.
     ///
     /// @throw BadValue Number of libraries must be >= 0.
+    /// @throw LibraryCountChanged Number of libraries has been changed after
+    ///        callouts have been registered.
     void setNumLibraries(int num_libraries);
 
     /// @brief Get number of libraries
@@ -224,9 +268,14 @@ public:
 
     /// @brief Set current library index
     ///
-    /// Sets the current library index.  This must be in the range 0 to
-    /// (numlib - 1), where "numlib" is the number of libraries loaded in the
-    /// system, this figure being passed to this object at construction time.
+    /// Sets the current library index.  This has the following valid values:
+    ///
+    /// - -1: invalidate current index.
+    /// - 0: pre-user library callout.
+    /// - 1 - numlib: user-library callout (where "numlib" is the number of
+    ///   libraries loaded in the system, this figure being passed to this
+    ///   object at construction time).
+    /// - INT_MAX: post-user library callout.
     ///
     /// @param library_index New library index.
     ///
@@ -236,6 +285,19 @@ public:
         current_library_ = library_index;
     }
 
+    /// @defgroup calloutManagerLibraryHandles Callout manager library handles
+    ///
+    /// The CalloutManager offers three library handles:
+    ///
+    /// - a "standard" one, used to register and deregister callouts for
+    ///   the library index that is marked as current in the CalloutManager.
+    ///   When a callout is called, it is passed this one.
+    /// - a pre-library callout handle, used by the server to register
+    //    callouts to run prior to user-library callouts.
+    /// - a post-library callout handle, used by the server to register
+    ///   callouts to run after the user-library callouts.
+    //@{
+
     /// @brief Return library handle
     ///
     /// The library handle is available to the user callout via the callout
@@ -244,10 +306,32 @@ public:
     /// library of which it is part, whilst denying access to anything that
     /// may affect other libraries.
     ///
-    /// @return Reference to callout handle for this manager
+    /// @return Reference to library handle for this manager
     LibraryHandle& getLibraryHandle() {
         return (library_handle_);
     }
+
+    /// @brief Return pre-user callouts library handle
+    ///
+    /// The LibraryHandle to affect callouts that will run before the
+    /// user-library callouts.
+    ///
+    /// @return Reference to pre-user library handle for this manager
+    LibraryHandle& getPreLibraryHandle() {
+        return (pre_library_handle_);
+    }
+
+    /// @brief Return post-user callouts library handle
+    ///
+    /// The LibraryHandle to affect callouts that will run before the
+    /// user-library callouts.
+    ///
+    /// @return Reference to post-user library handle for this manager
+    LibraryHandle& getPostLibraryHandle() {
+        return (post_library_handle_);
+    }
+
+    //@}
 
 private:
     /// @brief Check library index
@@ -256,15 +340,11 @@ private:
     /// the hook registration functions.
     ///
     /// @param library_index Value to check for validity as a library index.
+    ///        Valid values are 0 - numlib+1 and -1: see @ref setLibraryIndex
+    ///        for the meaning of the various values.
     ///
     /// @throw NoSuchLibrary Library index is not valid.
-    void checkLibraryIndex(int library_index) const {
-        if ((library_index < 0) || (library_index >= num_libraries_)) {
-            isc_throw(NoSuchLibrary, "library index " << library_index <<
-                      " is not valid for the number of loaded libraries (" <<
-                      num_libraries_ << ")");
-        }
-    }
+    void checkLibraryIndex(int library_index) const;
 
     /// @brief Compare two callout entries for library equality
     ///
@@ -301,8 +381,18 @@ private:
     std::vector<CalloutVector>  hook_vector_;
 
     /// LibraryHandle object user by the callout to access the callout
-    /// registration methods on this CalloutManager object.
+    /// registration methods on this CalloutManager object.  The object is set
+    /// such that the index of the library associated with any operation is
+    /// whatever is currently set in the CalloutManager.
     LibraryHandle library_handle_;
+    
+    /// LibraryHandle for callouts to be registered as being called before
+    /// the user-registered callouts.
+    LibraryHandle pre_library_handle_;
+    
+    /// LibraryHandle for callouts to be registered as being called after
+    /// the user-registered callouts.
+    LibraryHandle post_library_handle_;
 
     /// Number of libraries.
     int num_libraries_;
