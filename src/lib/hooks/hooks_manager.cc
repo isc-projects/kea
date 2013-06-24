@@ -49,17 +49,15 @@ HooksManager::getHooksManager() {
 // Perform conditional initialization if nothing is loaded.
 
 void
-HooksManager::conditionallyInitialize() {
-    if (!lm_collection_) {
+HooksManager::performConditionalInitialization() {
 
-        // Nothing present, so create the collection with any empty set of
-        // libraries, and get the CalloutManager.
-        vector<string> libraries;
-        lm_collection_.reset(new LibraryManagerCollection(libraries));
-        lm_collection_->loadLibraries();
+    // Nothing present, so create the collection with any empty set of
+    // libraries, and get the CalloutManager.
+    vector<string> libraries;
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    lm_collection_->loadLibraries();
 
-        callout_manager_ = lm_collection_->getCalloutManager();
-    }
+    callout_manager_ = lm_collection_->getCalloutManager();
 }
 
 // Create a callout handle
@@ -102,6 +100,46 @@ HooksManager::callCallouts(int index, CalloutHandle& handle) {
     return (getHooksManager().callCalloutsInternal(index, handle));
 }
 
+// Load the libraries.  This will delete the previously-loaded libraries
+// (if present) and load new ones.
+
+bool
+HooksManager::loadLibrariesInternal(const std::vector<std::string>& libraries) {
+    // Unload current set of libraries (if any are loaded).
+    unloadLibrariesInternal();
+
+    // Create the library manager and load the libraries.
+    lm_collection_.reset(new LibraryManagerCollection(libraries));
+    bool status = lm_collection_->loadLibraries();
+
+    // ... and obtain the callout manager for them.
+    callout_manager_ = lm_collection_->getCalloutManager();
+
+    return (status);
+}
+
+bool
+HooksManager::loadLibraries(const std::vector<std::string>& libraries) {
+    return (getHooksManager().loadLibrariesInternal(libraries));
+}
+
+// Unload the libraries.  This just deletes all internal objects which will
+// cause the libraries to be unloaded.
+
+void
+HooksManager::unloadLibrariesInternal() {
+    // The order of deletion does not matter here, as each library manager
+    // holds its own pointer to the callout manager.  However, we may as
+    // well delete the library managers first: if there are no other references
+    // to the callout manager, the second statement will delete it, which may
+    // ease debugging.
+    lm_collection_.reset();
+    callout_manager_.reset();
+}
+
+void HooksManager::unloadLibraries() {
+    getHooksManager().unloadLibrariesInternal();
+}
 
 
 
