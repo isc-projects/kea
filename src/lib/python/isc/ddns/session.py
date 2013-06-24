@@ -812,6 +812,20 @@ class UpdateSession:
         self.__diff.delete_data(old_soa)
         self.__diff.add_data(new_soa)
 
+    def __validate_error(self, reason):
+        '''
+        Used as error callback below.
+        '''
+        logger.error(LIBDDNS_ZONE_INVALID_ERROR, self.__zname, self.__zclass,
+                     reason)
+
+    def __validate_warning(self, reason):
+        '''
+        Used as warning callback below.
+        '''
+        logger.warn(LIBDDNS_ZONE_INVALID_WARN, self.__zname, self.__zclass,
+                    reason)
+
     def __do_update(self):
         '''Scan, check, and execute the Update section in the
            DDNS Update message.
@@ -849,6 +863,11 @@ class UpdateSession:
                 elif rrset.get_class() == RRClass.NONE:
                     self.__do_update_delete_rrs_from_rrset(rrset)
 
+            if not check_zone(self.__zname, self.__zclass,
+                              self.__diff.get_rrset_collection(),
+                              (self.__validate_error, self.__validate_warning)):
+                raise UpdateError('Validation of the new zone failed',
+                                  self.__zname, self.__zclass, Rcode.SERVFAIL)
             self.__diff.commit()
             return Rcode.NOERROR
         except isc.datasrc.Error as dse:
