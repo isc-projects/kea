@@ -32,27 +32,26 @@ class LibraryManager;
 ///
 /// On loading, it opens the library using dlopen and checks the version (set
 /// with the "version" method.  If all is OK, it iterates through the list of
-/// known hooks and locates their symbols, registering each callout as it
-/// does so.  Finally it locates the "load" and "unload" functions (if present),
-/// calling the "load" callout if present.
+/// known hooks and locates their symbols, registering each callout as it does
+/// so.  Finally it locates the "load" function (if present) and calls it.
 ///
-/// On unload, it calls the "unload" method if one was located, clears the
-/// callouts from all hooks and closes the library.
+/// On unload, it calls the "unload" method if present, clears the callouts
+/// all hooks and closes the library.
 ///
 /// @note Caution needs to be exercised when using the unload method. During
-///       use, data will pass between the server and the library.  In this
-///       process, the library may allocate memory and pass it back to the
+///       normal use, data will pass between the server and the library.  In
+///       this process, the library may allocate memory and pass it back to the
 ///       server.  This could happen by the server setting arguments or context
 ///       in the CalloutHandle object, or by the library modifying the content
 ///       of pointed-to data. If the library is unloaded, this memory may lie
 ///       in the virtual address space deleted in that process. (The word "may"
-///       is used, as this could be operating-system specific.) If this happens,
-///       any reference to the memory will cause a segmentation fault.  This can
-///       occur in a quite obscure place, for example in the middle of a
-///       destructor of an STL class when it is deleting memory allocated
-///       when the data structure was extended.
+///       is used, as this could be operating-system specific.) Should this
+///       happens, any reference to the memory will cause a segmentation fault.
+///       This can occur in a quite obscure place, for example in the middle of
+///       a destructor of an STL class when it is deleting memory allocated
+///       when the data structure was extended by a function in the library.
 ///
-/// @par  The only safe way to run the "unload" function is to ensure that all
+/// @note The only safe way to run the "unload" function is to ensure that all
 ///       possible references to it are removed first.  This means that all
 ///       CalloutHandles must be destroyed, as must any data items that were
 ///       passed to the callouts.  In practice, it could mean that a server
@@ -85,22 +84,20 @@ public:
     /// @brief Destructor
     ///
     /// If the library is open, closes it.  This is principally a safety
-    /// feature to ensure closure in the case of an exception destroying
-    /// this object.
-    ///
-    /// However, see the caveat in the class header about when it is safe
-    /// to unload libraries.
+    /// feature to ensure closure in the case of an exception destroying this
+    /// object.  However, see the caveat in the class header about when it is
+    /// safe to unload libraries.
     ~LibraryManager() {
         static_cast<void>(unloadLibrary());
     }
 
     /// @brief Loads a library
     ///
-    /// Open the library and check the version.  If all is OK, load all
-    /// standard symbols then call "load" if present.
+    /// Open the library and check the version.  If all is OK, load all standard
+    /// symbols then call "load" if present.
     ///
-    /// @return true if the library loaded successfully, false otherwise.
-    ///         In the latter case, the library will be unloaded if possible.
+    /// @return true if the library loaded successfully, false otherwise. In the
+    ///         latter case, the library will be unloaded if possible.
     bool loadLibrary();
 
     /// @brief Unloads a library
@@ -108,8 +105,8 @@ public:
     /// Calls the libraries "unload" function if present, the closes the
     /// library.
     ///
-    /// However, see the caveat in the class header about when it is safe
-    /// to unload libraries.
+    /// However, see the caveat in the class header about when it is safe to
+    /// unload libraries.
     ///
     /// @return true if the library unloaded successfully, false if an error
     ///         occurred in the process (most likely the unload() function
@@ -140,9 +137,9 @@ protected:
     /// Closes the library associated with this LibraryManager.  A message is
     /// logged on an error.
     ///
-    /// @return true if the library closed successfully, false otherwise.
-    ///         "true" is also returned if the library were already closed
-    ///         when this method was called.
+    /// @return true if the library closed successfully, false otherwise. "true"
+    ///         is also returned if the library were already closed when this
+    ///         method was called.
     bool closeLibrary();
 
     /// @brief Check library version

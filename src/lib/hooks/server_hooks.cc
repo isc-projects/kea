@@ -65,7 +65,7 @@ ServerHooks::registerHook(const string& name) {
 
 void
 ServerHooks::reset() {
-    // Log a wanring - although this is done during testing, it should never be
+    // Log a warning - although this is done during testing, it should never be
     // seen in a production system.
     LOG_WARN(hooks_logger, HOOKS_RESET_HOOK_LIST);
 
@@ -128,33 +128,6 @@ ServerHooks::getHookNames() const {
     }
 
     return (names);
-}
-
-// Hook registration function methods
-
-// Access the hook registration function vector itself
-
-std::vector<HookRegistrationFunction::RegistrationFunctionPtr>&
-HookRegistrationFunction::getFunctionVector() {
-    static std::vector<RegistrationFunctionPtr> reg_functions;
-    return (reg_functions);
-}
-
-// Constructor - add a registration function to the function vector
-
-HookRegistrationFunction::HookRegistrationFunction(
-    HookRegistrationFunction::RegistrationFunctionPtr reg_func) {
-    getFunctionVector().push_back(reg_func);
-}
-
-// Execute all registered registration functions
-
-void
-HookRegistrationFunction::execute(ServerHooks& hooks) {
-    std::vector<RegistrationFunctionPtr>& reg_functions = getFunctionVector();
-    for (int i = 0; i < reg_functions.size(); ++i) {
-        (*reg_functions[i])(hooks);
-    }
 }
 
 // Return global ServerHooks object

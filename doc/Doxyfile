@@ -679,6 +679,7 @@ INPUT                  = ../src/lib/exceptions \
                          ../src/lib/cache \
                          ../src/lib/server_common/ \
                          ../src/bin/sockcreator/ \
+                         ../src/lib/hooks/ \
                          ../src/lib/util/ \
                          ../src/lib/util/io/ \
                          ../src/lib/util/threads/ \

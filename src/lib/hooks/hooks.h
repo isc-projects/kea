@@ -18,7 +18,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
 
-// Version 1.0
+// Version 1 of the hooks framework.
 static const int BIND10_HOOKS_VERSION = 1;
 
 #endif  // HOOKS_H

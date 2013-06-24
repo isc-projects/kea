@@ -71,7 +71,7 @@ public:
 ///
 /// The library index is important because it determines in what order callouts
 /// on a particular hook are called.  For each hook, the CalloutManager
-/// maintains a vector of callouts, ordered by library index.  When a callout
+/// maintains a vector of callouts ordered by library index.  When a callout
 /// is added to the list, it is added at the end of the callouts associated
 /// with the current library.  To clarify this further, suppose that three
 /// libraries are loaded, A (assigned an index 1), B (assigned an index 2) and
@@ -87,22 +87,21 @@ public:
 /// loaded) and are assigned to libraries based on the order the libraries
 /// presented to the hooks framework for loading (something that occurs in the
 /// isc::util::HooksManager) class.  However, two other indexes are recognised,
-/// 0 and n+1.  These are used when the server itself registers callouts - the
-/// server is able to register callouts that get called before any user-library
-/// callouts, and callouts that get called after user-library callouts. In other
-/// words, assuming the callouts on a hook are A1, A2, B1, B2, B3, C2, C2 as
-/// before, and that the server registers Spre (to run before the
-/// user-registered callouts) and Spost (to run after them), the callouts are
-/// stored (and executed) in the order Spre, A1, A2, B1, B2, B3, C2, C2, Spost.
-/// In summary, the index values are:
+/// 0 and INT_MAX.  These are used when the server itself registers callouts -
+/// the server is able to register callouts that get called before any
+/// user-library callouts, and ones that get called after user-library callouts.
+/// In other words, assuming the callouts on a hook are A1, A2, B1, B2, B3, C2,
+/// C2 as before, and that the server registers S1 (to run before the
+/// user-registered callouts) and S2 (to run after them), the callouts are
+/// stored (and executed) in the order S1, A1, A2, B1, B2, B3, C2, C2, S2.  In
+/// summary, the recognised index values are:
 ///
 /// - < 0: invalid.
 /// - 0: used for server-registered callouts that are called before
 ///   user-registered callouts.
-/// - 1 - n: callouts from user-libraries.
+/// - 1 - n: callouts from user libraries.
 /// - INT_MAX: used for server-registered callouts called after
 ///   user-registered callouts.
-/// - > n + 1: invalid
 ///
 /// Note that the callout functions do not access the CalloutManager: instead,
 /// they use a LibraryHandle object.  This contains an internal pointer to
