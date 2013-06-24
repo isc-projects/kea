@@ -22,7 +22,6 @@ import signal
 
 sys.path.append('@@PYTHONPATH@@')
 import isc.log
-#from isc.log import DBGLVL_TRACE_BASIC
 from isc.config import ModuleSpecError, ModuleCCSessionError
 from isc.log_messages.memmgr_messages import *
 from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
