@@ -146,12 +146,12 @@ class MappedSegmentInfo(SegmentInfo):
 
     def switch_versions(self):
         # Swith the versions as noted in the constructor.
-        self.__writer_ver ^= 1
+        self.__writer_ver = 1 - self.__writer_ver
 
         if self.__reader_ver is None:
             self.__reader_ver = 0
         else:
-            self.__reader_ver ^= 1
+            self.__reader_ver = 1 - self.__reader_ver
 
         # Versions should be different
         assert(self.__reader_ver != self.__writer_ver)

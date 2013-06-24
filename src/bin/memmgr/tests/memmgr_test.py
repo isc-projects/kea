@@ -146,7 +146,8 @@ class TestMemmgr(unittest.TestCase):
                            self.__mgr._datasrc_config_handler)],
                          self.__mgr.mod_ccsession.add_remote_params)
 
-        # If data source isn't configured it's considered fatal.
+        # If data source isn't configured it's considered fatal (checking the
+        # same scenario with two possible exception types)
         self.__mgr.mod_ccsession.add_remote_exception = \
             isc.config.ModuleCCSessionError('faked exception')
         self.assertRaises(isc.server_common.bind10_server.BIND10ServerFatal,
