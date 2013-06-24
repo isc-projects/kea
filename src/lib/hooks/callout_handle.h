@@ -54,6 +54,7 @@ public:
 
 class CalloutManager;
 class LibraryHandle;
+class LibraryManagerCollection;
 
 /// @brief Per-packet callout handle
 ///
@@ -110,12 +111,27 @@ public:
     /// Creates the object and calls the callouts on the "context_create"
     /// hook.
     ///
+    /// Of the two arguments passed, only the pointer to the callout manager is
+    /// actively used.  The second argument, the pointer to the library manager
+    /// collection, is used for lifetime control: after use, the callout handle
+    /// may contain pointers to memory allocated by the loaded libraries.  The
+    /// used of a shared pointer to the collection of library managers means
+    /// that the libraries that could have allocated memory in a callout handle
+    /// will not be unloaded until all such handles have been destroyed.  This
+    /// issue is discussed in more detail in the documentation for
+    /// isc::hooks::LibraryManager.
+    ///
     /// @param manager Pointer to the callout manager object.
-    CalloutHandle(const boost::shared_ptr<CalloutManager>& manager);
+    /// @param lmcoll Pointer to the library manager collection.  This has a
+    ///        null default for testing purposes.
+    CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
+                  const boost::shared_ptr<LibraryManagerCollection>& lmcoll =
+                        boost::shared_ptr<LibraryManagerCollection>());
 
     /// @brief Destructor
     ///
     /// Calls the context_destroy callback to release any per-packet context.
+    /// It also clears stored data to avoid problems during member destruction.
     ~CalloutHandle();
 
     /// @brief Set argument
@@ -339,6 +355,10 @@ private:
     const ElementCollection& getContextForLibrary() const;
 
     // Member variables
+    
+    /// Pointer to the collection of libraries for which this handle has been
+    /// created.
+    boost::shared_ptr<LibraryManagerCollection> lm_collection_;
 
     /// Collection of arguments passed to the callouts
     ElementCollection arguments_;

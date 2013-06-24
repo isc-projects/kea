@@ -15,6 +15,8 @@
 #ifndef HOOKS_MANAGER_H
 #define HOOKS_MANAGER_H
 
+#include <hooks/server_hooks.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -152,6 +154,28 @@ public:
     ///
     /// @return Shared pointer to a CalloutHandle object.
     static boost::shared_ptr<CalloutHandle> createCalloutHandle();
+
+    /// @brief Register Hook
+    ///
+    /// This is just a convenience shell around the ServerHooks::registerHook()
+    /// method.  It - along with the definitions of the two hook indexes for
+    /// the context_create and context_destroy methods - means that server
+    /// authors only need to deal with HooksManager and CalloutHandle, and not
+    /// include any other hooks framework classes.
+    ///
+    /// @param name Name of the hook
+    ///
+    /// @return Index of the hook, to be used in subsequent hook-related calls.
+    ///         This will be greater than or equal to zero (so allowing a
+    ///         negative value to indicate an invalid index).
+    ///
+    /// @throws DuplicateHook A hook with the same name has already been
+    ///         registered.
+    static int registerHook(const std::string& name);
+
+    /// Index numbers for pre-defined hooks.
+    static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
+    static const int CONTEXT_DESTROY = ServerHooks::CONTEXT_DESTROY;
 
 private:
 
