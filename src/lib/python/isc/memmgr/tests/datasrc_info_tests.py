@@ -13,7 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import json
 import os
 import unittest
 
@@ -52,7 +51,7 @@ class TestSegmentInfo(unittest.TestCase):
         if expected_ver is None:
             self.assertIsNone(self.__sgmt_info.get_reset_param(user_type))
             return
-        param = json.loads(self.__sgmt_info.get_reset_param(user_type))
+        param = self.__sgmt_info.get_reset_param(user_type)
         self.assertEqual(self.__mapped_file_dir +
                          '/zone-IN-0-sqlite3-mapped.' + str(expected_ver),
                          param['mapped-file'])
@@ -124,7 +123,7 @@ class TestDataSrcInfo(unittest.TestCase):
         # Check if the initial state of (mapped) segment info object has
         # expected values.
         self.assertIsNone(sgmt_info.get_reset_param(SegmentInfo.READER))
-        param = json.loads(sgmt_info.get_reset_param(SegmentInfo.WRITER))
+        param = sgmt_info.get_reset_param(SegmentInfo.WRITER)
         self.assertEqual(writer_file, param['mapped-file'])
 
     def test_init(self):

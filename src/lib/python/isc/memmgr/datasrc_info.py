@@ -14,7 +14,6 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
-import json
 
 class SegmentInfoError(Exception):
     """An exception raised for general errors in the SegmentInfo class."""
@@ -80,11 +79,14 @@ class SegmentInfo:
     def get_reset_param(self, user_type):
         """Return parameters to reset the zone table memory segment.
 
-        It returns a json expression in string that contains parameters for
-        the specified type of user to reset a zone table segment with
-        isc.datasrc.ConfigurableClientList.reset_memory_segment().
-        It can also be passed to the user module as part of command
-        parameters.
+        It returns a dict object that consists of parameter mappings
+        (string to parameter value) for the specified type of user to
+        reset a zone table segment with
+        isc.datasrc.ConfigurableClientList.reset_memory_segment().  It
+        can also be passed to the user module as part of command
+        parameters.  Note that reset_memory_segment() takes a json
+        expression encoded as a string, so the return value of this method
+        will have to be converted with json.dumps().
 
         Each subclass must implement this method.
 
@@ -142,7 +144,7 @@ class MappedSegmentInfo(SegmentInfo):
         if ver is None:
             return None
         mapped_file = self.__mapped_file_base + '.' + str(ver)
-        return json.dumps({'mapped-file': mapped_file})
+        return {'mapped-file': mapped_file}
 
     def switch_versions(self):
         # Swith the versions as noted in the constructor.
