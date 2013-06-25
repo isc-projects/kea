@@ -34,7 +34,6 @@ import threading
 import select
 import socket
 import errno
-from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 import isc.util.process
@@ -117,8 +116,7 @@ class ZonemgrRefresh:
         self._max_transfer_timeout = None
         self._refresh_jitter = None
         self._reload_jitter = None
-        self.update_config_data(module_cc.get_full_config(),
-                                module_cc)
+        self.update_config_data(module_cc.get_full_config(), module_cc)
         self._running = False
         # This is essentially private, but we allow tests to customize it.
         self._datasrc_clients_mgr = DataSrcClientsMgr()
@@ -218,11 +216,6 @@ class ZonemgrRefresh:
         zone; the Auth module should have rejected the case where it's not
         even authoritative for the zone.
 
-        Note: to be more robust and less independent from other module's
-        behavior, it's probably safer to check the authority condition here,
-        too.  But right now it uses SQLite3 specific API (to be deprecated),
-        so we rather rely on Auth.
-
         Parameters:
         zone_name_class (Name, RRClass): the notified zone name and class.
         master (str): textual address of the NOTIFY sender.
@@ -239,14 +232,14 @@ class ZonemgrRefresh:
     def zonemgr_reload_zone(self, zone_name_class):
         """ Reload a zone."""
         self._zonemgr_refresh_info[zone_name_class]["zone_soa_rdata"] = \
-            self._get_zone_soa(zone_name_class[0], zone_name_class[1])
+            self._get_zone_soa(zone_name_class)
 
     def zonemgr_add_zone(self, zone_name_class):
         """ Add a zone into zone manager."""
         logger.debug(DBG_ZONEMGR_BASIC, ZONEMGR_LOAD_ZONE, zone_name_class[0],
                      zone_name_class[1])
         zone_info = {}
-        zone_soa = self._get_zone_soa(zone_name_class[0], zone_name_class[1])
+        zone_soa = self._get_zone_soa(zone_name_class)
         if zone_soa is None:
             logger.warn(ZONEMGR_NO_SOA, zone_name_class[0], zone_name_class[1])
             zone_info["zone_soa_rdata"] = None
@@ -263,24 +256,48 @@ class ZonemgrRefresh:
         self._set_zone_timer(zone_name_class, zone_reload_time,
                              self._reload_jitter * zone_reload_time)
 
-    def _get_zone_soa(self, zone_name, zone_class):
+    def _get_zone_soa(self, zone_name_class):
         """Retrieve the current SOA RR of the zone to be transferred."""
+
+        def get_zone_soa_rrset(datasrc_client, zone_name, zone_class):
+            """Retrieve the current SOA RR of the zone to be transferred."""
+            def format_zone_str(zone_name, zone_class):
+                """Helper function to format a zone name and class as a string
+                of the form '<name>/<class>'.
+                Parameters:
+                zone_name (isc.dns.Name) name to format
+                zone_class (isc.dns.RRClass) class to format
+                """
+                return zone_name.to_text(True) + '/' + str(zone_class)
+            # get the zone finder.  this must be SUCCESS (not even
+            # PARTIALMATCH) because we are specifying the zone origin name.
+            result, finder = datasrc_client.find_zone(zone_name)
+            if result != DataSourceClient.SUCCESS:
+                # The data source doesn't know the zone.  In the context in
+                # which this function is called, this shouldn't happen.
+                raise ZonemgrException("unexpected result: zone %s doesn't exist" %
+                                       format_zone_str(zone_name, zone_class))
+            result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
+            if result != ZoneFinder.SUCCESS:
+                logger.info(ZONEMGR_NO_SOA, format_zone_str(zone_name, zone_class))
+                return None
+            return soa_rrset
+
         # Identify the data source to which the zone content is transferred,
         # and get the current zone SOA from the data source (if available).
-        # Note that we do this before spawning the zonemgr session thread.
-        # find() on the client list and use of ZoneFinder (in _get_zone_soa())
-        # should be completed within the same single thread.
         datasrc_client = None
-        clist = self._datasrc_clients_mgr.get_client_list(zone_class)
+        clist = self._datasrc_clients_mgr.get_client_list(zone_name_class[1])
         if clist is None:
             return None
         try:
-            datasrc_client = clist.find(zone_name, True, False)[0]
+            datasrc_client = clist.find(zone_name_class[0], True, False)[0]
             if datasrc_client is None: # can happen, so log it separately.
                 logger.error(ZONEMGR_DATASRC_UNKNOWN,
-                             format_zone_str(zone_name, zone_class))
+                             zone_name_class[0] + '/' + zone_name_class[1])
                 return None
-            zone_soa = _get_zone_soa(datasrc_client, Name(zone_name), RRClass(zone_class))
+            zone_soa = get_zone_soa_rrset(datasrc_client,
+                                          Name(zone_name_class[0]),
+                                          RRClass(zone_name_class[1]))
             if (zone_soa == None):
                 return None
             else:
@@ -289,7 +306,7 @@ class ZonemgrRefresh:
             # rare case error. re-raise as ZonemgrException so it'll be logged
             # in command_handler().
             raise ZonemgrException('unexpected failure in datasrc module: ' +
-                                 str(ex))
+                                   str(ex))
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
@@ -776,59 +793,6 @@ class Zonemgr:
                     self._module_cc.check_command(True)
         finally:
             self._module_cc.send_stopping()
-
-# XXX copy from xfrin for now
-def format_zone_str(zone_name, zone_class):
-    """Helper function to format a zone name and class as a string of
-       the form '<name>/<class>'.
-       Parameters:
-       zone_name (isc.dns.Name) name to format
-       zone_class (isc.dns.RRClass) class to format
-    """
-    return zone_name.to_text(True) + '/' + str(zone_class)
-
-# XXX copy from xfrin for now
-def _get_zone_soa(datasrc_client, zone_name, zone_class):
-    """Retrieve the current SOA RR of the zone to be transferred.
-
-    This function is essentially private to the module, but will also
-    be called (or tweaked) from tests; no one else should use this
-    function directly.
-
-    The specified zone is expected to exist in the data source referenced
-    by the given datasrc_client at the point of the call to this function.
-    If this is not met ZonemgrException exception will be raised.
-
-    It will be used for various purposes in subsequent xfr protocol
-    processing.   It is validly possible that the zone is currently
-    empty and therefore doesn't have an SOA, so this method doesn't
-    consider it an error and returns None in such a case.  It may or
-    may not result in failure in the actual processing depending on
-    how the SOA is used.
-
-    When the zone has an SOA RR, this method makes sure that it's
-    valid, i.e., it has exactly one RDATA; if it is not the case
-    this method returns None.
-
-    """
-    # get the zone finder.  this must be SUCCESS (not even
-    # PARTIALMATCH) because we are specifying the zone origin name.
-    result, finder = datasrc_client.find_zone(zone_name)
-    if result != DataSourceClient.SUCCESS:
-        # The data source doesn't know the zone.  In the context of this
-        # function is called, this shouldn't happen.
-        raise ZonemgrException("unexpected result: zone %s doesn't exist" %
-                             format_zone_str(zone_name, zone_class))
-    result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
-    if result != ZoneFinder.SUCCESS:
-        logger.info(ZONEMGR_NO_SOA, format_zone_str(zone_name, zone_class))
-        return None
-    if soa_rrset.get_rdata_count() != 1:
-        logger.warn(ZONEMGR_MULTIPLE_SOA,
-                    format_zone_str(zone_name, zone_class),
-                    soa_rrset.get_rdata_count())
-        return None
-    return soa_rrset
 
 zonemgrd = None
 

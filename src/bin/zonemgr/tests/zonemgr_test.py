@@ -40,8 +40,6 @@ RELOAD_JITTER = 0.75
 rdata_net = 'a.example.net. root.example.net. 2009073106 7200 3600 2419200 21600'
 rdata_org = 'a.example.org. root.example.org. 2009073112 7200 3600 2419200 21600'
 
-TEST_SQLITE3_DBFILE = os.getenv("TESTDATAOBJDIR") + '/initdb.file'
-
 class ZonemgrTestException(Exception):
     pass
 
@@ -50,19 +48,15 @@ class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
         module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
         MockModuleCCSession.__init__(self)
+        # For inspection
+        self.added_remote_modules = []
 
     def add_remote_config_by_name(self, name, callback):
-        pass
+        self.added_remote_modules.append((name, callback))
 
     def rpc_call(self, command, module, instance="*", to="*", params=None):
         if module not in ("Auth", "Xfrin"):
             raise ZonemgrTestException("module name not exist")
-
-    def get_remote_config_value(self, module_name, identifier):
-        if module_name == "Auth" and identifier == "database_file":
-            return TEST_SQLITE3_DBFILE, False
-        else:
-            return "unknown", False
 
 class MockDataSourceClient():
     '''A simple mock data source client.'''
@@ -132,18 +126,22 @@ class MyZonemgrRefresh(ZonemgrRefresh):
 
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
         self.cc_session = FakeCCSession()
 
     def tearDown(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         sys.stderr.close()
         sys.stderr = self.stderr_backup
+
+    def test_init(self):
+        """Check some initial configuration after construction"""
+        # data source "module" should have been registrered as a necessary
+        # remote config
+        self.assertEqual([('data_sources',
+                           self.zone_refresh._datasrc_config_handler)],
+                         self.zone_refresh._module_cc.added_remote_modules)
 
     def test_random_jitter(self):
         max = 100025.120
@@ -332,7 +330,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         rdata_net = old_rdata_net
 
         old_get_zone_soa = self.zone_refresh._get_zone_soa
-        def get_zone_soa2(zone_name, db_file):
+        def get_zone_soa2(zone_name_class):
             return None
         self.zone_refresh._get_zone_soa = get_zone_soa2
         self.zone_refresh.zonemgr_add_zone(ZONE_NAME_CLASS2_IN)
@@ -400,7 +398,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN)
 
         old_get_zone_soa = self.zone_refresh._get_zone_soa
-        def get_zone_soa(zone_name, db_file):
+        def get_zone_soa(zone_name_class):
             return None
         self.zone_refresh._get_zone_soa = get_zone_soa
         self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
@@ -654,7 +652,6 @@ class MyZonemgr(Zonemgr):
         def __exit__(self, type, value, traceback): pass
 
     def __init__(self):
-        self._db_file = TEST_SQLITE3_DBFILE
         self._zone_refresh = None
         self._shutdown_event = threading.Event()
         self._module_cc = FakeCCSession()
@@ -675,13 +672,10 @@ class MyZonemgr(Zonemgr):
 class TestZonemgr(unittest.TestCase):
 
     def setUp(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         self.zonemgr = MyZonemgr()
 
     def tearDown(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
+        pass
 
     def test_config_handler(self):
         config_data1 = {
