@@ -224,8 +224,7 @@ public:
     void addRRset(const UpdateMsgSection section, const dns::RRsetPtr& rrset);
 
 
-    /// @name Functions used to encode outgoing messages to wire format and \
-    /// decode incoming messages from wire format.
+    /// @name Functions to handle messages encoding and decoding.
     ///
     //@{
     /// @brief Encode outgoing message into wire format.
