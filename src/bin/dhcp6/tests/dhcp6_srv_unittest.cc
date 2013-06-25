@@ -26,6 +26,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -35,6 +36,7 @@
 
 #include <hooks/server_hooks.h>
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -66,13 +68,21 @@ public:
         LeaseMgrFactory::create(memfile);
     }
 
+    /// @brief fakes packet reception
+    /// @param timeout ignored
+    ///
+    /// The method receives all packets queued in receive
+    /// queue, one after another. Once the queue is empty,
+    /// it initiates the shutdown procedure.
+    ///
+    /// See fake_received_ field for description
     virtual Pkt6Ptr receivePacket(int /*timeout*/) {
 
         // If there is anything prepared as fake incoming
         // traffic, use it
-        if (!to_be_received_.empty()) {
-            Pkt6Ptr pkt = to_be_received_.front();
-            to_be_received_.pop_front();
+        if (!fake_received_.empty()) {
+            Pkt6Ptr pkt = fake_received_.front();
+            fake_received_.pop_front();
             return (pkt);
         }
 
@@ -82,11 +92,27 @@ public:
         return (Pkt6Ptr());
     }
 
+    /// @brief fake packet sending
+    ///
+    /// Pretend to send a packet, but instead just store
+    /// it in fake_send_ list where test can later inspect
+    /// server's response.
+    virtual void sendPacket(const Pkt6Ptr& pkt) {
+        fake_sent_.push_back(pkt);
+    }
+
+    /// @brief adds a packet to fake receive queue
+    ///
+    /// See fake_received_ field for description
     void fakeReceive(const Pkt6Ptr& pkt) {
-        to_be_received_.push_back(pkt);
+        fake_received_.push_back(pkt);
     }
 
     virtual ~NakedDhcpv6Srv() {
+        // Remove all registered hook points (it must be done even for tests that
+        // do not use hooks as the base class - Dhcpv6Srv registers hooks
+        ServerHooks::getServerHooks().reset();
+
         // Close the lease database
         LeaseMgrFactory::destroy();
     }
@@ -101,7 +127,15 @@ public:
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
 
-    list<Pkt6Ptr> to_be_received_;
+    /// @brief packets we pretend to receive
+    ///
+    /// Instead of setting up sockets on interfaces that change between OSes, it
+    /// is much easier to fake packet reception. This is a list of packets that
+    /// we pretend to have received. You can schedule new packets to be received
+    /// using fakeReceive() and NakedDhcpv6Srv::receivePacket() methods.
+    list<Pkt6Ptr> fake_received_;
+
+    list<Pkt6Ptr> fake_sent_;
 };
 
 static const char* DUID_FILE = "server-id-test.txt";
@@ -253,9 +287,6 @@ public:
     }
 
     virtual ~NakedDhcpv6SrvTest() {
-        // Remove all registered hook points
-        ServerHooks::getServerHooks().reset();
-
         // Let's clean up if there is such a file.
         unlink(DUID_FILE);
     };
@@ -510,7 +541,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
     ASSERT_NO_THROW( {
-        srv.reset(new Dhcpv6Srv(0));
+        srv.reset(new NakedDhcpv6Srv(0));
     });
 
     OptionPtr srvid = srv->getServerID();
@@ -1822,46 +1853,266 @@ Pkt6* captureEmpty() {
     return (pkt);
 }
 
-string callback_name("");
+// This function returns buffer for very simple Solicit
+Pkt6* captureSimpleSolicit() {
+    Pkt6* pkt;
+    uint8_t data[] = {
+        1,  // type 1 = SOLICIT
+        0xca, 0xfe, 0x01, // trans-id = 0xcafe01
+        0, 1, // option type 1 (client-id)
+        0, 10, // option lenth 10
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // DUID
+        0, 3, // option type 3 (IA_NA)
+        0, 12, // option length 12
+        0, 0, 0, 1, // iaid = 1
+        0, 0, 0, 0, // T1 = 0
+        0, 0, 0, 0  // T2 = 0
+    };
 
-Pkt6Ptr callback_packet;
+    pkt = new Pkt6(data, sizeof(data));
+    pkt->setRemotePort(546);
+    pkt->setRemoteAddr(IOAddress("fe80::1"));
+    pkt->setLocalPort(0);
+    pkt->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt->setIndex(2);
+    pkt->setIface("eth0");
 
-int
-pkt6_receive_callout(CalloutHandle& callout_handle) {
-    printf("pkt6_receive_callout called!");
-    callback_name = string("pkt6_receive");
-
-    callout_handle.getArgument("pkt6", callback_packet);
-    return (0);
+    return (pkt);
 }
 
-// Checks if callouts installed on pkt6_received are indeed called
+/// @brief a class dedicated to Hooks testing in DHCPv6 server
+///
+/// This class has a some static members, because each non-static
+/// method has implicit this parameter, so it does not match callout
+/// signature and couldn't be registered. Furthermore, static methods
+/// can't modify non-static members (for obvious reasons), so many
+/// fields are declared static. It is still better to keep them as
+/// one class rather than unrelated collection of global objects.
+class HooksDhcpv6SrvTest : public Dhcpv6SrvTest {
+
+public:
+    HooksDhcpv6SrvTest() {
+
+        // Allocate new DHCPv6 Server
+        srv_ = new NakedDhcpv6Srv(0);
+
+        // clear static buffers
+        resetCalloutBuffers();
+
+        // Let's pretent we're the library 0
+        EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
+    }
+
+    ~HooksDhcpv6SrvTest() {
+        delete srv_;
+    }
+
+    static OptionPtr createOption(uint16_t option_code) {
+
+        char payload[] = {
+            0xa, 0xb, 0xc, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14
+        };
+
+        OptionBuffer tmp(payload, payload + sizeof(payload));
+        return OptionPtr(new Option(Option::V6, option_code, tmp));
+    }
+
+    /// Just store received callout name and pkt6 value
+    static int
+    pkt6_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt6_receive");
+
+        callout_handle.getArgument("pkt6", callback_pkt6_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    // change client-id
+    static int
+    pkt6_receive_change_clientid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(D6O_CLIENTID);
+
+        // add a new option
+        pkt->addOption(createOption(D6O_CLIENTID));
+
+        // carry on as usual
+        return pkt6_receive_callout(callout_handle);
+    }
+
+    // delete client-id
+    static int
+    pkt6_receive_delete_clientid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(D6O_CLIENTID);
+
+        // carry on as usual
+        return pkt6_receive_callout(callout_handle);
+    }
+
+    // add option 100
+    static int
+    pkt6_receive_skip(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt6_receive_callout(callout_handle);
+    }
+
+    void resetCalloutBuffers() {
+        callback_name_ = string("");
+        callback_pkt6_.reset();
+        callback_argument_names_.clear();
+    }
+
+    NakedDhcpv6Srv* srv_;
+
+    // Used in testing pkt6_receive_callout
+    static string callback_name_; ///< string name of the received callout
+
+    static Pkt6Ptr callback_pkt6_; ///< Pkt6 structure returned in the callout
+
+    static vector<string> callback_argument_names_;
+};
+
+string HooksDhcpv6SrvTest::callback_name_;
+
+Pkt6Ptr HooksDhcpv6SrvTest::callback_pkt6_;
+
+vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
+
+
+// Checks if callouts installed on pkt6_received are indeed called and the
+// all necessary parameters are passed.
+//
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "pkt6_receive".
-TEST_F(Dhcpv6SrvTest, Hook_pkt6_receive) {
+TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
 
-    // This calls Dhcpv6Srv::ctor, which registers hook names
-    NakedDhcpv6Srv srv(0);
-
-    // Let's pretend there will be 3 libraries
-    CalloutManager callout_mgr(3);
-
-    // Let's pretent we're the library 0
-    EXPECT_NO_THROW(callout_mgr.setLibraryIndex(0));
-
-    EXPECT_NO_THROW( callout_mgr.registerCallout("pkt6_receive", pkt6_receive_callout) );
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
+                                                                       pkt6_receive_callout));
 
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(captureEmpty());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(req);
+    srv_->fakeReceive(req);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered pkt6_receive callback.
-    srv.run();
+    srv_->run();
+
+    // check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt6_receive", callback_name_);
+
+    // check that pkt6 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt6_.get() == req.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("pkt6"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt6_received is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
+                                                       pkt6_receive_change_clientid));
+
+    // Let's create a REQUEST
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(D6O_CLIENTID);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(D6O_CLIENTID);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt6_received is able to delete
+// existing options and that change impacts server processing (mandatory
+// client-id option is deleted, so the packet is expected to be dropped)
+TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
+                    pkt6_receive_delete_clientid));
+
+    // Let's create a REQUEST
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not send a response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt6_received is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
+                    pkt6_receive_skip));
+
+    // Let's create a REQUEST
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
 }
 
 
