@@ -39,6 +39,30 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Exception indicating that QR flag has invalid value.
+///
+/// This exception is thrown when QR flag has invalid value for
+/// the operation performed on the particular message. For instance,
+/// the QR flag must be set to indicate that the given message is
+/// a RESPONSE when @c D2UpdateMessage::fromWire is performed.
+/// The QR flag must be cleared when @c D2UpdateMessage::toWire
+/// is executed.
+class InvalidQRFlag : public Exception {
+public:
+    InvalidQRFlag(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Exception indicating that the parsed message is not DNS Update.
+///
+/// This exception is thrown when decoding the DNS message which is not
+/// a DNS Update.
+class NotUpdateMessage : public Exception {
+public:
+    NotUpdateMessage(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 /// @brief The @c D2UpdateMessage encapsulates a DNS Update message.
 ///
@@ -80,11 +104,9 @@ public:
 
     QRFlag getQRFlag() const;
 
-    void setQRFlag(const QRFlag flag);
+    uint16_t getId() const;
 
-    uint16_t getQid() const;
-
-    void setQid(const uint16_t qid);
+    void setId(const uint16_t qid);
 
     const dns::Rcode& getRcode() const;
 
@@ -102,15 +124,6 @@ public:
 
     void addRRset(const UpdateMsgSection section, const dns::RRsetPtr& rrset);
 
-    bool hasRRset(const UpdateMsgSection section, const dns::Name& name,
-                  const dns::RRClass& rrclass, const dns::RRType& rrtype);
-
-    bool hasRRset(const UpdateMsgSection section, const dns::RRsetPtr &rrset);
-
-    void clearSection(const UpdateMsgSection section);
-
-    void clear(const bool parse_mode);
-
     void toWire(dns::AbstractMessageRenderer& renderer);
 
     void fromWire(isc::util::InputBuffer& buffer);
@@ -119,6 +132,7 @@ public:
 private:
 
     static dns::Message::Section ddnsToDnsSection(const UpdateMsgSection section);
+    void validate() const;
 
     dns::Message message_;
     D2ZonePtr zone_;
