@@ -56,7 +56,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
 
         self._builder_thread.start()
 
-        # Now that the builder thread is running, send it the shutdown
+        # Now that the builder thread is running, send it a bad
         # command. The thread should exit its main loop and be joinable.
         with self._builder_cv:
             with self._builder_lock:
@@ -69,7 +69,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         self.assertFalse(self._builder_thread.isAlive())
 
         # The command queue must be cleared, and the response queue must
-        # be untouched (we don't use it in this test).
+        # contain a response that a bad command was sent.
         with self._builder_lock:
             self.assertEqual(len(self._builder_command_queue), 0)
             self.assertEqual(len(self._builder_response_queue), 1)
