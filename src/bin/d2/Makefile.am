@@ -53,6 +53,7 @@ b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
 b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
 b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
+b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
