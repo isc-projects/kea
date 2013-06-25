@@ -15,6 +15,7 @@
 #ifndef D2_UPDATE_MESSAGE_H
 #define D2_UPDATE_MESSAGE_H
 
+#include <d2/d2_zone.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rcode.h>
@@ -91,15 +92,13 @@ public:
 
     unsigned int getRRCount(const UpdateMsgSection section) const;
 
-    const dns::QuestionIterator beginQuestion() const;
-
-    const dns::QuestionIterator endQuestion() const;
-
     const dns::RRsetIterator beginSection(const UpdateMsgSection section) const;
 
     const dns::RRsetIterator endSection(const UpdateMsgSection section) const;
 
     void setZone(const dns::Name& zone, const dns::RRClass& rrclass);
+
+    D2ZonePtr getZone() const;
 
     void addRRset(const UpdateMsgSection section, const dns::RRsetPtr& rrset);
 
@@ -122,6 +121,7 @@ private:
     static dns::Message::Section ddnsToDnsSection(const UpdateMsgSection section);
 
     dns::Message message_;
+    D2ZonePtr zone_;
 
 };
 

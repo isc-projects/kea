@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <d2/d2_update_message.h>
+#include <d2/d2_zone.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdataclass.h>
 #include <dns/rdata.h>
@@ -151,50 +152,72 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     };
     InputBuffer buf(bin_msg, sizeof(bin_msg));
 
+    // Create an object to be used to decode the message from the wire format.
     D2UpdateMessage msg(true);
-
+    // Decode the message.
     ASSERT_NO_THROW(msg.fromWire(buf));
 
+    // Check that the message header is valid.
     EXPECT_EQ(0x05AF, msg.getQid());
     EXPECT_EQ(D2UpdateMessage::RESPONSE, msg.getQRFlag());
     EXPECT_EQ(Rcode::YXDOMAIN_CODE, msg.getRcode().getCode());
-    ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_ZONE));
-    // Zone section is TBD
 
+    // The ZOCOUNT must contain exactly one zone. If it does, we should get
+    // the name, class and type of the zone and verify they are valid.
+    ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_ZONE));
+    D2ZonePtr zone = msg.getZone();
+    ASSERT_TRUE(zone);
+    EXPECT_EQ("example.com.", zone->getName().toText());
+    EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
+
+    // Check the Prerequisite section. It should contain two records.
     ASSERT_EQ(2, msg.getRRCount(D2UpdateMessage::SECTION_PREREQUISITE));
+
+    // Proceed to the first prerequisite.
     RRsetIterator rrset_it = msg.beginSection(D2UpdateMessage::SECTION_PREREQUISITE);
     RRsetPtr prereq1 = *rrset_it;
     ASSERT_TRUE(prereq1);
-    EXPECT_EQ("foo.example.com.", prereq1->getName().toText());
-    EXPECT_EQ(RRType::AAAA().getCode(), prereq1->getType().getCode());
-    EXPECT_EQ(RRClass::NONE().getCode(), prereq1->getClass().getCode());
-    EXPECT_EQ(0, prereq1->getTTL().getValue());
-    EXPECT_EQ(0, prereq1->getRdataCount());
+    // Check record fields.
+    EXPECT_EQ("foo.example.com.", prereq1->getName().toText()); // NAME
+    EXPECT_EQ(RRType::AAAA().getCode(), prereq1->getType().getCode()); // TYPE
+    EXPECT_EQ(RRClass::NONE().getCode(), prereq1->getClass().getCode()); // CLASS
+    EXPECT_EQ(0, prereq1->getTTL().getValue()); // TTL
+    EXPECT_EQ(0, prereq1->getRdataCount()); // RDLENGTH
 
     // Move to next prerequisite section.
     ++rrset_it;
-
     RRsetPtr prereq2 = *rrset_it;
     ASSERT_TRUE(prereq2);
-    EXPECT_EQ("bar.example.com.", prereq2->getName().toText());
-    EXPECT_EQ(RRType::AAAA().getCode(), prereq2->getType().getCode());
-    EXPECT_EQ(RRClass::ANY().getCode(), prereq2->getClass().getCode());
-    EXPECT_EQ(0, prereq2->getTTL().getValue());
-    EXPECT_EQ(0, prereq2->getRdataCount());
+    // Check record fields.
+    EXPECT_EQ("bar.example.com.", prereq2->getName().toText()); // NAME
+    EXPECT_EQ(RRType::AAAA().getCode(), prereq2->getType().getCode()); // TYPE
+    EXPECT_EQ(RRClass::ANY().getCode(), prereq2->getClass().getCode()); // CLASS
+    EXPECT_EQ(0, prereq2->getTTL().getValue()); // TTL
+    EXPECT_EQ(0, prereq2->getRdataCount()); // RDLENGTH
 
+    // Check the Update section. There is only one record, so beginSection()
+    // should return the pointer to this sole record.
     ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_UPDATE));
     rrset_it = msg.beginSection(D2UpdateMessage::SECTION_UPDATE);
     RRsetPtr update = *rrset_it;
     ASSERT_TRUE(update);
-    EXPECT_EQ("foo.example.com.", update->getName().toText());
-    EXPECT_EQ(RRType::AAAA().getCode(), update->getType().getCode());
-    EXPECT_EQ(RRClass::IN().getCode(), update->getClass().getCode());
-    EXPECT_EQ(0xAABBCCDD, update->getTTL().getValue());
+    // Check the record fields.
+    EXPECT_EQ("foo.example.com.", update->getName().toText()); // NAME
+    EXPECT_EQ(RRType::AAAA().getCode(), update->getType().getCode()); // TYPE
+    EXPECT_EQ(RRClass::IN().getCode(), update->getClass().getCode()); // CLASS
+    EXPECT_EQ(0xAABBCCDD, update->getTTL().getValue()); // TTL
+    // There should be exactly one record holding the IPv6 address.
+    // This record can be accessed using RdataIterator. This record
+    // can be compared with the reference record, holding expected IPv6
+    // address using compare function.
     ASSERT_EQ(1, update->getRdataCount());
     RdataIteratorPtr rdata_it = update->getRdataIterator();
     ASSERT_TRUE(rdata_it);
     in::AAAA rdata_ref("2001:db8:1::1");
     EXPECT_EQ(0, rdata_ref.compare(rdata_it->getCurrent()));
+
+    // @todo: at this point we don't test Additional Data records. We may
+    // consider implementing tests for it in the future.
 }
 
 // This test verifies that the wire format of the message is produced

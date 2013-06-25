@@ -12,12 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <d2/d2_update_message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
 #include <dns/question.h>
-
-#include <d2/d2_update_message.h>
 
 namespace isc {
 namespace d2 {
@@ -85,7 +84,14 @@ D2UpdateMessage::setZone(const Name& zone, const RRClass& rrclass) {
         message_.clearSection(dns::Message::SECTION_QUESTION);
     }
 
-    message_.addQuestion(Question(zone, rrclass, RRType::SOA()));
+    Question question(zone, rrclass, RRType::SOA());
+    message_.addQuestion(question);
+    zone_.reset(new D2Zone(question.getName(), question.getClass()));
+}
+
+D2ZonePtr
+D2UpdateMessage::getZone() const {
+    return (zone_);
 }
 
 void
@@ -118,6 +124,15 @@ D2UpdateMessage::toWire(AbstractMessageRenderer& renderer) {
 void
 D2UpdateMessage::fromWire(isc::util::InputBuffer& buffer) {
     message_.fromWire(buffer);
+    if (getRRCount(D2UpdateMessage::SECTION_ZONE) > 0) {
+        QuestionPtr question = *message_.beginQuestion();
+        assert(question);
+        zone_.reset(new D2Zone(question->getName(), question->getClass()));
+
+    } else {
+        zone_.reset();
+
+    }
 }
 
 dns::Message::Section
