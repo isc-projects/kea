@@ -52,13 +52,17 @@ CalloutHandle::~CalloutHandle() {
     context_collection_.clear();
 
     // Normal destruction of the remaining variables will include the
-    // decrementing of the reference count on the library manager collection
-    // (which holds the libraries that could have allocated memory in the
-    // argument and context members).  When that goes to zero, the libraries
-    // will be unloaded: however, at that point nothing in the hooks framework
-    // will be accessing memory in the libraries' address space.  It is possible    // that some other data structure in the server (the program using the hooks
-    // library) still references the address space, but that is outside the
-    // scope of this framework.
+    // destruction of lm_collection_, wn action that will decrement the
+    // reference count on the library manager collection (which holds the
+    // libraries that could have allocated memory in the argument and context
+    // members).  When that goes to zero, the libraries will be unloaded:
+    // at that point nothing in the hooks framework will be pointing to memory
+    // in the libraries' address space.
+    //
+    // It is possible that some other data structure in the server (the program
+    // using the hooks library) still references the address space and attempts
+    // to access it causing a segmentation fault. That issue is outside the
+    // scope of this framework and is not addressed by it.
 }
 
 // Return the name of all argument items.
