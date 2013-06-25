@@ -76,6 +76,45 @@ public:
     }
 };
 
+// This test verifies that DNS Update message ID can be set using
+// setId function.
+TEST_F(D2UpdateMessageTest, setId) {
+    D2UpdateMessage msg;
+    EXPECT_EQ(0, msg.getId());
+    msg.setId(0x1234);
+    EXPECT_EQ(0x1234, msg.getId());
+}
+
+// This test verifies that the DNS Update message RCODE can be set
+// using setRcode function.
+TEST_F(D2UpdateMessageTest, setRcode) {
+    D2UpdateMessage msg;
+    msg.setRcode(Rcode::NOERROR());
+    EXPECT_EQ(Rcode::NOERROR().getCode(), msg.getRcode().getCode());
+
+    msg.setRcode(Rcode::NOTIMP());
+    EXPECT_EQ(Rcode::NOTIMP().getCode(), msg.getRcode().getCode());
+}
+
+// This test verifies that the Zone section in the DNS Update message
+// can be set.
+TEST_F(D2UpdateMessageTest, setZone) {
+    D2UpdateMessage msg;
+    D2ZonePtr zone = msg.getZone();
+    EXPECT_FALSE(zone);
+    msg.setZone(Name("example.com"), RRClass::ANY());
+    zone = msg.getZone();
+    EXPECT_TRUE(zone);
+    EXPECT_EQ("example.com.", zone->getName().toText());
+    EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
+
+    msg.setZone(Name("foo.example.com"), RRClass::NONE());
+    zone = msg.getZone();
+    EXPECT_TRUE(zone);
+    EXPECT_EQ("foo.example.com.", zone->getName().toText());
+    EXPECT_EQ(RRClass::NONE().getCode(), zone->getClass().getCode());
+}
+
 // This test verifies that the DNS message is properly decoded from the
 // wire format.
 TEST_F(D2UpdateMessageTest, fromWire) {
@@ -158,7 +197,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     ASSERT_NO_THROW(msg.fromWire(buf));
 
     // Check that the message header is valid.
-    EXPECT_EQ(0x05AF, msg.getQid());
+    EXPECT_EQ(0x05AF, msg.getId());
     EXPECT_EQ(D2UpdateMessage::RESPONSE, msg.getQRFlag());
     EXPECT_EQ(Rcode::YXDOMAIN_CODE, msg.getRcode().getCode());
 
@@ -225,9 +264,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
 TEST_F(D2UpdateMessageTest, toWire) {
     D2UpdateMessage msg;
     // Set message ID.
-    msg.setQid(0x1234);
-    // Make it a Request message by setting the QR flag to 0.
-    msg.setQRFlag(D2UpdateMessage::REQUEST);
+    msg.setId(0x1234);
     // Rcode to NOERROR.
     msg.setRcode(Rcode(Rcode::NOERROR_CODE));
 
