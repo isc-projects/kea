@@ -69,23 +69,34 @@ public:
 /// This class represents the DNS Update message. Functions exposed by this
 /// class allow to specify the data sections carried by the message and create
 /// an on-wire format of this message. This class is also used to decode
-/// messages received from the DNS server from the on-wire format.
+/// messages received from the DNS server in the on-wire format.
 ///
 /// <b>Design choice:</b> A dedicated class has been created to encapsulate
 /// DNS Update message because existing @c isc::dns::Message is designed to
-/// support regular DNS messages described in RFC 1035 only. Altough DNS Update
+/// support regular DNS messages (described in RFC 1035) only. Although DNS Update
 /// has the same format, particular sections serve different purposes. In order
 /// to avoid rewrite of significant portions of @c isc::dns::Message class, this
-/// class is implemented in-terms-of @c Message class to reuse its functionality
-/// wherever possible.
+/// class is implemented in-terms-of @c isc::dns::Message class to reuse its
+/// functionality where possible.
 class D2UpdateMessage {
 public:
 
+    /// Indicates whether DNS Update message is a REQUEST or RESPONSE.
     enum QRFlag {
         REQUEST,
         RESPONSE
     };
 
+    /// Identifies sections in the DNS Update Message. Each message comprises
+    /// message Header and may contain the following sections:
+    /// - ZONE
+    /// - PREREQUISITE
+    /// - UPDATE
+    /// - ADDITIONAL
+    ///
+    /// The enum elements are used by functions such as @c getRRCount (to get
+    /// the number of records in a corresponding section) and @c beginSection
+    /// and @c endSection (to access data in the corresponding section).
     enum UpdateMsgSection {
         SECTION_ZONE,
         SECTION_PREREQUISITE,
@@ -94,43 +105,185 @@ public:
     };
 
 public:
+    /// @brief Constructor used to create an instance of the DNS Update Message
+    /// (either outgoing or incoming).
+    ///
+    /// This constructor is used to create an instance of either incoming or
+    /// outgoing DNS Update message. The boolean argument indicates wheteher it
+    /// is incoming (true) or outgoing (false) message. For incoming messages
+    /// the @c D2UpdateMessage::fromWire function is used to parse on-wire data.
+    /// For outgoing messages, modifier functions should be used to set the message
+    /// contents and @c D2UpdateMessage::toWire function to create on-wire data.
+    ///
+    /// @param parse indicates if this is an incoming message (true) or outgoing
+    /// message (false).
     D2UpdateMessage(const bool parse = false);
 
+    ///
+    /// @name Copy constructor and assignment operator
+    ///
+    /// Copy constructor and assignment operator are private because we assume
+    /// there will be no need to copy messages on the client side.
+    //@{
 private:
     D2UpdateMessage(const D2UpdateMessage& source);
     D2UpdateMessage& operator=(const D2UpdateMessage& source);
+    //@}
 
 public:
 
+    /// @brief Returns enum value indicating if the message is a
+    /// REQUEST or RESPONSE
+    ///
+    /// The returned value is REQUEST if the message is created as an outgoing
+    /// message. In such case the QR flag bit in the message header is cleared.
+    /// The returned value is RESPONSE if the message is created as an incoming
+    /// message and the QR flag bit was set in the received message header.
+    ///
+    /// @return An enum value indicating whether the message is a
+    /// REQUEST or RESPONSE.
     QRFlag getQRFlag() const;
 
+    /// @brief Returns message ID.
+    ///
+    /// @return message ID.
     uint16_t getId() const;
 
-    void setId(const uint16_t qid);
+    /// @brief Sets message ID.
+    ///
+    /// @param id 16-bit value of the message id.
+    void setId(const uint16_t id);
 
+    /// @brief Returns an object representing message RCode.
+    ///
+    /// @return An object representing message RCode.
     const dns::Rcode& getRcode() const;
 
+    /// @brief Sets message RCode.
+    ///
+    /// @param rcode An object representing message RCode.
     void setRcode(const dns::Rcode& rcode);
 
+    /// @brief Returns number of RRsets in the specified message section.
+    ///
+    /// @param section An @c UpdateMsgSection enum specifying a message section
+    /// for which the number of RRsets is to be returned.
+    ///
+    /// @return A number of RRsets in the specified message section.
     unsigned int getRRCount(const UpdateMsgSection section) const;
 
+    /// @name Functions returning iterators to RRsets in message sections.
+    ///
+    //@{
+    /// @brief Return iterators pointing to the beginning of the list of RRsets,
+    /// which belong to the specified section.
+    ///
+    /// @param section An @c UpdateMsgSection enum specifying a message section
+    /// for which the iterator should be returned.
+    ///
+    /// @return An iterator pointing to the beginning of the list of the
+    /// RRsets, which belong to the specified section.
     const dns::RRsetIterator beginSection(const UpdateMsgSection section) const;
 
+    /// @brief Return iterators pointing to the end of the list of RRsets,
+    /// which belong to the specified section.
+    ///
+    /// @param section An @c UpdateMsgSection enum specifying a message section
+    /// for which the iterator should be returned.
+    ///
+    /// @return An iterator pointing to the end of the list of the
+    /// RRsets, which belong to the specified section.
     const dns::RRsetIterator endSection(const UpdateMsgSection section) const;
+    //@}
 
+    /// @brief Sets the Zone record.
+    ///
+    /// This function creates the @c D2Zone object, representing a Zone record
+    /// for the outgoing message. If the Zone record is already set, it is
+    /// replaced by the new record being set by this function. The RRType for
+    /// the record is always SOA.
+    ///
+    /// @param zone A name of the zone being updated.
+    /// @param rrclass A class of the zone record.
     void setZone(const dns::Name& zone, const dns::RRClass& rrclass);
 
+    /// @brief Returns a pointer to the object representing Zone record.
+    ///
+    /// @return A pointer to the object representing Zone record.
     D2ZonePtr getZone() const;
 
+    /// @brief Adds an RRset to the specified section.
+    ///
+    /// This function may throw exception if the specified section is
+    /// out of bounds or Zone section update is attempted. For Zone
+    /// section @c D2UpdateMessage::setZone function should be used instead.
+    /// Also, this function expects that @c rrset argument is non-NULL.
+    ///
+    /// @param section A message section where the RRset should be added.
+    /// @param rrset A reference to a RRset which should be added.
     void addRRset(const UpdateMsgSection section, const dns::RRsetPtr& rrset);
 
+
+    /// @name Functions used to encode outgoing messages to wire format and \
+    /// decode incoming messages from wire format.
+    ///
+    //@{
+    /// @brief Encode outgoing message into wire format.
+    ///
+    /// This function encodes the DNS Update into the wire format. The format of
+    /// such a message is described in the RFC2136, section 2. Some of the sections
+    /// which belong to encoded message may be empty. If a particular message section
+    /// is empty (does not comprise any RRs), the corresponding counter in the
+    /// message header is set to 0. These counters are: PRCOUNT, UPCOUNT,
+    /// ADCOUNT for the Prerequisites, Update RRs and Additional Data RRs respectively.
+    /// The ZOCOUNT must be equal to 1 because RFC2136 requires that the message
+    /// comprises exactly one Zone record.
+    ///
+    /// This function does not guarantee exception safety. However, exceptions
+    /// should be rare because @c D2UpdateMessage class API prevents invalid
+    /// use of the class. The typical case, when this function may throw an
+    /// exception is when this it is called on the object representing
+    /// incoming (instead of outgoing) message. In such case, the QR field
+    /// will be set to RESPONSE, which is invalid setting when calling this function.
+    ///
+    /// @param renderer A renderer object used to generate the message wire format.
     void toWire(dns::AbstractMessageRenderer& renderer);
 
+    /// @brief Decode incoming message from the wire format.
+    ///
+    /// This function decodes the DNS Update message stored in the buffer specified
+    /// by the function argument. In the first turn, this function parses message
+    /// header and extracts the section counters: ZOCOUNT, PRCOUNT, UPCOUNT and
+    /// ADCOUNT. Using these counters, function identifies message sections, which
+    /// follow message header. These sections can be later accessed using:
+    /// @c D2UpdateMessage::getZone, @c D2UpdateMessage::beginSection and
+    /// @c D2UpdateMessage::endSection functions.
+    ///
+    /// This function is NOT exception safe. It signals message decoding errors
+    /// through exceptions. Message decoding error may occur if the received
+    /// message does not conform to the general DNS Message format, specified in
+    /// RFC 1035. Errors which are specific to DNS Update messages include:
+    /// - Invalid Opcode - not an UPDATE.
+    /// - Invalid QR flag - the QR bit should be set to indicate that the message
+    /// is the server response.
+    /// - The number of records in the Zone section is greater than 1.
+    ///
+    /// @param buffer input buffer, holding DNS Update message to be parsed.
     void fromWire(isc::util::InputBuffer& buffer);
-
+    //@}
 
 private:
 
+    /// Maps the values of the @c UpdateMessageSection field to the
+    /// corresponding values in the @c isc::dns::Message class. This
+    /// mapping is required here because this class uses @c isc::dns::Message
+    /// class to do the actual processing of the DNS Update message.
+    ///
+    /// @param section An enum indicating the section for which the corresponding
+    /// enum value from @c isc::dns::Message will be returned.
+    ///
+    /// @return The enum value indicating the section in the DNS message
+    /// represented by the @c isc::dns::Message class.
     static dns::Message::Section ddnsToDnsSection(const UpdateMsgSection section);
     void validate() const;
 
