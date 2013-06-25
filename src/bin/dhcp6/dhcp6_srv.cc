@@ -134,6 +134,9 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
+
+    /// @todo Unregister hooks once ServerHooks::deregisterHooks() becomes
+    /// available
 }
 
 void Dhcpv6Srv::shutdown() {
@@ -145,9 +148,13 @@ Pkt6Ptr Dhcpv6Srv::receivePacket(int timeout) {
     return (IfaceMgr::instance().receive6(timeout));
 }
 
+void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
+    IfaceMgr::instance().send(packet);
+}
+
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo: calculate actual timeout to the next event (e.g. lease
+        /// @todo Calculate actual timeout to the next event (e.g. lease
         /// expiration) once we have lease database. The idea here is that
         /// it is possible to do everything in a single process/thread.
         /// For now, we are just calling select for 1000 seconds. There
@@ -195,6 +202,8 @@ bool Dhcpv6Srv::run() {
                     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP);
                     continue;
                 }
+
+                callout_handle->getArgument("pkt6", query);
             }
 
             try {
@@ -299,7 +308,7 @@ bool Dhcpv6Srv::run() {
 
                 if (rsp->pack()) {
                     try {
-                        IfaceMgr::instance().send(rsp);
+                        sendPacket(rsp);
                     } catch (const std::exception& e) {
                         LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
                     }

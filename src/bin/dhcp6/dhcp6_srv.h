@@ -344,6 +344,12 @@ protected:
     /// simulates reception of a packet. For that purpose it is protected.
     virtual Pkt6Ptr receivePacket(int timeout);
 
+    /// @brief dummy wrapper around IfaceMgr::send()
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual void sendPacket(const Pkt6Ptr& pkt);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
