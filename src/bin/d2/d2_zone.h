@@ -32,10 +32,11 @@ namespace d2 {
 /// section 2.3).
 ///
 /// Note, that this @c D2Zone class neither exposes functions to decode messages
-/// from wire format nor to encode to wire format. This is not needed because
+/// from wire format nor to encode to wire format. This is not needed, because
 /// @c isc::d2::D2UpdateMessage class uses @c D2Zone only to return the parsed Zone
 /// information to the caller. Internally, D2UpdateMessage parses and stores Zone
-/// section using @c isc::dns::Question class.
+/// section using @c isc::dns::Question class, and the @c toWire and @c fromWire
+/// functions of the @c isc::dns::Question class are used.
 class D2Zone {
 public:
     /// @brief Constructor from Name and RRClass.

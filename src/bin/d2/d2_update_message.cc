@@ -99,6 +99,10 @@ D2UpdateMessage::getZone() const {
 void
 D2UpdateMessage::addRRset(const UpdateMsgSection section,
                           const dns::RRsetPtr& rrset) {
+    if (section == SECTION_ZONE) {
+        isc_throw(isc::BadValue, "unable to add RRset to the Zone section"
+                  " of the DNS Update message, use setZone instead");
+    }
     message_.addRRset(ddnsToDnsSection(section), rrset);
 }
 
