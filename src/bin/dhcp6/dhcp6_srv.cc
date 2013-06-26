@@ -71,8 +71,8 @@ namespace dhcp {
 static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-:alloc_engine_(), serverid_(), shutdown_(true), hook_index_pkt6_receive_(100),
-    hook_index_subnet6_select_(101), hook_index_pkt6_send_(102)
+:alloc_engine_(), serverid_(), shutdown_(true), hook_index_pkt6_receive_(-1),
+    hook_index_subnet6_select_(-1), hook_index_pkt6_send_(-1)
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
