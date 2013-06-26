@@ -223,8 +223,7 @@ public:
     /// @param rrset A reference to a RRset which should be added.
     void addRRset(const UpdateMsgSection section, const dns::RRsetPtr& rrset);
 
-
-    /// @name Functions to handle messages encoding and decoding.
+    /// @name Functions to handle message encoding and decoding.
     ///
     //@{
     /// @brief Encode outgoing message into wire format.
@@ -272,7 +271,6 @@ public:
     //@}
 
 private:
-
     /// Maps the values of the @c UpdateMessageSection field to the
     /// corresponding values in the @c isc::dns::Message class. This
     /// mapping is required here because this class uses @c isc::dns::Message
@@ -284,6 +282,22 @@ private:
     /// @return The enum value indicating the section in the DNS message
     /// represented by the @c isc::dns::Message class.
     static dns::Message::Section ddnsToDnsSection(const UpdateMsgSection section);
+
+    /// @brief Checks received response message for correctness.
+    ///
+    /// This function verifies that the received response from a server is
+    /// correct. Currently this function checks the following:
+    /// - Opcode is 'DNS Update',
+    /// - QR flag is RESPONSE (flag bit is set),
+    /// - Zone section comprises at most one record.
+    ///
+    /// The function will throw exception if any of the conditions above are
+    /// not met.
+    ///
+    /// @throw isc::d2::NotUpdateMessage if invalid Opcode.
+    /// @throw isc::d2::InvalidQRFlag if QR flag is not set to RESPONSE
+    /// @throw isc::d2::InvalidZone section, if Zone section comprises more
+    /// than one record.
     void validate() const;
 
     dns::Message message_;
