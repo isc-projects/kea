@@ -160,20 +160,26 @@ D2UpdateMessage::fromWire(isc::util::InputBuffer& buffer) {
 
 dns::Message::Section
 D2UpdateMessage::ddnsToDnsSection(const UpdateMsgSection section) {
+    /// The following switch maps the enumerator values from the
+    /// DNS Update message to the corresponding enumerator values
+    /// representing fields of the DNS message.
     switch(section) {
     case SECTION_ZONE :
         return (dns::Message::SECTION_QUESTION);
+
     case SECTION_PREREQUISITE:
         return (dns::Message::SECTION_ANSWER);
+
     case SECTION_UPDATE:
         return (dns::Message::SECTION_AUTHORITY);
+
     case SECTION_ADDITIONAL:
         return (dns::Message::SECTION_ADDITIONAL);
+
     default:
         ;
     }
-    isc_throw(dns::InvalidMessageSection,
-              "unknown message section " << section);
+    isc_throw(dns::InvalidMessageSection, "unknown message section " << section);
 }
 
 void
@@ -190,7 +196,7 @@ D2UpdateMessage::validate() const {
     // Received message should have QR flag set, which indicates that it is
     // a RESPONSE.
     if (getQRFlag() == REQUEST) {
-        isc_throw(NotUpdateMessage, "received message should should have QR flag set,"
+        isc_throw(InvalidQRFlag, "received message should should have QR flag set,"
                   " to indicate that it is a RESPONSE message, the QR flag is unset");
     }
     // DNS server may copy a Zone record from the query message. Since query must
