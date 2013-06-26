@@ -148,20 +148,15 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
 
-    // LONG_MAX, -LONG_MAX, LONG_MIN test
-    std::ostringstream longmax, minus_longmax, longmin;
-    longmax << LONG_MAX;
-    minus_longmax << -LONG_MAX;
-    longmin << LONG_MIN;
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(longmax.str(), Element::fromJSON(longmax.str())->str());
+    EXPECT_NO_THROW({
+       EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
     });
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(minus_longmax.str(), Element::fromJSON(minus_longmax.str())->str());
+    EXPECT_NO_THROW({
+       EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
     });
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(longmin.str(), Element::fromJSON(longmin.str())->str());
-    });
+    EXPECT_THROW({
+       EXPECT_NE("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
+    }, JSONError);
 
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
     EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
