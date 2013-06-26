@@ -25,7 +25,9 @@
 
 #include <dhcpsrv/tests/test_utils.h>
 
-#include <hooks/callout_handle.h>
+#include <hooks/server_hooks.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -110,6 +112,10 @@ public:
 
     ~AllocEngine6Test() {
         factory_.destroy();
+
+        // Remove all registered hook points (it must be done even for tests that
+        // do not use hooks as the base class - Dhcpv6Srv registers hooks
+        ServerHooks::getServerHooks().reset();
     }
 
     DuidPtr duid_;            ///< client-identifier (value used in tests)
@@ -178,6 +184,10 @@ public:
 
     ~AllocEngine4Test() {
         factory_.destroy();
+
+        // Remove all registered hook points (it must be done even for tests that
+        // do not use hooks as the base class - Dhcpv6Srv registers hooks
+        ServerHooks::getServerHooks().reset();
     }
 
     ClientIdPtr clientid_;    ///< Client-identifier (value used in tests)
@@ -1023,5 +1033,121 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 }
+
+class HookAllocEngine6Test : public AllocEngine6Test {
+public:
+    HookAllocEngine6Test() {
+        resetCalloutBuffers();
+
+        // Initialize Hooks Manager
+        vector<string> libraries; // no libraries at this time
+        HooksManager::getHooksManager().loadLibraries(libraries);
+
+        EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
+    }
+
+    ~HookAllocEngine6Test() {
+
+    }
+
+    void resetCalloutBuffers() {
+        callback_name_ = string("");
+        callback_subnet6_.reset();
+        callback_fake_allocation_ = false;
+        callback_lease6_.reset();
+        callback_argument_names_.clear();
+        callback_addr_original_ = IOAddress("::");
+        callback_addr_updated_ = IOAddress("::");
+    }
+
+    /// callback that stores received callout name and received values
+    static int
+    lease6_select_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_select");
+
+        callout_handle.getArgument("subnet6", callback_subnet6_);
+        callout_handle.getArgument("fake_allocation", callback_fake_allocation_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+
+        callback_addr_original_ = callback_lease6_->addr_;
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// callback that picks a different lease
+    static int
+    lease6_select_different_callout(CalloutHandle& callout_handle) {
+
+        lease6_select_callout(callout_handle);
+
+        callback_name_ = string("lease6_select");
+
+        Lease6Ptr lease;
+        callout_handle.getArgument("lease6", lease);
+
+        callback_addr_updated_ = IOAddress("2001:db8::abcd");
+        lease->addr_ = callback_addr_updated_;
+
+        return (0);
+    }
+
+    static IOAddress callback_addr_original_;
+    static IOAddress callback_addr_updated_;
+
+    static string callback_name_;
+    static Subnet6Ptr callback_subnet6_;
+    static Lease6Ptr callback_lease6_;
+    static bool callback_fake_allocation_;
+    static vector<string> callback_argument_names_;
+};
+
+IOAddress HookAllocEngine6Test::callback_addr_original_("::");
+IOAddress HookAllocEngine6Test::callback_addr_updated_("::");
+string HookAllocEngine6Test::callback_name_;
+Subnet6Ptr HookAllocEngine6Test::callback_subnet6_;
+Lease6Ptr HookAllocEngine6Test::callback_lease6_;
+bool HookAllocEngine6Test::callback_fake_allocation_;
+vector<string> HookAllocEngine6Test::callback_argument_names_;
+
+
+// This test checks if the simple allocation can succeed
+TEST_F(HookAllocEngine6Test, lease6_select) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Install pkt6_receive_callout
+
+    ASSERT_TRUE(HooksManager::getCalloutManager());
+
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
+                                                                       lease6_select_callout));
+
+    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
+                                               false, CalloutHandlePtr());
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease6(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Check that callouts were indeed called
+    EXPECT_EQ(callback_name_, "subnet6_select");
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    ASSERT_TRUE(callback_lease6_);
+    detailCompareLease(callback_lease6_, from_mgr);
+
+    ASSERT_TRUE(callback_subnet6_);
+    EXPECT_EQ(subnet_->toText(), callback_subnet6_->toText());
+
+    EXPECT_EQ(callback_fake_allocation_, false);
+}
+
 
 }; // End of anonymous namespace
