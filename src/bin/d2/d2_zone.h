@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -106,7 +106,8 @@ typedef boost::shared_ptr<D2Zone> D2ZonePtr;
 /// performed.
 /// @param zone A reference to the @c D2Zone object output by the
 /// operation.
-/// @param A reference to the same @c std::ostream object referenced by
+///
+/// @return A reference to the same @c std::ostream object referenced by
 /// parameter @c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const D2Zone& zone);
 
