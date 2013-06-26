@@ -1917,7 +1917,7 @@ public:
         return OptionPtr(new Option(Option::V6, option_code, tmp));
     }
 
-    /// Just store received callout name and pkt6 value
+    /// callback that stores received callout name and pkt6 value
     static int
     pkt6_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt6_receive");
@@ -1928,7 +1928,7 @@ public:
         return (0);
     }
 
-    // change client-id
+    // callback that changes client-id value
     static int
     pkt6_receive_change_clientid(CalloutHandle& callout_handle) {
 
@@ -1945,7 +1945,7 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    // delete client-id
+    // callback that deletes client-id
     static int
     pkt6_receive_delete_clientid(CalloutHandle& callout_handle) {
 
@@ -1959,7 +1959,7 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    // add option 100
+    // callback that sets skip flag
     static int
     pkt6_receive_skip(CalloutHandle& callout_handle) {
 
@@ -1970,6 +1970,61 @@ public:
 
         // carry on as usual
         return pkt6_receive_callout(callout_handle);
+    }
+
+    // Callback that stores received callout name and pkt6 value
+    static int
+    pkt6_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt6_send");
+
+        callout_handle.getArgument("pkt6", callback_pkt6_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    // Callback that changes server-id
+    static int
+    pkt6_send_change_serverid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        // get rid of the old server-id
+        pkt->delOption(D6O_SERVERID);
+
+        // add a new option
+        pkt->addOption(createOption(D6O_SERVERID));
+
+        // carry on as usual
+        return pkt6_send_callout(callout_handle);
+    }
+
+    // callback that deletes server-id
+    static int
+    pkt6_send_delete_serverid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(D6O_SERVERID);
+
+        // carry on as usual
+        return pkt6_send_callout(callout_handle);
+    }
+
+    // Callback that sets skip blag
+    static int
+    pkt6_send_skip(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("pkt6", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt6_send_callout(callout_handle);
     }
 
     void resetCalloutBuffers() {
@@ -2006,11 +2061,11 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
                                                                        pkt6_receive_callout));
 
-    // Let's create a REQUEST
-    Pkt6Ptr req = Pkt6Ptr(captureEmpty());
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
 
     // Simulate that we have received that traffic
-    srv_->fakeReceive(req);
+    srv_->fakeReceive(sol);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
@@ -2022,7 +2077,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
     EXPECT_EQ("pkt6_receive", callback_name_);
 
     // check that pkt6 argument passing was successful and returned proper value
-    EXPECT_TRUE(callback_pkt6_.get() == req.get());
+    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
@@ -2039,7 +2094,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
                                                        pkt6_receive_change_clientid));
 
-    // Let's create a REQUEST
+    // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
 
     // Simulate that we have received that traffic
@@ -2075,7 +2130,7 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
                     pkt6_receive_delete_clientid));
 
-    // Let's create a REQUEST
+    // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
 
     // Simulate that we have received that traffic
@@ -2099,7 +2154,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
                     pkt6_receive_skip));
 
-    // Let's create a REQUEST
+    // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
 
     // Simulate that we have received that traffic
@@ -2115,6 +2170,134 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
     ASSERT_EQ(0, srv_->fake_sent_.size());
 }
 
+
+// Checks if callouts installed on pkt6_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
+                                                                       pkt6_send_callout));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt6_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt6 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt6_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("pkt6"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt6_send is able to change
+// the values and the packet sent contains those changes
+TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
+                                                       pkt6_send_change_serverid));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(D6O_SERVERID);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(D6O_SERVERID);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt6_send is able to delete
+// existing options and that server applies those changes. In particular,
+// we are trying to send a packet without server-id. The packet should
+// be sent
+TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
+                    pkt6_send_delete_serverid));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the server indeed sent a malformed ADVERTISE
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Get that ADVERTISE
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Make sure that it does not have server-id
+    EXPECT_FALSE(adv->getOption(D6O_SERVERID));
+}
+
+// Checks if callouts installed on pkt6_skip is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
+                    pkt6_send_skip));
+
+    // Let's create a simple REQUEST
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
