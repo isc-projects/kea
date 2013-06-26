@@ -24,6 +24,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp/dhcp6.h>
@@ -148,6 +149,16 @@ public:
     NakedDhcpv6SrvTest() : rcode_(-1) {
         // it's ok if that fails. There should not be such a file anyway
         unlink(DUID_FILE);
+
+        const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+        // There must be some interface detected
+        if (ifaces.empty()) {
+            // We can't use ASSERT in constructor
+            ADD_FAILURE() << "No interfaces detected.";
+        }
+
+        valid_iface_ = ifaces.begin()->getName();
     }
 
     // Generate IA_NA option with specified parameters
@@ -296,6 +307,9 @@ public:
 
     int rcode_;
     ConstElementPtr comment_;
+
+    // Name of a valid network interface
+    string valid_iface_;
 };
 
 // Provides suport for tests against a preconfigured subnet6
@@ -2027,9 +2041,33 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
+    // Callback that stores received callout name and subnet6 values
+    static int
+    subnet6_select_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("subnet6_select");
+
+        callout_handle.getArgument("pkt6", callback_pkt6_);
+        callout_handle.getArgument("subnet6", callback_subnet6_);
+        callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
+
+        if (callback_subnet6_) {
+            cout << "#### subnet6_select: subnet6=" << callback_subnet6_->toText()
+                 << ", subnet6collection.size=" << callback_subnet6collection_.size()
+                 << endl;
+        } else {
+            cout << "#### subnet6 empty!" << endl;
+        }
+
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt6_.reset();
+        callback_subnet6_.reset();
+        callback_subnet6collection_.clear();
         callback_argument_names_.clear();
     }
 
@@ -2040,12 +2078,20 @@ public:
 
     static Pkt6Ptr callback_pkt6_; ///< Pkt6 structure returned in the callout
 
+    static Subnet6Ptr callback_subnet6_;
+
+    static Subnet6Collection callback_subnet6collection_;
+
     static vector<string> callback_argument_names_;
 };
 
 string HooksDhcpv6SrvTest::callback_name_;
 
 Pkt6Ptr HooksDhcpv6SrvTest::callback_pkt6_;
+
+Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
+
+Subnet6Collection HooksDhcpv6SrvTest::callback_subnet6collection_;
 
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 
@@ -2298,6 +2344,77 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
     // check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
 }
+
+
+// This test checks if Option Request Option (ORO) is parsed correctly
+// and the requested options are actually assigned.
+TEST_F(HooksDhcpv6SrvTest, subnet_select) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("subnet6_select",
+                    subnet6_select_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " }, {"
+        "    \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare solicit packet. Server should select first subnet for it
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface(valid_iface_);
+    sol->addOption(generateIA(234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv_->processSolicit(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("subnet6_select", callback_name_);
+
+    // Check that pkt6 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
+
+    Subnet6Collection exp_subnets = CfgMgr::instance().getSubnets6();
+
+    // The server is supposed to pick the first subnet, because of matching
+    // interface. Check that the value is reported properly.
+    ASSERT_TRUE(callback_subnet6_);
+    EXPECT_EQ(callback_subnet6_.get(), exp_subnets.front().get());
+
+    // Server is supposed to report two subnets
+    ASSERT_EQ(exp_subnets.size(), callback_subnet6collection_.size());
+
+    // Compare that the available subnets are reported as expected
+    EXPECT_TRUE(exp_subnets[0].get() == callback_subnet6collection_[0].get());
+    EXPECT_TRUE(exp_subnets[1].get() == callback_subnet6collection_[1].get());
+
+}
+
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
