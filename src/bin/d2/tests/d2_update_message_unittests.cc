@@ -79,8 +79,10 @@ public:
 // This test verifies that DNS Update message ID can be set using
 // setId function.
 TEST_F(D2UpdateMessageTest, setId) {
+    // Message ID is initialized to 0.
     D2UpdateMessage msg;
     EXPECT_EQ(0, msg.getId());
+    // Override the default value and verify that it has been set.
     msg.setId(0x1234);
     EXPECT_EQ(0x1234, msg.getId());
 }
@@ -89,9 +91,11 @@ TEST_F(D2UpdateMessageTest, setId) {
 // using setRcode function.
 TEST_F(D2UpdateMessageTest, setRcode) {
     D2UpdateMessage msg;
+    // Rcode must be explicitly set before it is accessed.
     msg.setRcode(Rcode::NOERROR());
     EXPECT_EQ(Rcode::NOERROR().getCode(), msg.getRcode().getCode());
-
+    // Let's override current value to make sure that getter does
+    // not return fixed value.
     msg.setRcode(Rcode::NOTIMP());
     EXPECT_EQ(Rcode::NOTIMP().getCode(), msg.getRcode().getCode());
 }
@@ -100,14 +104,19 @@ TEST_F(D2UpdateMessageTest, setRcode) {
 // can be set.
 TEST_F(D2UpdateMessageTest, setZone) {
     D2UpdateMessage msg;
+    // The zone pointer is initialized to NULL.
     D2ZonePtr zone = msg.getZone();
     EXPECT_FALSE(zone);
+    // Let's create a new Zone and check that it is returned
+    // via getter.
     msg.setZone(Name("example.com"), RRClass::ANY());
     zone = msg.getZone();
     EXPECT_TRUE(zone);
     EXPECT_EQ("example.com.", zone->getName().toText());
     EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
 
+    // Now, let's check that the existing Zone object can be
+    // overriden with a new one.
     msg.setZone(Name("foo.example.com"), RRClass::NONE());
     zone = msg.getZone();
     EXPECT_TRUE(zone);
@@ -257,6 +266,93 @@ TEST_F(D2UpdateMessageTest, fromWire) {
 
     // @todo: at this point we don't test Additional Data records. We may
     // consider implementing tests for it in the future.
+}
+
+// This test verifies that the fromWire function throws appropriate exception
+// if the message being parsed comprises invalid Opcode (is not a DNS Update).
+TEST_F(D2UpdateMessageTest, fromWireInvalidOpcode) {
+    // This is a binary representation of the DNS message.
+    // It comprises invalid Opcode=3, expected value is 6
+    // (Update).
+    const uint8_t bin_msg[] = {
+        0x05, 0xAF, // ID=0x05AF
+        0x98, 0x6,  // QR=1, Opcode=3, RCODE=YXDOMAIN
+        0x0, 0x0,   // ZOCOUNT=0
+        0x0, 0x0,   // PRCOUNT=0
+        0x0, 0x0,   // UPCOUNT=0
+        0x0, 0x0    // ADCOUNT=0
+    };
+    InputBuffer buf(bin_msg, sizeof(bin_msg));
+    // The 'true' argument passed to the constructor turns the
+    // message into the parse mode in which the fromWire function
+    // can be used to decode the binary mesasage data.
+    D2UpdateMessage msg(true);
+    // When using invalid Opcode, the fromWire function should
+    // throw NotUpdateMessage exception.
+    EXPECT_THROW(msg.fromWire(buf), isc::d2::NotUpdateMessage);
+}
+
+// This test verifies that the fromWire function throws appropriate exception
+// if the message being parsed comprises invalid QR flag. The QR bit is
+// expected to be set to indicate that the message is a RESPONSE.
+TEST_F(D2UpdateMessageTest, fromWireInvalidQRFlag) {
+    // This is a binary representation of the DNS message.
+    // It comprises invalid QR flag = 0.
+    const uint8_t bin_msg[] = {
+        0x05, 0xAF, // ID=0x05AF
+        0x28, 0x6,  // QR=0, Opcode=6, RCODE=YXDOMAIN
+        0x0, 0x0,   // ZOCOUNT=0
+        0x0, 0x0,   // PRCOUNT=0
+        0x0, 0x0,   // UPCOUNT=0
+        0x0, 0x0    // ADCOUNT=0
+    };
+    InputBuffer buf(bin_msg, sizeof(bin_msg));
+    // The 'true' argument passed to the constructor turns the
+    // message into the parse mode in which the fromWire function
+    // can be used to decode the binary mesasage data.
+    D2UpdateMessage msg(true);
+    // When using invalid QR flag, the fromWire function should
+    // throw InvalidQRFlag exception.
+    EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidQRFlag);
+}
+
+// This test verifies that the fromWire function throws appropriate exception
+// if the message being parsed comprises more than one (two in this case)
+// Zone records.
+TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
+    // This is a binary representation of the DNS message. This message
+    // comprises two Zone records.
+    const uint8_t bin_msg[] = {
+        0x05, 0xAF, // ID=0x05AF
+        0xA8, 0x6,  // QR=1, Opcode=6, RCODE=YXDOMAIN
+        0x0, 0x2,   // ZOCOUNT=2
+        0x0, 0x0,   // PRCOUNT=0
+        0x0, 0x0,   // UPCOUNT=0
+        0x0, 0x0,   // ADCOUNT=0
+
+        // Start first Zone record.
+        0x7, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, // example (0x7 is a length)
+        0x3, 0x63, 0x6F, 0x6D, //.com. (0x3 is a length)
+        0x0,      // NULL character terminates the Zone name.
+        0x0, 0x6, // ZTYPE='SOA'
+        0x0, 0x1, // ZCLASS='IN'
+
+        // Start second Zone record. Presence of this record should result
+        // in error when parsing this message.
+        0x3, 0x63, 0x6F, 0x6D, // com. (0x3 is a length)
+        0x0,      // NULL character terminates the Zone name.
+        0x0, 0x6, // ZTYPE='SOA'
+        0x0, 0x1  // ZCLASS='IN'
+    };
+    InputBuffer buf(bin_msg, sizeof(bin_msg));
+
+    // The 'true' argument passed to the constructor turns the
+    // message into the parse mode in which the fromWire function
+    // can be used to decode the binary mesasage data.
+    D2UpdateMessage msg(true);
+    // When parsing a message with more than one Zone record,
+    // exception should be thrown.
+    EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidZoneSection);
 }
 
 // This test verifies that the wire format of the message is produced
@@ -453,6 +549,38 @@ TEST_F(D2UpdateMessageTest, toWire) {
 
     // @todo: consider extending this test to verify Additional Data
     // section.
+}
+
+// This test verifies that an attempt to call toWire function on the
+// received message will result in an exception.
+TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
+    // This is a binary representation of the DNS message.
+    // This message is valid and should be parsed with no
+    // error.
+    const uint8_t bin_msg[] = {
+        0x05, 0xAF, // ID=0x05AF
+        0xA8, 0x6,  // QR=1, Opcode=6, RCODE=YXDOMAIN
+        0x0, 0x0,   // ZOCOUNT=0
+        0x0, 0x0,   // PRCOUNT=0
+        0x0, 0x0,   // UPCOUNT=0
+        0x0, 0x0    // ADCOUNT=0
+    };
+
+    InputBuffer buf(bin_msg, sizeof(bin_msg));
+    // The 'true' argument passed to the constructor turns the
+    // message into the parse mode in which the fromWire function
+    // can be used to decode the binary mesasage data.
+    D2UpdateMessage msg(true);
+    ASSERT_NO_THROW(msg.fromWire(buf));
+
+    // The message is parsed. The QR Flag should now indicate that
+    // it is a Response message.
+    ASSERT_EQ(D2UpdateMessage::RESPONSE, msg.getQRFlag());
+
+    // An attempt to call toWire on the Response message should
+    // result in the InvalidQRFlag exception.
+    MessageRenderer renderer;
+    EXPECT_THROW(msg.toWire(renderer), isc::d2::InvalidQRFlag);
 }
 
 } // End of anonymous namespace
