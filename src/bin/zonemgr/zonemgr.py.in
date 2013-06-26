@@ -80,7 +80,6 @@ __version__ = "BIND10"
 
 # define module name
 XFRIN_MODULE_NAME = 'Xfrin'
-AUTH_MODULE_NAME = 'Auth'
 
 # define command name
 ZONE_REFRESH_COMMAND = 'refresh_from_zonemgr'
