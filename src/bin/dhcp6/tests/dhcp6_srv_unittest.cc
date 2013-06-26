@@ -2050,16 +2050,28 @@ public:
         callout_handle.getArgument("subnet6", callback_subnet6_);
         callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
 
-        if (callback_subnet6_) {
-            cout << "#### subnet6_select: subnet6=" << callback_subnet6_->toText()
-                 << ", subnet6collection.size=" << callback_subnet6collection_.size()
-                 << endl;
-        } else {
-            cout << "#### subnet6 empty!" << endl;
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    // Callback that picks the other subnet if possible.
+    static int
+    subnet6_select_different_subnet_callout(CalloutHandle& callout_handle) {
+
+        // Call the basic calllout to record all passed values
+        subnet6_select_callout(callout_handle);
+
+        Subnet6Collection subnets;
+        Subnet6Ptr subnet;
+        callout_handle.getArgument("subnet6", subnet);
+        callout_handle.getArgument("subnet6collection", subnets);
+
+        // Let's change to a different subnet
+        if (subnets.size() > 1) {
+            subnet = subnets[1]; // Let's pick the other subnet
+            callout_handle.setArgument("subnet6", subnet);
         }
 
-
-        callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
     }
 
@@ -2345,10 +2357,9 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
     ASSERT_EQ(0, srv_->fake_sent_.size());
 }
 
-
-// This test checks if Option Request Option (ORO) is parsed correctly
-// and the requested options are actually assigned.
-TEST_F(HooksDhcpv6SrvTest, subnet_select) {
+// This test checks if subnet6_select callout is triggered and reports
+// valid parameters
+TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("subnet6_select",
@@ -2412,7 +2423,74 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select) {
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE(exp_subnets[0].get() == callback_subnet6collection_[0].get());
     EXPECT_TRUE(exp_subnets[1].get() == callback_subnet6collection_[1].get());
+}
 
+// This test checks if callout installed on subnet6_select hook point can pick
+// a different subnet.
+TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("subnet6_select",
+                    subnet6_select_different_subnet_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interface\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " }, {"
+        "    \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare solicit packet. Server should select first subnet for it
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface(valid_iface_);
+    sol->addOption(generateIA(234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv_->processSolicit(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // The response should have an address from second pool, so let's check it
+    OptionPtr tmp = adv->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(ia);
+    tmp = ia->getOption(D6O_IAADDR);
+    ASSERT_TRUE(tmp);
+    boost::shared_ptr<Option6IAAddr> addr_opt =
+        boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
+    ASSERT_TRUE(addr_opt);
+
+    // Get all subnets and use second subnet for verification
+    Subnet6Collection subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets.size());
+
+    // Advertised address must belong to the second pool (in subnet's range,
+    // in dynamic pool)
+    EXPECT_TRUE(subnets[1]->inRange(addr_opt->getAddress()));
+    EXPECT_TRUE(subnets[1]->inPool(addr_opt->getAddress()));
 }
 
 
