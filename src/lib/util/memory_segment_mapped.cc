@@ -28,6 +28,8 @@
 #include <string>
 #include <new>
 
+#include <stdint.h>
+
 // boost::interprocess namespace is big and can cause unexpected import
 // (e.g., it has "read_only"), so it's safer to be specific for shortcuts.
 using boost::interprocess::basic_managed_mapped_file;
