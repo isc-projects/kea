@@ -27,16 +27,16 @@ namespace d2 {
 ///
 /// This class is used by the @c D2UpdateMessage to encapsulate the Zone section
 /// of the DNS Update message. Class members hold corresponding values of
-/// section's fields: NAME, CLASS. This class does not hold the RTYPE field value
-/// because RTYPE is always equal to SOA for DNS Update message (see RFC 2136,
-/// section 2.3).
+/// section's fields: NAME, CLASS. This class does not hold the RTYPE field
+/// value because RTYPE is always equal to SOA for DNS Update message (see
+/// RFC 2136, section 2.3).
 ///
 /// Note, that this @c D2Zone class neither exposes functions to decode messages
 /// from wire format nor to encode to wire format. This is not needed, because
-/// @c isc::d2::D2UpdateMessage class uses @c D2Zone only to return the parsed Zone
-/// information to the caller. Internally, D2UpdateMessage parses and stores Zone
-/// section using @c isc::dns::Question class, and the @c toWire and @c fromWire
-/// functions of the @c isc::dns::Question class are used.
+/// @c isc::d2::D2UpdateMessage class uses @c D2Zone only to return the parsed
+/// Zone information to the caller. Internally, D2UpdateMessage parses and
+/// stores Zone section using @c isc::dns::Question class, and the @c toWire
+/// and @c fromWire functions of the @c isc::dns::Question class are used.
 class D2Zone {
 public:
     /// @brief Constructor from Name and RRClass.
@@ -72,8 +72,8 @@ public:
     /// @name Comparison Operators
     ///
     //@{
-    /// @brief Equality operator to compare @c D2Zone objects in query and response
-    /// messages.
+    /// @brief Equality operator to compare @c D2Zone objects in query and
+    /// response messages.
     ///
     /// @param rhs Zone to compare against.
     ///
