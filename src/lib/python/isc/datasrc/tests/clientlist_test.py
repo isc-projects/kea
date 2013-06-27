@@ -253,7 +253,9 @@ class ClientListTest(unittest.TestCase):
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.CREATE,
                                         map_params)
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
+        result, self.__zone_writer = \
+            self.clist.get_cached_zone_writer(isc.dns.Name("example.com"),
+                                              False)
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         err_msg = self.__zone_writer.load()
@@ -264,7 +266,9 @@ class ClientListTest(unittest.TestCase):
         self.clist.reset_memory_segment("MasterFiles",
                                         isc.datasrc.ConfigurableClientList.READ_ONLY,
                                         map_params)
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
+        result, self.__zone_writer = \
+            self.clist.get_cached_zone_writer(isc.dns.Name("example.com"),
+                                              False)
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_CACHE_NOT_WRITABLE,
                          result)
 
@@ -280,12 +284,38 @@ class ClientListTest(unittest.TestCase):
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.configure_helper()
 
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
+        result, self.__zone_writer = \
+            self.clist.get_cached_zone_writer(isc.dns.Name("example.com"),
+                                              False)
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         err_msg = self.__zone_writer.load()
         self.assertIsNone(err_msg)
         self.assertRaises(isc.datasrc.Error, self.__zone_writer.load)
+        self.__zone_writer.cleanup()
+
+    def test_zone_writer_load_without_raise(self):
+        """
+        Test that the zone writer does not throw when asked not to.
+        """
+
+        self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
+        self.clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.com": "''' + TESTDATA_PATH + '''example.com-broken.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+
+        result, self.__zone_writer = \
+            self.clist.get_cached_zone_writer(isc.dns.Name("example.com"),
+                                              True)
+        self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
+                         result)
+        err_msg = self.__zone_writer.load()
+        self.assertIsNotNone(err_msg)
+        self.assertTrue('Errors found when validating zone' in err_msg)
         self.__zone_writer.cleanup()
 
     def test_zone_writer_install_without_load(self):
@@ -297,7 +327,9 @@ class ClientListTest(unittest.TestCase):
         self.clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN)
         self.configure_helper()
 
-        result, self.__zone_writer = self.clist.get_cached_zone_writer(isc.dns.Name("example.com"))
+        result, self.__zone_writer = \
+            self.clist.get_cached_zone_writer(isc.dns.Name("example.com"),
+                                              False)
         self.assertEqual(isc.datasrc.ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS,
                          result)
         self.assertRaises(isc.datasrc.Error, self.__zone_writer.install)
