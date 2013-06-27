@@ -1059,8 +1059,9 @@ TEST_P(ListTest, checkZoneWriterCatchesExceptions) {
     ASSERT_TRUE(result.second);
 
     std::string error_msg;
-    // This should not throw and must return an error message in
-    // error_msg.
+    // Because of the way we called getCachedZoneWriter() with
+    // catch_load_error=true, the following should not throw and must
+    // return an error message in error_msg.
     EXPECT_NO_THROW(result.second->load(&error_msg));
     EXPECT_FALSE(error_msg.empty());
     result.second->cleanup();
