@@ -437,7 +437,7 @@ class ZonemgrRefresh:
                 start_event.set()
                 start_event = None
             # If zonemgr has no zone, set timeout to minimum
-            if not len(self._zonemgr_refresh_info):
+            if not self._zonemgr_refresh_info:
                 timeout = self._lowerbound_retry
             else:
                 zone_need_refresh = self._find_need_do_refresh_zone()
