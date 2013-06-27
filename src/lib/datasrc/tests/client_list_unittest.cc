@@ -1041,6 +1041,31 @@ ListTest::doReload(const Name& origin, const string& datasrc_name) {
     return (result.first);
 }
 
+// Check that ZoneWriter doesn't throw when asked not to
+TEST_P(ListTest, checkZoneWriterCatchesExceptions) {
+    const ConstElementPtr config_elem_zones_(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"example.edu\": \"" TEST_DATA_DIR "example.edu-broken\""
+        "    },"
+        "   \"cache-enable\": true"
+        "}]"));
+
+    list_->configure(config_elem_zones_, true);
+    ConfigurableClientList::ZoneWriterPair
+        result(list_->getCachedZoneWriter(Name("example.edu"), true));
+    ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
+    ASSERT_TRUE(result.second);
+
+    std::string error_msg;
+    // This should not throw and must return an error message in
+    // error_msg.
+    EXPECT_NO_THROW(result.second->load(&error_msg));
+    EXPECT_FALSE(error_msg.empty());
+    result.second->cleanup();
+}
+
 // Test we can reload a zone
 TEST_P(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);
