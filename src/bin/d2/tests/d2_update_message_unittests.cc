@@ -148,7 +148,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
         // by a length of the following label. The whole Zone name is
         // terminated with a NULL char.
         // For Zone section format see (RFC 2136, section 2.3).
-        0x7, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, // example (0x7 is a length)
+        0x7, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, // example (7 is length)
         0x3, 0x63, 0x6F, 0x6D, //.com. (0x3 is a length)
         0x0,      // NULL character terminates the Zone name.
         0x0, 0x6, // ZTYPE='SOA'
@@ -222,13 +222,15 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     ASSERT_EQ(2, msg.getRRCount(D2UpdateMessage::SECTION_PREREQUISITE));
 
     // Proceed to the first prerequisite.
-    RRsetIterator rrset_it = msg.beginSection(D2UpdateMessage::SECTION_PREREQUISITE);
+    RRsetIterator rrset_it =
+        msg.beginSection(D2UpdateMessage::SECTION_PREREQUISITE);
     RRsetPtr prereq1 = *rrset_it;
     ASSERT_TRUE(prereq1);
     // Check record fields.
     EXPECT_EQ("foo.example.com.", prereq1->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), prereq1->getType().getCode()); // TYPE
-    EXPECT_EQ(RRClass::NONE().getCode(), prereq1->getClass().getCode()); // CLASS
+    EXPECT_EQ(RRClass::NONE().getCode(),
+              prereq1->getClass().getCode()); // CLASS
     EXPECT_EQ(0, prereq1->getTTL().getValue()); // TTL
     EXPECT_EQ(0, prereq1->getRdataCount()); // RDLENGTH
 
@@ -331,7 +333,7 @@ TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
         0x0, 0x0,   // ADCOUNT=0
 
         // Start first Zone record.
-        0x7, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, // example (0x7 is a length)
+        0x7, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, // example (7 is length)
         0x3, 0x63, 0x6F, 0x6D, //.com. (0x3 is a length)
         0x0,      // NULL character terminates the Zone name.
         0x0, 0x6, // ZTYPE='SOA'

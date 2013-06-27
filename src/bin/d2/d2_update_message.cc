@@ -179,7 +179,8 @@ D2UpdateMessage::ddnsToDnsSection(const UpdateMsgSection section) {
     default:
         ;
     }
-    isc_throw(dns::InvalidMessageSection, "unknown message section " << section);
+    isc_throw(dns::InvalidMessageSection,
+              "unknown message section " << section);
 }
 
 void
@@ -190,22 +191,25 @@ D2UpdateMessage::validate() const {
     // stop further processing, because it is likely that the message was
     // directed to someone else.
     if (message_.getOpcode() != Opcode::UPDATE()) {
-        isc_throw(NotUpdateMessage, "received message is not a DDNS update, received"
-                  " message code is " << message_.getOpcode().getCode());
+        isc_throw(NotUpdateMessage, "received message is not a DDNS update,"
+                  << " received message code is "
+                  << message_.getOpcode().getCode());
     }
     // Received message should have QR flag set, which indicates that it is
     // a RESPONSE.
     if (getQRFlag() == REQUEST) {
-        isc_throw(InvalidQRFlag, "received message should should have QR flag set,"
-                  " to indicate that it is a RESPONSE message, the QR flag is unset");
+        isc_throw(InvalidQRFlag, "received message should should have QR flag"
+                  << " set, to indicate that it is a RESPONSE message, the QR"
+                  << " flag is unset");
     }
-    // DNS server may copy a Zone record from the query message. Since query must
-    // comprise exactly one Zone record (RFC 2136, section 2.3), the response message
-    // may contain 1 record at most. It may also contain no records if a server
-    // chooses not to copy Zone section.
+    // DNS server may copy a Zone record from the query message. Since query
+    // must comprise exactly one Zone record (RFC 2136, section 2.3), the
+    // response message may contain 1 record at most. It may also contain no
+    // records if a server chooses not to copy Zone section.
     if (getRRCount(SECTION_ZONE) > 1) {
-        isc_throw(InvalidZoneSection, "received message contains " << getRRCount(SECTION_ZONE)
-                  << " Zone records, it should contain at most 1 record");
+        isc_throw(InvalidZoneSection, "received message contains "
+                  << getRRCount(SECTION_ZONE) << " Zone records,"
+                  << " it should contain at most 1 record");
     }
 }
 
