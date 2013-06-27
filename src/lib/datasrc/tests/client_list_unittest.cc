@@ -1315,9 +1315,9 @@ ListTest::accessorIterate(const ConstZoneTableAccessorPtr& accessor,
     bool found = false;
     int i;
     for (i = 0; !it->isLast(); ++i, it->next()) {
-	if (Name(zoneName) == it->getCurrent().origin) {
-	    found = true;
-	}
+        if (Name(zoneName) == it->getCurrent().origin) {
+            found = true;
+        }
     }
     EXPECT_EQ(i, numZones);
     if (numZones > 0) {
