@@ -1,3 +1,8 @@
+631.	[bug]		muks
+	Applied a patch by Tomas Hozza to fix a couple of compile errors
+	on Fedora 19 development release.
+	(Trac #3001, git 6e42b90971b377261c72d51c38bf4a8dc336664a)
+
 630.	[bug]		muks
 	If there is a problem loading the backend module for a type of
 	data source, b10-auth would not serve any zones. This behaviour
