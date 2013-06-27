@@ -1039,11 +1039,6 @@ public:
     HookAllocEngine6Test() {
         resetCalloutBuffers();
 
-        // Initialize Hooks Manager
-        vector<string> libraries; // no libraries at this time
-        HooksManager::getHooksManager().loadLibraries(libraries);
-
-        EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
     }
 
     ~HookAllocEngine6Test() {
@@ -1063,6 +1058,7 @@ public:
     /// callback that stores received callout name and received values
     static int
     lease6_select_callout(CalloutHandle& callout_handle) {
+
         callback_name_ = string("lease6_select");
 
         callout_handle.getArgument("subnet6", callback_subnet6_);
@@ -1081,20 +1077,32 @@ public:
 
         lease6_select_callout(callout_handle);
 
-        callback_name_ = string("lease6_select");
-
         Lease6Ptr lease;
         callout_handle.getArgument("lease6", lease);
 
-        callback_addr_updated_ = IOAddress("2001:db8::abcd");
+        // Let's tweak the lease a bit
+        callback_addr_updated_ = addr_override_;
         lease->addr_ = callback_addr_updated_;
+        lease->t1_ = t1_override_;
+        lease->t2_ = t2_override_;
+        lease->preferred_lft_ = pref_override_;
+        lease->valid_lft_ = valid_override_;
 
-        return (0);
+        return (lease6_select_callout(callout_handle));
     }
 
+    // Values to be used in callout to override lease6 content
+    static const IOAddress addr_override_;
+    static const uint32_t t1_override_;
+    static const uint32_t t2_override_;
+    static const uint32_t pref_override_;
+    static const uint32_t valid_override_;
+
+    // Callback will store original and overridden values here
     static IOAddress callback_addr_original_;
     static IOAddress callback_addr_updated_;
 
+    // Buffers (callback will store received values here)
     static string callback_name_;
     static Subnet6Ptr callback_subnet6_;
     static Lease6Ptr callback_lease6_;
@@ -1102,30 +1110,50 @@ public:
     static vector<string> callback_argument_names_;
 };
 
+// For some reason intialization within a class makes the linker confused.
+// linker complains about undefined references if they are defined within
+// the class declaration.
+const IOAddress HookAllocEngine6Test::addr_override_("2001:db8::abcd");
+const uint32_t HookAllocEngine6Test::t1_override_ = 6000;
+const uint32_t HookAllocEngine6Test::t2_override_ = 7000;
+const uint32_t HookAllocEngine6Test::pref_override_ = 8000;
+const uint32_t HookAllocEngine6Test::valid_override_ = 9000;
+
 IOAddress HookAllocEngine6Test::callback_addr_original_("::");
 IOAddress HookAllocEngine6Test::callback_addr_updated_("::");
+
 string HookAllocEngine6Test::callback_name_;
 Subnet6Ptr HookAllocEngine6Test::callback_subnet6_;
 Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
 
-
-// This test checks if the simple allocation can succeed
+// This test checks if the lease6_select callout is executed and expected
+// parameters as passed.
 TEST_F(HookAllocEngine6Test, lease6_select) {
+
+    // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    vector<string> libraries; // no libraries at this time
+    HooksManager::getHooksManager().loadLibraries(libraries);
 
     // Install pkt6_receive_callout
 
     ASSERT_TRUE(HooksManager::getCalloutManager());
 
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
+
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
                                                                        lease6_select_callout));
 
+    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               false, CalloutHandlePtr());
+                                               false, callout_handle);
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1137,7 +1165,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(from_mgr);
 
     // Check that callouts were indeed called
-    EXPECT_EQ(callback_name_, "subnet6_select");
+    EXPECT_EQ(callback_name_, "lease6_select");
 
     // Now check that the lease in LeaseMgr has the same parameters
     ASSERT_TRUE(callback_lease6_);
@@ -1147,6 +1175,71 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_EQ(subnet_->toText(), callback_subnet6_->toText());
 
     EXPECT_EQ(callback_fake_allocation_, false);
+
+    // Check if all expected parameters are reported. It's a bit tricky, because
+    // order may be different. If the test starts failing, because someone tweaked
+    // hooks engine, we'll have to implement proper vector matching (ignoring order)
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("fake_allocation");
+    expected_argument_names.push_back("lease6");
+    expected_argument_names.push_back("subnet6");
+
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+}
+
+// This test checks if lease6_select callout is able to override the values
+// in a lease6.
+TEST_F(HookAllocEngine6Test, change_lease6_select) {
+
+    // Make sure that the overridden values are different than the ones from
+    // subnet originally used to create the lease
+    ASSERT_NE(t1_override_, subnet_->getT1());
+    ASSERT_NE(t2_override_, subnet_->getT2());
+    ASSERT_NE(pref_override_, subnet_->getPreferred());
+    ASSERT_NE(valid_override_, subnet_->getValid());
+    ASSERT_FALSE(subnet_->inRange(addr_override_));
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    vector<string> libraries; // no libraries at this time
+    HooksManager::getHooksManager().loadLibraries(libraries);
+
+    // Install pkt6_receive_callout
+
+    ASSERT_TRUE(HooksManager::getCalloutManager());
+
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
+
+    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
+                    lease6_select_different_callout));
+
+    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+
+    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
+                                               false, callout_handle);
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // See if the values overridden by callout are there
+    EXPECT_TRUE(lease->addr_.equals(addr_override_));
+    EXPECT_EQ(lease->t1_, t1_override_);
+    EXPECT_EQ(lease->t2_, t2_override_);
+    EXPECT_EQ(lease->preferred_lft_, pref_override_);
+    EXPECT_EQ(lease->valid_lft_, valid_override_);
+
+    // Now check if the lease is in the database
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
+    EXPECT_EQ(from_mgr->t1_, t1_override_);
+    EXPECT_EQ(from_mgr->t2_, t2_override_);
+    EXPECT_EQ(from_mgr->preferred_lft_, pref_override_);
+    EXPECT_EQ(from_mgr->valid_lft_, valid_override_);
 }
 
 
