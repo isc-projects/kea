@@ -28,91 +28,24 @@ using namespace boost::posix_time;
 D2Dhcid::D2Dhcid() {
 }
 
-D2Dhcid::~D2Dhcid() {
-}
-
 D2Dhcid::D2Dhcid(const std::string& data) {
     fromStr(data);
 }
 
 void
 D2Dhcid::fromStr(const std::string& data) {
-    const char* buf = data.c_str();
-    size_t len = data.size();
-
-    // String can't be empty and must be an even number of characters.
-    if (len == 0 || ((len % 2) > 0)) {
-        isc_throw(NcrMessageError,
-            "String to byte conversion, invalid data length: " << len);
-    }
-
-    // Iterate over the string of character "digits", combining each pair
-    // into an unsigned byte and then add the byte to our byte vector.
-    // This implementation may seem verbose but it is very quick and more
-    // importantly provides data validation.
     bytes_.clear();
-    for (int i = 0; i < len; i++) {
-        char ch = buf[i++];
-        if (ch >= 0x30 && ch <= 0x39) {
-            // '0' to '9'
-            ch -= 0x30;
-        } else if (ch >= 0x41 && ch <= 0x46) {
-            // 'A' to 'F'
-            ch -= 0x37;
-        } else {
-            // Not a digit, so throw an error.
-            isc_throw(NcrMessageError, "Invalid data in Dhcid");
-        }
-
-        // Set the upper nibble digit.
-        uint8_t byte = ch  << 4;
-
-        ch = buf[i];
-        if (ch >= 0x30 && ch <= 0x39) {
-            // '0' to '9'
-            ch -= 0x30;
-        } else if (ch >= 0x41 && ch <= 0x46) {
-            // 'A' to 'F'
-            ch -= 0x37;
-        } else {
-            // Not a digit, so throw an error.
-            isc_throw(NcrMessageError, "Invalid data in Dhcid");
-        }
-
-        // "OR" in the lower nibble digit.
-        byte |= ch;
-
-        // Add the new byte to the end of the vector.
-        bytes_.push_back(byte);
+    try {
+        isc::util::encode::decodeHex(data, bytes_);
+    } catch (const isc::Exception& ex) {
+        isc_throw(NcrMessageError, "Invalid data in Dhcid:" << ex.what());
     }
 }
 
 std::string
 D2Dhcid::toStr() const {
-    int len = bytes_.size();
-    char tmp[len+1];
-    char* chptr = tmp;
-    unsigned char* bptr = const_cast<unsigned char*>(bytes_.data());
+    return (isc::util::encode::encodeHex(bytes_));
 
-    // Iterate over the vector of bytes, converting them into a contiguous
-    // string of ASCII hexadecimal digits, '0' - '9' and 'A' to 'F'.
-    // Each byte is split into a pair of digits.
-    for (int i = 0; i < len; i++) {
-        uint8_t byte = *bptr++;
-        char ch = (byte >> 4);
-        // Turn upper nibble into a digit and append it to char buf.
-        ch += (ch < 0x0A ? 0x30 : 0x37);
-        *chptr++ = ch;
-        // Turn lower nibble into a digit and append it to char buf.
-        ch = (byte & 0x0F);
-        ch += (ch < 0x0A ? 0x30 : 0x37);
-        *chptr++ = ch;
-    }
-
-    // Null terminate it.
-    *chptr = 0x0;
-
-    return (std::string(tmp));
 
 }
 
@@ -120,9 +53,9 @@ D2Dhcid::toStr() const {
 /**************************** NameChangeRequest ******************************/
 
 NameChangeRequest::NameChangeRequest()
-    : change_type_(chgAdd), forward_change_(false),
+    : change_type_(CHG_ADD), forward_change_(false),
     reverse_change_(false), fqdn_(""), ip_address_(""),
-    dhcid_(), lease_expires_on_(), lease_length_(0), status_(stNew) {
+    dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
 }
 
 NameChangeRequest::NameChangeRequest(NameChangeType change_type,
@@ -133,14 +66,11 @@ NameChangeRequest::NameChangeRequest(NameChangeType change_type,
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
     dhcid_(dhcid), lease_expires_on_(new ptime(lease_expires_on)),
-    lease_length_(lease_length), status_(stNew) {
+    lease_length_(lease_length), status_(ST_NEW) {
 
     // Validate the contents. This will throw a NcrMessageError if anything
     // is invalid.
     validateContent();
-}
-
-NameChangeRequest::~NameChangeRequest() {
 }
 
 NameChangeRequestPtr
@@ -149,19 +79,18 @@ NameChangeRequest::fromFormat(NameChangeFormat format,
     // Based on the format requested, pull the marshalled request from
     // InputBuffer and pass it into the appropriate format-specific factory.
     NameChangeRequestPtr ncr;
-    switch (format)
-    {
-    case fmtJSON: {
+    switch (format) {
+    case FMT_JSON: {
         try {
-            // Get the length of the JSON text and create a char buf large
-            // enough to hold it + 1.
+            // Get the length of the JSON text.
             size_t len = buffer.readUint16();
-            char string_data[len+1];
 
-            // Read len bytes of data from the InputBuffer into local char buf
-            // and then NULL terminate it.
-            buffer.readData(&string_data, len);
-            string_data[len] = 0x0;
+            // Read the text from the buffer into a vector.
+            std::vector<uint8_t> vec;
+            buffer.readVector(vec, len);
+
+            // Turn the vector into a string.
+            std::string string_data(vec.begin(), vec.end());
 
             // Pass the string of JSON text into JSON factory to create the
             // NameChangeRequest instance.  Note the factory may throw
@@ -186,12 +115,12 @@ NameChangeRequest::fromFormat(NameChangeFormat format,
 
 void
 NameChangeRequest::toFormat(NameChangeFormat format,
-                            isc::util::OutputBuffer& buffer) {
+                            isc::util::OutputBuffer& buffer) const {
     // Based on the format requested, invoke the appropriate format handler
     // which will marshal this request's contents into the OutputBuffer.
     switch (format)
     {
-    case fmtJSON: {
+    case FMT_JSON: {
         // Invoke toJSON to create a JSON text of this request's contents.
         std::string json = toJSON();
         uint16_t length = json.size();
@@ -271,22 +200,22 @@ NameChangeRequest::fromJSON(const std::string& json) {
 }
 
 std::string
-NameChangeRequest::toJSON() {
+NameChangeRequest::toJSON() const  {
     // Create a JSON string of this request's contents.  Note that this method
     // does NOT use the isc::data library as generating the output is straight
     // forward.
     std::ostringstream stream;
 
-    stream << "{\"change_type\":" << change_type_ << ","
+    stream << "{\"change_type\":" << getChangeType() << ","
         << "\"forward_change\":"
-        << (forward_change_ ? "true" : "false") << ","
+        << (isForwardChange() ? "true" : "false") << ","
         << "\"reverse_change\":"
-        << (reverse_change_ ? "true" : "false") << ","
-        << "\"fqdn\":\"" << fqdn_ << "\","
-        << "\"ip_address\":\"" << ip_address_ << "\","
-        << "\"dhcid\":\"" << dhcid_.toStr() << "\","
+        << (isReverseChange() ? "true" : "false") << ","
+        << "\"fqdn\":\"" << getFqdn() << "\","
+        << "\"ip_address\":\"" << getIpAddress() << "\","
+        << "\"dhcid\":\"" << getDhcid().toStr() << "\","
         << "\"lease_expires_on\":\""  << getLeaseExpiresOnStr() << "\","
-        << "\"lease_length\":" << lease_length_ << "}";
+        << "\"lease_length\":" << getLeaseLength() << "}";
 
     return (stream.str());
 }
@@ -294,7 +223,9 @@ NameChangeRequest::toJSON() {
 
 void
 NameChangeRequest::validateContent() {
-    // Validate FQDN.
+    //@TODO This is an initial implementation which provides a minimal amount
+    // of validation.  FQDN, DHCID, and IP Address members are all currently
+    // strings, these may be replaced with richer classes.
     if (fqdn_ == "") {
         isc_throw(NcrMessageError, "FQDN cannot be blank");
     }
@@ -326,7 +257,7 @@ NameChangeRequest::validateContent() {
 
 isc::data::ConstElementPtr
 NameChangeRequest::getElement(const std::string& name,
-                              const ElementMap& element_map) {
+                              const ElementMap& element_map) const {
     // Look for "name" in the element map.
     ElementMap::const_iterator it = element_map.find(name);
     if (it == element_map.end()) {
@@ -357,7 +288,7 @@ NameChangeRequest::setChangeType(isc::data::ConstElementPtr element) {
                   "Wrong data type for change_type: " << ex.what());
     }
 
-    if (raw_value != chgAdd && raw_value != chgRemove) {
+    if ((raw_value != CHG_ADD) && (raw_value != CHG_REMOVE)) {
         // Value is not a valid change type.
         isc_throw(NcrMessageError,
                   "Invalid data value for change_type: " << raw_value);
@@ -524,11 +455,11 @@ NameChangeRequest::toText() const {
 
     stream << "Type: " << static_cast<int>(change_type_) << " (";
     switch (change_type_) {
-        case chgAdd:
-            stream << "chgAdd)\n";
+        case CHG_ADD:
+            stream << "CHG_ADD)\n";
             break;
-        case chgRemove:
-            stream << "chgRemove)\n";
+        case CHG_REMOVE:
+            stream << "CHG_REMOVE)\n";
             break;
         default:
             // Shouldn't be possible.

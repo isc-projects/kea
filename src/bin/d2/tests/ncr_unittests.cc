@@ -17,6 +17,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
@@ -31,7 +33,7 @@ const char *valid_msgs[] =
 {
     // Valid Add.
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -42,7 +44,7 @@ const char *valid_msgs[] =
      "}",
     // Valid Remove.
      "{"
-     " \"change_type\" : 2 , "
+     " \"change_type\" : 1 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -53,7 +55,7 @@ const char *valid_msgs[] =
      "}",
      // Valid Add with IPv6 address
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -81,7 +83,7 @@ const char *invalid_msgs[] =
      "}",
     // Invalid forward change.
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : \"bogus\" , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -92,7 +94,7 @@ const char *invalid_msgs[] =
      "}",
     // Invalid reverse change.
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : 500 , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -103,7 +105,7 @@ const char *invalid_msgs[] =
      "}",
     // Forward and reverse change both false.
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : false , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -112,10 +114,9 @@ const char *invalid_msgs[] =
      " \"lease_expires_on\" : \"19620121T132405\" , "
      " \"lease_length\" : 1300 "
      "}",
-    // Invalid forward change.
     // Blank FQDN
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"\" , "
@@ -126,7 +127,7 @@ const char *invalid_msgs[] =
      "}",
     // Bad IP address
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -137,7 +138,7 @@ const char *invalid_msgs[] =
      "}",
     // Blank DHCID
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -148,7 +149,7 @@ const char *invalid_msgs[] =
      "}",
     // Odd number of digits in DHCID
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -159,7 +160,7 @@ const char *invalid_msgs[] =
      "}",
     // Text in DHCID
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -170,18 +171,18 @@ const char *invalid_msgs[] =
      "}",
     // Invalid lease expiration string
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121132405\" , "
+     " \"lease_expires_on\" : \"Wed Jun 26 13:46:46 EDT 2013\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Non-integer for lease length.
      "{"
-     " \"change_type\" : 1 , "
+     " \"change_type\" : 0 , "
      " \"forward_change\" : true , "
      " \"reverse_change\" : false , "
      " \"fqdn\" : \"walah.walah.com\" , "
@@ -203,46 +204,46 @@ const char *invalid_msgs[] =
 /// 6. "Full" constructor, given an invalid lease expiration fails
 /// 7. "Full" constructor, given false for both forward and reverse fails
 TEST(NameChangeRequestTest, constructionTests) {
-
-    NameChangeRequest* ncr = NULL;
-
     // Verify the default constructor works.
-    ASSERT_TRUE((ncr = new NameChangeRequest()));
-    delete ncr;
+    NameChangeRequestPtr ncr;
+    EXPECT_NO_THROW(ncr.reset(new NameChangeRequest()));
+    EXPECT_TRUE(ncr);
 
     // Verify that full constructor works.
     ptime expiry(second_clock::universal_time());
     D2Dhcid dhcid("010203040A7F8E3D");
 
-    ASSERT_NO_THROW(ncr = new NameChangeRequest(
-                    chgAdd, true, true, "walah.walah.com",
-                    "192.168.1.101", dhcid, expiry, 1300));
-
-    ASSERT_TRUE(ncr);
-    delete ncr;
+    EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(
+                    CHG_ADD, true, true, "walah.walah.com",
+                    "192.168.1.101", dhcid, expiry, 1300)));
+    EXPECT_TRUE(ncr);
+    ncr.reset();
 
     // Verify blank FQDN is detected.
-    EXPECT_THROW(new NameChangeRequest(chgAdd, true, true, "",
-                 "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+    EXPECT_THROW(ncr.reset(new NameChangeRequest(CHG_ADD, true, true, "",
+                 "192.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
 
     // Verify that an invalid IP address is detected.
-    EXPECT_THROW(new NameChangeRequest(chgAdd, true, true, "valid.fqdn",
-                 "xxx.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+    EXPECT_THROW(ncr.reset(
+                 new NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
+                 "xxx.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
 
     // Verify that a blank DHCID is detected.
     D2Dhcid blank_dhcid;
-    EXPECT_THROW(ncr = new NameChangeRequest(chgAdd, true, true,
-                 "walah.walah.com", "192.168.1.101", blank_dhcid,
-                 expiry, 1300), NcrMessageError);
+    EXPECT_THROW(ncr.reset(
+                 new NameChangeRequest(CHG_ADD, true, true, "walah.walah.com",
+                 "192.168.1.101", blank_dhcid, expiry, 1300)), NcrMessageError);
 
     // Verify that an invalid lease expiration is detected.
     ptime blank_expiry;
-    EXPECT_THROW(new NameChangeRequest( chgAdd, true, true, "valid.fqdn",
-                 "192.168.1.101", dhcid, blank_expiry, 1300), NcrMessageError);
+    EXPECT_THROW(ncr.reset(
+                 new NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
+                 "192.168.1.101", dhcid, blank_expiry, 1300)), NcrMessageError);
 
     // Verify that one or both of direction flags must be true.
-    EXPECT_THROW(new NameChangeRequest( chgAdd, false, false, "valid.fqdn",
-                 "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+    EXPECT_THROW(ncr.reset(
+                 new NameChangeRequest(CHG_ADD, false, false, "valid.fqdn",
+                "192.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
 
 }
 
@@ -268,20 +269,16 @@ TEST(NameChangeRequestTest, dhcidTest) {
     ASSERT_NO_THROW(dhcid.fromStr(test_str));
 
     // Create a test vector of expected byte contents.
-    std::vector<uint8_t> expected_bytes;
-    expected_bytes.push_back(0x01);
-    expected_bytes.push_back(0x02);
-    expected_bytes.push_back(0x03);
-    expected_bytes.push_back(0x04);
-    expected_bytes.push_back(0x0A);
-    expected_bytes.push_back(0x7F);
-    expected_bytes.push_back(0x8E);
-    expected_bytes.push_back(0x3D);
+    const uint8_t bytes[] = { 0x1, 0x2, 0x3, 0x4, 0xA, 0x7F, 0x8E, 0x3D };
+    std::vector<uint8_t> expected_bytes(bytes, bytes + sizeof(bytes));
 
     // Fetch the byte vector from the dhcid and verify if equals the expected
     // content.
     const std::vector<uint8_t>& converted_bytes = dhcid.getBytes();
-    EXPECT_EQ(expected_bytes, converted_bytes);
+    EXPECT_EQ(expected_bytes.size(), converted_bytes.size()); 
+    EXPECT_TRUE (std::equal(expected_bytes.begin(), 
+                            expected_bytes.begin()+expected_bytes.size(), 
+                            converted_bytes.begin()));
 
     // Convert the new dhcid back to string and verify it matches the original
     // DHCID input string.
@@ -435,7 +432,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
     // Verify that we output the request as JSON text to a buffer
     // without error.
     isc::util::OutputBuffer output_buffer(1024);
-    ASSERT_NO_THROW(ncr->toFormat(fmtJSON, output_buffer));
+    ASSERT_NO_THROW(ncr->toFormat(FMT_JSON, output_buffer));
 
     // Make an InputBuffer from the OutputBuffer.
     isc::util::InputBuffer input_buffer(output_buffer.getData(),
@@ -444,7 +441,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
     // Verify that we can create a new request from the InputBuffer.
     NameChangeRequestPtr ncr2;
     ASSERT_NO_THROW(ncr2 =
-                    NameChangeRequest::fromFormat(fmtJSON, input_buffer));
+                    NameChangeRequest::fromFormat(FMT_JSON, input_buffer));
 
     // Convert the new request to JSON directly.
     std::string final_str = ncr2->toJSON();
