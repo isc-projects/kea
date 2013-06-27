@@ -92,9 +92,13 @@ class MemorySegmentBuilder:
                         # queue.
                         with self._lock:
                             self._response_queue.append(('bad_command',))
-                        # In this case, we do not notify the main
-                        # thread about a response on the socket, as
-                        # we quit the main loop here anyway (and any
-                        # enclosing thread).
+
                         self._shutdown = True
                         break
+
+                # Notify (any main thread) on the socket about a
+                # response. Otherwise, the main thread may wait in its
+                # loop without knowing there was a problem.
+                if len(self._response_queue) > 0:
+                    while self._sock.send(b'x') != 1:
+                        continue
