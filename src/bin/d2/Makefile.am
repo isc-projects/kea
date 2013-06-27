@@ -62,6 +62,7 @@ b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 
 b10_dhcp_ddnsdir = $(pkgdatadir)
 b10_dhcp_ddns_DATA = dhcp-ddns.spec
