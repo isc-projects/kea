@@ -1,3 +1,8 @@
+632.	[bug]		marcin
+	perfdhcp: Fixed a bug in whereby the application was sporadically
+	crashing when timed out packets were garbage collected.
+	(Trac #2979, git 6d42b333f446eccc9d0204bcc04df38fed0c31db)
+
 631.	[bug]		muks
 	Applied a patch by Tomas Hozza to fix a couple of compile errors
 	on Fedora 19 development release.
