@@ -81,14 +81,23 @@ public:
 class D2UpdateMessage {
 public:
 
-    /// Indicates whether DNS Update message is a REQUEST or RESPONSE.
+    /// @brief Indicates if the @c D2UpdateMessage object encapsulates Inbound
+    /// or Outbound message.
+    enum Direction {
+        INBOUND,
+        OUTBOUND
+    };
+
+    /// @brief Indicates whether DNS Update message is a REQUEST or RESPONSE.
     enum QRFlag {
         REQUEST,
         RESPONSE
     };
 
-    /// Identifies sections in the DNS Update Message. Each message comprises
-    /// message Header and may contain the following sections:
+    /// @brief Identifies sections in the DNS Update Message.
+    ///
+    /// Each message comprises message Header and may contain the following
+    /// sections:
     /// - ZONE
     /// - PREREQUISITE
     /// - UPDATE
@@ -116,9 +125,8 @@ public:
     /// message contents and @c D2UpdateMessage::toWire function to create
     /// on-wire data.
     ///
-    /// @param parse indicates if this is an incoming message (true) or outgoing
-    /// message (false).
-    D2UpdateMessage(const bool parse = false);
+    /// @param direction indicates if this is an inbound or outbound message.
+    D2UpdateMessage(const Direction direction = OUTBOUND);
 
     ///
     /// @name Copy constructor and assignment operator
@@ -303,9 +311,22 @@ private:
     /// @throw isc::d2::InvalidQRFlag if QR flag is not set to RESPONSE
     /// @throw isc::d2::InvalidZone section, if Zone section comprises more
     /// than one record.
-    void validate() const;
+    void validateResponse() const;
 
+    /// @brief An object representing DNS Message which is used by the
+    /// implementation of @c D2UpdateMessage to perform low level.
+    ///
+    /// Declaration of this object pollutes the header with the details
+    /// of @c D2UpdateMessage implementation. It might be cleaner to use
+    /// Pimpl idiom to hide this object in an D2UpdateMessageImpl. However,
+    /// it would bring additional complications to the implementation
+    /// while the benefit would low - this header is not a part of any
+    /// common library. Therefore, if implementation is changed, modification of
+    /// private members of this class in the header has low impact.
     dns::Message message_;
+
+    /// @brief Holds a pointer to the object, representing Zone in the DNS
+    /// Update.
     D2ZonePtr zone_;
 
 };
