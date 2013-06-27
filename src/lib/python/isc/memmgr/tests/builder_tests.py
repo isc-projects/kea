@@ -15,6 +15,7 @@
 
 import unittest
 import socket
+import select
 import threading
 
 import isc.log
@@ -62,6 +63,17 @@ class TestMemorySegmentBuilder(unittest.TestCase):
             with self._builder_lock:
                 self._builder_command_queue.append('bad_command')
             self._builder_cv.notify_all()
+
+        # Wait 5 seconds to receive a notification on the socket from
+        # the builder.
+        (reads, _, _) = select.select([self._master_sock], [], [], 5)
+        self.assertTrue(self._master_sock in reads)
+
+        # Reading 1 byte should not block us here, especially as the
+        # socket is ready to read. It's a hack, but this is just a
+        # testcase.
+        got = self._master_sock.recv(1)
+        self.assertEqual(got, b'x')
 
         # Wait 5 seconds at most for the main loop of the builder to
         # exit.
