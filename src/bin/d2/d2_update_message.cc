@@ -23,11 +23,12 @@ namespace d2 {
 
 using namespace isc::dns;
 
-D2UpdateMessage::D2UpdateMessage(const bool parse)
-    : message_(parse ? dns::Message::PARSE : dns::Message::RENDER) {
+D2UpdateMessage::D2UpdateMessage(const Direction direction)
+    : message_(direction == INBOUND ?
+               dns::Message::PARSE : dns::Message::RENDER) {
     // If this object is to create an outgoing message, we have to
     // set the proper Opcode field and QR flag here.
-    if (!parse) {
+    if (direction == OUTBOUND) {
         message_.setOpcode(Opcode(Opcode::UPDATE_CODE));
         message_.setHeaderFlag(dns::Message::HEADERFLAG_QR, false);
 
@@ -131,16 +132,18 @@ D2UpdateMessage::fromWire(isc::util::InputBuffer& buffer) {
     // not be the message that we are interested in, but needs to be
     // parsed so as we can check its ID, Opcode etc.
     message_.fromWire(buffer);
-    // This class implements exposes the getZone() function. This function
-    // will return pointer to the D2Zone object if non-empty Zone
-    // section exists in the received message. It will return NULL pointer
-    // if it doesn't exist. The pointer is held in the D2UpdateMessage class
-    // member. We need to update this pointer every time we parse the
-    // message.
+    // This class exposes the getZone() function. This function will return
+    // pointer to the D2Zone object if non-empty Zone section exists in the
+    // received message. It will return NULL pointer if it doesn't exist.
+    // The pointer is held in the D2UpdateMessage class member. We need to
+    // update this pointer every time we parse the message.
     if (getRRCount(D2UpdateMessage::SECTION_ZONE) > 0) {
         // There is a Zone section in the received message. Replace
         // Zone pointer with the new value.
         QuestionPtr question = *message_.beginQuestion();
+        // If the Zone counter is greater than 0 (which we have checked)
+        // there must be a valid Question pointer stored in the message_
+        // object. If there isn't, it is a programming error.
         assert(question);
         zone_.reset(new D2Zone(question->getName(), question->getClass()));
 
@@ -155,7 +158,7 @@ D2UpdateMessage::fromWire(isc::util::InputBuffer& buffer) {
     // or an error message can be printed. Other than that, we
     // will check that there is at most one Zone record and QR flag
     // is set.
-    validate();
+    validateResponse();
 }
 
 dns::Message::Section
@@ -184,7 +187,7 @@ D2UpdateMessage::ddnsToDnsSection(const UpdateMsgSection section) {
 }
 
 void
-D2UpdateMessage::validate() const {
+D2UpdateMessage::validateResponse() const {
     // Verify that we are dealing with the DNS Update message. According to
     // RFC 2136, section 3.8 server will copy the Opcode from the query.
     // If we are dealing with a different type of message, we may simply
@@ -198,9 +201,9 @@ D2UpdateMessage::validate() const {
     // Received message should have QR flag set, which indicates that it is
     // a RESPONSE.
     if (getQRFlag() == REQUEST) {
-        isc_throw(InvalidQRFlag, "received message should should have QR flag"
-                  << " set, to indicate that it is a RESPONSE message, the QR"
-                  << " flag is unset");
+        isc_throw(InvalidQRFlag, "received message should have QR flag set,"
+                  " to indicate that it is a RESPONSE message; the QR"
+                  << " flag in received message is unset");
     }
     // DNS server may copy a Zone record from the query message. Since query
     // must comprise exactly one Zone record (RFC 2136, section 2.3), the

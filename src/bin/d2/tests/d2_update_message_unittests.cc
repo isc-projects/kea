@@ -33,13 +33,18 @@ using namespace isc::util;
 
 namespace {
 
+// @brief Test fixture class for testing D2UpdateMessage object.
 class D2UpdateMessageTest : public ::testing::Test {
 public:
-    D2UpdateMessageTest() {
-    }
+    // @brief Constructor.
+    //
+    // Does nothing.
+    D2UpdateMessageTest() { }
 
-    ~D2UpdateMessageTest() {
-    };
+    // @brief Destructor.
+    //
+    // Does nothing.
+    ~D2UpdateMessageTest() { };
 
     // @brief Return string representation of the name encoded in wire format.
     //
@@ -58,18 +63,16 @@ public:
     //
     // @return string representation of the name.
     std::string readNameFromWire(InputBuffer& buf, size_t name_length,
-                                 bool no_zero_byte = false) {
-        // 64 characters bytes should be sufficent for current tests.
-        // It may be extended if required.
-        char name_data[64];
+                                 const bool no_zero_byte = false) {
+        std::vector<uint8_t> name_data;
         // Create another InputBuffer which holds only the name in the wire
         // format.
-        buf.readData(name_data, name_length);
+        buf.readVector(name_data, name_length);
         if (no_zero_byte) {
             ++name_length;
-            name_data[name_length-1] = 0;
+            name_data.push_back(0);
         }
-        InputBuffer name_buf(name_data, name_length);
+        InputBuffer name_buf(&name_data[0], name_length);
         // Parse the name and return its textual representation.
         Name name(name_buf);
         return (name.toText());
@@ -201,7 +204,7 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     InputBuffer buf(bin_msg, sizeof(bin_msg));
 
     // Create an object to be used to decode the message from the wire format.
-    D2UpdateMessage msg(true);
+    D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // Decode the message.
     ASSERT_NO_THROW(msg.fromWire(buf));
 
@@ -288,7 +291,7 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidOpcode) {
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
-    D2UpdateMessage msg(true);
+    D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid Opcode, the fromWire function should
     // throw NotUpdateMessage exception.
     EXPECT_THROW(msg.fromWire(buf), isc::d2::NotUpdateMessage);
@@ -312,7 +315,7 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidQRFlag) {
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
-    D2UpdateMessage msg(true);
+    D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid QR flag, the fromWire function should
     // throw InvalidQRFlag exception.
     EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidQRFlag);
@@ -351,7 +354,7 @@ TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
-    D2UpdateMessage msg(true);
+    D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When parsing a message with more than one Zone record,
     // exception should be thrown.
     EXPECT_THROW(msg.fromWire(buf), isc::d2::InvalidZoneSection);
@@ -572,7 +575,7 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
     // can be used to decode the binary mesasage data.
-    D2UpdateMessage msg(true);
+    D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     ASSERT_NO_THROW(msg.fromWire(buf));
 
     // The message is parsed. The QR Flag should now indicate that
