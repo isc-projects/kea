@@ -65,7 +65,7 @@ Parameters:\n\
 ";
 
 const char* const ConfigurableClientList_get_cached_zone_writer_doc = "\
-get_cached_zone_writer(zone, datasrc_name) -> status, zone_writer\n\
+get_cached_zone_writer(zone, catch_load_error, datasrc_name) -> status, zone_writer\n\
 \n\
 This method returns a ZoneWriter that can be used to (re)load a zone.\n\
 \n\
@@ -89,6 +89,7 @@ the status is anything else, the second element is None.\n\
 \n\
 Parameters:\n\
   zone              The origin of the zone to (re)load.\n\
+  catch_load_error  Whether to catch load errors, or to raise them as exceptions.\n\
   datasrc_name      The name of the data source where the zone is to be loaded (optional).\n\
 ";
 

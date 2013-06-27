@@ -210,7 +210,7 @@ public:
                               config_ztable_segment);
 
             const ConfigurableClientList::ZoneWriterPair result =
-                list_->getCachedZoneWriter(zone, dsrc_info.name_);
+                list_->getCachedZoneWriter(zone, false, dsrc_info.name_);
 
             ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
             result.second->load();
@@ -1023,7 +1023,7 @@ TEST_P(ListTest, BadMasterFile) {
 ConfigurableClientList::CacheStatus
 ListTest::doReload(const Name& origin, const string& datasrc_name) {
     ConfigurableClientList::ZoneWriterPair
-        result(list_->getCachedZoneWriter(origin, datasrc_name));
+        result(list_->getCachedZoneWriter(origin, false, datasrc_name));
     if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
         // Can't use ASSERT_NE here, it would want to return(), which
         // it can't in non-void function.
