@@ -455,9 +455,16 @@ public:
                             packet_period.length().total_seconds() +
                             (static_cast<double>(packet_period.length().fractional_seconds())
                              / packet_period.length().ticks_per_second());
-                        if (drop_time_ > 0 &&
-                            (period_fractional > drop_time_)) {
-                            eraseSent(sent_packets_.template project<0>(it));
+                        if (drop_time_ > 0 && (period_fractional > drop_time_)) {
+                            // The packet pointed to by 'it' is timed out so we
+                            // have to remove it. Removal may invalidate the
+                            // next_sent_ pointer if it points to the packet
+                            // being removed. So, we set the next_sent_ to point
+                            // to the next packet after removed one. This
+                            // pointer will be further updated in the following
+                            // iterations, if the subsequent packets are also
+                            // timed out.
+                            next_sent_ = eraseSent(sent_packets_.template project<0>(it));
                             ++collected_;
                         }
                     }
