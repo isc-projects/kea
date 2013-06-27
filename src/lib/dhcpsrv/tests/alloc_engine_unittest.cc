@@ -110,7 +110,7 @@ public:
         // @todo: check cltt
      }
 
-    ~AllocEngine6Test() {
+    virtual ~AllocEngine6Test() {
         factory_.destroy();
 
         // Remove all registered hook points (it must be done even for tests that
@@ -182,7 +182,7 @@ public:
         // @todo: check cltt
      }
 
-    ~AllocEngine4Test() {
+    virtual ~AllocEngine4Test() {
         factory_.destroy();
 
         // Remove all registered hook points (it must be done even for tests that
@@ -1034,17 +1034,21 @@ TEST_F(AllocEngine4Test, renewLease4) {
     detailCompareLease(lease, from_mgr);
 }
 
+/// @brief helper class used in Hooks testing in AllocEngine6
+///
+/// It features a couple of callout functions and buffers to store
+/// the data that is accessible via callouts.
 class HookAllocEngine6Test : public AllocEngine6Test {
 public:
     HookAllocEngine6Test() {
         resetCalloutBuffers();
+    }
+
+    virtual ~HookAllocEngine6Test() {
 
     }
 
-    ~HookAllocEngine6Test() {
-
-    }
-
+    /// @brief clears out buffers, so callouts can store received arguments
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_subnet6_.reset();
@@ -1071,16 +1075,16 @@ public:
         return (0);
     }
 
-    /// callback that picks a different lease
+    /// callback that overrides the lease with different values
     static int
     lease6_select_different_callout(CalloutHandle& callout_handle) {
 
+        // Let's call the basic callout, so it can record all parameters
         lease6_select_callout(callout_handle);
 
+        // Now we need to tweak the least a bit
         Lease6Ptr lease;
         callout_handle.getArgument("lease6", lease);
-
-        // Let's tweak the lease a bit
         callback_addr_updated_ = addr_override_;
         lease->addr_ = callback_addr_updated_;
         lease->t1_ = t1_override_;
@@ -1088,7 +1092,7 @@ public:
         lease->preferred_lft_ = pref_override_;
         lease->valid_lft_ = valid_override_;
 
-        return (lease6_select_callout(callout_handle));
+        return (0);
     }
 
     // Values to be used in callout to override lease6 content
@@ -1132,6 +1136,14 @@ vector<string> HookAllocEngine6Test::callback_argument_names_;
 // parameters as passed.
 TEST_F(HookAllocEngine6Test, lease6_select) {
 
+    // Note: The following order is working as expected:
+    // 1. create AllocEngine (that register hook points)
+    // 2. call loadLibraries()
+    //
+    // This order, however, causes segfault in HooksManager
+    // 1. call loadLibraries()
+    // 2. create AllocEngine (that register hook points)
+
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
@@ -1142,11 +1154,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     HooksManager::getHooksManager().loadLibraries(libraries);
 
     // Install pkt6_receive_callout
-
     ASSERT_TRUE(HooksManager::getCalloutManager());
-
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
-
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
                                                                        lease6_select_callout));
 
@@ -1183,7 +1192,6 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease6");
     expected_argument_names.push_back("subnet6");
-
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 }
 
@@ -1208,17 +1216,17 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     vector<string> libraries; // no libraries at this time
     HooksManager::getHooksManager().loadLibraries(libraries);
 
-    // Install pkt6_receive_callout
-
+    // Install a callout
     ASSERT_TRUE(HooksManager::getCalloutManager());
-
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
-
     EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
                     lease6_select_different_callout));
 
+    // Normally, dhcpv6_srv would passed the handle when calling allocateAddress6,
+    // but in tests we need to create it on our own.
     CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
 
+    // Call allocateAddress6. Callouts should be triggered here.
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
                                                false, callout_handle);
     // Check that we got a lease
@@ -1235,12 +1243,12 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
     ASSERT_TRUE(from_mgr);
 
+    // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
     EXPECT_EQ(from_mgr->t1_, t1_override_);
     EXPECT_EQ(from_mgr->t2_, t2_override_);
     EXPECT_EQ(from_mgr->preferred_lft_, pref_override_);
     EXPECT_EQ(from_mgr->valid_lft_, valid_override_);
 }
-
 
 }; // End of anonymous namespace
