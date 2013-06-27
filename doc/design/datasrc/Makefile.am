@@ -8,7 +8,7 @@ UML_FILES = \
 TEXT_FILES = \
 	data-source-classes.txt
 
-devel:	$(UML_FILES:.txt=.png) $(TEXT_FILES:.txt=.html)
+devel: $(patsubst %.txt, %.png, $(UML_FILES)) $(patsubst %.txt, %.html, $(TEXT_FILES))
 
 .txt.html:
 if HAVE_ASCIIDOC
@@ -25,6 +25,6 @@ else
 endif
 
 CLEANFILES = \
-	$(UML_FILES:.txt=.png) \
-	$(TEXT_FILES:.txt=.html) \
-	$(TEXT_FILES:.txt=.xml)
+	$(patsubst %.txt, %.png, $(UML_FILES)) \
+	$(patsubst %.txt, %.html, $(TEXT_FILES)) \
+	$(patsubst %.txt, %.xml, $(TEXT_FILES))
