@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _NCR_MSG_H
-#define _NCR_MSG_H
+#ifndef NCR_MSG_H
+#define NCR_MSG_H
 
 /// @file ncr_msg.h
 /// @brief This file provides the classes needed to embody, compose, and
@@ -23,6 +23,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <util/encode/hex.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -41,28 +42,28 @@ public:
 
 /// @brief Defines the types of DNS updates that can be requested.
 enum NameChangeType {
-  chgAdd = 1,
-  chgRemove
+  CHG_ADD,
+  CHG_REMOVE
 };
 
 /// @brief Defines the runtime processing status values for requests.
 enum NameChangeStatus  {
-  stNew = 1,
-  stPending,
-  stCompleted,
-  stFailed,
+  ST_NEW,
+  ST_PENDING,
+  ST_COMPLETED,
+  ST_FAILED,
 };
 
 /// @brief Defines the list of data wire formats supported.
 enum NameChangeFormat {
-  fmtJSON = 1
+  FMT_JSON
 };
 
 /// @brief Container class for handling the DHCID value within a
 /// NameChangeRequest. It provides conversion to and from string for JSON
 /// formatting, but stores the data internally as unsigned bytes.
 class D2Dhcid {
-  public:
+public:
     /// @brief Default constructor
     D2Dhcid();
 
@@ -77,9 +78,6 @@ class D2Dhcid {
     /// or there is an odd number of digits.
     D2Dhcid(const std::string& data);
 
-    /// @Destructor
-    virtual ~D2Dhcid();
-
     /// @brief Returns the DHCID value as a string of hexadecimal digits.
     ///
     /// @return returns a string containing a contiguous stream of digits.
@@ -93,7 +91,7 @@ class D2Dhcid {
     ///
     /// @throw throws a NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
-    void fromStr(const std::string & data);
+    void fromStr(const std::string& data);
 
     /// @brief Returns a reference to the DHCID byte vector.
     ///
@@ -102,7 +100,7 @@ class D2Dhcid {
         return (bytes_);
     }
 
-  private:
+private:
     /// @Brief Storage for the DHCID value in unsigned bytes.
     std::vector<uint8_t> bytes_;
 };
@@ -124,9 +122,11 @@ typedef boost::shared_ptr<NameChangeRequest> NameChangeRequestPtr;
 /// @brief Defines a map of Elements, keyed by their string name.
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
-/// @brief This class is used by DHCP-DDNS clients (e.g. DHCP4, DHCP6) to
+/// @brief  Represents a DHCP-DDNS client request.
+/// This class is used by DHCP-DDNS clients (e.g. DHCP4, DHCP6) to
 /// request DNS updates.  Each message contains a single DNS change (either an
-/// add/update or a remove) for a single FQDN.  It provides marshalling services/// for moving instances to and from the wire.  Currently, the only format
+/// add/update or a remove) for a single FQDN.  It provides marshalling services
+/// for moving instances to and from the wire.  Currently, the only format
 /// supported is JSON, however the class provides an interface such that other
 /// formats can be readily supported.
 class NameChangeRequest {
@@ -137,26 +137,23 @@ public:
     /// @brief Constructor.  Full constructor, which provides parameters for
     /// all of the class members, except status.
     ///
-    /// @param change_type is the type of change (Add or Update)
-    /// @param forward_change indicates if this change should sent to forward
+    /// @param change_type the type of change (Add or Update)
+    /// @param forward_change indicates if this change should be sent to forward
     /// DNS servers.
-    /// @param reverse_change indicates if this change should sent to reverse
+    /// @param reverse_change indicates if this change should be sent to reverse
     /// DNS servers.
-    /// @param fqdn is the domain name whose pointer record(s) should be
+    /// @param fqdn the domain name whose pointer record(s) should be
     /// updated.
-    /// @param ip_address is the ip address leased to the given FQDN.
-    /// @param dhcid is the lease client's unique DHCID.
-    /// @param ptime is a timestamp containing the date/time the lease expires.
-    /// @param lease_length is the amount of time in seconds for which the
+    /// @param ip_address the ip address leased to the given FQDN.
+    /// @param dhcid the lease client's unique DHCID.
+    /// @param ptime a timestamp containing the date/time the lease expires.
+    /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
     NameChangeRequest(NameChangeType change_type, bool forward_change,
                       bool reverse_change, const std::string& fqdn,
                       const std::string& ip_address, const D2Dhcid& dhcid,
                       const boost::posix_time::ptime& lease_expires_on,
                       uint32_t lease_length);
-
-    /// @brief Destructor
-    virtual ~NameChangeRequest();
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// buffer containing a marshalled request in a given format.
@@ -198,7 +195,8 @@ public:
     /// @param format indicates the data format to use
     /// @param buffer is the output buffer to which the request should be
     /// marshalled.
-    void toFormat(NameChangeFormat format, isc::util::OutputBuffer& buffer);
+    void
+    toFormat(NameChangeFormat format, isc::util::OutputBuffer& buffer) const;
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// string containing a JSON rendition of a request.
@@ -214,19 +212,23 @@ public:
     /// into a string of JSON text.
     ///
     /// @return returns a string containing the JSON rendition of the request
-    std::string toJSON();
+    std::string toJSON() const;
 
     /// @brief Validates the content of a populated request.  This method is
     /// used by both the full constructor and from-wire marshalling to ensure
     /// that the request is content valid.  Currently it enforces the
     /// following rules:
     ///
-    /// 1. FQDN must not be blank.
-    /// 2. The IP address must be a valid address.
-    /// 3. The DHCID must not be blank.
-    /// 4. The lease expiration date must be a valid date/time.
-    /// 5. That at least one of the two direction flags, forward change and
+    ///  - FQDN must not be blank.
+    ///  - The IP address must be a valid address.
+    ///  - The DHCID must not be blank.
+    ///  - The lease expiration date must be a valid date/time.
+    ///  - That at least one of the two direction flags, forward change and
     ///    reverse change is true.
+    ///
+    /// @TODO This is an initial implementation which provides a minimal amount
+    /// of validation.  FQDN, DHCID, and IP Address members are all currently
+    /// strings, these may be replaced with richer classes.
     ///
     /// @throw throws a NcrMessageError if the request content violates any
     /// of the validation rules.
@@ -235,7 +237,7 @@ public:
     /// @brief Fetches the request change type.
     ///
     /// @return returns the change type
-    NameChangeType getChangeType() {
+    NameChangeType getChangeType() const {
         return (change_type_);
     }
 
@@ -255,7 +257,7 @@ public:
     /// @brief Checks forward change flag.
     ///
     /// @return returns a true if the forward change flag is true.
-    const bool isForwardChange() const {
+    bool isForwardChange() const {
         return (forward_change_);
     }
 
@@ -277,7 +279,7 @@ public:
     /// @brief Checks reverse change flag.
     ///
     /// @return returns a true if the reverse change flag is true.
-    const bool isReverseChange() const {
+    bool isReverseChange() const {
         return (reverse_change_);
     }
 
@@ -319,7 +321,7 @@ public:
     /// @brief Fetches the request IP address.
     ///
     /// @return returns a string containing the IP address
-    const std::string& getIpAddress_() const {
+    const std::string& getIpAddress() const {
         return (ip_address_);
     }
 
@@ -371,6 +373,12 @@ public:
 
     /// @brief Fetches the request lease expiration as string.
     ///
+    /// The format of the string returned is:
+    ///
+    ///    YYYYMMDDTHHMMSS where T is the date-time separator
+    ///
+    /// Example: 18:54:54 June 26, 2013 would be: 20130626T185455
+    ///
     /// @return returns a ISO date-time string of the lease expiration.
     std::string getLeaseExpiresOnStr() const;
 
@@ -385,7 +393,11 @@ public:
     /// @brief Sets the lease expiration based on the given string.
     ///
     /// @param value is an ISO date-time string from which to set the
-    /// lease expiration.
+    /// lease expiration. The format of the input is:
+    ///
+    ///    YYYYMMDDTHHMMSS where T is the date-time separator
+    ///
+    /// Example: 18:54:54 June 26, 2013 would be: 20130626T185455
     ///
     /// @throw throws a NcrMessageError if the ISO string is invalid.
     void setLeaseExpiresOn(const std::string& value);
@@ -440,7 +452,7 @@ public:
     /// @throw throws a NcrMessageError if the element cannot be found within
     /// the map
     isc::data::ConstElementPtr getElement(const std::string& name,
-                                          const ElementMap& element_map);
+                                          const ElementMap& element_map) const;
 
     /// @brief Returns a text rendition of the contents of the request.
     /// This method is primarily for logging purposes.
@@ -459,18 +471,20 @@ private:
     bool reverse_change_;
 
     /// @brief The domain name whose DNS entry(ies) are to be updated.
+    /// @TODO Currently, this is a std::string but may be replaced with 
+    /// dns::Name which provides additional validation and domain name 
+    /// manipulation.
     std::string fqdn_;
 
     /// @brief The ip address leased to the FQDN.
     std::string ip_address_;
 
     /// @brief The lease client's unique DHCID.
+    /// @TODO Currently, this is uses D2Dhcid it but may be replaced with 
+    /// dns::DHCID which provides additional validation.
     D2Dhcid dhcid_;
 
-    /// @brief The date-time the lease expires.  Note, that a TimePtr currently
-    /// points to a boost::posix_time::ptime instance. Boost ptimes were chosen
-    /// because they convert to and from ISO strings in GMT time.  The time.h
-    /// classes can convert to GMT but conversion back assumes local time.
+    /// @brief The date-time the lease expires.
     TimePtr lease_expires_on_;
 
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
