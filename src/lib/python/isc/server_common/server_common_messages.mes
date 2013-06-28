@@ -21,6 +21,9 @@
 # have that at this moment. So when adding a message, make sure that
 # the name is not already used in src/lib/config/config_messages.mes
 
+% PYSERVER_COMMON_COMMAND %1 server has received '%2' command
+The server process received the shown name of command from other module.
+
 % PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)
 Debug message.  A complete DNS message has been successfully
 transmitted over a TCP connection, possibly after multiple send
@@ -44,6 +47,18 @@ The destination address and the total size of the message that has
 been transmitted so far (including the 2-byte length field) are shown
 in the log message.
 
+% PYSERVER_COMMON_SERVER_FATAL %1 server has encountered a fatal error: %2
+The BIND 10 server process encountered a fatal error (normally specific to
+the particular program), and is forcing itself to shut down.
+
+% PYSERVER_COMMON_SERVER_STARTED %1 server has started
+The server process has successfully started and is now ready to receive
+commands and configuration updates.
+
+% PYSERVER_COMMON_SERVER_STOPPED %1 server has started
+The server process has successfully stopped and is no longer listening for or
+handling commands.  Normally the process will soon exit.
+
 % PYSERVER_COMMON_TSIG_KEYRING_DEINIT Deinitializing global TSIG keyring
 A debug message noting that the global TSIG keyring is being removed from
 memory. Most programs don't do that, they just exit, which is OK.
@@ -57,3 +72,8 @@ to be loaded from configuration.
 A debug message. The TSIG keyring is being (re)loaded from configuration.
 This happens at startup or when the configuration changes. The old keyring
 is removed and new one created with all the keys.
+
+% PYSERVER_COMMON_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2
+The BIND 10 server process encountered an uncaught exception and will now shut
+down. This is indicative of a programming error and should not happen under
+normal circumstances. The exception type and message are printed.
