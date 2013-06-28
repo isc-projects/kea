@@ -867,9 +867,13 @@ class UpdateSession:
                               self.__diff.get_rrset_collection(),
                               (self.__validate_error, self.__validate_warning)):
                 raise UpdateError('Validation of the new zone failed',
-                                  self.__zname, self.__zclass, Rcode.SERVFAIL)
+                                  self.__zname, self.__zclass, Rcode.REFUSED)
             self.__diff.commit()
             return Rcode.NOERROR
+        except UpdateError:
+            # Propagate UpdateError exceptions (don't catch them in the
+            # blocks below)
+            raise
         except isc.datasrc.Error as dse:
             logger.info(LIBDDNS_UPDATE_DATASRC_COMMIT_FAILED, dse)
             return Rcode.SERVFAIL
