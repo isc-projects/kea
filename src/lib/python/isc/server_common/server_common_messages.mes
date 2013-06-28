@@ -53,7 +53,7 @@ the particular program), and is forcing itself to shut down.
 
 % PYSERVER_COMMON_SERVER_STARTED %1 server has started
 The server process has successfully started and is now ready to receive
-commands and updates.
+commands and configuration updates.
 
 % PYSERVER_COMMON_SERVER_STOPPED %1 server has started
 The server process has successfully stopped and is no longer listening for or
