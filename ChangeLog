@@ -1,3 +1,10 @@
+633.	[func]		jinmei
+	b10-memmgr: a new BIND 10 module that manages shared memory
+	segments for DNS zone data.  At this point it's runnable but does
+	nothing really meaningful for end users; it was added to the
+	master branch for further development.
+	(Trac #2854, git d05d7aa36d0f8f87b94dba114134b50ca37eabff)
+
 632.	[bug]		marcin
 	perfdhcp: Fixed a bug in whereby the application was sporadically
 	crashing when timed out packets were garbage collected.
