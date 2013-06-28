@@ -46,12 +46,13 @@ the data actually served, it only prepares them for future use.\n\
 This is the first method you should call on the object. Never call it\n\
 multiple times.\n\
 \n\
-Depending on how the ZoneWriter was constructed (see catch_load_error\n\
-argument to ConfigurableClientList.get_cached_zone_writer()), in case a\n\
-load error happens, a string with the error message may be returned. When\n\
-ZoneWriter is not constructed to do that, in case of a load error, a\n\
-DataSourceError exception is raised. In all other cases, this method\n\
-returns None.\n\
+If the zone loads successfully, this method returns None. In the case of\n\
+a load error, if the ZoneWriter was constructed with the\n\
+catch_load_error option (see\n\
+ConfigurableClientList.get_cached_zone_writer()), this method will\n\
+return an error message string; if it was created without the\n\
+catch_load_error option, this method will raise a DataSourceError\n\
+exception.\n\
 \n\
 Exceptions:\n\
   isc.InvalidOperation if called second time.\n\
