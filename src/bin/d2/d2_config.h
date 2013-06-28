@@ -35,16 +35,25 @@ namespace d2 {
 ///
 /// This file contains the class declarations for the class hierarchy created
 /// from the D2 configuration and the parser classes used to create it.
-/// The application configuration consists of a set of scalar parameters and
-/// two managed lists of domains: one list for forward domains and one list for
-/// reverse domains.
+/// The application configuration consists of a set of scalar parameters,
+/// a list of TSIG keys, and two managed lists of domains: one list for
+/// forward domains and one list for reverse domains.
 ///
-/// Each managed list consists of a list one or more domains and is represented
-/// by the class DdnsDomainListMgr.
+/// The key list consists of one or more TSIG keys, each entry described by
+/// a name, the algorithm method name, and its secret key component.
+///
+/// @TODO  NOTE that TSIG configuration parsing is functional, the use of
+/// TSIG Keys during the actual DNS update transactions is not.  This will be
+/// implemented in a future release.
+///
+/// Each managed domain list consists of a list one or more domains and is
+/// represented by the class DdnsDomainListMgr.
 ///
 /// Each domain consists of a set of scalars parameters and a list of DNS
-/// servers which support that domain.  Domains are represented by the class,
-/// DdnsDomain.
+/// servers which support that domain. Among its scalars, is key_name, which
+/// is the name of the TSIG Key to use for with this domain.  This value should
+/// map to one of the TSIG Keys in the key list.  Domains are represented by
+/// the class, DdnsDomain.
 ///
 /// Each server consists of a set of scalars used to describe the server such
 /// that the application can carry out DNS update exchanges with it. Servers
@@ -70,6 +79,61 @@ namespace d2 {
 /// each server entry in its list.
 ///
 /// A DdnsServerInfoParser handles the scalars which belong to the server.
+/// The following is sample configuration in JSON form with extra spacing
+/// for clarity:
+///
+/// @code
+/// {
+///  "interface" : "eth1" ,
+///  "ip_address" : "192.168.1.33" ,
+///  "port" : 88 ,
+///  "tsig_keys":
+//// [
+///    {
+///     "name": "d2_key.tmark.org" ,
+///     "algorithm": "md5" ,
+///     "secret": "0123456989"
+///    }
+///  ],
+///  "forward_ddns" :
+///  {
+///    "ddns_domains":
+///    [
+///      {
+///        "name": "tmark.org." ,
+///        "key_name": "d2_key.tmark.org" ,
+///        "dns_servers" :
+///        [
+///          { "hostname": "fserver.tmark.org" },
+///          { "hostname": "f2server.tmark.org" }
+///        ]
+///      },
+///      {
+///        "name": "pub.tmark.org." ,
+///        "key_name": "d2_key.tmark.org" ,
+///        "dns_servers" :
+///        [
+///          { "hostname": "f3server.tmark.org" }
+///        ]
+///      }
+///    ]
+///  },
+///  "reverse_ddns" :
+///  {
+///    "ddns_domains":
+///    [
+///      {
+///        "name": " 0.168.192.in.addr.arpa." ,
+///        "key_name": "d2_key.tmark.org" ,
+///        "dns_servers" :
+///        [
+///          { "ip_address": "127.0.0.101" , "port": 100 }
+///        ]
+///      }
+///    ]
+///  }
+/// }
+/// @endcode
 
 /// @brief Exception thrown when the error during configuration handling
 /// occurs.
@@ -78,6 +142,77 @@ public:
     D2CfgError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Represents a TSIG Key.
+///
+/// Currently, this is simple storage class containing the basic attributes of
+/// a TSIG Key.  It is intended primarily as a reference for working with
+/// actual keys and may eventually be replaced by isc::dns::TSIGKey.  TSIG Key
+/// functionality at this stage is strictly limited to configuration parsing.
+/// @TODO full functionality for using TSIG during DNS updates will be added
+/// in a future release.
+class TSIGKeyInfo {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param name the unique label used to identify this key
+    /// @param algorithm the name of the encryption alogirthm this key uses.
+    /// (@TODO This will be a fixed list of choices)
+    /// @param secret the secret component of this key
+    TSIGKeyInfo(const std::string& name, const std::string& algorithm,
+                const std::string& secret);
+
+    /// @brief Destructor
+    virtual ~TSIGKeyInfo();
+
+    /// @brief Getter which returns the key's name.
+    ///
+    /// @return returns the name as as std::string.
+    const std::string getName() const {
+        return (name_);
+    }
+
+    /// @brief Getter which returns the key's algorithm.
+    ///
+    /// @return returns the algorithm as as std::string.
+    const std::string getAlgorithm() const {
+        return (algorithm_);
+    }
+
+    /// @brief Getter which returns the key's secret.
+    ///
+    /// @return returns the secret as as std::string.
+    const std::string getSecret() const {
+        return (secret_);
+    }
+
+private:
+    /// @brief The name of the key.
+    ///
+    /// This value is the unique identifeir thay domains use to
+    /// to specify which TSIG key they need.
+    std::string name_;
+
+    /// @brief The algorithm that should be used for this key.
+    std::string algorithm_;
+
+    /// @brief The secret value component of this key.
+    std::string secret_;
+};
+
+/// @brief Defines a pointer for TSIGKeyInfo instances.
+typedef boost::shared_ptr<TSIGKeyInfo> TSIGKeyInfoPtr;
+
+/// @brief Defines a map of TSIGKeyInfos, keyed by the name.
+typedef std::map<std::string, TSIGKeyInfoPtr> TSIGKeyInfoMap;
+
+/// @brief Defines a iterator pairing of name and TSIGKeyInfo
+typedef std::pair<std::string, TSIGKeyInfoPtr> TSIGKeyInfoMapPair;
+
+/// @brief Defines a pointer to map of TSIGkeyInfos
+typedef boost::shared_ptr<TSIGKeyInfoMap> TSIGKeyInfoMapPtr;
+
 
 /// @brief Represents a specific DNS Server.
 /// It provides information about the server's network identity and typically
@@ -88,10 +223,11 @@ class DnsServerInfo {
 public:
 
     /// @brief defines DNS standard port value
-    static const uint32_t standard_dns_port;
+    static const uint32_t STANDARD_DNS_PORT = 53;
 
     /// @brief defines an "empty" string version of an ip address.
-    static const char* empty_ip_str;
+    static const char* EMPTY_IP_STR;
+
 
     /// @brief Constructor
     ///
@@ -106,7 +242,8 @@ public:
     /// @param enabled is a flag that indicates whether this server is
     /// enabled for use. It defaults to true.
     DnsServerInfo(const std::string& hostname,
-                  isc::asiolink::IOAddress ip_address, uint32_t port,
+                  isc::asiolink::IOAddress ip_address,
+                  uint32_t port=STANDARD_DNS_PORT,
                   bool enabled=true);
 
     /// @brief Destructor
@@ -189,7 +326,6 @@ public:
     ///
     /// @param name is the domain name of the domain.
     /// @param key_name is the TSIG key name for use with this domain.
-    /// (@TODO TSIG is not yet functional).
     /// @param servers is the list of server(s) supporting this domain.
     DdnsDomain(const std::string& name, const std::string& key_name,
                DnsServerInfoStoragePtr servers);
@@ -223,7 +359,6 @@ private:
     std::string name_;
 
     /// @brief The name of the TSIG key for use with this domain.
-    /// @TODO TSIG is not yet functional).
     std::string key_name_;
 
     /// @brief The list of server(s) supporting this domain.
@@ -233,15 +368,14 @@ private:
 /// @brief Defines a pointer for DdnsDomain instances.
 typedef boost::shared_ptr<DdnsDomain> DdnsDomainPtr;
 
-/// @brief Defines a storage container for DdnsDomain pointers.
-typedef std::map<std::string, DdnsDomainPtr> DdnsDomainStorage;
+/// @brief Defines a map of DdnsDomains, keyed by the domain name.
+typedef std::map<std::string, DdnsDomainPtr> DdnsDomainMap;
+
+/// @brief Defines a iterator pairing domain name and DdnsDomain
+typedef std::pair<std::string, DdnsDomainPtr> DdnsDomainMapPair;
 
 /// @brief Defines a pointer to DdnsDomain storage containers.
-typedef boost::shared_ptr<DdnsDomainStorage> DdnsDomainStoragePtr;
-
-/// @brief Defines a domain and domain key pair for iterating.
-typedef std::pair<std::string, DdnsDomainPtr> DdnsDomainPtrPair;
-
+typedef boost::shared_ptr<DdnsDomainMap> DdnsDomainMapPtr;
 
 /// @brief Provides storage for and management of a list of DNS domains.
 /// In addition to housing the domain list storage, it provides domain matching
@@ -252,6 +386,9 @@ typedef std::pair<std::string, DdnsDomainPtr> DdnsDomainPtrPair;
 /// As matching capabilities evolve this class is expected to expand.
 class DdnsDomainListMgr {
 public:
+    /// @brief defines the domain name for denoting the wildcard domain.
+    static const char* wildcard_domain_name_;
+
     /// @brief Constructor
     ///
     /// @param name is an arbitrary label assigned to this manager.
@@ -267,7 +404,7 @@ public:
     /// sub-domain from the FQDN until a match is found.  If no match is found
     /// and the wild card domain is present in the list, then return it as the
     /// match.  If the wild card domain is the only domain in the list, then
-    /// the it will be returned immediately for any FQDN.
+    /// it will be returned immediately for any FQDN.
     ///
     /// @param fqdn is the name for which to look.
     /// @param domain receives the matching domain. Note that it will be reset
@@ -301,21 +438,21 @@ public:
     /// @brief Fetches the domain list.
     ///
     /// @return returns a pointer reference to the list of domains.
-    const DdnsDomainStoragePtr &getDomains() {
+    const DdnsDomainMapPtr &getDomains() {
         return (domains_);
     }
 
     /// @brief Sets the manger's domain list to the given list of domains.
     /// This method will scan the inbound list for the wild card domain and
     /// set the internal wild card domain pointer accordingly.
-    void setDomains(DdnsDomainStoragePtr domains);
+    void setDomains(DdnsDomainMapPtr domains);
 
 private:
     /// @brief An arbitrary label assigned to this manager.
     std::string name_;
 
-    /// @brief Storage for the list of domains.
-    DdnsDomainStoragePtr domains_;
+    /// @brief Map of the domains, keyed by name.
+    DdnsDomainMapPtr domains_;
 
     /// @brief Pointer to the wild card domain.
     DdnsDomainPtr wildcard_domain_;
@@ -325,11 +462,15 @@ private:
 typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 
 /// @brief Storage container for scalar configuration parameters.
+///
 /// This class is useful for implementing parsers for more complex configuration
 /// elements (e.g. those of item type "map").  It provides a convenient way to
-/// add storage to the parser for an arbitrary number and variety of simple
+/// add storage to the parser for an arbitrary number and variety of scalar
 /// configuration items (e.g. ints, bools, strings...) without explicitly adding
 /// storage for each individual type needed by the parser.
+///
+/// This class implements a concrete version of the base class by supplying a
+/// "clone" method.
 class DScalarContext : public DCfgContextBase {
 public:
 
@@ -350,12 +491,122 @@ public:
 
 protected:
     /// @brief Copy constructor
-    DScalarContext(const DScalarContext& rhs) : DCfgContextBase(rhs){
+    DScalarContext(const DScalarContext& rhs) : DCfgContextBase(rhs) {
     }
 
 private:
     /// @brief Private assignment operator, not implemented.
     DScalarContext& operator=(const DScalarContext& rhs);
+};
+
+/// @brief Parser for  TSIGKeyInfo
+///
+/// This class parses the configuration element "tsig_key" defined in
+/// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
+class TSIGKeyInfoParser : public  isc::dhcp::DhcpConfigParser {
+public:
+    /// @brief Constructor
+    ///
+    /// @param entry_name is an arbitrary label assigned to this configuration
+    /// definition. Since servers are specified in a list this value is likely
+    /// be something akin to "key:0", set during parsing.
+    /// @param servers is a pointer to the storage area to which the parser
+    /// should commit the newly created TSIGKeyInfo instance.
+    TSIGKeyInfoParser(const std::string& entry_name, TSIGKeyInfoMapPtr keys);
+
+    /// @brief Destructor
+    virtual ~TSIGKeyInfoParser();
+
+    /// @brief Performs the actual parsing of the given  "tsig_key" element.
+    ///
+    /// The results of the parsing are retained internally for use during
+    /// commit.
+    ///
+    /// @param key_config is the "tsig_key" configuration to parse
+    virtual void build(isc::data::ConstElementPtr key_config);
+
+    /// @brief Creates a parser for the given "tsig_key" member element id.
+    ///
+    /// The key elements currently supported are(see dhcp-ddns.spec):
+    ///   1. name
+    ///   2. algorithm
+    ///   3. secret
+    ///
+    /// @param config_id is the "item_name" for a specific member element of
+    /// the "tsig_key" specification.
+    ///
+    /// @return returns a pointer to newly created parser.
+    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
+                                                    config_id);
+
+    /// @brief Instantiates a DnsServerInfo from internal data values
+    /// saves it to the storage area pointed to by servers_.
+    virtual void commit();
+
+private:
+    /// @brief Arbitrary label assigned to this parser instance.
+    /// Since servers are specified in a list this value is likely be something
+    /// akin to "key:0", set during parsing.  Primarily here for diagnostics.
+    std::string entry_name_;
+
+    /// @brief Pointer to the storage area to which the parser should commit
+    /// the newly created TSIGKeyInfo instance. This is given to us as a
+    /// constructor argument by an upper level.
+    TSIGKeyInfoMapPtr keys_;
+
+    /// @brief Local storage area for scalar parameter values. Use to hold
+    /// data until time to commit.
+    DScalarContext local_scalars_;
+};
+
+/// @brief Parser for a list of TSIGKeyInfos
+///
+/// This class parses a list of "tsig_key" configuration elements.
+/// (see src/bin/d2/dhcp-ddns.spec). The TSIGKeyInfo instances are added
+/// to the given storage upon commit.
+class TSIGKeyInfoListParser : public isc::dhcp::DhcpConfigParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param list_name is an arbitrary label assigned to this parser instance.
+    /// @param keys is a pointer to the storage area to which the parser
+    /// should commit the newly created TSIGKeyInfo instance.
+    TSIGKeyInfoListParser(const std::string& list_name, TSIGKeyInfoMapPtr keys);
+
+    /// @brief Destructor
+    virtual ~TSIGKeyInfoListParser();
+
+    /// @brief Performs the parsing of the given list "tsig_key" elements.
+    ///
+    /// It iterates over each key entry in the list:
+    ///   1. Instantiate a TSIGKeyInfoParser for the entry
+    ///   2. Pass the element configuration to the parser's build method
+    ///   3. Add the parser instance to local storage
+    ///
+    /// The net effect is to parse all of the key entries in the list
+    /// prepping them for commit.
+    ///
+    /// @param key_list_config is the list of "tsig_key" elements to parse.
+    virtual void build(isc::data::ConstElementPtr key_list_config);
+
+    /// @brief Iterates over the internal list of TSIGKeyInfoParsers,
+    /// invoking commit on each.  This causes each parser to instantiate a
+    /// TSIGKeyInfo from its internal data values and add that that key
+    /// instance to the storage area, keys_.
+    virtual void commit();
+
+private:
+    /// @brief Arbitrary label assigned to this parser instance.
+    std::string list_name_;
+
+    /// @brief Pointer to the storage area to which the parser should commit
+    /// the list of newly created TSIGKeyInfo instances. This is given to us
+    /// as a constructor argument by an upper level.
+    TSIGKeyInfoMapPtr keys_;
+
+    /// @brief Local storage of TSIGKeyInfoParser instances
+    isc::dhcp::ParserCollection parsers_;
 };
 
 /// @brief Parser for  DnsServerInfo
@@ -389,7 +640,7 @@ public:
     /// The server elements currently supported are(see dhcp-ddns.spec):
     ///   1. hostname
     ///   2. ip_address
-    ///   3. port 
+    ///   3. port
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "dns_server" specification.
@@ -481,9 +732,10 @@ public:
     /// definition. Since domains are specified in a list this value is likely
     /// be something akin to "forward_ddns:0", set during parsing.
     /// @param domains is a pointer to the storage area to which the parser
+    /// @param keys is a pointer to a map of the defined TSIG keys.
     /// should commit the newly created DdnsDomain instance.
-    DdnsDomainParser(const std::string& entry_name,
-                     DdnsDomainStoragePtr domains);
+    DdnsDomainParser(const std::string& entry_name, DdnsDomainMapPtr domains,
+                     TSIGKeyInfoMapPtr keys);
 
     /// @brief Destructor
     virtual ~DdnsDomainParser();
@@ -521,7 +773,13 @@ private:
     /// @brief Pointer to the storage area to which the parser should commit
     /// the newly created DdnsDomain instance. This is given to us as a
     /// constructor argument by an upper level.
-    DdnsDomainStoragePtr domains_;
+    DdnsDomainMapPtr domains_;
+
+    /// @brief Pointer to the map of defined TSIG keys.
+    /// This map is passed into us and contains all of the TSIG keys defined
+    /// for this configuration.  It is used to validate the key name entry of
+    /// DdnsDomains that specify one.
+    TSIGKeyInfoMapPtr keys_;
 
     /// @brief Local storage for DnsServerInfo instances. This is passed into
     /// DnsServerInfoListParser(s), which in turn passes it into each
@@ -546,9 +804,10 @@ public:
     ///
     /// @param list_name is an arbitrary label assigned to this parser instance.
     /// @param domains is a pointer to the storage area to which the parser
+    /// @param keys is a pointer to a map of the defined TSIG keys.
     /// should commit the newly created DdnsDomain instance.
     DdnsDomainListParser(const std::string& list_name,
-                            DdnsDomainStoragePtr domains_);
+                         DdnsDomainMapPtr domains_, TSIGKeyInfoMapPtr keys);
 
     /// @brief Destructor
     virtual ~DdnsDomainListParser();
@@ -580,7 +839,13 @@ private:
     /// @brief Pointer to the storage area to which the parser should commit
     /// the list of newly created DdnsDomain instances. This is given to us
     /// as a constructor argument by an upper level.
-    DdnsDomainStoragePtr domains_;
+    DdnsDomainMapPtr domains_;
+
+    /// @brief Pointer to the map of defined TSIG keys.
+    /// This map is passed into us and contains all of the TSIG keys defined
+    /// for this configuration.  It is used to validate the key name entry of
+    /// DdnsDomains that specify one.
+    TSIGKeyInfoMapPtr keys_;
 
     /// @brief Local storage of DdnsDomainParser instances
     isc::dhcp::ParserCollection parsers_;
@@ -600,9 +865,10 @@ public:
     /// @param entry_name is an arbitrary label assigned to this configuration
     /// definition.
     /// @param mgr is a pointer to the DdnsDomainListMgr to populate.
+    /// @param keys is a pointer to a map of the defined TSIG keys.
     /// @throw throws D2CfgError if mgr pointer is empty.
     DdnsDomainListMgrParser(const std::string& entry_name,
-                     DdnsDomainListMgrPtr& mgr);
+                     DdnsDomainListMgrPtr mgr, TSIGKeyInfoMapPtr keys);
 
     /// @brief Destructor
     virtual ~DdnsDomainListMgrParser();
@@ -616,9 +882,8 @@ public:
 
     /// @brief Creates a parser for the given manager member element id.
     ///
-    /// 
     /// The manager elements currently supported are (see dhcp-ddns.spec):
-    ///     1. ddns_domains 
+    ///     1. ddns_domains
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the manager specification.
@@ -640,11 +905,17 @@ private:
     /// upper level.
     DdnsDomainListMgrPtr mgr_;
 
+    /// @brief Pointer to the map of defined TSIG keys.
+    /// This map is passed into us and contains all of the TSIG keys defined
+    /// for this configuration.  It is used to validate the key name entry of
+    /// DdnsDomains that specify one.
+    TSIGKeyInfoMapPtr keys_;
+
     /// @brief Local storage for DdnsDomain instances. This is passed into a
     /// DdnsDomainListParser(s), which in turn passes it into each
     /// DdnsDomainParser.  When the DdnsDomainParsers "commit" they add their
     /// domain instance to this storage.
-    DdnsDomainStoragePtr local_domains_;
+    DdnsDomainMapPtr local_domains_;
 
     /// @brief Local storage area for scalar parameter values. Use to hold
     /// data until time to commit.
@@ -652,7 +923,6 @@ private:
     /// change as matching capabilities expand.
     DScalarContext local_scalars_;
 };
-
 
 
 }; // end of isc::d2 namespace

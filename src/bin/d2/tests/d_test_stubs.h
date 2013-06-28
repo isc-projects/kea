@@ -628,10 +628,12 @@ public:
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer_);
         // Handy for diagnostics
-        // if (rcode != 0) {
-        //    std::cout << "checkAnswer rcode:" << rcode << " comment: "
-        //          << *comment << std::endl;
-        //}
+        #if 1
+        if (rcode != 0) {
+            std::cout << "checkAnswer rcode:" << rcode << " comment: "
+                  << *comment << std::endl;
+        }
+        #endif
         return (rcode == should_be);
     }
 

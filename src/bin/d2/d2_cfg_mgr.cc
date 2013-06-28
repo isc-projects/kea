@@ -30,7 +30,8 @@ namespace d2 {
 
 D2CfgContext::D2CfgContext()
     : forward_mgr_(new DdnsDomainListMgr("forward_mgr")),
-      reverse_mgr_(new DdnsDomainListMgr("reverse_mgr")) {
+      reverse_mgr_(new DdnsDomainListMgr("reverse_mgr")),
+      keys_(new TSIGKeyInfoMap()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : DCfgContextBase(rhs) {
@@ -43,6 +44,8 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : DCfgContextBase(rhs) {
         reverse_mgr_.reset(new DdnsDomainListMgr(rhs.reverse_mgr_->getName()));
         reverse_mgr_->setDomains(rhs.reverse_mgr_->getDomains());
     }
+
+    keys_ = rhs.keys_; 
 }
 
 D2CfgContext::~D2CfgContext() {
@@ -51,6 +54,14 @@ D2CfgContext::~D2CfgContext() {
 // *********************** D2CfgMgr  *************************
 
 D2CfgMgr::D2CfgMgr() : DCfgMgrBase(DCfgContextBasePtr(new D2CfgContext())) {
+    // TSIG keys need to parse before the Domains, so we can catch Domains
+    // that specify undefined keys. Create the necessary parsing order now.
+    addToParseOrder("interface");
+    addToParseOrder("ip_address");
+    addToParseOrder("port");
+    addToParseOrder("tsig_keys");
+    addToParseOrder("forward_ddns");
+    addToParseOrder("reverse_ddns");
 }
 
 D2CfgMgr::~D2CfgMgr() {
@@ -58,13 +69,13 @@ D2CfgMgr::~D2CfgMgr() {
 
 bool
 D2CfgMgr::matchForward(const std::string& fqdn, DdnsDomainPtr& domain) {
-    if (fqdn == "") {
+    if (fqdn.empty()) {
         // This is a programmatic error and should not happen.
-        isc_throw (D2CfgError, "matchForward passed an empty fqdn");
+        isc_throw(D2CfgError, "matchForward passed an empty fqdn");
     }
 
     // Fetch the forward manager from the D2 context.
-    DdnsDomainListMgrPtr& mgr = getD2CfgContext()->getForwardMgr();
+    DdnsDomainListMgrPtr mgr = getD2CfgContext()->getForwardMgr();
 
     // Call the manager's match method and return the result.
     return (mgr->matchDomain(fqdn, domain));
@@ -72,13 +83,13 @@ D2CfgMgr::matchForward(const std::string& fqdn, DdnsDomainPtr& domain) {
 
 bool
 D2CfgMgr::matchReverse(const std::string& fqdn, DdnsDomainPtr& domain) {
-    if (fqdn == "") {
+    if (fqdn.empty()) {
         // This is a programmatic error and should not happen.
-        isc_throw (D2CfgError, "matchReverse passed a null or empty fqdn");
+        isc_throw(D2CfgError, "matchReverse passed a null or empty fqdn");
     }
 
     // Fetch the reverse manager from the D2 context.
-    DdnsDomainListMgrPtr& mgr = getD2CfgContext()->getReverseMgr();
+    DdnsDomainListMgrPtr mgr = getD2CfgContext()->getReverseMgr();
 
     // Call the manager's match method and return the result.
     return (mgr->matchDomain(fqdn, domain));
@@ -99,10 +110,14 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
         parser = new Uint32Parser(config_id, context->getUint32Storage());
     } else if (config_id ==  "forward_ddns") {
         parser = new DdnsDomainListMgrParser("forward_mgr",
-                                             context->getForwardMgr());
+                                             context->getForwardMgr(),
+                                             context->getKeys());
     } else if (config_id ==  "reverse_ddns") {
         parser = new DdnsDomainListMgrParser("reverse_mgr",
-                                             context->getReverseMgr());
+                                             context->getReverseMgr(),
+                                             context->getKeys());
+    } else if (config_id ==  "tsig_keys") {
+        parser = new TSIGKeyInfoListParser("tsig_key_list", context->getKeys());
     } else {
         isc_throw(NotImplemented,
                   "parser error: D2CfgMgr parameter not supported: "

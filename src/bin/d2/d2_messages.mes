@@ -68,10 +68,14 @@ application and will exit.
 A warning message is issued when an attempt is made to shut down the
 application when it is not running.
 
-% DCTL_ORDER_ERROR Configuration contains more elements than the parsing order
-A debug message which indicates that configuration being parsed includes
-element ids not specified the configuration manager's parse order list. This is
-programming logic error.
+% DCTL_ORDER_ERROR configuration contains more elements than the parsing order
+An error message which indicates that configuration being parsed includes
+element ids not specified the configuration manager's parse order list. This 
+is a programmatic error.
+
+% DCTL_ORDER_NO_ELEMENT element: %1 is in the parsing order but is missing from the configuration
+An error message indicating that the listed element is in specified in the
+parsing order but is not in the configuration.  The configuration is incorrect. 
 
 % DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1
 On receipt of message containing details to a change of its configuration,
@@ -121,8 +125,8 @@ unrecoverable error from within the event loop.
 
 % DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
 This is warning message issued when there are no domains in the configuration
-which match the cited FQDN.  The DNS Update request for the FQDN cannot be
-processed.
+which match the cited fully qualified domain name (FQDN).  The DNS Update 
+request for the FQDN cannot be processed.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the Dhcp-Ddns application enters

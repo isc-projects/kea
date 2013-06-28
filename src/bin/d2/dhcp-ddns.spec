@@ -24,9 +24,40 @@
         "item_optional": true,
         "item_default": 51771 
     },
-
     {
-        "item_name": "foward_ddns",
+        "item_name": "tsig_keys",
+        "item_type": "list",
+        "item_optional": true, 
+        "item_default": [],
+        "list_item_spec":
+        {
+            "item_name": "tsig_key",
+            "item_type": "map",
+            "item_optional": false,
+            "item_default": {"algorithm" : "hmac_md5"},
+            "map_item_spec": [ 
+            {
+                "item_name": "name",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+            },
+            {
+                "item_name": "algorithm",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+            },
+            {
+                "item_name": "secret",
+                "item_type": "string",
+                "item_optional": false,
+                "item_default": ""
+            }]
+        }
+    },
+    {
+        "item_name": "forward_ddns",
         "item_type": "map",
         "item_optional": false,
          "item_default": {},
@@ -171,3 +202,4 @@
     ]
   }
 }
+
