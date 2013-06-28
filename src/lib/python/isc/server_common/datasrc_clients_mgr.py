@@ -40,10 +40,11 @@ class DataSrcClientsMgr:
     def __init__(self, use_cache=False):
         """Constructor.
 
-        In the initial implementation, user applications of this class are
-        generally expected to NOT use in-memory cache; use_cache would be
-        set to True only for tests.  In future, some applications such as
-        outbound zone transfer may want to set it to True.
+        In the initial implementation, most user applications of this class
+        are generally expected to NOT use in-memory cache; the only expected
+        exception is the memory (cache) manager, which, by definition,
+        needs to deal with in-memory data.  In future, some more applications
+        such as outbound zone transfer may want to set it to True.
 
         Parameter:
           use_cache (bool): If set to True, enable in-memory cache on
@@ -60,6 +61,31 @@ class DataSrcClientsMgr:
         # to be an additional layer of protection).
         self.__clients_map = {}
         self.__map_lock = threading.Lock()
+
+        # The generation ID of the configuration corresponding to
+        # current __clinets_map.  Until we support the concept of generations
+        # in the configuration framework, we tentatively maintain it within
+        # this class.
+        self.__gen_id = 0
+
+    def get_clients_map(self):
+        """Returns a dict from RR class to ConfigurableClientList with gen ID.
+
+        It corresponds to the generation of data source configuration at the
+        time of the call.  It can be safely called while reconfigure() is
+        called from another thread.
+
+        The mapping of the dict should be considered "frozen"; the caller
+        shouldn't modify the mapping (it can use the mapped objects in a
+        way modifying its internal state).
+
+        Note: in a future version we may also need to return the
+        "generation ID" of the corresponding configuration so the caller
+        application can handle migration between generations gradually.
+
+        """
+        with self.__map_lock:
+            return (self.__gen_id, self.__clients_map)
 
     def get_client_list(self, rrclass):
         """Return the configured ConfigurableClientList for the RR class.
@@ -91,7 +117,7 @@ class DataSrcClientsMgr:
             client_list = self.__clients_map.get(rrclass)
         return client_list
 
-    def reconfigure(self, config):
+    def reconfigure(self, new_config, config_data):
         """(Re)configure the set of client lists.
 
         This method takes a new set of data source configuration, builds
@@ -116,12 +142,20 @@ class DataSrcClientsMgr:
         at the same time.
 
         Parameter:
-          config (dict): configuration data for the data_sources module.
+          new_config (dict): configuration data for the data_sources module
+            (actually unused in this method).
+          config_data (isc.config.ConfigData): the latest full config data
+            for the data_sources module.  Usually the second parameter of
+            the (remote) configuration update callback for the module.
 
         """
         try:
             new_map = {}
-            for rrclass_cfg, class_cfg in config.get('classes').items():
+            # We only refer to config_data, not new_config (diff from the
+            # previous).  the latter may be empty for the initial default
+            # configuration while the former works for all cases.
+            for rrclass_cfg, class_cfg in \
+                    config_data.get_value('classes')[0].items():
                 rrclass = isc.dns.RRClass(rrclass_cfg)
                 new_client_list = isc.datasrc.ConfigurableClientList(rrclass)
                 new_client_list.configure(json.dumps(class_cfg),
@@ -129,6 +163,10 @@ class DataSrcClientsMgr:
                 new_map[rrclass] = new_client_list
             with self.__map_lock:
                 self.__clients_map = new_map
+
+                # NOTE: when we support the concept of generations this should
+                # be retrieved from the configuration
+                self.__gen_id += 1
         except Exception as ex:
             # Catch all types of exceptions as a whole: there won't be much
             # granularity for exceptions raised from the C++ module anyway.

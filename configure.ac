@@ -1192,6 +1192,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/Makefile
                  src/bin/loadzone/tests/correct/Makefile
+                 src/bin/memmgr/Makefile
+                 src/bin/memmgr/tests/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -1264,6 +1266,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/bind10/tests/Makefile
                  src/lib/python/isc/ddns/Makefile
                  src/lib/python/isc/ddns/tests/Makefile
+                 src/lib/python/isc/memmgr/Makefile
+                 src/lib/python/isc/memmgr/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
@@ -1377,6 +1381,8 @@ AC_OUTPUT([doc/version.ent
            src/bin/loadzone/loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
+           src/bin/memmgr/memmgr.py
+           src/bin/memmgr/memmgr.spec.pre
            src/bin/msgq/msgq.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
@@ -1395,6 +1401,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
            src/lib/python/isc/log_messages/work/__init__.py
+           src/lib/python/isc/server_common/bind10_server.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
