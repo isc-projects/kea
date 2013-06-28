@@ -256,11 +256,11 @@ class MockDataSrcClientsMgr():
     def get_client_list(self, rrclass):
         return self.found_datasrc_client_list
 
-    def reconfigure(self, arg1):
+    def reconfigure(self, arg1, arg2):
         # the only current test simply needs to know this is called with
-        # the expected argument and exceptions are handled.  if we need more
+        # the expected arguments and exceptions are handled.  if we need more
         # variations in tests, this mock method should be extended.
-        self.reconfigure_param.append(arg1)
+        self.reconfigure_param.append((arg1, arg2))
         raise isc.server_common.datasrc_clients_mgr.ConfigError(
             'reconfigure failure')
 
@@ -3038,7 +3038,7 @@ class TestXfrin(unittest.TestCase):
         # we just check it's called as expected, and the only possible
         # exception doesn't cause disruption.
         self.xfr._datasrc_config_handler(True, False)
-        self.assertEqual([True],
+        self.assertEqual([(True, False)],
                          self.xfr._datasrc_clients_mgr.reconfigure_param)
 
 def raise_interrupt():

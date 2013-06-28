@@ -1,0 +1,154 @@
+#!@PYTHON@
+
+# Copyright (C) 2013  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import copy
+import os
+import sys
+import signal
+
+sys.path.append('@@PYTHONPATH@@')
+import isc.log
+from isc.config import ModuleSpecError, ModuleCCSessionError
+from isc.log_messages.memmgr_messages import *
+from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
+from isc.server_common.datasrc_clients_mgr \
+    import DataSrcClientsMgr, ConfigError
+from isc.memmgr.datasrc_info import DataSrcInfo
+import isc.util.process
+
+MODULE_NAME = 'memmgr'
+
+isc.log.init('b10-memmgr', buffer=True)
+logger = isc.log.Logger(MODULE_NAME)
+
+isc.util.process.rename()
+
+class ConfigError(Exception):
+    """An exception class raised for configuration errors of Memmgr."""
+    pass
+
+class Memmgr(BIND10Server):
+    def __init__(self):
+        # Running configurable parameters: on initial configuration this will
+        # be a dict: str=>config_value.
+        # This is defined as "protected" so tests can inspect it; others
+        # shouldn't use it directly.
+        self._config_params = None
+
+        # The manager to keep track of data source configuration.  Allow
+        # tests to inspect/tweak it.
+        self._datasrc_clients_mgr = DataSrcClientsMgr(use_cache=True)
+
+        # List of DataSrcInfo.  Used as a queue to maintain info for all
+        # active configuration generations.  Allow tests to inspec it.
+        self._datasrc_info_list = []
+
+    def _config_handler(self, new_config):
+        """Configuration handler, called via BIND10Server.
+
+        This method must be exception free.  We assume minimum validity
+        about the parameter, though: it should be a valid dict, and conform
+        to the type specification of the spec file.
+
+        """
+        logger.debug(logger.DBGLVL_TRACE_BASIC, MEMMGR_CONFIG_UPDATE)
+
+        # Default answer:
+        answer = isc.config.create_answer(0)
+
+        # If this is the first time, initialize the local attributes with the
+        # latest full config data, which consist of the defaults with
+        # possibly overridden by user config.  Otherwise, just apply the latest
+        # diff.
+        if self._config_params is None:
+            new_config = self.mod_ccsession.get_full_config()
+        try:
+            self.__update_config(new_config)
+        except Exception as ex:
+            logger.error(MEMMGR_CONFIG_FAIL, ex)
+            answer = isc.config.create_answer(
+                1, 'Memmgr failed to apply configuration updates: ' + str(ex))
+
+        return answer
+
+    def __update_config(self, new_config):
+        """Apply config changes to local attributes.
+
+        This is a subroutine of _config_handler.  It's supposed to provide
+        strong exception guarantee: either all changes successfully apply
+        or, if any error is found, none applies.  In the latter case the
+        entire original configuration should be kept.
+
+        Errors are to be reported as an exception.
+
+        """
+        # If this is the first time, build everything from the scratch.
+        # Otherwise, make a full local copy and update it.
+        if self._config_params is None:
+            new_config_params = {}
+        else:
+            new_config_params = copy.deepcopy(self._config_params)
+
+        new_mapped_file_dir = new_config.get('mapped_file_dir')
+        if new_mapped_file_dir is not None:
+            if not os.path.isdir(new_mapped_file_dir):
+                raise ConfigError('mapped_file_dir is not a directory: ' +
+                                  new_mapped_file_dir)
+            if not os.access(new_mapped_file_dir, os.W_OK):
+                raise ConfigError('mapped_file_dir is not writable: ' +
+                                  new_mapped_file_dir)
+            new_config_params['mapped_file_dir'] = new_mapped_file_dir
+
+        # All copy, switch to the new configuration.
+        self._config_params = new_config_params
+
+    def _setup_module(self):
+        """Module specific initialization for BIND10Server."""
+        try:
+            # memmgr isn't usable if data source is not configured, and
+            # as long as cfgmgr is ready there's no timing issue.  So we
+            # immediately shut it down if it's missing.  See ddns.py.in
+            # about exceptions to catch.
+            self.mod_ccsession.add_remote_config_by_name(
+                'data_sources', self._datasrc_config_handler)
+        except (ModuleSpecError, ModuleCCSessionError) as ex:
+            logger.error(MEMMGR_NO_DATASRC_CONF, ex)
+            raise BIND10ServerFatal('failed to setup memmgr module')
+
+    def _datasrc_config_handler(self, new_config, config_data):
+        """Callback of data_sources configuration update.
+
+        This method must be exception free, so we catch all expected
+        exceptions internally; unexpected ones should mean a programming
+        error and will terminate the program.
+
+        """
+        try:
+            self._datasrc_clients_mgr.reconfigure(new_config, config_data)
+            genid, clients_map = self._datasrc_clients_mgr.get_clients_map()
+            datasrc_info = DataSrcInfo(genid, clients_map, self._config_params)
+            self._datasrc_info_list.append(datasrc_info)
+
+            # Full datasrc reconfig will be rare, so would be worth logging
+            # at the info level.
+            logger.info(MEMMGR_DATASRC_RECONFIGURED, genid)
+        except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
+            logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
+
+if '__main__' == __name__:
+    mgr = Memmgr()
+    sys.exit(mgr.run(MODULE_NAME))

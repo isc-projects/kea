@@ -1,0 +1,51 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# When you add a message to this file, it is a good idea to run
+# <topsrcdir>/tools/reorder_message_file.py to make sure the
+# messages are in the correct order.
+
+% MEMMGR_CONFIG_FAIL failed to apply configuration updates: %1
+The memmgr daemon tried to apply configuration updates but found an error.
+The cause of the error is included in the message.  None of the received
+updates applied, and the daemon keeps running with the previous configuration.
+
+% MEMMGR_CONFIG_UPDATE received new configuration
+A debug message.  The memmgr daemon receives configuratiopn updates
+and is now applying them to its running configurations.
+
+% MEMMGR_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
+Configuration for the global data sources is updated, but the update
+cannot be applied to memmgr.  The memmgr module will still keep running
+with the previous configuration, but the cause of the failure and
+other log messages must be carefully examined because if only memmgr
+rejects the new configuration then the entire BIND 10 system will have
+inconsistent state among different modules.  If other modules accept
+the update but memmgr produces this error, it's quite likely that the
+system isn't working as expected, and is probably better to be shut down
+to figure out and fix the cause.
+
+% MEMMGR_DATASRC_RECONFIGURED data source configuration has been updated, generation ID %1
+The memmgr daemon received a new version of data source configuration,
+and has successfully applied it to the local state.  Loading of new zone
+data into memory will possibly take place.
+
+% MEMMGR_NO_DATASRC_CONF failed to add data source configuration: %1
+The memmgr daemon tried to incorporate data source configuration on
+its startup but failed to do so.  Due to internal implementation
+details this shouldn't happen as long as the BIND 10 system has been
+installed correctly.  So, if this error message is logged, you should
+probably reinstall the entire system, preferably from the scratch, and
+see if it still happens.  The memmgr daemon cannot do any meaningful
+work without data sources, so it immediately terminates itself.

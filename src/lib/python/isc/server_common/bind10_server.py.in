@@ -1,0 +1,213 @@
+# Copyright (C) 2013  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import errno
+import os
+import select
+import signal
+
+import isc.log
+import isc.config
+from isc.server_common.logger import logger
+from isc.log_messages.server_common_messages import *
+
+class BIND10ServerFatal(Exception):
+    """Exception raised when the server program encounters a fatal error."""
+    pass
+
+class BIND10Server:
+    """A mixin class for common BIND 10 server implementations.
+
+    It takes care of common initialization such as setting up a module CC
+    session, and running main event loop.  It also handles the "shutdown"
+    command for its normal behavior.  If a specific server class wants to
+    handle this command differently or if it does not support the command,
+    it should override the _command_handler method.
+
+    Specific modules can define module-specific class inheriting this class,
+    instantiate it, and call run() with the module name.
+
+    Methods to be implemented in the actual class:
+      _config_handler: config handler method as specified in ModuleCCSession.
+                       must be exception free; errors should be signaled by
+                       the return value.
+      _mod_command_handler: can be optionally defined to handle
+                            module-specific commands.  should conform to
+                            command handlers as specified in ModuleCCSession.
+                            must be exception free; errors should be signaled
+                            by the return value.
+      _setup_module: can be optionally defined for module-specific
+                     initialization.  This is called after the module CC
+                     session has started, and can be used for registering
+                     interest on remote modules, etc.  If it raises an
+                     exception, the server will be immediatelly stopped.
+                     Parameter: None, Return: None
+
+    """
+    # Will be set to True when the server should stop and shut down.
+    # Can be read via accessor method 'shutdown', mainly for testing.
+    __shutdown = False
+
+    # ModuleCCSession used in the server.  Defined as 'protectd' so tests
+    # can refer to it directly; others should access it via the
+    # 'mod_ccsession' accessor.
+    _mod_cc = None
+
+    # Will be set in run().  Define a tentative value so other methods can
+    # be tested directly.
+    __module_name = ''
+
+    # Basically constant, but allow tests to override it.
+    _select_fn = select.select
+
+    @property
+    def shutdown(self):
+        return self.__shutdown
+
+    @property
+    def mod_ccsession(self):
+        return self._mod_cc
+
+    def _setup_ccsession(self):
+        """Create and start module CC session.
+
+        This is essentially private, but allows tests to override it.
+
+        """
+        self._mod_cc = isc.config.ModuleCCSession(
+            self._get_specfile_location(), self._config_handler,
+            self._command_handler)
+        self._mod_cc.start()
+
+    def _get_specfile_location(self):
+        """Return the path to the module spec file following common convetion.
+
+        This method generates the path commonly used by most BIND 10 modules,
+        determined by a well known prefix and the module name.
+
+        A specific module can override this method if it uses a different
+        path for the spec file.
+
+        """
+        # First check if it's running under an 'in-source' environment,
+        # then try commonly used paths and file names.  If found, use it.
+        for ev in ['B10_FROM_SOURCE', 'B10_FROM_BUILD']:
+            if ev in os.environ:
+                specfile = os.environ[ev] + '/src/bin/' + self.__module_name +\
+                    '/' + self.__module_name + '.spec'
+                if os.path.exists(specfile):
+                    return specfile
+        # Otherwise, just use the installed path, whether or not it really
+        # exists; leave error handling to the caller.
+        specfile_path = '${datarootdir}/bind10'\
+            .replace('${datarootdir}', '${prefix}/share')\
+            .replace('${prefix}', '/Users/jinmei/opt')
+        return specfile_path + '/' + self.__module_name + '.spec'
+
+    def _trigger_shutdown(self):
+        """Initiate a shutdown sequence.
+
+        This method is expected to be called in various ways including
+        in the middle of a signal handler, and is designed to be as simple
+        as possible to minimize side effects.  Actual shutdown will take
+        place in a normal control flow.
+
+        This method is defined as 'protected'.  User classes can use it
+        to shut down the server.
+
+        """
+        self.__shutdown = True
+
+    def _run_internal(self):
+        """Main event loop.
+
+        This method is essentially private, but allows tests to override it.
+
+        """
+
+        logger.info(PYSERVER_COMMON_SERVER_STARTED, self.__module_name)
+        cc_fileno = self._mod_cc.get_socket().fileno()
+        while not self.__shutdown:
+            try:
+                (reads, _, _) = self._select_fn([cc_fileno], [], [])
+            except select.error as ex:
+                # ignore intterruption by signal; regard other select errors
+                # fatal.
+                if ex.args[0] == errno.EINTR:
+                    continue
+                else:
+                    raise
+            for fileno in reads:
+                if fileno == cc_fileno:
+                    # this shouldn't raise an exception (if it does, we'll
+                    # propagate it)
+                    self._mod_cc.check_command(True)
+
+        self._mod_cc.send_stopping()
+
+    def _command_handler(self, cmd, args):
+        logger.debug(logger.DBGLVL_TRACE_BASIC, PYSERVER_COMMON_COMMAND,
+                     self.__module_name, cmd)
+        if cmd == 'shutdown':
+            self._trigger_shutdown()
+            answer = isc.config.create_answer(0)
+        else:
+            answer = self._mod_command_handler(cmd, args)
+
+        return answer
+
+    def _mod_command_handler(self, cmd, args):
+        """The default implementation of the module specific command handler"""
+        return isc.config.create_answer(1, "Unknown command: " + str(cmd))
+
+    def _setup_module(self):
+        """The default implementation of the module specific initilization"""
+        pass
+
+    def run(self, module_name):
+        """Start the server and let it run until it's told to stop.
+
+        Usually this must be the first method of this class that is called
+        from its user.
+
+        Parameter:
+          module_name (str): the Python module name for the actual server
+            implementation.  Often identical to the directory name in which
+            the implementation files are placed.
+
+        Returns: values expected to be used as program's exit code.
+          0: server has run and finished successfully.
+          1: some error happens
+
+          """
+        try:
+            self.__module_name = module_name
+            shutdown_sighandler = \
+                lambda signal, frame: self._trigger_shutdown()
+            signal.signal(signal.SIGTERM, shutdown_sighandler)
+            signal.signal(signal.SIGINT, shutdown_sighandler)
+            self._setup_ccsession()
+            self._setup_module()
+            self._run_internal()
+            logger.info(PYSERVER_COMMON_SERVER_STOPPED, self.__module_name)
+            return 0
+        except BIND10ServerFatal as ex:
+            logger.error(PYSERVER_COMMON_SERVER_FATAL, self.__module_name,
+                         ex)
+        except Exception as ex:
+            logger.error(PYSERVER_COMMON_UNCAUGHT_EXCEPTION, type(ex).__name__,
+                         ex)
+
+        return 1
