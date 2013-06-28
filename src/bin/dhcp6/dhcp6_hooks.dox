@@ -13,95 +13,116 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /**
- @page hooks-dhcp6 Hooks API for DHCPv6 Server
+ @page dhcpv6Hooks The Hooks API for the DHCPv6 Server
 
- BIND10 features Hooks API that allows user libraries to define callouts that
- can be called when specific action is taken. Please refer to
- http://bind10.isc.org/wiki/DhcpHooks for generic Hooks API. The following
- page describes hooks available in DHCPv6 Server engine.
+ @section dhcpv6HooksIntroduction Introduction
+ BIND10 features an API (the "Hooks" API) that allows user-written code to
+ be integrated into BIND 10 and called at specific points in its processing.
+ An overview of the API and a tutorial for writing generalised hook code can
+ API can be found in @ref hookDevelopersGuide.
 
- @todo Move generic Hooks API from wiki to Developer's Guide
+ This manual is more specialised and is aimed at developers of hook
+ code for the DHCPv6 server. It describes each hook point, the callouts
+ attached to the hook are able to do, and the arguments passed  to them.
+ Each entry in this manual has the following information:
 
- Each hook point can have zero or more callouts installed on it. The callouts
- will be called and there usually one or more arguments passed to it. The
- arguments can be accessed using isc::hooks::CalloutHandle::getArgument() method.
- Arguments can have @b in direction (server passes values to callouts, but
- ignores any value set by callout), <b>in/out</b> (server passes values to
- callouts and uses whatever value callouts sends back) or @b out (callout is
- expected to set the value). In case of <b>in/out</b> direction, the callout
- may choose to not do any modifications. The server will use the value it
- sent to callouts.
+ - Name of the hook point.
+ - Arguments for the callout.  As well as the argument name and data type, the
+   information includes the direction, which can be one of:
+   - @b in - the server passes values to the callout but ignored any data
+     returned.
+   - @b out - the callout is expected to set this value.
+   - <b>in/out</b> - the server passes a value to the callout and uses whatever
+     value the callout sends back.  Note that the callout may choose not to
+     do any modification, in which case the server will use whatever value
+     it sent to the callout.
+ - Description: a description of the hook, including where in the processing
+   it is called, a description of the data available, and the possible
+   actions a callout attached to this hook could take.
+ - Skip flag action: the action taken by the server if a callout chooses to set
+    the "skip" flag.
 
- Hook point name: @b pkt6_receive
+@section dhcpv6HooksHookPoints Hooks in the DHCPv6 Server
+
+@subsection dhcpv6HooksLeaseSelect lease6_select
 
  - @b Arguments:
-   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>[in/out]</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b fake_allocation, type: bool, direction: <b>in</b>
+   - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
 
- - @b Description: this callout is executed when incoming DHCPv6
+ - @b Description: this callout is executed after the server engine
+   has selected a lease for client's request but before the lease has
+   been inserted into the database. Any modifications made to the
+   Lease6 object will be directly inserted into database. The callout should
+   make sure that any modifications are sanity checked as the
+   server will use that data as is with no further checking.\n\n
+   The server processes lease requests for SOLICIT and REQUEST in a very
+   similar way. The only major difference is that for SOLICIT the
+   lease is just selected but it is not inserted into database.  It is
+   possible to distinguish between SOLICIT and REQUEST by checking value
+   of fake_allocation flag: true means that the lease won't be interested
+   into database (SOLICIT), false means that it will (REQUEST).
+
+ - <b>Skip flag action</b>: the "skip" flag is ignored by the server on this
+   hook.
+
+ @subsection dhcpv6HooksPkt6Receive pkt6_receive
+
+ - @b Arguments:
+   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when an incoming DHCPv6
    packet is received and its content is parsed. The sole argument -
-   pkt6 - contains a pointer to isc::dhcp::Pkt6 class that contains all
-   informations regarding incoming packet, including its source and
-   destination addresses, interface over which it was received, list
+   pkt6 - contains a pointer to an isc::dhcp::Pkt6 object that contains all
+   information regarding incoming packet, including its source and
+   destination addresses, interface over which it was received, a list
    of all options present within and relay information. See Pkt6 class
    definition for details. All fields of the Pkt6 class can be
    modified at this time, except data_ (which contains incoming packet
    as raw buffer, but that information was already parsed, so it
-   doesn't make sense to modify it at this time). If any callout sets
-   skip flag, the server will drop the packet and will not do anything
-   with it, except logging a drop reason as a callout action.
+   doesn't make sense to modify it at this time).
+   
+ - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+   drop the packet and will not do anything with it except logging a drop
+   reason if debugging is enabled.
 
-Hook point name: @b subnet6_select
+@subsection dhcpv6HooksPkt6Send pkt6_send
 
  - @b Arguments:
-   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction <b>[in/out]</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction <b>[in/out]</b>
-   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection&, direction <b>[in]</b>
+   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when server's response
+   is about to be send back to the client. The sole argument - pkt6 -
+   contains a pointer to Pkt6 class that contains packet, with set
+   source and destination addresses, interface over which it will be
+   send, list of all options and relay information. (See the isc::dhcp::Pkt6
+   class definition for details.) All fields of the Pkt6 class can be
+   modified at this time, except bufferOut_.  (This is scratch space used for
+   constructing the packet after all pkt6_send callouts are complete, so any
+   changes to that field will be overwritten.)
+  
+ - <b>Skip flag action</b>: if any callout sets the skip
+   flag, the server will drop the packet and will not do anything with
+   it, except logging a drop reason if debugging is enabled.
+
+@subsection dhcpv6HooksSubnet6Select subnet6_select
+
+ - @b Arguments:
+   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection&, direction: <b>in</b>
 
  - @b Description: this callout is executed when a subnet is being
    selected for incoming packet. All parameters, addresses and
    prefixes will be assigned from that subnet. Callout can select a
    different subnet if it wishes so. The list of all subnets currently
    configured is provided as 'subnet6collection'. The list itself must
-   not be modified. If any callout installed on 'subnet6_select' sets
-   a flag skip, then the server will not select any subnet. Packet
-   processing will continue, but it will be severely limited
-   (i.e. only global options will be assigned).
-
-Hook point name: @b lease6_select
-
- - @b Arguments:
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>[in]</b>
-   - name: @b fake_allocation, type: bool, direction: <b>[in]</b>
-   - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>[in/out]</b>
-
- - @b Description: this callout is executed after the server engine
-   has selected a lease for client's request, and before the lease has
-   been inserted into the database. Any modifications made to the
-   Lease6 object will be directly inserted into database. Make sure
-   that any modifications the callout does are sanity checked as
-   server will use that data as is. Server processes lease requests
-   for SOLICIT and REQUEST in a very similar way. The only major
-   difference is that for SOLICIT the lease is just selected to be
-   offered, but it is not inserted into database. You can distinguish
-   between SOLICIT and REQUEST by checking value of fake_allocation
-   flag: true means that the lease won't be interested into database
-   (SOLICIT), false means that it will (REQUEST).
-
-Hook point name: @b pkt6_send
-
- - Arguments:
-   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>[in/out]</b>
-
- - @b Description: this callout is executed when server's response
-   DHCP is about to be send back to clients. The sole argument - pkt6 -
-   contains a pointer to Pkt6 class that contains packet, with set
-   source and destination addresses, interface over which it will be
-   send, list of all options and relay information. See Pkt6 class
-   definition for details. All fields of the Pkt6 class can be
-   modified at this time, except bufferOut_ (packet will be
-   constructed there after pkt6_send callouts are complete), so any
-   changes to that field will be overwritten. If any callout sets skip
-   flag, the server will drop the packet and will not do anything with
-   it, except logging a drop reason as a callout action.
+   not be modified.
+   
+ - <b>Skip flag action</b>: If any callout installed on 'subnet6_select'
+   sets the skip flag, the server will not select any subnet. Packet processing
+   will continue, but will be severely limited (i.e. only global options
+   will be assigned).
 
 */
