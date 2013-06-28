@@ -28,6 +28,7 @@ namespace isc {
 namespace d2 {
 
 /// @brief  DHCP-DDNS Configuration Context
+///
 /// Implements the storage container for configuration context.
 /// It provides a single enclosure for the storage of configuration parameters
 /// and any other DHCP-DDNS specific information that needs to be accessible
@@ -45,21 +46,28 @@ public:
     ///
     /// @return returns a raw pointer to the new clone.
     virtual D2CfgContext* clone() {
-            return (new D2CfgContext(*this));
+        return (new D2CfgContext(*this));
     }
 
     /// @brief Fetches the forward DNS domain list manager.
     ///
-    /// @return returns a pointer reference to the forward manager.
-    DdnsDomainListMgrPtr& getForwardMgr() {
+    /// @return returns a pointer to the forward manager.
+    DdnsDomainListMgrPtr getForwardMgr() {
         return (forward_mgr_);
     }
 
     /// @brief Fetches the reverse DNS domain list manager.
     ///
-    /// @return returns a pointer reference to the reverse manager.
-    DdnsDomainListMgrPtr& getReverseMgr() {
+    /// @return returns a pointer to the reverse manager.
+    DdnsDomainListMgrPtr getReverseMgr() {
         return (reverse_mgr_);
+    }
+
+    /// @brief Fetches the map of TSIG keys.
+    ///
+    /// @return returns a pointer to the key map.
+    TSIGKeyInfoMapPtr getKeys() {
+        return (keys_);
     }
 
 protected:
@@ -75,6 +83,9 @@ private:
 
     /// @brief Reverse domain list manager.
     DdnsDomainListMgrPtr reverse_mgr_;
+
+    /// @brief Storage for the map of TSIGKeyInfos
+    TSIGKeyInfoMapPtr keys_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.

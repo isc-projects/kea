@@ -88,17 +88,17 @@ public:
 /// 3. Destruction works properly.
 /// 4. Construction with a null context is not allowed.
 TEST(DCfgMgrBase, construction) {
-    DCfgMgrBase *cfg_mgr = NULL;
+    DCfgMgrBasePtr cfg_mgr;
 
     // Verify that configuration manager constructions without error.
-    ASSERT_NO_THROW(cfg_mgr=new DStubCfgMgr());
+    ASSERT_NO_THROW(cfg_mgr.reset(new DStubCfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
     DCfgContextBasePtr context = cfg_mgr->getContext();
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
-    EXPECT_NO_THROW(delete cfg_mgr);
+    EXPECT_NO_THROW(cfg_mgr.reset());
 
     // Verify that an attempt to construct a manger with a null context fails.
     ASSERT_THROW(DCtorTestCfgMgr(), DCfgMgrBaseError);
@@ -145,6 +145,7 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
 /// 2. A parse order list with too few elements is detected.
 /// 3. Ordered parsing parses the elements in the order specified by the
 /// configuration manager's parse order list.
+/// 4. A parse order list with too many elements is detected.
 TEST_F(DStubCfgMgrTest, parseOrderTest) {
     // Element ids used for test.
     std::string charlie("charlie");
@@ -213,6 +214,17 @@ TEST_F(DStubCfgMgrTest, parseOrderTest) {
 
     // Verify that the parsed order is the order we configured.
     EXPECT_TRUE(cfg_mgr_->getParseOrder() == cfg_mgr_->parsed_order_);
+
+    // Create a parse order list that has too many entries.  Verify that
+    // when parsing the test config, it fails.
+    cfg_mgr_->addToParseOrder("delta");
+
+    // Verify the parse order list is the size we expect.
+    EXPECT_EQ(4, cfg_mgr_->getParseOrder().size());
+
+    // Verify the configuration fails.
+    answer_ = cfg_mgr_->parseConfig(config_set_);
+    EXPECT_TRUE(checkAnswer(1));
 }
 
 /// @brief Tests that element ids supported by the base class as well as those
