@@ -40,8 +40,6 @@ namespace d2 {
 
 // *********************** DCfgContextBase  *************************
 
-const bool DCfgContextBase::optional_ = true;
-
 DCfgContextBase::DCfgContextBase():
         boolean_values_(new BooleanStorage()),
         uint32_values_(new Uint32Storage()),
@@ -143,30 +141,42 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         // elements are parsed in the order the value_map presents them.
 
         if (parse_order_.size() > 0) {
+            // For each element_id in the parse order list, look for it in the
+            // value map.  If the element exists in the map, pass it and it's
+            // associated data in for parsing.  
+            // If there is no matching entry in the value map an error is 
+            // thrown.  Optional elements may not be used with ordered parsing.
+            int parsed_count = 0;
+            std::map<std::string, ConstElementPtr>::const_iterator it;
+            BOOST_FOREACH(element_id, parse_order_) {
+                it = values_map.find(element_id);
+                if (it != values_map.end()) {
+                    ++parsed_count;
+                    buildAndCommit(element_id, it->second);
+                }
+                else {
+                    LOG_ERROR(dctl_logger, DCTL_ORDER_NO_ELEMENT)
+                              .arg(element_id);
+                    isc_throw(DCfgMgrBaseError, "Element:" << element_id <<  
+                              " is listed in the parse order but is not "
+                              " present in the configuration");
+                }
+            }
+
             // NOTE: When using ordered parsing, the parse order list MUST
             // include every possible element id that the value_map may contain.
             // Entries in the map that are not in the parse order, would not be
             // parsed. For now we will flag this as a programmatic error.  One
             // could attempt to adjust for this, by identifying such entries
             // and parsing them either first or last but which would be correct?
-            // Better to make hold the engineer accountable.
-            if (values_map.size() > parse_order_.size()) {
+            // Better to hold the engineer accountable.  So, if we parsed none
+            // or we parsed fewer than are in the map; then either the parse i
+            // order is incomplete OR the map has unsupported values.
+            if (!parsed_count || 
+                (parsed_count && ((parsed_count + 1) < values_map.size()))) {
                 LOG_ERROR(dctl_logger, DCTL_ORDER_ERROR);
-                return (isc::config::createAnswer(1,
-                        "Configuration contains elements not in parse order"));
-            }
-
-            // For each element_id in the parse order list, look for it in the
-            // value map.  If the element exists in the map, pass it and it's
-            // associated data in for parsing.  If there is no matching entry
-            // in the value map, then assume the element is optional and move
-            // on to next element_id.
-            std::map<std::string, ConstElementPtr>::const_iterator it;
-            BOOST_FOREACH(element_id, parse_order_) {
-                it = values_map.find(element_id);
-                if (it != values_map.end()) {
-                    buildAndCommit(element_id, it->second);
-                }
+                isc_throw(DCfgMgrBaseError, 
+                        "Configuration contains elements not in parse order");
             }
         } else {
             // Order doesn't matter so iterate over the value map directly.
@@ -185,8 +195,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(element_id).arg(ex.what());
         answer = isc::config::createAnswer(1,
-                     string("Configuration parsing failed:") + ex.what() +
-                     " for element: " + element_id);
+                     string("Configuration parsing failed: ") + ex.what());
 
         // An error occurred, so make sure that we restore original context.
         context_ = original_context;
@@ -202,7 +211,7 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
     // based on the element id.
     ParserPtr parser = createConfigParser(element_id);
     if (!parser) {
-        isc_throw(DCfgMgrBaseError, std::string("Could not create parser"));
+        isc_throw(DCfgMgrBaseError, "Could not create parser");
     }
 
     try {
@@ -217,8 +226,8 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
         // nothing something we are concerned with here.)
         parser->commit();
     } catch (const isc::Exception& ex) {
-        isc_throw(DCfgMgrBaseError, std::string("Could not build and commit")
-                                    + ex.what());
+        isc_throw(DCfgMgrBaseError, 
+                  "Could not build and commit: " << ex.what());
     } catch (...) {
         isc_throw(DCfgMgrBaseError, "Non-ISC exception occurred");
     }

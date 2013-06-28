@@ -25,13 +25,18 @@ const char* valid_d2_config = "{ "
                         "\"interface\" : \"eth1\" , "
                         "\"ip_address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
+                        "\"tsig_keys\": ["
+                        "{ \"name\": \"d2_key.tmark.org\" , "
+                        "   \"algorithm\": \"md5\" ,"
+                        "   \"secret\": \"0123456989\" "
+                        "} ],"
                         "\"forward_ddns\" : {"
                         "\"ddns_domains\": [ "
                         "{ \"name\": \"tmark.org\" , "
                         "  \"key_name\": \"d2_key.tmark.org\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"hostname\": \"one.tmark\" } "
-                        "     ] } ] }, "
+                        "] } ] }, "
                         "\"reverse_ddns\" : {"
                         "\"ddns_domains\": [ "
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
@@ -296,7 +301,7 @@ DStubCfgMgr::createConfigParser(const std::string& element_id) {
         // to test parse ordering, by permitting a wide range of element ids
         // to "succeed" without specifically supporting them.
         if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
-            isc_throw(DCfgMgrBaseError, "Configuration parameter not supported"
+            isc_throw(DCfgMgrBaseError, "Configuration parameter not supported: "
                       << element_id);
         }
 
