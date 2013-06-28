@@ -1489,7 +1489,7 @@ class SessionTest(SessionTestBase):
                                  RRType.CNAME, 3600,
                                  [ "cname.example.org." ])
 
-        self.check_full_handle_result(Rcode.SERVFAIL, [ new_cname ])
+        self.check_full_handle_result(Rcode.REFUSED, [ new_cname ])
 
 class SessionACLTest(SessionTestBase):
     '''ACL related tests for update session.'''
