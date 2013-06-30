@@ -347,6 +347,7 @@ ConfigurableClientList::resetMemorySegment
 
 ConfigurableClientList::ZoneWriterPair
 ConfigurableClientList::getCachedZoneWriter(const Name& name,
+                                            bool catch_load_error,
                                             const std::string& datasrc_name)
 {
     if (!allow_cache_) {
@@ -385,7 +386,8 @@ ConfigurableClientList::getCachedZoneWriter(const Name& name,
                                ZoneWriterPtr(
                                    new memory::ZoneWriter(
                                        *info.ztable_segment_,
-                                       load_action, name, rrclass_, false))));
+                                       load_action, name, rrclass_,
+                                       catch_load_error))));
     }
 
     // We can't find the specified zone.  If a specific data source was

@@ -1,17 +1,10 @@
+SUBDIRS = testdata
+
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS =  datasrc_test.py sqlite3_ds_test.py
 PYTESTS += clientlist_test.py zone_loader_test.py
 EXTRA_DIST = $(PYTESTS)
 
-EXTRA_DIST += testdata/brokendb.sqlite3
-EXTRA_DIST += testdata/example.com.sqlite3
-EXTRA_DIST += testdata/example.com.source.sqlite3
-EXTRA_DIST += testdata/newschema.sqlite3
-EXTRA_DIST += testdata/oldschema.sqlite3
-EXTRA_DIST += testdata/new_minor_schema.sqlite3
-EXTRA_DIST += testdata/example.com
-EXTRA_DIST += testdata/example.com.ch
-EXTRA_DIST += testdata/static.zone
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
 CLEANFILES += $(abs_builddir)/zoneloadertest.sqlite3
 
