@@ -1,4 +1,4 @@
-SUBDIRS = guide
+SUBDIRS = guide design
 
 EXTRA_DIST = version.ent.in differences.txt Doxyfile Doxyfile-xml
 
