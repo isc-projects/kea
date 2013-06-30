@@ -1481,6 +1481,16 @@ class SessionTest(SessionTestBase):
         self.assertEqual(Rcode.SERVFAIL.to_text(),
                          self._session._UpdateSession__do_update().to_text())
 
+    def test_check_zone_failure(self):
+        # ns3.example.org. is an NS and should not have a CNAME
+        # record. This would cause check_zone() to fail.
+        self.__initialize_update_rrsets()
+        new_cname = create_rrset("ns3.example.org", TEST_RRCLASS,
+                                 RRType.CNAME, 3600,
+                                 [ "cname.example.org." ])
+
+        self.check_full_handle_result(Rcode.REFUSED, [ new_cname ])
+
 class SessionACLTest(SessionTestBase):
     '''ACL related tests for update session.'''
     def test_update_acl_check(self):
