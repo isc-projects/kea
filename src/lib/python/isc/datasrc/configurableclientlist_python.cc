@@ -165,8 +165,15 @@ ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
         PyObject* name_obj;
         int catch_load_error;
         const char* datasrc_name_p = "";
+#if (PY_VERSION_HEX >= 0x030300f0)
+        // The 'p' specifier for predicate (boolean) is available from
+        // Python 3.3 (final) only.
         if (PyArg_ParseTuple(args, "O!p|s", &isc::dns::python::name_type,
                              &name_obj, &catch_load_error, &datasrc_name_p)) {
+#else
+        if (PyArg_ParseTuple(args, "O!i|s", &isc::dns::python::name_type,
+                             &name_obj, &catch_load_error, &datasrc_name_p)) {
+#endif
             const isc::dns::Name&
                 name(isc::dns::python::PyName_ToName(name_obj));
             const std::string datasrc_name(datasrc_name_p);
