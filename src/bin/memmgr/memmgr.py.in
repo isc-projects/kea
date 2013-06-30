@@ -139,12 +139,11 @@ class Memmgr(BIND10Server):
 
         # See the documentation for MemorySegmentBuilder on how the
         # following are used.
-        self._builder_cv = threading.Condition()
         self._builder_lock = threading.Lock()
+        self._builder_cv = threading.Condition(lock=self._builder_lock)
 
         self._builder = MemorySegmentBuilder(self._builder_sock,
                                              self._builder_cv,
-                                             self._builder_lock,
                                              self._builder_command_queue,
                                              self._builder_response_queue)
         self._builder_thread = threading.Thread(target=self._builder.run)
@@ -163,8 +162,7 @@ class Memmgr(BIND10Server):
         # This makes the MemorySegmentBuilder exit its main loop. It
         # should make the builder thread joinable.
         with self._builder_cv:
-            with self._builder_lock:
-                self._builder_command_queue.append('shutdown')
+            self._builder_command_queue.append('shutdown')
             self._builder_cv.notify_all()
 
         self._builder_thread.join()

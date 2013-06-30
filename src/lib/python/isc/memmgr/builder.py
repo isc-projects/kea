@@ -19,7 +19,7 @@ class MemorySegmentBuilder:
     in the given order sequentially.
     """
 
-    def __init__(self, sock, cv, lock, command_queue, response_queue):
+    def __init__(self, sock, cv, command_queue, response_queue):
         """ The constructor takes the following arguments:
 
             sock: A socket using which this builder object notifies the
@@ -27,11 +27,10 @@ class MemorySegmentBuilder:
 
             cv: A condition variable object that is used by the main
                 thread to tell this builder object that new commands are
-                available to it.
-
-            lock: A lock object which should be acquired before using or
-                  modifying the contents of command_queue and
-                  response_queue.
+                available to it. Note that this is also used for
+                synchronizing access to the queues, so code that uses
+                MemorySegmentBuilder must use this condition variable's
+                lock object to synchronize its access to the queues.
 
             command_queue: A list of commands sent by the main thread to
                            this object. Commands should be executed
@@ -47,7 +46,6 @@ class MemorySegmentBuilder:
 
         self._sock = sock
         self._cv = cv
-        self._lock = lock
         self._command_queue = command_queue
         self._response_queue = response_queue
         self._shutdown = False
@@ -55,12 +53,12 @@ class MemorySegmentBuilder:
     def run(self):
         """ This is the method invoked when the builder thread is
             started.  In this thread, be careful when modifying
-            variables passed-by-reference in the constructor. If they are
-            reassigned, they will not refer to the main thread's objects
-            any longer. Any use of command_queue and response_queue must
-            be synchronized by acquiring the lock. This method must
-            normally terminate only when the 'shutdown' command is sent
-            to it.
+            variables passed-by-reference in the constructor. If they
+            are reassigned, they will not refer to the main thread's
+            objects any longer. Any use of command_queue and
+            response_queue must be synchronized by acquiring the lock in
+            the condition variable. This method must normally terminate
+            only when the 'shutdown' command is sent to it.
         """
 
         # Acquire the condition variable while running the loop.
@@ -70,9 +68,8 @@ class MemorySegmentBuilder:
                     self._cv.wait()
                 # Move the queue content to a local queue. Be careful of
                 # not making assignments to reference variables.
-                with self._lock:
-                    local_command_queue = self._command_queue.copy()
-                    self._command_queue.clear()
+                local_command_queue = self._command_queue.copy()
+                self._command_queue.clear()
 
                 # Run commands passed in the command queue sequentially
                 # in the given order.  For now, it only supports the
@@ -90,9 +87,7 @@ class MemorySegmentBuilder:
                         # main thread which would need to be
                         # notified. Instead return this in the response
                         # queue.
-                        with self._lock:
-                            self._response_queue.append(('bad_command',))
-
+                        self._response_queue.append(('bad_command',))
                         self._shutdown = True
                         break
 
