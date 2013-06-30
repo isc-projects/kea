@@ -1,3 +1,12 @@
+634.	[bug]		muks
+	When processing DDNS updates, we now check the zone more
+	thoroughly with the received zone data updates to check if it is
+	valid.  If the zone fails validation, we reply with SERVFAIL
+	rcode. So, while previously we may have allowed more zone data
+	cases without checking which resulted in invalid zones, such
+	update requests are now rejected.
+	(Trac #2759, git d8991bf8ed720a316f7506c1dd9db7de5c57ad4d)
+
 633.	[func]		jinmei
 	b10-memmgr: a new BIND 10 module that manages shared memory
 	segments for DNS zone data.  At this point it's runnable but does
