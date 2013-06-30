@@ -210,7 +210,7 @@ public:
                               config_ztable_segment);
 
             const ConfigurableClientList::ZoneWriterPair result =
-                list_->getCachedZoneWriter(zone, dsrc_info.name_);
+                list_->getCachedZoneWriter(zone, false, dsrc_info.name_);
 
             ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
             result.second->load();
@@ -1023,7 +1023,7 @@ TEST_P(ListTest, BadMasterFile) {
 ConfigurableClientList::CacheStatus
 ListTest::doReload(const Name& origin, const string& datasrc_name) {
     ConfigurableClientList::ZoneWriterPair
-        result(list_->getCachedZoneWriter(origin, datasrc_name));
+        result(list_->getCachedZoneWriter(origin, false, datasrc_name));
     if (result.first == ConfigurableClientList::ZONE_SUCCESS) {
         // Can't use ASSERT_NE here, it would want to return(), which
         // it can't in non-void function.
@@ -1039,6 +1039,59 @@ ListTest::doReload(const Name& origin, const string& datasrc_name) {
         EXPECT_EQ(static_cast<memory::ZoneWriter*>(NULL), result.second.get());
     }
     return (result.first);
+}
+
+// Check that ZoneWriter doesn't throw when asked not to
+TEST_P(ListTest, checkZoneWriterCatchesExceptions) {
+    const ConstElementPtr config_elem_zones_(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"example.edu\": \"" TEST_DATA_DIR "example.edu-broken\""
+        "    },"
+        "   \"cache-enable\": true"
+        "}]"));
+
+    list_->configure(config_elem_zones_, true);
+    ConfigurableClientList::ZoneWriterPair
+        result(list_->getCachedZoneWriter(Name("example.edu"), true));
+    ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
+    ASSERT_TRUE(result.second);
+
+    std::string error_msg;
+    // Because of the way we called getCachedZoneWriter() with
+    // catch_load_error=true, the following should not throw and must
+    // return an error message in error_msg.
+    EXPECT_NO_THROW(result.second->load(&error_msg));
+    EXPECT_FALSE(error_msg.empty());
+    result.second->cleanup();
+}
+
+// Check that ZoneWriter throws when asked to
+TEST_P(ListTest, checkZoneWriterThrows) {
+    const ConstElementPtr config_elem_zones_(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"example.edu\": \"" TEST_DATA_DIR "example.edu-broken\""
+        "    },"
+        "   \"cache-enable\": true"
+        "}]"));
+
+    list_->configure(config_elem_zones_, true);
+    ConfigurableClientList::ZoneWriterPair
+        result(list_->getCachedZoneWriter(Name("example.edu"), false));
+    ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
+    ASSERT_TRUE(result.second);
+
+    std::string error_msg;
+    // Because of the way we called getCachedZoneWriter() with
+    // catch_load_error=false, the following should throw and must not
+    // modify error_msg.
+    EXPECT_THROW(result.second->load(&error_msg),
+                 isc::datasrc::ZoneLoaderException);
+    EXPECT_TRUE(error_msg.empty());
+    result.second->cleanup();
 }
 
 // Test we can reload a zone
@@ -1315,9 +1368,9 @@ ListTest::accessorIterate(const ConstZoneTableAccessorPtr& accessor,
     bool found = false;
     int i;
     for (i = 0; !it->isLast(); ++i, it->next()) {
-	if (Name(zoneName) == it->getCurrent().origin) {
-	    found = true;
-	}
+        if (Name(zoneName) == it->getCurrent().origin) {
+            found = true;
+        }
     }
     EXPECT_EQ(i, numZones);
     if (numZones > 0) {

@@ -163,15 +163,17 @@ ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
         static_cast<s_ConfigurableClientList*>(po_self);
     try {
         PyObject* name_obj;
+        int catch_load_error;
         const char* datasrc_name_p = "";
-        if (PyArg_ParseTuple(args, "O!|s", &isc::dns::python::name_type,
-                             &name_obj, &datasrc_name_p)) {
+        if (PyArg_ParseTuple(args, "O!p|s", &isc::dns::python::name_type,
+                             &name_obj, &catch_load_error, &datasrc_name_p)) {
             const isc::dns::Name&
                 name(isc::dns::python::PyName_ToName(name_obj));
             const std::string datasrc_name(datasrc_name_p);
 
             const ConfigurableClientList::ZoneWriterPair result =
-                self->cppobj->getCachedZoneWriter(name, datasrc_name);
+                self->cppobj->getCachedZoneWriter(name, catch_load_error,
+                                                  datasrc_name);
 
             PyObjectContainer writer;
             if (!result.second) {
