@@ -30,11 +30,9 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         self._builder_response_queue = []
 
         self._builder_cv = threading.Condition()
-        self._builder_lock = threading.Lock()
 
         self._builder = MemorySegmentBuilder(self._builder_sock,
                                              self._builder_cv,
-                                             self._builder_lock,
                                              self._builder_command_queue,
                                              self._builder_response_queue)
         self._builder_thread = threading.Thread(target=self._builder.run)
@@ -60,8 +58,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         # Now that the builder thread is running, send it a bad
         # command. The thread should exit its main loop and be joinable.
         with self._builder_cv:
-            with self._builder_lock:
-                self._builder_command_queue.append('bad_command')
+            self._builder_command_queue.append('bad_command')
             self._builder_cv.notify_all()
 
         # Wait 5 seconds to receive a notification on the socket from
@@ -81,15 +78,15 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         self.assertFalse(self._builder_thread.isAlive())
 
         # The command queue must be cleared, and the response queue must
-        # contain a response that a bad command was sent.
-        with self._builder_lock:
-            self.assertEqual(len(self._builder_command_queue), 0)
-            self.assertEqual(len(self._builder_response_queue), 1)
+        # contain a response that a bad command was sent. The thread is
+        # no longer running, so we can use the queues without a lock.
+        self.assertEqual(len(self._builder_command_queue), 0)
+        self.assertEqual(len(self._builder_response_queue), 1)
 
-            response = self._builder_response_queue[0]
-            self.assertTrue(isinstance(response, tuple))
-            self.assertTupleEqual(response, ('bad_command',))
-            self._builder_response_queue.clear()
+        response = self._builder_response_queue[0]
+        self.assertTrue(isinstance(response, tuple))
+        self.assertTupleEqual(response, ('bad_command',))
+        self._builder_response_queue.clear()
 
     def test_shutdown(self):
         """Tests that shutdown command exits the MemorySegmentBuilder
@@ -101,11 +98,10 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         # Now that the builder thread is running, send it the shutdown
         # command. The thread should exit its main loop and be joinable.
         with self._builder_cv:
-            with self._builder_lock:
-                self._builder_command_queue.append('shutdown')
-                # Commands after 'shutdown' must be ignored.
-                self._builder_command_queue.append('bad_command_1')
-                self._builder_command_queue.append('bad_command_2')
+            self._builder_command_queue.append('shutdown')
+            # Commands after 'shutdown' must be ignored.
+            self._builder_command_queue.append('bad_command_1')
+            self._builder_command_queue.append('bad_command_2')
             self._builder_cv.notify_all()
 
         # Wait 5 seconds at most for the main loop of the builder to
@@ -114,10 +110,10 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         self.assertFalse(self._builder_thread.isAlive())
 
         # The command queue must be cleared, and the response queue must
-        # be untouched (we don't use it in this test).
-        with self._builder_lock:
-            self.assertEqual(len(self._builder_command_queue), 0)
-            self.assertEqual(len(self._builder_response_queue), 0)
+        # be untouched (we don't use it in this test). The thread is no
+        # longer running, so we can use the queues without a lock.
+        self.assertEqual(len(self._builder_command_queue), 0)
+        self.assertEqual(len(self._builder_response_queue), 0)
 
 if __name__ == "__main__":
     isc.log.init("bind10-test")
