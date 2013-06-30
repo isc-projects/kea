@@ -623,7 +623,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
     datasrc::ConfigurableClientList::ZoneWriterPair writerpair;
     {
         typename MutexType::Locker locker(*map_mutex_);
-        writerpair = client_list.getCachedZoneWriter(origin);
+        writerpair = client_list.getCachedZoneWriter(origin, false);
     }
 
     switch (writerpair.first) {

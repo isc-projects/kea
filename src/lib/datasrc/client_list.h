@@ -432,6 +432,8 @@ public:
     /// of the pair.
     ///
     /// \param zone The origin of the zone to load.
+    /// \param catch_load_errors Whether to make the zone writer catch
+    /// load errors (see \c ZoneWriter constructor documentation).
     /// \param datasrc_name If not empty, the name of the data source
     /// to be used for loading the zone (see above).
     /// \return The result has two parts. The first one is a status indicating
@@ -442,6 +444,7 @@ public:
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
     ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
+                                       bool catch_load_error,
                                        const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
