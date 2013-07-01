@@ -33,7 +33,6 @@ namespace dhcp {
 /// @brief Storage for option definitions.
 typedef OptionSpaceContainer<OptionDefContainer,
                              OptionDefinitionPtr> OptionDefStorage;
-
 /// @brief Shared pointer to option definitions storage.
 typedef boost::shared_ptr<OptionDefStorage> OptionDefStoragePtr;
 
@@ -44,11 +43,18 @@ typedef OptionSpaceContainer<Subnet::OptionContainer,
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 
+/// @brief Storage for hooks libraries
+typedef std::vector<std::string> HooksLibrariesStorage;
+/// @brief Pointer to storage for hooks libraries
+typedef boost::shared_ptr<HooksLibrariesStorage> HooksLibrariesStoragePtr;
+
+
+
 /// @brief A template class that stores named elements of a given data type.
 ///
-/// This template class is provides data value storage for configuration parameters
-/// of a given data type.  The values are stored by parameter name and as instances 
-/// of type "ValueType". 
+/// This template class is provides data value storage for configuration
+/// parameters of a given data type.  The values are stored by parameter name
+/// and as instances of type "ValueType". 
 ///
 /// @param ValueType is the data type of the elements to store.
 template<typename ValueType>
@@ -150,6 +156,26 @@ public:
 
     /// @brief Storage for option definitions.
     OptionDefStoragePtr option_defs_;
+
+    /// @brief Hooks libraries pointer.
+    ///
+    /// The hooks libraries information is a vector of strings, each containing
+    /// the name of a library.  Hooks libraries should only be reloaded if the
+    /// list of names has changed, so the list of current DHCP parameters
+    /// (in isc::dhcp::CfgMgr) contains an indication as to whether the list has
+    /// altered.  This indication is implemented by storing a pointer to the
+    /// list of library names which is cleared when the libraries are loaded.
+    /// So either the pointer is null (meaning don't reload the libraries and
+    /// the list of current names can be obtained from the HooksManager) or it
+    /// is non-null (this is the new list of names, reload the libraries when
+    /// possible).
+    ///
+    /// The same applies to the parser context.  The pointer is null (which
+    /// means that the isc::dhcp::HooksLibrariesParser::build method has
+    /// compared the library list in the configuration against the library
+    /// list in the HooksManager and has found no change) or it is non-null
+    /// (in which case this is the list of new library names).
+    HooksLibrariesStoragePtr hooks_libraries_;
 
     /// @brief The parsing universe of this context.
     Option::Universe universe_;
@@ -306,6 +332,44 @@ private:
     std::vector<std::string> interfaces_;
 };
 
+/// @brief parser for hooks library list
+///
+/// This parser handles the list of hooks libraries.  This is an optional list,
+/// which may be empty.
+class HooksLibrariesParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    ///
+    /// As this is a dedicated parser, it must be used to parse
+    /// "hooks_libraries" parameter only. All other types will throw exception.
+    ///
+    /// @param param_name name of the configuration parameter being parsed.
+    /// @param GERBIL
+    /// @throw BadValue if supplied parameter name is not "hooks_libraries"
+    HooksLibrariesParser(const std::string& param_name,
+                         ParserContextPtr global_context);
+
+    /// @brief parses parameters value
+    ///
+    /// Parses configuration entry (list of parameters) and adds each element
+    /// to the hooks libraries list.
+    ///
+    /// @param value pointer to the content of parsed values
+    virtual void build(isc::data::ConstElementPtr value);
+
+    /// @brief commits hooks libraries data
+    virtual void commit();
+
+private:
+    /// List of hooks libraries.  This will be NULL if there is no change to
+    /// the list.
+    HooksLibrariesStoragePtr libraries_;
+
+    /// Parsing context which contains global values, options and option 
+    /// definitions.
+    ParserContextPtr global_context_;
+};
 
 /// @brief Parser for option data value.
 ///
