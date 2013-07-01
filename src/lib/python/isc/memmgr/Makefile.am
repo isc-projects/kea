@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-python_PYTHON = __init__.py datasrc_info.py
+python_PYTHON = __init__.py builder.py datasrc_info.py
 
 pythondir = $(pyexecdir)/isc/memmgr
 
