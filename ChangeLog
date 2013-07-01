@@ -1,3 +1,7 @@
+635.	[func]		marcin
+	b10-dhcp-ddns: Implemented DNS Update message construction.
+	(Trac #2796, git eac5e751473e238dee1ebf16491634a1fbea25e2)
+
 634.	[bug]		muks
 	When processing DDNS updates, we now check the zone more
 	thoroughly with the received zone data updates to check if it is
