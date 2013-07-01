@@ -69,7 +69,7 @@ class MemorySegmentBuilder:
                 # Move the queue content to a local queue. Be careful of
                 # not making assignments to reference variables.
                 local_command_queue = self._command_queue.copy()
-                self._command_queue.clear()
+                del self._command_queue[:]
 
                 # Run commands passed in the command queue sequentially
                 # in the given order.  For now, it only supports the
