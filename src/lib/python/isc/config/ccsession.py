@@ -624,6 +624,8 @@ class ModuleCCSession(ConfigData):
 
           The callback should not raise exceptions, such exceptions are
           likely to propagate through the loop and terminate program.
+        Returns: Opaque id of the subscription. It can be used to cancel
+          the subscription by unsubscribe_notification.
         """
         self._last_notif_id += 1
         my_id = self._last_notif_id
@@ -635,6 +637,23 @@ class ModuleCCSession(ConfigData):
             self._notification_callbacks[notification_group] = \
                 { my_id: callback }
         return (notification_group, my_id)
+
+    def unsubscribe_notification(self, nid):
+        """
+        Remove previous subscription for notifications. Pass the id returned
+        from subscribe_notification.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        - KeyError: The id does not correspond to valid subscription.
+        """
+        (group, cid) = nid
+        del self._notification_callbacks[group][cid]
+        if not self._notification_callbacks[group]:
+            # Removed the last one
+            self._session.group_unsubscribe(CC_GROUP_NOTIFICATION_PREFIX +
+                                            group)
+            del self._notification_callbacks[group]
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
