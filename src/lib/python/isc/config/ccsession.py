@@ -297,8 +297,27 @@ class ModuleCCSession(ConfigData):
            configuration update. Calls the corresponding handler
            functions if present. Responds on the channel if the
            handler returns a message."""
-        # should we default to an answer? success-by-default? unhandled error?
-        if msg is not None and not CC_PAYLOAD_RESULT in msg:
+        if msg is None:
+            return
+        if CC_PAYLOAD_NOTIFICATION in msg:
+            group_s = env[CC_HEADER_GROUP].split('/', 1)
+            # What to do with these bogus inputs? We just ignore them for now.
+            if len(group_s) != 2:
+                return
+            [prefix, group] = group_s
+            if prefix + '/' != CC_GROUP_NOTIFICATION_PREFIX:
+                return
+            # Now, get the callbacks and call one by one
+            callbacks = self._notification_callbacks.get(group, {})
+            event = msg[CC_PAYLOAD_NOTIFICATION][0]
+            params = None
+            if len(msg[CC_PAYLOAD_NOTIFICATION]) > 1:
+                params = msg[CC_PAYLOAD_NOTIFICATION][1]
+            for key in sorted(callbacks.keys()):
+                callbacks[key](event, params)
+        elif not CC_PAYLOAD_RESULT in msg:
+            # should we default to an answer? success-by-default? unhandled
+            # error?
             answer = None
             try:
                 module_name = env[CC_HEADER_GROUP]
@@ -602,6 +621,9 @@ class ModuleCCSession(ConfigData):
           will be received.
         - callback (callable): The callback to be called whenever the
           notification comes.
+
+          The callback should not raise exceptions, such exceptions are
+          likely to propagate through the loop and terminate program.
         """
         self._last_notif_id += 1
         my_id = self._last_notif_id
