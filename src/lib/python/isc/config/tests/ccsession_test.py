@@ -431,14 +431,14 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.check_command()
         self.assertEqual(fake_session.message_queue, [])
         self.assertEqual(notifications, [
-            ("second", "event", {'param': True})
+            ("first", "event", {'param': True})
         ])
         del notifications[:]
         # If we try to unsubscribe again, it complains.
-        self.assertRaises(KeyError, self.unsubscribe_notification, id1)
+        self.assertRaises(KeyError, mccs.unsubscribe_notification, id2)
         # Unsubscribe the other one too. From now on, it doesn't eat the
         # messages again.
-        mccs.unsubscribe_notification(id2)
+        mccs.unsubscribe_notification(id1)
         fake_session.group_sendmsg({"notification": ["event", {
             "param": True
         }]}, "notifications/group")
