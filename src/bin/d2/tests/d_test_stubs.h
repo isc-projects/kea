@@ -28,7 +28,7 @@
 namespace isc {
 namespace d2 {
 
-/// @brief Provides a valid DHCP-DDNS configuraiton for testing basic
+/// @brief Provides a valid DHCP-DDNS configuration for testing basic
 /// parsing fundamentals.
 extern const char* valid_d2_config;
 
