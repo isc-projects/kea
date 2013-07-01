@@ -220,6 +220,9 @@ class ModuleCCSession(ConfigData):
         self._remote_module_configs = {}
         self._remote_module_callbacks = {}
 
+        self._notification_callbacks = {}
+        self._last_notif_id = 0
+
         if handle_logging_config:
             self.add_remote_config(path_search('logging.spec', bind10_config.PLUGIN_PATHS),
                                    default_logconfig_handler)
@@ -574,6 +577,42 @@ class ModuleCCSession(ConfigData):
                                     instance=CC_INSTANCE_WILDCARD,
                                     to=CC_TO_WILDCARD,
                                     want_answer=False)
+
+    def subscribe_notification(self, notification_group, callback):
+        """
+        Subscribe to receive notifications in given notification group. When a
+        notification comes to the group, the callback is called with two
+        parameters, the name of the event (the value of `event_name` parameter
+        passed to `notify`) and the parameters of the event (the value
+        of `params` passed to `notify`).
+
+        This is a fast operation (there may be communication with the message
+        queue daemon, but it does not wait for any remote process).
+
+        The callback may get called multiple times (once for each notification).
+        It is possible to subscribe multiple callbacks for the same notification,
+        by multiple calls of this method, and they will be called in the order
+        of registration when the notification comes.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        Params:
+        - notification_group (string): Notification group to subscribe to.
+          Notification with the same value of the same parameter of `notify`
+          will be received.
+        - callback (callable): The callback to be called whenever the
+          notification comes.
+        """
+        self._last_notif_id += 1
+        my_id = self._last_notif_id
+        if notification_group in self._notification_callbacks:
+            self._notification_callbacks[notification_group][my_id] = callback
+        else:
+            self._session.group_subscribe(CC_GROUP_NOTIFICATION_PREFIX +
+                                          notification_group)
+            self._notification_callbacks[notification_group] = \
+                { my_id: callback }
+        return (notification_group, my_id)
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
