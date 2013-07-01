@@ -32,6 +32,10 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+class DCfgContextBase;
+/// @brief Pointer to a configuration context.
+typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
+
 /// @brief Abstract class that implements a container for configuration context.
 /// It provides a single enclosure for the storage of configuration parameters
 /// and any other context specific information that needs to be accessible
@@ -141,8 +145,8 @@ public:
     /// public:
     ///  :
     ///     // Clone calls its own copy constructor
-    ///     virtual DStubContext* clone() {
-    ///         return (new DStubContext(*this));
+    ///     virtual DCfgContextBasePtr clone() {
+    ///         return (DCfgContextBasePtr(new DStubContext(*this)));
     ///     }
     ///
     ///     // Note that the copy constructor calls the base class copy ctor
@@ -156,8 +160,8 @@ public:
     ///  :
     /// @endcode
     ///
-    /// @return returns a raw pointer to the new clone.
-    virtual DCfgContextBase* clone() = 0;
+    /// @return returns a pointer to the new clone.
+    virtual DCfgContextBasePtr clone() = 0;
 
 protected:
     /// @brief Copy constructor for use by derivations in clone().
@@ -176,9 +180,6 @@ private:
     /// @brief Storage for string parameters.
     isc::dhcp::StringStoragePtr string_values_;
 };
-
-/// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 
 /// @brief Defines an unsorted, list of string Element IDs.
 typedef std::vector<std::string> ElementIdList;

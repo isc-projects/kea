@@ -59,7 +59,7 @@
     {
         "item_name": "forward_ddns",
         "item_type": "map",
-        "item_optional": false,
+        "item_optional": true,
          "item_default": {},
          "map_item_spec": [ 
          {
@@ -127,7 +127,7 @@
     {
         "item_name": "reverse_ddns",
         "item_type": "map",
-        "item_optional": false,
+        "item_optional": true,
          "item_default": {},
          "map_item_spec": [ 
          { 
