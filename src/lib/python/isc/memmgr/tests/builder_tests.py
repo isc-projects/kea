@@ -86,7 +86,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         response = self._builder_response_queue[0]
         self.assertTrue(isinstance(response, tuple))
         self.assertTupleEqual(response, ('bad_command',))
-        self._builder_response_queue.clear()
+        del self._builder_response_queue[:]
 
     def test_shutdown(self):
         """Tests that shutdown command exits the MemorySegmentBuilder
