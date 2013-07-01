@@ -50,7 +50,9 @@ namespace dhcp {
 ///   this means when there are no packets being activly processed.  Rather than
 ///   take a chance that the configuration code will do the unload/load at the
 ///   right time, the configuration code sets the names of the new libraries in
-///   this object and the server decides when to reconfigure the hooks.
+///   this object and the server decides when to reconfigure the hooks.  The
+///   presence or absence of the names of the hooks libraries here is an
+///   indication of whether the libraries should be reloaded.
 ///
 /// Below is a sketch of configuration inheritance (not implemented yet).
 /// Let's investigate the following configuration:

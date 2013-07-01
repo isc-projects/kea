@@ -41,6 +41,7 @@ ParserContext::ParserContext(Option::Universe universe):
         string_values_(new StringStorage()),
         options_(new OptionStorage()),
         option_defs_(new OptionDefStorage()),
+        hooks_libraries_(new HooksLibrariesStorage()),
         universe_(universe) {
     }
 
@@ -50,6 +51,7 @@ ParserContext::ParserContext(const ParserContext& rhs):
         string_values_(new StringStorage(*(rhs.string_values_))),
         options_(new OptionStorage(*(rhs.options_))),
         option_defs_(new OptionDefStorage(*(rhs.option_defs_))),
+        hooks_libraries_(new HooksLibrariesStorage(*(rhs.hooks_libraries_))),
         universe_(rhs.universe_) {
     }
 
@@ -65,6 +67,9 @@ ParserContext::operator=(const ParserContext& rhs) {
             options_ = OptionStoragePtr(new OptionStorage(*(rhs.options_)));
             option_defs_ = 
                 OptionDefStoragePtr(new OptionDefStorage(*(rhs.option_defs_)));
+            hooks_libraries_ =
+                HooksLibrariesStoragePtr(new HooksLibrariesStorage(
+                                                    *(rhs.hooks_libraries_)));
             universe_ = rhs.universe_;
         }
         return (*this);
@@ -159,6 +164,63 @@ void
 InterfaceListConfigParser::commit() {
     /// @todo: Implement per interface listening. Currently always listening
     /// on all interfaces.
+}
+
+// ******************** HooksLibrariesParser *************************
+
+HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name,
+                                           ParserContextPtr global_context)
+    : libraries_(), global_context_(global_context) {
+
+    // SanitY check on the name.
+    if (param_name != "hooks_libraries") {
+        isc_throw(BadValue, "Internal error. Hooks libraries "
+            "parser called for the wrong parameter: " << param_name);
+    }
+}
+
+void 
+HooksLibrariesParser::build(ConstElementPtr value) {
+
+    /// Extract the list of libraries.
+    HooksLibrariesStoragePtr libraries(new HooksLibrariesStorage());
+    BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
+        string libname = iface->str();
+        boost::erase_all(libname, "\"");
+        libraries->push_back(libname);
+    }
+    /// @todo A two-stage process.  The first stage checks if the libraries
+    /// element has changed.  If not, nothing is done - the command
+    /// "DhcpN reload_hooks" is required to reload the same libraries (this
+    /// prevents needless reloads when anything in the configuration is
+    /// changed).
+    ///
+    /// If the libraries have changed, the next step is to validate each of the
+    /// libraries.  This should be a method on HooksManager which should create
+    /// a LibraryManager for it and call a new method "validateLibrary()".
+    /// That method will open a library (verifying that it exists) and check
+    /// version() (both that it exists and returned the right value).  If these
+    /// checks succeed, it is considered a success.  The library is closed when
+    /// the LibraryManager is deleted.
+
+    /// @TODO Validate the library list
+
+    /// The library list has changed, so store the new list. (This clears the
+    /// local pointer libraries as a side-effect, but as that is being
+    /// destroyed on exit, it is not an issue).
+    libraries_.swap(libraries);
+}
+
+void 
+HooksLibrariesParser::commit() {
+    /// Commits the list of libraries to the configuration manager storage.
+    /// Note that the list stored here could be empty, which will signify
+    /// no change.
+    ///
+    /// We use "swap" to reduce overhead - as this parser is being destroyed
+    /// after the commit, there is no reason to retain a pointer to the hooks
+    /// library data in it.
+    global_context_->hooks_libraries_.swap(libraries_);
 }
 
 // **************************** OptionDataParser *************************
