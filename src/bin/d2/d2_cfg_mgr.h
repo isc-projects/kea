@@ -27,6 +27,10 @@
 namespace isc {
 namespace d2 {
 
+class D2CfgContext;
+/// @brief Pointer to a configuration context.
+typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
+
 /// @brief  DHCP-DDNS Configuration Context
 ///
 /// Implements the storage container for configuration context.
@@ -44,9 +48,9 @@ public:
 
     /// @brief Creates a clone of this context object.
     ///
-    /// @return returns a raw pointer to the new clone.
-    virtual D2CfgContext* clone() {
-        return (new D2CfgContext(*this));
+    /// @return returns a pointer to the new clone.
+    virtual DCfgContextBasePtr clone() {
+        return (DCfgContextBasePtr(new D2CfgContext(*this)));
     }
 
     /// @brief Fetches the forward DNS domain list manager.
@@ -92,8 +96,6 @@ private:
 typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 
 
-/// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 
 /// @brief DHCP-DDNS Configuration Manager
 ///

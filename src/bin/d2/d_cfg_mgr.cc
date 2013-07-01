@@ -122,7 +122,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     // inconsistency if the parsing operation fails after the context has been
     // modified. We need to preserve the original context here
     // so as we can rollback changes when an error occurs.
-    DCfgContextBasePtr original_context(context_->clone());
+    DCfgContextBasePtr original_context = context_->clone();
 
     // Answer will hold the result returned to the caller.
     ConstElementPtr answer;
@@ -143,9 +143,11 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         if (parse_order_.size() > 0) {
             // For each element_id in the parse order list, look for it in the
             // value map.  If the element exists in the map, pass it and it's
-            // associated data in for parsing.  
-            // If there is no matching entry in the value map an error is 
-            // thrown.  Optional elements may not be used with ordered parsing.
+            // associated data in for parsing.
+            // If there is no matching entry in the value map an error is
+            // thrown.  Note, that elements tagged as "optional" from the user
+            // perspective must still have default or empty entries in the
+            // configuration set to be parsed.
             int parsed_count = 0;
             std::map<std::string, ConstElementPtr>::const_iterator it;
             BOOST_FOREACH(element_id, parse_order_) {
@@ -157,7 +159,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                 else {
                     LOG_ERROR(dctl_logger, DCTL_ORDER_NO_ELEMENT)
                               .arg(element_id);
-                    isc_throw(DCfgMgrBaseError, "Element:" << element_id <<  
+                    isc_throw(DCfgMgrBaseError, "Element:" << element_id <<
                               " is listed in the parse order but is not "
                               " present in the configuration");
                 }
@@ -172,10 +174,10 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
             // Better to hold the engineer accountable.  So, if we parsed none
             // or we parsed fewer than are in the map; then either the parse i
             // order is incomplete OR the map has unsupported values.
-            if (!parsed_count || 
+            if (!parsed_count ||
                 (parsed_count && ((parsed_count + 1) < values_map.size()))) {
                 LOG_ERROR(dctl_logger, DCTL_ORDER_ERROR);
-                isc_throw(DCfgMgrBaseError, 
+                isc_throw(DCfgMgrBaseError,
                         "Configuration contains elements not in parse order");
             }
         } else {
@@ -226,7 +228,7 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
         // nothing something we are concerned with here.)
         parser->commit();
     } catch (const isc::Exception& ex) {
-        isc_throw(DCfgMgrBaseError, 
+        isc_throw(DCfgMgrBaseError,
                   "Could not build and commit: " << ex.what());
     } catch (...) {
         isc_throw(DCfgMgrBaseError, "Non-ISC exception occurred");
