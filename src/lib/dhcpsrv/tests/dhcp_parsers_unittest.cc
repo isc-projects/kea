@@ -20,6 +20,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/tests/test_libraries.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -332,6 +333,8 @@ public:
         } else if (config_id.compare("option-def") == 0) {
             parser  = new OptionDefListParser(config_id, 
                                           parser_context_->option_defs_);
+        } else if (config_id.compare("hooks_libraries") == 0) {
+            parser = new HooksLibrariesParser(config_id, parser_context_);
         } else {
             isc_throw(NotImplemented,
                 "Parser error: configuration parameter not supported: "
@@ -349,7 +352,7 @@ public:
     ///
     /// @return retuns 0 if the configuration parsed successfully, 
     /// non-zero otherwise failure.
-    int parseConfiguration (std::string &config) {    
+    int parseConfiguration(const std::string& config) {    
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
@@ -420,6 +423,14 @@ public:
 
         return (option_ptr); 
     }
+
+    /// @brief Returns hooks libraries from the parser context
+    ///
+    /// Returns the pointer to the vector of strings from the parser context.
+    HooksLibrariesStoragePtr getHooksLibrariesPtr() {
+        return (parser_context_->hooks_libraries_);
+    }
+   
 
     /// @brief Wipes the contents of the context to allowing another parsing 
     /// during a given test if needed.
@@ -517,3 +528,100 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
 };  // Anonymous namespace
 
+/// @brief Check Basic parsing of hooks libraries
+/// 
+/// These tests check basic operation of the HooksLibrariesParser.
+TEST_F(ParseConfigTest, emptyHooksLibrariesTest) {
+
+    // @todo Initialize global library context to null
+
+    // Configuration string.  This contains a valid library.
+    const std::string config =
+        "{ \"hooks_libraries\": [ "
+        "   ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+    // @todo modify after the hooks check has been added.  At the moment, the
+    // string should parse to an empty string.
+    HooksLibrariesStoragePtr ptr = getHooksLibrariesPtr();
+    EXPECT_TRUE(ptr);
+    EXPECT_EQ(0, ptr->size());
+}
+
+TEST_F(ParseConfigTest, validHooksLibrariesTest) {
+
+    // @todo Initialize global library context to null
+
+    // Configuration string.  This contains a valid library.
+    const std::string quote("\"");
+    const std::string comma(", ");
+
+    const std::string config =
+        std::string("{ ") +
+            std::string("\"hooks_libraries\": [") +
+                quote + std::string(BASIC_CALLOUT_LIBRARY) + quote + comma +
+                quote + std::string(FULL_CALLOUT_LIBRARY)  + quote +
+            std::string("]") +
+        std::string("}");
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+    // @todo modify after the hooks check has been added.  At the moment, the
+    // string should parse to an empty string.
+    HooksLibrariesStoragePtr ptr = getHooksLibrariesPtr();
+    EXPECT_TRUE(ptr);
+
+    // The expected libraries should be the list of libraries specified
+    // in the given order.
+    std::vector<std::string> expected;
+    expected.push_back(BASIC_CALLOUT_LIBRARY);
+    expected.push_back(FULL_CALLOUT_LIBRARY);
+
+    ASSERT_TRUE(ptr);
+    EXPECT_TRUE(expected == *ptr);
+}
+
+// Now parse
+TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
+
+    // @todo Initialize global library context to null
+
+    // Configuration string.  This contains an invalid library which should
+    // trigger an error in the "build" stage.
+    const std::string quote("\"");
+    const std::string comma(", ");
+
+    const std::string config =
+        std::string("{ ") +
+            std::string("\"hooks_libraries\": [") +
+                quote + std::string(BASIC_CALLOUT_LIBRARY) + quote + comma +
+                quote + std::string(NOT_PRESENT_LIBRARY) + quote + comma +
+                quote + std::string(FULL_CALLOUT_LIBRARY)  + quote +
+            std::string("]") +
+        std::string("}");
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0);
+
+    // @todo modify after the hooks check has been added.  At the moment, the
+    // string should parse to an empty string.
+    HooksLibrariesStoragePtr ptr = getHooksLibrariesPtr();
+    EXPECT_TRUE(ptr);
+
+    // The expected libraries should be the list of libraries specified
+    // in the given order.
+    std::vector<std::string> expected;
+    expected.push_back(BASIC_CALLOUT_LIBRARY);
+    expected.push_back(NOT_PRESENT_LIBRARY);
+    expected.push_back(FULL_CALLOUT_LIBRARY);
+
+    ASSERT_TRUE(ptr);
+    EXPECT_TRUE(expected == *ptr);
+}
