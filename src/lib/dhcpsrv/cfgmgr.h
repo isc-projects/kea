@@ -38,10 +38,19 @@ namespace dhcp {
 /// @brief Configuration Manager
 ///
 /// This singleton class holds the whole configuration for DHCPv4 and DHCPv6
-/// servers. It currently holds information about zero or more subnets6.
-/// Each subnet may contain zero or more pools. Pool4 and Pool6 is the most
-/// basic "chunk" of configuration. It contains a range of assignable
-/// addresses.
+/// servers. It currently holds information about:
+/// - Zero or more subnets.  Each subnet may contain zero or more pools. Pool4
+///   and Pool6 is the most basic "chunk" of configuration. It contains a range
+///   of assignable addresses.
+/// - Hook libraries. Hooks library names are stored here, but only up to the
+///   point that the libraries are reloaded.  In more detail: libraries
+///   containing hooks callouts can only be loaded and reloaded safely (or, more
+///   accurately, unloaded safely) when no data structure in the server contains
+///   a reference to any memory allocated by a function in them.  In practice
+///   this means when there are no packets being activly processed.  Rather than
+///   take a chance that the configuration code will do the unload/load at the
+///   right time, the configuration code sets the names of the new libraries in
+///   this object and the server decides when to reconfigure the hooks.
 ///
 /// Below is a sketch of configuration inheritance (not implemented yet).
 /// Let's investigate the following configuration:
@@ -68,6 +77,7 @@ namespace dhcp {
 /// routines, so there is no storage capability in a global scope for
 /// subnet-specific parameters.
 ///
+/// ARE THESE DONE?
 /// @todo: Implement Subnet4 support (ticket #2237)
 /// @todo: Implement option definition support
 /// @todo: Implement parameter inheritance
@@ -229,13 +239,31 @@ public:
     /// completely new?
     void deleteSubnets4();
 
-
     /// @brief returns path do the data directory
     ///
     /// This method returns a path to writeable directory that DHCP servers
     /// can store data in.
     /// @return data directory
     std::string getDataDir();
+
+    /// @brief Sets list of hooks libraries
+    ///
+    /// Sets the list of hooks libraries.  It is possible for there to be no
+    /// hooks libraries, in which case this is indicated by an emopty vector.
+    ///
+    /// @param hooks_libraries Vector (possibly empty) of current hook libraries.
+    void setHooksLibraries(const std::vector<std::string>& hooks_libraries);
+
+    /// @brief Get and clear list of hooks libraries
+    ///
+    /// Gets the currently-set vector of hooks libraries.  If there is no data
+    /// (as opposed to an empty vector), there has been no change to the data
+    /// since the last time this method was called. Should there be a necessity
+    /// to know this information, it can be obtained from the HooksManager.
+    ///
+    /// @return Pointer to vector of strings listing the hooks libraries.  This
+    ///         may be empty.
+    boost::shared_ptr<std::vector<std::string> > getAndClearHooksLibraries();
 
 protected:
 
@@ -283,6 +311,28 @@ private:
 
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
+
+    /// @brief Hooks libraries
+    ///
+    /// Unlike other configuration items that can be referenced all the time,
+    /// this is a "one-shot" item.  When the list of libraries is altered, the
+    /// server needs to know about the change: once the libraries are loaded,
+    /// the list is ignored.  As configuration updates cause an update of the
+    /// entire configuration and we wish to reload the libraries only if the
+    /// list has changed, we could check the library list against that stored
+    /// in the hooks manager.  Unfortunately, since the libraries are reloaded
+    /// when a new packet is received, this would mean a set of string
+    /// comparisons on each packet.  Instead, the data is flagged to indicate
+    /// that it has changed.
+    ///
+    /// The parsing checks the set of hooks libraries in the configuration
+    /// against the list stored in the HooksManager and only updates the data
+    /// here if they have changed.  Although a flag could be used to indicate
+    /// a change, a more streamlined approach is used: the data in this object
+    /// is cleared when it is read.  As the data is a vector of strings and as
+    /// an empty vector is valid data, we'll store the data as a shared pointer
+    /// to a vector of strings.  The pointer is zeroed when the data is read.
+    boost::shared_ptr<std::vector<std::string> > hooks_libraries_;
 };
 
 } // namespace isc::dhcp
