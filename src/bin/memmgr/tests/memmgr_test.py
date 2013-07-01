@@ -74,6 +74,15 @@ class TestMemmgr(unittest.TestCase):
         self.__orig_isdir = os.path.isdir
 
     def tearDown(self):
+        # Not all unittests cause this method to be called, so we call
+        # it explicitly as it may be necessary in some cases where the
+        # builder thread has been created.
+        self.__mgr._shutdown_module()
+
+        # Assert that all commands sent to the builder thread were
+        # handled.
+        self.assertEqual(len(self.__mgr._builder_command_queue), 0)
+
         # Restore faked values
         os.access = self.__orig_os_access
         os.path.isdir = self.__orig_isdir
