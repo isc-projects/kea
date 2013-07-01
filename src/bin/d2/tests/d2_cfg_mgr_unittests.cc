@@ -78,8 +78,7 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
     // Return value, assume its a match.
     bool result = true;
 
-    if (!server)
-    {
+    if (!server) {
         EXPECT_TRUE(server);
         return false;
     }
@@ -135,7 +134,7 @@ bool checkKey(TSIGKeyInfoPtr key, const char* name,
         result = false;
     }
 
-    // Check algorithm. 
+    // Check algorithm.
     if (key->getAlgorithm() != algorithm) {
         EXPECT_EQ(key->getAlgorithm(), algorithm);
         result = false;
@@ -234,7 +233,7 @@ public:
     void addKey(const std::string& name, const std::string& algorithm,
                 const std::string& secret) {
         TSIGKeyInfoPtr key_info(new TSIGKeyInfo(name, algorithm, secret));
-        (*keys_)[name]=key_info; 
+        (*keys_)[name]=key_info;
     }
 
     /// @brief Storage for "committing" domains.
@@ -251,8 +250,8 @@ public:
 /// It verifies that:
 /// 1. Name cannot be blank.
 /// 2. Algorithm cannot be blank.
-/// 3. Secret cannot be blank. 
-/// @TODO TSIG keys are not fully functional. Only basic validation is 
+/// 3. Secret cannot be blank.
+/// @TODO TSIG keys are not fully functional. Only basic validation is
 /// currently supported. This test will need to expand as they evolve.
 TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
     // Config with a blank name entry.
@@ -262,7 +261,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
                          " \"secret\": \"0123456789\" "
                          "}";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that build succeeds but commit fails on blank name.
     EXPECT_NO_THROW(parser_->build(config_set_));
@@ -275,7 +274,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
                          " \"secret\": \"0123456789\" "
                          "}";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that build succeeds but commit fails on blank algorithm.
     EXPECT_NO_THROW(parser_->build(config_set_));
@@ -288,7 +287,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
                          " \"secret\": \"\" "
                          "}";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that build succeeds but commit fails on blank secret.
     EXPECT_NO_THROW(parser_->build(config_set_));
@@ -304,7 +303,7 @@ TEST_F(TSIGKeyInfoTest, validEntryTests) {
                          " \"algorithm\": \"md5\" , "
                          " \"secret\": \"0123456789\" "
                          "}";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -343,7 +342,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
                          " }"
                          " ]";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Create the list parser.
     isc::dhcp::ParserPtr parser;
@@ -376,7 +375,7 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
                          " }"
                          " ]";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Create the list parser.
     isc::dhcp::ParserPtr parser;
@@ -391,7 +390,7 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
 TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
-    // Construct a valid list of keys. 
+    // Construct a valid list of keys.
     std::string config = "["
 
                          " { \"name\": \"key1\" , "
@@ -408,7 +407,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          " }"
                          " ]";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that the list builds and commits without errors.
     // Create the list parser.
@@ -456,7 +455,7 @@ TEST_F(DnsServerInfoTest, invalidEntryTests) {
     // Verify that it builds without throwing but commit fails.
     std::string config = "{ \"hostname\": \"pegasus.tmark\", "
                          "  \"ip_address\": \"127.0.0.1\" } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
     EXPECT_NO_THROW(parser_->build(config_set_));
     EXPECT_THROW(parser_->commit(), D2CfgError);
 
@@ -464,7 +463,7 @@ TEST_F(DnsServerInfoTest, invalidEntryTests) {
     // Verify that it builds without throwing but commit fails.
     config = "{ \"hostname\": \"\", "
              "  \"ip_address\": \"\" } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
     EXPECT_NO_THROW(parser_->build(config_set_));
     EXPECT_THROW(parser_->commit(), D2CfgError);
 
@@ -472,7 +471,7 @@ TEST_F(DnsServerInfoTest, invalidEntryTests) {
     // Verify that build fails.
     config = "{ \"ip_address\": \"192.168.5.6\" ,"
              "  \"port\": -100 }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
     EXPECT_THROW (parser_->build(config_set_), isc::BadValue);
 }
 
@@ -486,7 +485,7 @@ TEST_F(DnsServerInfoTest, invalidEntryTests) {
 TEST_F(DnsServerInfoTest, validEntryTests) {
     // Valid entries for dynamic host
     std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -508,7 +507,7 @@ TEST_F(DnsServerInfoTest, validEntryTests) {
     // Valid entries for static ip
     config = " { \"ip_address\": \"127.0.0.1\" , "
              "  \"port\": 100 }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -527,7 +526,7 @@ TEST_F(DnsServerInfoTest, validEntryTests) {
 
     // Valid entries for static ip, no port
     config = " { \"ip_address\": \"192.168.2.5\" }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that it builds and commits without throwing.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -550,7 +549,7 @@ TEST_F(ConfigParseTest, invalidServerList) {
     std::string config = "[ { \"hostname\": \"one.tmark\" }, "
                         "{ \"hostname\": \"\" }, "
                         "{ \"hostname\": \"three.tmark\" } ]";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
@@ -571,7 +570,7 @@ TEST_F(ConfigParseTest, validServerList) {
     std::string config = "[ { \"hostname\": \"one.tmark\" }, "
                         "{ \"hostname\": \"two.tmark\" }, "
                         "{ \"hostname\": \"three.tmark\" } ]";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Create the server storage and list parser.
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
@@ -624,7 +623,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
                          "    \"port\": 200 },"
                          "  {  \"ip_address\": \"127.0.0.3\" , "
                          "    \"port\": 300 } ] } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration builds but commit fails.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -635,7 +634,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
              "  \"key_name\": \"d2_key.tmark.org\" , "
              "  \"dns_servers\" : [ "
              "   ] } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
     ASSERT_THROW(parser_->build(config_set_), D2CfgError);
@@ -646,7 +645,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
              "  \"dns_servers\" : [ "
              "  {  \"ip_address\": \"127.0.0.3\" , "
              "    \"port\": -1 } ] } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
     ASSERT_THROW(parser_->build(config_set_), isc::BadValue);
@@ -657,7 +656,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
              "  \"dns_servers\" : [ "
              "  {  \"ip_address\": \"127.0.0.3\" , "
              "    \"port\": 300 } ] } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build succeeds but commit fails.
     ASSERT_NO_THROW(parser_->build(config_set_));
@@ -683,7 +682,7 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
                         "    \"port\": 200 },"
                         "  {  \"ip_address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Add a TSIG key to the test key map, so key validation will pass.
     addKey("d2_key.tmark.org", "md5", "0123456789");
@@ -759,14 +758,14 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
                         "    \"port\": 600 } ] } "
                         "] ";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Add keys to key map so key validation passes.
     addKey("d2_key.tmark.org", "algo1", "secret1");
     addKey("d2_key.billcat.net", "algo2", "secret2");
 
     // Create the list parser
-    isc::dhcp::ParserPtr list_parser;    
+    isc::dhcp::ParserPtr list_parser;
     ASSERT_NO_THROW(list_parser.reset(
                     new DdnsDomainListParser("test", domains_, keys_)));
 
@@ -849,10 +848,10 @@ TEST_F(DdnsDomainTest, duplicateDomainTest) {
                         "  { \"ip_address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         "] ";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Create the list parser
-    isc::dhcp::ParserPtr list_parser;    
+    isc::dhcp::ParserPtr list_parser;
     ASSERT_NO_THROW(list_parser.reset(
                     new DdnsDomainListParser("test", domains_, keys_)));
 
@@ -867,7 +866,7 @@ TEST(D2CfgMgr, construction) {
     D2CfgMgr *cfg_mgr = NULL;
 
     // Verify that configuration manager constructions without error.
-    ASSERT_NO_THROW(cfg_mgr=new D2CfgMgr());
+    ASSERT_NO_THROW(cfg_mgr = new D2CfgMgr());
 
     // Verify that the context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -944,7 +943,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
                         "  { \"hostname\": \"six.rev\" } "
                         "  ] } "
                         "] } }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1045,12 +1044,12 @@ TEST_F(D2CfgMgrTest, forwardMatchTest) {
                         "  \"dns_servers\" : [ "
                         "  { \"hostname\": \"global.net\" } "
                         "  ] } "
-                        "] }, " 
+                        "] }, "
                         "\"reverse_ddns\" : {} "
                         "}";
 
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
@@ -1110,7 +1109,7 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
                         "\"reverse_ddns\" : {} "
                         " }";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1153,7 +1152,7 @@ TEST_F(D2CfgMgrTest, matchAll) {
                         "\"reverse_ddns\" : {} "
                         "}";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1207,7 +1206,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
                         "  ] } "
                         "] } }";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1272,7 +1271,7 @@ TEST_F(D2CfgMgrTest, tsigTest) {
                         "  ] } "
                         "] } }";
 
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse the configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
