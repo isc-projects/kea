@@ -521,8 +521,8 @@ public:
 
     /// @brief Creates a clone of a DStubContext.
     ///
-    /// @return returns a raw pointer to the new clone.
-    virtual DStubContext* clone();
+    /// @return returns a pointer to the new clone.
+    virtual DCfgContextBasePtr clone();
 
 protected:
     /// @brief Copy constructor
@@ -607,10 +607,11 @@ public:
         try  {
             config_set_ = isc::data::Element::fromJSON(json_text);
         } catch (...) {
-            // This is so we can diagnose parsing mistakes during test
-            // development.
-            std::cerr << "fromJSON failed to parse text" << json_text
+            #if 0
+            // Handy for diagnostics
+            std::cout << "fromJSON failed to parse text" << json_text
                       << std::endl;
+            #endif
             return (false);
         }
 
@@ -627,8 +628,8 @@ public:
         int rcode = 0;
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer_);
+        #if 0
         // Handy for diagnostics
-        #if 1
         if (rcode != 0) {
             std::cout << "checkAnswer rcode:" << rcode << " comment: "
                   << *comment << std::endl;

@@ -484,9 +484,9 @@ public:
 
     /// @brief Creates a clone of a DStubContext.
     ///
-    /// @return returns a raw pointer to the new clone.
-    virtual DScalarContext* clone() {
-        return (new DScalarContext(*this));
+    /// @return returns a pointer to the new clone.
+    virtual DCfgContextBasePtr clone() {
+        return (DCfgContextBasePtr(new DScalarContext(*this)));
     }
 
 protected:
@@ -498,6 +498,9 @@ private:
     /// @brief Private assignment operator, not implemented.
     DScalarContext& operator=(const DScalarContext& rhs);
 };
+
+/// @brief Defines a pointer for DScalarContext instances.
+typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 
 /// @brief Parser for  TSIGKeyInfo
 ///

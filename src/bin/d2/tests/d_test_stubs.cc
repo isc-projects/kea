@@ -260,9 +260,9 @@ DStubContext::getExtraStorage() {
     return (extra_values_);
 }
 
-DStubContext*
+DCfgContextBasePtr
 DStubContext::clone() {
-    return (new DStubContext(*this));
+    return (DCfgContextBasePtr(new DStubContext(*this)));
 }
 
 DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
