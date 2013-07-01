@@ -58,11 +58,12 @@ NameChangeRequest::NameChangeRequest()
     dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
 }
 
-NameChangeRequest::NameChangeRequest(NameChangeType change_type,
-            bool forward_change, bool reverse_change,
-            const std::string& fqdn, const std::string & ip_address,
-            const D2Dhcid& dhcid, const ptime& lease_expires_on,
-            uint32_t lease_length)
+NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
+            const bool forward_change, const bool reverse_change,
+            const std::string& fqdn, const std::string& ip_address,
+            const D2Dhcid& dhcid,
+            const boost::posix_time::ptime& lease_expires_on,
+            const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
     dhcid_(dhcid), lease_expires_on_(new ptime(lease_expires_on)),
@@ -74,7 +75,7 @@ NameChangeRequest::NameChangeRequest(NameChangeType change_type,
 }
 
 NameChangeRequestPtr
-NameChangeRequest::fromFormat(NameChangeFormat format,
+NameChangeRequest::fromFormat(const NameChangeFormat format,
                               isc::util::InputBuffer& buffer) {
     // Based on the format requested, pull the marshalled request from
     // InputBuffer and pass it into the appropriate format-specific factory.
@@ -114,12 +115,11 @@ NameChangeRequest::fromFormat(NameChangeFormat format,
 }
 
 void
-NameChangeRequest::toFormat(NameChangeFormat format,
+NameChangeRequest::toFormat(const NameChangeFormat format,
                             isc::util::OutputBuffer& buffer) const {
     // Based on the format requested, invoke the appropriate format handler
     // which will marshal this request's contents into the OutputBuffer.
-    switch (format)
-    {
+    switch (format) {
     case FMT_JSON: {
         // Invoke toJSON to create a JSON text of this request's contents.
         std::string json = toJSON();
@@ -223,7 +223,7 @@ NameChangeRequest::toJSON() const  {
 
 void
 NameChangeRequest::validateContent() {
-    //@TODO This is an initial implementation which provides a minimal amount
+    //@todo This is an initial implementation which provides a minimal amount
     // of validation.  FQDN, DHCID, and IP Address members are all currently
     // strings, these may be replaced with richer classes.
     if (fqdn_ == "") {
@@ -271,7 +271,7 @@ NameChangeRequest::getElement(const std::string& name,
 }
 
 void
-NameChangeRequest::setChangeType(NameChangeType value) {
+NameChangeRequest::setChangeType(const NameChangeType value) {
     change_type_ = value;
 }
 
@@ -299,7 +299,7 @@ NameChangeRequest::setChangeType(isc::data::ConstElementPtr element) {
 }
 
 void
-NameChangeRequest::setForwardChange(bool value) {
+NameChangeRequest::setForwardChange(const bool value) {
     forward_change_ = value;
 }
 
@@ -320,7 +320,7 @@ NameChangeRequest::setForwardChange(isc::data::ConstElementPtr element) {
 }
 
 void
-NameChangeRequest::setReverseChange(bool value) {
+NameChangeRequest::setReverseChange(const bool value) {
     reverse_change_ = value;
 }
 
@@ -385,7 +385,8 @@ NameChangeRequest::getLeaseExpiresOnStr() const {
     return (to_iso_string(*lease_expires_on_));
 }
 
-void NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
+void 
+NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
     try {
         // Create a new ptime instance from the ISO date-time string in value
         // add assign it to lease_expires_on_.
@@ -399,7 +400,8 @@ void NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
 
 }
 
-void NameChangeRequest::setLeaseExpiresOn(const ptime&  value) {
+void 
+NameChangeRequest::setLeaseExpiresOn(const boost::posix_time::ptime&  value) {
     if (lease_expires_on_->is_not_a_date_time()) {
         isc_throw(NcrMessageError, "Invalid value for lease_expires_on");
     }
@@ -414,7 +416,7 @@ void NameChangeRequest::setLeaseExpiresOn(isc::data::ConstElementPtr element) {
 }
 
 void
-NameChangeRequest::setLeaseLength(uint32_t value) {
+NameChangeRequest::setLeaseLength(const uint32_t value) {
     lease_length_ = value;
 }
 
@@ -445,7 +447,7 @@ NameChangeRequest::setLeaseLength(isc::data::ConstElementPtr element) {
 }
 
 void
-NameChangeRequest::setStatus(NameChangeStatus value) {
+NameChangeRequest::setStatus(const NameChangeStatus value) {
     status_ = value;
 }
 
@@ -455,15 +457,15 @@ NameChangeRequest::toText() const {
 
     stream << "Type: " << static_cast<int>(change_type_) << " (";
     switch (change_type_) {
-        case CHG_ADD:
-            stream << "CHG_ADD)\n";
-            break;
-        case CHG_REMOVE:
-            stream << "CHG_REMOVE)\n";
-            break;
-        default:
-            // Shouldn't be possible.
-            stream << "Invalid Value\n";
+    case CHG_ADD:
+        stream << "CHG_ADD)\n";
+        break;
+    case CHG_REMOVE:
+        stream << "CHG_REMOVE)\n";
+        break;
+    default:
+        // Shouldn't be possible.
+        stream << "Invalid Value\n";
     }
 
     stream << "Forward Change: " << (forward_change_ ? "yes" : "no")

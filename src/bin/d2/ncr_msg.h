@@ -101,7 +101,7 @@ public:
     }
 
 private:
-    /// @Brief Storage for the DHCID value in unsigned bytes.
+    /// @brief Storage for the DHCID value in unsigned bytes.
     std::vector<uint8_t> bytes_;
 };
 
@@ -146,14 +146,16 @@ public:
     /// updated.
     /// @param ip_address the ip address leased to the given FQDN.
     /// @param dhcid the lease client's unique DHCID.
-    /// @param ptime a timestamp containing the date/time the lease expires.
+    /// @param lease_expires_on a timestamp containing the date/time the lease 
+    /// expires.
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
-    NameChangeRequest(NameChangeType change_type, bool forward_change,
-                      bool reverse_change, const std::string& fqdn,
-                      const std::string& ip_address, const D2Dhcid& dhcid,
+    NameChangeRequest(const NameChangeType change_type,
+                      const bool forward_change, const bool reverse_change,
+                      const std::string& fqdn, const std::string& ip_address,
+                      const D2Dhcid& dhcid,
                       const boost::posix_time::ptime& lease_expires_on,
-                      uint32_t lease_length);
+                      const uint32_t lease_length);
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// buffer containing a marshalled request in a given format.
@@ -176,7 +178,7 @@ public:
     ///
     /// @throw throws NcrMessageError if an error occurs creating new
     /// request.
-    static NameChangeRequestPtr fromFormat(NameChangeFormat format,
+    static NameChangeRequestPtr fromFormat(const NameChangeFormat format,
                                            isc::util::InputBuffer& buffer);
 
     /// @brief Instance method for marshalling the contents of the request
@@ -195,8 +197,8 @@ public:
     /// @param format indicates the data format to use
     /// @param buffer is the output buffer to which the request should be
     /// marshalled.
-    void
-    toFormat(NameChangeFormat format, isc::util::OutputBuffer& buffer) const;
+    void toFormat(const NameChangeFormat format,
+                  isc::util::OutputBuffer& buffer) const;
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// string containing a JSON rendition of a request.
@@ -226,7 +228,7 @@ public:
     ///  - That at least one of the two direction flags, forward change and
     ///    reverse change is true.
     ///
-    /// @TODO This is an initial implementation which provides a minimal amount
+    /// @todo This is an initial implementation which provides a minimal amount
     /// of validation.  FQDN, DHCID, and IP Address members are all currently
     /// strings, these may be replaced with richer classes.
     ///
@@ -244,7 +246,7 @@ public:
     /// @brief Sets the change type to the given value.
     ///
     /// @param value is the NameChangeType value to assign to the request.
-    void setChangeType(NameChangeType value);
+    void setChangeType(const NameChangeType value);
 
     /// @brief Sets the change type to the value of the given Element.
     ///
@@ -265,7 +267,7 @@ public:
     ///
     /// @param value contains the new value to assign to the forward change
     /// flag
-    void setForwardChange(bool value);
+    void setForwardChange(const bool value);
 
     /// @brief Sets the forward change flag to the value of the given Element.
     ///
@@ -287,7 +289,7 @@ public:
     ///
     /// @param value contains the new value to assign to the reverse change
     /// flag
-    void setReverseChange(bool value);
+    void setReverseChange(const bool value);
 
     /// @brief Sets the reverse change flag to the value of the given Element.
     ///
@@ -347,7 +349,7 @@ public:
 
     /// @brief Sets the DHCID based on the given string value.
     ///
-    /// @param string is a string of hexadecimal digits. The format is simply
+    /// @param value is a string of hexadecimal digits. The format is simply
     /// a contiguous stream of digits, with no delimiters. For example a string
     /// containing "14A3" converts to a byte array containing:  0x14, 0xA3.
     ///
@@ -420,7 +422,7 @@ public:
     /// @brief Sets the lease length to the given value.
     ///
     /// @param value contains the new value to assign to the lease length
-    void setLeaseLength(uint32_t value);
+    void setLeaseLength(const uint32_t value);
 
     /// @brief Sets the lease length to the value of the given Element.
     ///
@@ -440,7 +442,7 @@ public:
     /// @brief Sets the request status to the given value.
     ///
     /// @param value contains the new value to assign to request status
-    void setStatus(NameChangeStatus value);
+    void setStatus(const NameChangeStatus value);
 
     /// @brief Given a name, finds and returns an element from a map of
     /// elements.
@@ -471,8 +473,8 @@ private:
     bool reverse_change_;
 
     /// @brief The domain name whose DNS entry(ies) are to be updated.
-    /// @TODO Currently, this is a std::string but may be replaced with 
-    /// dns::Name which provides additional validation and domain name 
+    /// @todo Currently, this is a std::string but may be replaced with
+    /// dns::Name which provides additional validation and domain name
     /// manipulation.
     std::string fqdn_;
 
@@ -480,7 +482,7 @@ private:
     std::string ip_address_;
 
     /// @brief The lease client's unique DHCID.
-    /// @TODO Currently, this is uses D2Dhcid it but may be replaced with 
+    /// @todo Currently, this is uses D2Dhcid it but may be replaced with
     /// dns::DHCID which provides additional validation.
     D2Dhcid dhcid_;
 

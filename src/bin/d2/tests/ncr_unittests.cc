@@ -220,30 +220,26 @@ TEST(NameChangeRequestTest, constructionTests) {
     ncr.reset();
 
     // Verify blank FQDN is detected.
-    EXPECT_THROW(ncr.reset(new NameChangeRequest(CHG_ADD, true, true, "",
-                 "192.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
+    EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "",
+                 "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
 
     // Verify that an invalid IP address is detected.
-    EXPECT_THROW(ncr.reset(
-                 new NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
-                 "xxx.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
+    EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
+                 "xxx.168.1.101", dhcid, expiry, 1300), NcrMessageError);
 
     // Verify that a blank DHCID is detected.
     D2Dhcid blank_dhcid;
-    EXPECT_THROW(ncr.reset(
-                 new NameChangeRequest(CHG_ADD, true, true, "walah.walah.com",
-                 "192.168.1.101", blank_dhcid, expiry, 1300)), NcrMessageError);
+    EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "walah.walah.com",
+                 "192.168.1.101", blank_dhcid, expiry, 1300), NcrMessageError);
 
     // Verify that an invalid lease expiration is detected.
     ptime blank_expiry;
-    EXPECT_THROW(ncr.reset(
-                 new NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
-                 "192.168.1.101", dhcid, blank_expiry, 1300)), NcrMessageError);
+    EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
+                 "192.168.1.101", dhcid, blank_expiry, 1300), NcrMessageError);
 
     // Verify that one or both of direction flags must be true.
-    EXPECT_THROW(ncr.reset(
-                 new NameChangeRequest(CHG_ADD, false, false, "valid.fqdn",
-                "192.168.1.101", dhcid, expiry, 1300)), NcrMessageError);
+    EXPECT_THROW(NameChangeRequest(CHG_ADD, false, false, "valid.fqdn",
+                "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
 
 }
 
@@ -275,9 +271,9 @@ TEST(NameChangeRequestTest, dhcidTest) {
     // Fetch the byte vector from the dhcid and verify if equals the expected
     // content.
     const std::vector<uint8_t>& converted_bytes = dhcid.getBytes();
-    EXPECT_EQ(expected_bytes.size(), converted_bytes.size()); 
-    EXPECT_TRUE (std::equal(expected_bytes.begin(), 
-                            expected_bytes.begin()+expected_bytes.size(), 
+    EXPECT_EQ(expected_bytes.size(), converted_bytes.size());
+    EXPECT_TRUE (std::equal(expected_bytes.begin(),
+                            expected_bytes.begin()+expected_bytes.size(),
                             converted_bytes.begin()));
 
     // Convert the new dhcid back to string and verify it matches the original
@@ -356,22 +352,10 @@ TEST(NameChangeRequestTest, invalidMsgChecks) {
     // NameChangeRequest. The attempt should throw a NcrMessageError.
     int num_msgs = sizeof(invalid_msgs)/sizeof(char*);
     for (int i = 0; i < num_msgs; i++) {
-        bool it_threw = false;
-        try {
-            NameChangeRequest::fromJSON(invalid_msgs[i]);
-        } catch (NcrMessageError& ex) {
-            it_threw = true;
-            std::cout << "Invalid Message: " << ex.what() << std::endl;
-        }
-
-        // If it the conversion didn't fail, log the index message and fail
-        // the test.
-        if (!it_threw) {
-            std::cerr << "Invalid Message not caught, message idx: " << i
-                      << std::endl;
-            EXPECT_TRUE(it_threw);
-
-        }
+        EXPECT_THROW(NameChangeRequest::fromJSON(invalid_msgs[i]),
+                     NcrMessageError) << "Invalid message not caught idx: "
+                     << i << std::endl << " text:[" << invalid_msgs[i] << "]"
+                     << std::endl;
     }
 }
 
@@ -389,21 +373,10 @@ TEST(NameChangeRequestTest, validMsgChecks) {
     // NameChangeRequest. The attempt should succeed.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
     for (int i = 0; i < num_msgs; i++) {
-        bool it_threw = false;
-        try {
-            NameChangeRequest::fromJSON(valid_msgs[i]);
-        } catch (NcrMessageError& ex) {
-            it_threw = true;
-            std::cout << "Message Error: " << ex.what() << std::endl;
-        }
-
-        // If it the conversion failed log the index message and fail
-        // the test.
-        if (it_threw) {
-            std::cerr << "Valid Message failed, message idx: " << i
-                      << std::endl;
-            EXPECT_TRUE(!it_threw);
-        }
+        EXPECT_NO_THROW(NameChangeRequest::fromJSON(valid_msgs[i]))
+                        << "Valid message failed,  message idx: " << i
+                        << std::endl << " text:[" << valid_msgs[i] << "]"
+                        << std::endl;
     }
 }
 
