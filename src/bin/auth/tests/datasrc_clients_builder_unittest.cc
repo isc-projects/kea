@@ -36,9 +36,13 @@
 
 #include <boost/function.hpp>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <cerrno>
 
 using isc::data::ConstElementPtr;
 using namespace isc::dns;
@@ -55,11 +59,14 @@ protected:
         clients_map(new std::map<RRClass,
                     boost::shared_ptr<ConfigurableClientList> >),
         builder(&command_queue, &callback_queue, &cond, &queue_mutex,
-                &clients_map, &map_mutex, -1 /* TEMPORARY */),
+                &clients_map, &map_mutex, generateSockets()),
         cond(command_queue, delayed_command_queue), rrclass(RRClass::IN()),
         shutdown_cmd(SHUTDOWN, ConstElementPtr(), FinishedCallback()),
         noop_cmd(NOOP, ConstElementPtr(), FinishedCallback())
     {}
+    ~ DataSrcClientsBuilderTest() {
+
+    }
 
     void configureZones();      // used for loadzone related tests
 
@@ -74,6 +81,16 @@ protected:
     const RRClass rrclass;
     const Command shutdown_cmd;
     const Command noop_cmd;
+    int write_end, read_end;
+private:
+    int generateSockets() {
+        int pair[2];
+        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, pair);
+        assert(result == 0);
+        write_end = pair[0];
+        read_end = pair[1];
+        return write_end;
+    }
 };
 
 TEST_F(DataSrcClientsBuilderTest, runSingleCommand) {
@@ -84,6 +101,34 @@ TEST_F(DataSrcClientsBuilderTest, runSingleCommand) {
     EXPECT_EQ(0, cond.wait_count); // no wait because command queue is not empty
     EXPECT_EQ(1, queue_mutex.lock_count);
     EXPECT_EQ(1, queue_mutex.unlock_count);
+    // No callback scheduled, none called.
+    EXPECT_TRUE(callback_queue.empty());
+    // Not woken up.
+    char c;
+    int result = recv(read_end, &c, 1, MSG_DONTWAIT);
+    EXPECT_EQ(-1, result);
+    EXPECT_TRUE(errno == EAGAIN || errno == EWOULDBLOCK);
+}
+
+// Just to have a valid function callback to pass
+void emptyCallsback() {}
+
+// Check a command finished callback is passed
+TEST_F(DataSrcClientsBuilderTest, commandFinished) {
+    command_queue.push_back(Command(SHUTDOWN, ConstElementPtr(),
+                                    emptyCallsback));
+    builder.run();
+    EXPECT_EQ(0, cond.wait_count); // no wait because command queue is not empty
+    // Once for picking up data, once for putting the callback there
+    EXPECT_EQ(2, queue_mutex.lock_count);
+    EXPECT_EQ(2, queue_mutex.unlock_count);
+    // There's one callback in the queue
+    ASSERT_EQ(1, callback_queue.size());
+    EXPECT_EQ(emptyCallsback, callback_queue.front());
+    // And we are woken up.
+    char c;
+    int result = recv(read_end, &c, 1, MSG_DONTWAIT);
+    EXPECT_EQ(1, result);
 }
 
 TEST_F(DataSrcClientsBuilderTest, runMultiCommands) {
