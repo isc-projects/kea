@@ -85,19 +85,19 @@ bool checkServer(DnsServerInfoPtr server, const char* hostname,
 
     // Check hostname.
     if (server->getHostname() != hostname) {
-        EXPECT_EQ(server->getHostname(),hostname);
+        EXPECT_EQ(hostname, server->getHostname());
         result = false;
     }
 
     // Check IP address.
     if (server->getIpAddress().toText() != ip_address) {
-        EXPECT_EQ(server->getIpAddress().toText(), ip_address);
+        EXPECT_EQ(ip_address, server->getIpAddress().toText());
         result = false;
     }
 
     // Check port.
     if (server->getPort() !=  port) {
-        EXPECT_EQ (server->getPort(), port);
+        EXPECT_EQ (port, server->getPort());
         result = false;
     }
 
@@ -122,27 +122,26 @@ bool checkKey(TSIGKeyInfoPtr key, const char* name,
 {
     // Return value, assume its a match.
     bool result = true;
-    if (!key)
-    {
+    if (!key) {
         EXPECT_TRUE(key);
         return false;
     }
 
     // Check name.
     if (key->getName() != name) {
-        EXPECT_EQ(key->getName(),name);
+        EXPECT_EQ(name, key->getName());
         result = false;
     }
 
     // Check algorithm.
     if (key->getAlgorithm() != algorithm) {
-        EXPECT_EQ(key->getAlgorithm(), algorithm);
+        EXPECT_EQ(algorithm, key->getAlgorithm());
         result = false;
     }
 
     // Check secret.
     if (key->getSecret() !=  secret) {
-        EXPECT_EQ (key->getSecret(), secret);
+        EXPECT_EQ (secret, key->getSecret());
         result = false;
     }
 
@@ -260,7 +259,6 @@ TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
                          " \"algorithm\": \"md5\" , "
                          " \"secret\": \"0123456789\" "
                          "}";
-
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build succeeds but commit fails on blank name.
@@ -311,7 +309,7 @@ TEST_F(TSIGKeyInfoTest, validEntryTests) {
 
     // Verify the correct number of keys are present
     int count =  keys_->size();
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(1, count);
 
     // Find the key and retrieve it.
     TSIGKeyInfoMap::iterator gotit = keys_->find("d2_key_one");
@@ -493,7 +491,7 @@ TEST_F(DnsServerInfoTest, validEntryTests) {
 
     // Verify the correct number of servers are present
     int count =  servers_->size();
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(1, count);
 
     // Verify the server exists and has the correct values.
     DnsServerInfoPtr server = (*servers_)[0];
@@ -515,7 +513,7 @@ TEST_F(DnsServerInfoTest, validEntryTests) {
 
     // Verify the correct number of servers are present
     count =  servers_->size();
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(1, count);
 
     // Verify the server exists and has the correct values.
     server = (*servers_)[0];
@@ -534,7 +532,7 @@ TEST_F(DnsServerInfoTest, validEntryTests) {
 
     // Verify the correct number of servers are present
     count =  servers_->size();
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(1, count);
 
     // Verify the server exists and has the correct values.
     server = (*servers_)[0];
@@ -583,7 +581,7 @@ TEST_F(ConfigParseTest, validServerList) {
 
     // Verify that the server storage contains the correct number of servers.
     int count =  servers->size();
-    EXPECT_EQ(count, 3);
+    EXPECT_EQ(3, count);
 
     // Verify the first server exists and has the correct values.
     DnsServerInfoPtr server = (*servers)[0];
@@ -693,7 +691,7 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
 
     // Verify that the domain storage contains the correct number of domains.
     int count =  domains_->size();
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(1, count);
 
     // Verify that the expected domain exists and can be retrieved from
     // the storage.
@@ -702,15 +700,15 @@ TEST_F(DdnsDomainTest, ddnsDomainParsing) {
     DdnsDomainPtr& domain = gotit->second;
 
     // Verify the name and key_name values.
-    EXPECT_EQ(domain->getName(), "tmark.org");
-    EXPECT_EQ(domain->getKeyName(), "d2_key.tmark.org");
+    EXPECT_EQ("tmark.org", domain->getName());
+    EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
 
     // Verify that the server list exists and contains the correct number of
     // servers.
     const DnsServerInfoStoragePtr& servers = domain->getServers();
     EXPECT_TRUE(servers);
     count =  servers->size();
-    EXPECT_EQ(count, 3);
+    EXPECT_EQ(3, count);
 
     // Fetch each server and verify its contents.
     DnsServerInfoPtr server = (*servers)[0];
@@ -775,7 +773,7 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
 
     // Verify that the domain storage contains the correct number of domains.
     int count =  domains_->size();
-    EXPECT_EQ(count, 2);
+    EXPECT_EQ(2, count);
 
     // Verify that the first domain exists and can be retrieved.
     DdnsDomainMap::iterator gotit = domains_->find("tmark.org");
@@ -783,14 +781,14 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     DdnsDomainPtr& domain = gotit->second;
 
     // Verify the name and key_name values of the first domain.
-    EXPECT_EQ(domain->getName(), "tmark.org");
-    EXPECT_EQ(domain->getKeyName(), "d2_key.tmark.org");
+    EXPECT_EQ("tmark.org", domain->getName());
+    EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
 
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
     EXPECT_TRUE(servers);
     count =  servers->size();
-    EXPECT_EQ(count, 3);
+    EXPECT_EQ(3, count);
 
     DnsServerInfoPtr server = (*servers)[0];
     EXPECT_TRUE(server);
@@ -810,14 +808,14 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
     domain = gotit->second;
 
     // Verify the name and key_name values of the second domain.
-    EXPECT_EQ(domain->getName(), "billcat.net");
-    EXPECT_EQ(domain->getKeyName(), "d2_key.billcat.net");
+    EXPECT_EQ("billcat.net", domain->getName());
+    EXPECT_EQ("d2_key.billcat.net", domain->getKeyName());
 
     // Verify the each of second domain's servers
     servers = domain->getServers();
     EXPECT_TRUE(servers);
     count =  servers->size();
-    EXPECT_EQ(count, 3);
+    EXPECT_EQ(3, count);
 
     server = (*servers)[0];
     EXPECT_TRUE(server);
@@ -956,15 +954,15 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
     // Verify that the application level scalars have the proper values.
     std::string interface;
     EXPECT_NO_THROW (context->getParam("interface", interface));
-    EXPECT_EQ(interface, "eth1");
+    EXPECT_EQ("eth1", interface);
 
     std::string ip_address;
     EXPECT_NO_THROW (context->getParam("ip_address", ip_address));
-    EXPECT_EQ(ip_address, "192.168.1.33");
+    EXPECT_EQ("192.168.1.33", ip_address);
 
     uint32_t port = 0;
     EXPECT_NO_THROW (context->getParam("port", port));
-    EXPECT_EQ(port, 88);
+    EXPECT_EQ(88, port);
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();
@@ -974,7 +972,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
     DdnsDomainMapPtr domains = mgr->getDomains();
     ASSERT_TRUE(domains);
     int count =  domains->size();
-    EXPECT_EQ(count, 2);
+    EXPECT_EQ(2, count);
 
     // Verify that the server count in each of the forward manager domains.
     // NOTE that since prior tests have validated server parsing, we are are
@@ -986,7 +984,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
         EXPECT_TRUE(servers);
-        EXPECT_EQ(count, 3);
+        EXPECT_EQ(3, count);
     }
 
     // Verify that the reverse manager can be retrieved.
@@ -996,7 +994,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
     // Verify that the reverse manager has the correct number of domains.
     domains = mgr->getDomains();
     count =  domains->size();
-    EXPECT_EQ(count, 2);
+    EXPECT_EQ(2, count);
 
     // Verify that the server count in each of the reverse manager domains.
     // NOTE that since prior tests have validated server parsing, we are are
@@ -1007,7 +1005,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
         EXPECT_TRUE(servers);
-        EXPECT_EQ(count, 3);
+        EXPECT_EQ(3, count);
     }
 }
 
@@ -1235,47 +1233,6 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 
     // Verify that an attempt to match an empty FQDN throws.
     ASSERT_THROW(cfg_mgr_->matchReverse("", match), D2CfgError);
-}
-
-TEST_F(D2CfgMgrTest, tsigTest) {
-    std::string config = "{ "
-                        "\"interface\" : \"eth1\" , "
-                        "\"ip_address\" : \"192.168.1.33\" , "
-                        "\"port\" : 88 , "
-                        "\"tsig_keys\": [] ,"
-                        "\"forward_ddns\" : {"
-                        "\"ddns_domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
-                        "  ] } "
-                        ", "
-                        "{ \"name\": \"one.tmark.org\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.2\" } "
-                        "  ] } "
-                        "] },"
-                        "\"reverse_ddns\" : {"
-                        "\"ddns_domains\": [ "
-                        "{ \"name\": \"100.168.192.in-addr.arpa\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
-                        "  ] }, "
-                        "{ \"name\": \"168.192.in-addr.arpa\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
-                        "  ] }, "
-                        "{ \"name\": \"*\" , "
-                        "  \"dns_servers\" : [ "
-                        "  { \"ip_address\": \"127.0.0.1\" } "
-                        "  ] } "
-                        "] } }";
-
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
 }
 
 } // end of anonymous namespace

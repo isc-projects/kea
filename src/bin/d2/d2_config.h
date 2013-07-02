@@ -42,7 +42,7 @@ namespace d2 {
 /// The key list consists of one or more TSIG keys, each entry described by
 /// a name, the algorithm method name, and its secret key component.
 ///
-/// @TODO  NOTE that TSIG configuration parsing is functional, the use of
+/// @todo  NOTE that TSIG configuration parsing is functional, the use of
 /// TSIG Keys during the actual DNS update transactions is not.  This will be
 /// implemented in a future release.
 ///
@@ -149,7 +149,7 @@ public:
 /// a TSIG Key.  It is intended primarily as a reference for working with
 /// actual keys and may eventually be replaced by isc::dns::TSIGKey.  TSIG Key
 /// functionality at this stage is strictly limited to configuration parsing.
-/// @TODO full functionality for using TSIG during DNS updates will be added
+/// @todo full functionality for using TSIG during DNS updates will be added
 /// in a future release.
 class TSIGKeyInfo {
 public:
@@ -158,7 +158,7 @@ public:
     ///
     /// @param name the unique label used to identify this key
     /// @param algorithm the name of the encryption alogirthm this key uses.
-    /// (@TODO This will be a fixed list of choices)
+    /// (@todo This will be a fixed list of choices)
     /// @param secret the secret component of this key
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                 const std::string& secret);
@@ -243,7 +243,7 @@ public:
     /// enabled for use. It defaults to true.
     DnsServerInfo(const std::string& hostname,
                   isc::asiolink::IOAddress ip_address,
-                  uint32_t port=STANDARD_DNS_PORT,
+                  uint32_t port = STANDARD_DNS_PORT,
                   bool enabled=true);
 
     /// @brief Destructor
@@ -320,6 +320,9 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// This class specifies a DNS domain and the list of DNS servers that support
 /// it.  It's primary use is to map a domain to the DNS server(s) responsible
 /// for it.
+/// @todo Currently the name entry for a domain is just an std::string. It
+/// may be worthwhile to change this to a dns::Name for purposes of better 
+/// validation and matching capabilities. 
 class DdnsDomain {
 public:
     /// @brief Constructor
@@ -411,6 +414,10 @@ public:
     /// upon entry and only set if a match is subsequently found.
     ///
     /// @return returns true if a match is found, false otherwise.
+    /// @todo This is a very basic match method, which expects valid FQDNs
+    /// both as input and for the DdnsDomain::getName().  Currently both are
+    /// simple strings and there is no normalization (i.e. added trailing dots
+    /// if missing).
     virtual bool matchDomain(const std::string& fqdn, DdnsDomainPtr& domain);
 
     /// @brief Fetches the manager's name.
@@ -513,7 +520,7 @@ public:
     /// @param entry_name is an arbitrary label assigned to this configuration
     /// definition. Since servers are specified in a list this value is likely
     /// be something akin to "key:0", set during parsing.
-    /// @param servers is a pointer to the storage area to which the parser
+    /// @param keys is a pointer to the storage area to which the parser
     /// should commit the newly created TSIGKeyInfo instance.
     TSIGKeyInfoParser(const std::string& entry_name, TSIGKeyInfoMapPtr keys);
 
@@ -686,7 +693,7 @@ public:
     /// @param servers is a pointer to the storage area to which the parser
     /// should commit the newly created DnsServerInfo instance.
     DnsServerInfoListParser(const std::string& list_name,
-                            DnsServerInfoStoragePtr servers_);
+                            DnsServerInfoStoragePtr servers);
 
     /// @brief Destructor
     virtual ~DnsServerInfoListParser();
@@ -747,7 +754,7 @@ public:
     /// The results of the parsing are retained internally for use during
     /// commit.
     ///
-    /// @param server_config is the "ddns_domain" configuration to parse
+    /// @param domain_config is the "ddns_domain" configuration to parse
     virtual void build(isc::data::ConstElementPtr domain_config);
 
     /// @brief Creates a parser for the given "ddns_domain" member element id.
@@ -810,7 +817,7 @@ public:
     /// @param keys is a pointer to a map of the defined TSIG keys.
     /// should commit the newly created DdnsDomain instance.
     DdnsDomainListParser(const std::string& list_name,
-                         DdnsDomainMapPtr domains_, TSIGKeyInfoMapPtr keys);
+                         DdnsDomainMapPtr domains, TSIGKeyInfoMapPtr keys);
 
     /// @brief Destructor
     virtual ~DdnsDomainListParser();
@@ -922,7 +929,7 @@ private:
 
     /// @brief Local storage area for scalar parameter values. Use to hold
     /// data until time to commit.
-    /// @TODO Currently, the manager has no scalars but this is likely to
+    /// @todo Currently, the manager has no scalars but this is likely to
     /// change as matching capabilities expand.
     DScalarContext local_scalars_;
 };

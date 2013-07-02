@@ -171,7 +171,7 @@ public:
     /// various configuration values. Installing the dummy handler
     /// that guarantees to return success causes initial configuration
     /// to be stored for the session being created and that it can
-    /// be later accessed with \ref isc::ConfigData::getFullConfig.
+    /// be later accessed with \ref isc::config::ConfigData::getFullConfig.
     ///
     /// @param new_config new configuration.
     ///
@@ -210,7 +210,7 @@ public:
     /// implementation will merge the configuration update into the existing
     /// configuration and then invoke the application process' configure method.
     ///
-    /// @TODO This implementation is will evolve as the D2 configuration
+    /// @todo This implementation is will evolve as the D2 configuration
     /// management task is implemented (trac #2957).
     ///
     /// @param  new_config is the new configuration
@@ -261,7 +261,7 @@ protected:
     ///
     /// @param option is the option "character" from the command line, without
     /// any prefixing hyphen(s)
-    /// @optarg optarg is the argument value (if one) associated with the option
+    /// @param optarg is the argument value (if one) associated with the option
     ///
     /// @return must return true if the option was valid, false is it is
     /// invalid. (Note the default implementation always returns false.)
@@ -395,7 +395,7 @@ protected:
 
     /// @brief Setter for setting the name of the controller's BIND10 spec file.
     ///
-    /// @param value is the file name string.
+    /// @param spec_file_name the file name string.
     void setSpecFileName(const std::string& spec_file_name) {
         spec_file_name_ = spec_file_name;
     }

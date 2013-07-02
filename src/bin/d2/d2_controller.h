@@ -24,7 +24,7 @@ namespace d2 {
 /// This class is the DHCP-DDNS specific derivation of DControllerBase. It
 /// creates and manages an instance of the DHCP-DDNS application process,
 /// D2Process.
-/// @TODO Currently, this class provides only the minimum required specialized
+/// @todo Currently, this class provides only the minimum required specialized
 /// behavior to run the DHCP-DDNS service. It may very well expand as the
 /// service implementation evolves.  Some thought was given to making
 /// DControllerBase a templated class but the labor savings versus the
