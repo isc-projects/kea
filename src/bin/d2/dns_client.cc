@@ -43,8 +43,13 @@ DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
 
 void
 DNSClient::operator()(IOFetch::Result result) {
-    // @todo Do something useful here. One of the useful things will be to parse
-    // incoming message if the result is SUCCESS.
+    // @todo More sanity checks here. Also, there is a question, what happens if
+    // the exception is thrown here.
+
+    if (result == IOFetch::SUCCESS) {
+        InputBuffer response_buf(in_buf_->getData(), in_buf_->getLength());
+        response_->fromWire(response_buf);
+    }
 
     // Once we are done with internal business, let's call a callback supplied
     // by a caller.
