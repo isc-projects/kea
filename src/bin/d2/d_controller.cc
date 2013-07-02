@@ -305,7 +305,7 @@ isc::data::ConstElementPtr
 DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
     isc::data::ConstElementPtr full_config;
     if (stand_alone_) {
-        // @TODO Until there is a configuration manager to provide retrieval
+        // @todo Until there is a configuration manager to provide retrieval
         // we'll just assume the incoming config is the full configuration set.
         // It may also make more sense to isolate the controller from the
         // configuration manager entirely. We could do something like

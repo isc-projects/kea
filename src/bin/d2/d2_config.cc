@@ -103,7 +103,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
     // Start with the longest version of the fqdn and search the list.
     // Continue looking for shorter versions of fqdn so long as no match is
     // found.
-    // @TODO This can surely be optimized, time permitting.
+    // @todo This can surely be optimized, time permitting.
     std::string match_name = fqdn;
     std::size_t start_pos = 0;
     while (start_pos != std::string::npos) {
@@ -195,7 +195,7 @@ TSIGKeyInfoParser::commit() {
     local_scalars_.getParam("algorithm", algorithm);
     local_scalars_.getParam("secret", secret);
 
-    // @TODO Validation here is very superficial. This will expand as TSIG
+    // @todo Validation here is very superficial. This will expand as TSIG
     // Key use is more fully implemented.
 
     // Name cannot be blank.
