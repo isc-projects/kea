@@ -78,7 +78,7 @@ An error message output during a configuration update.  The program is
 expecting an item but has not found it in the new configuration.  This may
 mean that the BIND 10 configuration database is corrupt.
 
-% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1
+% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2 
 On receipt of message containing details to a change of its configuration,
 the server failed to create a parser to decode the contents of the named
 configuration element, or the creation succeeded but the parsing actions
