@@ -278,7 +278,8 @@ class ZonemgrRefresh:
                                        format_zone_str(zone_name, zone_class))
             result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
             if result != ZoneFinder.SUCCESS:
-                logger.info(ZONEMGR_NO_SOA, format_zone_str(zone_name, zone_class))
+                logger.warn(ZONEMGR_NO_SOA,
+                            format_zone_str(zone_name, zone_class))
                 return None
             return soa_rrset
 
