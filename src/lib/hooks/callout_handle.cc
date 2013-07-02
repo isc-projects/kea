@@ -52,12 +52,12 @@ CalloutHandle::~CalloutHandle() {
     context_collection_.clear();
 
     // Normal destruction of the remaining variables will include the
-    // destruction of lm_collection_, wn action that will decrement the
-    // reference count on the library manager collection (which holds the
-    // libraries that could have allocated memory in the argument and context
-    // members).  When that goes to zero, the libraries will be unloaded:
-    // at that point nothing in the hooks framework will be pointing to memory
-    // in the libraries' address space.
+    // destruction of lm_collection_, an action that decrements the reference
+    // count on the library manager collection (which holds the libraries that
+    // could have allocated memory in the argument and context members.)  When
+    // that goes to zero, the libraries will be unloaded: at that point nothing
+    // in the hooks framework will be pointing to memory in the libraries'
+    // address space.
     //
     // It is possible that some other data structure in the server (the program
     // using the hooks library) still references the address space and attempts
