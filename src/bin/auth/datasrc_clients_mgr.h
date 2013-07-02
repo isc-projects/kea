@@ -82,12 +82,22 @@ enum CommandID {
 typedef boost::function<void ()> FinishedCallback;
 
 /// \brief The data type passed from DataSrcClientsMgr to
-/// DataSrcClientsBuilder.
+///     DataSrcClientsBuilder.
 ///
-/// The first element of the pair is the command ID, and the second element
-/// is its argument.  If the command doesn't take an argument it should be
-/// a null pointer.
-typedef std::pair<CommandID, data::ConstElementPtr> Command;
+/// This just holds the data items together, no logic or protection
+/// is present here.
+struct Command {
+    Command(CommandID id, const data::ConstElementPtr& params,
+            const FinishedCallback& callback) :
+        id(id),
+        params(params),
+        callback(callback)
+    {}
+    CommandID id;
+    data::ConstElementPtr params;
+    FinishedCallback callback;
+};
+
 } // namespace datasrc_clientmgr_internal
 
 /// \brief Frontend to the manager object for data source clients.
@@ -336,13 +346,12 @@ private:
                      const datasrc_clientmgr_internal::FinishedCallback&
                      callback = datasrc_clientmgr_internal::FinishedCallback())
     {
-        (void) callback; // Temporary, remove!
         // The lock will be held until the end of this method.  Only
         // push_back has to be protected, but we can avoid having an extra
         // block this way.
         typename MutexType::Locker locker(queue_mutex_);
         command_queue_.push_back(
-            datasrc_clientmgr_internal::Command(command, arg));
+            datasrc_clientmgr_internal::Command(command, arg, callback));
         cond_.signal();
     }
 
@@ -533,7 +542,7 @@ bool
 DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     const Command& command)
 {
-    const CommandID cid = command.first;
+    const CommandID cid = command.id;
     if (cid >= NUM_COMMANDS) {
         // This shouldn't happen except for a bug within this file.
         isc_throw(Unexpected, "internal bug: invalid command, ID: " << cid);
@@ -544,12 +553,12 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
-    switch (command.first) {
+    switch (command.id) {
     case RECONFIGURE:
-        doReconfigure(command.second);
+        doReconfigure(command.params);
         break;
     case LOADZONE:
-        doLoadZone(command.second);
+        doLoadZone(command.params);
         break;
     case SHUTDOWN:
         return (false);

@@ -81,9 +81,9 @@ TestDataSrcClientsMgr::reconfigureHook() {
     using namespace datasrc_clientmgr_internal;
 
     // Simply replace the local map, ignoring bogus config value.
-    assert(command_queue_.front().first == RECONFIGURE);
+    assert(command_queue_.front().id == RECONFIGURE);
     try {
-        clients_map_ = configureDataSource(command_queue_.front().second);
+        clients_map_ = configureDataSource(command_queue_.front().params);
     } catch (...) {}
 }
 
