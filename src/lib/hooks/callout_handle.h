@@ -80,11 +80,11 @@ class LibraryManagerCollection;
 ///   "context_destroy" callout.  The information is accessed through the
 ///   {get,set}Context() methods.
 ///
-/// - Per-library handle.  Allows the callout to dynamically register and
-///   deregister callouts. (In the latter case, only functions registered by
-///   functions in the same library as the callout doing the deregistration
-///   can be removed: callouts registered by other libraries cannot be
-///   modified.)
+/// - Per-library handle (LibraryHandle). The library handle allows the
+///   callout to dynamically register and deregister callouts. In the latter
+///   case, only functions registered by functions in the same library as the
+///   callout doing the deregistration can be removed: callouts registered by
+///   other libraries cannot be modified.
 
 class CalloutHandle {
 public:

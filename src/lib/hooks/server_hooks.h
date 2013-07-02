@@ -151,7 +151,7 @@ private:
     ///
     /// Constructor is declared private to enforce the singleton nature of
     /// the object.  A reference to the singleton is obtainable through the
-    /// ggetServerHooks() static method.
+    /// getServerHooks() static method.
     ///
     /// @throws isc::Unexpected if the registration of the pre-defined hooks
     ///         fails in some way.
