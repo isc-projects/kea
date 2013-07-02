@@ -602,40 +602,37 @@ public:
     ///
     /// @param json_text contains the configuration text in JSON format to
     /// convert.
-    /// @return returns true if the conversion is successful, false otherwise.
-    bool fromJSON(std::string& json_text) {
+    /// @return returns AssertionSuccess if there were no parsing errors,
+    /// AssertionFailure otherwise.
+    ::testing::AssertionResult fromJSON(std::string& json_text) {
         try  {
             config_set_ = isc::data::Element::fromJSON(json_text);
-        } catch (...) {
-            #if 0
-            // Handy for diagnostics
-            std::cout << "fromJSON failed to parse text" << json_text
-                      << std::endl;
-            #endif
-            return (false);
+        } catch (const isc::Exception &ex) {
+            return  ::testing::AssertionFailure() 
+                << "JSON text failed to parse:" << ex.what();
         }
 
-        return (true);
+        return ::testing::AssertionSuccess();
     }
+
 
     /// @brief Compares the status in the  parse result stored in member
     /// variable answer_ to a given value.
     ///
     /// @param should_be is an integer against which to compare the status.
     ///
-    /// @return returns true if the status value is equal to the given value.
-    bool checkAnswer(int should_be) {
+    /// @return returns AssertionSuccess if there were no parsing errors,
+    /// AssertionFailure otherwise.
+    ::testing::AssertionResult checkAnswer(int should_be) {
         int rcode = 0;
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer_);
-        #if 0
-        // Handy for diagnostics
-        if (rcode != 0) {
-            std::cout << "checkAnswer rcode:" << rcode << " comment: "
-                  << *comment << std::endl;
+        if (rcode == should_be) {
+            return testing::AssertionSuccess();
         }
-        #endif
-        return (rcode == should_be);
+
+        return ::testing::AssertionFailure() << "checkAnswer rcode:" 
+               << rcode << " comment: " << *comment << std::endl;
     }
 
     /// @brief Configuration set being tested.

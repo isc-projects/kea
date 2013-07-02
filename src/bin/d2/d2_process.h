@@ -41,7 +41,7 @@ public:
     D2Process(const char* name, IOServicePtr io_service);
 
     /// @brief Will be used after instantiation to perform initialization
-    /// unique to D2. @TODO This will likely include interactions with
+    /// unique to D2. @todo This will likely include interactions with
     /// QueueMgr and UpdateMgr, to prepare for request receipt and processing.
     /// Current implementation successfully does nothing.
     /// @throw throws a DProcessBaseError if the initialization fails.
@@ -58,7 +58,7 @@ public:
     /// @brief Implements the process's shutdown processing. When invoked, it
     /// should ensure that the process gracefully exits the run method.
     /// Current implementation simply sets the shutdown flag monitored by the
-    /// run method. @TODO this may need to expand as the implementation evolves.
+    /// run method. @todo this may need to expand as the implementation evolves.
     /// @throw throws a DProcessBaseError if an error is encountered.
     virtual void shutdown();
 

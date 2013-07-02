@@ -106,8 +106,6 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 class D2CfgMgr : public DCfgMgrBase {
 public:
     /// @brief Constructor
-    ///
-    /// @param context is a pointer to the configuration context the manager
     D2CfgMgr();
 
     /// @brief Destructor
@@ -131,7 +129,7 @@ public:
     ///
     /// @return returns true if a match is found, false otherwise.
     /// @throw throws D2CfgError if given an invalid fqdn. 
-    bool matchForward(const std::string& fdqn, DdnsDomainPtr &domain);
+    bool matchForward(const std::string& fqdn, DdnsDomainPtr &domain);
 
     /// @brief Matches a given FQDN to a reverse domain.
     ///
@@ -144,7 +142,7 @@ public:
     ///
     /// @return returns true if a match is found, false otherwise.
     /// @throw throws D2CfgError if given an invalid fqdn. 
-    bool matchReverse(const std::string& fdqn, DdnsDomainPtr &domain);
+    bool matchReverse(const std::string& fqdn, DdnsDomainPtr &domain);
 
 protected:
     /// @brief Given an element_id returns an instance of the appropriate

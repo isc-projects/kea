@@ -60,6 +60,8 @@ public:
     /// in log statements, but otherwise arbitrary.
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
+    /// @param cfg_mgr the configuration manager instance that handles
+    /// configuration parsing.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
     DProcessBase(const char* app_name, IOServicePtr io_service, 
