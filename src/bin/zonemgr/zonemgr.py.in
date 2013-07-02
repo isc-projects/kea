@@ -142,14 +142,14 @@ class ZonemgrRefresh:
         """Set zone next refresh time.
         jitter should not be bigger than half the original value."""
         self._set_zone_next_refresh_time(zone_name_class,
-                                         self._get_current_time() + \
+                                         self._get_current_time() +
                                             self._random_jitter(max, jitter))
 
     def _set_zone_refresh_timer(self, zone_name_class):
         """Set zone next refresh time after zone refresh success.
            now + refresh - refresh_jitter <= next_refresh_time <= now + refresh
            """
-        zone_refresh_time = float(self._get_zone_soa_rdata(zone_name_class).\
+        zone_refresh_time = float(self._get_zone_soa_rdata(zone_name_class).
                                       split(" ")[REFRESH_OFFSET])
         zone_refresh_time = max(self._lowerbound_refresh, zone_refresh_time)
         self._set_zone_timer(zone_name_class, zone_refresh_time,
@@ -160,7 +160,7 @@ class ZonemgrRefresh:
            now + retry - retry_jitter <= next_refresh_time <= now + retry
            """
         if (self._get_zone_soa_rdata(zone_name_class) is not None):
-            zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).\
+            zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).
                                         split(" ")[RETRY_OFFSET])
         else:
             zone_retry_time = 0.0
@@ -309,12 +309,12 @@ class ZonemgrRefresh:
 
     def _zone_is_expired(self, zone_name_class):
         """Judge whether a zone is expired or not."""
-        zone_expired_time = float(self._get_zone_soa_rdata(zone_name_class).\
+        zone_expired_time = float(self._get_zone_soa_rdata(zone_name_class).
                                       split(" ")[EXPIRED_OFFSET])
         zone_last_refresh_time = \
             self._get_zone_last_refresh_time(zone_name_class)
         if (ZONE_EXPIRED == self._get_zone_state(zone_name_class) or
-            zone_last_refresh_time + zone_expired_time <= \
+            zone_last_refresh_time + zone_expired_time <=
                 self._get_current_time()):
             return True
 
@@ -330,7 +330,7 @@ class ZonemgrRefresh:
         self._zonemgr_refresh_info[zone_name_class]["last_refresh_time"] = time
 
     def _get_zone_notifier_master(self, zone_name_class):
-        if ("notify_master" in \
+        if ("notify_master" in
                 self._zonemgr_refresh_info[zone_name_class].keys()):
             return self._zonemgr_refresh_info[zone_name_class]["notify_master"]
 
@@ -341,7 +341,7 @@ class ZonemgrRefresh:
             master_addr
 
     def _clear_zone_notifier_master(self, zone_name_class):
-        if ("notify_master" in \
+        if ("notify_master" in
                 self._zonemgr_refresh_info[zone_name_class].keys()):
             del self._zonemgr_refresh_info[zone_name_class]["notify_master"]
 
@@ -385,7 +385,7 @@ class ZonemgrRefresh:
             # If hasn't received refresh response but are within refresh
             # timeout, skip the zone
             if (ZONE_REFRESHING == zone_state and
-                (self._get_zone_refresh_timeout(zone_name_class) > \
+                (self._get_zone_refresh_timeout(zone_name_class) >
                      self._get_current_time())):
                 continue
 
@@ -396,7 +396,7 @@ class ZonemgrRefresh:
                 zone_need_refresh = zone_name_class
 
             # Find the zone need do refresh
-            if (self._get_zone_next_refresh_time(zone_need_refresh) < \
+            if (self._get_zone_next_refresh_time(zone_need_refresh) <
                     self._get_current_time()):
                 break
 
@@ -409,7 +409,7 @@ class ZonemgrRefresh:
                      zone_name_class[0], zone_name_class[1])
         self._set_zone_state(zone_name_class, ZONE_REFRESHING)
         self._set_zone_refresh_timeout(zone_name_class,
-                                       self._get_current_time() + \
+                                       self._get_current_time() +
                                            self._max_transfer_timeout)
         notify_master = self._get_zone_notifier_master(zone_name_class)
         # If the zone has notify master, send notify command to xfrin module
