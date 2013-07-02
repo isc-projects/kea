@@ -14,6 +14,7 @@
 
 #include <config/ccsession.h>
 #include <d2/d2_log.h>
+#include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
 
 using namespace asio;
@@ -22,7 +23,7 @@ namespace isc {
 namespace d2 {
 
 D2Process::D2Process(const char* name, IOServicePtr io_service)
-    : DProcessBase(name, io_service) {
+    : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())) {
 };
 
 void
@@ -60,19 +61,19 @@ D2Process::shutdown() {
 
 isc::data::ConstElementPtr
 D2Process::configure(isc::data::ConstElementPtr config_set) {
-    // @TODO This is the initial implementation which simply accepts
-    // any content in config_set as valid.  This is sufficient to
-    // allow participation as a BIND10 module, while D2 configuration support
-    // is being developed.
+    // @todo This is the initial implementation passes the configuration onto
+    // the D2CfgMgr.  There may be additional steps taken added to handle
+    // configuration changes but for now, assume that D2CfgMgr is handling it
+    // all. 
     LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
               DHCP_DDNS_CONFIGURE).arg(config_set->str());
 
-    return (isc::config::createAnswer(0, "Configuration accepted."));
+    return (getCfgMgr()->parseConfig(config_set));
 }
 
 isc::data::ConstElementPtr
 D2Process::command(const std::string& command, isc::data::ConstElementPtr args){
-    // @TODO This is the initial implementation.  If and when D2 is extended
+    // @todo This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise
     // it should reject all commands as it does now.
     LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
