@@ -159,7 +159,7 @@ class ZonemgrRefresh:
         """Set zone next refresh time after zone refresh fail.
            now + retry - retry_jitter <= next_refresh_time <= now + retry
            """
-        if (self._get_zone_soa_rdata(zone_name_class) is not None):
+        if self._get_zone_soa_rdata(zone_name_class) is not None:
             zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).
                                         split(" ")[RETRY_OFFSET])
         else:
@@ -180,7 +180,7 @@ class ZonemgrRefresh:
 
     def zone_refresh_success(self, zone_name_class):
         """Update zone info after zone refresh success"""
-        if (self._zone_not_exist(zone_name_class)):
+        if self._zone_not_exist(zone_name_class):
             logger.error(ZONEMGR_UNKNOWN_ZONE_SUCCESS, zone_name_class[0],
                          zone_name_class[1])
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
@@ -193,7 +193,7 @@ class ZonemgrRefresh:
 
     def zone_refresh_fail(self, zone_name_class):
         """Update zone info after zone refresh fail"""
-        if (self._zone_not_exist(zone_name_class)):
+        if self._zone_not_exist(zone_name_class):
             logger.error(ZONEMGR_UNKNOWN_ZONE_FAIL, zone_name_class[0],
                          zone_name_class[1])
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
@@ -297,7 +297,7 @@ class ZonemgrRefresh:
             zone_soa = get_zone_soa_rrset(datasrc_client,
                                           Name(zone_name_class[0]),
                                           RRClass(zone_name_class[1]))
-            if (zone_soa == None):
+            if zone_soa == None:
                 return None
             else:
                 return zone_soa.get_rdata()[0].to_text()
@@ -449,7 +449,7 @@ class ZonemgrRefresh:
                     timeout = \
                         self._get_zone_next_refresh_time(zone_need_refresh) - \
                         self._get_current_time()
-                    if (timeout < 0):
+                    if timeout < 0:
                         self._do_refresh(zone_need_refresh)
                         continue
 
@@ -710,7 +710,7 @@ class Zonemgr:
             logger.error(ZONEMGR_NO_ZONE_CLASS)
             raise ZonemgrException("zone class should be provided")
 
-        if (command != ZONE_NOTIFY_COMMAND):
+        if command != ZONE_NOTIFY_COMMAND:
             return (zone_name, zone_class)
 
         master_str = args.get("master")
