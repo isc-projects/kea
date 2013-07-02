@@ -385,7 +385,7 @@ NameChangeRequest::getLeaseExpiresOnStr() const {
     return (to_iso_string(*lease_expires_on_));
 }
 
-void 
+void
 NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
     try {
         // Create a new ptime instance from the ISO date-time string in value
@@ -400,7 +400,7 @@ NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
 
 }
 
-void 
+void
 NameChangeRequest::setLeaseExpiresOn(const boost::posix_time::ptime&  value) {
     if (lease_expires_on_->is_not_a_date_time()) {
         isc_throw(NcrMessageError, "Invalid value for lease_expires_on");
