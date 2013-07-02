@@ -669,9 +669,6 @@ class TestZonemgr(unittest.TestCase):
     def setUp(self):
         self.zonemgr = MyZonemgr()
 
-    def tearDown(self):
-        pass
-
     def test_config_handler(self):
         config_data1 = {
                     "lowerbound_refresh" : 60,
