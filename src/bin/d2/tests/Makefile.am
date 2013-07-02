@@ -61,6 +61,7 @@ d2_unittests_SOURCES += ../d2_config.cc ../d2_config.h
 d2_unittests_SOURCES += ../d2_cfg_mgr.cc ../d2_cfg_mgr.h
 d2_unittests_SOURCES += ../d2_update_message.cc ../d2_update_message.h
 d2_unittests_SOURCES += ../d2_zone.cc ../d2_zone.h
+d2_unittests_SOURCES += ../ncr_msg.cc ../ncr_msg.h
 d2_unittests_SOURCES += d_test_stubs.cc d_test_stubs.h
 d2_unittests_SOURCES += d2_unittests.cc
 d2_unittests_SOURCES += d2_process_unittests.cc
@@ -70,6 +71,7 @@ d2_unittests_SOURCES += d_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_update_message_unittests.cc
 d2_unittests_SOURCES += d2_zone_unittests.cc
+d2_unittests_SOURCES += ncr_unittests.cc
 nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
@@ -82,6 +84,8 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+
 endif
 
 noinst_PROGRAMS = $(TESTS)
