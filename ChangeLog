@@ -1,3 +1,8 @@
+636.	[func]		[tmark]
+	Added the initial implementation of configuration parsing for
+	DCHP-DDNS.
+	(Trac #2957, git c04fb71fa44c2a458aac57ae54eeb1711c017a49)
+
 635.	[func]		marcin
 	b10-dhcp-ddns: Implemented DNS Update message construction.
 	(Trac #2796, git eac5e751473e238dee1ebf16491634a1fbea25e2)
