@@ -15,6 +15,7 @@
 
 #include <config/ccsession.h>
 #include <d2/d2_process.h>
+#include <d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -83,17 +84,23 @@ TEST(D2Process, construction) {
 }
 
 /// @brief Verifies basic configure method behavior.
-/// @TODO This test is simplistic and will need to be augmented as configuration
+///  This test is simplistic and will need to be augmented as configuration
 /// ability is implemented.
 TEST_F(D2ProcessTest, configure) {
-    // Verify that given a configuration "set", configure returns
-    // a successful response.
     int rcode = -1;
-    string config = "{ \"test-value\": 1000 } ";
-    isc::data::ElementPtr json = isc::data::Element::fromJSON(config);
+
+    // Use a small, valid D2 configuration to verify successful parsing.
+    isc::data::ElementPtr json = isc::data::Element::fromJSON(valid_d2_config);
     isc::data::ConstElementPtr answer = process_->configure(json);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
+
+    // Use an invalid configuration to verify parsing error return.
+    string config = "{ \"bogus\": 1000 } ";
+    json = isc::data::Element::fromJSON(config);
+    answer = process_->configure(json);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
 }
 
 /// @brief Verifies basic command method behavior.

@@ -79,9 +79,9 @@ DebugParser::DebugParser(const std::string& param_name)
 
 void 
 DebugParser::build(ConstElementPtr new_config) {
+    value_ = new_config;
     std::cout << "Build for token: [" << param_name_ << "] = ["
         << value_->str() << "]" << std::endl; 
-    value_ = new_config;
 }
 
 void 
