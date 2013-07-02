@@ -291,7 +291,7 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     // its value from the context.
     actual_bool = true;
     EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(false, actual_bool);
+    EXPECT_FALSE(actual_bool);
 
     // Verify that the uint32 parameter was updated correctly by retrieving
     // its value from the context.
