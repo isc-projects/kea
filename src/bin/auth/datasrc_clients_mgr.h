@@ -40,8 +40,11 @@
 
 #include <exception>
 #include <cassert>
+#include <cerrno>
 #include <list>
 #include <utility>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 namespace isc {
 namespace auth {
@@ -530,6 +533,31 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
                     LOG_ERROR(auth_logger,
                               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR).
                         arg(e.what());
+                }
+                if (current_commands.front().callback) {
+                    // Lock the queue
+                    typename MutexType::Locker locker(*queue_mutex_);
+                    callback_queue_->
+                        push_back(current_commands.front().callback);
+                    // Wake up the other end. If it would block, there are data
+                    // and it'll wake anyway.
+                    int result = send(wake_fd_, "w", 1, MSG_DONTWAIT);
+                    if (result == -1 &&
+                        (errno != EWOULDBLOCK && errno != EAGAIN)) {
+                        // Note: the strerror might not be thread safe, as
+                        // subsequent call to it might change the returned
+                        // string. But that is unlikely and strerror_r is
+                        // not portable and we are going to terminate anyway,
+                        // so that's better than nothing.
+                        //
+                        // Also, this error handler is not tested. It should
+                        // be generally impossible to happen, so it is hard
+                        // to trigger in controlled way.
+                        LOG_FATAL(auth_logger,
+                                  AUTH_DATASRC_CLIENTS_BUILDER_WAKE_ERR).
+                            arg(strerror(errno));
+                        std::terminate();
+                    }
                 }
                 current_commands.pop_front();
             }
