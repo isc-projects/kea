@@ -54,7 +54,8 @@ protected:
     DataSrcClientsBuilderTest() :
         clients_map(new std::map<RRClass,
                     boost::shared_ptr<ConfigurableClientList> >),
-        builder(&command_queue, &cond, &queue_mutex, &clients_map, &map_mutex),
+        builder(&command_queue, &callback_queue, &cond, &queue_mutex,
+                &clients_map, &map_mutex, -1 /* TEMPORARY */),
         cond(command_queue, delayed_command_queue), rrclass(RRClass::IN()),
         shutdown_cmd(SHUTDOWN, ConstElementPtr(), FinishedCallback()),
         noop_cmd(NOOP, ConstElementPtr(), FinishedCallback())
@@ -65,6 +66,7 @@ protected:
     ClientListMapPtr clients_map; // configured clients
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
+    std::list<FinishedCallback> callback_queue; // Callbacks from commands
     TestDataSrcClientsBuilder builder;
     TestCondVar cond;
     TestMutex queue_mutex;

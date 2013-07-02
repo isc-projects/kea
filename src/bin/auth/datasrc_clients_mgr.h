@@ -192,8 +192,8 @@ public:
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase() :
         clients_map_(new ClientListsMap),
-        builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
-                 &map_mutex_),
+        builder_(&command_queue_, &callback_queue_, &cond_, &queue_mutex_,
+                 &clients_map_, &map_mutex_, -1 /* TEMPORARY */),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
 
@@ -360,6 +360,11 @@ private:
     //
     // The list is used as a one-way queue: back-in, front-out
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
+    // Similar to above, for the callbacks that are ready to be called.
+    // While the command queue is for sending commands from the main thread
+    // to the work thread, this one is for the other direction. Protected
+    // by the same mutex (queue_mutex_).
+    std::list<datasrc_clientmgr_internal::FinishedCallback> callback_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
     datasrc::ClientListMapPtr clients_map_;
@@ -412,12 +417,15 @@ public:
     ///
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
+                              std::list<FinishedCallback>* callback_queue,
                               CondVarType* cond, MutexType* queue_mutex,
                               datasrc::ClientListMapPtr* clients_map,
-                              MutexType* map_mutex
+                              MutexType* map_mutex,
+                              int wake_fd
         ) :
-        command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
-        clients_map_(clients_map), map_mutex_(map_mutex)
+        command_queue_(command_queue), callback_queue_(callback_queue),
+        cond_(cond), queue_mutex_(queue_mutex),
+        clients_map_(clients_map), map_mutex_(map_mutex), wake_fd_(wake_fd)
     {}
 
     /// \brief The main loop.
@@ -484,10 +492,12 @@ private:
 
     // The following are shared with the manager
     std::list<Command>* command_queue_;
+    std::list<FinishedCallback> *callback_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
     datasrc::ClientListMapPtr* clients_map_;
     MutexType* map_mutex_;
+    int wake_fd_;
 };
 
 // Shortcut typedef for normal use

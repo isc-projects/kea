@@ -153,10 +153,11 @@ public:
 
     FakeDataSrcClientsBuilder(
         std::list<Command>* command_queue,
+        std::list<FinishedCallback>*,
         TestCondVar* cond,
         TestMutex* queue_mutex,
         isc::datasrc::ClientListMapPtr* clients_map,
-        TestMutex* map_mutex)
+        TestMutex* map_mutex, int)
     {
         FakeDataSrcClientsBuilder::started = false;
         FakeDataSrcClientsBuilder::command_queue = command_queue;
