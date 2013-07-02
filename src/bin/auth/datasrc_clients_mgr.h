@@ -36,6 +36,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
 
 #include <exception>
 #include <cassert>
@@ -76,6 +77,9 @@ enum CommandID {
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
+
+/// \brief Callback to be called when the command is completed.
+typedef boost::function<void ()> FinishedCallback;
 
 /// \brief The data type passed from DataSrcClientsMgr to
 /// DataSrcClientsBuilder.
@@ -234,11 +238,17 @@ public:
     /// \brief std::bad_alloc
     ///
     /// \param config_arg The new data source configuration.  Must not be NULL.
-    void reconfigure(data::ConstElementPtr config_arg) {
+    /// \param callback Called once the reconfigure command completes. It is
+    ///     called in the main thread (not in the work one).
+    void reconfigure(const data::ConstElementPtr& config_arg,
+                     const datasrc_clientmgr_internal::FinishedCallback&
+                     callback = datasrc_clientmgr_internal::FinishedCallback())
+    {
         if (!config_arg) {
             isc_throw(InvalidParameter, "Invalid null config argument");
         }
-        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg);
+        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg,
+                    callback);
         reconfigureHook();      // for test's customization
     }
 
@@ -257,12 +267,17 @@ public:
     /// \param args Element argument that should be a map of the form
     /// { "class": "IN", "origin": "example.com" }
     /// (but class is optional and will default to IN)
+    /// \param callback Called once the loadZone command completes. It
+    ///     is called in the main thread, not in the work thread.
     ///
     /// \exception CommandError if the args value is null, or not in
     ///                                 the expected format, or contains
     ///                                 a bad origin or class string
     void
-    loadZone(data::ConstElementPtr args) {
+    loadZone(const data::ConstElementPtr& args,
+             const datasrc_clientmgr_internal::FinishedCallback& callback =
+             datasrc_clientmgr_internal::FinishedCallback())
+    {
         if (!args) {
             isc_throw(CommandError, "loadZone argument empty");
         }
@@ -303,7 +318,7 @@ public:
         // implement it would be to factor out the code from
         // the start of doLoadZone(), and call it here too
 
-        sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
+        sendCommand(datasrc_clientmgr_internal::LOADZONE, args, callback);
     }
 
 private:
@@ -317,8 +332,11 @@ private:
     void reconfigureHook() {}
 
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
-                     data::ConstElementPtr arg)
+                     const data::ConstElementPtr& arg,
+                     const datasrc_clientmgr_internal::FinishedCallback&
+                     callback = datasrc_clientmgr_internal::FinishedCallback())
     {
+        (void) callback; // Temporary, remove!
         // The lock will be held until the end of this method.  Only
         // push_back has to be protected, but we can avoid having an extra
         // block this way.
