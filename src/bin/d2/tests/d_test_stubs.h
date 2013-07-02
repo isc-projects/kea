@@ -632,7 +632,7 @@ public:
         }
 
         return ::testing::AssertionFailure() << "checkAnswer rcode:" 
-               << rcode << " comment: " << *comment << std::endl;
+               << rcode << " comment: " << *comment;
     }
 
     /// @brief Configuration set being tested.
