@@ -37,9 +37,6 @@ LOWERBOUND_RETRY = 5
 REFRESH_JITTER = 0.10
 RELOAD_JITTER = 0.75
 
-rdata_net = 'a.example.net. root.example.net. 2009073106 7200 3600 2419200 21600'
-rdata_org = 'a.example.org. root.example.org. 2009073112 7200 3600 2419200 21600'
-
 class ZonemgrTestException(Exception):
     pass
 
@@ -61,21 +58,19 @@ class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
 class MockDataSourceClient():
     '''A simple mock data source client.'''
     def find_zone(self, zone_name):
-        '''Mock version of find_zone().'''
+        '''Mock version of DataSourceClient.find_zone().'''
         return (isc.datasrc.DataSourceClient.SUCCESS, self)
 
     def find(self, name, rrtype, options=ZoneFinder.FIND_DEFAULT):
-        '''Mock ZoneFinder.find().
-
-        It returns the predefined SOA RRset to queries for SOA of the common
-        test zone name.  It also emulates some unusual cases for special
-        zone names.
-
-        '''
+        '''Mock version of ZoneFinder.find().'''
         if name == Name('example.net'):
-            rdata = Rdata(RRType.SOA, RRClass.IN, rdata_net)
+            rdata = Rdata(RRType.SOA, RRClass.IN,
+                          'a.example.net. root.example.net. 2009073106 ' +
+                          '7200 3600 2419200 21600')
         elif name == 'example.org.':
-            rdata = Rdata(RRType.SOA, RRClass.IN, rdata_org)
+            rdata = Rdata(RRType.SOA, RRClass.IN,
+                          'a.example.org. root.example.org. 2009073112 ' +
+                          '7200 3600 2419200 21600')
         else:
             return (ZoneFinder.NXDOMAIN, None, 0)
         rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(3600))
@@ -83,21 +78,18 @@ class MockDataSourceClient():
         return (ZoneFinder.SUCCESS, rrset, 0)
 
 class MockDataSrcClientsMgr():
+    '''A simple mock data source client manager.'''
     def __init__(self):
-        # Default faked result of get_client_list, customizable by tests
-        self.found_datasrc_client_list = self
-
-        # Default faked result of find(), customizable by tests
-        self.found_datasrc_client = MockDataSourceClient()
+        self.datasrc_client = MockDataSourceClient()
 
     def get_client_list(self, rrclass):
-        return self.found_datasrc_client_list
+        return self
 
     def find(self, zone_name, want_exact_match, want_finder):
         """Pretending find method on the object returned by get_client_list"""
-        if issubclass(type(self.found_datasrc_client), Exception):
-            raise self.found_datasrc_client
-        return self.found_datasrc_client, None, None
+        if issubclass(type(self.datasrc_client), Exception):
+            raise self.datasrc_client
+        return self.datasrc_client, None, None
 
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
@@ -229,14 +221,15 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(KeyError, self.zone_refresh._get_zone_soa_rdata, ZONE_NAME_CLASS2_IN)
 
     def test_zonemgr_reload_zone(self):
-        global rdata_net
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        # We need to restore this not to harm other tests
-        old_rdata_net = rdata_net
-        rdata_net = soa_rdata
+        def find(name, rrtype, options=ZoneFinder.FIND_DEFAULT):
+            rdata = Rdata(RRType.SOA, RRClass.IN, soa_rdata)
+            rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(3600))
+            rrset.add_rdata(rdata)
+            return (ZoneFinder.SUCCESS, rrset, 0)
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.find = find
         self.zone_refresh.zonemgr_reload_zone(ZONE_NAME_CLASS1_IN)
         self.assertEqual(soa_rdata, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"])
-        rdata_net = old_rdata_net
 
     def test_get_zone_notifier_master(self):
         notify_master = "192.168.1.1"
@@ -308,12 +301,13 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(ZonemgrTestException, self.zone_refresh._send_command, "Unknown", "Notify", None)
 
     def test_zonemgr_add_zone(self):
-        global rdata_net
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        # This needs to be restored. The following test actually failed if we left
-        # this unclean
-        old_rdata_net = rdata_net
-        rdata_net = soa_rdata
+        def find(name, rrtype, options=ZoneFinder.FIND_DEFAULT):
+            rdata = Rdata(RRType.SOA, RRClass.IN, soa_rdata)
+            rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(3600))
+            rrset.add_rdata(rdata)
+            return (ZoneFinder.SUCCESS, rrset, 0)
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.find = find
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info = {}
         self.zone_refresh.zonemgr_add_zone(ZONE_NAME_CLASS1_IN)
@@ -327,7 +321,6 @@ class TestZonemgrRefresh(unittest.TestCase):
         zone_timeout = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["next_refresh_time"]
         self.assertTrue((time1 + 900 * (1 - self.zone_refresh._reload_jitter)) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 900)
-        rdata_net = old_rdata_net
 
         old_get_zone_soa = self.zone_refresh._get_zone_soa
         def get_zone_soa2(zone_name_class):
@@ -356,10 +349,13 @@ class TestZonemgrRefresh(unittest.TestCase):
                 ZONE_NAME_CLASS3_IN, "127.0.0.1"))
 
     def test_zone_refresh_success(self):
-        global rdata_net
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        old_rdata_net = rdata_net
-        rdata_net = soa_rdata
+        def find(name, rrtype, options=ZoneFinder.FIND_DEFAULT):
+            rdata = Rdata(RRType.SOA, RRClass.IN, soa_rdata)
+            rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(3600))
+            rrset.add_rdata(rdata)
+            return (ZoneFinder.SUCCESS, rrset, 0)
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.find = find
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_REFRESHING
         self.zone_refresh.zone_refresh_success(ZONE_NAME_CLASS1_IN)
@@ -375,7 +371,6 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue(last_refresh_time <= time2)
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_success, ("example.test.", "CH"))
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_success, ZONE_NAME_CLASS3_IN)
-        rdata_net = old_rdata_net
 
     def test_zone_refresh_fail(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073105 7200 3600 2419200 21600'
