@@ -43,8 +43,8 @@ shutdownCheck() {
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::cond->signal_count);
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
     const Command& cmd = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(SHUTDOWN, cmd.first);
-    EXPECT_FALSE(cmd.second);   // no argument
+    EXPECT_EQ(SHUTDOWN, cmd.id);
+    EXPECT_FALSE(cmd.params);   // no argument
 
     // Finally, the manager should wait for the thread to terminate.
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
@@ -130,8 +130,8 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
     // touch or refer to the map, so it shouldn't acquire the map lock.
     checkSharedMembers(1, 1, 0, 0, 1, 1);
     const Command& cmd1 = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(RECONFIGURE, cmd1.first);
-    EXPECT_EQ(reconfigure_arg, cmd1.second);
+    EXPECT_EQ(RECONFIGURE, cmd1.id);
+    EXPECT_EQ(reconfigure_arg, cmd1.params);
 
     // Non-null, but semantically invalid argument.  The manager doesn't do
     // this check, so it should result in the same effect.
@@ -140,8 +140,8 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
     mgr.reconfigure(reconfigure_arg);
     checkSharedMembers(2, 2, 0, 0, 2, 1);
     const Command& cmd2 = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(RECONFIGURE, cmd2.first);
-    EXPECT_EQ(reconfigure_arg, cmd2.second);
+    EXPECT_EQ(RECONFIGURE, cmd2.id);
+    EXPECT_EQ(reconfigure_arg, cmd2.params);
 
     // Passing NULL argument is immediately rejected
     EXPECT_THROW(mgr.reconfigure(ConstElementPtr()), isc::InvalidParameter);
