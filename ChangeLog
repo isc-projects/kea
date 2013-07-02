@@ -1,3 +1,9 @@
+637.	[func]		[tmark]
+	Added initial implementation of NameChangeRequest,
+	which embodies DNS update requests sent to DHCP-DDNS
+	by its clients.
+	(trac3007 git f33bdd59c6a8c8ea883f11578b463277d01c2b70)
+
 636.	[func]		[tmark]
 	Added the initial implementation of configuration parsing for
 	DCHP-DDNS.
