@@ -48,10 +48,12 @@ pkglibexec_PROGRAMS = b10-dhcp-ddns
 
 b10_dhcp_ddns_SOURCES  = main.cc
 b10_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
-b10_dhcp_ddns_SOURCES += d_process.h
 b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
 b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h
 b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
+b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
+b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
+b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 
@@ -63,6 +65,7 @@ b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la 
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 
 b10_dhcp_ddnsdir = $(pkgdatadir)

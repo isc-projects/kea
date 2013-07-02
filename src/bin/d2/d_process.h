@@ -17,6 +17,8 @@
 
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
+#include <d2/d_cfg_mgr.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
@@ -58,12 +60,20 @@ public:
     /// in log statements, but otherwise arbitrary.
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
+    /// @param cfg_mgr the configuration manager instance that handles
+    /// configuration parsing.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DProcessBase(const char* app_name, IOServicePtr io_service)
-        : app_name_(app_name), io_service_(io_service), shut_down_flag_(false) {
+    DProcessBase(const char* app_name, IOServicePtr io_service, 
+                 DCfgMgrBasePtr cfg_mgr)
+        : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
+        cfg_mgr_(cfg_mgr) {
         if (!io_service_) {
             isc_throw (DProcessBaseError, "IO Service cannot be null");
+        }
+
+        if (!cfg_mgr_) {
+            isc_throw (DProcessBaseError, "CfgMgr cannot be null");
         }
     };
 
@@ -159,6 +169,13 @@ public:
         io_service_->stop();
     }
 
+    /// @brief Fetches the process's configuration manager.
+    ///
+    /// @return returns a reference to the configuration manager.
+    DCfgMgrBasePtr& getCfgMgr() {
+        return (cfg_mgr_);
+    }
+
 private:
     /// @brief Text label for the process. Generally used in log statements,
     /// but otherwise can be arbitrary.
@@ -169,6 +186,9 @@ private:
 
     /// @brief Boolean flag set when shutdown has been requested.
     bool shut_down_flag_;
+
+    /// @brief  Pointer to the configuration manager.
+    DCfgMgrBasePtr cfg_mgr_;
 };
 
 /// @brief Defines a shared pointer to DProcessBase.
