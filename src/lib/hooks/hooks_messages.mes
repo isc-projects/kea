@@ -83,6 +83,12 @@ was called.  The function returned a non-zero status (also given in
 the message) which was interpreted as an error.  The library has been
 unloaded and no callouts from it will be installed.
 
+% HOOKS_LOAD_EXCEPTION 'load' function in hook library %1 threw an exception
+A "load" function was found in the library named in the message and
+was called.  The function threw an exception (an error indication)
+during execution, which is an error condition.  The library has been
+unloaded and no callouts from it will be installed.
+
 % HOOKS_LOAD_LIBRARY loading hooks library %1
 This is a debug message called when the specified library is being loaded.
 
@@ -117,10 +123,10 @@ This is a debug message indicating that a hook of the specified name
 was registered by a BIND 10 server.  The server doing the logging is
 indicated by the full name of the logger used to log this message.
 
-% HOOKS_REGISTER_STD_CALLOUT hooks library %1 registered standard callout for hook %2
+% HOOKS_REGISTER_STD_CALLOUT hooks library %1 registered standard callout for hook %2 at address %3
 This is a debug message, output when the library loading function has
 located a standard callout (a callout with the same name as a hook point)
-and registered it.
+and registered it.  The address of the callout is indicated.
 
 % HOOKS_RESET_HOOK_LIST the list of hooks has been reset
 This is a message indicating that the list of hooks has been reset.
@@ -138,6 +144,17 @@ It was called, but returned an error (non-zero) status, resulting in
 the issuing of this message.  The unload process continued after this
 message and the library has been unloaded.
 
+% HOOKS_UNLOAD_EXCEPTION 'unload' function in hook library %1 threw an exception
+During the unloading of a library, an "unload" function was found.  It was
+called, but in the process generated an exception (an error indication).
+The unload process continued after this message and the library has
+been unloaded.
+
 % HOOKS_UNLOAD_LIBRARY unloading library %1
 This is a debug message called when the specified library is being
 unloaded.
+
+% HOOKS_VERSION_EXCEPTION 'version' function in hook library %1 threw an exception
+This error message is issued if the version() function in the specified
+hooks library was called and generated an exception.  The library is
+considered unusable and will not be loaded.

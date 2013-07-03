@@ -18,7 +18,22 @@
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
 
+namespace {
+
 // Version 1 of the hooks framework.
 static const int BIND10_HOOKS_VERSION = 1;
+
+// Names of the framework functions.
+const char* LOAD_FUNCTION_NAME = "load";
+const char* UNLOAD_FUNCTION_NAME = "unload";
+const char* VERSION_FUNCTION_NAME = "version";
+
+// Typedefs for pointers to the framework functions.
+typedef int (*version_function_ptr)();  ///< version() signature
+typedef int (*load_function_ptr)(isc::hooks::LibraryHandle&);
+                                        ///< load() signature
+typedef int (*unload_function_ptr)();   ///< unload() signature
+
+} // Anonymous namespace
 
 #endif  // HOOKS_H
