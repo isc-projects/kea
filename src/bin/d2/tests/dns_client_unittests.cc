@@ -54,7 +54,7 @@ class DNSClientTest : public virtual ::testing::Test, DNSClient::Callback {
 public:
     IOService service_;
     D2UpdateMessagePtr response_;
-    IOFetch::Result result_;
+    DNSClient::Status status_;
     uint8_t receive_buffer_[MAX_SIZE];
 
     // @brief Constructor.
@@ -67,7 +67,7 @@ public:
     // become messy if such errors were logged.
     DNSClientTest()
         : service_(),
-          result_(IOFetch::SUCCESS) {
+          status_(DNSClient::SUCCESS) {
         asiodns::logger.setSeverity(log::INFO);
         response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
     }
@@ -84,9 +84,9 @@ public:
     // This callback is called when the exchange with the DNS server is
     // complete or an error occured. This includes the occurence of a timeout.
     //
-    // @param result An error code returned by an IO.
-    virtual void operator()(IOFetch::Result result) {
-        result_ = result;
+    // @param status A status code returned by DNSClient.
+    virtual void operator()(DNSClient::Status status) {
+        status_ = status;
         service_.stop();
     }
 
@@ -166,8 +166,8 @@ public:
         service_.run();
 
         // If callback function was called it should have modified the default
-        // value of result_ with the TIME_OUT error code.
-        EXPECT_EQ(IOFetch::TIME_OUT, result_);
+        // value of status_ with the TIMEOUT error code.
+        EXPECT_EQ(DNSClient::TIMEOUT, status_);
     }
 
     // This test verifies that DNSClient can send DNS Update and receive a
@@ -228,7 +228,7 @@ public:
         udp_socket.close();
 
         // We should have received a response.
-        EXPECT_EQ(IOFetch::SUCCESS, result_);
+        EXPECT_EQ(DNSClient::SUCCESS, status_);
 
         ASSERT_TRUE(response_);
         EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
