@@ -177,8 +177,8 @@ class _Statistics():
           "item_type": "named_set",
           "item_optional": False,
           "item_default": {},
-          "item_title": "Class name",
-          "item_description": "Class name",
+          "item_title": "RR class name",
+          "item_description": "RR class name",
           "named_set_item_spec": {
             "item_name": "zonename",
             "item_type": "map",

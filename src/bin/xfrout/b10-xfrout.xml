@@ -173,7 +173,7 @@
             <varlistentry>
               <term><replaceable>classname</replaceable></term>
               <listitem><simpara>
-                An actual class name of the zone, e.g. IN, CH, and HS
+                An actual RR class name of the zone, e.g. IN, CH, and HS
                 </simpara>
                 <variablelist>
 
