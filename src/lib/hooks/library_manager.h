@@ -35,8 +35,8 @@ class LibraryManager;
 /// known hooks and locates their symbols, registering each callout as it does
 /// so.  Finally it locates the "load" function (if present) and calls it.
 ///
-/// On unload, it calls the "unload" method if present, clears the callouts
-/// all hooks and closes the library.
+/// On unload, it calls the "unload" method if present, clears the callouts on
+/// all hooks, and closes the library.
 ///
 /// @note Caution needs to be exercised when using the unload method. During
 ///       normal use, data will pass between the server and the library.  In
@@ -46,7 +46,7 @@ class LibraryManager;
 ///       of pointed-to data. If the library is unloaded, this memory may lie
 ///       in the virtual address space deleted in that process. (The word "may"
 ///       is used, as this could be operating-system specific.) Should this
-///       happens, any reference to the memory will cause a segmentation fault.
+///       happen, any reference to the memory will cause a segmentation fault.
 ///       This can occur in a quite obscure place, for example in the middle of
 ///       a destructor of an STL class when it is deleting memory allocated
 ///       when the data structure was extended by a function in the library.
@@ -60,12 +60,6 @@ class LibraryManager;
 ///       reloading the libraries.
 
 class LibraryManager {
-private:
-    /// Useful typedefs for the framework functions
-    typedef int (*version_function_ptr)();            ///< version() signature
-    typedef int (*load_function_ptr)(LibraryHandle&); ///< load() signature
-    typedef int (*unload_function_ptr)();             ///< unload() signature
-
 public:
     /// @brief Constructor
     ///
@@ -146,7 +140,9 @@ protected:
     ///
     /// With the library open, accesses the "version()" function and, if
     /// present, checks the returned value against the hooks version symbol
-    /// for the currently running BIND 10.
+    /// for the currently running BIND 10.  The "version()" function is
+    /// mandatory and must be present (and return the correct value) for the
+    /// library to load.
     ///
     /// If there is no version() function, or if there is a mismatch in
     /// version number, a message logged.

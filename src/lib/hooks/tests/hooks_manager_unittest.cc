@@ -82,21 +82,21 @@ public:
 
         // Perform the first calculation.
         handle->setArgument("data_1", d1);
-        HooksManager::callCallouts(lm_one_index_, *handle);
+        HooksManager::callCallouts(hook_point_one_index_, *handle);
         handle->getArgument(RESULT, result);
-        EXPECT_EQ(r1, result) << "lm_one" << COMMON_TEXT;
+        EXPECT_EQ(r1, result) << "hook_point_one" << COMMON_TEXT;
 
         // ... the second ...
         handle->setArgument("data_2", d2);
-        HooksManager::callCallouts(lm_two_index_, *handle);
+        HooksManager::callCallouts(hook_point_two_index_, *handle);
         handle->getArgument(RESULT, result);
-        EXPECT_EQ(r2, result) << "lm_two" << COMMON_TEXT;
+        EXPECT_EQ(r2, result) << "hook_point_two" << COMMON_TEXT;
 
         // ... and the third.
         handle->setArgument("data_3", d3);
-        HooksManager::callCallouts(lm_three_index_, *handle);
+        HooksManager::callCallouts(hook_point_three_index_, *handle);
         handle->getArgument(RESULT, result);
-        EXPECT_EQ(r3, result) << "lm_three" << COMMON_TEXT;
+        EXPECT_EQ(r3, result) << "hook_point_three" << COMMON_TEXT;
     }
 
 };
@@ -353,7 +353,7 @@ testPostCallout(CalloutHandle& handle) {
 
 }
 
-// The next test registers the pre and post- callouts above for hook lm_two,
+// The next test registers the pre and post- callouts above for hook hook_point_two,
 // and checks they are called.
 
 TEST_F(HooksManagerTest, PrePostCalloutTest) {
@@ -364,12 +364,12 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Load the pre- and post- callouts.
-    HooksManager::preCalloutsLibraryHandle().registerCallout("lm_two",
+    HooksManager::preCalloutsLibraryHandle().registerCallout("hook_point_two",
                                                              testPreCallout);
-    HooksManager::postCalloutsLibraryHandle().registerCallout("lm_two",
+    HooksManager::postCalloutsLibraryHandle().registerCallout("hook_point_two",
                                                               testPostCallout);
 
-    // Execute the callouts.  lm_two implements the calculation:
+    // Execute the callouts.  hook_point_two implements the calculation:
     //
     //  "result - data_2"
     //
@@ -380,7 +380,7 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
     handle->setArgument("result", static_cast<int>(0));
     handle->setArgument("data_2", static_cast<int>(15));
 
-    HooksManager::callCallouts(lm_two_index_, *handle);
+    HooksManager::callCallouts(hook_point_two_index_, *handle);
 
     int result = 0;
     handle->getArgument("result", result);
@@ -394,7 +394,7 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
     handle->setArgument("result", static_cast<int>(0));
     handle->setArgument("data_2", static_cast<int>(15));
 
-    HooksManager::callCallouts(lm_two_index_, *handle);
+    HooksManager::callCallouts(hook_point_two_index_, *handle);
 
     result = 0;
     handle->getArgument("result", result);
@@ -406,9 +406,9 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
 
 TEST_F(HooksManagerTest, NoLibrariesCalloutsPresent) {
     // No callouts should be present on any hooks.
-    EXPECT_FALSE(HooksManager::calloutsPresent(lm_one_index_));
-    EXPECT_FALSE(HooksManager::calloutsPresent(lm_two_index_));
-    EXPECT_FALSE(HooksManager::calloutsPresent(lm_three_index_));
+    EXPECT_FALSE(HooksManager::calloutsPresent(hook_point_one_index_));
+    EXPECT_FALSE(HooksManager::calloutsPresent(hook_point_two_index_));
+    EXPECT_FALSE(HooksManager::calloutsPresent(hook_point_three_index_));
 }
 
 TEST_F(HooksManagerTest, NoLibrariesCallCallouts) {
