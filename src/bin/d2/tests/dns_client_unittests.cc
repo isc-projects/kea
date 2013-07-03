@@ -56,6 +56,9 @@ public:
     D2UpdateMessagePtr response_;
     DNSClient::Status status_;
     uint8_t receive_buffer_[MAX_SIZE];
+    DNSClientPtr dns_client_;
+    bool corrupt_response_;
+    bool expect_response_;
 
     // @brief Constructor.
     //
@@ -67,9 +70,12 @@ public:
     // become messy if such errors were logged.
     DNSClientTest()
         : service_(),
-          status_(DNSClient::SUCCESS) {
+          status_(DNSClient::SUCCESS),
+          corrupt_response_(false),
+          expect_response_(true) {
         asiodns::logger.setSeverity(log::INFO);
         response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+        dns_client_.reset(new DNSClient(response_, this));
     }
 
     // @brief Destructor.
@@ -79,7 +85,7 @@ public:
         asiodns::logger.setSeverity(log::DEBUG);
     };
 
-    // @brief Exchange completion calback.
+    // @brief Exchange completion callback.
     //
     // This callback is called when the exchange with the DNS server is
     // complete or an error occured. This includes the occurence of a timeout.
@@ -88,6 +94,29 @@ public:
     virtual void operator()(DNSClient::Status status) {
         status_ = status;
         service_.stop();
+
+        if (expect_response_) {
+            if (!corrupt_response_) {
+                // We should have received a response.
+                EXPECT_EQ(DNSClient::SUCCESS, status_);
+
+                ASSERT_TRUE(response_);
+                EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
+                ASSERT_EQ(1, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
+                D2ZonePtr zone = response_->getZone();
+                ASSERT_TRUE(zone);
+                EXPECT_EQ("example.com.", zone->getName().toText());
+                EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
+
+            } else {
+                EXPECT_EQ(DNSClient::INVALID_RESPONSE, status_);
+
+            }
+        // If we don't expect a response, the status should indicate a timeout.
+        } else {
+            EXPECT_EQ(DNSClient::TIMEOUT, status_);
+
+        }
     }
 
     // @brief Handler invoked when test request is received.
@@ -102,22 +131,27 @@ public:
     // @param remote A pointer to an object which specifies the host (address
     // and port) from which a request has come.
     // @param receive_length A length (in bytes) of the received data.
+    // @param corrupt_response A bool value which indicates that the server's
+    // response should be invalid (true) or valid (false)
     void udpReceiveHandler(udp::socket* socket, udp::endpoint* remote,
-                           size_t receive_length) {
+                           size_t receive_length, const bool corrupt_response) {
         // The easiest way to create a response message is to copy the entire
         // request.
         OutputBuffer response_buf(receive_length);
         response_buf.writeData(receive_buffer_, receive_length);
-
-        // What must be different between a request and response is the QR
-        // flag bit. This bit differentiates both types of messages. We have
-        // to set this bit to 1. Note that the 3rd byte of the message header
-        // comprises this bit in the front followed by the message code and
-        // reserved zeros. Therefore, this byte comprises:
-        //             10101000,
-        // where a leading bit is a QR flag. The hexadecimal value is 0xA8.
-        // Write it at message offset 2.
-        response_buf.writeUint8At(0xA8, 2);
+        // If a response is to be valid, we have to modify it slightly. If not,
+        // we leave it as is.
+        if (!corrupt_response) {
+            // For a valid response the QR bit must be set. This bit
+            // differentiates both types of messages. Note that the 3rd byte of
+            // the message header comprises this bit in the front followed by
+            // the message code and reserved zeros. Therefore, this byte
+            // has the following value:
+            //             10101000,
+            // where a leading bit is a QR flag. The hexadecimal value is 0xA8.
+            // Write it at message offset 2.
+            response_buf.writeUint8At(0xA8, 2);
+        }
         // A response message is now ready to send. Send it!
         socket->send_to(asio::buffer(response_buf.getData(),
                                      response_buf.getLength()),
@@ -138,18 +172,15 @@ public:
     // do the DNS Update message. In such case, the callback function is
     // expected to be called and the TIME_OUT error code should be returned.
     void runSendNoReceiveTest() {
+        // We expect no response from a server.
+        expect_response_ = false;
+
         // Create outgoing message. Simply set the required message fields:
         // error code and Zone section. This is enough to create on-wire format
         // of this message and send it.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
-
-        // Use scoped pointer so as we can declare dns_client in the function
-        // scope.
-        boost::scoped_ptr<DNSClient> dns_client;
-        // Constructor may throw if the response placehoder is NULL.
-        ASSERT_NO_THROW(dns_client.reset(new DNSClient(response_, this)));
 
         // Set the response wait time to 0 so as our test is not hanging. This
         // should cause instant timeout.
@@ -158,30 +189,25 @@ public:
         // server. When message exchange is done or timeout occurs, the
         // completion callback will be triggered. The doUpdate function returns
         // immediately.
-        EXPECT_NO_THROW(dns_client->doUpdate(service_, IOAddress(TEST_ADDRESS),
+        EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
                                              TEST_PORT, message, timeout));
 
         // This starts the execution of tasks posted to IOService. run() blocks
         // until stop() is called in the completion callback function.
         service_.run();
 
-        // If callback function was called it should have modified the default
-        // value of status_ with the TIMEOUT error code.
-        EXPECT_EQ(DNSClient::TIMEOUT, status_);
     }
 
     // This test verifies that DNSClient can send DNS Update and receive a
     // corresponding response from a server.
-    void runSendReceiveTest() {
+    void runSendReceiveTest(const bool corrupt_response,
+                            const bool two_sends = false) {
+        corrupt_response_ = corrupt_response;
+
         // Create a request DNS Update message.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
-
-        // Create an instance of the DNSClient. Constructor may throw an
-        // exception, so we guard it with EXPECT_NO_THROW.
-        boost::scoped_ptr<DNSClient> dns_client;
-        EXPECT_NO_THROW(dns_client.reset(new DNSClient(response_, this)));
 
         // In order to perform the full test, when the client sends the request
         // and receives a response from the server, we have to emulate the
@@ -213,13 +239,21 @@ public:
                                                    sizeof(receive_buffer_)),
                                       remote,
                                       boost::bind(&DNSClientTest::udpReceiveHandler,
-                                                  this, &udp_socket, &remote, _2));
+                                                  this, &udp_socket, &remote, _2,
+                                                  corrupt_response));
 
         // The socket is now ready to receive the data. Let's post some request
         // message then.
         const int timeout = 5;
-        dns_client->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
+        dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
                              message, timeout);
+
+        // It is possible to request that two packets are sent concurrently.
+        if (two_sends) {
+            dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
+                                  message, timeout);
+
+        }
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.
@@ -227,29 +261,53 @@ public:
 
         udp_socket.close();
 
-        // We should have received a response.
-        EXPECT_EQ(DNSClient::SUCCESS, status_);
-
-        ASSERT_TRUE(response_);
-        EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
-        ASSERT_EQ(1, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
-        D2ZonePtr zone = response_->getZone();
-        ASSERT_TRUE(zone);
-        EXPECT_EQ("example.com.", zone->getName().toText());
-        EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
     }
 };
 
+// Verify that the DNSClient object can be created if provided parameters are
+// valid. Constructor should throw exceptions when parameters are invalid.
 TEST_F(DNSClientTest, constructor) {
     runConstructorTest();
 }
 
+// Verify that timeout is reported when no response is received from DNS.
 TEST_F(DNSClientTest, timeout) {
     runSendNoReceiveTest();
 }
 
+// Verify that the DNSClient receives the response from DNS and the received
+// buffer can be decoded as DNS Update Response.
 TEST_F(DNSClientTest, sendReceive) {
-    runSendReceiveTest();
+    // false means that server response is not corrupted.
+    runSendReceiveTest(false);
+}
+
+// Verify that the DNSClient reports an error when the response is received from
+// a DNS and this response is corrupted.
+TEST_F(DNSClientTest, sendReceiveCurrupted) {
+    // true means that server's response is corrupted.
+    runSendReceiveTest(true);
+}
+
+// Verify that it is possible to use the same DNSClient instance to
+// perform the following sequence of message exchanges:
+// 1. send
+// 2. receive
+// 3. send
+// 4. receive
+TEST_F(DNSClientTest, sendReceiveTwice) {
+    runSendReceiveTest(false);
+    runSendReceiveTest(false);
+}
+
+// Verify that it is possible to use the DNSClient instance to perform the
+// following  sequence of message exchanges:
+// 1. send
+// 2. send
+// 3. receive
+// 4. receive
+TEST_F(DNSClientTest, concurrentSendReceive) {
+    runSendReceiveTest(true, true);
 }
 
 } // End of anonymous namespace
