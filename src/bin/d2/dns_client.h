@@ -25,6 +25,8 @@
 namespace isc {
 namespace d2 {
 
+class DNSClientImpl;
+
 /// @brief The @c DNSClient class handles communication with the DNS server.
 ///
 /// Communication with the DNS server is asynchronous. Caller must provide a
@@ -39,12 +41,17 @@ namespace d2 {
 /// Caller must supply a pointer to the @c D2UpdateMessage object, which will
 /// encapsulate DNS response, through class constructor. An exception will be
 /// thrown if the pointer is not initialized by the caller.
-///
-/// @todo Currently, only the stub implementation is available for this class.
-/// The major missing piece is to create @c D2UpdateMessage object which will
-/// encapsulate the response from the DNS server.
-class DNSClient : public asiodns::IOFetch::Callback {
+class DNSClient {
 public:
+
+    /// @brief A status code of the DNSClient.
+    enum Status {
+        SUCCESS,           ///< Response received and is ok.
+        TIMEOUT,           ///< No response, timeout.
+        IO_STOPPED,        ///< IO was stopped.
+        INVALID_RESPONSE,  ///< Response received but invalid.
+        OTHER              ///< Other, unclassified error.
+    };
 
     /// @brief Callback for the @c DNSClient class.
     ///
@@ -61,7 +68,7 @@ public:
         ///
         /// @param result an @c asiodns::IOFetch::Result object representing
         /// IO status code.
-        virtual void operator()(asiodns::IOFetch::Result result) = 0;
+        virtual void operator()(DNSClient::Status status) = 0;
     };
 
     /// @brief Constructor.
@@ -74,7 +81,7 @@ public:
     DNSClient(D2UpdateMessagePtr& response_placeholder, Callback* callback);
 
     /// @brief Virtual destructor, does nothing.
-    virtual ~DNSClient() { }
+    ~DNSClient();
 
     ///
     /// @name Copy constructor and assignment operator
@@ -88,18 +95,6 @@ private:
     //@}
 
 public:
-
-    /// @brief Function operator, implementing an internal callback.
-    ///
-    /// This internal callback is called when the DNS update message exchange is
-    /// complete. It further invokes the external callback provided by a caller.
-    /// Before external callback is invoked, an object of the @c D2UpdateMessage
-    /// type, representing a response from the server is set.
-    ///
-    /// @param result An @c asiodns::IOFetch::Result object representing status
-    /// code returned by the IO.
-    virtual void operator()(asiodns::IOFetch::Result result);
-
     /// @brief Start asynchronous DNS Update.
     ///
     /// This function starts asynchronous DNS Update and returns. The DNS Update
@@ -125,13 +120,7 @@ public:
                   const int wait = -1);
 
 private:
-    /// A buffer holding server's response in the wire format.
-    util::OutputBufferPtr in_buf_;
-    /// A pointer to the caller-supplied object, encapsuating a response
-    /// from DNS.
-    D2UpdateMessagePtr response_;
-    /// A pointer to the external callback.
-    Callback* callback_;
+    DNSClientImpl* impl_;  ///< Pointer to DNSClient implementation.
 };
 
 } // namespace d2
