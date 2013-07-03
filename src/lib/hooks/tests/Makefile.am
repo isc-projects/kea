@@ -27,18 +27,23 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 # Build shared libraries for testing.
-lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la \
+lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
                   libucl.la libfcl.la
- 
+
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
 libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
- 
+
 # Incorrect version function
 libivl_la_SOURCES  = incorrect_version_library.cc
 libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
-libilv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libivl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+# All framework functions throw an exception
+libfxl_la_SOURCES = framework_exception_library.cc
+libfxl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libfxl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
 # The basic callout library - contains standard callouts
 libbcl_la_SOURCES  = basic_callout_library.cc

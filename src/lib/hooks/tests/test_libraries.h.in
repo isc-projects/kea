@@ -20,7 +20,7 @@
 namespace {
 
 
-// Take carse of differences in DLL naming between operating systems.
+// Take care of differences in DLL naming between operating systems.
 
 #ifdef OS_BSD
 #define DLL_SUFFIX ".dylib"
@@ -44,6 +44,10 @@ static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbcl"
 // load() and unload() functions.
 static const char* FULL_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libfcl"
                                           DLL_SUFFIX;
+
+// Library where the all framework functions throw an exception
+static const char* FRAMEWORK_EXCEPTION_LIBRARY = "@abs_builddir@/.libs/libfxl"
+                                                 DLL_SUFFIX;
 
 // Library where the version() function returns an incorrect result.
 static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/.libs/libivl"
@@ -69,7 +73,6 @@ static const char* NO_VERSION_LIBRARY = "@abs_builddir@/.libs/libnvl"
 // Library where there is an unload() function.
 static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl"
                                             DLL_SUFFIX;
-
 } // anonymous namespace
 
 

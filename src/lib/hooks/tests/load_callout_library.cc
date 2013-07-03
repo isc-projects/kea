@@ -20,9 +20,9 @@
 /// file are:
 ///
 /// - The "version" and "load" framework functions are supplied.  One "standard"
-///   callout is supplied ("lm_one") and two non-standard ones which are
-///   registered during the call to "load" on the hooks "lm_two" and
-///   "lm_three". 
+///   callout is supplied ("hook_point_one") and two non-standard ones which are
+///   registered during the call to "load" on the hooks "hook_point_two" and
+///   "hook_point_three". 
 ///
 ///   All callouts do trivial calculations, the result of all being called in
 ///   sequence being
@@ -30,8 +30,8 @@
 ///   @f[ ((5 * data_1) + data_2) * data_3 @f]
 ///
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
-///   the same name to the three callouts (data_1 passed to lm_one, data_2 to
-///   lm_two etc.) and the result is returned in the argument "result".
+///   the same name to the three callouts (data_1 passed to hook_point_one, data_2 to
+///   hook_point_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
 
@@ -54,7 +54,7 @@ context_create(CalloutHandle& handle) {
 // between callouts in the same library.)
 
 int
-lm_one(CalloutHandle& handle) {
+hook_point_one(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_1", data);
 
@@ -71,7 +71,7 @@ lm_one(CalloutHandle& handle) {
 // argument.
 
 static int
-lm_nonstandard_two(CalloutHandle& handle) {
+hook_nonstandard_two(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_2", data);
 
@@ -87,7 +87,7 @@ lm_nonstandard_two(CalloutHandle& handle) {
 // Final callout adds "data_3" to the result.
 
 static int
-lm_nonstandard_three(CalloutHandle& handle) {
+hook_nonstandard_three(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_3", data);
 
@@ -109,8 +109,8 @@ version() {
 
 int load(LibraryHandle& handle) {
     // Register the non-standard functions
-    handle.registerCallout("lm_two", lm_nonstandard_two);
-    handle.registerCallout("lm_three", lm_nonstandard_three);
+    handle.registerCallout("hook_point_two", hook_nonstandard_two);
+    handle.registerCallout("hook_point_three", hook_nonstandard_three);
 
     return (0);
 }
