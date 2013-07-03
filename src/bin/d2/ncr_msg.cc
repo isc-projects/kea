@@ -60,19 +60,11 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const bool forward_change, const bool reverse_change,
             const std::string& fqdn, const std::string& ip_address,
             const D2Dhcid& dhcid,
-#if 0
-            const boost::posix_time::ptime& lease_expires_on,
-#else
             const uint64_t lease_expires_on,
-#endif
             const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
-#if 0
-    dhcid_(dhcid), lease_expires_on_(new ptime(lease_expires_on)),
-#else
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
-#endif
     lease_length_(lease_length), status_(ST_NEW) {
 
     // Validate the contents. This will throw a NcrMessageError if anything
@@ -248,13 +240,6 @@ NameChangeRequest::validateContent() {
     if (dhcid_.getBytes().size()  == 0) {
         isc_throw(NcrMessageError, "DHCID cannot be blank");
     }
-
-#if 0
-    // Validate lease expiration.
-    if (lease_expires_on_->is_not_a_date_time()) {
-        isc_throw(NcrMessageError, "Invalid value for lease_expires_on");
-    }
-#endif
 
     // Ensure the request specifies at least one direction to update.
     if (!forward_change_ && !reverse_change_) {
