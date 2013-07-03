@@ -41,7 +41,8 @@ public:
 /// @brief Callout Manager
 ///
 /// This class manages the registration, deregistration and execution of the
-/// library callouts.
+/// library callouts.  It is part of the hooks framework used by the BIND 10
+/// server, and is not for use by user-written code in a hooks library.
 ///
 /// In operation, the class needs to know two items of data:
 ///
@@ -377,7 +378,7 @@ private:
     /// Vector of callout vectors.  There is one entry in this outer vector for
     /// each hook. Each element is itself a vector, with one entry for each
     /// callout registered for that hook.
-    std::vector<CalloutVector>  hook_vector_;
+    std::vector<CalloutVector> hook_vector_;
 
     /// LibraryHandle object user by the callout to access the callout
     /// registration methods on this CalloutManager object.  The object is set
