@@ -260,26 +260,19 @@ class ZonemgrRefresh:
 
         def get_zone_soa_rrset(datasrc_client, zone_name, zone_class):
             """Retrieve the current SOA RR of the zone to be transferred."""
-            def format_zone_str(zone_name, zone_class):
-                """Helper function to format a zone name and class as a string
-                of the form '<name>/<class>'.
-                Parameters:
-                zone_name (isc.dns.Name) name to format
-                zone_class (isc.dns.RRClass) class to format
-                """
-                return zone_name.to_text(True) + '/' + str(zone_class)
             # get the zone finder.  this must be SUCCESS (not even
             # PARTIALMATCH) because we are specifying the zone origin name.
             result, finder = datasrc_client.find_zone(zone_name)
             if result != DataSourceClient.SUCCESS:
                 # The data source doesn't know the zone.  In the context in
                 # which this function is called, this shouldn't happen.
-                raise ZonemgrException("unexpected result: zone %s doesn't exist" %
-                                       format_zone_str(zone_name, zone_class))
+                raise ZonemgrException(
+                    "unexpected result: zone %s/%s doesn't exist" %
+                    (zone_name.to_text(True), str(zone_class)))
             result, soa_rrset, _ = finder.find(zone_name, RRType.SOA)
             if result != ZoneFinder.SUCCESS:
                 logger.warn(ZONEMGR_NO_SOA,
-                            format_zone_str(zone_name, zone_class))
+                            zone_name.to_text(True), str(zone_class))
                 return None
             return soa_rrset
 
