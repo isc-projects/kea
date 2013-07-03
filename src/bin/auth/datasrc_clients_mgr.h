@@ -29,6 +29,8 @@
 #include <datasrc/client_list.h>
 #include <datasrc/memory/zone_writer.h>
 
+#include <asiolink/io_service.h>
+
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
 
@@ -193,7 +195,7 @@ public:
     ///
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
-    DataSrcClientsMgrBase() :
+    DataSrcClientsMgrBase(asiolink::IOService&) :
         clients_map_(new ClientListsMap),
         builder_(&command_queue_, &callback_queue_, &cond_, &queue_mutex_,
                  &clients_map_, &map_mutex_, -1 /* TEMPORARY */),

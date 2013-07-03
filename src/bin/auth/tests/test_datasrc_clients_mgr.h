@@ -20,6 +20,8 @@
 #include <auth/datasrc_clients_mgr.h>
 #include <datasrc/datasrc_config.h>
 
+#include <asiolink/io_service.h>
+
 #include <boost/function.hpp>
 
 #include <list>
@@ -202,18 +204,30 @@ typedef DataSrcClientsMgrBase<
     datasrc_clientmgr_internal::TestThread,
     datasrc_clientmgr_internal::FakeDataSrcClientsBuilder,
     datasrc_clientmgr_internal::TestMutex,
-    datasrc_clientmgr_internal::TestCondVar> TestDataSrcClientsMgr;
+    datasrc_clientmgr_internal::TestCondVar> TestDataSrcClientsMgrBase;
 
 // A specialization of manager's "cleanup" called at the end of the
 // destructor.  We use this to record the final values of some of the class
 // member variables.
 template<>
 void
-TestDataSrcClientsMgr::cleanup();
+TestDataSrcClientsMgrBase::cleanup();
 
 template<>
 void
-TestDataSrcClientsMgr::reconfigureHook();
+TestDataSrcClientsMgrBase::reconfigureHook();
+
+// A (hackish) trick how to not require the IOService to be passed from the
+// tests. We can't create the io service as a member, because it would
+// get initialized too late.
+class TestDataSrcClientsMgr :
+    public asiolink::IOService,
+    public TestDataSrcClientsMgrBase {
+public:
+    TestDataSrcClientsMgr() :
+        TestDataSrcClientsMgrBase(*static_cast<asiolink::IOService*>(this))
+    {}
+};
 } // namespace auth
 } // namespace isc
 
