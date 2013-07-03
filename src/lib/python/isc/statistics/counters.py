@@ -412,9 +412,8 @@ class Counters():
         for cls in zones.keys():
             for zone in zones[cls].keys():
                 for (attr, val) in zones[cls][zone].items():
-                    id_str = '%s/%%s/%s' % (cls, attr)
-                    id_str1 = id_str % zone
-                    id_str2 = id_str % self._entire_server
+                    id_str1 = '%s/%s/%s' % (cls, zone, attr)
+                    id_str2 = '%s/%s/%s' % (cls, self._entire_server, attr)
                     _set_counter(zones_data, zones_spec, id_str1, val)
                     _inc_counter(zones_data, zones_spec, id_str2, val)
         # insert entire-server counts
