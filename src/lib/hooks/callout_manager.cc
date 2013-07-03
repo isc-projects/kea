@@ -38,11 +38,11 @@ CalloutManager::checkLibraryIndex(int library_index) const {
     if (((library_index >= -1) && (library_index <= num_libraries_)) ||
         (library_index == INT_MAX)) {
         return;
-    } else {
-        isc_throw(NoSuchLibrary, "library index " << library_index <<
-                  " is not valid for the number of loaded libraries (" <<
-                  num_libraries_ << ")");
     }
+
+    isc_throw(NoSuchLibrary, "library index " << library_index <<
+              " is not valid for the number of loaded libraries (" <<
+              num_libraries_ << ")");
 }
 
 // Set the number of libraries handled by the CalloutManager.
