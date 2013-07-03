@@ -24,8 +24,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <util/time_utilities.h>
 
 #include <time.h>
 #include <string>
@@ -105,16 +104,6 @@ private:
     std::vector<uint8_t> bytes_;
 };
 
-/// @brief Defines a pointer to a ptime.
-/// NameChangeRequest member(s) that are timestamps are ptime instances.
-/// Boost ptime was chosen because it supports converting to and from ISO
-/// strings in GMT.  The Unix style time.h classes convert to GMT but
-/// conversion back assumes local time.  This is problematic if the "wire"
-/// format is string (i.e. JSON) and the request were to cross time zones.
-/// Additionally, time_t values should never be used directly so shipping them
-/// as string integers across platforms could theoretically be a problem.
-typedef boost::shared_ptr<boost::posix_time::ptime> TimePtr;
-
 class NameChangeRequest;
 /// @brief Defines a pointer to a NameChangeRequest.
 typedef boost::shared_ptr<NameChangeRequest> NameChangeRequestPtr;
@@ -146,7 +135,7 @@ public:
     /// updated.
     /// @param ip_address the ip address leased to the given FQDN.
     /// @param dhcid the lease client's unique DHCID.
-    /// @param lease_expires_on a timestamp containing the date/time the lease 
+    /// @param lease_expires_on a timestamp containing the date/time the lease
     /// expires.
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
@@ -154,7 +143,7 @@ public:
                       const bool forward_change, const bool reverse_change,
                       const std::string& fqdn, const std::string& ip_address,
                       const D2Dhcid& dhcid,
-                      const boost::posix_time::ptime& lease_expires_on,
+                      const uint64_t lease_expires_on,
                       const uint32_t lease_length);
 
     /// @brief Static method for creating a NameChangeRequest from a
@@ -366,10 +355,11 @@ public:
     /// or there is an odd number of digits.
     void setDhcid(isc::data::ConstElementPtr element);
 
-    /// @brief Fetches the request lease expiration as a timestamp.
+    /// @brief Fetches the request lease expiration
     ///
-    /// @return returns a pointer to the ptime containing the lease expiration
-    const TimePtr& getLeaseExpiresOn() const {
+    /// @return returns the lease expiration as the number of seconds since
+    /// the (00:00:00 January 1, 1970)
+    uint64_t getLeaseExpiresOn() const {
         return (lease_expires_on_);
     }
 
@@ -377,39 +367,33 @@ public:
     ///
     /// The format of the string returned is:
     ///
-    ///    YYYYMMDDTHHMMSS where T is the date-time separator
+    ///    YYYYMMDDHHmmSS
     ///
-    /// Example: 18:54:54 June 26, 2013 would be: 20130626T185455
+    /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
+    /// NOTE This is always UTC time.
     ///
     /// @return returns a ISO date-time string of the lease expiration.
     std::string getLeaseExpiresOnStr() const;
 
-    /// @brief Sets the lease expiration to given ptime value.
-    ///
-    /// @param value is the ptime value to assign to the lease expiration.
-    ///
-    /// @throw throws a NcrMessageError if the value is not a valid
-    /// timestamp.
-    void setLeaseExpiresOn(const boost::posix_time::ptime& value);
-
     /// @brief Sets the lease expiration based on the given string.
     ///
-    /// @param value is an ISO date-time string from which to set the
+    /// @param value is an date-time string from which to set the
     /// lease expiration. The format of the input is:
     ///
-    ///    YYYYMMDDTHHMMSS where T is the date-time separator
+    ///    YYYYMMDDHHmmSS
     ///
-    /// Example: 18:54:54 June 26, 2013 would be: 20130626T185455
+    /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
+    /// NOTE This is always UTC time.
     ///
     /// @throw throws a NcrMessageError if the ISO string is invalid.
     void setLeaseExpiresOn(const std::string& value);
 
     /// @brief Sets the lease expiration based on the given Element.
     ///
-    /// @param element is string Element containing an ISO date-time string.
+    /// @param element is string Element containing a date-time string.
     ///
     /// @throw throws a NcrMessageError if the element is not a string
-    /// Element, or if the element value is an invalid ISO date-time string.
+    /// Element, or if the element value is an invalid date-time string.
     void setLeaseExpiresOn(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request lease length.
@@ -487,7 +471,7 @@ private:
     D2Dhcid dhcid_;
 
     /// @brief The date-time the lease expires.
-    TimePtr lease_expires_on_;
+    uint64_t lease_expires_on_;
 
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
     uint32_t lease_length_;
