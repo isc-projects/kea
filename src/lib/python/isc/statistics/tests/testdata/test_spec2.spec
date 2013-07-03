@@ -25,8 +25,8 @@
           "item_type": "named_set",
           "item_optional": false,
           "item_default": {},
-          "item_title": "Class name",
-          "item_description": "Class name for Xfrout statistics",
+          "item_title": "RR class name",
+          "item_description": "RR class name for Xfrout statistics",
           "named_set_item_spec": {
             "item_name": "zonename",
             "item_type": "map",
