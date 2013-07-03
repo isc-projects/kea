@@ -81,6 +81,22 @@ def _add_counter(element, spec, identifier):
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
         pass
+
+    # Note: If there is a named_set type item in the statistics spec
+    # and if there are map type items under it, all of items under the
+    # map type item need to be added. For example, we're assuming that
+    # this method is now adding a counter whose identifier is like
+    # dir1/dir2/dir3/counter1. If both of dir1 and dir2 are named_set
+    # types, and if dir3 is a map type, and if counter1, counter2, and
+    # counter3 are defined as items under dir3 by the statistics spec,
+    # this method would add other two counters:
+    #
+    #   dir1/dir2/dir3/counter2
+    #   dir1/dir2/dir3/counter3
+    #
+    # Otherwise this method just adds the only counter
+    # dir1/dir2/dir3/counter1.
+
     # examine spec from the top-level item and know whether
     # has_named_set, and check whether spec and identifier are correct
     pidr = ''
