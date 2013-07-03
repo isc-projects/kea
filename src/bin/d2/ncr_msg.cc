@@ -17,6 +17,7 @@
 #include <asiolink/io_error.h>
 
 #include <sstream>
+#include <limits>
 
 namespace isc {
 namespace d2 {
