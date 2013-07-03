@@ -13,17 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/ncr_msg.h>
+#include <util/time_utilities.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
-
 #include <algorithm>
 
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
-
-using namespace boost::posix_time;
 
 namespace {
 
@@ -39,7 +36,7 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Valid Remove.
@@ -50,7 +47,7 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
      // Valid Add with IPv6 address
@@ -61,7 +58,7 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}"
 };
@@ -78,7 +75,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Invalid forward change.
@@ -89,7 +86,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Invalid reverse change.
@@ -100,7 +97,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Forward and reverse change both false.
@@ -111,7 +108,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Blank FQDN
@@ -122,7 +119,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Bad IP address
@@ -133,7 +130,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"xxxxxx\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Blank DHCID
@@ -144,7 +141,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Odd number of digits in DHCID
@@ -155,7 +152,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Text in DHCID
@@ -166,7 +163,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"THIS IS BOGUS!!!\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
     // Invalid lease expiration string
@@ -188,7 +185,7 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip_address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease_expires_on\" : \"19620121T132405\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : \"BOGUS\" "
      "}"
 
@@ -201,8 +198,7 @@ const char *invalid_msgs[] =
 /// 3. "Full" constructor, given a blank FQDN fails
 /// 4. "Full" constructor, given an invalid IP Address FQDN fails
 /// 5. "Full" constructor, given a blank DHCID fails
-/// 6. "Full" constructor, given an invalid lease expiration fails
-/// 7. "Full" constructor, given false for both forward and reverse fails
+/// 6. "Full" constructor, given false for both forward and reverse fails
 TEST(NameChangeRequestTest, constructionTests) {
     // Verify the default constructor works.
     NameChangeRequestPtr ncr;
@@ -210,7 +206,7 @@ TEST(NameChangeRequestTest, constructionTests) {
     EXPECT_TRUE(ncr);
 
     // Verify that full constructor works.
-    ptime expiry(second_clock::universal_time());
+    uint64_t expiry = isc::util::detail::gettimeWrapper();
     D2Dhcid dhcid("010203040A7F8E3D");
 
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(
@@ -231,11 +227,6 @@ TEST(NameChangeRequestTest, constructionTests) {
     D2Dhcid blank_dhcid;
     EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "walah.walah.com",
                  "192.168.1.101", blank_dhcid, expiry, 1300), NcrMessageError);
-
-    // Verify that an invalid lease expiration is detected.
-    ptime blank_expiry;
-    EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
-                 "192.168.1.101", dhcid, blank_expiry, 1300), NcrMessageError);
 
     // Verify that one or both of direction flags must be true.
     EXPECT_THROW(NameChangeRequest(CHG_ADD, false, false, "valid.fqdn",
@@ -282,24 +273,6 @@ TEST(NameChangeRequestTest, dhcidTest) {
     EXPECT_EQ(test_str, next_str);
 }
 
-/// @brief Tests that boost::posix_time library functions as expected.
-/// This test verifies that converting ptimes to and from ISO strings
-/// works properly. This test is perhaps unnecessary but just to avoid any
-/// OS specific surprises it is better safe than sorry.
-TEST(NameChangeRequestTest, boostTime) {
-   // Create a ptime with the time now.
-   ptime pt1(second_clock::universal_time());
-
-   // Get the ISO date-time string.
-   std::string pt1_str = to_iso_string(pt1);
-
-   // Use the ISO date-time string to create a new ptime.
-   ptime pt2 = from_iso_string(pt1_str);
-
-   // Verify the two times are equal.
-   EXPECT_EQ (pt1, pt2);
-}
-
 /// @brief Verifies the fundamentals of converting from and to JSON.
 /// It verifies that:
 /// 1. A NameChangeRequest can be created from a valid JSON string.
@@ -313,7 +286,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"fqdn\":\"walah.walah.com\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease_expires_on\":\"19620121T132405\","
+                            "\"lease_expires_on\":\"20130121132405\","
                             "\"lease_length\":1300"
                           "}";
 
@@ -394,7 +367,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"fqdn\":\"walah.walah.com\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease_expires_on\":\"19620121T132405\","
+                            "\"lease_expires_on\":\"20130121132405\","
                             "\"lease_length\":1300"
                           "}";
 
