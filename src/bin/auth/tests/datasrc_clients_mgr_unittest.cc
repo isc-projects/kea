@@ -248,7 +248,8 @@ TEST(DataSrcClientsMgrTest, reload) {
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
-    DataSrcClientsMgr mgr;
+    isc::asiolink::IOService service;
+    DataSrcClientsMgr mgr(service);
 }
 
 } // unnamed namespace

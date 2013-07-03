@@ -58,7 +58,7 @@ TestDataSrcClientsBuilder::doNoop() {
 
 template<>
 void
-TestDataSrcClientsMgr::cleanup() {
+TestDataSrcClientsMgrBase::cleanup() {
     using namespace datasrc_clientmgr_internal;
     // Make copy of some of the manager's member variables and reset the
     // corresponding pointers.  The currently pointed objects are in the
@@ -77,7 +77,7 @@ TestDataSrcClientsMgr::cleanup() {
 
 template<>
 void
-TestDataSrcClientsMgr::reconfigureHook() {
+TestDataSrcClientsMgrBase::reconfigureHook() {
     using namespace datasrc_clientmgr_internal;
 
     // Simply replace the local map, ignoring bogus config value.
