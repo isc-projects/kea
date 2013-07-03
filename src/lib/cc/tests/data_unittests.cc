@@ -194,7 +194,10 @@ template <typename T>
 void
 testGetValueInt() {
     T el;
-    long int i;
+    int64_t i;
+    int32_t i32;
+    long l;
+    long long ll;
     double d;
     bool b;
     std::string s;
@@ -215,13 +218,36 @@ testGetValueInt() {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_FALSE(el->getValue(m));
     EXPECT_EQ(1, i);
+
+    el = Element::create(9223372036854775807L);
+    EXPECT_NO_THROW(el->intValue());
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(9223372036854775807, i);
+
+    ll = 9223372036854775807L;
+    el = Element::create(ll);
+    EXPECT_NO_THROW(el->intValue());
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(ll, i);
+
+    i32 = 2147483647;
+    el = Element::create(i32);
+    EXPECT_NO_THROW(el->intValue());
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(i32, i);
+
+    l = 2147483647;
+    el = Element::create(l);
+    EXPECT_NO_THROW(el->intValue());
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(l, i);
 }
 
 template <typename T>
 void
 testGetValueDouble() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -248,7 +274,7 @@ template <typename T>
 void
 testGetValueBool() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -275,7 +301,7 @@ template <typename T>
 void
 testGetValueString() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -302,7 +328,7 @@ template <typename T>
 void
 testGetValueList() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -329,7 +355,7 @@ template <typename T>
 void
 testGetValueMap() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -357,7 +383,7 @@ TEST(Element, create_and_value_throws) {
     // incorrect type is requested
     ElementPtr el;
     ConstElementPtr cel;
-    long int i = 0;
+    int64_t i = 0;
     double d = 0.0;
     bool b = false;
     std::string s("asdf");

@@ -60,7 +60,7 @@ Element::toWire(std::ostream& ss) const {
 }
 
 bool
-Element::getValue(long int&) const {
+Element::getValue(int64_t&) const {
     return (false);
 }
 
@@ -90,7 +90,7 @@ Element::getValue(std::map<std::string, ConstElementPtr>&) const {
 }
 
 bool
-Element::setValue(const long int) {
+Element::setValue(const int64_t) {
     return (false);
 }
 
@@ -208,8 +208,8 @@ Element::create() {
 }
 
 ElementPtr
-Element::create(const long int i) {
-    return (ElementPtr(new IntElement(i)));
+Element::create(const long long int i) {
+    return (ElementPtr(new IntElement(static_cast<int64_t>(i))));
 }
 
 ElementPtr
@@ -391,9 +391,15 @@ numberFromStringstream(std::istream& in, int& pos) {
 // Should we change from IntElement and DoubleElement to NumberElement
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
+//
+// Type of IntElement is changed from long int to int64_t.
+// However, strtoint64_t function does not exist.
+// It is assumed that "long long" and int64_t are the same sizes.
+// strtoll is used to convert string to integer.
+//
 ElementPtr
 fromStringstreamNumber(std::istream& in, int& pos) {
-    long int i;
+    long long int i;
     double d = 0.0;
     bool is_double = false;
     char* endptr;
@@ -401,7 +407,7 @@ fromStringstreamNumber(std::istream& in, int& pos) {
     std::string number = numberFromStringstream(in, pos);
 
     errno = 0;
-    i = strtol(number.c_str(), &endptr, 10);
+    i = strtoll(number.c_str(), &endptr, 10);
     if (*endptr != '\0') {
         const char* ptr;
         errno = 0;
@@ -415,7 +421,7 @@ fromStringstreamNumber(std::istream& in, int& pos) {
             }
         }
     } else {
-        if ((i == LONG_MAX || i == LONG_MIN) && errno != 0) {
+        if ((i == LLONG_MAX || i == LLONG_MIN) && errno != 0) {
             isc_throw(JSONError, std::string("Number overflow: ") + number);
         }
     }

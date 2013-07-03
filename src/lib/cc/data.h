@@ -124,7 +124,7 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual long int intValue() const
+    virtual int64_t intValue() const
     { isc_throw(TypeError, "intValue() called on non-integer Element"); };
     virtual double doubleValue() const
     { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
@@ -151,7 +151,7 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(long int& t) const;
+    virtual bool getValue(int64_t& t) const;
     virtual bool getValue(double& t) const;
     virtual bool getValue(bool& t) const;
     virtual bool getValue(std::string& t) const;
@@ -167,7 +167,7 @@ public:
     /// is of the correct type
     ///
     //@{
-    virtual bool setValue(const long int v);
+    virtual bool setValue(const int64_t v);
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -273,8 +273,9 @@ public:
     /// represents an empty value, and is created with Element::create())
     //@{
     static ElementPtr create();
-    static ElementPtr create(const long int i);
-    static ElementPtr create(const int i) { return (create(static_cast<long int>(i))); };
+    static ElementPtr create(const long long int i);
+    static ElementPtr create(const int i) { return (create(static_cast<long long int>(i))); };
+    static ElementPtr create(const long int i) { return (create(static_cast<long long int>(i))); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
@@ -371,15 +372,16 @@ public:
 };
 
 class IntElement : public Element {
-    long int i;
+    int64_t i;
+private:
 
 public:
-    IntElement(long int v) : Element(integer), i(v) { }
-    long int intValue() const { return (i); }
+    IntElement(int64_t v) : Element(integer), i(v) { }
+    int64_t intValue() const { return (i); }
     using Element::getValue;
-    bool getValue(long int& t) const { t = i; return (true); }
+    bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
-    bool setValue(const long int v) { i = v; return (true); }
+    bool setValue(int64_t v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
 };
