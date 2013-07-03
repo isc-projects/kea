@@ -140,7 +140,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         // specific order if the list (parser_order_) is not empty; otherwise
         // elements are parsed in the order the value_map presents them.
 
-        if (parse_order_.size() > 0) {
+        if (!parse_order_.empty()) {
             // For each element_id in the parse order list, look for it in the
             // value map.  If the element exists in the map, pass it and it's
             // associated data in for parsing.
