@@ -25,6 +25,10 @@
 namespace isc {
 namespace d2 {
 
+class DNSClient;
+typedef boost::shared_ptr<DNSClient> DNSClientPtr;
+
+/// DNSClient class implementation.
 class DNSClientImpl;
 
 /// @brief The @c DNSClient class handles communication with the DNS server.
