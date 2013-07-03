@@ -21,8 +21,6 @@
 namespace isc {
 namespace d2 {
 
-using namespace boost::posix_time;
-
 /********************************* D2Dhcid ************************************/
 
 D2Dhcid::D2Dhcid() {
@@ -62,11 +60,19 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const bool forward_change, const bool reverse_change,
             const std::string& fqdn, const std::string& ip_address,
             const D2Dhcid& dhcid,
+#if 0
             const boost::posix_time::ptime& lease_expires_on,
+#else
+            const uint64_t lease_expires_on,
+#endif
             const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
+#if 0
     dhcid_(dhcid), lease_expires_on_(new ptime(lease_expires_on)),
+#else
+    dhcid_(dhcid), lease_expires_on_(lease_expires_on),
+#endif
     lease_length_(lease_length), status_(ST_NEW) {
 
     // Validate the contents. This will throw a NcrMessageError if anything
@@ -243,10 +249,12 @@ NameChangeRequest::validateContent() {
         isc_throw(NcrMessageError, "DHCID cannot be blank");
     }
 
+#if 0
     // Validate lease expiration.
     if (lease_expires_on_->is_not_a_date_time()) {
         isc_throw(NcrMessageError, "Invalid value for lease_expires_on");
     }
+#endif
 
     // Ensure the request specifies at least one direction to update.
     if (!forward_change_ && !reverse_change_) {
@@ -375,39 +383,19 @@ NameChangeRequest::setDhcid(isc::data::ConstElementPtr element) {
 
 std::string
 NameChangeRequest::getLeaseExpiresOnStr() const {
-    if (!lease_expires_on_) {
-        // This is a programmatic error, should not happen.
-        isc_throw(NcrMessageError,
-            "lease_expires_on_ is null, cannot convert to string");
-    }
-
-    // Return the ISO date-time string for the value of lease_expires_on_.
-    return (to_iso_string(*lease_expires_on_));
+    return (isc::util::timeToText64(lease_expires_on_));
 }
 
 void
 NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
     try {
-        // Create a new ptime instance from the ISO date-time string in value
-        // add assign it to lease_expires_on_.
-        ptime* tptr = new ptime(from_iso_string(value));
-        lease_expires_on_.reset(tptr);
+        lease_expires_on_ = isc::util::timeFromText64(value);
     } catch(...) {
         // We were given an invalid string, so throw.
         isc_throw(NcrMessageError,
-            "Invalid ISO date-time string: [" << value << "]");
+            "Invalid date-time string: [" << value << "]");
     }
 
-}
-
-void
-NameChangeRequest::setLeaseExpiresOn(const boost::posix_time::ptime&  value) {
-    if (lease_expires_on_->is_not_a_date_time()) {
-        isc_throw(NcrMessageError, "Invalid value for lease_expires_on");
-    }
-
-    // Go to go, make the assignment.
-    lease_expires_on_.reset(new ptime(value));
 }
 
 void NameChangeRequest::setLeaseExpiresOn(isc::data::ConstElementPtr element) {
