@@ -32,7 +32,7 @@ namespace hooks {
 /// @brief Local class for conversion of void pointers to function pointers
 ///
 /// Converting between void* and function pointers in C++ is fraught with
-/// difficulty and pitfalls (e.g. see
+/// difficulty and pitfalls, e.g. see
 /// https://groups.google.com/forum/?hl=en&fromgroups#!topic/comp.lang.c++/37o0l8rtEE0
 ///
 /// The method given in that article - convert using a union is used here.  A
@@ -43,7 +43,8 @@ class PointerConverter {
 public:
     /// @brief Constructor
     ///
-    /// Zeroes the union and stores the void* pointer (returned by dlsym) there.
+    /// Zeroes the union and stores the void* pointer we wish to convert (the
+    /// one returned by dlsym).
     ///
     /// @param dlsym_ptr void* pointer returned by call to dlsym()
     PointerConverter(void* dlsym_ptr) {
@@ -148,7 +149,6 @@ LibraryManager::checkVersion() const {
         try {
             version = (*pc.versionPtr())();
         } catch (...) {
-            // Exception - 
             LOG_ERROR(hooks_logger, HOOKS_VERSION_EXCEPTION).arg(library_name_);
             return (false);
         }
@@ -174,9 +174,9 @@ LibraryManager::checkVersion() const {
 
 void
 LibraryManager::registerStandardCallouts() {
-    // Create a library handle for doing the registration.  We also need to
-    // set the current library index to indicate the current library.
-    LibraryHandle library_handle(manager_.get(), index_);
+    // Set the library index for doing the registration.  This is picked up
+    // when the library handle is created.
+    manager_->setLibraryIndex(index_);
 
     // Iterate through the list of known hooks
     vector<string> hook_names = ServerHooks::getServerHooks().getHookNames();
@@ -187,9 +187,10 @@ LibraryManager::registerStandardCallouts() {
         PointerConverter pc(dlsym_ptr);
         if (pc.calloutPtr() != NULL) {
             // Found a symbol, so register it.
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_STD_CALLOUT)
+            manager_->getLibraryHandle().registerCallout(hook_names[i],
+                                                         pc.calloutPtr());
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_STD_CALLOUT_REGISTERED)
                 .arg(library_name_).arg(hook_names[i]).arg(dlsym_ptr);
-            library_handle.registerCallout(hook_names[i], pc.calloutPtr());
 
         }
     }
@@ -222,7 +223,7 @@ LibraryManager::runLoad() {
                       .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD)
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
             .arg(library_name_);
         }
 
@@ -262,7 +263,7 @@ LibraryManager::runUnload() {
                       .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD)
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_SUCCESS)
             .arg(library_name_);
         }
     } else {
@@ -277,7 +278,7 @@ LibraryManager::runUnload() {
 
 bool
 LibraryManager::loadLibrary() {
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_LIBRARY)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_LOADING)
         .arg(library_name_);
 
     // In the following, if a method such as openLibrary() fails, it will
@@ -305,15 +306,15 @@ LibraryManager::loadLibrary() {
                 // The load function failed, so back out.  We can't just close
                 // the library as (a) we need to call the library's "unload"
                 // function (if present) in case "load" allocated resources that
-                // need to be freed and (b) - we need to remove any callouts
-                // that have been installed.
+                // need to be freed and (b) we need to remove any callouts that
+                // have been installed.
                 static_cast<void>(unloadLibrary());
             }
         }
 
-        // Either version check or call to load() failed, so close the library
-        // and free up resources.  Ignore the status return here - we already
-        // know there's an error and will have output a message.
+        // Either the version check or call to load() failed, so close the
+        // library and free up resources.  Ignore the status return here - we
+        // already know there's an error and will have output a message.
         static_cast<void>(closeLibrary());
     }
 
@@ -325,7 +326,7 @@ LibraryManager::loadLibrary() {
 
 bool
 LibraryManager::unloadLibrary() {
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_LIBRARY)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_UNLOADING)
         .arg(library_name_);
 
     // Call the unload() function if present.  Note that this is done first -
@@ -340,7 +341,7 @@ LibraryManager::unloadLibrary() {
     for (int i = 0; i < hooks.size(); ++i) {
         bool removed = manager_->deregisterAllCallouts(hooks[i]);
         if (removed) {
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REMOVED)
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
                 .arg(hooks[i]).arg(library_name_);
         }
     }

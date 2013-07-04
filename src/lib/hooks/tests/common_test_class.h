@@ -44,18 +44,18 @@ public:
         isc::hooks::ServerHooks& hooks =
             isc::hooks::ServerHooks::getServerHooks();
         hooks.reset();
-        hook_point_one_index_ = hooks.registerHook("hook_point_one");
-        hook_point_two_index_ = hooks.registerHook("hook_point_two");
-        hook_point_three_index_ = hooks.registerHook("hook_point_three");
+        hookpt_one_index_ = hooks.registerHook("hookpt_one");
+        hookpt_two_index_ = hooks.registerHook("hookpt_two");
+        hookpt_three_index_ = hooks.registerHook("hookpt_three");
     }
 
     /// @brief Call callouts test
     ///
     /// All of the loaded libraries for which callouts are called register four
     /// callouts: a context_create callout and three callouts that are attached
-    /// to hooks hook_point_one, hook_point_two and hook_point_three.  These four callouts, executed
-    /// in sequence, perform a series of calculations. Data is passed between
-    /// callouts in the argument list, in a variable named "result".
+    /// to hooks hookpt_one, hookpt_two and hookpt_three.  These four callouts,
+    /// executed in sequence, perform a series of calculations. Data is passed
+    /// between callouts in the argument list, in a variable named "result".
     ///
     /// context_create initializes the calculation by setting a seed
     /// value, called r0 here.  This value is dependent on the library being
@@ -63,20 +63,24 @@ public:
     /// the purpose being to avoid exceptions when running this test with no
     /// libraries loaded.
     ///
-    /// Callout hook_point_one is passed a value d1 and performs a simple arithmetic
+    /// Callout hookpt_one is passed a value d1 and performs a simple arithmetic
     /// operation on it and r0 yielding a result r1.  Hence we can say that
-    /// @f[ r1 = lm1(r0, d1) @f]
+    /// @f[ r1 = hookpt_one(r0, d1) @f]
     ///
-    /// Callout hook_point_two is passed a value d2 and peforms another simple
+    /// Callout hookpt_two is passed a value d2 and peforms another simple
     /// arithmetic operation on it and d2, yielding r2, i.e.
-    /// @f[ r2 = lm2(d1, d2) @f]
+    /// @f[ r2 = hookpt_two(d1, d2) @f]
     ///
-    /// hook_point_three does a similar operation giving @f[ r3 = lm3(r2, d3) @f].
+    /// hookpt_three does a similar operation giving
+    /// @f[ r3 = hookpt_three(r2, d3) @f].
     ///
-    /// The details of the operations lm1, lm2 and lm3 depend on the library.
-    /// However the sequence of calls needed to do this set of calculations
-    /// is identical regardless of the exact functions. This method performs
-    /// those operations and checks the results of each step.
+    /// The details of the operations hookpt_one, hookpt_two and hookpt_three
+    /// depend on the library, so the results obtained not only depend on
+    /// the data, but also on the library loaded.  This method is passed both
+    /// data and expected results.  It executes the three callouts in sequence,
+    /// checking the intermediate and final results.  Only if the expected
+    /// library has been loaded correctly and the callouts in it registered
+    /// correctly will be the results be as expected.
     ///
     /// It is assumed that callout_manager_ has been set up appropriately.
     ///
@@ -86,9 +90,9 @@ public:
     ///       allocated by loaded libraries while they are still loaded.
     ///
     /// @param manager CalloutManager to use for the test
-    /// @param r0...r3, d1..d3 Values and intermediate values expected.  They
-    ///        are ordered so that the variables appear in the argument list in
-    ///        the order they are used.
+    /// @param r0...r3, d1..d3 Data (dN) and expected results (rN) - both
+    ///        intermediate and final.  The arguments are ordered so that they
+    ///        appear in the argument list in the order they are used.
     void executeCallCallouts(
             const boost::shared_ptr<isc::hooks::CalloutManager>& manager,
             int r0, int d1, int r1, int d2, int r2, int d3, int r3) {
@@ -112,27 +116,27 @@ public:
 
         // Perform the first calculation.
         handle.setArgument("data_1", d1);
-        manager->callCallouts(hook_point_one_index_, handle);
+        manager->callCallouts(hookpt_one_index_, handle);
         handle.getArgument(RESULT, result);
-        EXPECT_EQ(r1, result) << "hook_point_one" << COMMON_TEXT;
+        EXPECT_EQ(r1, result) << "hookpt_one" << COMMON_TEXT;
 
         // ... the second ...
         handle.setArgument("data_2", d2);
-        manager->callCallouts(hook_point_two_index_, handle);
+        manager->callCallouts(hookpt_two_index_, handle);
         handle.getArgument(RESULT, result);
-        EXPECT_EQ(r2, result) << "hook_point_two" << COMMON_TEXT;
+        EXPECT_EQ(r2, result) << "hookpt_two" << COMMON_TEXT;
 
         // ... and the third.
         handle.setArgument("data_3", d3);
-        manager->callCallouts(hook_point_three_index_, handle);
+        manager->callCallouts(hookpt_three_index_, handle);
         handle.getArgument(RESULT, result);
-        EXPECT_EQ(r3, result) << "hook_point_three" << COMMON_TEXT;
+        EXPECT_EQ(r3, result) << "hookpt_three" << COMMON_TEXT;
     }
 
     /// Hook indexes.  These are are made public for ease of reference.
-    int hook_point_one_index_;
-    int hook_point_two_index_;
-    int hook_point_three_index_;
+    int hookpt_one_index_;
+    int hookpt_two_index_;
+    int hookpt_three_index_;
 };
 
 #endif // COMMON_HOOKS_TEST_CLASS_H

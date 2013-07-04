@@ -82,7 +82,7 @@ TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
     // Execute the callouts.  The first library implements the calculation.
     //
     // r3 = (7 * d1 - d2) * d3
-    // 
+    //
     // The last-loaded library implements the calculation
     //
     // r3 = (10 + d1) * d2 - d3
@@ -135,7 +135,7 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
     // Execute the callouts.  The first library implements the calculation.
     //
     // r3 = (7 * d1 - d2) * d3
-    // 
+    //
     // The last-loaded library implements the calculation
     //
     // r3 = (10 + d1) * d2 - d3

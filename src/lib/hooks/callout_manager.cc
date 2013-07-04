@@ -62,7 +62,7 @@ CalloutManager::setNumLibraries(int num_libraries) {
 void
 CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // Note the registration.
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REGISTRATION)
         .arg(current_library_).arg(name);
 
     // Sanity check that the current library index is set to a valid value.
@@ -142,7 +142,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 int status = (*i->second)(callout_handle);
                 if (status == 0) {
                     LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
-                              HOOKS_CALLOUT).arg(current_library_)
+                              HOOKS_CALLOUT_CALLED).arg(current_library_)
                         .arg(ServerHooks::getServerHooks()
                             .getName(current_hook_))
                         .arg(reinterpret_cast<void*>(i->second));
@@ -209,7 +209,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_DEREGISTER_CALLOUT).arg(current_library_).arg(name);
+                  HOOKS_CALLOUT_DEREGISTERED).arg(current_library_).arg(name);
     }
 
     return (removed);
@@ -244,7 +244,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_DEREGISTER_ALL_CALLOUTS).arg(current_library_)
+                  HOOKS_ALL_CALLOUTS_DEREGISTERED).arg(current_library_)
                                                 .arg(name);
     }
 
