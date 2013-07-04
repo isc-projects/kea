@@ -168,7 +168,7 @@ public:
 
         value = boost::any_cast<T>(element_ptr->second);
     }
-    
+
     /// @brief Get argument names
     ///
     /// Returns a vector holding the names of arguments in the argument
@@ -273,7 +273,7 @@ public:
 
         value = boost::any_cast<T>(element_ptr->second);
     }
-    
+
     /// @brief Get context names
     ///
     /// Returns a vector holding the names of items in the context associated
@@ -355,7 +355,7 @@ private:
     const ElementCollection& getContextForLibrary() const;
 
     // Member variables
-    
+
     /// Pointer to the collection of libraries for which this handle has been
     /// created.
     boost::shared_ptr<LibraryManagerCollection> lm_collection_;

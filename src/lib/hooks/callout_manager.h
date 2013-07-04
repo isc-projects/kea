@@ -60,7 +60,7 @@ public:
 ///   deregister callouts in the same library (including themselves): they
 ///   cannot affect callouts registered by another library.  When calling a
 ///   callout, the callout manager maintains the idea of a "current library
-///   index": if the callout calls one of the callout registration functions 
+///   index": if the callout calls one of the callout registration functions
 ///   (indirectly via the @ref LibraryHandle object), the registration
 ///   functions use the "current library index" in their processing.
 ///
@@ -385,11 +385,11 @@ private:
     /// such that the index of the library associated with any operation is
     /// whatever is currently set in the CalloutManager.
     LibraryHandle library_handle_;
-    
+
     /// LibraryHandle for callouts to be registered as being called before
     /// the user-registered callouts.
     LibraryHandle pre_library_handle_;
-    
+
     /// LibraryHandle for callouts to be registered as being called after
     /// the user-registered callouts.
     LibraryHandle post_library_handle_;

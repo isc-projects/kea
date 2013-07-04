@@ -261,12 +261,12 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     // Load the standard callouts
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
 
-    // Check that only context_create and hook_point_one have callouts registered.
+    // Check that only context_create and hookpt_one have callouts registered.
     EXPECT_TRUE(callout_manager_->calloutsPresent(
                 ServerHooks::CONTEXT_CREATE));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -274,9 +274,9 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_TRUE(lib_manager.runLoad());
     EXPECT_TRUE(callout_manager_->calloutsPresent(
                 ServerHooks::CONTEXT_CREATE));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -300,7 +300,7 @@ TEST_F(LibraryManagerTest, CheckLoadException) {
                                      0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
-    // Check that we catch a load error
+    // Running the load function should fail.
     EXPECT_FALSE(lib_manager.runLoad());
 
     // Tidy up
@@ -368,7 +368,7 @@ TEST_F(LibraryManagerTest, CheckUnloadException) {
                                      0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
-    // Check that unload function returning an error returns false.
+    // Check that we detect that the unload function throws an exception.
     EXPECT_FALSE(lib_manager.runUnload());
 
     // Tidy up
@@ -418,28 +418,28 @@ TEST_F(LibraryManagerTest, LibUnload) {
     EXPECT_TRUE(lib_manager.checkVersion());
 
     // No callouts should be registered at the moment.
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
 
     // Load the single standard callout and check it is registered correctly.
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
 
     // Call the load function to load the other callouts.
     EXPECT_TRUE(lib_manager.runLoad());
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_TRUE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
 
     // Unload the library and check that the callouts have been removed from
     // the CalloutManager.
     lib_manager.unloadLibrary();
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
 }
 
 // Now come the loadLibrary() tests that make use of all the methods tested
@@ -488,9 +488,9 @@ TEST_F(LibraryManagerTest, LoadLibrary) {
     EXPECT_TRUE(lib_manager.unloadLibrary());
 
     // Check that the callouts have been removed from the callout manager.
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_one_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_two_index_));
-    EXPECT_FALSE(callout_manager_->calloutsPresent(hook_point_three_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
+    EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
 }
 
 // Now test for multiple libraries.  We'll load the full callout library
@@ -530,7 +530,7 @@ TEST_F(LibraryManagerTest, LoadMultipleLibraries) {
     // Execute the callouts.  The first library implements the calculation.
     //
     // r3 = (7 * d1 - d2) * d3
-    // 
+    //
     // The last-loaded library implements the calculation
     //
     // r3 = (10 + d1) * d2 - d3
