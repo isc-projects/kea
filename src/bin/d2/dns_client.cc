@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/dns_client.h>
+#include <d2/d2_log.h>
 #include <dns/messagerenderer.h>
 
 namespace isc {
@@ -82,17 +83,22 @@ DNSClientImpl::~DNSClientImpl() {
 
 void
 DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
-    // @todo More sanity checks here. Also, there is a question, what happens if
-    // the exception is thrown here.
-
+    // Get the status from IO. If no success, we just call user's callback
+    // and pass the status code.
     DNSClient::Status status = getStatus(result);
-
     if (status == DNSClient::SUCCESS) {
         InputBuffer response_buf(in_buf_->getData(), in_buf_->getLength());
+        // Server's response may be corrupted. In such case, fromWire will
+        // throw an exception. We want to catch this exception to return
+        // appropriate status code to the caller and log this event.
         try {
             response_->fromWire(response_buf);
+
         } catch (const Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
+            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+                      DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
+
         }
     }
 
