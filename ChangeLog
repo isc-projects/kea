@@ -1,3 +1,9 @@
+638.	[bug]*		naokikambe
+	Per-zone statistics counters are distinguished by zone class,
+	e.g. IN, CH, and HS. A class name is added onto a zone name in
+	structure of per-zone statistics.
+	(Trac #2884, git c0153581c3533ef045a92e68e0464aab00947cbb)
+
 637.	[func]		[tmark]
 	Added initial implementation of NameChangeRequest,
 	which embodies DNS update requests sent to DHCP-DDNS
