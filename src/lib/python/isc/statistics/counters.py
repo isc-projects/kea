@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2012-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -81,19 +81,47 @@ def _add_counter(element, spec, identifier):
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
         pass
-    # check whether spec and identifier are correct
-    isc.config.find_spec_part(spec, identifier)
-    # examine spec of the top-level item first
-    spec_ = isc.config.find_spec_part(spec, identifier.split('/')[0])
-    if spec_['item_type'] == 'named_set' and \
-            spec_['named_set_item_spec']['item_type'] ==  'map':
-        map_spec = spec_['named_set_item_spec']['map_item_spec']
-        for name in isc.config.spec_name_list(map_spec):
-            spec_ = isc.config.find_spec_part(map_spec, name)
-            id_str = '%s/%s/%s' % \
-                tuple(identifier.split('/')[0:2] + [name])
-            isc.cc.data.set(element, id_str, spec_['item_default'])
-    else:
+
+    # Note: If there is a named_set type item in the statistics spec
+    # and if there are map type items under it, all of items under the
+    # map type item need to be added. For example, we're assuming that
+    # this method is now adding a counter whose identifier is like
+    # dir1/dir2/dir3/counter1. If both of dir1 and dir2 are named_set
+    # types, and if dir3 is a map type, and if counter1, counter2, and
+    # counter3 are defined as items under dir3 by the statistics spec,
+    # this method would add other two counters:
+    #
+    #   dir1/dir2/dir3/counter2
+    #   dir1/dir2/dir3/counter3
+    #
+    # Otherwise this method just adds the only counter
+    # dir1/dir2/dir3/counter1.
+
+    # examine spec from the top-level item and know whether
+    # has_named_set, and check whether spec and identifier are correct
+    pidr = ''
+    has_named_set = False
+    for idr in identifier.split('/'):
+        if len(pidr) > 0:
+            idr = pidr + '/' + idr
+        spec_ = isc.config.find_spec_part(spec, idr)
+        if isc.config.spec_part_is_named_set(spec_):
+            has_named_set = True
+            break
+        pidr = idr
+    # add all elements in map type if has_named_set
+    has_map = False
+    if has_named_set:
+        p_idr = identifier.rsplit('/', 1)[0]
+        p_spec = isc.config.find_spec_part(spec, p_idr)
+        if isc.config.spec_part_is_map(p_spec):
+            has_map = True
+            for name in isc.config.spec_name_list(p_spec['map_item_spec']):
+                idr_ = p_idr + '/' + name
+                spc_ = isc.config.find_spec_part(spec, idr_)
+                isc.cc.data.set(element, idr_, spc_['item_default'])
+    # otherwise add a specific element
+    if not has_map:
         spec_ = isc.config.find_spec_part(spec, identifier)
         isc.cc.data.set(element, identifier, spec_['item_default'])
     return isc.cc.data.find(element, identifier)
@@ -161,30 +189,38 @@ class _Statistics():
         "item_title": "Zone names",
         "item_description": "Zone names",
         "named_set_item_spec": {
-          "item_name": "zonename",
-          "item_type": "map",
+          "item_name": "classname",
+          "item_type": "named_set",
           "item_optional": False,
           "item_default": {},
-          "item_title": "Zone name",
-          "item_description": "Zone name",
-          "map_item_spec": [
-            {
-              "item_name": "notifyoutv4",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv4 notifies",
-              "item_description": "Number of IPv4 notifies per zone name sent out"
-            },
-            {
-              "item_name": "notifyoutv6",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv6 notifies",
-              "item_description": "Number of IPv6 notifies per zone name sent out"
-            }
-          ]
+          "item_title": "RR class name",
+          "item_description": "RR class name",
+          "named_set_item_spec": {
+            "item_name": "zonename",
+            "item_type": "map",
+            "item_optional": False,
+            "item_default": {},
+            "item_title": "Zone name",
+            "item_description": "Zone name",
+            "map_item_spec": [
+              {
+                "item_name": "notifyoutv4",
+                "item_type": "integer",
+                "item_optional": False,
+                "item_default": 0,
+                "item_title": "IPv4 notifies",
+                "item_description": "Number of IPv4 notifies per zone name sent out"
+              },
+              {
+                "item_name": "notifyoutv6",
+                "item_type": "integer",
+                "item_optional": False,
+                "item_default": 0,
+                "item_title": "IPv6 notifies",
+                "item_description": "Number of IPv6 notifies per zone name sent out"
+              }
+            ]
+          }
         }
       }
     ]
@@ -205,20 +241,20 @@ class Counters():
     per-zone counters, a list of counters which can be handled in the
     class are like the following:
 
-        zones/example.com./notifyoutv4
-        zones/example.com./notifyoutv6
-        zones/example.com./xfrrej
-        zones/example.com./xfrreqdone
-        zones/example.com./soaoutv4
-        zones/example.com./soaoutv6
-        zones/example.com./axfrreqv4
-        zones/example.com./axfrreqv6
-        zones/example.com./ixfrreqv4
-        zones/example.com./ixfrreqv6
-        zones/example.com./xfrsuccess
-        zones/example.com./xfrfail
-        zones/example.com./last_ixfr_duration
-        zones/example.com./last_axfr_duration
+        zones/IN/example.com./notifyoutv4
+        zones/IN/example.com./notifyoutv6
+        zones/IN/example.com./xfrrej
+        zones/IN/example.com./xfrreqdone
+        zones/IN/example.com./soaoutv4
+        zones/IN/example.com./soaoutv6
+        zones/IN/example.com./axfrreqv4
+        zones/IN/example.com./axfrreqv6
+        zones/IN/example.com./ixfrreqv4
+        zones/IN/example.com./ixfrreqv6
+        zones/IN/example.com./xfrsuccess
+        zones/IN/example.com./xfrfail
+        zones/IN/example.com./last_ixfr_duration
+        zones/IN/example.com./last_axfr_duration
         ixfr_running
         axfr_running
         socket/unixdomain/open
@@ -275,8 +311,9 @@ class Counters():
                 isc.config.spec_name_list(self._statistics._spec):
             self._zones_item_list = isc.config.spec_name_list(
                 isc.config.find_spec_part(
-                    self._statistics._spec, self._perzone_prefix)\
-                    ['named_set_item_spec']['map_item_spec'])
+                    self._statistics._spec,
+                    '%s/%s/%s' % (self._perzone_prefix,
+                                  '_CLASS_', self._entire_server)))
 
     def clear_all(self):
         """clears all statistics data"""
@@ -387,15 +424,14 @@ class Counters():
         # Start calculation for '_SERVER_' counts
         zones_spec = isc.config.find_spec_part(self._statistics._spec,
                                                self._perzone_prefix)
-        zones_attrs = zones_spec['item_default'][self._entire_server]
         zones_data = {}
-        for attr in zones_attrs:
-            id_str = '%s/%s' % (self._entire_server, attr)
-            sum_ = 0
-            for name in zones:
-                if attr in zones[name]:
-                    sum_ += zones[name][attr]
-            _set_counter(zones_data, zones_spec, id_str, sum_)
+        for cls in zones.keys():
+            for zone in zones[cls].keys():
+                for (attr, val) in zones[cls][zone].items():
+                    id_str1 = '%s/%s/%s' % (cls, zone, attr)
+                    id_str2 = '%s/%s/%s' % (cls, self._entire_server, attr)
+                    _set_counter(zones_data, zones_spec, id_str1, val)
+                    _inc_counter(zones_data, zones_spec, id_str2, val)
         # insert entire-server counts
         statistics_data[self._perzone_prefix] = dict(
             statistics_data[self._perzone_prefix],

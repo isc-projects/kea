@@ -509,10 +509,14 @@ class NotifyOut:
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
             if zone_notify_info.get_socket().family == socket.AF_INET:
-                self._counters.inc('zones', zone_notify_info.zone_name,
+                self._counters.inc('zones',
+                                   zone_notify_info.zone_class,
+                                   zone_notify_info.zone_name,
                                   'notifyoutv4')
             elif zone_notify_info.get_socket().family == socket.AF_INET6:
-                self._counters.inc('zones', zone_notify_info.zone_name,
+                self._counters.inc('zones',
+                                   zone_notify_info.zone_class,
+                                   zone_notify_info.zone_name,
                                   'notifyoutv6')
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, AddressFormatter(addrinfo))
         except (socket.error, addr.InvalidAddress) as err:
