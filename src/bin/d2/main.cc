@@ -38,7 +38,8 @@ int main(int argc, char* argv[]) {
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
-        controller->launch(argc, argv);
+        // 'false' value disables test mode.
+        controller->launch(argc, argv, false);
     } catch (const isc::Exception& ex) {
         std::cerr << "Service failed:" << ex.what() << std::endl;
         ret = EXIT_FAILURE;
