@@ -75,7 +75,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv6     |          1 |
       | _SERVER_.xfrreqdone      |          1 |
@@ -100,7 +100,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
+    The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
       | item_name                       | item_value | min_value |
       | _SERVER_.soaoutv6               |          1 |           |
       | _SERVER_.axfrreqv6              |          1 |           |
@@ -177,7 +177,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv4     |          1 |
       | _SERVER_.xfrreqdone      |          1 |
@@ -202,7 +202,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
+    The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
       | item_name                       | item_value | min_value |
       | _SERVER_.soaoutv4               |          1 |           |
       | _SERVER_.axfrreqv4              |          1 |           |
@@ -282,7 +282,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv6     |          1 |           |           |
       | _SERVER_.xfrrej          |            |         1 |         3 |
@@ -310,7 +310,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
+    The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
       | item_name              | item_value |
       | _SERVER_.soaoutv6      |          1 |
       | _SERVER_.axfrreqv6     |          1 |
@@ -388,7 +388,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv4     |          1 |           |           |
       | _SERVER_.xfrrej          |            |         1 |         3 |
@@ -416,7 +416,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
+    The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
       | item_name              | item_value |
       | _SERVER_.soaoutv4      |          1 |
       | _SERVER_.axfrreqv4     |          1 |
@@ -454,7 +454,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | min_value | max_value |
       | _SERVER_.notifyoutv6     |         1 |	       5 |
       | example.org..notifyoutv6 |         1 |	       5 |
