@@ -307,7 +307,7 @@ TEST_F(DNSClientTest, sendReceiveTwice) {
 // 3. receive
 // 4. receive
 TEST_F(DNSClientTest, concurrentSendReceive) {
-    runSendReceiveTest(true, true);
+    runSendReceiveTest(false, true);
 }
 
 } // End of anonymous namespace
