@@ -132,6 +132,24 @@ private:
                      boost::shared_ptr<datasrc::ConfigurableClientList> >
     ClientListsMap;
 
+    class FDGuard : boost::noncopyable {
+    public:
+        FDGuard(DataSrcClientsMgrBase *mgr) :
+            mgr_(mgr)
+        {}
+        ~FDGuard() {
+            if (mgr_->read_fd_ != -1) {
+                close(mgr_->read_fd_);
+            }
+            if (mgr_->write_fd_ != -1) {
+                close(mgr_->write_fd_);
+            }
+        }
+    private:
+        DataSrcClientsMgrBase* mgr_;
+    };
+    friend class FDGuard;
+
 public:
     /// \brief Thread-safe accessor to the data source client lists.
     ///
@@ -197,8 +215,10 @@ public:
     /// \throw isc::Unexpected general unexpected system errors.
     DataSrcClientsMgrBase(asiolink::IOService&) :
         clients_map_(new ClientListsMap),
+        fd_guard_(new FDGuard(this)),
+        read_fd_(-1), write_fd_(-1),
         builder_(&command_queue_, &callback_queue_, &cond_, &queue_mutex_,
-                 &clients_map_, &map_mutex_, -1 /* TEMPORARY */),
+                 &clients_map_, &map_mutex_, createFds()),
         builder_thread_(boost::bind(&BuilderType::run, &builder_))
     {}
 
@@ -360,6 +380,18 @@ private:
         cond_.signal();
     }
 
+    int createFds() {
+        int fds[2];
+        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, fds);
+        if (result != 0) {
+            isc_throw(Unexpected, "Can't create socket pair: " <<
+                      strerror(errno));
+        }
+        read_fd_ = fds[0];
+        write_fd_ = fds[1];
+        return write_fd_;
+    }
+
     //
     // The following are shared with the builder.
     //
@@ -374,6 +406,8 @@ private:
     MutexType queue_mutex_;     // mutex to protect the queue
     datasrc::ClientListMapPtr clients_map_;
                                 // map of actual data source client objects
+    boost::scoped_ptr<FDGuard> fd_guard_; // A guard to close the fds.
+    int read_fd_, write_fd_;    // Descriptors for wakeup
     MutexType map_mutex_;       // mutex to protect the clients map
 
     BuilderType builder_;
