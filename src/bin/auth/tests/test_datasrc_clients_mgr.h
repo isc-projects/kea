@@ -133,15 +133,18 @@ public:
     // true iff a builder has started.
     static bool started;
 
-    // These three correspond to the resource shared with the manager.
+    // These five correspond to the resource shared with the manager.
     // xxx_copy will be set in the manager's destructor to record the
     // final state of the manager.
     static std::list<Command>* command_queue;
+    static std::list<FinishedCallback>* callback_queue;
     static TestCondVar* cond;
     static TestMutex* queue_mutex;
+    static int wakeup_fd;
     static isc::datasrc::ClientListMapPtr* clients_map;
     static TestMutex* map_mutex;
     static std::list<Command> command_queue_copy;
+    static std::list<FinishedCallback> callback_queue_copy;
     static TestCondVar cond_copy;
     static TestMutex queue_mutex_copy;
 
@@ -155,16 +158,18 @@ public:
 
     FakeDataSrcClientsBuilder(
         std::list<Command>* command_queue,
-        std::list<FinishedCallback>*,
+        std::list<FinishedCallback>* callback_queue,
         TestCondVar* cond,
         TestMutex* queue_mutex,
         isc::datasrc::ClientListMapPtr* clients_map,
-        TestMutex* map_mutex, int)
+        TestMutex* map_mutex, int wakeup_fd)
     {
         FakeDataSrcClientsBuilder::started = false;
         FakeDataSrcClientsBuilder::command_queue = command_queue;
+        FakeDataSrcClientsBuilder::callback_queue = callback_queue;
         FakeDataSrcClientsBuilder::cond = cond;
         FakeDataSrcClientsBuilder::queue_mutex = queue_mutex;
+        FakeDataSrcClientsBuilder::wakeup_fd = wakeup_fd;
         FakeDataSrcClientsBuilder::clients_map = clients_map;
         FakeDataSrcClientsBuilder::map_mutex = map_mutex;
         FakeDataSrcClientsBuilder::thread_waited = false;

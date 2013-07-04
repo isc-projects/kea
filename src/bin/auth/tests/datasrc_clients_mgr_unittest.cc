@@ -245,6 +245,47 @@ TEST(DataSrcClientsMgrTest, reload) {
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 }
 
+void
+callback(bool* called, int *tag_target, int tag_value) {
+    *called = true;
+    *tag_target = tag_value;
+}
+
+// Test we can wake up the main thread by writing to the file descriptor and
+// that the callbacks are executed and removed when woken up.
+TEST(DataSrcClientsMgrTest, wakeup) {
+    bool called = false;
+    int tag;
+    {
+        TestDataSrcClientsMgr mgr;
+        // There's some real file descriptor (or something that looks so)
+        ASSERT_GT(FakeDataSrcClientsBuilder::wakeup_fd, 0);
+        // Push a callback in and wake the manager
+        FakeDataSrcClientsBuilder::callback_queue->
+            push_back(boost::bind(callback, &called, &tag, 1));
+        write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1);
+        mgr.run_one();
+        EXPECT_TRUE(called);
+        EXPECT_EQ(1, tag);
+        EXPECT_TRUE(FakeDataSrcClientsBuilder::callback_queue->empty());
+
+        called = false;
+        // If we wake up and don't push anything, it doesn't break.
+        write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1);
+        mgr.run_one();
+        EXPECT_FALSE(called);
+
+        // When we terminate, it should process whatever is left
+        // of the callbacks. So push and terminate (and don't directly
+        // wake).
+        FakeDataSrcClientsBuilder::callback_queue->
+            push_back(boost::bind(callback, &called, &tag, 2));
+    }
+    EXPECT_TRUE(called);
+    EXPECT_EQ(2, tag);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::callback_queue->empty());
+}
+
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
