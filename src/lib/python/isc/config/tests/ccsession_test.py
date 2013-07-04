@@ -376,6 +376,77 @@ class TestModuleCCSession(unittest.TestCase):
             ],
             fake_session.message_queue)
 
+    def test_notify_receive(self):
+        """
+        Test we can subscribe to notifications, receive them, unsubscribe, etc.
+        """
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        fake_session.group_sendmsg({"notification": ["event", {
+            "param": True
+        }]}, "notifications/group")
+        # Not subscribed to notifications -> not subscribed to
+        # 'notifications/group' -> message not eaten yet
+        mccs.check_command()
+        self.assertEqual(fake_session.message_queue, [['notifications/group',
+                         None, {'notification': ['event', {'param': True}]},
+                         False]])
+        # Place to log called notifications
+        notifications = []
+        def notified(tag, event, params):
+            notifications.append((tag, event, params))
+        # Subscribe to the notifications. Twice.
+        id1 = mccs.subscribe_notification('group',
+                                          lambda event, params:
+                                              notified("first", event, params))
+        id2 = mccs.subscribe_notification('group',
+                                          lambda event, params:
+                                              notified("second", event,
+                                              params))
+        # Now the message gets eaten because we are subscribed, and both
+        # callbacks are called.
+        mccs.check_command()
+        self.assertEqual(fake_session.message_queue, [])
+        self.assertEqual(notifications, [
+            ("first", "event", {'param': True}),
+            ("second", "event", {'param': True})
+        ])
+        del notifications[:]
+        # If a notification for different group comes, it is left untouched.
+        fake_session.group_sendmsg({"notification": ["event", {
+            "param": True
+        }]}, "notifications/other")
+        mccs.check_command()
+        self.assertEqual(notifications, [])
+        self.assertEqual(fake_session.message_queue, [['notifications/other',
+                         None, {'notification': ['event', {'param': True}]},
+                         False]])
+        del fake_session.message_queue[:]
+        # Unsubscribe one of the notifications and see that only the other
+        # is triggered.
+        mccs.unsubscribe_notification(id2)
+        fake_session.group_sendmsg({"notification": ["event", {
+            "param": True
+        }]}, "notifications/group")
+        mccs.check_command()
+        self.assertEqual(fake_session.message_queue, [])
+        self.assertEqual(notifications, [
+            ("first", "event", {'param': True})
+        ])
+        del notifications[:]
+        # If we try to unsubscribe again, it complains.
+        self.assertRaises(KeyError, mccs.unsubscribe_notification, id2)
+        # Unsubscribe the other one too. From now on, it doesn't eat the
+        # messages again.
+        mccs.unsubscribe_notification(id1)
+        fake_session.group_sendmsg({"notification": ["event", {
+            "param": True
+        }]}, "notifications/group")
+        mccs.check_command()
+        self.assertEqual(fake_session.message_queue, [['notifications/group',
+                         None, {'notification': ['event', {'param': True}]},
+                         False]])
+
     def my_config_handler_ok(self, new_config):
         return isc.config.ccsession.create_answer(0)
 
