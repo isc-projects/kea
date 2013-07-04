@@ -85,7 +85,7 @@ public:
     ///
     /// @param command is a string label representing the command to execute.
     /// @param args is a set of arguments (if any) required for the given
-    /// command.
+    /// command. It can be a NULL pointer if no arguments exist for a command.
     /// @return an Element that contains the results of command composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.

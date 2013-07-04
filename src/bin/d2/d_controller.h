@@ -144,8 +144,19 @@ public:
     /// arguments. Note this method is deliberately not virtual to ensure the
     /// proper sequence of events occur.
     ///
+    /// This function can be run in the test mode. It prevents initialization
+    /// of D2 module logger. This is used in unit tests which initialize logger
+    /// in their main function. Such logger uses environmental variables to
+    /// control severity, verbosity etc. Reinitialization of logger by this
+    /// function would replace unit tests specific logger configuration with
+    /// this suitable for D2 running as a bind10 module.
+    ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
+    /// @param test_mode is a bool value which indicates if
+    /// @c DControllerBase::launch should be run in the test mode (if true).
+    /// This parameter doesn't have default value to force test implementers to
+    /// enable test mode explicitly.
     ///
     /// @throw throws one of the following exceptions:
     /// InvalidUsage - Indicates invalid command line.
@@ -156,7 +167,7 @@ public:
     /// process event loop.
     /// SessionEndError - Could not disconnect from BIND10 (integrated mode
     /// only).
-    void launch(int argc, char* argv[]);
+    void launch(int argc, char* argv[], const bool test_mode);
 
     /// @brief A dummy configuration handler that always returns success.
     ///
@@ -198,7 +209,8 @@ public:
     /// the virtual instance method, executeCommand.
     ///
     /// @param command textual representation of the command
-    /// @param args parameters of the command
+    /// @param args parameters of the command. It can be NULL pointer if no
+    /// arguments exist for a particular command.
     ///
     /// @return status of the processed command
     static isc::data::ConstElementPtr
