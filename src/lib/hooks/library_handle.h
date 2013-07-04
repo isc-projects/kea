@@ -116,6 +116,25 @@ public:
     bool deregisterAllCallouts(const std::string& name);
 
 private:
+    /// @brief Copy constructor
+    ///
+    /// Private (with no implementation) as it makes no sense to copy an object
+    /// of this type.  All code receives a reference to an existing handle which
+    /// is tied to a particular CalloutManager.  Creating a copy of that handle
+    /// runs the risk of a "dangling pointer" to the original handle's callout
+    /// manager.
+    ///
+    /// @param Unused - should be the object to copy.
+    LibraryHandle(const LibraryHandle&);
+
+    /// @brief Assignment operator
+    ///
+    /// Declared private like the copy constructor for the same reasons. It too
+    /// has no implementation.
+    ///
+    /// @param Unused - should be the object to copy.
+    LibraryHandle& operator=(const LibraryHandle&);
+
     /// Back pointer to the collection object for the library
     CalloutManager* callout_manager_;
 
