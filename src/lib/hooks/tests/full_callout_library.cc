@@ -34,8 +34,8 @@
 ///   @f[ ((7 * data_1) - data_2) * data_3 @f]
 ///
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
-///   the same name to the three callouts (data_1 passed to hook_point_one, data_2 to
-///   hook_point_two etc.) and the result is returned in the argument "result".
+///   the same name to the three callouts (data_1 passed to hookpt_one, data_2 to
+///   hookpt_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
 #include <hooks/tests/marker_file.h>
@@ -61,7 +61,7 @@ context_create(CalloutHandle& handle) {
 // between callouts in the same library.)
 
 int
-hook_point_one(CalloutHandle& handle) {
+hookpt_one(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_1", data);
 
@@ -117,8 +117,8 @@ version() {
 int
 load(LibraryHandle& handle) {
     // Register the non-standard functions
-    handle.registerCallout("hook_point_two", hook_nonstandard_two);
-    handle.registerCallout("hook_point_three", hook_nonstandard_three);
+    handle.registerCallout("hookpt_two", hook_nonstandard_two);
+    handle.registerCallout("hookpt_three", hook_nonstandard_three);
 
     return (0);
 }
