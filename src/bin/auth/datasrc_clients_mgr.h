@@ -30,6 +30,7 @@
 #include <datasrc/memory/zone_writer.h>
 
 #include <asiolink/io_service.h>
+#include <asiolink/local_socket.h>
 
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
@@ -39,6 +40,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 
 #include <exception>
 #include <cassert>
@@ -213,14 +215,20 @@ public:
     ///
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
-    DataSrcClientsMgrBase(asiolink::IOService&) :
+    DataSrcClientsMgrBase(asiolink::IOService& service) :
         clients_map_(new ClientListsMap),
         fd_guard_(new FDGuard(this)),
         read_fd_(-1), write_fd_(-1),
         builder_(&command_queue_, &callback_queue_, &cond_, &queue_mutex_,
                  &clients_map_, &map_mutex_, createFds()),
-        builder_thread_(boost::bind(&BuilderType::run, &builder_))
-    {}
+        builder_thread_(boost::bind(&BuilderType::run, &builder_)),
+        wakeup_socket_(service, read_fd_)
+    {
+        // Schedule wakeups when callbacks are pushed.
+        wakeup_socket_.asyncRead(
+            boost::bind(&DataSrcClientsMgrBase::processCallbacks, this, _1),
+            buffer, 1);
+    }
 
     /// \brief The destructor.
     ///
@@ -259,6 +267,7 @@ public:
                       AUTH_DATASRC_CLIENTS_SHUTDOWN_UNEXPECTED_ERROR);
         }
 
+        processCallbacks(); // Any leftover callbacks
         cleanup();              // see below
     }
 
@@ -274,7 +283,8 @@ public:
     ///
     /// \param config_arg The new data source configuration.  Must not be NULL.
     /// \param callback Called once the reconfigure command completes. It is
-    ///     called in the main thread (not in the work one).
+    ///     called in the main thread (not in the work one). It should be
+    ///     exceptionless.
     void reconfigure(const data::ConstElementPtr& config_arg,
                      const datasrc_clientmgr_internal::FinishedCallback&
                      callback = datasrc_clientmgr_internal::FinishedCallback())
@@ -303,7 +313,8 @@ public:
     /// { "class": "IN", "origin": "example.com" }
     /// (but class is optional and will default to IN)
     /// \param callback Called once the loadZone command completes. It
-    ///     is called in the main thread, not in the work thread.
+    ///     is called in the main thread, not in the work thread. It should
+    ///     be exceptionless.
     ///
     /// \exception CommandError if the args value is null, or not in
     ///                                 the expected format, or contains
@@ -392,6 +403,31 @@ private:
         return write_fd_;
     }
 
+    void processCallbacks(const std::string& error = std::string()) {
+        // Schedule the next read.
+        wakeup_socket_.asyncRead(
+            boost::bind(&DataSrcClientsMgrBase::processCallbacks, this, _1),
+            buffer, 1);
+        if (!error.empty()) {
+            // Generally, there should be no errors (as we are the other end
+            // as well), but check just in case.
+            isc_throw(Unexpected, error);
+        }
+
+        // Steal the callbacks into local copy.
+        std::list<datasrc_clientmgr_internal::FinishedCallback> queue;
+        {
+            typename MutexType::Locker locker(queue_mutex_);
+            queue.swap(callback_queue_);
+        }
+
+        // Execute the callbacks
+        BOOST_FOREACH(const datasrc_clientmgr_internal::FinishedCallback&
+                      callback, queue) {
+            callback();
+        }
+    }
+
     //
     // The following are shared with the builder.
     //
@@ -412,6 +448,9 @@ private:
 
     BuilderType builder_;
     ThreadType builder_thread_; // for safety this should be placed last
+    isc::asiolink::LocalSocket wakeup_socket_; // For integration of read_fd_
+                                               // to the asio loop
+    char buffer[1];   // Buffer for the wakeup socket.
 };
 
 namespace datasrc_clientmgr_internal {
