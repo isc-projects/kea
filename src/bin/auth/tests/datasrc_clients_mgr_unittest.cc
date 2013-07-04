@@ -38,8 +38,8 @@ void
 shutdownCheck() {
     // Check for common points on shutdown.  The manager should have acquired
     // the lock, put a SHUTDOWN command to the queue, and should have signaled
-    // the builder.
-    EXPECT_EQ(1, FakeDataSrcClientsBuilder::queue_mutex->lock_count);
+    // the builder. It should check again for the callback queue, with the lock
+    EXPECT_EQ(2, FakeDataSrcClientsBuilder::queue_mutex->lock_count);
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::cond->signal_count);
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
     const Command& cmd = FakeDataSrcClientsBuilder::command_queue->front();
