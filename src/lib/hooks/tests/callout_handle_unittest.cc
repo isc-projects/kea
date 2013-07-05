@@ -83,7 +83,7 @@ TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
     EXPECT_EQ(142, d);
 
     // Add a short (random value).
-    short e = -81; 
+    short e = -81;
     handle.setArgument("short", e);
     EXPECT_EQ(-81, e);
 
