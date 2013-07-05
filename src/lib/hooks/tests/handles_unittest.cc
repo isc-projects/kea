@@ -301,10 +301,10 @@ TEST_F(HandlesTest, ContextAccessCheck) {
     // Create the callout handles and distinguish them by setting the
     // "handle_num" argument.
     CalloutHandle callout_handle_1(getCalloutManager());
-    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
 
     CalloutHandle callout_handle_2(getCalloutManager());
-    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
 
     // Now call the callouts attached to the first three hooks.  Each hook is
     // called twice (once for each callout handle) before the next hook is
@@ -606,7 +606,7 @@ TEST_F(HandlesTest, DynamicRegistrationAnotherHook) {
 
     // See what we get for calling the callouts on alpha first.
     CalloutHandle callout_handle_1(getCalloutManager());
-    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_1);
 
     zero_results();
@@ -622,7 +622,7 @@ TEST_F(HandlesTest, DynamicRegistrationAnotherHook) {
 
     // Use a new callout handle so as to get fresh callout context.
     CalloutHandle callout_handle_2(getCalloutManager());
-    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_2);
 
     zero_results();
@@ -654,7 +654,7 @@ TEST_F(HandlesTest, DynamicRegistrationSameHook) {
 
     // See what we get for calling the callouts on alpha first.
     CalloutHandle callout_handle_1(getCalloutManager());
-    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_1);
     zero_results();
     getCalloutManager()->callCallouts(delta_index_, callout_handle_1);
@@ -662,7 +662,7 @@ TEST_F(HandlesTest, DynamicRegistrationSameHook) {
 
     // Run it again - we should have added something to this hook.
     CalloutHandle callout_handle_2(getCalloutManager());
-    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_2);
     zero_results();
     getCalloutManager()->callCallouts(delta_index_, callout_handle_2);
@@ -670,7 +670,7 @@ TEST_F(HandlesTest, DynamicRegistrationSameHook) {
 
     // And a third time...
     CalloutHandle callout_handle_3(getCalloutManager());
-    callout_handle_3.setArgument("handle_num", static_cast<int>(3)); 
+    callout_handle_3.setArgument("handle_num", static_cast<int>(3));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_3);
     zero_results();
     getCalloutManager()->callCallouts(delta_index_, callout_handle_3);
@@ -694,7 +694,7 @@ TEST_F(HandlesTest, DynamicDeregistrationDifferentHook) {
 
     // Call the callouts on alpha
     CalloutHandle callout_handle_1(getCalloutManager());
-    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_1);
 
     zero_results();
@@ -707,7 +707,7 @@ TEST_F(HandlesTest, DynamicDeregistrationDifferentHook) {
     // The run of the callouts should have altered the callout list on the
     // first library for hook alpha, so call again to make sure.
     CalloutHandle callout_handle_2(getCalloutManager());
-    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_2);
 
     zero_results();
@@ -734,7 +734,7 @@ TEST_F(HandlesTest, DynamicDeregistrationSameHook) {
 
     // Call the callouts on alpha
     CalloutHandle callout_handle_1(getCalloutManager());
-    callout_handle_1.setArgument("handle_num", static_cast<int>(1)); 
+    callout_handle_1.setArgument("handle_num", static_cast<int>(1));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_1);
 
     zero_results();
@@ -745,7 +745,7 @@ TEST_F(HandlesTest, DynamicDeregistrationSameHook) {
     // The run of the callouts should have altered the callout list on the
     // first library for hook alpha, so call again to make sure.
     CalloutHandle callout_handle_2(getCalloutManager());
-    callout_handle_2.setArgument("handle_num", static_cast<int>(2)); 
+    callout_handle_2.setArgument("handle_num", static_cast<int>(2));
     getCalloutManager()->callCallouts(alpha_index_, callout_handle_2);
 
     zero_results();
@@ -934,7 +934,7 @@ TEST_F(HandlesTest, HookName) {
     getCalloutManager()->registerCallout("alpha", callout_hook_name);
     getCalloutManager()->registerCallout("beta", callout_hook_name);
 
-    // Call alpha abd beta callouts and check the hook to which they belong.
+    // Call alpha and beta callouts and check the hook to which they belong.
     CalloutHandle callout_handle(getCalloutManager());
 
     EXPECT_EQ(std::string(""), HandlesTest::common_string_);
@@ -949,8 +949,8 @@ TEST_F(HandlesTest, HookName) {
     // only callout in the list.
     getCalloutManager()->setLibraryIndex(1);
     getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
-    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
     getCalloutManager()->registerCallout("gamma", callout_hook_name);
+    getCalloutManager()->registerCallout("gamma", callout_hook_dummy);
 
     EXPECT_EQ(std::string("beta"), HandlesTest::common_string_);
     getCalloutManager()->callCallouts(gamma_index_, callout_handle);

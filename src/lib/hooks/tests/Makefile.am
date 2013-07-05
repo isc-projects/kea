@@ -27,18 +27,23 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 # Build shared libraries for testing.
-lib_LTLIBRARIES = libnvl.la libivl.la libbcl.la liblcl.la liblecl.la \
+lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
                   libucl.la libfcl.la
- 
+
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
 libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
- 
+
 # Incorrect version function
 libivl_la_SOURCES  = incorrect_version_library.cc
 libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
-libilv_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libivl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+# All framework functions throw an exception
+libfxl_la_SOURCES = framework_exception_library.cc
+libfxl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libfxl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 
 # The basic callout library - contains standard callouts
 libbcl_la_SOURCES  = basic_callout_library.cc
@@ -71,9 +76,15 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
 run_unittests_SOURCES += callout_manager_unittest.cc
+run_unittests_SOURCES += common_test_class.h
 run_unittests_SOURCES += handles_unittest.cc
+run_unittests_SOURCES += hooks_manager_unittest.cc
+run_unittests_SOURCES += library_manager_collection_unittest.cc
 run_unittests_SOURCES += library_manager_unittest.cc
 run_unittests_SOURCES += server_hooks_unittest.cc
+
+nodist_run_unittests_SOURCES  = marker_file.h
+nodist_run_unittests_SOURCES += test_libraries.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
@@ -88,4 +99,4 @@ endif
 
 noinst_PROGRAMS = $(TESTS)
 
-EXTRA_DIST = library_manager_unittest.cc.in marker_file.h.in
+EXTRA_DIST = marker_file.h.in test_libraries.h.in

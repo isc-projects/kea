@@ -24,16 +24,16 @@
 /// - A context_create callout is supplied.
 ///
 /// - Three "standard" callouts are supplied corresponding to the hooks
-///   "lm_one", "lm_two", "lm_three".  All do some trivial calculations
+///   "hookpt_one", "hookpt_two", "hookpt_three".  All do some trivial calculations
 ///   on the arguments supplied to it and the context variables, returning
 ///   intermediate results through the "result" argument. The result of
-///   the calculation is:
+///   executing all four callouts in order is:
 ///
 ///   @f[ (10 + data_1) * data_2 - data_3 @f]
 ///
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
-///   the same name to the three callouts (data_1 passed to lm_one, data_2 to
-///   lm_two etc.) and the result is returned in the argument "result".
+///   the same name to the three callouts (data_1 passed to hookpt_one, data_2 to
+///   hookpt_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
 #include <fstream>
@@ -58,7 +58,7 @@ context_create(CalloutHandle& handle) {
 // between callouts in the same library.)
 
 int
-lm_one(CalloutHandle& handle) {
+hookpt_one(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_1", data);
 
@@ -75,7 +75,7 @@ lm_one(CalloutHandle& handle) {
 // argument.
 
 int
-lm_two(CalloutHandle& handle) {
+hookpt_two(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_2", data);
 
@@ -91,7 +91,7 @@ lm_two(CalloutHandle& handle) {
 // Final callout subtracts the result in "data_3".
 
 int
-lm_three(CalloutHandle& handle) {
+hookpt_three(CalloutHandle& handle) {
     int data;
     handle.getArgument("data_3", data);
 

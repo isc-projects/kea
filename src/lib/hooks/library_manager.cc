@@ -24,19 +24,83 @@
 
 #include <dlfcn.h>
 
-namespace {
-
-// String constants
-
-const char* LOAD_FUNCTION_NAME = "load";
-const char* UNLOAD_FUNCTION_NAME = "unload";
-const char* VERSION_FUNCTION_NAME = "version";
-}
-
 using namespace std;
 
 namespace isc {
 namespace hooks {
+
+/// @brief Local class for conversion of void pointers to function pointers
+///
+/// Converting between void* and function pointers in C++ is fraught with
+/// difficulty and pitfalls, e.g. see
+/// https://groups.google.com/forum/?hl=en&fromgroups#!topic/comp.lang.c++/37o0l8rtEE0
+///
+/// The method given in that article - convert using a union is used here.  A
+/// union is declared (and zeroed) and the appropriate member extracted when
+/// needed.
+
+class PointerConverter {
+public:
+    /// @brief Constructor
+    ///
+    /// Zeroes the union and stores the void* pointer we wish to convert (the
+    /// one returned by dlsym).
+    ///
+    /// @param dlsym_ptr void* pointer returned by call to dlsym()
+    PointerConverter(void* dlsym_ptr) {
+        memset(&pointers_, 0, sizeof(pointers_));
+        pointers_.dlsym_ptr = dlsym_ptr;
+    }
+
+    /// @name Pointer accessor functions
+    ///
+    /// It is up to the caller to ensure that the correct member is called so
+    /// that the correct trype of pointer is returned.
+    ///
+    ///@{
+
+    /// @brief Return pointer to callout function
+    ///
+    /// @return Pointer to the callout function
+    CalloutPtr calloutPtr() const {
+        return (pointers_.callout_ptr);
+    }
+
+    /// @brief Return pointer to load function
+    ///
+    /// @return Pointer to the load function
+    load_function_ptr loadPtr() const {
+        return (pointers_.load_ptr);
+    }
+
+    /// @brief Return pointer to unload function
+    ///
+    /// @return Pointer to the unload function
+    unload_function_ptr unloadPtr() const {
+        return (pointers_.unload_ptr);
+    }
+
+    /// @brief Return pointer to version function
+    ///
+    /// @return Pointer to the version function
+    version_function_ptr versionPtr() const {
+        return (pointers_.version_ptr);
+    }
+
+    ///@}
+
+private:
+
+    /// @brief Union linking void* and pointers to functions.
+    union {
+        void*                   dlsym_ptr;      // void* returned by dlsym
+        CalloutPtr              callout_ptr;    // Pointer to callout
+        load_function_ptr       load_ptr;       // Pointer to load function
+        unload_function_ptr     unload_ptr;     // Pointer to unload function
+        version_function_ptr    version_ptr;    // Pointer to version function
+    } pointers_;
+};
+
 
 // Open the library
 
@@ -45,7 +109,7 @@ LibraryManager::openLibrary() {
 
     // Open the library.  We'll resolve names now, so that if there are any
     // issues we don't bugcheck in the middle of apparently unrelated code.
-    dl_handle_ = dlopen(library_name_.c_str(), RTLD_NOW | RTLD_DEEPBIND);
+    dl_handle_ = dlopen(library_name_.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (dl_handle_ == NULL) {
         LOG_ERROR(hooks_logger, HOOKS_OPEN_ERROR).arg(library_name_)
                   .arg(dlerror());
@@ -78,28 +142,17 @@ LibraryManager::closeLibrary() {
 bool
 LibraryManager::checkVersion() const {
 
-    // Look up the "version" string in the library.  This is returned as
-    // "void*": without any other information, we must assume that it is of
-    // the correct type of version_function_ptr.
-    //
-    // Note that converting between void* and function pointers in C++ is
-    // fraught with difficulty and pitfalls (e.g. see
-    // https://groups.google.com/forum/?hl=en&fromgroups#!topic/
-    // comp.lang.c++/37o0l8rtEE0)
-    // The method given in that article - convert using a union is used here.
-    union {
-        version_function_ptr    ver_ptr;
-        void*                   dlsym_ptr;
-    } pointers;
-
-    // Zero the union, whatever the size of the pointers.
-    pointers.ver_ptr = NULL;
-    pointers.dlsym_ptr = NULL;
-
     // Get the pointer to the "version" function.
-    pointers.dlsym_ptr = dlsym(dl_handle_, VERSION_FUNCTION_NAME);
-    if (pointers.ver_ptr != NULL) {
-        int version = (*pointers.ver_ptr)();
+    PointerConverter pc(dlsym(dl_handle_, VERSION_FUNCTION_NAME));
+    if (pc.versionPtr() != NULL) {
+        int version = BIND10_HOOKS_VERSION - 1; // This is an invalid value
+        try {
+            version = (*pc.versionPtr())();
+        } catch (...) {
+            LOG_ERROR(hooks_logger, HOOKS_VERSION_EXCEPTION).arg(library_name_);
+            return (false);
+        }
+
         if (version == BIND10_HOOKS_VERSION) {
             // All OK, version checks out
             LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_LIBRARY_VERSION)
@@ -121,31 +174,23 @@ LibraryManager::checkVersion() const {
 
 void
 LibraryManager::registerStandardCallouts() {
-    // Create a library handle for doing the registration.  We also need to
-    // set the current library index to indicate the current library.
+    // Set the library index for doing the registration.  This is picked up
+    // when the library handle is created.
     manager_->setLibraryIndex(index_);
-    LibraryHandle library_handle(manager_.get());
 
-    // Iterate through the list of known hooksv
+    // Iterate through the list of known hooks
     vector<string> hook_names = ServerHooks::getServerHooks().getHookNames();
     for (int i = 0; i < hook_names.size(); ++i) {
 
-        // Convert void* to function pointers using the same tricks as
-        // described above.
-        union {
-            CalloutPtr  callout_ptr;
-            void*       dlsym_ptr;
-        } pointers;
-        pointers.callout_ptr = NULL;
-        pointers.dlsym_ptr = NULL;
-
         // Look up the symbol
-        pointers.dlsym_ptr = dlsym(dl_handle_, hook_names[i].c_str());
-        if (pointers.callout_ptr != NULL) {
+        void* dlsym_ptr = dlsym(dl_handle_, hook_names[i].c_str());
+        PointerConverter pc(dlsym_ptr);
+        if (pc.calloutPtr() != NULL) {
             // Found a symbol, so register it.
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_STD_CALLOUT)
-                .arg(library_name_).arg(hook_names[i]);
-            library_handle.registerCallout(hook_names[i], pointers.callout_ptr);
+            manager_->getLibraryHandle().registerCallout(hook_names[i],
+                                                         pc.calloutPtr());
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_STD_CALLOUT_REGISTERED)
+                .arg(library_name_).arg(hook_names[i]).arg(dlsym_ptr);
 
         }
     }
@@ -156,35 +201,32 @@ LibraryManager::registerStandardCallouts() {
 bool
 LibraryManager::runLoad() {
 
-    // Look up the "load" function in the library.  The code here is similar
-    // to that in "checkVersion".
-    union {
-        load_function_ptr   load_ptr;
-        void*               dlsym_ptr;
-    } pointers;
-
-    // Zero the union, whatever the size of the pointers.
-    pointers.load_ptr = NULL;
-    pointers.dlsym_ptr = NULL;
-
     // Get the pointer to the "load" function.
-    pointers.dlsym_ptr = dlsym(dl_handle_, LOAD_FUNCTION_NAME);
-    if (pointers.load_ptr != NULL) {
+    PointerConverter pc(dlsym(dl_handle_, LOAD_FUNCTION_NAME));
+    if (pc.loadPtr() != NULL) {
 
         // Call the load() function with the library handle.  We need to set
         // the CalloutManager's index appropriately.  We'll invalidate it
         // afterwards.
-        manager_->setLibraryIndex(index_);
-        int status = (*pointers.load_ptr)(manager_->getLibraryHandle());
-        manager_->setLibraryIndex(index_);
+
+        int status = -1;
+        try {
+            manager_->setLibraryIndex(index_);
+            status = (*pc.loadPtr())(manager_->getLibraryHandle());
+        } catch (...) {
+            LOG_ERROR(hooks_logger, HOOKS_LOAD_EXCEPTION).arg(library_name_);
+            return (false);
+        }
+
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_ERROR).arg(library_name_)
                       .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD)
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
             .arg(library_name_);
         }
+
     } else {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_NO_LOAD)
             .arg(library_name_);
@@ -199,31 +241,29 @@ LibraryManager::runLoad() {
 bool
 LibraryManager::runUnload() {
 
-    // Look up the "load" function in the library.  The code here is similar
-    // to that in "checkVersion".
-    union {
-        unload_function_ptr unload_ptr;
-        void*               dlsym_ptr;
-    } pointers;
-
-    // Zero the union, whatever the relative size of the pointers.
-    pointers.unload_ptr = NULL;
-    pointers.dlsym_ptr = NULL;
-
     // Get the pointer to the "load" function.
-    pointers.dlsym_ptr = dlsym(dl_handle_, UNLOAD_FUNCTION_NAME);
-    if (pointers.unload_ptr != NULL) {
+    PointerConverter pc(dlsym(dl_handle_, UNLOAD_FUNCTION_NAME));
+    if (pc.unloadPtr() != NULL) {
 
         // Call the load() function with the library handle.  We need to set
         // the CalloutManager's index appropriately.  We'll invalidate it
         // afterwards.
-        int status = (*pointers.unload_ptr)();
+        int status = -1;
+        try {
+            status = (*pc.unloadPtr())();
+        } catch (...) {
+            // Exception generated.  Note a warning as the unload will occur
+            // anyway.
+            LOG_WARN(hooks_logger, HOOKS_UNLOAD_EXCEPTION).arg(library_name_);
+            return (false);
+        }
+
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_UNLOAD_ERROR).arg(library_name_)
                       .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD)
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_SUCCESS)
             .arg(library_name_);
         }
     } else {
@@ -238,43 +278,44 @@ LibraryManager::runUnload() {
 
 bool
 LibraryManager::loadLibrary() {
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_LIBRARY)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_LOADING)
         .arg(library_name_);
 
     // In the following, if a method such as openLibrary() fails, it will
     // have issued an error message so there is no need to issue another one
     // here.
 
+    // Open the library (which is a check that it exists and is accessible).
     if (openLibrary()) {
 
         // Library opened OK, see if a version function is present and if so,
-        // check it.
+        // check what value it returns.
         if (checkVersion()) {
 
             // Version OK, so now register the standard callouts and call the
-            // librarie's load() function if present.
+            // library's load() function if present.
             registerStandardCallouts();
             if (runLoad()) {
 
                 // Success - the library has been successfully loaded.
                 LOG_INFO(hooks_logger, HOOKS_LIBRARY_LOADED).arg(library_name_);
                 return (true);
+
             } else {
 
                 // The load function failed, so back out.  We can't just close
                 // the library as (a) we need to call the library's "unload"
                 // function (if present) in case "load" allocated resources that
-                // need to be freed and (b) - we need to remove any callouts
-                // that have been installed.
+                // need to be freed and (b) we need to remove any callouts that
+                // have been installed.
                 static_cast<void>(unloadLibrary());
             }
-        } else {
-
-            // Version check failed so close the library and free up resources.
-            // Ignore the status return here - we already have an error
-            // consition.
-            static_cast<void>(closeLibrary());
         }
+
+        // Either the version check or call to load() failed, so close the
+        // library and free up resources.  Ignore the status return here - we
+        // already know there's an error and will have output a message.
+        static_cast<void>(closeLibrary());
     }
 
     return (false);
@@ -285,7 +326,7 @@ LibraryManager::loadLibrary() {
 
 bool
 LibraryManager::unloadLibrary() {
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_UNLOAD_LIBRARY)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_UNLOADING)
         .arg(library_name_);
 
     // Call the unload() function if present.  Note that this is done first -
@@ -300,13 +341,13 @@ LibraryManager::unloadLibrary() {
     for (int i = 0; i < hooks.size(); ++i) {
         bool removed = manager_->deregisterAllCallouts(hooks[i]);
         if (removed) {
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REMOVED)
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
                 .arg(hooks[i]).arg(library_name_);
         }
     }
 
     // ... and close the library.
-    result = result && closeLibrary();
+    result = closeLibrary() && result;
     if (result) {
 
         // Issue the informational message only if the library was unloaded

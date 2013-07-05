@@ -61,7 +61,7 @@ public:
 /// difference in a frequently-executed piece of code.)
 ///
 /// ServerHooks is a singleton object and is only accessible by the static
-/// method getserverHooks().
+/// method getServerHooks().
 
 class ServerHooks : public boost::noncopyable {
 public:
@@ -134,7 +134,7 @@ public:
     /// @return Vector of strings holding hook names.
     std::vector<std::string> getHookNames() const;
 
-    /// @brief Return ServerHookms object
+    /// @brief Return ServerHooks object
     ///
     /// Returns the global ServerHooks object.
     ///
@@ -151,7 +151,7 @@ private:
     ///
     /// Constructor is declared private to enforce the singleton nature of
     /// the object.  A reference to the singleton is obtainable through the
-    /// ggetServerHooks() static method.
+    /// getServerHooks() static method.
     ///
     /// @throws isc::Unexpected if the registration of the pre-defined hooks
     ///         fails in some way.
@@ -165,84 +165,6 @@ private:
     /// simpler than using a multi-indexed container.)
     HookCollection  hooks_;                 ///< Hook name/index collection
     InverseHookCollection inverse_hooks_;   ///< Hook index/name collection
-};
-
-
-/// @brief Hooks Registration
-///
-/// All hooks must be registered before libraries are loaded and callouts
-/// assigned to them.  One way of doing this is to have a global list of hooks:
-/// the addition of any hook anywhere would require updating the list. This
-/// is possible and, if desired, the author of a server can do it.
-///
-/// An alternative is the option provided here, where each component of BIND 10
-/// registers the hooks they are using.  To do this, the component should
-/// create a hook registration function of the form:
-///
-/// @code
-/// static int hook1_num = -1;  // Initialize number for hook 1
-/// static int hook2_num = -1;  // Initialize number for hook 2
-///
-/// void myModuleRegisterHooks(ServerHooks& hooks) {
-///     hook1_num = hooks.registerHook("hook1");
-///     hook2_num = hooks.registerHook("hook2");
-/// }
-/// @endcode
-///
-/// ... which registers the hooks and stores the associated hook index. To
-/// avoid the need to add an explicit call to each of the hook registration
-/// functions to the server initialization code, the component should declare
-/// an object of this class in the same file as the registration function,
-/// but outside of any function.  The declaration should include the name
-/// of the registration function, i.e.
-///
-/// @code
-/// HookRegistrationFunction f(myModuleRegisterHooks);
-/// @code
-///
-/// The constructor of this object will run prior to main() getting called and
-/// will add the registration function to a list of such functions.  The server
-/// then calls the static class method "execute()" to run all the declared
-/// registration functions.
-
-class HookRegistrationFunction {
-public:
-    /// @brief Pointer to a hook registration function
-    typedef void (*RegistrationFunctionPtr)(ServerHooks&);
-
-    /// @brief Constructor
-    ///
-    /// For variables declared outside functions or methods, the constructors
-    /// are run after the program is loaded and before main() is called. This
-    /// constructor adds the passed pointer to a vector of such pointers.
-    HookRegistrationFunction(RegistrationFunctionPtr reg_func);
-
-    /// @brief Access registration function vector
-    ///
-    /// One of the problems with functions run prior to starting main() is the
-    /// "static initialization fiasco".  This occurs because the order in which
-    /// objects outside functions are constructed is not defined.  So if this
-    /// constructor were to depend on a vector declared externally, we would
-    /// not be able to guarantee that the vector had been initialised properly
-    /// before we used it.
-    ///
-    /// To get round this situation, the vector is declared statically within
-    /// a static function.  The first time the function is called, the vector
-    /// is initialized before it is used.
-    ///
-    /// This function returns a reference to the vector used to hold the
-    /// pointers.
-    ///
-    /// @return Reference to the (static) list of registration functions
-    static std::vector<RegistrationFunctionPtr>& getFunctionVector();
-
-    /// @brief Execute registration functions
-    ///
-    /// Called by the server initialization code, this function executes all
-    /// registered hook registration functions.
-    ///
-    /// @param hooks ServerHooks object to which hook information will be added.
-    static void execute(ServerHooks& hooks);
 };
 
 } // namespace util
