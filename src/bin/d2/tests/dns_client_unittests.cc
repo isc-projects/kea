@@ -16,8 +16,10 @@
 #include <d2/dns_client.h>
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
+#include <asiolink/interval_timer.h>
 #include <dns/rcode.h>
 #include <dns/rrclass.h>
+#include <dns/tsig.h>
 #include <asio/ip/udp.hpp>
 #include <asio/socket_base.hpp>
 #include <boost/bind.hpp>
@@ -41,15 +43,22 @@ namespace {
 const char* TEST_ADDRESS = "127.0.0.1";
 const uint16_t TEST_PORT = 5301;
 const size_t MAX_SIZE = 1024;
+const long TEST_TIMEOUT = 5 * 1000;
 
 // @brief Test Fixture class.
 //
 // This test fixture class implements DNSClient::Callback so as it can be
 // installed as a completion callback for tests it implements. This callback
 // is called when a DDNS transaction (send and receive) completes. This allows
-// for the callback function to direcetly access class members. In particular,
+// for the callback function to directly access class members. In particular,
 // the callback function can access IOService on which run() was called and
 // call stop() on it.
+//
+// Many of the tests defined here schedule execution of certain tasks and block
+// until tasks are completed or a timeout is hit. However, if timeout is not
+// properly handled a task may be hanging for a long time. In order to prevent
+// it, the asiolink::IntervalTimer is used to break a running test if test
+// timeout is hit. This will result in test failure.
 class DNSClientTest : public virtual ::testing::Test, DNSClient::Callback {
 public:
     IOService service_;
@@ -59,6 +68,7 @@ public:
     DNSClientPtr dns_client_;
     bool corrupt_response_;
     bool expect_response_;
+    asiolink::IntervalTimer test_timer_;
 
     // @brief Constructor.
     //
@@ -72,10 +82,15 @@ public:
         : service_(),
           status_(DNSClient::SUCCESS),
           corrupt_response_(false),
-          expect_response_(true) {
+          expect_response_(true),
+          test_timer_(service_) {
         asiodns::logger.setSeverity(log::INFO);
         response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
         dns_client_.reset(new DNSClient(response_, this));
+
+        // Set the test timeout to break any running tasks if they hang.
+        test_timer_.setup(boost::bind(&DNSClientTest::testTimeoutHandler, this),
+                          TEST_TIMEOUT);
     }
 
     // @brief Destructor.
@@ -88,7 +103,7 @@ public:
     // @brief Exchange completion callback.
     //
     // This callback is called when the exchange with the DNS server is
-    // complete or an error occured. This includes the occurence of a timeout.
+    // complete or an error occurred. This includes the occurrence of a timeout.
     //
     // @param status A status code returned by DNSClient.
     virtual void operator()(DNSClient::Status status) {
@@ -117,6 +132,14 @@ public:
             EXPECT_EQ(DNSClient::TIMEOUT, status_);
 
         }
+    }
+
+    // @brief Handler invoked when test timeout is hit.
+    //
+    // This callback stops all running (hanging) tasks on IO service.
+    void testTimeoutHandler() {
+        service_.stop();
+        FAIL() << "Test timeout hit.";
     }
 
     // @brief Handler invoked when test request is received.
@@ -164,8 +187,61 @@ public:
     // callback object is NULL.
     void runConstructorTest() {
         D2UpdateMessagePtr null_response;
-        EXPECT_THROW(DNSClient(null_response, this), isc::BadValue);
-        EXPECT_NO_THROW(DNSClient(response_, NULL));
+        EXPECT_THROW(DNSClient(null_response, this, DNSClient::UDP),
+                     isc::BadValue);
+        EXPECT_NO_THROW(DNSClient(response_, NULL, DNSClient::UDP));
+
+        // The TCP Transport is not supported right now. So, we return exception
+        // if caller specified TCP as a preferred protocol. This test will be
+        // removed once TCP is supported.
+        EXPECT_THROW(DNSClient(response_, NULL, DNSClient::TCP),
+                     isc::NotImplemented);
+    }
+
+    // This test verifies that it accepted timeout values belong to the range of
+    // <0, DNSClient::getMaxTimeout()>.
+    void runInvalidTimeoutTest() {
+
+        expect_response_ = false;
+
+        // Create outgoing message. Simply set the required message fields:
+        // error code and Zone section. This is enough to create on-wire format
+        // of this message and send it.
+        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
+        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
+
+        // Start with a valid timeout equal to maximal allowed. This why we will
+        // ensure that doUpdate doesn't throw an exception for valid timeouts.
+        unsigned int timeout = DNSClient::getMaxTimeout();
+        EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
+                                           TEST_PORT, message, timeout));
+
+        // Cross the limit and expect that exception is thrown this time.
+        timeout = DNSClient::getMaxTimeout() + 1;
+        EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
+                                           TEST_PORT, message, timeout),
+                     isc::BadValue);
+    }
+
+    // This test verifies that isc::NotImplemented exception is thrown when
+    // attempt to send DNS Update message with TSIG is attempted.
+    void runTSIGTest() {
+        // Create outgoing message. Simply set the required message fields:
+        // error code and Zone section. This is enough to create on-wire format
+        // of this message and send it.
+        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
+        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
+
+        const int timeout = 0;
+        // Try to send DNS Update with TSIG key. Currently TSIG is not supported
+        // and therefore we expect an exception.
+        TSIGKey tsig_key("key.example:MSG6Ng==");
+        EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
+                                           TEST_PORT, message, timeout,
+                                           tsig_key),
+                     isc::NotImplemented);
     }
 
     // This test verifies the DNSClient behavior when a server does not respond
@@ -201,7 +277,7 @@ public:
     // This test verifies that DNSClient can send DNS Update and receive a
     // corresponding response from a server.
     void runSendReceiveTest(const bool corrupt_response,
-                            const bool two_sends = false) {
+                            const bool two_sends) {
         corrupt_response_ = corrupt_response;
 
         // Create a request DNS Update message.
@@ -270,23 +346,41 @@ TEST_F(DNSClientTest, constructor) {
     runConstructorTest();
 }
 
+// This test verifies that the maximal allowed timeout value is maximal int
+// value.
+TEST_F(DNSClientTest, getMaxTimeout) {
+    EXPECT_EQ(std::numeric_limits<int>::max(), DNSClient::getMaxTimeout());
+}
+
 // Verify that timeout is reported when no response is received from DNS.
 TEST_F(DNSClientTest, timeout) {
     runSendNoReceiveTest();
+}
+
+// Verify that exception is thrown when invalid (too high) timeout value is
+// specified for asynchronous DNS Update.
+TEST_F(DNSClientTest, invalidTimeout) {
+    runInvalidTimeoutTest();
+}
+
+// Verify that exception is thrown when an attempt to send DNS Update with TSIG
+// is made. This test will be removed/changed once TSIG support is added.
+TEST_F(DNSClientTest, runTSIGTest) {
+    runTSIGTest();
 }
 
 // Verify that the DNSClient receives the response from DNS and the received
 // buffer can be decoded as DNS Update Response.
 TEST_F(DNSClientTest, sendReceive) {
     // false means that server response is not corrupted.
-    runSendReceiveTest(false);
+    runSendReceiveTest(false, false);
 }
 
 // Verify that the DNSClient reports an error when the response is received from
 // a DNS and this response is corrupted.
 TEST_F(DNSClientTest, sendReceiveCurrupted) {
     // true means that server's response is corrupted.
-    runSendReceiveTest(true);
+    runSendReceiveTest(true, false);
 }
 
 // Verify that it is possible to use the same DNSClient instance to
@@ -296,8 +390,8 @@ TEST_F(DNSClientTest, sendReceiveCurrupted) {
 // 3. send
 // 4. receive
 TEST_F(DNSClientTest, sendReceiveTwice) {
-    runSendReceiveTest(false);
-    runSendReceiveTest(false);
+    runSendReceiveTest(false, false);
+    runSendReceiveTest(false, false);
 }
 
 // Verify that it is possible to use the DNSClient instance to perform the

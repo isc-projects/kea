@@ -15,6 +15,7 @@
 #include <d2/dns_client.h>
 #include <d2/d2_log.h>
 #include <dns/messagerenderer.h>
+#include <limits>
 
 namespace isc {
 namespace d2 {
@@ -31,8 +32,9 @@ const size_t DEFAULT_BUFFER_SIZE = 128;
 using namespace isc::util;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using namespace isc::dns;
 
-// This class provides the implementation for the DNSClient. This allows to
+// This class provides the implementation for the DNSClient. This allows for
 // the separation of the DNSClient interface from the implementation details.
 // Currently, implementation uses IOFetch object to handle asynchronous
 // communication with the DNS. This design may be revisited in the future. If
@@ -47,9 +49,13 @@ public:
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.
     DNSClient::Callback* callback_;
+    // A Transport Layer protocol used to communicate with a DNS.
+    DNSClient::Protocol proto_;
 
+    // Constructor and Destructor
     DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
-                  DNSClient::Callback* callback);
+                  DNSClient::Callback* callback,
+                  const DNSClient::Protocol proto);
     virtual ~DNSClientImpl();
 
     // This internal callback is called when the DNS update message exchange is
@@ -58,23 +64,45 @@ public:
     // type, representing a response from the server is set.
     virtual void operator()(asiodns::IOFetch::Result result);
 
+    // Starts asynchronous DNS Update.
     void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
-                  const int wait = -1);
+                  const unsigned int wait);
 
     // This function maps the IO error to the DNSClient error.
     DNSClient::Status getStatus(const asiodns::IOFetch::Result);
 };
 
 DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
-                             DNSClient::Callback* callback)
+                             DNSClient::Callback* callback,
+                             const DNSClient::Protocol proto)
     : in_buf_(new OutputBuffer(DEFAULT_BUFFER_SIZE)),
-      response_(response_placeholder), callback_(callback) {
+      response_(response_placeholder), callback_(callback), proto_(proto) {
+
+    // @todo At some point we may need to implement TCP. It should be straight
+    // forward but would require a bunch of new unit tests. That's why we
+    // currently disable TCP. Once implemented the check below should be
+    // removed.
+    if (proto_ == DNSClient::TCP) {
+        isc_throw(isc::NotImplemented, "TCP is currently not supported as a"
+                  << " Transport protocol for DNS Updates; please use UDP");
+    }
+
+    // Given that we already eliminated the possibility that TCP is used, it
+    // would be sufficient  to check that (proto != DNSClient::UDP). But, once
+    // support TCP is added the check above will disappear and the extra check
+    // will be needed here anyway. Why not add it now?
+    if (proto_ != DNSClient::TCP && proto_ != DNSClient::UDP) {
+        isc_throw(isc::NotImplemented, "invalid transport protocol type '"
+                  << proto_ << "' specified for DNS Updates");
+    }
+
     if (!response_) {
         isc_throw(BadValue, "a pointer to an object to encapsulate the DNS"
                   " server must be provided; found NULL value");
+
     }
 }
 
@@ -132,7 +160,7 @@ DNSClientImpl::doUpdate(IOService& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
-                        const int wait) {
+                        const unsigned int wait) {
     // A renderer is used by the toWire function which creates the on-wire data
     // from the DNS Update message. A renderer has its internal buffer where it
     // renders data by default. However, this buffer can't be directly accessed.
@@ -151,8 +179,12 @@ DNSClientImpl::doUpdate(IOService& io_service,
     // communication with the DNS server. The last but one argument points to
     // this object as a completion callback for the message exchange. As a
     // result operator()(Status) will be called.
+
+    // Timeout value is explicitly cast to the int type to avoid warnings about
+    // overflows when doing implicit cast. It should have been checked by the
+    // caller that the unsigned timeout value will fit into int.
     IOFetch io_fetch(IOFetch::UDP, io_service, msg_buf, ns_addr, ns_port,
-                     in_buf_, this, wait);
+                     in_buf_, this, static_cast<int>(wait));
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
     io_service.post(io_fetch);
@@ -160,12 +192,29 @@ DNSClientImpl::doUpdate(IOService& io_service,
 
 
 DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
-                     Callback* callback)
-    : impl_(new DNSClientImpl(response_placeholder, callback)) {
+                     Callback* callback, const DNSClient::Protocol proto)
+    : impl_(new DNSClientImpl(response_placeholder, callback, proto)) {
 }
 
 DNSClient::~DNSClient() {
     delete (impl_);
+}
+
+unsigned int
+DNSClient::getMaxTimeout() {
+    static const unsigned int max_timeout = std::numeric_limits<int>::max();
+    return (max_timeout);
+}
+
+void
+DNSClient::doUpdate(IOService&,
+                    const IOAddress&,
+                    const uint16_t,
+                    D2UpdateMessage&,
+                    const unsigned int,
+                    const dns::TSIGKey&) {
+    isc_throw(isc::NotImplemented, "TSIG is currently not supported for"
+              "DNS Update message");
 }
 
 void
@@ -173,9 +222,18 @@ DNSClient::doUpdate(IOService& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,
-                    const int wait) {
+                    const unsigned int wait) {
+    // The underlying implementation which we use to send DNS Updates uses
+    // signed integers for timeout. If we want to avoid overflows we need to
+    // respect this limitation here.
+    if (wait > getMaxTimeout()) {
+        isc_throw(isc::BadValue, "A timeout value for DNS Update request must"
+                  " not exceed " << getMaxTimeout()
+                  << ". Provided timeout value is '" << wait << "'");
+    }
     impl_->doUpdate(io_service, ns_addr, ns_port, update, wait);
 }
+
 
 
 } // namespace d2
