@@ -43,6 +43,97 @@ class SegmentInfo:
     READER = 0
     WRITER = 1
 
+    # Enumerated values for state
+    UPDATING = 0
+    SYNCHRONIZING = 1
+    COPYING = 2
+    READY = 3
+
+    def __init__(self):
+        self.__state = self.READY
+        self.__readers = set()
+        self.__old_readers = set()
+        self.__events = []
+
+    def get_state(self):
+        return self.__state
+
+    def get_readers(self):
+        return self.__readers
+
+    def get_old_readers(self):
+        return self.__old_readers
+
+    def get_events(self):
+        return self.__events
+
+    def complete_update(self):
+        if self.__state == self.UPDATING:
+            self.__state = self.SYNCHRONIZING
+        elif self.__state == self.COPYING:
+            self.__state = self.READY
+        else:
+            raise SegmentInfoError('complete_update() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+
+    def __sync_reader_helper(self):
+        if len(self.__old_readers) == 0:
+            self.__state = self.COPYING
+            if len(self.__events) > 0:
+                e = self.__events[0]
+                del self.__events[0]
+                return e
+
+        return None
+
+    def sync_reader(self, reader_session_id):
+        if self.__state != self.SYNCHRONIZING:
+            raise SegmentInfoError('sync_reader() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+        if reader_session_id not in self.__old_readers:
+            raise SegmentInfoError('Reader session ID is not in old readers set: ' +
+                                   reader_session_id)
+        if reader_session_id in self.__readers:
+            raise SegmentInfoError('Reader session ID is already in readers set: ' +
+                                   reader_session_id)
+
+        self.__old_readers.remove(reader_session_id)
+        self.__readers.add(reader_session_id)
+
+        return self.__sync_reader_helper()
+
+    def remove_reader(self, reader_session_id):
+        if self.__state != self.SYNCHRONIZING:
+            raise SegmentInfoError('remove_reader() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+        if reader_session_id in self.__old_readers:
+            self.__old_readers.remove(reader_session_id)
+            return self.__sync_reader_helper()
+        elif reader_session_id in self.__readers:
+            self.__readers.remove(reader_session_id)
+            return None
+        else:
+            raise SegmentInfoError('Reader session ID is not in current ' +
+                                   'readers or old readers set: ' +
+                                   reader_session_id)
+
+    def add_event(self, event_data):
+        self.__events.append(event_data)
+
+    def start_update(self):
+        if self.__state == self.READY and len(self.__events) > 0:
+            self.__state = self.UPDATING
+            return self.__events[0]
+
+        return None
+
+    def add_reader(self, reader_session_id):
+        if reader_session_id in self.__readers:
+            raise SegmentInfoError('Reader session ID is already in readers set: ' +
+                                   reader_session_id)
+
+        self.__readers.add(reader_session_id)
+
     def create(type, genid, rrclass, datasrc_name, mgr_config):
         """Factory of specific SegmentInfo subclass instance based on the
         segment type.
