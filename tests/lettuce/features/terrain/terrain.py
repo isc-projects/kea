@@ -135,7 +135,7 @@ class RunningProcess:
         """
         stderr_write = open(self.stderr_filename, "w")
         stdout_write = open(self.stdout_filename, "w")
-        self.process = subprocess.Popen(args, 1, None, subprocess.PIPE,
+        self.process = subprocess.Popen(args, 0, None, subprocess.PIPE,
                                         stdout_write, stderr_write)
         # open them again, this time for reading
         self.stderr = open(self.stderr_filename, "r")
