@@ -12,27 +12,36 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef HOOKS_H
-#define HOOKS_H
+/// @file
+/// @brief Framework exception library
+///
+/// This is source of a test library for various test (LibraryManager and
+/// HooksManager).  The characteristics of the library produced from this
+/// file are:
+///
+/// - All three framework functions are supplied (version(), load() and
+///   unload()) and all generate an exception.
 
-#include <hooks/callout_handle.h>
-#include <hooks/library_handle.h>
+#include <hooks/hooks.h>
 
-namespace {
+#include <exception>
 
-// Version 1 of the hooks framework.
-const int BIND10_HOOKS_VERSION = 1;
+extern "C" {
 
-// Names of the framework functions.
-const char* LOAD_FUNCTION_NAME = "load";
-const char* UNLOAD_FUNCTION_NAME = "unload";
-const char* VERSION_FUNCTION_NAME = "version";
+int
+version() {
+    throw std::exception();
+}
 
-// Typedefs for pointers to the framework functions.
-typedef int (*version_function_ptr)();
-typedef int (*load_function_ptr)(isc::hooks::LibraryHandle&);
-typedef int (*unload_function_ptr)();
+int
+load(isc::hooks::LibraryHandle& handle) {
+    throw std::exception();
+}
 
-} // Anonymous namespace
+int
+unload() {
+    throw std::exception();
+}
 
-#endif  // HOOKS_H
+};
+

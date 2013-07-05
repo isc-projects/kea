@@ -37,7 +37,6 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 #include <util/encode/hex.h>
-#include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 
@@ -113,13 +112,13 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
         // Register hook points
-        hook_index_pkt6_receive_  = ServerHooks::getServerHooks().registerHook("pkt6_receive");
-        hook_index_subnet6_select_ = ServerHooks::getServerHooks().registerHook("subnet6_select");
-        hook_index_pkt6_send_      = ServerHooks::getServerHooks().registerHook("pkt6_send");
+        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
+        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
 
         /// @todo call loadLibraries() when handling configuration changes
         vector<string> libraries; // no libraries at this time
-        HooksManager::getHooksManager().loadLibraries(libraries);
+        HooksManager::loadLibraries(libraries);
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());

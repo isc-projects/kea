@@ -1154,10 +1154,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     HooksManager::getHooksManager().loadLibraries(libraries);
 
     // Install pkt6_receive_callout
-    ASSERT_TRUE(HooksManager::getCalloutManager());
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
-                                                                       lease6_select_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_select", lease6_select_callout));
 
     CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
 
@@ -1217,10 +1215,8 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     HooksManager::getHooksManager().loadLibraries(libraries);
 
     // Install a callout
-    ASSERT_TRUE(HooksManager::getCalloutManager());
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("lease6_select",
-                    lease6_select_different_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_select", lease6_select_different_callout));
 
     // Normally, dhcpv6_srv would passed the handle when calling allocateAddress6,
     // but in tests we need to create it on our own.

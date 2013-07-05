@@ -19,6 +19,7 @@
 #include <boost/static_assert.hpp>
 
 #include <algorithm>
+#include <climits>
 #include <functional>
 #include <utility>
 
@@ -27,12 +28,41 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
+// Check that the index of a library is valid.  It can range from 1 - n
+// (n is the number of libraries), 0 (pre-user library callouts), or INT_MAX
+// (post-user library callouts).  It can also be -1 to indicate an invalid
+// value.
+
+void
+CalloutManager::checkLibraryIndex(int library_index) const {
+    if (((library_index >= -1) && (library_index <= num_libraries_)) ||
+        (library_index == INT_MAX)) {
+        return;
+    }
+
+    isc_throw(NoSuchLibrary, "library index " << library_index <<
+              " is not valid for the number of loaded libraries (" <<
+              num_libraries_ << ")");
+}
+
+// Set the number of libraries handled by the CalloutManager.
+
+void
+CalloutManager::setNumLibraries(int num_libraries) {
+    if (num_libraries < 0) {
+        isc_throw(isc::BadValue, "number of libraries passed to the "
+                  "CalloutManager must be >= 0");
+    }
+
+    num_libraries_ = num_libraries;
+}
+
 // Register a callout for the current library.
 
 void
 CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // Note the registration.
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_REGISTER_CALLOUT)
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUT_REGISTRATION)
         .arg(current_library_).arg(name);
 
     // Sanity check that the current library index is set to a valid value.
@@ -108,15 +138,24 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             current_library_ = i->first;
 
             // Call the callout
-            // @todo Log the return status if non-zero
-            int status = (*i->second)(callout_handle);
-            if (status == 0) {
-                LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS, HOOKS_CALLOUT)
-                    .arg(current_library_)
-                    .arg(ServerHooks::getServerHooks().getName(current_hook_))
-                    .arg(reinterpret_cast<void*>(i->second));
-            } else {
-                LOG_WARN(hooks_logger, HOOKS_CALLOUT_ERROR)
+            try {
+                int status = (*i->second)(callout_handle);
+                if (status == 0) {
+                    LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
+                              HOOKS_CALLOUT_CALLED).arg(current_library_)
+                        .arg(ServerHooks::getServerHooks()
+                            .getName(current_hook_))
+                        .arg(reinterpret_cast<void*>(i->second));
+                } else {
+                    LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
+                        .arg(current_library_)
+                        .arg(ServerHooks::getServerHooks()
+                            .getName(current_hook_))
+                        .arg(reinterpret_cast<void*>(i->second));
+                }
+            } catch (...) {
+                // Any exception, not just ones based on isc::Exception
+                LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
                     .arg(ServerHooks::getServerHooks().getName(current_hook_))
                     .arg(reinterpret_cast<void*>(i->second));
@@ -170,7 +209,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_DEREGISTER_CALLOUT).arg(current_library_).arg(name);
+                  HOOKS_CALLOUT_DEREGISTERED).arg(current_library_).arg(name);
     }
 
     return (removed);
@@ -205,7 +244,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     bool removed = initial_size != hook_vector_[hook_index].size();
     if (removed) {
         LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
-                  HOOKS_DEREGISTER_ALL_CALLOUTS).arg(current_library_)
+                  HOOKS_ALL_CALLOUTS_DEREGISTERED).arg(current_library_)
                                                 .arg(name);
     }
 

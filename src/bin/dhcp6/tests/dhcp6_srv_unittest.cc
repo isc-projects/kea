@@ -36,7 +36,6 @@
 #include <util/range_utilities.h>
 
 #include <hooks/server_hooks.h>
-#include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -1912,9 +1911,6 @@ public:
 
         // clear static buffers
         resetCalloutBuffers();
-
-        // Let's pretent we're the library 0
-        EXPECT_NO_THROW(HooksManager::getCalloutManager()->setLibraryIndex(0));
     }
 
     ~HooksDhcpv6SrvTest() {
@@ -2116,8 +2112,8 @@ vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
-                                                                       pkt6_receive_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_receive", pkt6_receive_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2149,8 +2145,8 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
 TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
-                                                       pkt6_receive_change_clientid));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_receive", pkt6_receive_change_clientid));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2185,8 +2181,8 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
 TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
-                    pkt6_receive_delete_clientid));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_receive", pkt6_receive_delete_clientid));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2209,8 +2205,8 @@ TEST_F(HooksDhcpv6SrvTest, deleteClientId_pkt6_receive) {
 TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_receive",
-                    pkt6_receive_skip));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_receive", pkt6_receive_skip));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2234,8 +2230,8 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
 TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
-                                                                       pkt6_send_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_send", pkt6_send_callout));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2270,8 +2266,8 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
 TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
-                                                       pkt6_send_change_serverid));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_send", pkt6_send_change_serverid));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2307,8 +2303,8 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
 TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
-                    pkt6_send_delete_serverid));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_send", pkt6_send_delete_serverid));
 
     // Let's create a simple SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2338,8 +2334,8 @@ TEST_F(HooksDhcpv6SrvTest, deleteServerId_pkt6_send) {
 TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("pkt6_send",
-                    pkt6_send_skip));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt6_send", pkt6_send_skip));
 
     // Let's create a simple REQUEST
     Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
@@ -2362,8 +2358,8 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
 TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("subnet6_select",
-                    subnet6_select_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet6_select", subnet6_select_callout));
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
@@ -2430,8 +2426,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
 
     // Install pkt6_receive_callout
-    EXPECT_NO_THROW(HooksManager::getCalloutManager()->registerCallout("subnet6_select",
-                    subnet6_select_different_subnet_callout));
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet6_select", subnet6_select_different_subnet_callout));
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)

@@ -27,8 +27,10 @@ namespace isc {
 namespace hooks {
 
 // Constructor.
-CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager)
-    : arguments_(), context_collection_(), manager_(manager), skip_(false) {
+CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
+                    const boost::shared_ptr<LibraryManagerCollection>& lmcoll)
+    : lm_collection_(lmcoll), arguments_(), context_collection_(),
+      manager_(manager), skip_(false) {
 
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables
@@ -43,6 +45,24 @@ CalloutHandle::~CalloutHandle() {
     // the destructor is being called, all the member variables are still in
     // existence.
     manager_->callCallouts(ServerHooks::CONTEXT_DESTROY, *this);
+
+    // Explicitly clear the argument and context objects.  This should free up
+    // all memory that could have been allocated by libraries that were loaded.
+    arguments_.clear();
+    context_collection_.clear();
+
+    // Normal destruction of the remaining variables will include the
+    // destruction of lm_collection_, an action that decrements the reference
+    // count on the library manager collection (which holds the libraries that
+    // could have allocated memory in the argument and context members.)  When
+    // that goes to zero, the libraries will be unloaded: at that point nothing
+    // in the hooks framework will be pointing to memory in the libraries'
+    // address space.
+    //
+    // It is possible that some other data structure in the server (the program
+    // using the hooks library) still references the address space and attempts
+    // to access it causing a segmentation fault. That issue is outside the
+    // scope of this framework and is not addressed by it.
 }
 
 // Return the name of all argument items.
@@ -130,8 +150,9 @@ CalloutHandle::getHookName() const {
     try {
         hook = ServerHooks::getServerHooks().getName(index);
     } catch (const NoSuchHook&) {
-        // Hook index is invalid, so probably called outside of a callout.
-        // This is a no-op.
+        // Hook index is invalid, so this methods probably called from outside
+        // a callout being executed via a call to CalloutManager::callCallouts.
+        // In this case, the empty string is returned.
     }
 
     return (hook);
