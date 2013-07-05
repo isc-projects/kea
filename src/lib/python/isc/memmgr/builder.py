@@ -50,6 +50,17 @@ class MemorySegmentBuilder:
         self._response_queue = response_queue
         self._shutdown = False
 
+    def __handle_shutdown(self):
+        self._shutdown = True
+
+    def __handle_bad_command(self):
+        # A bad command was received. Raising an exception is not useful
+        # in this case as we are likely running in a different thread
+        # from the main thread which would need to be notified. Instead
+        # return this in the response queue.
+        self._response_queue.append(('bad_command',))
+        self._shutdown = True
+
     def run(self):
         """ This is the method invoked when the builder thread is
             started.  In this thread, be careful when modifying
@@ -76,19 +87,14 @@ class MemorySegmentBuilder:
                 # "shutdown" command, which just exits the thread.
                 for command in local_command_queue:
                     if command == 'shutdown':
-                        self._shutdown = True
+                        self.__handle_shutdown()
                         # When the shutdown command is received, we do
                         # not process any further commands.
                         break
                     else:
-                        # A bad command was received. Raising an
-                        # exception is not useful in this case as we are
-                        # likely running in a different thread from the
-                        # main thread which would need to be
-                        # notified. Instead return this in the response
-                        # queue.
-                        self._response_queue.append(('bad_command',))
-                        self._shutdown = True
+                        self.__handle_bad_command()
+                        # When a bad command is received, we do not
+                        # process any further commands.
                         break
 
                 # Notify (any main thread) on the socket about a
