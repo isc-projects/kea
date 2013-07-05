@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@ import tempfile
 from zonemgr import *
 from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.notify import notify_out
+from isc.datasrc import ZoneFinder
 
 ZONE_NAME_CLASS1_IN = ("example.net.", "IN")
 ZONE_NAME_CLASS1_CH = ("example.net.", "CH")
@@ -36,8 +37,6 @@ LOWERBOUND_RETRY = 5
 REFRESH_JITTER = 0.10
 RELOAD_JITTER = 0.75
 
-TEST_SQLITE3_DBFILE = os.getenv("TESTDATAOBJDIR") + '/initdb.file'
-
 class ZonemgrTestException(Exception):
     pass
 
@@ -46,16 +45,53 @@ class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
         module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
         MockModuleCCSession.__init__(self)
+        # For inspection
+        self.added_remote_modules = []
+
+    def add_remote_config_by_name(self, name, callback):
+        self.added_remote_modules.append((name, callback))
 
     def rpc_call(self, command, module, instance="*", to="*", params=None):
         if module not in ("Auth", "Xfrin"):
             raise ZonemgrTestException("module name not exist")
 
-    def get_remote_config_value(self, module_name, identifier):
-        if module_name == "Auth" and identifier == "database_file":
-            return TEST_SQLITE3_DBFILE, False
+class MockDataSourceClient():
+    '''A simple mock data source client.'''
+    def __init__(self):
+        self.rdata_net = 'a.example.net. root.example.net. 2009073106 ' + \
+            '7200 3600 2419200 21600'
+        self.rdata_org = 'a.example.org. root.example.org. 2009073112 ' + \
+            '7200 3600 2419200 21600'
+
+    def find_zone(self, zone_name):
+        '''Mock version of DataSourceClient.find_zone().'''
+        return (isc.datasrc.DataSourceClient.SUCCESS, self)
+
+    def find(self, name, rrtype, options=ZoneFinder.FIND_DEFAULT):
+        '''Mock version of ZoneFinder.find().'''
+        if name == Name('example.net'):
+            rdata = Rdata(RRType.SOA, RRClass.IN, self.rdata_net)
+        elif name == 'example.org.':
+            rdata = Rdata(RRType.SOA, RRClass.IN, self.rdata_org)
         else:
-            return "unknown", False
+            return (ZoneFinder.NXDOMAIN, None, 0)
+        rrset = RRset(name, RRClass.IN, RRType.SOA, RRTTL(3600))
+        rrset.add_rdata(rdata)
+        return (ZoneFinder.SUCCESS, rrset, 0)
+
+class MockDataSrcClientsMgr():
+    '''A simple mock data source client manager.'''
+    def __init__(self):
+        self.datasrc_client = MockDataSourceClient()
+
+    def get_client_list(self, rrclass):
+        return self
+
+    def find(self, zone_name, want_exact_match, want_finder):
+        """Pretending find method on the object returned by get_client_list"""
+        if issubclass(type(self.datasrc_client), Exception):
+            raise self.datasrc_client
+        return self.datasrc_client, None, None
 
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
@@ -66,19 +102,8 @@ class MyZonemgrRefresh(ZonemgrRefresh):
         self._reload_jitter = 0.75
         self._refresh_jitter = 0.25
 
-        def get_zone_soa(zone_name, db_file):
-            if zone_name == 'example.net.':
-                return (1, 2, 'example.net.', 'example.net.sd.', 21600, 'SOA', None,
-                        'a.example.net. root.example.net. 2009073106 7200 3600 2419200 21600')
-            elif zone_name == 'example.org.':
-                return (1, 2, 'example.org.', 'example.org.sd.', 21600, 'SOA', None,
-                        'a.example.org. root.example.org. 2009073112 7200 3600 2419200 21600')
-            else:
-                return None
-        sqlite3_ds.get_zone_soa = get_zone_soa
-
-        ZonemgrRefresh.__init__(self, TEST_SQLITE3_DBFILE, self._slave_socket,
-                                FakeCCSession())
+        ZonemgrRefresh.__init__(self, self._slave_socket, FakeCCSession())
+        self._datasrc_clients_mgr = MockDataSrcClientsMgr()
         current_time = time.time()
         self._zonemgr_refresh_info = {
          ('example.net.', 'IN'): {
@@ -95,18 +120,22 @@ class MyZonemgrRefresh(ZonemgrRefresh):
 
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
         self.cc_session = FakeCCSession()
 
     def tearDown(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         sys.stderr.close()
         sys.stderr = self.stderr_backup
+
+    def test_init(self):
+        """Check some initial configuration after construction"""
+        # data source "module" should have been registrered as a necessary
+        # remote config
+        self.assertEqual([('data_sources',
+                           self.zone_refresh._datasrc_config_handler)],
+                         self.zone_refresh._module_cc.added_remote_modules)
 
     def test_random_jitter(self):
         max = 100025.120
@@ -195,16 +224,9 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_zonemgr_reload_zone(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        # We need to restore this not to harm other tests
-        old_get_zone_soa = sqlite3_ds.get_zone_soa
-        def get_zone_soa(zone_name, db_file):
-            return (1, 2, 'example.net.', 'example.net.sd.', 21600, 'SOA', None,
-                    'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600')
-        sqlite3_ds.get_zone_soa = get_zone_soa
-
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.rdata_net = soa_rdata
         self.zone_refresh.zonemgr_reload_zone(ZONE_NAME_CLASS1_IN)
         self.assertEqual(soa_rdata, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"])
-        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_get_zone_notifier_master(self):
         notify_master = "192.168.1.1"
@@ -275,24 +297,10 @@ class TestZonemgrRefresh(unittest.TestCase):
     def test_send_command(self):
         self.assertRaises(ZonemgrTestException, self.zone_refresh._send_command, "Unknown", "Notify", None)
 
-    def test_zone_mgr_is_empty(self):
-        self.assertFalse(self.zone_refresh._zone_mgr_is_empty())
-        self.zone_refresh._zonemgr_refresh_info = {}
-        self.assertTrue(self.zone_refresh._zone_mgr_is_empty())
-
     def test_zonemgr_add_zone(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        # This needs to be restored. The following test actually failed if we left
-        # this unclean
-        old_get_zone_soa = sqlite3_ds.get_zone_soa
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.rdata_net = soa_rdata
         time1 = time.time()
-
-        def get_zone_soa(zone_name, db_file):
-            return (1, 2, 'example.net.', 'example.net.sd.', 21600, 'SOA', None,
-                    'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600')
-
-        sqlite3_ds.get_zone_soa = get_zone_soa
-
         self.zone_refresh._zonemgr_refresh_info = {}
         self.zone_refresh.zonemgr_add_zone(ZONE_NAME_CLASS1_IN)
         self.assertEqual(1, len(self.zone_refresh._zonemgr_refresh_info))
@@ -306,12 +314,13 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue((time1 + 900 * (1 - self.zone_refresh._reload_jitter)) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 900)
 
-        def get_zone_soa2(zone_name, db_file):
+        old_get_zone_soa = self.zone_refresh._get_zone_soa
+        def get_zone_soa2(zone_name_class):
             return None
-        sqlite3_ds.get_zone_soa = get_zone_soa2
+        self.zone_refresh._get_zone_soa = get_zone_soa2
         self.zone_refresh.zonemgr_add_zone(ZONE_NAME_CLASS2_IN)
         self.assertTrue(self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS2_IN]["zone_soa_rdata"] is None)
-        sqlite3_ds.get_zone_soa = old_get_zone_soa
+        self.zone_refresh._get_zone_soa = old_get_zone_soa
 
     def test_zone_handle_notify(self):
         self.assertTrue(self.zone_refresh.zone_handle_notify(
@@ -333,10 +342,7 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_zone_refresh_success(self):
         soa_rdata = 'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600'
-        def get_zone_soa(zone_name, db_file):
-            return (1, 2, 'example.net.', 'example.net.sd.', 21600, 'SOA', None,
-                    'a.example.net. root.example.net. 2009073106 1800 900 2419200 21600')
-        sqlite3_ds.get_zone_soa = get_zone_soa
+        self.zone_refresh._datasrc_clients_mgr.datasrc_client.rdata_net = soa_rdata
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_REFRESHING
         self.zone_refresh.zone_refresh_success(ZONE_NAME_CLASS1_IN)
@@ -373,14 +379,14 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_CH)
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN)
 
-        old_get_zone_soa = sqlite3_ds.get_zone_soa
-        def get_zone_soa(zone_name, db_file):
+        old_get_zone_soa = self.zone_refresh._get_zone_soa
+        def get_zone_soa(zone_name_class):
             return None
-        sqlite3_ds.get_zone_soa = get_zone_soa
+        self.zone_refresh._get_zone_soa = get_zone_soa
         self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
         self.assertEqual(self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"],
                          ZONE_EXPIRED)
-        sqlite3_ds.get_zone_soa = old_get_zone_soa
+        self.zone_refresh._get_zone_soa = old_get_zone_soa
 
     def test_find_need_do_refresh_zone(self):
         time1 = time.time()
@@ -628,7 +634,6 @@ class MyZonemgr(Zonemgr):
         def __exit__(self, type, value, traceback): pass
 
     def __init__(self):
-        self._db_file = TEST_SQLITE3_DBFILE
         self._zone_refresh = None
         self._shutdown_event = threading.Event()
         self._module_cc = FakeCCSession()
@@ -649,13 +654,7 @@ class MyZonemgr(Zonemgr):
 class TestZonemgr(unittest.TestCase):
 
     def setUp(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
         self.zonemgr = MyZonemgr()
-
-    def tearDown(self):
-        if os.path.exists(TEST_SQLITE3_DBFILE):
-            os.unlink(TEST_SQLITE3_DBFILE)
 
     def test_config_handler(self):
         config_data1 = {
@@ -676,9 +675,8 @@ class TestZonemgr(unittest.TestCase):
         config_data3 = {"refresh_jitter" : 0.7}
         self.zonemgr.config_handler(config_data3)
         self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
-        # The zone doesn't exist in database, simply skip loading soa for it and log an warning
-        self.zonemgr._zone_refresh = ZonemgrRefresh(TEST_SQLITE3_DBFILE, None,
-                                                    FakeCCSession())
+        # The zone doesn't exist in database, simply skip loading soa for it and log a warning
+        self.zonemgr._zone_refresh = ZonemgrRefresh(None, FakeCCSession())
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
         self.assertEqual(self.zonemgr.config_handler(config_data1),
@@ -688,9 +686,6 @@ class TestZonemgr(unittest.TestCase):
         self.assertTrue(self.zonemgr._zone_refresh._zonemgr_refresh_info[name_class]["zone_soa_rdata"]
                         is None)
         self.assertEqual(0.1, self.zonemgr._config_data.get("refresh_jitter"))
-
-    def test_get_db_file(self):
-        self.assertEqual(TEST_SQLITE3_DBFILE, self.zonemgr.get_db_file())
 
     def test_parse_cmd_params(self):
         params1 = {"zone_name" : "example.com.", "zone_class" : "CH",
