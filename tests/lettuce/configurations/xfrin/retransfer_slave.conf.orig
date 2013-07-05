@@ -8,7 +8,6 @@
         } ]
     },
     "Auth": {
-        "database_file": "data/test_nonexistent_db.sqlite3",
         "listen_on": [ {
             "address": "::1",
             "port": 47806
