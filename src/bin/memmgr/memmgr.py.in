@@ -162,7 +162,7 @@ class Memmgr(BIND10Server):
         # This makes the MemorySegmentBuilder exit its main loop. It
         # should make the builder thread joinable.
         with self._builder_cv:
-            self._builder_command_queue.append('shutdown')
+            self._builder_command_queue.append(('shutdown',))
             self._builder_cv.notify_all()
 
         self._builder_thread.join()

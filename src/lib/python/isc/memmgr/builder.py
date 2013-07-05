@@ -85,7 +85,8 @@ class MemorySegmentBuilder:
                 # Run commands passed in the command queue sequentially
                 # in the given order.  For now, it only supports the
                 # "shutdown" command, which just exits the thread.
-                for command in local_command_queue:
+                for command_tuple in local_command_queue:
+                    command = command_tuple[0]
                     if command == 'shutdown':
                         self.__handle_shutdown()
                         # When the shutdown command is received, we do
