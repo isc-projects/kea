@@ -44,6 +44,49 @@
 
 @section dhcpv6HooksHookPoints Hooks in the DHCPv6 Server
 
+The following list is ordered by appearance of specific hook points during
+packet processing. Hook points that are not specific to packet processing
+(e.g. lease expiration) will be added to the end of this list.
+
+ @subsection dhcpv6HooksPkt6Receive pkt6_receive
+
+ - @b Arguments:
+   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when an incoming DHCPv6
+   packet is received and its content is parsed. The sole argument -
+   pkt6 - contains a pointer to an isc::dhcp::Pkt6 object that contains all
+   information regarding incoming packet, including its source and
+   destination addresses, interface over which it was received, a list
+   of all options present within and relay information. See Pkt6 class
+   definition for details. All fields of the Pkt6 class can be
+   modified at this time, except data_ (which contains incoming packet
+   as raw buffer, but that information was already parsed, so it
+   doesn't make sense to modify it at this time).
+
+ - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+   drop the packet and will not do anything with it except logging a drop
+   reason if debugging is enabled.
+
+@subsection dhcpv6HooksSubnet6Select subnet6_select
+
+ - @b Arguments:
+   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection&, direction: <b>in</b>
+
+ - @b Description: this callout is executed when a subnet is being
+   selected for incoming packet. All parameters, addresses and
+   prefixes will be assigned from that subnet. Callout can select a
+   different subnet if it wishes so. The list of all subnets currently
+   configured is provided as 'subnet6collection'. The list itself must
+   not be modified.
+
+ - <b>Skip flag action</b>: If any callout installed on 'subnet6_select'
+   sets the skip flag, the server will not select any subnet. Packet processing
+   will continue, but will be severely limited (i.e. only global options
+   will be assigned).
+
 @subsection dhcpv6HooksLeaseSelect lease6_select
 
  - @b Arguments:
@@ -67,26 +110,6 @@
  - <b>Skip flag action</b>: the "skip" flag is ignored by the server on this
    hook.
 
- @subsection dhcpv6HooksPkt6Receive pkt6_receive
-
- - @b Arguments:
-   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-
- - @b Description: this callout is executed when an incoming DHCPv6
-   packet is received and its content is parsed. The sole argument -
-   pkt6 - contains a pointer to an isc::dhcp::Pkt6 object that contains all
-   information regarding incoming packet, including its source and
-   destination addresses, interface over which it was received, a list
-   of all options present within and relay information. See Pkt6 class
-   definition for details. All fields of the Pkt6 class can be
-   modified at this time, except data_ (which contains incoming packet
-   as raw buffer, but that information was already parsed, so it
-   doesn't make sense to modify it at this time).
-   
- - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
-   drop the packet and will not do anything with it except logging a drop
-   reason if debugging is enabled.
-
 @subsection dhcpv6HooksPkt6Send pkt6_send
 
  - @b Arguments:
@@ -101,28 +124,11 @@
    modified at this time, except bufferOut_.  (This is scratch space used for
    constructing the packet after all pkt6_send callouts are complete, so any
    changes to that field will be overwritten.)
-  
+
  - <b>Skip flag action</b>: if any callout sets the skip
-   flag, the server will drop the packet and will not do anything with
-   it, except logging a drop reason if debugging is enabled.
-
-@subsection dhcpv6HooksSubnet6Select subnet6_select
-
- - @b Arguments:
-   - name: @b pkt6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection&, direction: <b>in</b>
-
- - @b Description: this callout is executed when a subnet is being
-   selected for incoming packet. All parameters, addresses and
-   prefixes will be assigned from that subnet. Callout can select a
-   different subnet if it wishes so. The list of all subnets currently
-   configured is provided as 'subnet6collection'. The list itself must
-   not be modified.
-   
- - <b>Skip flag action</b>: If any callout installed on 'subnet6_select'
-   sets the skip flag, the server will not select any subnet. Packet processing
-   will continue, but will be severely limited (i.e. only global options
-   will be assigned).
+   flag, the server will drop this response packet. However, the original
+   request packet from a client was processed, so server's state was likely
+   changed (e.g. lease was allocated). This flag will merely stop the
+   change to be communicated to the client.
 
 */

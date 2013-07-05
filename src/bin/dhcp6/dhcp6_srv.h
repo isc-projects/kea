@@ -366,10 +366,6 @@ private:
 
     isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
 
-    void packetProcessStart(const Pkt6Ptr& pkt);
-
-    void packetProcessEnd(const Pkt6Ptr& pkt);
-
     /// Indexes for registered hook points
     int hook_index_pkt6_receive_;
     int hook_index_subnet6_select_;
