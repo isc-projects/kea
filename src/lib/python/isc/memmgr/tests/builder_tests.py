@@ -58,7 +58,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         # Now that the builder thread is running, send it a bad
         # command. The thread should exit its main loop and be joinable.
         with self._builder_cv:
-            self._builder_command_queue.append('bad_command')
+            self._builder_command_queue.append(('bad_command',))
             self._builder_cv.notify_all()
 
         # Wait 5 seconds to receive a notification on the socket from
@@ -98,10 +98,10 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         # Now that the builder thread is running, send it the shutdown
         # command. The thread should exit its main loop and be joinable.
         with self._builder_cv:
-            self._builder_command_queue.append('shutdown')
+            self._builder_command_queue.append(('shutdown',))
             # Commands after 'shutdown' must be ignored.
-            self._builder_command_queue.append('bad_command_1')
-            self._builder_command_queue.append('bad_command_2')
+            self._builder_command_queue.append(('bad_command_1',))
+            self._builder_command_queue.append(('bad_command_2',))
             self._builder_cv.notify_all()
 
         # Wait 5 seconds at most for the main loop of the builder to
