@@ -60,6 +60,25 @@ class TestSegmentInfo(unittest.TestCase):
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 0)
         self.__check_sgmt_reset_param(SegmentInfo.READER, None)
 
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+        self.assertEqual(len(self.__sgmt_info.get_readers()), 0)
+        self.assertEqual(len(self.__sgmt_info.get_old_readers()), 0)
+        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
+
+    def test_complete_update_when_ready(self):
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+
+    def test_sync_reader_when_ready(self):
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (None))
+
+    def test_remove_reader_when_ready(self):
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (None))
+
+    def test_add_event(self):
+        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
+        self.__sgmt_info.add_event(None)
+        self.assertNotEqual(len(self.__sgmt_info.get_events()), 0)
+
     def test_swtich_versions(self):
         self.__sgmt_info.switch_versions()
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 1)
