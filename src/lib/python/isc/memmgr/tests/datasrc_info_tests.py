@@ -99,6 +99,7 @@ class TestSegmentInfo(unittest.TestCase):
 
     def test_add_reader(self):
         self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
         self.__sgmt_info.add_reader(1)
         self.assertSetEqual(self.__sgmt_info.get_readers(), {1})
         self.__sgmt_info.add_reader(3)
@@ -112,6 +113,9 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.add_reader, (1))
         # but the existing readers must be untouched
         self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 3, 2})
+
+        # none of this touches the old readers
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
 
     def test_complete_update(self):
         # in READY state
