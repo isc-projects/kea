@@ -206,6 +206,54 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
 
+        # in SYNCHRONIZING state:
+        #
+        # a) ID is not in old readers set. The following call sets up ID 3
+        # to be in the old readers set.
+        self.__si_to_synchronizing_state()
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (1))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # b) ID is in old readers set, but also in readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(3)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (3))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # c) ID is in old readers set, but not in readers set, and
+        # old_readers becomes empty.
+        self.__si_to_synchronizing_state()
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.sync_reader(3)
+        self.assertTupleEqual(e, (42,))
+        # the ID should be moved from old readers to readers set
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # d) ID is in old readers set, but not in readers set, and
+        # old_readers doesn't become empty.
+        self.__si_to_updating_state()
+        self.__sgmt_info.add_reader(4)
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3, 4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.sync_reader(3)
+        self.assertIsNone(e)
+        # the ID should be moved from old readers to readers set
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        # we should be left in SYNCHRONIZING state
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
     def test_remove_reader(self):
         # in READY state, it must raise an exception
         self.__si_to_ready_state()
