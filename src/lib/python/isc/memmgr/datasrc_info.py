@@ -77,6 +77,23 @@ class SegmentInfo:
 
         return None
 
+    def add_event(self, event_data):
+        self.__events.append(event_data)
+
+    def add_reader(self, reader_session_id):
+        if reader_session_id in self.__readers:
+            raise SegmentInfoError('Reader session ID is already in readers set: ' +
+                                   str(reader_session_id))
+
+        self.__readers.add(reader_session_id)
+
+    def start_update(self):
+        if self.__state == self.READY and len(self.__events) > 0:
+            self.__state = self.UPDATING
+            return self.__events[0]
+
+        return None
+
     def complete_update(self):
         if self.__state == self.UPDATING:
             self.__state = self.SYNCHRONIZING
@@ -120,23 +137,6 @@ class SegmentInfo:
             raise SegmentInfoError('Reader session ID is not in current ' +
                                    'readers or old readers set: ' +
                                    reader_session_id)
-
-    def add_event(self, event_data):
-        self.__events.append(event_data)
-
-    def start_update(self):
-        if self.__state == self.READY and len(self.__events) > 0:
-            self.__state = self.UPDATING
-            return self.__events[0]
-
-        return None
-
-    def add_reader(self, reader_session_id):
-        if reader_session_id in self.__readers:
-            raise SegmentInfoError('Reader session ID is already in readers set: ' +
-                                   str(reader_session_id))
-
-        self.__readers.add(reader_session_id)
 
     def create(type, genid, rrclass, datasrc_name, mgr_config):
         """Factory of specific SegmentInfo subclass instance based on the
