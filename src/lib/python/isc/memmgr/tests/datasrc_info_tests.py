@@ -182,9 +182,10 @@ class TestSegmentInfo(unittest.TestCase):
         self.__si_to_synchronizing_state()
         self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
 
-        # in COPYING state with no events
+        # in COPYING state
         self.__si_to_copying_state()
-        self.__sgmt_info.complete_update()
+        e = self.__sgmt_info.complete_update()
+        self.assertIsNone(e)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
 
     def test_sync_reader_when_ready(self):
