@@ -134,7 +134,7 @@ class SegmentInfo:
     def add_reader(self, reader_session_id):
         if reader_session_id in self.__readers:
             raise SegmentInfoError('Reader session ID is already in readers set: ' +
-                                   reader_session_id)
+                                   str(reader_session_id))
 
         self.__readers.add(reader_session_id)
 
