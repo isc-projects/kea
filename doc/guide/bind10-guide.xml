@@ -3830,7 +3830,10 @@ Dhcp4/subnet4	[]	list	(default)
       </note>
 
       <para>
-        Below is a list of currently supported standard DHCPv4 options. The "Name" and "Code"
+        The currently supported standard DHCPv4 options are
+        listed in <xref linkend="dhcp4-std-options-list"/>
+        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        The "Name" and "Code"
         are the values that should be used as a name in the option-data
         structures. "Type" designates the format of the data: the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
@@ -3899,6 +3902,30 @@ Dhcp4/subnet4	[]	list	(default)
 <row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-internal</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry></row>
+
+          </tbody>
+          </tgroup>
+        </table>
+      </para>
+
+      <para>
+        <table frame="all" id="dhcp4-std-options-list-part2">
+          <title>List of standard DHCPv4 options (continued)</title>
+          <tgroup cols='4'>
+          <colspec colname='name'/>
+          <colspec colname='code'/>
+          <colspec colname='type'/>
+          <colspec colname='array'/>
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Code</entry>
+              <entry>Type</entry>
+              <entry>Array?</entry>
+            </row>
+          </thead>
+          <tbody>
+
 <row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry></row>
 <row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry></row>
@@ -3944,6 +3971,7 @@ Dhcp4/subnet4	[]	list	(default)
           </tbody>
           </tgroup>
         </table>
+
       </para>
       <para>
         <table frame="all" id="dhcp-types">
@@ -4560,7 +4588,7 @@ Dhcp6/subnet6/	list
       contains information on all global options that the server is
       supposed to configure in all subnets. The second line specifies
       option name. For a complete list of currently supported names,
-      see <xref linkend="dhcp6-std-options-list"/> below.
+      see <xref linkend="dhcp6-std-options-list"/>.
       The third line specifies option code, which must match one of the
       values from that
       list. Line 4 specifies option space, which must always
@@ -4630,7 +4658,9 @@ Dhcp6/subnet6/	list
 
 
     <para>
-      Below is a list of currently supported standard DHCPv6 options. The "Name" and "Code"
+      The currently supported standard DHCPv6 options are
+      listed in <xref linkend="dhcp6-std-options-list"/>.
+      The "Name" and "Code"
       are the values that should be used as a name in the option-data
       structures. "Type" designates the format of the data: the meanings of
       the various types is given in <xref linkend="dhcp-types"/>.
