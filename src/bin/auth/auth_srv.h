@@ -273,6 +273,9 @@ public:
     /// open forever.
     void setTCPRecvTimeout(size_t timeout);
 
+    // TODO: Doxygen
+    void listsReconfigured();
+
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
