@@ -167,7 +167,9 @@ public:
     /// is of the correct type
     ///
     //@{
-    virtual bool setValue(const int64_t v);
+    virtual bool setValue(const long long int v);
+    bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
+    bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); };
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -381,7 +383,7 @@ public:
     using Element::getValue;
     bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
-    bool setValue(int64_t v) { i = v; return (true); }
+    bool setValue(long long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
 };
