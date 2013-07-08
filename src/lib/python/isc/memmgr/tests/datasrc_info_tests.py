@@ -190,11 +190,37 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertIsNone(e)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
 
-    def test_sync_reader_when_ready(self):
-        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (None))
+    def test_sync_reader(self):
+        # in READY state, it must raise an exception
+        self.__si_to_ready_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
 
-    def test_remove_reader_when_ready(self):
-        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (None))
+        # in UPDATING state, it must raise an exception
+        self.__si_to_updating_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in COPYING state, it must raise an exception
+        self.__si_to_copying_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+    def test_remove_reader(self):
+        # in READY state, it must raise an exception
+        self.__si_to_ready_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # in UPDATING state, it must raise an exception
+        self.__si_to_updating_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in COPYING state, it must raise an exception
+        self.__si_to_copying_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
 
     def test_switch_versions(self):
         self.__sgmt_info.switch_versions()
