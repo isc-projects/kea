@@ -270,6 +270,65 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
 
+        # in SYNCHRONIZING state:
+        #
+        # a) ID is not in old readers set or readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (1))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # b) ID is in readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(4)
+        self.assertIsNone(e)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # c) ID is in old_readers set and it becomes empty.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(3)
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # d) ID is in old_readers set and it doesn't become empty.
+        self.__si_to_updating_state()
+        self.__sgmt_info.add_reader(4)
+        self.__sgmt_info.complete_update()
+        self.__sgmt_info.add_reader(5)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3, 4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {5})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(3)
+        self.assertIsNone(e)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {5})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
     def test_switch_versions(self):
         self.__sgmt_info.switch_versions()
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 1)
