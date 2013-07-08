@@ -92,6 +92,11 @@ class TestSegmentInfo(unittest.TestCase):
         self.__sgmt_info.sync_reader(3)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
 
+    def test_add_event(self):
+        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
+        self.__sgmt_info.add_event(None)
+        self.assertNotEqual(len(self.__sgmt_info.get_events()), 0)
+
     def test_complete_update(self):
         # in READY state
         self.__si_to_ready_state()
@@ -128,11 +133,6 @@ class TestSegmentInfo(unittest.TestCase):
 
     def test_remove_reader_when_ready(self):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (None))
-
-    def test_add_event(self):
-        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
-        self.__sgmt_info.add_event(None)
-        self.assertNotEqual(len(self.__sgmt_info.get_events()), 0)
 
     def test_swtich_versions(self):
         self.__sgmt_info.switch_versions()
