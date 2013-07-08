@@ -28,6 +28,7 @@
 #include <climits>
 
 #include <boost/algorithm/string.hpp> // for iequals
+#include <boost/lexical_cast.hpp>
 
 #include <cmath>
 
@@ -90,7 +91,7 @@ Element::getValue(std::map<std::string, ConstElementPtr>&) const {
 }
 
 bool
-Element::setValue(const int64_t) {
+Element::setValue(const long long int) {
     return (false);
 }
 
@@ -399,37 +400,20 @@ numberFromStringstream(std::istream& in, int& pos) {
 //
 ElementPtr
 fromStringstreamNumber(std::istream& in, int& pos) {
-    long long int i;
-    double d = 0.0;
-    bool is_double = false;
-    char* endptr;
-
     std::string number = numberFromStringstream(in, pos);
 
-    errno = 0;
-    i = strtoll(number.c_str(), &endptr, 10);
-    if (*endptr != '\0') {
-        const char* ptr;
-        errno = 0;
-        d = strtod(ptr = number.c_str(), &endptr);
-        is_double = true;
-        if (*endptr != '\0' || ptr == endptr) {
-            isc_throw(JSONError, std::string("Bad number: ") + number);
-        } else {
-            if (errno != 0) {
-                isc_throw(JSONError, std::string("Number overflow: ") + number);
-            }
-        }
-    } else {
-        if ((i == LLONG_MAX || i == LLONG_MIN) && errno != 0) {
+    if (number.find_first_of(".eE") < number.size()) {
+        try {
+            return (Element::create(boost::lexical_cast<double>(number)));
+        } catch (const boost::bad_lexical_cast&) {
             isc_throw(JSONError, std::string("Number overflow: ") + number);
         }
-    }
-
-    if (is_double) {
-        return (Element::create(d));
     } else {
-        return (Element::create(i));
+        try {
+            return (Element::create(boost::lexical_cast<int64_t>(number)));
+        } catch (const boost::bad_lexical_cast&) {
+            isc_throw(JSONError, std::string("Number overflow: ") + number);
+        }
     }
 }
 
