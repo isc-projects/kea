@@ -875,6 +875,10 @@ if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes"; then
     AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])
 fi
 
+if test "$BOOST_STATIC_ASSERT_WOULDFAIL" = "yes" -a X"$werror_ok" = X1; then
+    AC_MSG_ERROR([Failed to use Boost static assertions. Try upgrading Boost to 1.54 or higher (when using GCC 4.8) or specifying --without-werror.  See trac ticket no. 3039 for more details.])
+fi
+
 # There's a known bug in FreeBSD ports for Boost that would trigger a false
 # warning in build with g++ and -Werror (we exclude clang++ explicitly to
 # avoid unexpected false positives).
