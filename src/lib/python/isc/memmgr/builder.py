@@ -128,7 +128,8 @@ class MemorySegmentBuilder:
                 for command_tuple in local_command_queue:
                     command = command_tuple[0]
                     if command == 'load':
-                        self.__handle_load()
+                        self.__handle_load(command_tuple[1], command_tuple[2],
+                                           command_tuple[3], command_tuple[4])
                     elif command == 'shutdown':
                         self.__handle_shutdown()
                         # When the shutdown command is received, we do
