@@ -113,10 +113,10 @@ class SegmentInfo:
                                    'incorrect state: ' + str(self.__state))
         if reader_session_id not in self.__old_readers:
             raise SegmentInfoError('Reader session ID is not in old readers set: ' +
-                                   reader_session_id)
+                                   str(reader_session_id))
         if reader_session_id in self.__readers:
             raise SegmentInfoError('Reader session ID is already in readers set: ' +
-                                   reader_session_id)
+                                   str(reader_session_id))
 
         self.__old_readers.remove(reader_session_id)
         self.__readers.add(reader_session_id)
@@ -136,7 +136,7 @@ class SegmentInfo:
         else:
             raise SegmentInfoError('Reader session ID is not in current ' +
                                    'readers or old readers set: ' +
-                                   reader_session_id)
+                                   str(reader_session_id))
 
     def create(type, genid, rrclass, datasrc_name, mgr_config):
         """Factory of specific SegmentInfo subclass instance based on the
