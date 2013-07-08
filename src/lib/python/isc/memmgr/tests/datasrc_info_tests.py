@@ -134,7 +134,7 @@ class TestSegmentInfo(unittest.TestCase):
     def test_remove_reader_when_ready(self):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (None))
 
-    def test_swtich_versions(self):
+    def test_switch_versions(self):
         self.__sgmt_info.switch_versions()
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 1)
         self.__check_sgmt_reset_param(SegmentInfo.READER, 0)
