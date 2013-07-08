@@ -67,24 +67,28 @@ class SegmentInfo:
     def get_events(self):
         return self.__events
 
-    def complete_update(self):
-        if self.__state == self.UPDATING:
-            self.__state = self.SYNCHRONIZING
-        elif self.__state == self.COPYING:
-            self.__state = self.READY
-        else:
-            raise SegmentInfoError('complete_update() called in ' +
-                                   'incorrect state: ' + str(self.__state))
-
-    def __sync_reader_helper(self):
+    def __sync_reader_helper(self, new_state):
         if len(self.__old_readers) == 0:
-            self.__state = self.COPYING
+            self.__state = new_state
             if len(self.__events) > 0:
                 e = self.__events[0]
                 del self.__events[0]
                 return e
 
         return None
+
+    def complete_update(self):
+        if self.__state == self.UPDATING:
+            self.__state = self.SYNCHRONIZING
+            self.__old_readers.update(self.__readers)
+            self.__readers.clear()
+            return self.__sync_reader_helper(self.SYNCHRONIZING)
+        elif self.__state == self.COPYING:
+            self.__state = self.READY
+            return None
+        else:
+            raise SegmentInfoError('complete_update() called in ' +
+                                   'incorrect state: ' + str(self.__state))
 
     def sync_reader(self, reader_session_id):
         if self.__state != self.SYNCHRONIZING:
@@ -100,7 +104,7 @@ class SegmentInfo:
         self.__old_readers.remove(reader_session_id)
         self.__readers.add(reader_session_id)
 
-        return self.__sync_reader_helper()
+        return self.__sync_reader_helper(self.COPYING)
 
     def remove_reader(self, reader_session_id):
         if self.__state != self.SYNCHRONIZING:
@@ -108,7 +112,7 @@ class SegmentInfo:
                                    'incorrect state: ' + str(self.__state))
         if reader_session_id in self.__old_readers:
             self.__old_readers.remove(reader_session_id)
-            return self.__sync_reader_helper()
+            return self.__sync_reader_helper(self.COPYING)
         elif reader_session_id in self.__readers:
             self.__readers.remove(reader_session_id)
             return None
