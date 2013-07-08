@@ -65,8 +65,53 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertEqual(len(self.__sgmt_info.get_old_readers()), 0)
         self.assertEqual(len(self.__sgmt_info.get_events()), 0)
 
-    def test_complete_update_when_ready(self):
+    def __si_to_ready_state(self):
+        # Go to a default starting state
+        self.__sgmt_info = SegmentInfo.create('mapped', 0, RRClass.IN,
+                                              'sqlite3',
+                                              {'mapped_file_dir':
+                                                   self.__mapped_file_dir})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+    def __si_to_updating_state(self):
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_reader(3)
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+    def __si_to_synchronizing_state(self):
+        self.__si_to_updating_state()
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+    def __si_to_copying_state(self):
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.sync_reader(3)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+    def test_complete_update(self):
+        # in READY state
+        self.__si_to_ready_state()
         self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+
+        # in UPDATING state this is the same as calling
+        # self.__si_to_synchronizing_state(), but let's try to be
+        # descriptive
+        self.__si_to_updating_state()
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # in SYNCHRONIZING state
+        self.__si_to_synchronizing_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+
+        # in COPYING state
+        self.__si_to_copying_state()
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
 
     def test_sync_reader_when_ready(self):
         self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (None))
