@@ -115,8 +115,6 @@ class ZonemgrRefresh:
         self._max_transfer_timeout = None
         self._refresh_jitter = None
         self._reload_jitter = None
-        self.update_config_data(module_cc.get_full_config(), module_cc)
-        self._running = False
         # This is essentially private, but we allow tests to customize it.
         self._datasrc_clients_mgr = DataSrcClientsMgr()
         # data_sources configuration should be ready with cfgmgr, so this
@@ -124,6 +122,8 @@ class ZonemgrRefresh:
         # to terminate the program.
         self._module_cc.add_remote_config_by_name('data_sources',
                                                   self._datasrc_config_handler)
+        self.update_config_data(module_cc.get_full_config(), module_cc)
+        self._running = False
 
     def _random_jitter(self, max, jitter):
         """Imposes some random jitters for refresh and
