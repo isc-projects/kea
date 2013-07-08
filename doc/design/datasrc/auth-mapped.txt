@@ -1,20 +1,21 @@
 @startuml
 
-participant auth as "b10-auth"
+participant auth as ":b10-auth"
 [-> auth: new/initial config\n(datasrc cfg)
 activate auth
 
-participant list as "Configurable\nClientList"
+participant list as ":Configurable\nClientList"
 create list
 auth -> list: <<construct>>
 
 auth -> list: configure(cfg)
 activate list
 
+participant CacheConfig as ":CacheConfig"
 create CacheConfig
 list -> CacheConfig: <<construct>> (cfg)
 
-participant zt_segment as "ZoneTable\nSegment\n(Mapped)"
+participant zt_segment as ":ZoneTable\nSegment\n(Mapped)"
 create zt_segment
 list -> zt_segment: <<construct>>
 
@@ -46,7 +47,7 @@ activate list
 list -> zt_segment: reset\n(READ_ONLY,\nsegmentparam)
 activate zt_segment
 
-participant segment as "Memory\nSegment\n(Mapped)"
+participant segment as "seg1:Memory\nSegment\n(Mapped)"
 create segment
 zt_segment -> segment: <<construct>>
 
@@ -68,9 +69,9 @@ activate zt_segment
 zt_segment -> segment: <<destroy>>
 destroy segment
 
-participant segment.2 as "Memory\nSegment\n(Mapped)\n2"
-create segment.2
-zt_segment -> segment.2: <<construct>>
+participant segment2 as "seg2:Memory\nSegment\n(Mapped)"
+create segment2
+zt_segment -> segment2: <<construct>>
 
 deactivate zt_segment
 deactivate list

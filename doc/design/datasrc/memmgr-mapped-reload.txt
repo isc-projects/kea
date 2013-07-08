@@ -1,18 +1,18 @@
 @startuml
 
-participant memmgr as "memmgr"
+participant memmgr as ":b10-memmgr"
 [-> memmgr: reload\n(zonename)
 activate memmgr
 
-participant list as "Configurable\nClientList"
+participant list as ":Configurable\nClientList"
 memmgr -> list: getCachedZoneWriter\n(zone_name)
 activate list
 
-participant CacheConfig
+participant CacheConfig as ":CacheConfig"
 
-participant zt_segment as "ZoneTable\nSegment\n(Mapped)"
-participant segment as "Memory\nSegment\n(Mapped)"
-participant segment.2 as "Memory\nSegment\n(Mapped)\n2"
+participant zt_segment as ":ZoneTable\nSegment\n(Mapped)"
+participant segment as "existing:Memory\nSegment\n(Mapped)"
+participant segment2 as "new:Memory\nSegment\n(Mapped)"
 
 list -> zt_segment: isWritable()
 activate zt_segment
@@ -22,17 +22,18 @@ deactivate zt_segment
 list -> CacheConfig: getLoadAction()
 activate CacheConfig
 
-participant ZoneTable
-participant ZoneWriter
+participant ZoneTable as ":ZoneTable"
+participant ZoneWriter as "zw:ZoneWriter"
 
+participant LoadAction as "la:LoadAction"
 create LoadAction
 CacheConfig -> LoadAction: <<construct>>
-CacheConfig --> list: LoadAction
+CacheConfig --> list: la
 deactivate CacheConfig
 
 create ZoneWriter
-list -> ZoneWriter: <<construct>> (LoadAction)
-list --> memmgr: ZoneWriter
+list -> ZoneWriter: <<construct>> (la)
+list --> memmgr: zw
 deactivate list
 
 memmgr -> ZoneWriter: load()
@@ -40,21 +41,22 @@ activate ZoneWriter
 ZoneWriter -> LoadAction: (funcall)
 activate LoadAction
 
-participant ZoneData
+participant ZoneData as "zd_existing\n:ZoneData"
+participant ZoneData2 as "zd_new\n:ZoneData"
 
-create ZoneData.2
-LoadAction -> ZoneData.2: <<construct>> via helpers
+create ZoneData2
+LoadAction -> ZoneData2: <<construct>> via helpers
 
-LoadAction --> ZoneWriter: ZoneData.2
+LoadAction --> ZoneWriter: zd_new
 deactivate LoadAction
 deactivate ZoneWriter
 
 memmgr -> ZoneWriter: install()
 activate ZoneWriter
 
-ZoneWriter -> ZoneTable: addZone(ZoneData.2)
+ZoneWriter -> ZoneTable: addZone(zd_new)
 activate ZoneTable
-ZoneTable --> ZoneWriter: ZoneData (old data)
+ZoneTable --> ZoneWriter: zd_existing (old data)
 deactivate ZoneTable
 
 deactivate ZoneWriter
@@ -77,8 +79,8 @@ activate zt_segment
 
 zt_segment -> segment: <<destroy>>
 destroy segment
-create segment.2
-zt_segment -> segment.2: <<construct>>
+create segment2
+zt_segment -> segment2: <<construct>>
 
 deactivate zt_segment
 deactivate list
