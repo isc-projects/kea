@@ -160,6 +160,7 @@ class TestSegmentInfo(unittest.TestCase):
         # in READY state
         self.__si_to_ready_state()
         self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
 
         # in UPDATING state this is the same as calling
         # self.__si_to_synchronizing_state(), but let's try to be
@@ -181,6 +182,7 @@ class TestSegmentInfo(unittest.TestCase):
         # in SYNCHRONIZING state
         self.__si_to_synchronizing_state()
         self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
 
         # in COPYING state
         self.__si_to_copying_state()
