@@ -117,6 +117,45 @@ class TestSegmentInfo(unittest.TestCase):
         # none of this touches the old readers
         self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
 
+    def test_start_update(self):
+        # in READY state
+        # a) there are no events
+        self.__si_to_ready_state()
+        e = self.__sgmt_info.start_update()
+        self.assertIsNone(e)
+        # if there are no events, there is nothing to update
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # b) there are events. this is the same as calling
+        # self.__si_to_updating_state(), but let's try to be
+        # descriptive.
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in UPDATING state, it should always return None and not change
+        # state.
+        self.__si_to_updating_state()
+        e = self.__sgmt_info.start_update()
+        self.assertIsNone(e)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in SYNCHRONIZING state, it should always return None and not
+        # change state.
+        self.__si_to_synchronizing_state()
+        e = self.__sgmt_info.start_update()
+        self.assertIsNone(e)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # in COPYING state, it should always return None and not
+        # change state.
+        self.__si_to_copying_state()
+        e = self.__sgmt_info.start_update()
+        self.assertIsNone(e)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
     def test_complete_update(self):
         # in READY state
         self.__si_to_ready_state()
@@ -124,7 +163,7 @@ class TestSegmentInfo(unittest.TestCase):
 
         # in UPDATING state this is the same as calling
         # self.__si_to_synchronizing_state(), but let's try to be
-        # descriptive
+        # descriptive.
         #
         # a) with no events
         self.__si_to_updating_state()
