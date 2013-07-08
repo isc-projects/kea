@@ -939,3 +939,8 @@ void
 AuthSrv::setTCPRecvTimeout(size_t timeout) {
     dnss_->setTCPRecvTimeout(timeout);
 }
+
+void
+AuthSrv::listsReconfigured() {
+    // TODO: Here comes something.
+}
