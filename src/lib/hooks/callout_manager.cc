@@ -15,6 +15,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_log.h>
+#include <hooks/pointer_converter.h>
 
 #include <boost/static_assert.hpp>
 
@@ -145,20 +146,20 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                               HOOKS_CALLOUT_CALLED).arg(current_library_)
                         .arg(ServerHooks::getServerHooks()
                             .getName(current_hook_))
-                        .arg(reinterpret_cast<void*>(i->second));
+                        .arg(PointerConverter(i->second).dlsymPtr());
                 } else {
                     LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
                         .arg(current_library_)
                         .arg(ServerHooks::getServerHooks()
                             .getName(current_hook_))
-                        .arg(reinterpret_cast<void*>(i->second));
+                        .arg(PointerConverter(i->second).dlsymPtr());
                 }
             } catch (...) {
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
                     .arg(ServerHooks::getServerHooks().getName(current_hook_))
-                    .arg(reinterpret_cast<void*>(i->second));
+                    .arg(PointerConverter(i->second).dlsymPtr());
             }
 
         }
