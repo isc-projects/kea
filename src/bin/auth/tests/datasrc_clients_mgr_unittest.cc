@@ -156,6 +156,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_FALSE(holder.findClientList(RRClass::IN()));
         EXPECT_FALSE(holder.findClientList(RRClass::CH()));
+        EXPECT_TRUE(holder.getClasses().empty());
         // map should be protected here
         EXPECT_EQ(1, FakeDataSrcClientsBuilder::map_mutex->lock_count);
         EXPECT_EQ(0, FakeDataSrcClientsBuilder::map_mutex->unlock_count);
@@ -174,6 +175,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_TRUE(holder.findClientList(RRClass::IN()));
         EXPECT_TRUE(holder.findClientList(RRClass::CH()));
+        EXPECT_EQ(2, holder.getClasses().size());
     }
     // We need to clear command queue by hand
     FakeDataSrcClientsBuilder::command_queue->clear();
@@ -188,6 +190,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_TRUE(holder.findClientList(RRClass::IN()));
         EXPECT_FALSE(holder.findClientList(RRClass::CH()));
+        EXPECT_EQ(RRClass::IN(), holder.getClasses()[0]);
     }
 
     // Duplicate lock acquisition is prohibited (only test mgr can detect
