@@ -24,9 +24,9 @@ namespace {
 const int BIND10_HOOKS_VERSION = 1;
 
 // Names of the framework functions.
-const char* LOAD_FUNCTION_NAME = "load";
-const char* UNLOAD_FUNCTION_NAME = "unload";
-const char* VERSION_FUNCTION_NAME = "version";
+const char* const LOAD_FUNCTION_NAME = "load";
+const char* const UNLOAD_FUNCTION_NAME = "unload";
+const char* const VERSION_FUNCTION_NAME = "version";
 
 // Typedefs for pointers to the framework functions.
 typedef int (*version_function_ptr)();

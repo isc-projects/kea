@@ -17,6 +17,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
 #include <hooks/library_manager.h>
+#include <hooks/pointer_converter.h>
 #include <hooks/server_hooks.h>
 
 #include <string>
@@ -28,78 +29,6 @@ using namespace std;
 
 namespace isc {
 namespace hooks {
-
-/// @brief Local class for conversion of void pointers to function pointers
-///
-/// Converting between void* and function pointers in C++ is fraught with
-/// difficulty and pitfalls, e.g. see
-/// https://groups.google.com/forum/?hl=en&fromgroups#!topic/comp.lang.c++/37o0l8rtEE0
-///
-/// The method given in that article - convert using a union is used here.  A
-/// union is declared (and zeroed) and the appropriate member extracted when
-/// needed.
-
-class PointerConverter {
-public:
-    /// @brief Constructor
-    ///
-    /// Zeroes the union and stores the void* pointer we wish to convert (the
-    /// one returned by dlsym).
-    ///
-    /// @param dlsym_ptr void* pointer returned by call to dlsym()
-    PointerConverter(void* dlsym_ptr) {
-        memset(&pointers_, 0, sizeof(pointers_));
-        pointers_.dlsym_ptr = dlsym_ptr;
-    }
-
-    /// @name Pointer accessor functions
-    ///
-    /// It is up to the caller to ensure that the correct member is called so
-    /// that the correct trype of pointer is returned.
-    ///
-    ///@{
-
-    /// @brief Return pointer to callout function
-    ///
-    /// @return Pointer to the callout function
-    CalloutPtr calloutPtr() const {
-        return (pointers_.callout_ptr);
-    }
-
-    /// @brief Return pointer to load function
-    ///
-    /// @return Pointer to the load function
-    load_function_ptr loadPtr() const {
-        return (pointers_.load_ptr);
-    }
-
-    /// @brief Return pointer to unload function
-    ///
-    /// @return Pointer to the unload function
-    unload_function_ptr unloadPtr() const {
-        return (pointers_.unload_ptr);
-    }
-
-    /// @brief Return pointer to version function
-    ///
-    /// @return Pointer to the version function
-    version_function_ptr versionPtr() const {
-        return (pointers_.version_ptr);
-    }
-
-    ///@}
-
-private:
-
-    /// @brief Union linking void* and pointers to functions.
-    union {
-        void*                   dlsym_ptr;      // void* returned by dlsym
-        CalloutPtr              callout_ptr;    // Pointer to callout
-        load_function_ptr       load_ptr;       // Pointer to load function
-        unload_function_ptr     unload_ptr;     // Pointer to unload function
-        version_function_ptr    version_ptr;    // Pointer to version function
-    } pointers_;
-};
 
 
 // Open the library
