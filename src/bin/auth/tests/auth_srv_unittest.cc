@@ -2166,6 +2166,18 @@ TEST_F(AuthSrvTest, postReconfigure) {
     }
     server.listsReconfigured();
     EXPECT_TRUE(session.haveSubscription("SegmentReader", "*"));
+    // Set the segment to local again
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    {
+        DataSrcClientsMgr &mgr(server.getDataSrcClientsMgr());
+        DataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_EQ(SEGMENT_INUSE, holder.findClientList(RRClass::IN())->
+                  getStatus()[0].getSegmentState());
+        EXPECT_EQ("local", holder.findClientList(RRClass::IN())->
+                  getStatus()[0].getSegmentType());
+    }
+    server.listsReconfigured();
+    EXPECT_FALSE(session.haveSubscription("SegmentReader", "*"));
 }
 
 }
