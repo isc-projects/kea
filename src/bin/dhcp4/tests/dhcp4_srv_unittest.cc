@@ -157,11 +157,6 @@ public:
     }
 
     virtual ~Dhcpv4SrvTest() {
-
-        // Remove all registered hook points (it must be done even for tests that
-        // do not use hooks as the base class - Dhcpv4Srv calls allocation engine
-        // that registers hooks)
-        isc::hooks::ServerHooks::getServerHooks().reset();
     }
 
     /// @brief Add 'Parameter Request List' option to the packet.

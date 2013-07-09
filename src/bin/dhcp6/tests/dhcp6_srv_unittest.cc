@@ -109,10 +109,6 @@ public:
     }
 
     virtual ~NakedDhcpv6Srv() {
-        // Remove all registered hook points (it must be done even for tests that
-        // do not use hooks as the base class - Dhcpv6Srv registers hooks)
-        ServerHooks::getServerHooks().reset();
-
         // Close the lease database
         LeaseMgrFactory::destroy();
     }

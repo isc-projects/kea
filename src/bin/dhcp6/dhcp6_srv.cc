@@ -56,6 +56,30 @@ using namespace isc::hooks;
 using namespace isc::util;
 using namespace std;
 
+namespace {
+
+/// Structure that holds registered hook indexes
+struct Dhcp6Hooks {
+    int hook_index_pkt6_receive_;   ///< index for "pkt6_receive" hook point
+    int hook_index_subnet6_select_; ///< index for "subnet6_select" hook point
+    int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
+
+    /// Constructor that registers hook points for DHCPv6 engine
+    Dhcp6Hooks() {
+        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
+        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp6Hooks Hooks;
+
+}; // anonymous namespace
+
 namespace isc {
 namespace dhcp {
 
@@ -112,9 +136,9 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
         // Register hook points
-        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
-        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
-        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
+        hook_index_pkt6_receive_   = Hooks.hook_index_pkt6_receive_;
+        hook_index_subnet6_select_ = Hooks.hook_index_subnet6_select_;
+        hook_index_pkt6_send_      = Hooks.hook_index_pkt6_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
         vector<string> libraries; // no libraries at this time
@@ -133,9 +157,6 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
-
-    /// @todo Unregister hooks once ServerHooks::deregisterHooks() becomes
-    /// available
 }
 
 void Dhcpv6Srv::shutdown() {

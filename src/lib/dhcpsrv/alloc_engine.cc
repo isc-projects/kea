@@ -26,6 +26,26 @@
 using namespace isc::asiolink;
 using namespace isc::hooks;
 
+namespace {
+
+/// Structure that holds registered hook indexes
+struct Dhcp6Hooks {
+    int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
+
+    /// Constructor that registers hook points for AllocationEngine
+    Dhcp6Hooks() {
+        hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp6Hooks Hooks;
+
+}; // anonymous namespace
+
 namespace isc {
 namespace dhcp {
 
@@ -167,7 +187,7 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     }
 
     // Register hook points
-    hook_index_lease6_select_ = ServerHooks::getServerHooks().registerHook("lease6_select");
+    hook_index_lease6_select_ = Hooks.hook_index_lease6_select_;
 }
 
 Lease6Ptr
