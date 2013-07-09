@@ -575,6 +575,20 @@ public:
     /// \param id The id of request as returned by groupRecvMsgAsync.
     void cancelAsyncRecv(const AsyncRecvRequestID& id);
 
+    /// \brief Subscribe to a group
+    ///
+    /// Wrapper around the CCSession::subscribe.
+    void subscribe(const std::string& group) {
+        session_.subscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
+    /// \brief Unsubscribe from a group.
+    ///
+    /// Wrapper around the CCSession::unsubscribe.
+    void unsubscribe(const std::string& group) {
+        session_.unsubscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
