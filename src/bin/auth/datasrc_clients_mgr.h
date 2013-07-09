@@ -81,6 +81,7 @@ enum CommandID {
     LOADZONE,     ///< Load a new version of zone into a memory,
                   ///  the argument to the command is a map containing 'class'
                   ///  and 'origin' elements, both should have been validated.
+    SEGMENT_INFO_UPDATE, ///< The memory manager sent an update about segments.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -595,6 +596,10 @@ private:
         }
     }
 
+    void doSegmentUpdate(const isc::data::ConstElementPtr& arg) {
+        (void) arg;
+    }
+
     void doLoadZone(const isc::data::ConstElementPtr& arg);
     boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
         datasrc::ConfigurableClientList& client_list,
@@ -694,7 +699,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SEGMENT_INFO_UPDATE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
@@ -704,6 +709,9 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
         break;
     case LOADZONE:
         doLoadZone(command.params);
+        break;
+    case SEGMENT_INFO_UPDATE:
+        doSegmentUpdate(command.params);
         break;
     case SHUTDOWN:
         return (false);
