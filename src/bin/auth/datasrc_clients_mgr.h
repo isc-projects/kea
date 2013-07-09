@@ -212,6 +212,24 @@ public:
                 return (it->second);
             }
         }
+        /// \brief Return list of classes that are present.
+        ///
+        /// Get the list of classes for which there's a client list. It is
+        /// returned in form of a vector, copied from the internals. As the
+        /// number of classes in there is expected to be small, it is not
+        /// a performance issue.
+        ///
+        /// \return The list of classes.
+        /// \throw std::bad_alloc for problems allocating the result.
+        std::vector<dns::RRClass> getClasses() const {
+            std::vector<dns::RRClass> result;
+            for (ClientListsMap::const_iterator it =
+                 mgr_.clients_map_->begin(); it != mgr_.clients_map_->end();
+                 ++it) {
+                result.push_back(it->first);
+            }
+            return (result);
+        }
     private:
         DataSrcClientsMgrBase& mgr_;
         typename MutexType::Locker locker_;
