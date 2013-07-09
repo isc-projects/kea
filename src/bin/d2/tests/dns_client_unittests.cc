@@ -117,7 +117,8 @@ public:
 
                 ASSERT_TRUE(response_);
                 EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
-                ASSERT_EQ(1, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
+                ASSERT_EQ(1,
+                          response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
                 ASSERT_TRUE(zone);
                 EXPECT_EQ("example.com.", zone->getName().toText());
@@ -211,7 +212,7 @@ public:
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
-        // Start with a valid timeout equal to maximal allowed. This why we will
+        // Start with a valid timeout equal to maximal allowed. This way we will
         // ensure that doUpdate doesn't throw an exception for valid timeouts.
         unsigned int timeout = DNSClient::getMaxTimeout();
         EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),

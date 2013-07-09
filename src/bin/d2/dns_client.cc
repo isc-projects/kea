@@ -81,10 +81,8 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
     : in_buf_(new OutputBuffer(DEFAULT_BUFFER_SIZE)),
       response_(response_placeholder), callback_(callback), proto_(proto) {
 
-    // @todo At some point we may need to implement TCP. It should be straight
-    // forward but would require a bunch of new unit tests. That's why we
-    // currently disable TCP. Once implemented the check below should be
-    // removed.
+    // @todo Currently we only support UDP. The support for TCP is planned for
+    // the future release.
     if (proto_ == DNSClient::TCP) {
         isc_throw(isc::NotImplemented, "TCP is currently not supported as a"
                   << " Transport protocol for DNS Updates; please use UDP");
