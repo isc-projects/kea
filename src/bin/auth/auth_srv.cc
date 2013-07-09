@@ -306,6 +306,8 @@ public:
                       MessageAttributes& stats_attrs,
                       const bool done);
 
+    /// Are we currently subscribed to the SegmentReader group?
+    bool readers_subscribed_;
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
@@ -322,6 +324,7 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     datasrc_clients_mgr_(io_service_),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
+    readers_subscribed_(false),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {}
@@ -940,7 +943,38 @@ AuthSrv::setTCPRecvTimeout(size_t timeout) {
     dnss_->setTCPRecvTimeout(timeout);
 }
 
+namespace {
+
+bool
+hasRemoteSegment(auth::DataSrcClientsMgr& mgr) {
+    auth::DataSrcClientsMgr::Holder holder(mgr);
+    const std::vector<dns::RRClass>& classes(holder.getClasses());
+    BOOST_FOREACH(const dns::RRClass& rrclass, classes) {
+        const boost::shared_ptr<datasrc::ConfigurableClientList>&
+            list(holder.findClientList(rrclass));
+        const std::vector<DataSourceStatus>& states(list->getStatus());
+        BOOST_FOREACH(const datasrc::DataSourceStatus& status, states) {
+            if (status.getSegmentState() != datasrc::SEGMENT_UNUSED &&
+                status.getSegmentType() != "local")
+                // We use some segment and it's not a local one, so it
+                // must be remote.
+                return true;
+        }
+    }
+    // No remote segment found in any of the lists
+    return false;
+}
+
+}
+
 void
 AuthSrv::listsReconfigured() {
-    // TODO: Here comes something.
+    const bool has_remote = hasRemoteSegment(impl_->datasrc_clients_mgr_);
+    if (has_remote && !impl_->readers_subscribed_) {
+        impl_->config_session_->subscribe("SegmentReader");
+        impl_->readers_subscribed_ = true;
+    } else if (!has_remote && impl_->readers_subscribed_) {
+        impl_->config_session_->unsubscribe("SegmentReader");
+        impl_->readers_subscribed_ = false;
+    }
 }
