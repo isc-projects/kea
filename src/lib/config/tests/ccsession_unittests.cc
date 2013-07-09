@@ -157,6 +157,17 @@ TEST_F(CCSessionTest, notifyNoParams) {
             session.getMsgQueue()->get(1)->toWire();
 }
 
+// Try to subscribe and unsubscribe once again
+TEST_F(CCSessionTest, subscribe) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
+    mccs.subscribe("A group");
+    EXPECT_TRUE(session.haveSubscription("A group", "*"));
+    mccs.unsubscribe("A group");
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
+}
+
 TEST_F(CCSessionTest, createAnswer) {
     ConstElementPtr answer;
     answer = createAnswer();
