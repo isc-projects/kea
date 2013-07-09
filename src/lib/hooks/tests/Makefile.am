@@ -2,11 +2,6 @@ SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
-AM_LDFLAGS = $(PTHREAD_LDFLAGS)
-
-if USE_STATIC_LINK
-AM_LDFLAGS += -static
-endif
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
@@ -88,6 +83,12 @@ nodist_run_unittests_SOURCES += test_libraries.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+if USE_STATIC_LINK
+# If specified, only link unit tests static - the test libraries must be
+# build as shared libraries.
+run_unittests_LDFLAGS  += -static
+endif
+
 run_unittests_LDADD    = $(AM_LDADD)    $(GTEST_LDADD)
 
 run_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
