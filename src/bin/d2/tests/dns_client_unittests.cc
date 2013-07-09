@@ -84,7 +84,7 @@ public:
           corrupt_response_(false),
           expect_response_(true),
           test_timer_(service_) {
-        asiodns::logger.setSeverity(log::INFO);
+        asiodns::logger.setSeverity(isc::log::INFO);
         response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
         dns_client_.reset(new DNSClient(response_, this));
 
@@ -97,7 +97,7 @@ public:
     //
     // Sets the asiodns logging level back to DEBUG.
     virtual ~DNSClientTest() {
-        asiodns::logger.setSeverity(log::DEBUG);
+        asiodns::logger.setSeverity(isc::log::DEBUG);
     };
 
     // @brief Exchange completion callback.
