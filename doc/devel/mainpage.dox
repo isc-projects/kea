@@ -36,22 +36,22 @@
  * Regardless of your field of expertise, you are encouraged to visit
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  *
- * @section hookDevelopersGuide
- * - @subpage hookIntroduction
- *   - @subpage hookLanguages
- *   - @subpage hookTerminology
- * - @subpage hookTutorial
- *   - @subpage hookFrameworkFunctions
- *   - @subpage hookCallouts
- *   - @subpage hookExampleCallouts
- *   - @subpage hookBuild
- *   - @subpage hookConfiguration
- * - @subpage hookAdvancedTopics
- *   - @subpage hookContextCreateDestroy
- *   - @subpage hookCalloutRegistration
- *   - @subpage hookMultipleLibraries
- *   - @subpage hookInterLibraryData
- *   - @subpage hookRegisterMultipleLibraries
+ * @section hooksdgDevelopersGuide
+ * - @subpage hooksdgIntroduction
+ *   - @subpage hooksdgLanguages
+ *   - @subpage hooksdgTerminology
+ * - @subpage hooksdgTutorial
+ *   - @subpage hooksdgFrameworkFunctions
+ *   - @subpage hooksdgCallouts
+ *   - @subpage hooksdgExampleCallouts
+ *   - @subpage hooksdgBuild
+ *   - @subpage hooksdgConfiguration
+ * - @subpage hooksdgAdvancedTopics
+ *   - @subpage hooksdgContextCreateDestroy
+ *   - @subpage hooksdgCalloutRegistration
+ *   - @subpage hooksdgMultipleLibraries
+ *   - @subpage hooksdgInterLibraryData
+ *   - @subpage hooksdgRegisterMultipleLibraries
  *
  * @section dnsMaintenanceGuide DNS Maintenance Guide
  * - Authoritative DNS (todo)
