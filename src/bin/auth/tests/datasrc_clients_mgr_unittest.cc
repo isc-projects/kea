@@ -263,7 +263,7 @@ TEST(DataSrcClientsMgrTest, wakeup) {
         // Push a callback in and wake the manager
         FakeDataSrcClientsBuilder::callback_queue->
             push_back(boost::bind(callback, &called, &tag, 1));
-        write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1);
+        EXPECT_EQ(1, write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1));
         mgr.run_one();
         EXPECT_TRUE(called);
         EXPECT_EQ(1, tag);
@@ -271,7 +271,7 @@ TEST(DataSrcClientsMgrTest, wakeup) {
 
         called = false;
         // If we wake up and don't push anything, it doesn't break.
-        write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1);
+        EXPECT_EQ(1, write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1));
         mgr.run_one();
         EXPECT_FALSE(called);
 
