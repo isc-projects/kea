@@ -109,8 +109,11 @@ public:
     ///
     /// @name Copy constructor and assignment operator
     ///
-    /// Copy constructor and assignment operator are private because
-    /// @c DNSClient is a singleton class and its instance should not be copied.
+    /// Copy constructor and assignment operator are private because there are
+    /// no use cases when @DNSClient instance will need to be copied. Also, it
+    /// is desired to avoid copying @DNSClient::impl_ pointer and external
+    /// callbacks.
+    ///
     //@{
 private:
     DNSClient(const DNSClient& source);
