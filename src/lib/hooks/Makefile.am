@@ -35,13 +35,14 @@ libb10_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
 libb10_hooks_la_SOURCES += library_handle.cc library_handle.h
 libb10_hooks_la_SOURCES += library_manager.cc library_manager.h
 libb10_hooks_la_SOURCES += library_manager_collection.cc library_manager_collection.h
+libb10_hooks_la_SOURCES += pointer_converter.h
 libb10_hooks_la_SOURCES += server_hooks.cc server_hooks.h
 
 nodist_libb10_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libb10_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_hooks_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libb10_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -ldl
+libb10_hooks_la_LDFLAGS  = $(AM_LDFLAGS)
 libb10_hooks_la_LIBADD  =
 libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
