@@ -22,7 +22,7 @@ namespace {
 
 // Take care of differences in DLL naming between operating systems.
 
-#ifdef OS_BSD
+#ifdef OS_OSX
 #define DLL_SUFFIX ".dylib"
 
 #else

@@ -470,6 +470,17 @@ AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
 AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
 
+# Deal with variants
+AM_CONDITIONAL(OS_FREEBSD, test $system = FreeBSD)
+AM_COND_IF([OS_FREEBSD], [AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])])
+AM_CONDITIONAL(OS_NETBSD, test $system = NetBSD)
+AM_COND_IF([OS_NETBSD], [AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])])
+AM_CONDITIONAL(OS_OPENBSD, test $system = OpenBSD)
+AM_COND_IF([OS_OPENBSD], [AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])])
+AM_CONDITIONAL(OS_OSX, test $system = Darwin)
+AM_COND_IF([OS_OSX], [AC_DEFINE([OS_OSX], [1], [Running on OSX?])])
+
+
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
 #include <sys/types.h>
