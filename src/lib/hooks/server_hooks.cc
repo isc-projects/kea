@@ -55,7 +55,8 @@ ServerHooks::registerHook(const string& name) {
     inverse_hooks_[index] = name;
 
     // Log it if debug is enabled
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_HOOK_REGISTERED).arg(name);
+    /// @todo See todo comment in reset() below.
+    //LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_HOOK_REGISTERED).arg(name);
 
     // ... and return numeric index.
     return (index);
@@ -85,7 +86,12 @@ ServerHooks::reset() {
 
     // Log a warning - although this is done during testing, it should never be
     // seen in a production system.
-    LOG_WARN(hooks_logger, HOOKS_HOOK_LIST_RESET);
+    /// @todo Implement proper workaround here. The issue is when the first
+    /// module (e.g. Dhcp6Srv module) initializes global structure it calls
+    /// HooksManager::registerHooks() which in turn creates ServerHooks object.
+    /// Its constructor calls reset() method, but the loggers are not initialized
+    /// yet and exception is thrown.
+    //LOG_WARN(hooks_logger, HOOKS_HOOK_LIST_RESET);
 }
 
 // Find the name associated with a hook index.

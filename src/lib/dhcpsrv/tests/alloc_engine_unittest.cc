@@ -112,10 +112,6 @@ public:
 
     virtual ~AllocEngine6Test() {
         factory_.destroy();
-
-        // Remove all registered hook points (it must be done even for tests that
-        // do not use hooks as the base class - Dhcpv6Srv registers hooks
-        ServerHooks::getServerHooks().reset();
     }
 
     DuidPtr duid_;            ///< client-identifier (value used in tests)
@@ -184,10 +180,6 @@ public:
 
     virtual ~AllocEngine4Test() {
         factory_.destroy();
-
-        // Remove all registered hook points (it must be done even for tests that
-        // do not use hooks as the base class - Dhcpv6Srv registers hooks
-        ServerHooks::getServerHooks().reset();
     }
 
     ClientIdPtr clientid_;    ///< Client-identifier (value used in tests)
@@ -1045,7 +1037,8 @@ public:
     }
 
     virtual ~HookAllocEngine6Test() {
-
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+            "lease6_select");
     }
 
     /// @brief clears out buffers, so callouts can store received arguments
