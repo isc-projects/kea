@@ -453,8 +453,6 @@ public:
                             bool want_finder = true) const;
 
     /// \brief This holds one data source client and corresponding information.
-    ///
-    /// \todo The content yet to be defined.
     struct DataSourceInfo {
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
