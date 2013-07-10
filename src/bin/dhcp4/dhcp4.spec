@@ -3,7 +3,7 @@
     "module_name": "Dhcp4",
     "module_description": "DHCPv4 server daemon",
     "config_data": [
-      { "item_name": "interface",
+      { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
         "item_default": [ "all" ],

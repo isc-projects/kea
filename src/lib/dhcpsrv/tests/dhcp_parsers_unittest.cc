@@ -42,6 +42,7 @@ public:
     /// @brief Constructor
     ///
     DhcpParserTest() {
+        CfgMgr::instance().deleteActiveIfaces();
     }
 };
 
@@ -197,25 +198,56 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
 ///
 /// Verifies that the parser:
 /// 1. Does not allow empty for storage.
-/// 2. Does not allow name other than "interface"
-///
-/// InterfaceListParser doesn't do very much, this test will need to 
-/// expand once it does.
+/// 2. Does not allow name other than "interfaces"
+/// 3. Parses list of interfaces and adds them to CfgMgr
+/// 4. Parses 'all' keyword and sets a CfgMgr flag which indicates that
+///    server will listen on all interfaces.
 TEST_F(DhcpParserTest, interfaceListParserTest) {
 
-    const std::string name = "interface";
+    const std::string name = "interfaces";
 
     // Verify that parser constructor fails if parameter name isn't "interface"
     EXPECT_THROW(InterfaceListConfigParser("bogus_name"), isc::BadValue);
 
-    InterfaceListConfigParser parser(name);
+    boost::scoped_ptr<InterfaceListConfigParser>
+        parser(new InterfaceListConfigParser(name));
     ElementPtr list_element = Element::createList();
     list_element->add(Element::create("eth0"));
     list_element->add(Element::create("eth1"));
+
+    // Make sure there are no interfaces added yet.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+
+    // This should parse the configuration and add eth0 and eth1 to the list
+    // of interfaces that server should listen on.
+    parser->build(list_element);
+    parser->commit();
+
+    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
+    // eth2 was not added.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+
+    // Add keyword all to the configuration. This should activate all
+    // interfaces, including eth2, even though it has not been explicitly
+    // added.
+    list_element->add(Element::create("all"));
+
+    // Reset parser's state.
+    parser.reset(new InterfaceListConfigParser(name));
+    parser->build(list_element);
+    parser->commit();
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
 }
 
 /// @brief Test Implementation of abstract OptionDataParser class. Allows 
-/// testing basic option parsing.   
+/// testing basic option parsing.
 class UtestOptionDataParser : public OptionDataParser {
 public:
 
