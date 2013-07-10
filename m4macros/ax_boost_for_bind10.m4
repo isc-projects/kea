@@ -28,6 +28,8 @@ dnl                               cause build failure; otherwise set to "no"
 dnl   BOOST_MAPPED_FILE_CXXFLAG set to the compiler flag that would need to
 dnl                             compile managed_mapped_file (can be empty).
 dnl                             It is of no use if "WOULDFAIL" is yes.
+dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
+dnl                                 cause build error; otherwise set to "no"
 
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
 AC_LANG_SAVE
@@ -145,6 +147,18 @@ done
 if test $BOOST_MAPPED_FILE_WOULDFAIL = yes; then
   AC_MSG_RESULT(no)
 fi
+
+# BOOST_STATIC_ASSERT in versions below Boost 1.54.0 is known to result
+# in warnings with GCC 4.8.  Detect it.
+AC_MSG_CHECKING([BOOST_STATIC_ASSERT compiles])
+AC_TRY_COMPILE([
+#include <boost/static_assert.hpp>
+void testfn(void) { BOOST_STATIC_ASSERT(true); }
+],,
+[AC_MSG_RESULT(yes)
+ BOOST_STATIC_ASSERT_WOULDFAIL=no],
+[AC_MSG_RESULT(no)
+ BOOST_STATIC_ASSERT_WOULDFAIL=yes])
 
 CXXFLAGS="$CXXFLAGS_SAVED"
 
