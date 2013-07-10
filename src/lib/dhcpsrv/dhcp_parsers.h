@@ -302,8 +302,23 @@ public:
     virtual void commit();
 
 private:
+    /// @brief Check that specified interface exists in
+    /// @c InterfaceListConfigParser::interfaces_.
+    ///
+    /// @param iface A name of the interface.
+    ///
+    /// @return true if specified interface name was found.
+    bool isIfaceAdded(const std::string& iface) const;
+
     /// contains list of network interfaces
-    std::vector<std::string> interfaces_;
+    typedef std::list<std::string> IfaceListStorage;
+    IfaceListStorage interfaces_;
+
+    // Should server listen on all interfaces.
+    bool activate_all_;
+
+    // Parsed parameter name
+    std::string param_name_;
 };
 
 
