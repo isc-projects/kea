@@ -4,65 +4,65 @@ hide members
 
 note "Automatic placement of classes\ndoesn't look good. This diagram\nhas to be improved." as n1
 
-Auth "1" *-d-> "*" ConfigurableClientList
-Auth -d-> DataSourceClient
-Auth -d-> ZoneWriter
-Auth -d-> ZoneTableAccessor
-Auth -d-> DataSourceStatus
-Auth -d-> ZoneTableIterator
+Auth "1" *--> "*" ConfigurableClientList
+Auth --> DataSourceClient
+Auth --> ZoneWriter
+Auth --> ZoneTableAccessor
+Auth --> DataSourceStatus
+Auth --> ZoneTableIterator
 
-ConfigurableClientList "1" *-d-> "*" DataSourceInfo
+ConfigurableClientList "1" *--> "*" DataSourceInfo
 ConfigurableClientList ..> ZoneTableSegment : <<reset>>
-ConfigurableClientList ..d-> DataSourceStatus : <<create>>
+ConfigurableClientList ..> DataSourceStatus : <<create>>
 ConfigurableClientList ..> ZoneWriter : <<create>>
 ConfigurableClientList ..> ZoneTableAccessor : <<create>>
 
-DataSourceInfo "1" *-u-> "*" DataSourceClient
-DataSourceInfo "1" *-r-> "*" CacheConfig
-DataSourceInfo "1" *-d-> "*" ZoneTableSegment
+DataSourceInfo "1" *--> "*" DataSourceClient
+DataSourceInfo "1" *--> "*" CacheConfig
+DataSourceInfo "1" *--> "*" ZoneTableSegment
 
 ZoneTableAccessor ..> ZoneTableIterator : <<create>>
 
-ZoneTableAccessorCache -> CacheConfig
+ZoneTableAccessorCache --> CacheConfig
 ZoneTableAccessorCache ..> ZoneTableIteratorCache : <<create>>
-ZoneTableAccessorCache -u-o ZoneTableAccessor
+ZoneTableAccessorCache --o ZoneTableAccessor
 
-ZoneTableIteratorCache -u-o ZoneTableIterator
-ZoneTableIteratorCache -u-> CacheConfig
+ZoneTableIteratorCache --o ZoneTableIterator
+ZoneTableIteratorCache --> CacheConfig
 
-ZoneWriter -d-> ZoneTableSegment
+ZoneWriter --> ZoneTableSegment
 ZoneWriter ..> ZoneData : add/replace
 
-ZoneTableSegment "1" *-r-> "1" ZoneTableHeader
-ZoneTableSegment "1" *-d-> "1" MemorySegment
+ZoneTableSegment "1" *--> "1" ZoneTableHeader
+ZoneTableSegment "1" *--> "1" MemorySegment
 
 CacheConfig ..> LoadAction
 
 LoadAction ..> ZoneData : create
-LoadAction *-> ZoneDataLoader
+LoadAction *--> ZoneDataLoader
 
-ZoneDataLoader -> ZoneData
-ZoneDataLoader *-> ZoneDataUpdater
-ZoneDataLoader -> MemorySegment
+ZoneDataLoader --> ZoneData
+ZoneDataLoader *--> ZoneDataUpdater
+ZoneDataLoader --> MemorySegment
 
-ZoneDataUpdater -> ZoneData
+ZoneDataUpdater --> ZoneData
 ZoneDataUpdater ..> RdataSet : create
 ZoneDataUpdater ..> RdataSet : add
 
-ZoneTableHeader "1" *-d-> "1" ZoneTable
-ZoneTable "1" *-d-> "1" ZoneData
-ZoneData "1" *-d-> "1" RdataSet
+ZoneTableHeader "1" *--> "1" ZoneTable
+ZoneTable "1" *--> "1" ZoneData
+ZoneData "1" *--> "1" RdataSet
 
-loadFromFile -d-o LoadAction
-IteratorLoader -d-o LoadAction
+LoadFromFile --o LoadAction
+IteratorLoader --o LoadAction
 
-MemorySegmentMapped -d-o MemorySegment
-MemorySegmentLocal -d-o MemorySegment
+MemorySegmentMapped --o MemorySegment
+MemorySegmentLocal --o MemorySegment
 
-ZoneTableSegmentMapped -d-o ZoneTableSegment
-ZoneTableSegmentLocal -d-o ZoneTableSegment
+ZoneTableSegmentMapped --o ZoneTableSegment
+ZoneTableSegmentLocal --o ZoneTableSegment
 
-ZoneTableSegmentMapped *-d-> MemorySegmentMapped
-ZoneTableSegmentLocal *-d-> MemorySegmentLocal
+ZoneTableSegmentMapped *--> MemorySegmentMapped
+ZoneTableSegmentLocal *--> MemorySegmentLocal
 
 @enduml
