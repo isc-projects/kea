@@ -13,7 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
-#include <util/hooks/server_hooks.h>
+#include <hooks/hooks_log.h>
+#include <hooks/server_hooks.h>
 
 #include <utility>
 #include <vector>
@@ -22,22 +23,13 @@ using namespace std;
 using namespace isc;
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Constructor - register the pre-defined hooks and check that the indexes
 // assigned to them are as expected.
 
 ServerHooks::ServerHooks() {
-    int create = registerHook("context_create");
-    int destroy = registerHook("context_destroy");
-
-    if ((create != CONTEXT_CREATE) || (destroy != CONTEXT_DESTROY)) {
-        isc_throw(Unexpected, "pre-defined hook indexes are not as expected. "
-                  "context_create: expected = " << CONTEXT_CREATE <<
-                  ", actual = " << create <<
-                  ". context_destroy: expected = " << CONTEXT_DESTROY <<
-                  ", actual = " << destroy);
-    }
+    reset();
 }
 
 // Register a hook.  The index assigned to the hook is the current number
@@ -59,8 +51,55 @@ ServerHooks::registerHook(const string& name) {
                   " is already registered");
     }
 
-    // New element inserted, return numeric index.
+    // Element was inserted, so add to the inverse hooks collection.
+    inverse_hooks_[index] = name;
+
+    // Log it if debug is enabled
+    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_HOOK_REGISTERED).arg(name);
+
+    // ... and return numeric index.
     return (index);
+}
+
+// Reset ServerHooks object to initial state.
+
+void
+ServerHooks::reset() {
+
+    // Clear out the name->index and index->name maps.
+    hooks_.clear();
+    inverse_hooks_.clear();
+
+    // Register the pre-defined hooks.
+    int create = registerHook("context_create");
+    int destroy = registerHook("context_destroy");
+
+    // Check registration went as expected.
+    if ((create != CONTEXT_CREATE) || (destroy != CONTEXT_DESTROY)) {
+        isc_throw(Unexpected, "pre-defined hook indexes are not as expected. "
+                  "context_create: expected = " << CONTEXT_CREATE <<
+                  ", actual = " << create <<
+                  ". context_destroy: expected = " << CONTEXT_DESTROY <<
+                  ", actual = " << destroy);
+    }
+
+    // Log a warning - although this is done during testing, it should never be
+    // seen in a production system.
+    LOG_WARN(hooks_logger, HOOKS_HOOK_LIST_RESET);
+}
+
+// Find the name associated with a hook index.
+
+std::string
+ServerHooks::getName(int index) const {
+
+    // Get iterator to matching element.
+    InverseHookCollection::const_iterator i = inverse_hooks_.find(index);
+    if (i == inverse_hooks_.end()) {
+        isc_throw(NoSuchHook, "hook index " << index << " is not recognised");
+    }
+
+    return (i->second);
 }
 
 // Find the index associated with a hook name.
@@ -92,33 +131,13 @@ ServerHooks::getHookNames() const {
     return (names);
 }
 
-// Hook registration function methods
+// Return global ServerHooks object
 
-// Access the hook registration function vector itself
-
-std::vector<HookRegistrationFunction::RegistrationFunctionPtr>&
-HookRegistrationFunction::getFunctionVector() {
-    static std::vector<RegistrationFunctionPtr> reg_functions;
-    return (reg_functions);
+ServerHooks&
+ServerHooks::getServerHooks() {
+    static ServerHooks hooks;
+    return (hooks);
 }
-
-// Constructor - add a registration function to the function vector
-
-HookRegistrationFunction::HookRegistrationFunction(
-    HookRegistrationFunction::RegistrationFunctionPtr reg_func) {
-    getFunctionVector().push_back(reg_func);
-}
-
-// Execute all registered registration functions
-
-void
-HookRegistrationFunction::execute(ServerHooks& hooks) {
-    std::vector<RegistrationFunctionPtr>& reg_functions = getFunctionVector();
-    for (int i = 0; i < reg_functions.size(); ++i) {
-        (*reg_functions[i])(hooks);
-    }
-}
-
 
 
 } // namespace util

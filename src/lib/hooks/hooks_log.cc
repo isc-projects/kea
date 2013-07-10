@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,28 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/hooks/callout_manager.h>
-#include <util/hooks/library_handle.h>
+/// Defines the logger used by the NSAS
+
+#include "hooks/hooks_log.h"
 
 namespace isc {
-namespace util {
+namespace hooks {
 
-// Callout manipulation - all deferred to the CalloutManager.
+isc::log::Logger hooks_logger("hooks");
 
-void
-LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
-    callout_manager_->registerCallout(name, callout);
-}
-
-bool
-LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
-    return (callout_manager_->deregisterCallout(name, callout));
-}
-
-bool
-LibraryHandle::deregisterAllCallouts(const std::string& name) {
-    return (callout_manager_->deregisterAllCallouts(name));
-}
-
-} // namespace util
+} // namespace hooks
 } // namespace isc
+

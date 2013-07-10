@@ -12,16 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <util/hooks/callout_handle.h>
-#include <util/hooks/callout_manager.h>
-#include <util/hooks/library_handle.h>
-#include <util/hooks/server_hooks.h>
+#include <hooks/callout_handle.h>
+#include <hooks/callout_manager.h>
+#include <hooks/library_handle.h>
+#include <hooks/server_hooks.h>
 
 #include <boost/shared_ptr.hpp>
 
 #include <gtest/gtest.h>
 
-using namespace isc::util;
+using namespace isc::hooks;
 using namespace std;
 
 namespace {
@@ -40,8 +40,7 @@ public:
     /// Sets up a callout manager to be referenced by the CalloutHandle in
     /// these tests. (The "4" for the number of libraries in the
     /// CalloutManager is arbitrary - it is not used in these tests.)
-    CalloutHandleTest()
-        : hooks_(new ServerHooks()), manager_(new CalloutManager(hooks_, 4))
+    CalloutHandleTest() : manager_(new CalloutManager(4))
     {}
 
     /// Obtain hook manager
@@ -50,9 +49,6 @@ public:
     }
 
 private:
-    /// List of server hooks
-    boost::shared_ptr<ServerHooks> hooks_;
-
     /// Callout manager accessed by this CalloutHandle.
     boost::shared_ptr<CalloutManager> manager_;
 };
@@ -87,7 +83,7 @@ TEST_F(CalloutHandleTest, ArgumentDistinctSimpleType) {
     EXPECT_EQ(142, d);
 
     // Add a short (random value).
-    short e = -81; 
+    short e = -81;
     handle.setArgument("short", e);
     EXPECT_EQ(-81, e);
 
@@ -325,5 +321,9 @@ TEST_F(CalloutHandleTest, SkipFlag) {
     handle.setSkip(false);
     EXPECT_FALSE(handle.getSkip());
 }
+
+// Further tests of the "skip" flag and tests of getting the name of the
+// hook to which the current callout is attached is in the "handles_unittest"
+// module.
 
 } // Anonymous namespace
