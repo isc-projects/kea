@@ -248,6 +248,30 @@ TEST(DataSrcClientsMgrTest, reload) {
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 }
 
+TEST(DataSrcClientsMgrTest, segmentUpdate) {
+    TestDataSrcClientsMgr mgr;
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
+
+    isc::data::ElementPtr args =
+        isc::data::Element::fromJSON("{\"data-source-class\": \"IN\","
+                                     " \"data-source-name\": \"sqlite3\","
+                                     " \"segment-params\": {}}");
+    mgr.segmentInfoUpdate(args);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
+    // Some invalid inputs
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-class\": \"IN\","
+        " \"data-source-name\": \"sqlite3\"}")), CommandError);
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-name\": \"sqlite3\","
+        " \"segment-params\": {}}")), CommandError);
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-class\": \"IN\","
+        " \"segment-params\": {}}")), CommandError);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
+}
+
 void
 callback(bool* called, int *tag_target, int tag_value) {
     *called = true;

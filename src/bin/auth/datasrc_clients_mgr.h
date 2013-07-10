@@ -400,6 +400,36 @@ public:
         sendCommand(datasrc_clientmgr_internal::LOADZONE, args, callback);
     }
 
+    void segmentInfoUpdate(const data::ConstElementPtr& args,
+                           const datasrc_clientmgr_internal::FinishedCallback&
+                           callback =
+                           datasrc_clientmgr_internal::FinishedCallback()) {
+        // Some minimal validation
+        if (!args) {
+            isc_throw(CommandError, "segmentInfoUpdate argument empty");
+        }
+        if (args->getType() != isc::data::Element::map) {
+            isc_throw(CommandError, "segmentInfoUpdate argument not a map");
+        }
+        const char* params[] = {
+            "data-source-name",
+            "data-source-class",
+            "segment-params",
+            NULL
+        };
+        for (const char** param = params; *param; ++param) {
+            if (!args->contains(*param)) {
+                isc_throw(CommandError,
+                          "segmentInfoUpdate argument has no '" << param <<
+                          "' value");
+            }
+        }
+
+
+        sendCommand(datasrc_clientmgr_internal::SEGMENT_INFO_UPDATE, args,
+                    callback);
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
