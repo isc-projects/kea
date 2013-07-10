@@ -430,6 +430,7 @@ AC_SUBST(B10_CXXFLAGS)
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
 AC_SEARCH_LIBS(nanosleep, [rt])
+AC_SEARCH_LIBS(dlsym, [dl])
 
 # Checks for header files.
 
@@ -468,6 +469,17 @@ AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
 AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
 AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
+
+# Deal with variants
+AM_CONDITIONAL(OS_FREEBSD, test $system = FreeBSD)
+AM_COND_IF([OS_FREEBSD], [AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])])
+AM_CONDITIONAL(OS_NETBSD, test $system = NetBSD)
+AM_COND_IF([OS_NETBSD], [AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])])
+AM_CONDITIONAL(OS_OPENBSD, test $system = OpenBSD)
+AM_COND_IF([OS_OPENBSD], [AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])])
+AM_CONDITIONAL(OS_OSX, test $system = Darwin)
+AM_COND_IF([OS_OSX], [AC_DEFINE([OS_OSX], [1], [Running on OSX?])])
+
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
@@ -1317,6 +1329,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/tests/memory/testdata/Makefile
                  src/lib/xfr/Makefile
                  src/lib/xfr/tests/Makefile
+                 src/lib/hooks/Makefile
+                 src/lib/hooks/tests/Makefile
                  src/lib/log/Makefile
                  src/lib/log/interprocess/Makefile
                  src/lib/log/interprocess/tests/Makefile
@@ -1423,6 +1437,8 @@ AC_OUTPUT([doc/version.ent
            src/lib/cc/session_config.h.pre
            src/lib/cc/tests/session_unittests_config.h
            src/lib/datasrc/datasrc_config.h.pre
+           src/lib/hooks/tests/marker_file.h
+           src/lib/hooks/tests/test_libraries.h
            src/lib/log/tests/console_test.sh
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh

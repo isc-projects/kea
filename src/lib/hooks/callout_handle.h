@@ -16,7 +16,7 @@
 #define CALLOUT_HANDLE_H
 
 #include <exceptions/exceptions.h>
-#include <util/hooks/library_handle.h>
+#include <hooks/library_handle.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 /// @brief No such argument
 ///
@@ -54,6 +54,7 @@ public:
 
 class CalloutManager;
 class LibraryHandle;
+class LibraryManagerCollection;
 
 /// @brief Per-packet callout handle
 ///
@@ -79,11 +80,11 @@ class LibraryHandle;
 ///   "context_destroy" callout.  The information is accessed through the
 ///   {get,set}Context() methods.
 ///
-/// - Per-library handle.  Allows the callout to dynamically register and
-///   deregister callouts. (In the latter case, only functions registered by
-///   functions in the same library as the callout doing the deregistration
-///   can be removed: callouts registered by other libraries cannot be
-///   modified.)
+/// - Per-library handle (LibraryHandle). The library handle allows the
+///   callout to dynamically register and deregister callouts. In the latter
+///   case, only functions registered by functions in the same library as the
+///   callout doing the deregistration can be removed: callouts registered by
+///   other libraries cannot be modified.
 
 class CalloutHandle {
 public:
@@ -105,18 +106,32 @@ public:
     /// need to be set when the CalloutHandle is constructed.
     typedef std::map<int, ElementCollection> ContextCollection;
 
-
     /// @brief Constructor
     ///
     /// Creates the object and calls the callouts on the "context_create"
     /// hook.
     ///
+    /// Of the two arguments passed, only the pointer to the callout manager is
+    /// actively used.  The second argument, the pointer to the library manager
+    /// collection, is used for lifetime control: after use, the callout handle
+    /// may contain pointers to memory allocated by the loaded libraries.  The
+    /// used of a shared pointer to the collection of library managers means
+    /// that the libraries that could have allocated memory in a callout handle
+    /// will not be unloaded until all such handles have been destroyed.  This
+    /// issue is discussed in more detail in the documentation for
+    /// isc::hooks::LibraryManager.
+    ///
     /// @param manager Pointer to the callout manager object.
-    CalloutHandle(const boost::shared_ptr<CalloutManager>& manager);
+    /// @param lmcoll Pointer to the library manager collection.  This has a
+    ///        null default for testing purposes.
+    CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
+                  const boost::shared_ptr<LibraryManagerCollection>& lmcoll =
+                        boost::shared_ptr<LibraryManagerCollection>());
 
     /// @brief Destructor
     ///
     /// Calls the context_destroy callback to release any per-packet context.
+    /// It also clears stored data to avoid problems during member destruction.
     ~CalloutHandle();
 
     /// @brief Set argument
@@ -153,7 +168,7 @@ public:
 
         value = boost::any_cast<T>(element_ptr->second);
     }
-    
+
     /// @brief Get argument names
     ///
     /// Returns a vector holding the names of arguments in the argument
@@ -258,7 +273,7 @@ public:
 
         value = boost::any_cast<T>(element_ptr->second);
     }
-    
+
     /// @brief Get context names
     ///
     /// Returns a vector holding the names of items in the context associated
@@ -292,6 +307,14 @@ public:
         getContextForLibrary().clear();
     }
 
+    /// @brief Get hook name
+    ///
+    /// Get the name of the hook to which the current callout is attached.
+    /// This can be the null string if the CalloutHandle is being accessed
+    /// outside of the CalloutManager's "callCallouts" method.
+    ///
+    /// @return Name of the current hook or the empty string if none.
+    std::string getHookName() const;
 
 private:
     /// @brief Check index
@@ -333,6 +356,10 @@ private:
 
     // Member variables
 
+    /// Pointer to the collection of libraries for which this handle has been
+    /// created.
+    boost::shared_ptr<LibraryManagerCollection> lm_collection_;
+
     /// Collection of arguments passed to the callouts
     ElementCollection arguments_;
 
@@ -346,7 +373,10 @@ private:
     bool skip_;
 };
 
-} // namespace util
+/// A shared pointer to a CalloutHandle object.
+typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
+
+} // namespace hooks
 } // namespace isc
 
 
