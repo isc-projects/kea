@@ -627,7 +627,21 @@ private:
     }
 
     void doSegmentUpdate(const isc::data::ConstElementPtr& arg) {
-        (void) arg;
+        // TODO: Error handling. Invalid RRClass, non-existing stuff, exceptions
+        const isc::dns::RRClass
+            rrclass(arg->get("data-source-class")->stringValue());
+        const std::string& name(arg->get("data-source-name")->stringValue());
+        const isc::data::ConstElementPtr& segment_params =
+            arg->get("segment-params");
+        typename MutexType::Locker locker(*map_mutex_);
+        const boost::shared_ptr<isc::datasrc::ConfigurableClientList>& list =
+            (**clients_map_)[rrclass];
+        if (!list) {
+            // TODO: Log error
+            return;
+        }
+        list->resetMemorySegment(name,
+            isc::datasrc::memory::ZoneTableSegment::READ_ONLY, segment_params);
     }
 
     void doLoadZone(const isc::data::ConstElementPtr& arg);
