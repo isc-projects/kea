@@ -1165,7 +1165,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(from_mgr);
 
     // Check that callouts were indeed called
-    EXPECT_EQ(callback_name_, "lease6_select");
+    EXPECT_EQ("lease6_select", callback_name_);
 
     // Now check that the lease in LeaseMgr has the same parameters
     ASSERT_TRUE(callback_lease6_);
@@ -1223,10 +1223,10 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // See if the values overridden by callout are there
     EXPECT_TRUE(lease->addr_.equals(addr_override_));
-    EXPECT_EQ(lease->t1_, t1_override_);
-    EXPECT_EQ(lease->t2_, t2_override_);
-    EXPECT_EQ(lease->preferred_lft_, pref_override_);
-    EXPECT_EQ(lease->valid_lft_, valid_override_);
+    EXPECT_EQ(t1_override_, lease->t1_);
+    EXPECT_EQ(t2_override_, lease->t2_);
+    EXPECT_EQ(pref_override_, lease->preferred_lft_);
+    EXPECT_EQ(valid_override_, lease->valid_lft_);
 
     // Now check if the lease is in the database
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
@@ -1234,10 +1234,10 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
-    EXPECT_EQ(from_mgr->t1_, t1_override_);
-    EXPECT_EQ(from_mgr->t2_, t2_override_);
-    EXPECT_EQ(from_mgr->preferred_lft_, pref_override_);
-    EXPECT_EQ(from_mgr->valid_lft_, valid_override_);
+    EXPECT_EQ(t1_override_, from_mgr->t1_);
+    EXPECT_EQ(t2_override_, from_mgr->t2_);
+    EXPECT_EQ(pref_override_, from_mgr->preferred_lft_);
+    EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
 }
 
 }; // End of anonymous namespace

@@ -208,7 +208,10 @@ public:
     /// to choose a different subnet. Server code has to offer a list
     /// of possible choices (i.e. all subnets).
     /// @return const reference to Subnet6 collection
-    const Subnet6Collection& getSubnets6();
+    inline const Subnet6Collection& getSubnets6() {
+    return (subnets6_);
+}
+
 
     /// @brief get IPv4 subnet by address
     ///

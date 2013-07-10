@@ -262,10 +262,6 @@ void CfgMgr::deleteSubnets6() {
     subnets6_.clear();
 }
 
-const Subnet6Collection& CfgMgr::getSubnets6() {
-    return (subnets6_);
-}
-
 
 std::string CfgMgr::getDataDir() {
     return (datadir_);
