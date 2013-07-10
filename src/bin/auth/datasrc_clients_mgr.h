@@ -94,14 +94,23 @@ typedef boost::function<void ()> FinishedCallback;
 /// This just holds the data items together, no logic or protection
 /// is present here.
 struct Command {
+    /// \brief Constructor
+    ///
+    /// It just initializes the member variables of the same names
+    /// as the parameters.
     Command(CommandID id, const data::ConstElementPtr& params,
             const FinishedCallback& callback) :
         id(id),
         params(params),
         callback(callback)
     {}
+    /// \brief The command to execute
     CommandID id;
+    /// \brief Argument of the command.
+    ///
+    /// If the command takes no argument, it should be null pointer.
     data::ConstElementPtr params;
+    /// \brief A callback to be called once the command finishes.
     FinishedCallback callback;
 };
 
