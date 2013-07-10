@@ -129,6 +129,11 @@ This is warning message issued when there are no domains in the configuration
 which match the cited fully qualified domain name (FQDN).  The DNS Update 
 request for the FQDN cannot be processed.
 
+% DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
+This is a debug message issued when the DHCP-DDNS application encountered an error
+while decoding a response to DNS Update message. Typically, this error will be
+encountered when a response message is malformed.
+
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the Dhcp-Ddns application enters
 its init method.

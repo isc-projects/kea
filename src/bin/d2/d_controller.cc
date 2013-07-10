@@ -46,7 +46,7 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
 }
 
 void
-DControllerBase::launch(int argc, char* argv[]) {
+DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // Step 1 is to parse the command line arguments.
     try {
         parseArgs(argc, argv);
@@ -55,12 +55,16 @@ DControllerBase::launch(int argc, char* argv[]) {
         throw; // rethrow it
     }
 
-    // Now that we know what the mode flags are, we can init logging.
-    // If standalone is enabled, do not buffer initial log messages
-    isc::log::initLogger(bin_name_,
-                         ((verbose_ && stand_alone_)
-                          ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
+    // Do not initialize logger here if we are running unit tests. It would
+    // replace an instance of unit test specific logger.
+    if (!test_mode) {
+        // Now that we know what the mode flags are, we can init logging.
+        // If standalone is enabled, do not buffer initial log messages
+        isc::log::initLogger(bin_name_,
+                             ((verbose_ && stand_alone_)
+                              ? isc::log::DEBUG : isc::log::INFO),
+                             isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone_);
+    }
 
     LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STARTING)
               .arg(app_name_).arg(getpid());
@@ -295,7 +299,8 @@ DControllerBase::commandHandler(const std::string& command,
                                 isc::data::ConstElementPtr args) {
 
     LOG_DEBUG(dctl_logger, DBGLVL_COMMAND, DCTL_COMMAND_RECEIVED)
-              .arg(controller_->getAppName()).arg(command).arg(args->str());
+        .arg(controller_->getAppName()).arg(command)
+        .arg(args ? args->str() : "(no args)");
 
     // Invoke the instance method on the controller singleton.
     return (controller_->executeCommand(command, args));
@@ -368,7 +373,7 @@ DControllerBase::executeCommand(const std::string& command,
         if (rcode == COMMAND_INVALID)
         {
             // It wasn't controller command, so may be an application command.
-            answer = process_->command(command,args);
+            answer = process_->command(command, args);
         }
     }
 

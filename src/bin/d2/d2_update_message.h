@@ -63,6 +63,10 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+class D2UpdateMessage;
+
+/// @brief Pointer to the DNS Update Message.
+typedef boost::shared_ptr<D2UpdateMessage> D2UpdateMessagePtr;
 
 /// @brief The @c D2UpdateMessage encapsulates a DNS Update message.
 ///

@@ -409,7 +409,7 @@ public:
     /// DControllerBase::launch for details.
     void launch(int argc, char* argv[]) {
         optind = 1;
-        getController()->launch(argc, argv);
+        getController()->launch(argc, argv, true);
     }
 
     /// @Wrapper to invoke the Controller's disconnectSession method.  Please

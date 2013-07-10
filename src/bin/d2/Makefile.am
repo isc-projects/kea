@@ -56,6 +56,7 @@ b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
 b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
+b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
 b10_dhcp_ddns_SOURCES += ncr_msg.cc ncr_msg.h
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
@@ -64,6 +65,7 @@ EXTRA_DIST += d2_messages.mes
 b10_dhcp_ddns_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la 
