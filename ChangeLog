@@ -1,3 +1,9 @@
+639.	[bug]		muks
+	Added workaround for build failure on Fedora 19 between GCC 4.8.x
+	and boost versions less than 1.54. Fedora 19 currently ships
+	boost-1.53.
+	(Trac #3039, git 4ef6830ed357ceb859ebb3e5e821a064bd8797bb)
+
 638.	[bug]*		naokikambe
 	Per-zone statistics counters are distinguished by zone class,
 	e.g. IN, CH, and HS. A class name is added onto a zone name in
