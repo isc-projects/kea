@@ -491,26 +491,24 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
 
-    // Let's execute all callouts registered for lease6_ia_added
+    // Let's execute all callouts registered for lease6_select
     if (callout_handle &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
 
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setSkip(false);
-
         // Pass necessary arguments
-
         // Subnet from which we do the allocation
         callout_handle->setArgument("subnet6", subnet);
 
         // Is this solicit (fake = true) or request (fake = false)
         callout_handle->setArgument("fake_allocation", fake_allocation);
+
+        // The lease that will be assigned to a client
         callout_handle->setArgument("lease6", expired);
 
-        // This is the first callout, so no need to clear any arguments
+        // Call the callouts
         HooksManager::getHooksManager().callCallouts(hook_index_lease6_select_,
                                                      *callout_handle);
 
@@ -518,7 +516,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
             return (Lease6Ptr());
         }
 
@@ -617,7 +615,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP);
             return (Lease6Ptr());
         }
 

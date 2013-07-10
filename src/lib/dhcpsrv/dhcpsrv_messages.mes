@@ -122,9 +122,9 @@ server closes the currently open database, and opens a database using
 the new parameters.
 
 % DHCPSRV_HOOK_LEASE6_IA_ADD_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
-This debug message is printed when a callout installed on lease6_ia_assign
+This debug message is printed when a callout installed on lease6_assign
 hook point sets a skip flag. It means that the server was told that no lease6
-should be assigned. Server will not put that lease in its database and the client
+should be assigned. The server will not put that lease in its database and the client
 will get a NoAddrsAvail for that IA_NA option.
 
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
