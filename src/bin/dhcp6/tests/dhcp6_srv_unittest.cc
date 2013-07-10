@@ -1831,11 +1831,17 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     NakedDhcpv6Srv srv(0);
 
     // check if appropriate hooks are registered
+    int hook_index_pkt6_received = -1;
+    int hook_index_select_subnet = -1;
+    int hook_index_pkt6_send     = -1;
 
     // check if appropriate indexes are set
-    int hook_index_pkt6_received = ServerHooks::getServerHooks().getIndex("pkt6_receive");
-    int hook_index_select_subnet = ServerHooks::getServerHooks().getIndex("subnet6_select");
-    int hook_index_pkt6_send     = ServerHooks::getServerHooks().getIndex("pkt6_send");
+    EXPECT_NO_THROW(hook_index_pkt6_received = ServerHooks::getServerHooks()
+                    .getIndex("pkt6_receive"));
+    EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
+                    .getIndex("subnet6_select"));
+    EXPECT_NO_THROW(hook_index_pkt6_send     = ServerHooks::getServerHooks()
+                    .getIndex("pkt6_send"));
 
     EXPECT_TRUE(hook_index_pkt6_received > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
@@ -1900,6 +1906,8 @@ Pkt6* captureSimpleSolicit() {
 class HooksDhcpv6SrvTest : public Dhcpv6SrvTest {
 
 public:
+
+    /// @brief creates Dhcpv6Srv and prepares buffers for callouts
     HooksDhcpv6SrvTest() {
 
         // Allocate new DHCPv6 Server
@@ -1909,10 +1917,19 @@ public:
         resetCalloutBuffers();
     }
 
+    /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
         delete srv_;
     }
 
+    /// @brief creates an option with specified option code
+    ///
+    /// This method is static, because it is used from callouts
+    /// that do not have a pointer to HooksDhcpv6SSrvTest object
+    ///
+    /// @param option_code code of option to be created
+    ///
+    /// @return pointer to create option object
     static OptionPtr createOption(uint16_t option_code) {
 
         char payload[] = {
@@ -1923,23 +1940,27 @@ public:
         return OptionPtr(new Option(Option::V6, option_code, tmp));
     }
 
-    /// callback that stores received callout name and pkt6 value
+    /// test callback that stores received callout name and pkt6 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_receive_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt6_receive");
 
-        callout_handle.getArgument("pkt6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
     }
 
-    // callback that changes client-id value
+    /// test callback that changes client-id value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_receive_change_clientid(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("query6", pkt);
 
         // get rid of the old client-id
         pkt->delOption(D6O_CLIENTID);
@@ -1951,12 +1972,14 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    // callback that deletes client-id
+    /// test callback that deletes client-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_receive_delete_clientid(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("query6", pkt);
 
         // get rid of the old client-id
         pkt->delOption(D6O_CLIENTID);
@@ -1965,12 +1988,14 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    // callback that sets skip flag
+    /// test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_receive_skip(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("query6", pkt);
 
         callout_handle.setSkip(true);
 
@@ -1978,23 +2003,27 @@ public:
         return pkt6_receive_callout(callout_handle);
     }
 
-    // Callback that stores received callout name and pkt6 value
+    /// Test callback that stores received callout name and pkt6 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_send_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("pkt6_send");
 
-        callout_handle.getArgument("pkt6", callback_pkt6_);
+        callout_handle.getArgument("response6", callback_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         return (0);
     }
 
-    // Callback that changes server-id
+    // Test callback that changes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_send_change_serverid(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("response6", pkt);
 
         // get rid of the old server-id
         pkt->delOption(D6O_SERVERID);
@@ -2006,12 +2035,14 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    // callback that deletes server-id
+    /// test callback that deletes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_send_delete_serverid(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("response6", pkt);
 
         // get rid of the old client-id
         pkt->delOption(D6O_SERVERID);
@@ -2020,12 +2051,14 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    // Callback that sets skip blag
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     pkt6_send_skip(CalloutHandle& callout_handle) {
 
         Pkt6Ptr pkt;
-        callout_handle.getArgument("pkt6", pkt);
+        callout_handle.getArgument("response6", pkt);
 
         callout_handle.setSkip(true);
 
@@ -2033,12 +2066,14 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    // Callback that stores received callout name and subnet6 values
+    /// Test callback that stores received callout name and subnet6 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     subnet6_select_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("subnet6_select");
 
-        callout_handle.getArgument("pkt6", callback_pkt6_);
+        callout_handle.getArgument("query6", callback_pkt6_);
         callout_handle.getArgument("subnet6", callback_subnet6_);
         callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
 
@@ -2046,7 +2081,9 @@ public:
         return (0);
     }
 
-    // Callback that picks the other subnet if possible.
+    /// Test callback that picks the other subnet if possible.
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     subnet6_select_different_subnet_callout(CalloutHandle& callout_handle) {
 
@@ -2067,6 +2104,7 @@ public:
         return (0);
     }
 
+    /// resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt6_.reset();
@@ -2075,28 +2113,33 @@ public:
         callback_argument_names_.clear();
     }
 
+    /// pointer to Dhcpv6Srv that is used in tests
     NakedDhcpv6Srv* srv_;
 
-    // Used in testing pkt6_receive_callout
-    static string callback_name_; ///< string name of the received callout
+    // The following fields are used in testing pkt6_receive_callout
 
-    static Pkt6Ptr callback_pkt6_; ///< Pkt6 structure returned in the callout
+    /// String name of the received callout
+    static string callback_name_;
 
+    /// Pkt6 structure returned in the callout
+    static Pkt6Ptr callback_pkt6_;
+
+    /// Pointer to a subnet received by callout
     static Subnet6Ptr callback_subnet6_;
 
+    /// A list of all available subnets (received by callout)
     static Subnet6Collection callback_subnet6collection_;
 
+    /// A list of all received arguments
     static vector<string> callback_argument_names_;
 };
 
+// The following fields are used in testing pkt6_receive_callout.
+// See fields description in the class for details
 string HooksDhcpv6SrvTest::callback_name_;
-
 Pkt6Ptr HooksDhcpv6SrvTest::callback_pkt6_;
-
 Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
-
 Subnet6Collection HooksDhcpv6SrvTest::callback_subnet6collection_;
-
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 
 
@@ -2131,7 +2174,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
-    expected_argument_names.push_back(string("pkt6"));
+    expected_argument_names.push_back(string("query6"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 }
@@ -2253,7 +2296,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_send) {
 
     // Check that all expected parameters are there
     vector<string> expected_argument_names;
-    expected_argument_names.push_back(string("pkt6"));
+    expected_argument_names.push_back(string("response6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 }
 
