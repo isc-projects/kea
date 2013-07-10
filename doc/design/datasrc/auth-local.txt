@@ -1,26 +1,28 @@
 @startuml
 
-participant auth as "b10-auth"
+participant auth as ":b10-auth"
 [-> auth: new/initial config\n(datasrc cfg)
 activate auth
 
-participant list as "Configurable\nClientList"
+participant list as ":Configurable\nClientList"
 create list
 auth -> list: <<construct>>
 
 auth -> list: configure(cfg)
 activate list
 
-create CacheConfig
-list -> CacheConfig: <<construct>> (cfg)
+participant cache_config as ":CacheConfig"
+create cache_config
+list -> cache_config: <<construct>> (cfg)
 
-participant zt_segment as "ZoneTable\nSegment\n(Local)"
+participant zt_segment as ":ZoneTable\nSegment\n(Local)"
 create zt_segment
 list -> zt_segment: <<construct>>
 activate zt_segment
 
-create ZoneTable
-zt_segment -> ZoneTable: <<construct>>
+participant zone_table as ":ZoneTable"
+create zone_table
+zt_segment -> zone_table: <<construct>>
 
 deactivate zt_segment
 
@@ -30,47 +32,50 @@ note over zt_segment: Local segments are\nalways writable
 zt_segment --> list: true
 deactivate zt_segment
 
-loop for each zone in CacheConfig
-list -> CacheConfig: getLoadAction()
-activate CacheConfig
+loop for each zone in cache_config
+list -> cache_config: getLoadAction()
+activate cache_config
 
-create LoadAction
-CacheConfig -> LoadAction: <<construct>>
+participant la1 as "la1:LoadAction"
+create la1
+cache_config -> la1: <<construct>>
 
-participant LoadAction.2
+participant la2 as "la2:LoadAction"
 
-CacheConfig --> list : LoadAction
+cache_config --> list : la1
 
-deactivate CacheConfig
+deactivate cache_config
 
-create ZoneWriter
-list -> ZoneWriter: <<construct>> (load_action)
+participant w1 as "w1:ZoneWriter"
+create w1
+list -> w1: <<construct>> (la1)
 
-participant ZoneWriter.2
+participant w2 as "w2:ZoneWriter"
 
-list -> ZoneWriter: load()
-activate ZoneWriter
-ZoneWriter -> LoadAction: (funcall)
-activate LoadAction
+list -> w1: load()
+activate w1
+w1 -> la1: (funcall)
+activate la1
 
-create ZoneData
-LoadAction -> ZoneData: <<construct>> via helpers
+participant zd1 as "zd1:ZoneData"
+create zd1
+la1 -> zd1: <<construct>> via helpers
 
-participant ZoneData.2
+participant zd2 as "zd2:ZoneData"
 
-LoadAction --> ZoneWriter: ZoneData
-deactivate LoadAction
-deactivate ZoneWriter
+la1 --> w1: zd1
+deactivate la1
+deactivate w1
 
-list -> ZoneWriter: install()
-activate ZoneWriter
+list -> w1: install()
+activate w1
 
-ZoneWriter -> ZoneTable: addZone(ZoneData)
-activate ZoneTable
-ZoneTable --> ZoneWriter: NULL (no old data)
-deactivate ZoneTable
+w1 -> zone_table: addZone(zd1)
+activate zone_table
+zone_table --> w1: NULL (no old data)
+deactivate zone_table
 
-deactivate ZoneWriter
+deactivate w1
 
 end
 
@@ -82,55 +87,55 @@ deactivate auth
 [-> auth: reload\n(zonename)
 activate auth
 
-auth -> list: getCachedZoneWriter\n(zone_name)
+auth -> list: getCachedw1\n(zone_name)
 activate list
 
-list -> CacheConfig: getLoadAction()
-activate CacheConfig
+list -> cache_config: getLoadAction()
+activate cache_config
 
-create LoadAction.2
-CacheConfig -> LoadAction.2: <<construct>>
+create la2
+cache_config -> la2: <<construct>>
 
-CacheConfig --> list : LoadAction.2
+cache_config --> list : la2
 
-deactivate CacheConfig
+deactivate cache_config
 
-create ZoneWriter.2
-list -> ZoneWriter.2: <<construct>> (load_action)
+create w2
+list -> w2: <<construct>> (la2)
 
-list --> auth: ZoneWriter.2
+list --> auth: w2
 
 deactivate list
 
 
-auth -> ZoneWriter.2: load()
-activate ZoneWriter.2
-ZoneWriter.2 -> LoadAction.2: (funcall)
-activate LoadAction.2
+auth -> w2: load()
+activate w2
+w2 -> la2: (funcall)
+activate la2
 
-create ZoneData.2
-LoadAction.2 -> ZoneData.2: <<construct>> via helpers
+create zd2
+la2 -> zd2: <<construct>> via helpers
 
-LoadAction.2 --> ZoneWriter.2: ZoneData.2
-deactivate LoadAction.2
-deactivate ZoneWriter.2
+la2 --> w2: zd2
+deactivate la2
+deactivate w2
 
-auth -> ZoneWriter.2: install()
-activate ZoneWriter.2
+auth -> w2: install()
+activate w2
 
-ZoneWriter.2 -> ZoneTable: addZone(ZoneData.2)
-activate ZoneTable
-ZoneTable --> ZoneWriter.2: ZoneData (old data)
-deactivate ZoneTable
+w2 -> zone_table: addZone(zd2)
+activate zone_table
+zone_table --> w2: zd1 (old data)
+deactivate zone_table
 
-deactivate ZoneWriter.2
+deactivate w2
 
-auth -> ZoneWriter.2: cleanup()
-activate ZoneWriter.2
+auth -> w2: cleanup()
+activate w2
 
-ZoneWriter.2 -> ZoneData: <<destroy>>
-destroy ZoneData
-deactivate ZoneWriter.2
+w2 -> zd1: <<destroy>>
+destroy zd1
+deactivate w2
 
 deactivate auth
 
