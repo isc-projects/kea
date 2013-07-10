@@ -1,3 +1,9 @@
+641.	[func]		stephen
+	Added the hooks framework. This allows shared libraries of
+	user-written functions to be loaded at run-time and the
+	functions called during packet processing.
+	(Trac #2980, git 82c997a72890a12af135ace5b9ee100e41c5534e)
+
 640.	[func]		marcin
 	b10-dhcp-ddns: Implemented DNSClient class which implements
 	asynchronous DNS updates using UDP. The TCP and TSIG support
