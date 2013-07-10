@@ -74,8 +74,8 @@ public:
     ///
     /// Resets the collection of hooks to the initial state, with just the
     /// context_create and context_destroy hooks set.  This used during
-    /// construction. It is also used during testing to reset the global
-    /// ServerHooks object.
+    /// testing to reset the global ServerHooks object; it should never be
+    /// used in production.
     ///
     /// @throws isc::Unexpected if the registration of the pre-defined hooks
     ///         fails in some way.
@@ -156,6 +156,16 @@ private:
     /// @throws isc::Unexpected if the registration of the pre-defined hooks
     ///         fails in some way.
     ServerHooks();
+
+    /// @brief Initialize hooks
+    ///
+    /// Sets the collection of hooks to the initial state, with just the
+    /// context_create and context_destroy hooks set.  This used during
+    /// construction.
+    ///
+    /// @throws isc::Unexpected if the registration of the pre-defined hooks
+    ///         fails in some way.
+    void initialize();
 
     /// Useful typedefs.
     typedef std::map<std::string, int> HookCollection;
