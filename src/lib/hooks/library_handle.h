@@ -18,7 +18,7 @@
 #include <string>
 
 namespace isc {
-namespace util {
+namespace hooks {
 
 // Forward declarations
 class CalloutHandle;
@@ -58,7 +58,18 @@ public:
     ///        object.  Note that the "raw" pointer is safe - the only
     ///        instance of the LibraryHandle in the system is as a member of
     ///        the CalloutManager to which it points.
-    LibraryHandle(CalloutManager* manager) : callout_manager_(manager)
+    ///
+    /// @param index Index of the library to which the LibraryHandle applies.
+    ///        If negative, the library index as set in the CalloutManager is
+    ///        used.  Otherwise the current library index is saved, this value
+    ///        is set as the current index, the registration call is made, and
+    ///        the CalloutManager's library index is reset.  Note: although -1
+    ///        is a valid argument value for
+    ///        isc::hooks::CalloutManager::setLibraryIndex(), in this class is
+    ///        is used as a sentinel to indicate that the library index in
+    ///        isc::util::CalloutManager should not be set or reset.
+    LibraryHandle(CalloutManager* manager, int index = -1)
+        : callout_manager_(manager), index_(index)
     {}
 
     /// @brief Register a callout on a hook
@@ -105,8 +116,31 @@ public:
     bool deregisterAllCallouts(const std::string& name);
 
 private:
+    /// @brief Copy constructor
+    ///
+    /// Private (with no implementation) as it makes no sense to copy an object
+    /// of this type.  All code receives a reference to an existing handle which
+    /// is tied to a particular CalloutManager.  Creating a copy of that handle
+    /// runs the risk of a "dangling pointer" to the original handle's callout
+    /// manager.
+    ///
+    /// @param Unused - should be the object to copy.
+    LibraryHandle(const LibraryHandle&);
+
+    /// @brief Assignment operator
+    ///
+    /// Declared private like the copy constructor for the same reasons. It too
+    /// has no implementation.
+    ///
+    /// @param Unused - should be the object to copy.
+    LibraryHandle& operator=(const LibraryHandle&);
+
     /// Back pointer to the collection object for the library
     CalloutManager* callout_manager_;
+
+    /// Library index to which this handle applies.  -1 indicates that it
+    /// applies to whatever index is current in the CalloutManager.
+    int index_;
 };
 
 } // namespace util
