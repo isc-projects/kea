@@ -33,6 +33,10 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
+namespace {
+const char* ALL_IFACES_KEYWORD = "all";
+}
+
 // *********************** ParserContext  *************************
 
 ParserContext::ParserContext(Option::Universe universe):
@@ -140,33 +144,83 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
 
 // ******************** InterfaceListConfigParser *************************
 
-InterfaceListConfigParser::InterfaceListConfigParser(const std::string& 
-                                                     param_name) {
-    if (param_name != "interface") {
+InterfaceListConfigParser::
+InterfaceListConfigParser(const std::string& param_name)
+    : activate_all_(false),
+      param_name_(param_name) {
+    if (param_name_ != "interfaces") {
         isc_throw(BadValue, "Internal error. Interface configuration "
             "parser called for the wrong parameter: " << param_name);
     }
 }
 
-void 
+void
 InterfaceListConfigParser::build(ConstElementPtr value) {
+    // First, we iterate over all specified entries and add it to the
+    // local container so as we can do some basic validation, e.g. eliminate
+    // duplicates.
     BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
-        interfaces_.push_back(iface->str());
+        std::string iface_name = iface->stringValue();
+        if (iface_name != ALL_IFACES_KEYWORD) {
+            // Let's eliminate duplicates. We could possibly allow duplicates,
+            // but if someone specified duplicated interface name it is likely
+            // that he mistyped the configuration. Failing here should draw his
+            // attention.
+            if (isIfaceAdded(iface_name)) {
+                isc_throw(isc::dhcp::DhcpConfigError, "duplicate interface"
+                          << " name '" << iface_name << "' specified in '"
+                          << param_name_ << "' configuration parameter");
+            }
+            // @todo check that this interface exists in the system!
+            // The IfaceMgr exposes mechanisms to check this.
+
+            // Add the interface name if ok.
+            interfaces_.push_back(iface_name);
+
+        } else {
+            activate_all_ = true;
+
+        }
     }
 }
 
-void 
+void
 InterfaceListConfigParser::commit() {
-    /// @todo: Implement per interface listening. Currently always listening
-    /// on all interfaces.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    // Remove active interfaces and clear a flag which marks all interfaces
+    // active
+    cfg_mgr.deleteActiveIfaces();
+
+    if (activate_all_) {
+        // Activate all interfaces. There is not need to add their names
+        // explicitly.
+        cfg_mgr.activateAllIfaces();
+
+    } else {
+        // Explicitly add names of the interfaces which server should listen on.
+        BOOST_FOREACH(std::string iface, interfaces_) {
+            cfg_mgr.addActiveIface(iface);
+        }
+    }
+}
+
+bool
+InterfaceListConfigParser::isIfaceAdded(const std::string& iface) const {
+    for (IfaceListStorage::const_iterator it = interfaces_.begin();
+         it != interfaces_.end(); ++it) {
+        if (iface == *it) {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 // **************************** OptionDataParser *************************
 OptionDataParser::OptionDataParser(const std::string&, OptionStoragePtr options,
                                   ParserContextPtr global_context)
-    : boolean_values_(new BooleanStorage()), 
-    string_values_(new StringStorage()), uint32_values_(new Uint32Storage()), 
-    options_(options), option_descriptor_(false), 
+    : boolean_values_(new BooleanStorage()),
+    string_values_(new StringStorage()), uint32_values_(new Uint32Storage()),
+    options_(options), option_descriptor_(false),
     global_context_(global_context) {
     if (!options_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
