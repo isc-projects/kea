@@ -91,10 +91,18 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
     // Given that we already eliminated the possibility that TCP is used, it
     // would be sufficient  to check that (proto != DNSClient::UDP). But, once
     // support TCP is added the check above will disappear and the extra check
-    // will be needed here anyway. Why not add it now?
-    if (proto_ != DNSClient::TCP && proto_ != DNSClient::UDP) {
-        isc_throw(isc::NotImplemented, "invalid transport protocol type '"
-                  << proto_ << "' specified for DNS Updates");
+    // will be needed here anyway.
+    // Note that cascaded check is used here instead of:
+    //   if (proto_ != DNSClient::TCP && proto_ != DNSClient::UDP)..
+    // because some versions of GCC compiler complain that check above would
+    // be always 'false' due to limited range of enumeration. In fact, it is
+    // possible to pass out of range integral value through enum and it should
+    // be caught here.
+    if (proto_ != DNSClient::TCP) {
+        if (proto_ != DNSClient::UDP) {
+            isc_throw(isc::NotImplemented, "invalid transport protocol type '"
+                      << proto_ << "' specified for DNS Updates");
+        }
     }
 
     if (!response_) {
