@@ -210,8 +210,13 @@ bool Dhcpv6Srv::run() {
             if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt6_receive_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-                // This is the first callout, so no need to clear any arguments
-                callout_handle->setArgument("pkt6", query);
+                // Delete previously set arguments
+                callout_handle->deleteAllArguments();
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("query6", query);
+
+                // Call callouts
                 HooksManager::getHooksManager().callCallouts(hook_index_pkt6_receive_,
                                                 *callout_handle);
 
@@ -223,7 +228,7 @@ bool Dhcpv6Srv::run() {
                     continue;
                 }
 
-                callout_handle->getArgument("pkt6", query);
+                callout_handle->getArgument("query6", query);
             }
 
             try {
@@ -298,7 +303,7 @@ bool Dhcpv6Srv::run() {
 
                 // Execute all callouts registered for packet6_send
                 if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt6_send_)) {
-                    boost::shared_ptr<CalloutHandle> callout_handle = getCalloutHandle(query);
+                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                     // Delete all previous arguments
                     callout_handle->deleteAllArguments();
@@ -307,7 +312,7 @@ bool Dhcpv6Srv::run() {
                     callout_handle->setSkip(false);
 
                     // Set our response
-                    callout_handle->setArgument("pkt6", rsp);
+                    callout_handle->setArgument("response6", rsp);
 
                     // Call all installed callouts
                     HooksManager::getHooksManager().callCallouts(hook_index_pkt6_send_,
@@ -654,12 +659,17 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
     // Let's execute all callouts registered for packet_received
     if (HooksManager::getHooksManager().calloutsPresent(hook_index_subnet6_select_)) {
-        boost::shared_ptr<CalloutHandle> callout_handle = getCalloutHandle(question);
+        CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
-        // This is the first callout, so no need to clear any arguments
-        callout_handle->setArgument("pkt6", question);
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query6", question);
         callout_handle->setArgument("subnet6", subnet);
         callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
+
+        // Call user (and server-side) callouts
         HooksManager::getHooksManager().callCallouts(hook_index_subnet6_select_,
                                         *callout_handle);
 
@@ -1223,8 +1233,16 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
 }
 
 isc::hooks::CalloutHandlePtr Dhcpv6Srv::getCalloutHandle(const Pkt6Ptr& pkt) {
-    CalloutHandlePtr callout_handle;
+    // This method returns a CalloutHandle for a given packet. It is guaranteed
+    // to return the same callout_handle (so user library contexts are
+    // preserved). This method works well if the server processes one packet
+    // at a time. Once the server architecture is extended to cover parallel
+    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
+    // method has to be extended (e.g. store callouts in a map and use pkt as
+    // a key). Additional code would be required to release the callout handle
+    // once the server finished processing.
 
+    CalloutHandlePtr callout_handle;
     static Pkt6Ptr old_pointer;
 
     if (!callout_handle ||
