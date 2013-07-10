@@ -524,7 +524,7 @@ public:
     /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
     /// it is exception free.
     std::vector<DataSourceStatus> getStatus() const;
-public:
+
     /// \brief Access to the data source clients.
     ///
     /// It can be used to examine the loaded list of data sources clients
