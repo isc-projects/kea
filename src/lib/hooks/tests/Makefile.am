@@ -14,7 +14,8 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-CLEANFILES = *.gcno *.gcda
+# Files to clean include the file created by testing.
+CLEANFILES = *.gcno *.gcda $(builddir)/marker_file.dat
 
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
