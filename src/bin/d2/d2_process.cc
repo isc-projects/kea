@@ -76,8 +76,8 @@ D2Process::command(const std::string& command, isc::data::ConstElementPtr args){
     // @todo This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise
     // it should reject all commands as it does now.
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
-              DHCP_DDNS_COMMAND).arg(command).arg(args->str());
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_COMMAND)
+        .arg(command).arg(args ? args->str() : "(no args)");
 
     return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
                                       + command));
