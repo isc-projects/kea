@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''Tests for isc.statistics.counter'''
+'''Tests for isc.statistics.counters'''
 
 import unittest
 import threading
