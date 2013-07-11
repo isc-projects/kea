@@ -54,6 +54,10 @@ class MemorySegmentBuilder:
         self._shutdown = False
 
     def __handle_shutdown(self):
+        # This method is called when handling the 'shutdown' command. The
+        # following tuple is passed:
+        #
+        # ('shutdown',)
         self._shutdown = True
 
     def __handle_bad_command(self):
@@ -64,21 +68,40 @@ class MemorySegmentBuilder:
         self._response_queue.append(('bad_command',))
         self._shutdown = True
 
-    def __handle_load(self, zname, dsrc_info, rrclass, dsrc_name):
+    def __handle_load(self, zone_name, dsrc_info, rrclass, dsrc_name):
+        # This method is called when handling the 'load' command. The
+        # following tuple is passed:
+        #
+        # ('load', zone_name, dsrc_info, rrclass, dsrc_name)
+        #
+        # where:
+        #
+        #  * zone_name is None or isc.dns.Name, specifying the zone name
+        #    to load. If it's None, it means all zones to be cached in
+        #    the specified data source (used for initialization).
+        #
+        #  * dsrc_info is a DataSrcInfo object corresponding to the
+        #    generation ID of the set of data sources for this loading.
+        #
+        #  * rrclass is an isc.dns.RRClass object, the RR class of the
+        #    data source.
+        #
+        #  * dsrc_name is a string, specifying a data source name.
+
         clist = dsrc_info.clients_map[rrclass]
         sgmt_info = dsrc_info.segment_info_map[(rrclass, dsrc_name)]
         clist.reset_memory_segment(dsrc_name,
                                    ConfigurableClientList.READ_ONLY,
                                    sgmt_info.get_reset_param(SegmentInfo.WRITER))
 
-        if zname is not None:
-            zones = [(None, zname)]
+        if zone_name is not None:
+            zones = [(None, zone_name)]
         else:
             zones = clist.get_zone_table_accessor(dsrc_name, True)
 
-        for _, zname in zones:
-            cache_load_error = (zname is None) # install empty zone initially
-            writer = clist.get_cached_zone_writer(zname, catch_load_error,
+        for _, zone_name in zones:
+            cache_load_error = (zone_name is None) # install empty zone initially
+            writer = clist.get_cached_zone_writer(zone_name, catch_load_error,
                                                   dsrc_name)
             try:
                 error = writer.load()
@@ -128,6 +151,9 @@ class MemorySegmentBuilder:
                 for command_tuple in local_command_queue:
                     command = command_tuple[0]
                     if command == 'load':
+                        # See the comments for __handle_load() for
+                        # details of the tuple passed to the "load"
+                        # command.
                         self.__handle_load(command_tuple[1], command_tuple[2],
                                            command_tuple[3], command_tuple[4])
                     elif command == 'shutdown':
