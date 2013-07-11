@@ -33,10 +33,17 @@ class SegmentInfo:
     segment-type specific details.  Such details are expected to be
     delegated to subclasses corresponding to specific types of segments.
 
-    The implementation is still incomplete.  It will have more attributes
-    such as a set of current readers, methods for adding or deleting
-    the readers.  These will probably be implemented in this base class
-    as they will be independent from segment-type specific details.
+    A summarized (and simplified) state transition diagram (for __state)
+    would be as follows:
+                                                +--sync_reader()/remove_reader()
+                                                |  still have old readers
+                                                |          |
+                UPDATING-----complete_--->SYNCHRONIZING<---+
+                  ^          update()           |
+    start_update()|                             | sync_reader()/remove_reader()
+    events        |                             V no more old reader
+    exist       READY<------complete_----------COPYING
+                            update()
 
     """
     # Common constants of user type: reader or writer
@@ -57,6 +64,8 @@ class SegmentInfo:
               # handle further updates (e.g., from xfrin).
 
     def __init__(self):
+        # Holds the state of SegmentInfo. See the class description
+        # above for the state transition diagram.
         self.__state = self.READY
         # __readers is a set of 'reader_session_id' private to
         # SegmentInfo. It consists of the (ID of) reader modules that
