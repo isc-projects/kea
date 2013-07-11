@@ -254,19 +254,33 @@ ControlledDhcpv4Srv::execDhcpv4ServerCommand(const std::string& command_id,
 }
 
 void
-ControlledDhcpv4Srv::openActiveSockets(const uint16_t port, const bool use_bcast) {
+ControlledDhcpv4Srv::openActiveSockets(const uint16_t port,
+                                       const bool use_bcast) {
     IfaceMgr::instance().closeSockets();
 
-    // Get the reference to the collection of interfaces. This reference should be
-    // valid as long as the program is run because IfaceMgr is a singleton.
-    // Therefore we can safely iterate over instances of all interfaces and modify
-    // their flags. Here we modify flags which indicate whether socket should be
-    // open for a particular interface or not.
+    // Get the reference to the collection of interfaces. This reference should
+    // be valid as long as the program is run because IfaceMgr is a singleton.
+    // Therefore we can safely iterate over instances of all interfaces and
+    // modify their flags. Here we modify flags which indicate whether socket
+    // should be open for a particular interface or not.
     const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
-        IfaceMgr::instance().getIface(iface->getName())->inactive_ =
-            !CfgMgr::instance().isActiveIface(iface->getName());
+        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
+        if (CfgMgr::instance().isActiveIface(iface->getName())) {
+            iface_ptr->inactive_ = false;
+            LOG_INFO(dhcp4_logger, DHCP4_ACTIVATE_INTERFACE)
+                .arg(iface->getFullName());
+
+        } else {
+            // For deactivating interface, it should be sufficient to log it
+            // on the debug level because it is more useful to know what
+            // interface is activated which is logged on the info level.
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_DEACTIVATE_INTERFACE).arg(iface->getName());
+            iface_ptr->inactive_ = true;
+
+        }
     }
     // Let's reopen active sockets. openSockets4 will check internally whether
     // sockets are marked active or inactive.
