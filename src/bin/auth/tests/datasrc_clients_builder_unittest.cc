@@ -58,6 +58,7 @@ protected:
     DataSrcClientsBuilderTest() :
         clients_map(new std::map<RRClass,
                     boost::shared_ptr<ConfigurableClientList> >),
+        write_end(-1), read_end(-1),
         builder(&command_queue, &callback_queue, &cond, &queue_mutex,
                 &clients_map, &map_mutex, generateSockets()),
         cond(command_queue, delayed_command_queue), rrclass(RRClass::IN()),
@@ -74,6 +75,7 @@ protected:
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
     std::list<FinishedCallback> callback_queue; // Callbacks from commands
+    int write_end, read_end;
     TestDataSrcClientsBuilder builder;
     TestCondVar cond;
     TestMutex queue_mutex;
@@ -81,7 +83,6 @@ protected:
     const RRClass rrclass;
     const Command shutdown_cmd;
     const Command noop_cmd;
-    int write_end, read_end;
 private:
     int generateSockets() {
         int pair[2];
