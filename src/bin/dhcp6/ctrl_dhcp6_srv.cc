@@ -193,8 +193,13 @@ void ControlledDhcpv6Srv::establishSession() {
     try {
         // Pull the full configuration out from the session.
         configureDhcp6Server(*this, config_session_->getFullConfig());
+        // Configuration may disable or enable interfaces so we have to
+        // reopen sockets according to new configuration.
+        openActiveSockets(getPort());
+
     } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
+
     }
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
