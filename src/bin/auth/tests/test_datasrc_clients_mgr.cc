@@ -26,7 +26,9 @@ namespace datasrc_clientmgr_internal {
 // Define static DataSrcClientsBuilder member variables.
 bool FakeDataSrcClientsBuilder::started = false;
 std::list<Command>* FakeDataSrcClientsBuilder::command_queue = NULL;
+std::list<FinishedCallback>* FakeDataSrcClientsBuilder::callback_queue = NULL;
 std::list<Command> FakeDataSrcClientsBuilder::command_queue_copy;
+std::list<FinishedCallback> FakeDataSrcClientsBuilder::callback_queue_copy;
 TestCondVar* FakeDataSrcClientsBuilder::cond = NULL;
 TestCondVar FakeDataSrcClientsBuilder::cond_copy;
 TestMutex* FakeDataSrcClientsBuilder::queue_mutex = NULL;
@@ -38,6 +40,7 @@ bool FakeDataSrcClientsBuilder::thread_waited = false;
 FakeDataSrcClientsBuilder::ExceptionFromWait
 FakeDataSrcClientsBuilder::thread_throw_on_wait =
     FakeDataSrcClientsBuilder::NOTHROW;
+int FakeDataSrcClientsBuilder::wakeup_fd = -1;
 
 template<>
 void
@@ -58,7 +61,7 @@ TestDataSrcClientsBuilder::doNoop() {
 
 template<>
 void
-TestDataSrcClientsMgr::cleanup() {
+TestDataSrcClientsMgrBase::cleanup() {
     using namespace datasrc_clientmgr_internal;
     // Make copy of some of the manager's member variables and reset the
     // corresponding pointers.  The currently pointed objects are in the
@@ -73,17 +76,21 @@ TestDataSrcClientsMgr::cleanup() {
     FakeDataSrcClientsBuilder::cond_copy = cond_;
     FakeDataSrcClientsBuilder::cond =
         &FakeDataSrcClientsBuilder::cond_copy;
+    FakeDataSrcClientsBuilder::callback_queue_copy =
+        *FakeDataSrcClientsBuilder::callback_queue;
+    FakeDataSrcClientsBuilder::callback_queue =
+        &FakeDataSrcClientsBuilder::callback_queue_copy;
 }
 
 template<>
 void
-TestDataSrcClientsMgr::reconfigureHook() {
+TestDataSrcClientsMgrBase::reconfigureHook() {
     using namespace datasrc_clientmgr_internal;
 
     // Simply replace the local map, ignoring bogus config value.
-    assert(command_queue_.front().first == RECONFIGURE);
+    assert(command_queue_.front().id == RECONFIGURE);
     try {
-        clients_map_ = configureDataSource(command_queue_.front().second);
+        clients_map_ = configureDataSource(command_queue_.front().params);
     } catch (...) {}
 }
 
