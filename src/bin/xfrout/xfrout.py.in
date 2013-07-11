@@ -27,7 +27,7 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
-from isc.statistics import Counters
+from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
 import fcntl
