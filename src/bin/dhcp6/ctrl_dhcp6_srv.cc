@@ -261,7 +261,8 @@ ControlledDhcpv6Srv::openActiveSockets(const uint16_t port) {
     IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
-        iface->inactive_ = !CfgMgr::instance().isActiveIface(iface->getName());
+        IfaceMgr::instance().getIface(iface->getName())->inactive_ =
+            !CfgMgr::instance().isActiveIface(iface->getName());
     }
     // Let's reopen active sockets. openSockets6 will check internally whether
     // sockets are marked active or inactive.
