@@ -14,6 +14,11 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCP4_ACTIVATE_INTERFACE activating interface %1
+This message is printed when DHCPv4 server enabled an interface to be used
+to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
+Interface Manager starts up procedure of opening sockets.
+
 % DHCP4_CCSESSION_STARTED control channel session started on socket %1
 A debug message issued during startup after the IPv4 DHCP server has
 successfully established a session with the BIND 10 control channel.
@@ -59,6 +64,11 @@ updated configuration from the BIND 10 configuration system.
 This informational message is printed every time DHCPv4 server is started
 and gives both the type and name of the database being used to store
 lease and other information.
+
+% DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
+This message is printed when DHCPv4 server disables an interface from being
+used to receive DHCPv4 traffic. Sockets on this interface will not be opened
+by the Interface Manager until interface is enabled.
 
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
