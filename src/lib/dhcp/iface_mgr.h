@@ -309,6 +309,10 @@ public:
     /// Interface flags (this value is as is returned by OS,
     /// it may mean different things on different OSes).
     uint32_t flags_;
+
+    /// Interface is inactive. This can be explicitly set to prevent Interface
+    /// Manager from opening the socket on this interface.
+    bool inactive_;
 };
 
 /// @brief Handles network interfaces, transmission and reception.

@@ -113,6 +113,32 @@ public:
     ///         be freed by the caller.
     static const char* serverReceivedPacketName(uint8_t type);
 
+    ///
+    /// @name Public accessors returning values required to (re)open sockets.
+    ///
+    /// These accessors must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires parameters
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using these public functions
+    //@{
+    ///
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Return bool value indicating that broadcast flags should be set
+    /// on sockets.
+    ///
+    /// @return A bool value indicating that broadcast should be used (if true).
+    bool useBroadcast() const {
+        return (use_bcast_);
+    }
+    //@}
+
 protected:
 
     /// @brief verifies if specified packet meets RFC requirements
@@ -309,6 +335,9 @@ private:
     /// It must be a pointer, because we will support changing engines
     /// during normal operation (e.g. to use different allocators)
     boost::shared_ptr<AllocEngine> alloc_engine_;
+
+    uint16_t port_;  ///< UDP port number on which server listens.
+    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
 
 };
 
