@@ -555,7 +555,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

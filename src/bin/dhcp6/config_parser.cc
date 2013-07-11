@@ -413,7 +413,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
         (config_id.compare("rebind-timer") == 0))  {
         parser = new Uint32Parser(config_id, 
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interface") == 0) {
+    } else if (config_id.compare("interfaces") == 0) {
         parser = new InterfaceListConfigParser(config_id);
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
@@ -463,6 +463,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr option_parser;
+    ParserPtr iface_parser;
 
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
@@ -495,6 +496,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
+            } else if (config_pair.first == "interfaces") {
+                // The interface parser is independent from any other parser and
+                // can be run here before other parsers.
+                parser->build(config_pair.second);
+                iface_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -547,6 +553,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         try {
             if (subnet_parser) {
                 subnet_parser->commit();
+            }
+
+            if (iface_parser) {
+                iface_parser->commit();
             }
         }
         catch (const isc::Exception& ex) {
