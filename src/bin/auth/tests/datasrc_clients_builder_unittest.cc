@@ -125,7 +125,8 @@ TEST_F(DataSrcClientsBuilderTest, commandFinished) {
     EXPECT_EQ(2, queue_mutex.unlock_count);
     // There's one callback in the queue
     ASSERT_EQ(1, callback_queue.size());
-    EXPECT_EQ(emptyCallsback, callback_queue.front());
+    // Not using EXPECT_EQ, as that produces warning in printing out the result
+    EXPECT_TRUE(emptyCallsback == callback_queue.front());
     // And we are woken up.
     char c;
     int result = recv(read_end, &c, 1, MSG_DONTWAIT);
