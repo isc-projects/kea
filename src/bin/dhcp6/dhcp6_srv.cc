@@ -67,7 +67,7 @@ namespace dhcp {
 static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : alloc_engine_(), serverid_(), shutdown_(true) {
+    : alloc_engine_(), serverid_(), shutdown_(true), port_(port) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
@@ -82,7 +82,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
                 LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
                 return;
             }
-            IfaceMgr::instance().openSockets6(port);
+            IfaceMgr::instance().openSockets6(port_);
         }
 
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
