@@ -71,7 +71,7 @@ class ValueStorage {
         /// @param name is the name of the parameter for which the data
         /// value is desired.
         ///
-        /// @return The paramater's data value of type <ValueType>.
+        /// @return The paramater's data value of type @c ValueType.
         /// @throw DhcpConfigError if the parameter is not found.
         ValueType getParam(const std::string& name) const {
             typename std::map<std::string, ValueType>::const_iterator param
@@ -199,7 +199,7 @@ public:
     }
 
 
-    /// @brief Parse a given element into a value of type <ValueType>
+    /// @brief Parse a given element into a value of type @c ValueType
     ///
     /// @param value a value to be parsed.
     ///
@@ -351,7 +351,7 @@ public:
     /// @param global_context is a pointer to the global context which
     /// stores global scope parameters, options, option defintions.
     /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataParser(const std::string&, OptionStoragePtr options,
+    OptionDataParser(const std::string& dummy, OptionStoragePtr options,
                     ParserContextPtr global_context);
 
     /// @brief Parses the single option data.
@@ -454,14 +454,14 @@ class OptionDataListParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
-    /// @param string& nominally would be param name, this is always ignored.
+    /// @param dummy nominally would be param name, this is always ignored.
     /// @param options parsed option storage for options in this list
     /// @param global_context is a pointer to the global context which
     /// stores global scope parameters, options, option defintions.
     /// @param optionDataParserFactory factory method for creating individual
     /// option parsers
     /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataListParser(const std::string&, OptionStoragePtr options,
+    OptionDataListParser(const std::string& dummy, OptionStoragePtr options,
                         ParserContextPtr global_context,
                         OptionDataParserFactory *optionDataParserFactory);
 
@@ -513,7 +513,7 @@ public:
     /// @param storage is the definition storage in which to store the parsed
     /// definition upon "commit".
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefParser(const std::string&, OptionDefStoragePtr storage);
+    OptionDefParser(const std::string& dummy, OptionDefStoragePtr storage);
 
     /// @brief Parses an entry that describes single option definition.
     ///
@@ -564,7 +564,7 @@ public:
     /// @param storage is the definition storage in which to store the parsed
     /// definitions in this list
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefListParser(const std::string&, OptionDefStoragePtr storage);
+    OptionDefListParser(const std::string& dummy, OptionDefStoragePtr storage);
 
     /// @brief Parse configuration entries.
     ///
@@ -608,7 +608,7 @@ public:
     /// @param pools is the storage in which to store the parsed pool
     /// upon "commit".
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolParser(const std::string&,  PoolStoragePtr pools);
+    PoolParser(const std::string& dummy, PoolStoragePtr pools);
 
     /// @brief parses the actual list
     ///
@@ -628,7 +628,7 @@ protected:
     ///
     /// @param addr is the IP  prefix of the pool.
     /// @param len is the prefix length.
-    /// @param ignored dummy parameter to provide symmetry between
+    /// @param ptype is the type of pool to create.
     /// @return returns a PoolPtr to the new Pool object.
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &addr, uint32_t len,
                            int32_t ptype=0) = 0;
