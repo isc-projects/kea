@@ -364,7 +364,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_,
-            !iface->inactive_) {
+            iface->inactive_) {
             continue;
         }
 
