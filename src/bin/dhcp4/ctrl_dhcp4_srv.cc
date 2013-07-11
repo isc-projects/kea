@@ -255,12 +255,13 @@ ControlledDhcpv4Srv::openActiveSockets(const uint16_t port, const bool use_bcast
     // Get the reference to the collection of interfaces. This reference should be
     // valid as long as the program is run because IfaceMgr is a singleton.
     // Therefore we can safely iterate over instances of all interfaces and modify
-    // their flags. Here we modify flags which indicate wheter socket should be
+    // their flags. Here we modify flags which indicate whether socket should be
     // open for a particular interface or not.
-    IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
-        iface->inactive_ = !CfgMgr::instance().isActiveIface(iface->getName());
+        IfaceMgr::instance().getIface(iface->getName())->inactive_ =
+            !CfgMgr::instance().isActiveIface(iface->getName());
     }
     // Let's reopen active sockets. openSockets4 will check internally whether
     // sockets are marked active or inactive.
