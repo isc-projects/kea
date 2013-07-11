@@ -109,8 +109,13 @@ struct Command {
     /// \brief Argument of the command.
     ///
     /// If the command takes no argument, it should be null pointer.
+    ///
+    /// This may be a null pointer if the command takes no parameters.
     data::ConstElementPtr params;
     /// \brief A callback to be called once the command finishes.
+    ///
+    /// This may be an empty boost::function. In such case, no callback
+    /// will be called after completion.
     FinishedCallback callback;
 };
 
