@@ -131,6 +131,16 @@ TEST_F(DataSrcClientsBuilderTest, commandFinished) {
     EXPECT_EQ(1, result);
 }
 
+// Test that low-level errors with the synchronization socket
+// (an unexpected condition) is detected and program aborted.
+TEST_F(DataSrcClientsBuilderTest, finishedCrash) {
+    command_queue.push_back(Command(SHUTDOWN, ConstElementPtr(),
+                                    emptyCallsback));
+    // Break the socket
+    close(write_end);
+    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
+}
+
 TEST_F(DataSrcClientsBuilderTest, runMultiCommands) {
     // Two NOOP commands followed by SHUTDOWN.  We should see two doNoop()
     // calls.
