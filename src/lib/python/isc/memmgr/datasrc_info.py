@@ -166,6 +166,16 @@ class SegmentInfo:
                                    'incorrect state: ' + str(self.__state))
 
     def sync_reader(self, reader_session_id):
+        """This method must only be called in the SYNCHRONIZING
+        state. memmgr should call it when it receives the
+        "segment_update_ack" message from a reader module. It moves the
+        given ID from the set of reader modules that are using the "old"
+        version of the segment to the set of reader modules that are
+        using the "current" version of the segment, and if there are no
+        reader modules using the "old" version of the segment, the state
+        is changed to COPYING. If the state has changed to COPYING, it
+        pops the head (oldest) event from the pending events queue and
+        returns it; otherwise it returns None."""
         if self.__state != self.SYNCHRONIZING:
             raise SegmentInfoError('sync_reader() called in ' +
                                    'incorrect state: ' + str(self.__state))
@@ -182,6 +192,16 @@ class SegmentInfo:
         return self.__sync_reader_helper(self.COPYING)
 
     def remove_reader(self, reader_session_id):
+        """This method must only be called in the SYNCHRONIZING
+        state. memmgr should call it when it's notified that an existing
+        reader has unsubscribed. It removes the given reader ID from
+        either the set of readers that use the "current" version of the
+        segment or the "old" version of the segment (wherever the reader
+        belonged), and in the latter case, if there are no reader
+        modules using the "old" version of the segment, the state is
+        changed to COPYING. If the state has changed to COPYING, it pops
+        the head (oldest) event from the pending events queue and
+        returns it; otherwise it returns None."""
         if self.__state != self.SYNCHRONIZING:
             raise SegmentInfoError('remove_reader() called in ' +
                                    'incorrect state: ' + str(self.__state))
