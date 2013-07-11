@@ -87,6 +87,19 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// This accessor must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires port parameter
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using this public function.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
 protected:
 
     /// @brief verifies if specified packet meets RFC requirements
@@ -334,6 +347,8 @@ private:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    uint16_t port_;  ///< UDP port number on which server listens.
 };
 
 }; // namespace isc::dhcp

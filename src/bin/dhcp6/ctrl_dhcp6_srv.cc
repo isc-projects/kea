@@ -20,6 +20,7 @@
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
@@ -100,7 +101,27 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
     }
 
     // Configure the server.
-    return (configureDhcp6Server(*server_, merged_config));
+    ConstElementPtr answer = configureDhcp6Server(*server_, merged_config);
+
+    // Check that configuration was successful. If not, do not reopen sockets.
+    int rcode = 0;
+    parseAnswer(rcode, answer);
+    if (rcode != 0) {
+        return (answer);
+    }
+
+    // Configuration may change active interfaces. Therefore, we have to reopen
+    // sockets according to new configuration. This operation is not exception
+    // safe and we really don't want to emit exceptions to the callback caller.
+    // Instead, catch an exception and create appropriate answer.
+    try {
+        server_->openActiveSockets(server_->getPort());
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "failed to open sockets after server reconfiguration: " << ex.what();
+        answer = isc::config::createAnswer(1, err.str());
+    }
+    return (answer);
 }
 
 ConstElementPtr
@@ -228,6 +249,24 @@ ControlledDhcpv6Srv::execDhcpv6ServerCommand(const std::string& command_id,
     }
 }
 
+void
+ControlledDhcpv6Srv::openActiveSockets(const uint16_t port) {
+    IfaceMgr::instance().closeSockets();
+
+    // Get the reference to the collection of interfaces. This reference should be
+    // valid as long as the program is run because IfaceMgr is a singleton.
+    // Therefore we can safely iterate over instances of all interfaces and modify
+    // their flags. Here we modify flags which indicate wheter socket should be
+    // open for a particular interface or not.
+    IfaceMgr::IfaceCollection ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+        iface->inactive_ = !CfgMgr::instance().isActiveIface(iface->getName());
+    }
+    // Let's reopen active sockets. openSockets6 will check internally whether
+    // sockets are marked active or inactive.
+    IfaceMgr::instance().openSockets6(port);
+}
 
 };
 };

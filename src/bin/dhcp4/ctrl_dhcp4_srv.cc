@@ -26,7 +26,6 @@
 #include <dhcp4/spec_config.h>
 #include <dhcp4/config_parser.h>
 #include <exceptions/exceptions.h>
-#include <boost/bind.hpp>
 #include <util/buffer.h>
 
 #include <cassert>
