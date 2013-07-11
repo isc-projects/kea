@@ -192,8 +192,13 @@ void ControlledDhcpv4Srv::establishSession() {
 
     try {
         configureDhcp4Server(*this, config_session_->getFullConfig());
+        // Configuration may disable or enable interfaces so we have to
+        // reopen sockets according to new configuration.
+        openActiveSockets(getPort(), useBroadcast());
+
     } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
+
     }
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
