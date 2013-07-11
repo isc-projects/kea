@@ -58,7 +58,8 @@ static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
 // grants those options and a single, fixed, hardcoded lease.
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
-                     const bool direct_response_desired) {
+                     const bool direct_response_desired)
+    : port_(port), use_bcast_(use_bcast) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
@@ -73,7 +74,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
         if (port) {
             // open sockets only if port is non-zero. Port 0 is used
             // for non-socket related testing.
-            IfaceMgr::instance().openSockets4(port, use_bcast);
+            IfaceMgr::instance().openSockets4(port_, use_bcast_);
         }
 
         string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
