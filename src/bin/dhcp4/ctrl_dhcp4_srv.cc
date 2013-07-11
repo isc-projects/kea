@@ -268,7 +268,7 @@ ControlledDhcpv4Srv::openActiveSockets(const uint16_t port,
          iface != ifaces.end(); ++iface) {
         Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
         if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive_ = false;
+            iface_ptr->inactive4_ = false;
             LOG_INFO(dhcp4_logger, DHCP4_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());
 
@@ -278,7 +278,7 @@ ControlledDhcpv4Srv::openActiveSockets(const uint16_t port,
             // interface is activated which is logged on the info level.
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
                       DHCP4_DEACTIVATE_INTERFACE).arg(iface->getName());
-            iface_ptr->inactive_ = true;
+            iface_ptr->inactive4_ = true;
 
         }
     }
