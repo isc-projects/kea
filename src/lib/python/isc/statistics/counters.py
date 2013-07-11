@@ -17,52 +17,34 @@
 
 This module handles the statistics counters for BIND 10 modules.  For
 using the module `counter.py`, first a counters object should be created
-in each module (like b10-xfrin or b10-xfrout) after importing this
-module. A spec file can be specified as an argument when creating the
-counters object:
+in each module like b10-foo after importing this module. A spec file can
+be specified as an argument when creating the counters object:
 
   from isc.statistics import Counters
   self.counters = Counters("/path/to/foo.spec")
 
 The first argument of Counters() can be specified, which is the location
-of the specification file (like src/bin/xfrout/xfrout.spec). If Counters
-is constructed this way, statistics counters can be accessed from each
-module. For example, in case that the item `xfrreqdone` is defined in
-statistics_spec in xfrout.spec, the following methods are
-callable. Since these methods require the string of the zone name in the
-first argument, if we have the following code in b10-xfrout:
+of the specification file. If Counters is constructed this way,
+statistics counters can be accessed from each module. For example, in
+case that the item `counter1` is defined in statistics_spec in foo.spec,
+the following methods are callable.
 
-  self.counters.inc('zones', zone_name, 'xfrreqdone')
+  self.counters.inc('counter1')
 
-then the counter for xfrreqdone corresponding to zone_name is
-incremented. For getting the current number of this counter, we can use
-the following code:
+Then the counter for `counter1` is incremented. For getting the current
+number of this counter, we can use the following code:
 
-  number = self.counters.get('zones', zone_name, 'xfrreqdone')
+  number = self.counters.get('counter1')
 
-then the current count is obtained and set in the variable
+Then the current count is obtained and set in the variable
 `number`. Such a getter method would be mainly used for unit-testing.
-As other example, for the item `axfr_running`, the decrementer method is
-also callable.  This method is used for decrementing a counter.  For the
-item `axfr_running`, an argument like zone name is not required:
+The decrementer method is also callable.  This method is used for
+decrementing a counter as well as inc().
 
-  self.counters.dec('axfr_running')
+  self.counters.dec('counter2')
 
-These methods are effective in other modules. For example, in case that
-this module `counter.py` is once imported in a main module such as
-b10-xfrout, then for the item `notifyoutv4`, the `inc()` method can be
-invoked in another module such as notify_out.py, which is firstly
-imported in the main module.
-
-  self.counters.inc('zones', zone_name, 'notifyoutv4')
-
-In this example this is for incrementing the counter of the item
-`notifyoutv4`. Thus, such statement can be also written in another
-library like isc.notify.notify_out. If this module `counter.py` isn't
-imported in the main module but imported in such a library module as
-isc.notify.notify_out, in this example, empty methods would be invoked,
-which is directly defined in `counter.py`.
-"""
+Some other methods accessible to a counter are provided by this
+module."""
 
 import threading
 import isc.config
