@@ -136,7 +136,6 @@ protected:
     /// only. This function is not exception safe.
     ///
     /// @param port UDP port on which server should listen.
-    /// @param use_bcast should broadcast flags be set on the sockets.
     static void openActiveSockets(const uint16_t port);
 
     /// @brief IOService object, used for all ASIO operations.
