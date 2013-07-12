@@ -26,7 +26,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	TESTDATA_PATH=$(builddir) \
+	TESTDATA_WRITE_PATH=$(builddir) \
 	B10_FROM_BUILD=$(abs_top_builddir) \
 	HAVE_SHARED_MEMORY=$(HAVE_SHARED_MEMORY) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/dns/python/.libs \
