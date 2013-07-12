@@ -3686,6 +3686,60 @@ Dhcp4/subnet4	[]	list	(default)
       </note>
       </section>
 
+      <section id="dhcp4-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv4 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp4/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp4/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp4/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
       <section id="dhcp4-address-config">
       <title>Configuration of Address Pools</title>
       <para>
@@ -4459,6 +4513,59 @@ Dhcp6/subnet6/	list
       </note>
       </section>
 
+      <section id="dhcp6-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv6 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp6/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
 
     <section>
       <title>Subnet and Address Pool</title>
