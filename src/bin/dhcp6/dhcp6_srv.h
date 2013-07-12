@@ -23,7 +23,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/subnet.h>
-#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -87,20 +87,6 @@ public:
 
     /// @brief Instructs the server to shut down.
     void shutdown();
-
-    /// @brief returns ServerHooks object
-    /// @todo: remove this as soon as ServerHooks object is converted
-    /// to a signleton.
-    //static boost::shared_ptr<isc::util::ServerHooks> getServerHooks();
-
-    /// @brief returns Callout Manager object
-    ///
-    /// This manager is used to manage callouts registered on various hook
-    /// points. @todo exact access method for HooksManager manager will change
-    /// when it will be converted to a singleton.
-    ///
-    /// @return CalloutManager instance
-    //static boost::shared_ptr<isc::util::HooksManager> getHooksManager();
 
 protected:
 
@@ -347,7 +333,7 @@ protected:
     /// @brief dummy wrapper around IfaceMgr::send()
     ///
     /// This method is useful for testing purposes, where its replacement
-    /// simulates reception of a packet. For that purpose it is protected.
+    /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt6Ptr& pkt);
 
 private:
@@ -364,6 +350,11 @@ private:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
+    /// @brief returns callout handle for specified packet
+    ///
+    /// @param pkt packet for which the handle should be returned
+    ///
+    /// @return a callout handle to be used in hooks related to said packet
     isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
 
     /// Indexes for registered hook points

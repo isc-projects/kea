@@ -295,6 +295,13 @@ public:
     virtual ~NakedDhcpv6SrvTest() {
         // Let's clean up if there is such a file.
         unlink(DUID_FILE);
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "pkt6_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "pkt6_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "subnet6_select");
+
     };
 
     // A DUID used in most tests (typically as client-id)
@@ -1897,8 +1904,8 @@ Pkt6* captureSimpleSolicit() {
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
 ///
-/// This class has a some static members, because each non-static
-/// method has implicit this parameter, so it does not match callout
+/// This class has a number of static members, because each non-static
+/// method has implicit 'this' parameter, so it does not match callout
 /// signature and couldn't be registered. Furthermore, static methods
 /// can't modify non-static members (for obvious reasons), so many
 /// fields are declared static. It is still better to keep them as
