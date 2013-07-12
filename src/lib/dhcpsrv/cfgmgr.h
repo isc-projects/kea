@@ -207,9 +207,9 @@ public:
     /// This is used in a hook (subnet6_select), where the hook is able
     /// to choose a different subnet. Server code has to offer a list
     /// of possible choices (i.e. all subnets).
-    /// @return const reference to Subnet6 collection
-    inline const Subnet6Collection& getSubnets6() {
-        return (subnets6_);
+    /// @return a pointer to const Subnet6 collection
+    const Subnet6Collection* getSubnets6() {
+        return (&subnets6_);
     }
 
 
