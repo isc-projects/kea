@@ -141,8 +141,6 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
         hook_index_pkt6_send_      = Hooks.hook_index_pkt6_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
-        vector<string> libraries; // no libraries at this time
-        HooksManager::loadLibraries(libraries);
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
@@ -217,8 +215,7 @@ bool Dhcpv6Srv::run() {
                 callout_handle->setArgument("query6", query);
 
                 // Call callouts
-                HooksManager::getHooksManager().callCallouts(hook_index_pkt6_receive_,
-                                                *callout_handle);
+                HooksManager::callCallouts(hook_index_pkt6_receive_, *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
                 // processing step would to process the packet, so skip at this
@@ -308,15 +305,11 @@ bool Dhcpv6Srv::run() {
                     // Delete all previous arguments
                     callout_handle->deleteAllArguments();
 
-                    // Clear skip flag if it was set in previous callouts
-                    callout_handle->setSkip(false);
-
                     // Set our response
                     callout_handle->setArgument("response6", rsp);
 
                     // Call all installed callouts
-                    HooksManager::getHooksManager().callCallouts(hook_index_pkt6_send_,
-                                                    *callout_handle);
+                    HooksManager::callCallouts(hook_index_pkt6_send_, *callout_handle);
 
                     // Callouts decided to skip the next processing step. The next
                     // processing step would to send the packet, so skip at this
@@ -670,8 +663,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
 
         // Call user (and server-side) callouts
-        HooksManager::getHooksManager().callCallouts(hook_index_subnet6_select_,
-                                        *callout_handle);
+        HooksManager::callCallouts(hook_index_subnet6_select_, *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet will be
         // selected. Packet processing will continue, but it will be severly limited
