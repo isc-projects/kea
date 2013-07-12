@@ -34,7 +34,7 @@ namespace isc {
 namespace dhcp {
 
 namespace {
-const char* ALL_IFACES_KEYWORD = "all";
+const char* ALL_IFACES_KEYWORD = "*";
 }
 
 // *********************** ParserContext  *************************
