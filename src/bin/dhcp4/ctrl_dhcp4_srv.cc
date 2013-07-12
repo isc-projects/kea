@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -284,7 +284,9 @@ ControlledDhcpv4Srv::openActiveSockets(const uint16_t port,
     }
     // Let's reopen active sockets. openSockets4 will check internally whether
     // sockets are marked active or inactive.
-    IfaceMgr::instance().openSockets4(port, use_bcast);
+    if (!IfaceMgr::instance().openSockets4(port, use_bcast)) {
+        LOG_WARN(dhcp4_logger, DHCP4_NO_SOCKETS_OPEN);
+    }
 }
 
 
