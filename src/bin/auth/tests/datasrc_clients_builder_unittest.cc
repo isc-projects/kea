@@ -703,6 +703,35 @@ TEST_F(DataSrcClientsBuilderTest,
                                   FinishedCallback()));
     // The segment is now used.
     EXPECT_EQ(SEGMENT_INUSE, list->getStatus()[0].getSegmentState());
+
+    // Some invalid inputs (wrong class, different name of data source, etc).
+
+    // Copy the confing and modify
+    const ElementPtr bad_name = Element::fromJSON(command_args->toWire());
+    // Set bad name
+    bad_name->set("data-source-name", Element::create("bad"));
+    // Nothing breaks
+    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_name,
+                                  FinishedCallback()));
+
+    // Another copy with wrong class
+    const ElementPtr bad_class = Element::fromJSON(command_args->toWire());
+    // Set bad class
+    bad_class->set("data-source-class", Element::create("bad"));
+    // Nothing breaks
+    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                  FinishedCallback()));
+
+    // Class CH is valid, but not present.
+    bad_class->set("data-source-class", Element::create("CH"));
+    // Nothing breaks
+    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                  FinishedCallback()));
+
+    // And break the segment params
+    const ElementPtr bad_params = Element::fromJSON(command_args->toWire());
+    bad_params->set("segment-params",
+                    Element::fromJSON("{\"mapped-file\": \"/bad/file\"}"));
 }
 
 } // unnamed namespace
