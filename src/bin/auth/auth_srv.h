@@ -282,6 +282,9 @@ public:
     void listsReconfigured();
 
 private:
+    void reconfigureDone(isc::data::ConstElementPtr request);
+    void foreignCommand(const std::string& command, const std::string&,
+                        const isc::data::ConstElementPtr& params);
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;

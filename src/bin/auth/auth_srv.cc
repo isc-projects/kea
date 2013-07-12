@@ -972,9 +972,34 @@ AuthSrv::listsReconfigured() {
     const bool has_remote = hasRemoteSegment(impl_->datasrc_clients_mgr_);
     if (has_remote && !impl_->readers_subscribed_) {
         impl_->config_session_->subscribe("SegmentReader");
+        impl_->config_session_->
+            setUnhandledCallback(boost::bind(&AuthSrv::foreignCommand, this,
+                                             _1, _2, _3));
         impl_->readers_subscribed_ = true;
     } else if (!has_remote && impl_->readers_subscribed_) {
         impl_->config_session_->unsubscribe("SegmentReader");
+        impl_->config_session_->
+            setUnhandledCallback(isc::config::ModuleCCSession::
+                                 UnhandledCallback());
         impl_->readers_subscribed_ = false;
+    }
+}
+
+void
+AuthSrv::reconfigureDone(ConstElementPtr params) {
+    // ACK the segment
+    impl_->config_session_->
+        groupSendMsg(isc::config::createCommand("sgmtinfo-update-ack",
+                                                params), "MemMgr");
+}
+
+void
+AuthSrv::foreignCommand(const std::string& command, const std::string&,
+                        const ConstElementPtr& params)
+{
+    if (command == "sgmtinfo-update") {
+        impl_->datasrc_clients_mgr_.
+            segmentInfoUpdate(params, boost::bind(&AuthSrv::reconfigureDone,
+                                                  this, params));
     }
 }
