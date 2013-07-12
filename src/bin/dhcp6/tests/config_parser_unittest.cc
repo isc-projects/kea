@@ -134,7 +134,7 @@ public:
                                        std::string>& params)
     {
         std::ostringstream stream;
-        stream << "{ \"interfaces\": [ \"all\" ],"
+        stream << "{ \"interfaces\": [ \"*\" ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -180,7 +180,7 @@ public:
     void resetConfiguration() {
         ConstElementPtr status;
 
-        string config = "{ \"interfaces\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"*\" ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -331,7 +331,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ \"interfaces\": [ \"all\" ],"
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
@@ -350,7 +350,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -384,7 +384,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -422,7 +422,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     // There should be at least one interface
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -455,7 +455,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
 
     // There should be at least one interface
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -486,7 +486,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -556,7 +556,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
 // parameter.
 TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
 
-    const string config = "{ \"interfaces\": [ \"all\" ],"
+    const string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -611,7 +611,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -639,7 +639,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1159,7 +1159,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -1241,7 +1241,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp6' option space as it is the
     // standard option.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1319,7 +1319,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1368,7 +1368,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interfaces\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1462,7 +1462,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 // for multiple subnets.
 TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1705,7 +1705,7 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // In the first stahe we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1758,7 +1758,7 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interfaces\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1906,7 +1906,7 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     // bu also includes keyword 'all'. This keyword switches server into the
     // mode when it listens on all interfaces regardless of what interface names
     // were specified in the "interfaces" parameter.
-    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\", \"all\" ],"
+    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

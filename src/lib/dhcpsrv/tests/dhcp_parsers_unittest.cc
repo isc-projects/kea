@@ -200,8 +200,8 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
 /// 1. Does not allow empty for storage.
 /// 2. Does not allow name other than "interfaces"
 /// 3. Parses list of interfaces and adds them to CfgMgr
-/// 4. Parses 'all' keyword and sets a CfgMgr flag which indicates that
-///    server will listen on all interfaces.
+/// 4. Parses wildcard interface name and sets a CfgMgr flag which indicates
+/// that server will listen on all interfaces.
 TEST_F(DhcpParserTest, interfaceListParserTest) {
 
     const std::string name = "interfaces";
@@ -234,7 +234,7 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     // Add keyword all to the configuration. This should activate all
     // interfaces, including eth2, even though it has not been explicitly
     // added.
-    list_element->add(Element::create("all"));
+    list_element->add(Element::create("*"));
 
     // Reset parser's state.
     parser.reset(new InterfaceListConfigParser(name));
