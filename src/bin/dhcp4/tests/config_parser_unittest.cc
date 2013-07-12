@@ -139,7 +139,7 @@ public:
     /// describing an option.
     std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
-        stream << "{ \"interfaces\": [ \"all\" ],"
+        stream << "{ \"interfaces\": [ \"*\" ],"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"subnet4\": [ { "
@@ -246,7 +246,7 @@ public:
     void resetConfiguration() {
         ConstElementPtr status;
 
-        string config = "{ \"interfaces\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"*\" ],"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
@@ -323,7 +323,7 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{ \"interfaces\": [ \"all\" ],"
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet4\": [  ], "
@@ -343,7 +343,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -373,7 +373,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -404,7 +404,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -428,7 +428,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -950,7 +950,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1023,7 +1023,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp4' option space as it is the
     // standard option.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1101,7 +1101,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1150,7 +1150,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interfaces\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1246,7 +1246,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 // option setting.
 TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
@@ -1318,7 +1318,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 // for multiple subnets.
 TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1598,7 +1598,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // In the first stahe we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interfaces\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1651,7 +1651,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interfaces\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1788,7 +1788,7 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     // but it also includes keyword 'all'. This keyword switches server into the
     // mode when it listens on all interfaces regardless of what interface names
     // were specified in the "interfaces" parameter.
-    string config = "{ \"interfaces\": [ \"eth0\",\"all\",\"eth1\" ],"
+    string config = "{ \"interfaces\": [ \"eth0\",\"*\",\"eth1\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000 }";
