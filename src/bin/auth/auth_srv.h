@@ -273,7 +273,12 @@ public:
     /// open forever.
     void setTCPRecvTimeout(size_t timeout);
 
-    // TODO: Doxygen
+    /// \brief Notify the authoritative server that the client lists were
+    ///     reconfigured.
+    ///
+    /// This is to be called when the work thread finishes reconfiguration
+    /// of the data sources. It involeves some book keeping and asking the
+    /// memory manager for segments, if some are remotely mapped.
     void listsReconfigured();
 
 private:
