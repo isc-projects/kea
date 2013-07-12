@@ -660,6 +660,10 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // Set new arguments
         callout_handle->setArgument("query6", question);
         callout_handle->setArgument("subnet6", subnet);
+
+        // We pass pointer to const collection for performance reasons.
+        // Otherwise we would get a non-trivial performance penalty each
+        // time subnet6_select is called.
         callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
 
         // Call user (and server-side) callouts

@@ -2097,14 +2097,14 @@ public:
         // Call the basic calllout to record all passed values
         subnet6_select_callout(callout_handle);
 
-        Subnet6Collection subnets;
+        const Subnet6Collection* subnets;
         Subnet6Ptr subnet;
         callout_handle.getArgument("subnet6", subnet);
         callout_handle.getArgument("subnet6collection", subnets);
 
         // Let's change to a different subnet
-        if (subnets.size() > 1) {
-            subnet = subnets[1]; // Let's pick the other subnet
+        if (subnets->size() > 1) {
+            subnet = (*subnets)[1]; // Let's pick the other subnet
             callout_handle.setArgument("subnet6", subnet);
         }
 
@@ -2116,7 +2116,7 @@ public:
         callback_name_ = string("");
         callback_pkt6_.reset();
         callback_subnet6_.reset();
-        callback_subnet6collection_.clear();
+        callback_subnet6collection_ = NULL;
         callback_argument_names_.clear();
     }
 
@@ -2135,7 +2135,7 @@ public:
     static Subnet6Ptr callback_subnet6_;
 
     /// A list of all available subnets (received by callout)
-    static Subnet6Collection callback_subnet6collection_;
+    static const Subnet6Collection* callback_subnet6collection_;
 
     /// A list of all received arguments
     static vector<string> callback_argument_names_;
@@ -2146,7 +2146,7 @@ public:
 string HooksDhcpv6SrvTest::callback_name_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_pkt6_;
 Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
-Subnet6Collection HooksDhcpv6SrvTest::callback_subnet6collection_;
+const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 
 
@@ -2452,19 +2452,19 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     // Check that pkt6 argument passing was successful and returned proper value
     EXPECT_TRUE(callback_pkt6_.get() == sol.get());
 
-    Subnet6Collection exp_subnets = CfgMgr::instance().getSubnets6();
+    const Subnet6Collection* exp_subnets = CfgMgr::instance().getSubnets6();
 
     // The server is supposed to pick the first subnet, because of matching
     // interface. Check that the value is reported properly.
     ASSERT_TRUE(callback_subnet6_);
-    EXPECT_EQ(callback_subnet6_.get(), exp_subnets.front().get());
+    EXPECT_EQ(callback_subnet6_.get(), exp_subnets->front().get());
 
     // Server is supposed to report two subnets
-    ASSERT_EQ(exp_subnets.size(), callback_subnet6collection_.size());
+    ASSERT_EQ(exp_subnets->size(), callback_subnet6collection_->size());
 
     // Compare that the available subnets are reported as expected
-    EXPECT_TRUE(exp_subnets[0].get() == callback_subnet6collection_[0].get());
-    EXPECT_TRUE(exp_subnets[1].get() == callback_subnet6collection_[1].get());
+    EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet6collection_)[0].get());
+    EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet6collection_)[1].get());
 }
 
 // This test checks if callout installed on subnet6_select hook point can pick
@@ -2526,13 +2526,13 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     ASSERT_TRUE(addr_opt);
 
     // Get all subnets and use second subnet for verification
-    Subnet6Collection subnets = CfgMgr::instance().getSubnets6();
-    ASSERT_EQ(2, subnets.size());
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets->size());
 
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
-    EXPECT_TRUE(subnets[1]->inRange(addr_opt->getAddress()));
-    EXPECT_TRUE(subnets[1]->inPool(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnets)[1]->inPool(addr_opt->getAddress()));
 }
 
 

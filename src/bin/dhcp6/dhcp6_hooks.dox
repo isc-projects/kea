@@ -75,7 +75,7 @@ packet processing. Hook points that are not specific to packet processing
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
    - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection&, direction: <b>in</b>
+   - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection *, direction: <b>in</b>
 
  - @b Description: this callout is executed when a subnet is being
    selected for the incoming packet. All parameters, addresses and
