@@ -34,7 +34,7 @@ class MockConfigData:
 
 class TestSegmentInfo(unittest.TestCase):
     def setUp(self):
-        self.__mapped_file_dir = os.environ['TESTDATA_PATH']
+        self.__mapped_file_dir = os.environ['TESTDATA_WRITE_PATH']
         self.__sgmt_info = SegmentInfo.create('mapped', 0, RRClass.IN,
                                               'sqlite3',
                                               {'mapped_file_dir':
@@ -372,9 +372,9 @@ class MockClientList:
 
 class TestDataSrcInfo(unittest.TestCase):
     def setUp(self):
-        self.__mapped_file_dir = os.environ['TESTDATA_PATH']
+        self.__mapped_file_dir = os.environ['TESTDATA_WRITE_PATH']
         self.__mgr_config = {'mapped_file_dir': self.__mapped_file_dir}
-        self.__sqlite3_dbfile = os.environ['TESTDATA_PATH'] + '/' + 'zone.db'
+        self.__sqlite3_dbfile = os.environ['TESTDATA_WRITE_PATH'] + '/' + 'zone.db'
         self.__clients_map = {
             # mixture of 'local' and 'mapped' and 'unused' (type =None)
             # segments
