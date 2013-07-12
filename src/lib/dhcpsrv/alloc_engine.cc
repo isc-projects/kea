@@ -509,8 +509,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
         callout_handle->setArgument("lease6", expired);
 
         // Call the callouts
-        HooksManager::getHooksManager().callCallouts(hook_index_lease6_select_,
-                                                     *callout_handle);
+        HooksManager::callCallouts(hook_index_lease6_select_, *callout_handle);
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
@@ -608,8 +607,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
         callout_handle->setArgument("lease6", lease);
 
         // This is the first callout, so no need to clear any arguments
-        HooksManager::getHooksManager().callCallouts(hook_index_lease6_select_,
-                                                     *callout_handle);
+        HooksManager::callCallouts(hook_index_lease6_select_, *callout_handle);
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
