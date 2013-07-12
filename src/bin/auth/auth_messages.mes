@@ -145,6 +145,22 @@ reconfigure, and has now started this process.
 The thread for maintaining data source clients has finished reconfiguring
 the data source clients, and is now running with the new configuration.
 
+% AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_BAD_CLASS invalid RRclass %1 at segment update
+A memory segment update message was sent to the authoritative server. But the
+class contained there is no valid class, so the update is dropped. This is
+likely a bug in the code.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_ERROR error updating the memory segment: %1
+The authoritative server tried to update the memory segment. But the update
+failed. The update is dropped. This is likely a bug in the code.
+
+% AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_UNKNOWN_CLASS unknown class %1 at segment update
+A memory segment update message was sent to the authoritative server. The class
+name for which the update should happen is valid, but no client lists are
+configured for that class. The update is dropped. This may be caused by a bug
+in the code or by a temporary inconsistancy between the memory manager and the
+authoritative server after change of configuration.
+
 % AUTH_DATASRC_CLIENTS_BUILDER_STARTED data source builder thread started
 A separate thread for maintaining data source clients has been started.
 
