@@ -92,6 +92,11 @@ specified client after receiving a REQUEST message from it.  There are many
 possible reasons for such a failure. Additional messages will indicate the
 reason.
 
+% DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
+
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv4 DHCP server but it is not running.
