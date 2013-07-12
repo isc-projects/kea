@@ -111,6 +111,11 @@ IPv6 DHCP server but it is not running.
 During startup the IPv6 DHCP server failed to detect any network
 interfaces and is therefore shutting down.
 
+% DHCP6_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
+
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.

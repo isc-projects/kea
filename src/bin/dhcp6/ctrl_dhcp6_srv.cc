@@ -284,7 +284,9 @@ ControlledDhcpv6Srv::openActiveSockets(const uint16_t port) {
     }
     // Let's reopen active sockets. openSockets6 will check internally whether
     // sockets are marked active or inactive.
-    IfaceMgr::instance().openSockets6(port);
+    if (!IfaceMgr::instance().openSockets6(port)) {
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
+    }
 }
 
 };
