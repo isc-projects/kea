@@ -595,6 +595,8 @@ ModuleCCSession::checkModuleCommand(const std::string& cmd_str,
                                  "Command given but no "
                                  "command handler for module"));
         }
+    } else if (unhandled_callback_) {
+        unhandled_callback_(cmd_str, target_module, arg);
     }
     return (ElementPtr());
 }
