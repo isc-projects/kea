@@ -13,6 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import json
 from isc.datasrc import ConfigurableClientList
 from isc.memmgr.datasrc_info import SegmentInfo
 
@@ -90,9 +91,10 @@ class MemorySegmentBuilder:
 
         clist = dsrc_info.clients_map[rrclass]
         sgmt_info = dsrc_info.segment_info_map[(rrclass, dsrc_name)]
+        params = json.dumps(sgmt_info.get_reset_param(SegmentInfo.WRITER))
         clist.reset_memory_segment(dsrc_name,
-                                   ConfigurableClientList.READ_ONLY,
-                                   sgmt_info.get_reset_param(SegmentInfo.WRITER))
+                                   ConfigurableClientList.READ_WRITE,
+                                   params)
 
         if zone_name is not None:
             zones = [(None, zone_name)]
@@ -100,9 +102,13 @@ class MemorySegmentBuilder:
             zones = clist.get_zone_table_accessor(dsrc_name, True)
 
         for _, zone_name in zones:
-            cache_load_error = (zone_name is None) # install empty zone initially
-            writer = clist.get_cached_zone_writer(zone_name, catch_load_error,
-                                                  dsrc_name)
+            catch_load_error = (zone_name is None) # install empty zone initially
+            result, writer = clist.get_cached_zone_writer(zone_name, catch_load_error,
+                                                          dsrc_name)
+            if result != ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS:
+                # FIXME: log the error
+                continue
+
             try:
                 error = writer.load()
                 if error is not None:
@@ -119,7 +125,7 @@ class MemorySegmentBuilder:
         # public API to just clear the segment)
         clist.reset_memory_segment(dsrc_name,
                                    ConfigurableClientList.READ_ONLY,
-                                   sgmt_info.get_reset_param(SegmentInfo.WRITER))
+                                   params)
 
         self._response_queue.append(('load-completed', dsrc_info, rrclass,
                                      dsrc_name))
@@ -154,8 +160,8 @@ class MemorySegmentBuilder:
                         # See the comments for __handle_load() for
                         # details of the tuple passed to the "load"
                         # command.
-                        self.__handle_load(command_tuple[1], command_tuple[2],
-                                           command_tuple[3], command_tuple[4])
+                        _, zone_name, dsrc_info, rrclass, dsrc_name = command_tuple
+                        self.__handle_load(zone_name, dsrc_info, rrclass, dsrc_name)
                     elif command == 'shutdown':
                         self.__handle_shutdown()
                         # When the shutdown command is received, we do

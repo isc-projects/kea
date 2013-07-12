@@ -1279,6 +1279,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/memmgr/Makefile
                  src/lib/python/isc/memmgr/tests/Makefile
+                 src/lib/python/isc/memmgr/tests/testdata/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
