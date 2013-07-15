@@ -26,6 +26,7 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <hooks/server_hooks.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -153,6 +154,9 @@ public:
 
         // it's ok if that fails. There should not be such a file anyway
         unlink(SRVID_FILE);
+    }
+
+    virtual ~Dhcpv4SrvTest() {
     }
 
     /// @brief Add 'Parameter Request List' option to the packet.

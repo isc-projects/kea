@@ -50,6 +50,9 @@ const int DHCPSRV_DBG_TRACE_DETAIL = DBGLVL_TRACE_DETAIL;
 /// Record detailed (and verbose) data on the server.
 const int DHCPSRV_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
 
+// Trace hook related operations
+const int DHCPSRV_DBG_HOOKS = DBGLVL_TRACE_BASIC;
+
 ///@}
 
 
