@@ -1,3 +1,8 @@
+642.	[func]		tomek
+	Added initial set of hooks (pk6_receive, subnet6_select,
+	lease6_select, pkt6_send) to the DHCPv6 server.
+	(Trac #2995, git d6de376f97313ba40fef989e4a437d184fdf70cc)
+
 641.	[func]		stephen
 	Added the hooks framework. This allows shared libraries of
 	user-written functions to be loaded at run-time and the

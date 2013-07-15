@@ -88,6 +88,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 endif
 
