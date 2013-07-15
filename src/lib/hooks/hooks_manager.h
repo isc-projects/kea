@@ -49,6 +49,27 @@ public:
     /// @return Reference to the singleton hooks manager.
     static HooksManager& getHooksManager();
 
+    /// @brief Validate library list
+    ///
+    /// For each library passed to it, checks that the library can be opened
+    /// and that the "version" function is present and gives the right answer.
+    /// Each library is closed afterwards.
+    ///
+    /// This is used during the configuration parsing - when the list of hooks
+    /// libraries is changed, each of the new libraries is checked before the
+    /// change is committed.
+    ///
+    /// @param List of libraries to be validated.
+    ///
+    /// @return An empty string if all libraries validated.  Otherwise it is
+    ///         the names of the libraries that failed validation, separated
+    ///         by a command and a space.  The configuration code can return
+    ///         this to bindctl as an indication of the problem. (Note that
+    ///         validation failures are logged, so more information can be
+    ///         obtained if necessary.)
+    static std::string validateLibraries(
+                       const std::vector<std::string>& libraries);
+
     /// @brief Load and reload libraries
     ///
     /// Loads the list of libraries into the server address space.  For each
@@ -171,6 +192,30 @@ public:
     ///         registered.
     static int registerHook(const std::string& name);
 
+    /// @brief Return list of loaded libraries
+    ///
+    /// Returns the names of the loaded libraries.
+    ///
+    /// @return List of loaded library names.
+    static std::vector<std::string> getLibraryNames();
+
+    /// @brief Validate set of libraries
+    ///
+    /// Validates the names of the libraries passed to it.  The function checks
+    /// that the libraries exist, that they contain a "version" function and
+    /// that it returns the right value.
+    ///
+    /// This is really just a wrapper around the LibraryManagerCollection
+    /// static method of the same name, and is supplied so that the server
+    /// does not have to know about that object.
+    ///
+    /// @param libraries Names of the libraries to validate
+    ///
+    /// @return Comma-separated list of libraries that failed to validate,
+    ///         empty string if not. (Actually, if the list of failures is
+    ///         more than one, each item is separated by a command and a space.)
+    static std::string validateLibraries();
+
     /// Index numbers for pre-defined hooks.
     static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
     static const int CONTEXT_DESTROY = ServerHooks::CONTEXT_DESTROY;
@@ -187,6 +232,17 @@ private:
     /// The following methods correspond to similarly-named static methods,
     /// but actually do the work on the singleton instance of the HooksManager.
     /// See the descriptions of the static methods for more details.
+
+    /// @brief Validate library list
+    ///
+    /// @param List of libraries to be validated.
+    ///
+    /// @return An empty string if all libraries validated.  Otherwise it is
+    ///         the name of the first library that failed validation.  The
+    ///         configuration code can return this to bindctl as an indication
+    ///         of the problem.
+    std::string validateLibrariesInternal(
+                       const std::vector<std::string>& libraries) const;
 
     /// @brief Load and reload libraries
     ///
@@ -233,6 +289,11 @@ private:
     /// @return Reference to library handle associated with post-library callout
     ///         registration.
     LibraryHandle& postCalloutsLibraryHandleInternal();
+
+    /// @brief Return list of loaded libraries
+    ///
+    /// @return List of loaded library names.
+    std::vector<std::string> getLibraryNamesInternal() const;
 
     //@}
 
