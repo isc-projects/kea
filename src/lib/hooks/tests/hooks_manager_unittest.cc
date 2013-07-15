@@ -157,33 +157,6 @@ TEST_F(HooksManagerTest, LoadLibrariesWithError) {
     // Load the libraries.  We expect a failure return because one of the
     // libraries fails to load.
     EXPECT_FALSE(HooksManager::loadLibraries(library_names));
-
-    // Execute the callouts.  The first library implements the calculation.
-    //
-    // r3 = (7 * d1 - d2) * d3
-    //
-    // The last-loaded library implements the calculation
-    //
-    // r3 = (10 + d1) * d2 - d3
-    //
-    // Putting the processing for each library together in the appropriate
-    // order, we get:
-    //
-    // r3 = ((10 * d1 + d1) - d2) * d2 * d3 - d3
-    {
-        SCOPED_TRACE("Calculation with libraries loaded");
-        executeCallCallouts(10, 3, 33, 2, 62, 3, 183);
-    }
-
-    // Try unloading the libraries.
-    EXPECT_NO_THROW(HooksManager::unloadLibraries());
-
-    // Re-execute the calculation - callouts can be called but as nothing
-    // happens, the result should always be -1.
-    {
-        SCOPED_TRACE("Calculation with libraries not loaded");
-        executeCallCallouts(-1, 3, -1, 22, -1, 83, -1);
-    }
 }
 
 // Test that we can unload a set of libraries while we have a CalloutHandle
@@ -448,6 +421,91 @@ TEST_F(HooksManagerTest, RegisterHooks) {
     EXPECT_EQ(string("context_create"), names[2]);
     EXPECT_EQ(string("context_destroy"), names[3]);
     EXPECT_EQ(string("gamma"), names[4]);
+}
+
+// Check that we can get the names of the libraries.
+
+TEST_F(HooksManagerTest, LibraryNames) {
+
+    // Set up the list of libraries to be loaded.
+    std::vector<std::string> library_names;
+    library_names.push_back(std::string(FULL_CALLOUT_LIBRARY));
+    library_names.push_back(std::string(BASIC_CALLOUT_LIBRARY));
+
+    // Check the names before the libraries are loaded.
+    std::vector<std::string> loaded_names = HooksManager::getLibraryNames();
+    EXPECT_TRUE(loaded_names.empty());
+
+    // Load the libraries and check the names again.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    loaded_names = HooksManager::getLibraryNames();
+    EXPECT_TRUE(library_names == loaded_names);
+
+    // Unload the libraries and check again.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
+    loaded_names = HooksManager::getLibraryNames();
+    EXPECT_TRUE(loaded_names.empty());
+}
+
+// Test the library validation function.
+
+TEST_F(HooksManagerTest, validateLibraries) {
+    const std::string empty;
+    const std::string separator(", ");
+
+    // Test different vectors of libraries.
+
+    // No libraries should return a success.
+    std::vector<std::string> libraries;
+    EXPECT_EQ(empty, HooksManager::validateLibraries(libraries));
+
+    // Single valid library should validate.
+    libraries.clear();
+    libraries.push_back(BASIC_CALLOUT_LIBRARY);
+    EXPECT_EQ(empty, HooksManager::validateLibraries(libraries));
+
+    // Multiple valid libraries should succeed.
+    libraries.clear();
+    libraries.push_back(BASIC_CALLOUT_LIBRARY);
+    libraries.push_back(FULL_CALLOUT_LIBRARY);
+    libraries.push_back(UNLOAD_CALLOUT_LIBRARY);
+    EXPECT_EQ(empty, HooksManager::validateLibraries(libraries));
+
+    // Single invalid library should fail.
+    libraries.clear();
+    libraries.push_back(NOT_PRESENT_LIBRARY);
+    EXPECT_EQ(std::string(NOT_PRESENT_LIBRARY),
+              HooksManager::validateLibraries(libraries));
+
+    // Multiple invalid libraries should fail.
+    libraries.clear();
+    libraries.push_back(INCORRECT_VERSION_LIBRARY);
+    libraries.push_back(NO_VERSION_LIBRARY);
+    libraries.push_back(FRAMEWORK_EXCEPTION_LIBRARY);
+    std::string expected = std::string(INCORRECT_VERSION_LIBRARY) + separator +
+                           std::string(NO_VERSION_LIBRARY) + separator +
+                           std::string(FRAMEWORK_EXCEPTION_LIBRARY);
+    EXPECT_EQ(expected, HooksManager::validateLibraries(libraries));
+
+    // Combination of valid and invalid (first one valid) should fail.
+    libraries.clear();
+    libraries.push_back(FULL_CALLOUT_LIBRARY);
+    libraries.push_back(INCORRECT_VERSION_LIBRARY);
+    libraries.push_back(NO_VERSION_LIBRARY);
+
+    expected = std::string(INCORRECT_VERSION_LIBRARY) + separator +
+               std::string(NO_VERSION_LIBRARY);
+    EXPECT_EQ(expected, HooksManager::validateLibraries(libraries));
+
+    // Combination of valid and invalid (first one invalid) should fail.
+    libraries.clear();
+    libraries.push_back(NO_VERSION_LIBRARY);
+    libraries.push_back(FULL_CALLOUT_LIBRARY);
+    libraries.push_back(INCORRECT_VERSION_LIBRARY);
+
+    expected = std::string(NO_VERSION_LIBRARY) + separator +
+               std::string(INCORRECT_VERSION_LIBRARY);
+    EXPECT_EQ(expected, HooksManager::validateLibraries(libraries));
 }
 
 
