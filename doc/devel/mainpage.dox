@@ -52,6 +52,7 @@
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
+ *   - @subpage dhcpv6Hooks
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
