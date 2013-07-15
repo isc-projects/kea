@@ -30,6 +30,8 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/addr_utilities.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/algorithm/string/erase.hpp>
 
@@ -39,8 +41,29 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::log;
 using namespace std;
+
+/// Structure that holds registered hook indexes
+struct Dhcp6Hooks {
+    int hook_index_pkt4_receive_;   ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_; ///< index for "subnet4_select" hook point
+    int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
+
+    /// Constructor that registers hook points for DHCPv6 engine
+    Dhcp6Hooks() {
+        hook_index_pkt4_receive_   = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_ = HooksManager::registerHook("subnet4_select");
+        hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp6Hooks Hooks;
 
 namespace isc {
 namespace dhcp {
@@ -58,7 +81,9 @@ static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
 // grants those options and a single, fixed, hardcoded lease.
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
-                     const bool direct_response_desired) {
+                     const bool direct_response_desired)
+    :serverid_(), shutdown_(true), alloc_engine_(), hook_index_pkt4_receive_(-1),
+     hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
@@ -103,6 +128,16 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
 
+        // Register hook points
+        hook_index_pkt4_receive_   = Hooks.hook_index_pkt4_receive_;
+        hook_index_subnet4_select_ = Hooks.hook_index_subnet4_select_;
+        hook_index_pkt4_send_      = Hooks.hook_index_pkt4_send_;
+
+        /// @todo call loadLibraries() when handling configuration changes
+        vector<string> libraries; // no libraries at this time
+        HooksManager::loadLibraries(libraries);
+
+
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
         shutdown_ = true;
@@ -122,6 +157,14 @@ Dhcpv4Srv::shutdown() {
     shutdown_ = true;
 }
 
+Pkt4Ptr Dhcpv4Srv::receivePacket(int timeout) {
+    return (IfaceMgr::instance().receive4(timeout));
+}
+
+void Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
+    IfaceMgr::instance().send(packet);
+}
+
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
@@ -134,7 +177,7 @@ Dhcpv4Srv::run() {
         Pkt4Ptr rsp;
 
         try {
-            query = IfaceMgr::instance().receive4(timeout);
+            query = receivePacket(timeout);
         } catch (const std::exception& e) {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_RECEIVE_FAIL).arg(e.what());
         }
@@ -155,6 +198,31 @@ Dhcpv4Srv::run() {
                       .arg(query->getIface());
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
                       .arg(query->toText());
+
+            // Let's execute all callouts registered for packet_received
+            if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt4_receive_)) {
+                CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                // Delete previously set arguments
+                callout_handle->deleteAllArguments();
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("query4", query);
+
+                // Call callouts
+                HooksManager::getHooksManager().callCallouts(hook_index_pkt4_receive_,
+                                                *callout_handle);
+
+                // Callouts decided to skip the next processing step. The next
+                // processing step would to process the packet, so skip at this
+                // stage means drop.
+                if (callout_handle->getSkip()) {
+                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP);
+                    continue;
+                }
+
+                callout_handle->getArgument("query4", query);
+            }
 
             try {
                 switch (query->getType()) {
@@ -220,13 +288,39 @@ Dhcpv4Srv::run() {
                 rsp->setIface(query->getIface());
                 rsp->setIndex(query->getIndex());
 
+                // Execute all callouts registered for packet6_send
+                if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt4_send_)) {
+                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                    // Delete all previous arguments
+                    callout_handle->deleteAllArguments();
+
+                    // Clear skip flag if it was set in previous callouts
+                    callout_handle->setSkip(false);
+
+                    // Set our response
+                    callout_handle->setArgument("response4", rsp);
+
+                    // Call all installed callouts
+                    HooksManager::getHooksManager().callCallouts(hook_index_pkt4_send_,
+                                                    *callout_handle);
+
+                    // Callouts decided to skip the next processing step. The next
+                    // processing step would to send the packet, so skip at this
+                    // stage means "drop response".
+                    if (callout_handle->getSkip()) {
+                        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP);
+                        continue;
+                    }
+                }
+
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
                           DHCP4_RESPONSE_DATA)
                           .arg(rsp->getType()).arg(rsp->toText());
 
                 if (rsp->pack()) {
                     try {
-                        IfaceMgr::instance().send(rsp);
+                        sendPacket(rsp);
                     } catch (const std::exception& e) {
                         LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL).arg(e.what());
                     }
@@ -782,17 +876,48 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
 Subnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
 
+    Subnet4Ptr subnet;
     // Is this relayed message?
     IOAddress relay = question->getGiaddr();
     if (relay.toText() == "0.0.0.0") {
 
         // Yes: Use relay address to select subnet
-        return (CfgMgr::instance().getSubnet4(relay));
+        subnet = CfgMgr::instance().getSubnet4(relay);
     } else {
 
         // No: Use client's address to select subnet
-        return (CfgMgr::instance().getSubnet4(question->getRemoteAddr()));
+        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr());
     }
+
+    // Let's execute all callouts registered for packet_received
+    if (HooksManager::getHooksManager().calloutsPresent(hook_index_subnet4_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(question);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query4", question);
+        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4collection", CfgMgr::instance().getSubnets4());
+
+        // Call user (and server-side) callouts
+        HooksManager::getHooksManager().callCallouts(hook_index_subnet4_select_,
+                                        *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet will be
+        // selected. Packet processing will continue, but it will be severly limited
+        // (i.e. only global options will be assigned)
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            return (Subnet4Ptr());
+        }
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet4", subnet);
+    }
+
+    return (subnet);
 }
 
 void
@@ -818,6 +943,33 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
         // do nothing here
         ;
     }
+}
+
+isc::hooks::CalloutHandlePtr Dhcpv4Srv::getCalloutHandle(const Pkt4Ptr& pkt) {
+    // This method returns a CalloutHandle for a given packet. It is guaranteed
+    // to return the same callout_handle (so user library contexts are
+    // preserved). This method works well if the server processes one packet
+    // at a time. Once the server architecture is extended to cover parallel
+    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
+    // method has to be extended (e.g. store callouts in a map and use pkt as
+    // a key). Additional code would be required to release the callout handle
+    // once the server finished processing.
+
+    CalloutHandlePtr callout_handle;
+    static Pkt4Ptr old_pointer;
+
+    if (!callout_handle ||
+        old_pointer != pkt) {
+        // This is the first packet or a different packet than previously
+        // passed to getCalloutHandle()
+
+        // Remember the pointer to this packet
+        old_pointer = pkt;
+
+        callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    }
+
+    return (callout_handle);
 }
 
 }   // namespace dhcp
