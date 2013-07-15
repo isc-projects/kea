@@ -201,6 +201,15 @@ public:
     /// completely new?
     void deleteSubnets6();
 
+    /// @brief returns const reference to all subnets6
+    ///
+    /// This is used in a hook (subnet4_select), where the hook is able
+    /// to choose a different subnet. Server code has to offer a list
+    /// of possible choices (i.e. all subnets).
+    /// @return a pointer to const Subnet6 collection
+    const Subnet4Collection* getSubnets4() {
+        return (&subnets4_);
+    }
 
     /// @brief returns const reference to all subnets6
     ///
@@ -211,7 +220,6 @@ public:
     const Subnet6Collection* getSubnets6() {
         return (&subnets6_);
     }
-
 
     /// @brief get IPv4 subnet by address
     ///
