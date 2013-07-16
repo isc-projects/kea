@@ -1722,24 +1722,35 @@ public:
             192, 0, 2, 255,         // siaddr
             255, 255, 255, 255,     // giaddr
         };
-        
+
         // Initialize the vector with the header fields defined above.
         vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
-        
+
         // Append the large header fields.
         copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
         copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
         copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
-        
+
         // Should now have all the header, so check.  The "static_cast" is used
         // to get round an odd bug whereby the linker appears not to find the
         // definition of DHCPV4_PKT_HDR_LEN if it appears within an EXPECT_EQ().
         EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), buf.size());
 
-        return (Pkt4Ptr(new Pkt4(DHCPDISCOVER, 12345)));
+        // Add magic cookie
+        buf.push_back(0x63);
+        buf.push_back(0x82);
+        buf.push_back(0x53);
+        buf.push_back(0x63);
+
+        // Add message type DISCOVER
+        buf.push_back(static_cast<uint8_t>(DHO_DHCP_MESSAGE_TYPE));
+        buf.push_back(1); // length (just one byte)
+        buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
+
+        return (Pkt4Ptr(new Pkt4(&buf[0], buf.size())));
     }
 
-    /// test callback that stores received callout name and pkt6 value
+    /// test callback that stores received callout name and pkt4 value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
