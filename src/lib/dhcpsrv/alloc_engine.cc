@@ -35,7 +35,7 @@ struct AllocEngineHooks {
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
-        hook_index_lease6_select_ = HooksManager::registerHook("lease4_select");
+        hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
     }
 };
@@ -577,8 +577,13 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
         callout_handle->deleteAllArguments();
 
         // Pass necessary arguments
-        // Subnet from which we do the allocation
-        callout_handle->setArgument("subnet4", subnet);
+
+        // Subnet from which we do the allocation (That's as far as we can go
+        // with using SubnetPtr to point to Subnet4 object. Users should not
+        // be confused with dynamic_pointer_casts. They should get a concrete
+        // pointer (Subnet4Ptr) pointing to a Subnet4 object.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
+        callout_handle->setArgument("subnet4", subnet4);
 
         // Is this solicit (fake = true) or request (fake = false)
         callout_handle->setArgument("fake_allocation", fake_allocation);
@@ -723,11 +728,17 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
 
         // Pass necessary arguments
 
-        // Subnet from which we do the allocation
-        callout_handle->setArgument("subnet4", subnet);
+        // Subnet from which we do the allocation (That's as far as we can go
+        // with using SubnetPtr to point to Subnet4 object. Users should not
+        // be confused with dynamic_pointer_casts. They should get a concrete
+        // pointer (Subnet4Ptr) pointing to a Subnet4 object.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
+        callout_handle->setArgument("subnet4", subnet4);
 
         // Is this solicit (fake = true) or request (fake = false)
         callout_handle->setArgument("fake_allocation", fake_allocation);
+
+        // Pass the intended lease as well
         callout_handle->setArgument("lease4", lease);
 
         // This is the first callout, so no need to clear any arguments
@@ -743,7 +754,7 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handled to it.
-        callout_handle->getArgument("lease6", lease);
+        callout_handle->getArgument("lease4", lease);
     }
 
 
