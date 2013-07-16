@@ -1622,6 +1622,11 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
     EXPECT_EQ(srvid_text, text);
 }
 
+/// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
+/// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
+/// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
+/// present in the DHCPv4, so not everything is applicable directly.
+
 // Checks if hooks are registered properly.
 TEST_F(Dhcpv4SrvTest, Hooks) {
     NakedDhcpv4Srv srv(0);
@@ -1909,14 +1914,14 @@ public:
         // Call the basic calllout to record all passed values
         subnet4_select_callout(callout_handle);
 
-        Subnet4Collection subnets;
+        const Subnet4Collection* subnets;
         Subnet4Ptr subnet;
         callout_handle.getArgument("subnet4", subnet);
         callout_handle.getArgument("subnet4collection", subnets);
 
         // Let's change to a different subnet
-        if (subnets.size() > 1) {
-            subnet = subnets[1]; // Let's pick the other subnet
+        if (subnets->size() > 1) {
+            subnet = (*subnets)[1]; // Let's pick the other subnet
             callout_handle.setArgument("subnet4", subnet);
         }
 
@@ -2222,16 +2227,15 @@ TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interface\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"2001:db8:1::/44\" ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"" + valid_iface_ + "\" "
         " }, {"
-        "    \"pool\": [ \"2001:db8:2::/44\" ],"
-        "    \"subnet\": \"2001:db8:2::/48\" "
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -2246,7 +2250,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
 
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
     sol->setIface(valid_iface_);
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -2289,16 +2293,15 @@ TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interface\": [ \"all\" ],"
-        "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
-        "    \"pool\": [ \"2001:db8:1::/44\" ],"
-        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"" + valid_iface_ + "\" "
         " }, {"
-        "    \"pool\": [ \"2001:db8:2::/44\" ],"
-        "    \"subnet\": \"2001:db8:2::/48\" "
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -2313,7 +2316,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
 
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
     sol->setIface(valid_iface_);
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
