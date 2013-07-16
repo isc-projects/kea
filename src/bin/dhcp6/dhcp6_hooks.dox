@@ -110,8 +110,10 @@ packet processing. Hook points that are not specific to packet processing
    means that the lease won't be inserted into the database (SOLICIT),
    a value of false means that it will (REQUEST).
 
- - <b>Skip flag action</b>: the "skip" flag is ignored by the server on this
-   hook.
+ - <b>Skip flag action</b>: If any callout installed on 'lease6_select'
+   sets the skip flag, the server will not assign that particular lease.
+   Packet processing will continue and the client may get other addresses
+   or prefixes if it requested more than one address and/or prefix.
 
 @subsection dhcpv6HooksPkt6Send pkt6_send
 
