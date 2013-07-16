@@ -1626,6 +1626,7 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
 /// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
 /// present in the DHCPv4, so not everything is applicable directly.
+/// See ticket #3057
 
 // Checks if hooks are registered properly.
 TEST_F(Dhcpv4SrvTest, Hooks) {
