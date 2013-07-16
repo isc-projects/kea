@@ -518,7 +518,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the
+        // won't be inserted into the database.
         if (callout_handle->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
@@ -596,7 +596,7 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the
+        // won't be inserted into the database.
         if (callout_handle->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
@@ -655,7 +655,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the
+        // won't be inserted into the database.
         if (callout_handle->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
@@ -746,7 +746,7 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
 
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
-        // won't be inserted into the
+        // won't be inserted into the database.
         if (callout_handle->getSkip()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
