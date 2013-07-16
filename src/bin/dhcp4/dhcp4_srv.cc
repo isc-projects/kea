@@ -885,7 +885,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     Subnet4Ptr subnet;
     // Is this relayed message?
     IOAddress relay = question->getGiaddr();
-    if (relay.toText() == "0.0.0.0") {
+    if (relay.toText() != "0.0.0.0") {
 
         // Yes: Use relay address to select subnet
         subnet = CfgMgr::instance().getSubnet4(relay);
@@ -894,6 +894,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
         // No: Use client's address to select subnet
         subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr());
     }
+
+    /// @todo Implement getSubnet4(interface-name)
 
     // Let's execute all callouts registered for packet_received
     if (HooksManager::getHooksManager().calloutsPresent(hook_index_subnet4_select_)) {
