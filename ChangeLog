@@ -1,3 +1,8 @@
+6XX.	[func]		tomek
+	Added initial set of hooks (pk4_receive, subnet4_select,
+	lease4_select, pkt4_send) to the DHCPv6 server.
+	(Trac #2994, git ABCD)
+
 642.	[func]		tomek
 	Added initial set of hooks (pk6_receive, subnet6_select,
 	lease6_select, pkt6_send) to the DHCPv6 server.
