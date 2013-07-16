@@ -1044,6 +1044,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setYiaddr(hint);
+    dis->setHWAddr(generateHWAddr(6));
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1405,8 +1406,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->setHWAddr(generateHWAddr(6));
 
-    // Client-id is optional for information-request, so
+    // Server-id is optional for information-request, so
     EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
 
     // Empty packet, no server-id
@@ -1420,6 +1422,11 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     // Server-id is forbidden, but present => exception
     EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
                  RFCViolation);
+
+    // There's no client-id and no HWADDR. Server needs something to
+    // identify the client
+    pkt->setHWAddr(generateHWAddr(0));
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY), RFCViolation);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly.
@@ -1791,8 +1798,10 @@ public:
         Pkt4Ptr pkt;
         callout_handle.getArgument("query4", pkt);
 
-        // get rid of the old client-id
+        // get rid of the old client-id (and no HWADDR)
+        vector<uint8_t> mac;
         pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        pkt->setHWAddr(1, 0, mac); // HWtype 1, hwardware len = 0
 
         // carry on as usual
         return pkt4_receive_callout(callout_handle);
