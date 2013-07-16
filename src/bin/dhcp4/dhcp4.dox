@@ -79,4 +79,8 @@ See \ref dhcpv6ConfigParser.
 Configuration inheritance in DHCPv4 follows exactly the same logic as its DHCPv6
 counterpart. See \ref dhcpv6ConfigInherit.
 
+@section dhcpv4Other Other DHCPv4 topics
+
+ For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
+
 */
