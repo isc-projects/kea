@@ -66,7 +66,7 @@ is started.  It indicates what database backend type is being to store
 lease and other information.
 
 % DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped, because a callout set skip flag.
-This debug message is printed when a callout installed on pkt6_received
+This debug message is printed when a callout installed on pkt6_receive
 hook point sets skip flag. For this particular hook point, the setting
 of the flag by a callout instructs the server to drop the packet.
 
