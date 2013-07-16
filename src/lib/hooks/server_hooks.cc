@@ -28,10 +28,10 @@ namespace hooks {
 // Constructor - register the pre-defined hooks and check that the indexes
 // assigned to them are as expected.
 //
-// Note that there are no logging messages here or in registerHooks().  One
-// method to initialize hook names is to use static initialization.  Here,
-// a static object is declared in a file outside of any function or method.
-// As a result, it is instantiated and its constructor run before the main
+// Note that there are no logging messages here or in registerHooks().  The
+// recommended way to initialize hook names is to use static initialization.
+// Here, a static object is declared in a file outside of any function or
+// method.  As a result, it is instantiated and its constructor run before the
 // program starts.  By putting calls to ServerHooks::registerHook() in there,
 // hooks names are already registered when the program runs.  However, at that
 // point, the logging system is not initialized, so messages are unable to
