@@ -729,6 +729,9 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+
+    sanityCheck(discover, FORBIDDEN);
+
     Pkt4Ptr offer = Pkt4Ptr
         (new Pkt4(DHCPOFFER, discover->getTransid()));
 
@@ -945,6 +948,21 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
     case OPTIONAL:
         // do nothing here
         ;
+    }
+
+    // If there is HWAddress set and it is non-empty, then we're good
+    if (pkt->getHWAddr() && !pkt->getHWAddr()->hwaddr_.empty())
+        return;
+
+    // There has to be something to uniquely identify the client:
+    // either non-zero MAC address or client-id option present (or both)
+    OptionPtr client_id = pkt->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+    // If there's no client-id (or a useless one is provided, i.e. 0 length)
+    if (!client_id || client_id->len() == client_id->getHeaderLen()) {
+        isc_throw(RFCViolation, "Missing or useless client-id and no HW address "
+                  " provided in message "
+                  << serverReceivedPacketName(pkt->getType()));
     }
 }
 
