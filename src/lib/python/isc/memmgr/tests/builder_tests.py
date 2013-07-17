@@ -56,6 +56,7 @@ class TestMemorySegmentBuilder(unittest.TestCase):
 
     def setUp(self):
         self._create_builder_thread()
+        self.__mapped_file_path = None
 
     def tearDown(self):
         # It's the tests' responsibility to stop and join the builder
@@ -64,6 +65,10 @@ class TestMemorySegmentBuilder(unittest.TestCase):
 
         self._master_sock.close()
         self._builder_sock.close()
+
+        if self.__mapped_file_path is not None:
+            if os.path.exists(self.__mapped_file_path):
+                os.unlink(self.__mapped_file_path)
 
     def test_bad_command(self):
         """Tests what happens when a bad command is passed to the
@@ -162,6 +167,9 @@ class TestMemorySegmentBuilder(unittest.TestCase):
         sgmt_info = datasrc_info.segment_info_map[(RRClass.IN, 'MasterFiles')]
         self.assertIsNone(sgmt_info.get_reset_param(SegmentInfo.READER))
         self.assertIsNotNone(sgmt_info.get_reset_param(SegmentInfo.WRITER))
+
+        param = sgmt_info.get_reset_param(SegmentInfo.WRITER)
+        self.__mapped_file_path = param['mapped-file']
 
         self._builder_thread.start()
 
