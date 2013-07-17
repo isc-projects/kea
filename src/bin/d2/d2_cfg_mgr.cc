@@ -17,12 +17,6 @@
 
 #include <boost/foreach.hpp>
 
-using namespace std;
-using namespace isc;
-using namespace isc::dhcp;
-using namespace isc::data;
-using namespace isc::asiolink;
-
 namespace isc {
 namespace d2 {
 
@@ -102,12 +96,14 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
     D2CfgContextPtr context = getD2CfgContext();
 
     // Create parser instance based on element_id.
-    DhcpConfigParser* parser = NULL;
+    isc::dhcp::DhcpConfigParser* parser = NULL;
     if ((config_id == "interface")  ||
         (config_id == "ip_address")) {
-        parser = new StringParser(config_id, context->getStringStorage());
+        parser = new isc::dhcp::StringParser(config_id, 
+                                             context->getStringStorage());
     } else if (config_id == "port") {
-        parser = new Uint32Parser(config_id, context->getUint32Storage());
+        parser = new isc::dhcp::Uint32Parser(config_id, 
+                                             context->getUint32Storage());
     } else if (config_id ==  "forward_ddns") {
         parser = new DdnsDomainListMgrParser("forward_mgr",
                                              context->getForwardMgr(),

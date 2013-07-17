@@ -70,7 +70,7 @@ application when it is not running.
 
 % DCTL_ORDER_ERROR configuration contains more elements than the parsing order
 An error message which indicates that configuration being parsed includes
-element ids not specified the configuration manager's parse order list. This 
+element ids not specified the configuration manager's parse order list. This
 is a programmatic error.
 
 % DCTL_ORDER_NO_ELEMENT element: %1 is in the parsing order but is missing from the configuration
@@ -78,7 +78,7 @@ An error message output during a configuration update.  The program is
 expecting an item but has not found it in the new configuration.  This may
 mean that the BIND 10 configuration database is corrupt.
 
-% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2 
+% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2
 On receipt of message containing details to a change of its configuration,
 the server failed to create a parser to decode the contents of the named
 configuration element, or the creation succeeded but the parsing actions
@@ -124,15 +124,39 @@ has been invoked.
 This is a debug message issued when the Dhcp-Ddns application encounters an
 unrecoverable error from within the event loop.
 
-% DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
-This is warning message issued when there are no domains in the configuration
-which match the cited fully qualified domain name (FQDN).  The DNS Update 
-request for the FQDN cannot be processed.
+% DHCP_DDNS_INVALID_NCR application received an invalid DNS update request: %1
+This is an error message that indicates that an invalid request to update
+a DNS entry was recevied by the application.  Either the format or the content
+of the request is incorret. The request will be ignored.
 
 % DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
-This is a debug message issued when the DHCP-DDNS application encountered an error
-while decoding a response to DNS Update message. Typically, this error will be
-encountered when a response message is malformed.
+This is a debug message issued when the DHCP-DDNS application encountered an
+error while decoding a response to DNS Update message. Typically, this error
+will be encountered when a response message is malformed.
+
+% DHCP_DDNS_NCR_UDP_LISTEN_CLOSE application encountered an error while closing the UDP socket used to receive NameChangeRequests : %1
+This is an error message that indicates the application was unable to close the
+UDP socket being used to receive NameChangeRequests.  Socket closure may occur
+during the course of error recovery or duing normal shutdown procedure.  In
+either case the error is unlikely to impair the application's ability to
+process requests but it should be reported for analysis.
+
+% DHCP_DDNS_NCR_UDP_RECV_ERROR UDP socket receive error while listening for DNS Update requests: %1
+This is an error message indicating that an IO error occured while listening
+over a UDP socket for DNS update requests. in the request. This could indicate
+a network connectivity or system resource issue.
+
+% DHCP_DDNS_NCR_UDP_SEND_CLOSE application encountered an error while closing the UDP socket used to send NameChangeRequests : %1
+This is an error message that indicates the DHCP-DDNS client was unable to close
+the UDP socket being used to send NameChangeRequests.  Socket closure may occur
+during the course of error recovery or duing normal shutdown procedure.  In
+either case the error is unlikely to impair the client's ability to send
+requests but it should be reported for analysis.
+
+% DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
+This is warning message issued when there are no domains in the configuration
+which match the cited fully qualified domain name (FQDN).  The DNS Update
+request for the FQDN cannot be processed.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the Dhcp-Ddns application enters
