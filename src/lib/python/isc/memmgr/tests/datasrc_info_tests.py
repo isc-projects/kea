@@ -104,10 +104,8 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertSetEqual(self.__sgmt_info.get_readers(), {1})
         self.__sgmt_info.add_reader(3)
         self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 3})
-        # ordering doesn't matter in sets
         self.__sgmt_info.add_reader(2)
         self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 2, 3})
-        self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 3, 2})
 
         # adding the same existing reader must throw
         self.assertRaises(SegmentInfoError, self.__sgmt_info.add_reader, (1))
