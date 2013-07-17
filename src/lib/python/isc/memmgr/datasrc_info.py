@@ -109,9 +109,9 @@ class SegmentInfo:
     # Helper method used in complete_update(), sync_reader() and
     # remove_reader().
     def __sync_reader_helper(self, new_state):
-        if len(self.__old_readers) == 0:
+        if not self.__old_readers:
             self.__state = new_state
-            if len(self.__events) > 0:
+            if self.__events:
                 e = self.__events[0]
                 del self.__events[0]
                 return e
@@ -145,7 +145,7 @@ class SegmentInfo:
         event (without removing it from the pending events queue). This
         tells the caller (memmgr) that it should initiate the update
         process with the builder. In all other cases it returns None."""
-        if self.__state == self.READY and  len(self.__events) > 0:
+        if self.__state == self.READY and self.__events:
             self.__state = self.UPDATING
             return self.__events[0]
 
