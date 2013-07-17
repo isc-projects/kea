@@ -110,16 +110,16 @@ class MemorySegmentBuilder:
             result, writer = clist.get_cached_zone_writer(zone_name, catch_load_error,
                                                           dsrc_name)
             if result != ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS:
-                # FIXME: log the error
+                logger.error(MEMMGR_BUILDER_GET_ZONE_WRITER_ERROR, zone_name, dsrc_name)
                 continue
 
             try:
                 error = writer.load()
                 if error is not None:
-                    # FIXME: log the error
+                    logger.error(MEMMGR_BUILDER_ZONE_WRITER_LOAD_1_ERROR, zone_name, dsrc_name, error)
                     continue
-            except Exception:
-                # FIXME: log it
+            except Exception as e:
+                logger.error(MEMMGR_BUILDER_ZONE_WRITER_LOAD_2_ERROR, zone_name, dsrc_name, str(e))
                 continue
             writer.install()
             writer.cleanup()
