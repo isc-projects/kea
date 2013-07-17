@@ -95,7 +95,8 @@ class TestSegmentInfo(unittest.TestCase):
     def test_add_event(self):
         self.assertEqual(len(self.__sgmt_info.get_events()), 0)
         self.__sgmt_info.add_event(None)
-        self.assertNotEqual(len(self.__sgmt_info.get_events()), 0)
+        self.assertEqual(len(self.__sgmt_info.get_events()), 1)
+        self.assertListEqual(self.__sgmt_info.get_events(), [None])
 
     def test_add_reader(self):
         self.assertSetEqual(self.__sgmt_info.get_readers(), set())
