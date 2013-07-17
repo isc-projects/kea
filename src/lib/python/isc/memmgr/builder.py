@@ -144,7 +144,7 @@ class MemorySegmentBuilder:
         # Acquire the condition variable while running the loop.
         with self._cv:
             while not self._shutdown:
-                while len(self._command_queue) == 0:
+                while not self._command_queue:
                     self._cv.wait()
                 # Move the queue content to a local queue. Be careful of
                 # not making assignments to reference variables.
@@ -176,6 +176,6 @@ class MemorySegmentBuilder:
                 # Notify (any main thread) on the socket about a
                 # response. Otherwise, the main thread may wait in its
                 # loop without knowing there was a problem.
-                if len(self._response_queue) > 0:
+                if self._response_queue:
                     while self._sock.send(b'x') != 1:
                         continue
