@@ -17,6 +17,9 @@ import json
 from isc.datasrc import ConfigurableClientList
 from isc.memmgr.datasrc_info import SegmentInfo
 
+from isc.log_messages.memmgr_messages import *
+from isc.memmgr.logger import logger
+
 class MemorySegmentBuilder:
     """The builder runs in a different thread in the memory manager. It
     waits for commands from the memory manager, and then executes them
@@ -61,11 +64,12 @@ class MemorySegmentBuilder:
         # ('shutdown',)
         self._shutdown = True
 
-    def __handle_bad_command(self):
+    def __handle_bad_command(self, bad_command):
         # A bad command was received. Raising an exception is not useful
         # in this case as we are likely running in a different thread
         # from the main thread which would need to be notified. Instead
         # return this in the response queue.
+        logger.error(MEMMGR_BUILDER_BAD_COMMAND_ERROR, bad_command)
         self._response_queue.append(('bad_command',))
         self._shutdown = True
 
@@ -168,7 +172,7 @@ class MemorySegmentBuilder:
                         # not process any further commands.
                         break
                     else:
-                        self.__handle_bad_command()
+                        self.__handle_bad_command(command)
                         # When a bad command is received, we do not
                         # process any further commands.
                         break
