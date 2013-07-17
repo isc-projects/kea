@@ -608,11 +608,12 @@ public:
         try  {
             config_set_ = isc::data::Element::fromJSON(json_text);
         } catch (const isc::Exception &ex) {
-            return  ::testing::AssertionFailure() 
-                << "JSON text failed to parse:" << ex.what();
+            return (::testing::AssertionFailure(::testing::Message() << 
+                                                "JSON text failed to parse:" 
+                                                << ex.what())); 
         }
 
-        return ::testing::AssertionSuccess();
+        return (::testing::AssertionSuccess());
     }
 
 
@@ -628,11 +629,12 @@ public:
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer_);
         if (rcode == should_be) {
-            return testing::AssertionSuccess();
+            return (testing::AssertionSuccess());
         }
 
-        return ::testing::AssertionFailure() << "checkAnswer rcode:" 
-               << rcode << " comment: " << *comment;
+        return (::testing::AssertionFailure(::testing::Message() << 
+                                            "checkAnswer rcode:" << rcode 
+                                            << " comment: " << *comment));
     }
 
     /// @brief Configuration set being tested.
