@@ -261,7 +261,7 @@ public:
     }
 
     /// @brief Returns the data transfer buffer capacity.
-    const size_t getBufferSize() const {
+    size_t getBufferSize() const {
         return (data_->buf_size_);
     }
 
@@ -287,7 +287,7 @@ public:
 
     /// @brief Returns the number of bytes manually written into the
     /// transfer buffer.
-    const size_t getPutLen() const {
+    size_t getPutLen() const {
         return (data_->put_len_);
     }
 
