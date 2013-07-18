@@ -19,6 +19,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_custom.h>
@@ -905,7 +906,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_FQDN, client_fqdn_buf.begin(),
-                                    client_fqdn_buf.end(), typeid(OptionCustom));
+                                    client_fqdn_buf.end(),
+                                    typeid(Option6ClientFqdn));
 
     LibDhcpTest::testStdOptionDefs6(D6O_PANA_AGENT, begin, end,
                                     typeid(Option6AddrLst));
