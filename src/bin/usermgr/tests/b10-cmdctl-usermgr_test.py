@@ -399,6 +399,19 @@ Options:
                          'add', 'user1', 'pass1'
                        ])
 
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_bad_file_permissions(self):
+        """
+        Check for graceful handling of bad file argument
+        """
+        # Create the test file
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user1', 'pass1'
+                       ])
+
         # Make it non-writable (don't worry about cleanup, the
         # file should be deleted after each test anyway
         os.chmod(self.OUTPUT_FILE, stat.S_IRUSR)
