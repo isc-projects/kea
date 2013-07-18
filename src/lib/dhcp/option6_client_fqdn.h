@@ -39,6 +39,8 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// Forward declaration to implementation of @c Option6ClientFqdn class.
+class Option6ClientFqdnImpl;
 
 /// @brief Represents DHCPv6 Client FQDN %Option (code 39).
 ///
@@ -60,8 +62,8 @@ public:
 /// where:
 /// - N flag specifies whether server should (0) or should not (1) perform DNS
 ///  Update,
-/// - O flag is set by the server to indicate that it has overriden client's
-/// preferrence set with the S bit.
+/// - O flag is set by the server to indicate that it has overridden client's
+/// preference set with the S bit.
 /// - S flag specifies whether server should (1) or should not (0) perform
 /// forward (FQDN-to-address) updates.
 ///
@@ -71,7 +73,21 @@ public:
 /// Domain names being carried by DHCPv6 Client Fqdn %Option can be fully
 /// qualified or partial. Partial domain names are encoded similar to the
 /// fully qualified domain names, except that they lack terminating zero
-/// at the end of their wire representation.
+/// at the end of their wire representation. It is also accepted to create an
+/// instance of this option which has empty domain-name. Clients use empty
+/// domain-names to indicate that server should generate complete fully
+/// qualified domain-name.
+///
+/// <b>Design choice:</b> This class uses pimpl idiom to separate the interface
+/// from implementation specifics. Implementations may use different approaches
+/// to handle domain names (mostly validation of the domain-names). The existing
+/// @c isc::dns::Name class is a natural (and the simplest) choice to handle
+/// domain-names. Use of this class however, implies that libdhcp must be linked
+/// with libdns. At some point these libraries may need to be separated, i.e. to
+/// support compilation and use of standalone DHCP server. This will require
+/// that the part of implementation which deals with domain-names is modified to
+/// not use classes from libdns. These changes will be transparent for this
+/// interface.
 class Option6ClientFqdn : public Option {
 public:
 
@@ -108,12 +124,20 @@ public:
                                const std::string& domain_name,
                                const DomainNameType domain_name_type = FULL);
 
+    /// @brief Constructor, creates option instance using flags.
+    ///
+    /// This constructor creates an instance of the option with empty
+    /// domain-name. This domain-name is marked partial.
+    ///
+    /// @param flag a combination of flags to be stored in flags field.
+    Option6ClientFqdn(const uint8_t flag);
+
     /// @brief Constructor, creates an option instance from part of the buffer.
     ///
     /// This constructor is mainly used to parse options in the received
     /// messages. Function parameters specify buffer bounds from which the
     /// option should be created. The size of the buffer chunk, specified by
-    /// the constructor's paramaters should be equal or larger than the size
+    /// the constructor's parameters should be equal or larger than the size
     /// of the option. Otherwise, constructor will throw an exception.
     ///
     /// @param first the lower bound of the buffer to create option from.
@@ -121,8 +145,14 @@ public:
     explicit Option6ClientFqdn(OptionBufferConstIter first,
                                OptionBufferConstIter last);
 
+   /// @brief Copy constructor
+    Option6ClientFqdn(const Option6ClientFqdn& source);
+
     /// @brief Destructor
     virtual ~Option6ClientFqdn();
+
+    /// @brief Assignment operator
+    Option6ClientFqdn& operator=(const Option6ClientFqdn& source);
 
     /// @brief Checks if the specified flag of the DHCPv6 Client FQDN %Option
     /// is set.
@@ -139,6 +169,36 @@ public:
     /// @param set a boolean value which indicates whether flag should be
     /// set (true), or cleared (false).
     void setFlag(const Flag flag, const bool set);
+
+    /// @brief Returns the domain-name in the text format.
+    ///
+    /// If domain-name is partial, it lacks the dot at the end (e.g. myhost).
+    /// If domain-name is fully qualified, it has the dot at the end (e.g.
+    /// myhost.example.com.).
+    ///
+    /// @return domain-name in the text format.
+    std::string getDomainName() const;
+
+    /// @brief Set new domain-name.
+    ///
+    /// @param domain_name domain name field value in the text format.
+    /// @param domain_name_type type of the domain name: partial or fully
+    /// qualified.
+    void setDomainName(const std::string& domain_name,
+                       const DomainNameType domain_name_type);
+
+    /// @brief Set empty domain-name.
+    ///
+    /// This function is equivalent to @c Option6ClientFqdn::setDomainName
+    /// with empty partial domain-name. It is exception safe.
+    void resetDomainName();
+
+    /// @brief Returns enumerator value which indicates whether domain-name is
+    /// partial or full.
+    ///
+    /// @return An enumerator value indicating whether domain-name is partial
+    /// or full.
+    DomainNameType getDomainNameType() const;
 
    /// @brief Writes option in the wire format into a buffer.
     ///
@@ -176,20 +236,8 @@ public:
 
 private:
 
-    /// @brief Verifies that flags are correct.
-    ///
-    /// Function throws @c isc::dhcp::InvalidFqdnOptionFlags exception if
-    /// current setting of DHCPv6 Client Fqdn %Option flags is invalid.
-    /// In particular, it checks that if N is set, S is cleared.
-    ///
-    /// @param flags DHCPv6 Client FQDN %Option flags to be checked.
-    ///
-    /// @throw isc::dhcp::InvalidFqdnOptionFlags if flags are incorrect.
-    static void checkFlags(const uint8_t flags);
-
-    uint8_t flags_;
-    dns::Name* domain_name_;
-    DomainNameType domain_name_type_;
+    /// @brief A pointer to the implementation.
+    Option6ClientFqdnImpl* impl_;
 };
 
 /// A pointer to the @c Option6ClientFqdn object.
