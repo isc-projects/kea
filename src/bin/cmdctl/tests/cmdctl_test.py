@@ -706,6 +706,15 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.assertRaises(CmdctlException, self.server._check_key_and_cert,
                          '/', certfile)
 
+        # All OK (also happens to check the context code above works)
+        self.server._check_key_and_cert(keyfile, certfile)
+
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_check_key_and_cert_for_unreadable(self):
+        keyfile = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
+        certfile = BUILD_FILE_PATH + 'cmdctl-certfile.pem'
+
         # no read permission
         with UnreadableFile(certfile):
             self.assertRaises(CmdctlException,
@@ -716,9 +725,6 @@ class TestSecureHTTPServer(unittest.TestCase):
             self.assertRaises(CmdctlException,
                               self.server._check_key_and_cert,
                               keyfile, certfile)
-
-        # All OK (also happens to check the context code above works)
-        self.server._check_key_and_cert(keyfile, certfile)
 
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
