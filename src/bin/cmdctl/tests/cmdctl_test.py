@@ -680,11 +680,15 @@ class TestSecureHTTPServer(unittest.TestCase):
         # Just some file that we know exists
         file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
         check_file(file_name)
-        with UnreadableFile(file_name):
-            self.assertRaises(CmdctlException, check_file, file_name)
         self.assertRaises(CmdctlException, check_file, '/local/not-exist')
         self.assertRaises(CmdctlException, check_file, '/')
 
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_check_file_for_unreadable(self):
+        file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
+        with UnreadableFile(file_name):
+            self.assertRaises(CmdctlException, check_file, file_name)
 
     def test_check_key_and_cert(self):
         keyfile = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
