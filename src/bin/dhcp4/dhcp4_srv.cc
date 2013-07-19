@@ -835,6 +835,11 @@ Dhcpv4Srv::openActiveSockets(const uint16_t port,
     for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
         Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
+        if (iface_ptr == NULL) {
+            isc_throw(isc::Unexpected, "Interface Manager returned NULL"
+                      << " instance of the interface when DHCPv4 server was"
+                      << " trying to reopen sockets after reconfiguration");
+        }
         if (CfgMgr::instance().isActiveIface(iface->getName())) {
             iface_ptr->inactive4_ = false;
             LOG_INFO(dhcp4_logger, DHCP4_ACTIVATE_INTERFACE)
