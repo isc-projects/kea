@@ -1785,10 +1785,10 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
 TEST_F(Dhcp4ParserTest, allInterfaces) {
     ConstElementPtr x;
     // This configuration specifies two interfaces on which server should listen
-    // but it also includes keyword 'all'. This keyword switches server into the
+    // but it also includes asterisk. The asterisk switches server into the
     // mode when it listens on all interfaces regardless of what interface names
     // were specified in the "interfaces" parameter.
-    string config = "{ \"interfaces\": [ \"eth0\",\"*\",\"eth1\" ],"
+    string config = "{ \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000 }";

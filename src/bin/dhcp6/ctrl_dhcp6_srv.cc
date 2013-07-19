@@ -254,40 +254,5 @@ ControlledDhcpv6Srv::execDhcpv6ServerCommand(const std::string& command_id,
     }
 }
 
-void
-ControlledDhcpv6Srv::openActiveSockets(const uint16_t port) {
-    IfaceMgr::instance().closeSockets();
-
-    // Get the reference to the collection of interfaces. This reference should be
-    // valid as long as the program is run because IfaceMgr is a singleton.
-    // Therefore we can safely iterate over instances of all interfaces and modify
-    // their flags. Here we modify flags which indicate wheter socket should be
-    // open for a particular interface or not.
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
-        if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive4_ = false;
-            LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
-                .arg(iface->getFullName());
-
-        } else {
-            // For deactivating interface, it should be sufficient to log it
-            // on the debug level because it is more useful to know what
-            // interface is activated which is logged on the info level.
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_DEACTIVATE_INTERFACE).arg(iface->getName());
-            iface_ptr->inactive6_ = true;
-
-        }
-    }
-    // Let's reopen active sockets. openSockets6 will check internally whether
-    // sockets are marked active or inactive.
-    if (!IfaceMgr::instance().openSockets6(port)) {
-        LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
-    }
-}
-
 };
 };

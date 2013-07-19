@@ -125,6 +125,9 @@ public:
     ///
     /// @brief Get UDP port on which server should listen.
     ///
+    /// Typically, server listens on UDP port number 67. Other ports are used
+    /// for testing purposes only.
+    ///
     /// @return UDP port on which server should listen.
     uint16_t getPort() const {
         return (port_);
@@ -138,6 +141,17 @@ public:
         return (use_bcast_);
     }
     //@}
+
+    /// @brief Open sockets which are marked as active in @c CfgMgr.
+    ///
+    /// This function reopens sockets according to the current settings in the
+    /// Configuration Manager. It holds the list of the interfaces which server
+    /// should listen on. This function will open sockets on these interfaces
+    /// only. This function is not exception safe.
+    ///
+    /// @param port UDP port on which server should listen.
+    /// @param use_bcast should broadcast flags be set on the sockets.
+    static void openActiveSockets(const uint16_t port, const bool use_bcast);
 
 protected:
 

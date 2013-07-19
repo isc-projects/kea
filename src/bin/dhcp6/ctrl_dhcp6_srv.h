@@ -128,16 +128,6 @@ protected:
     /// when there is a new command or configuration sent over msgq.
     static void sessionReader(void);
 
-    /// @brief Open sockets which are marked as active in @c CfgMgr.
-    ///
-    /// This function reopens sockets according to the current settings in the
-    /// Configuration Manager. It holds the list of the interfaces which server
-    /// should listen on. This function will open sockets on these interfaces
-    /// only. This function is not exception safe.
-    ///
-    /// @param port UDP port on which server should listen.
-    static void openActiveSockets(const uint16_t port);
-
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOService io_service_;
 

@@ -296,7 +296,7 @@ bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
 
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
-            !iface->flag_running_,
+            !iface->flag_running_ ||
             iface->inactive4_) {
             continue;
         }
@@ -363,7 +363,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
-            !iface->flag_running_,
+            !iface->flag_running_ ||
             iface->inactive6_) {
             continue;
         }
