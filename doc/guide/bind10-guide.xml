@@ -3599,7 +3599,7 @@ $</screen>
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/interface/	list	(default)
+Dhcp4/interfaces/	list	(default)
 Dhcp4/renew-timer	1000	integer	(default)
 Dhcp4/rebind-timer	2000	integer	(default)
 Dhcp4/valid-lifetime	4000	integer	(default)
@@ -4420,7 +4420,7 @@ Dhcp4/renew-timer	1000	integer	(default)
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/interface/	list	(default)
+Dhcp6/interfaces/	list	(default)
 Dhcp6/renew-timer	1000	integer	(default)
 Dhcp6/rebind-timer	2000	integer	(default)
 Dhcp6/preferred-lifetime	3000	integer	(default)

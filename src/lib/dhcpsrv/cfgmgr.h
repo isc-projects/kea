@@ -254,23 +254,30 @@ public:
     /// @param iface A name of the interface being added to the listening set.
     void addActiveIface(const std::string& iface);
 
-    /// @brief Configures the server to listen on all interfaces.
+    /// @brief Sets the flag which indicates that server is supposed to listen
+    /// on all available interfaces.
     ///
-    /// This function configrues the server to listen on all available
-    /// interfaces regardless of the interfaces specified with
-    /// @c CfgMgr::addListeningInterface.
+    /// This function does not close or open sockets. It simply marks that
+    /// server should start to listen on all interfaces the next time sockets
+    /// are reopened. Server should examine this flag when it gets reconfigured
+    /// and configuration changes the interfaces that server should listen on.
     void activateAllIfaces();
 
-    /// @brief Clear the collection of the interfaces that server is configured
-    /// to use to listen for incoming requests.
+    /// @brief Clear the collection of the interfaces that server should listen
+    /// on.
     ///
     /// Apart from clearing the list of interfaces specified with
     /// @c CfgMgr::addListeningInterface, it also disables listening on all
-    /// interfaces if it has been enabled using @c CfgMgr::listenAllInterfaces.
+    /// interfaces if it has been enabled using
+    /// @c CfgMgr::activateAllInterfaces.
+    /// Likewise @c CfgMgr::activateAllIfaces, this function does not close or
+    /// open sockets. It marks all interfaces inactive for DHCP traffic.
+    /// Server should examine this new setting when it attempts to
+    /// reopen sockets (as a result of reconfiguration).
     void deleteActiveIfaces();
 
-    /// @brief Check if server is configured to listen on the interface which
-    /// name is specified as an argument to this function.
+    /// @brief Check if specified interface should be used to listen to DHCP
+    /// traffic.
     ///
     /// @param iface A name of the interface to be checked.
     ///
