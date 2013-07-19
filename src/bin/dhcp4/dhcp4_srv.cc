@@ -852,6 +852,8 @@ Dhcpv4Srv::openActiveSockets(const uint16_t port,
     }
     // Let's reopen active sockets. openSockets4 will check internally whether
     // sockets are marked active or inactive.
+    // @todo Optimization: we should not reopen all sockets but rather select
+    // those that have been affected by the new configuration.
     if (!IfaceMgr::instance().openSockets4(port, use_bcast)) {
         LOG_WARN(dhcp4_logger, DHCP4_NO_SOCKETS_OPEN);
     }
