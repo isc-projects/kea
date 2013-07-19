@@ -134,9 +134,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
         hook_index_pkt4_send_      = Hooks.hook_index_pkt4_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
-        vector<string> libraries; // no libraries at this time
-        HooksManager::loadLibraries(libraries);
-
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
@@ -157,11 +154,13 @@ Dhcpv4Srv::shutdown() {
     shutdown_ = true;
 }
 
-Pkt4Ptr Dhcpv4Srv::receivePacket(int timeout) {
+Pkt4Ptr
+Dhcpv4Srv::receivePacket(int timeout) {
     return (IfaceMgr::instance().receive4(timeout));
 }
 
-void Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
+void
+Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
     IfaceMgr::instance().send(packet);
 }
 
@@ -200,7 +199,7 @@ Dhcpv4Srv::run() {
                       .arg(query->toText());
 
             // Let's execute all callouts registered for packet_received
-            if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt4_receive_)) {
+            if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete previously set arguments
@@ -210,8 +209,8 @@ Dhcpv4Srv::run() {
                 callout_handle->setArgument("query4", query);
 
                 // Call callouts
-                HooksManager::getHooksManager().callCallouts(hook_index_pkt4_receive_,
-                                                *callout_handle);
+                HooksManager::callCallouts(hook_index_pkt4_receive_,
+                                           *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
                 // processing step would to process the packet, so skip at this
@@ -289,7 +288,7 @@ Dhcpv4Srv::run() {
                 rsp->setIndex(query->getIndex());
 
                 // Execute all callouts registered for packet6_send
-                if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt4_send_)) {
+                if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
                     CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                     // Delete all previous arguments
@@ -302,8 +301,8 @@ Dhcpv4Srv::run() {
                     callout_handle->setArgument("response4", rsp);
 
                     // Call all installed callouts
-                    HooksManager::getHooksManager().callCallouts(hook_index_pkt4_send_,
-                                                    *callout_handle);
+                    HooksManager::callCallouts(hook_index_pkt4_send_,
+                                               *callout_handle);
 
                     // Callouts decided to skip the next processing step. The next
                     // processing step would to send the packet, so skip at this
@@ -885,8 +884,9 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     Subnet4Ptr subnet;
     // Is this relayed message?
     IOAddress relay = question->getGiaddr();
-    if (relay.toText() != "0.0.0.0") {
+    static const IOAddress notset("0.0.0.0");
 
+    if (relay != notset) {
         // Yes: Use relay address to select subnet
         subnet = CfgMgr::instance().getSubnet4(relay);
     } else {
@@ -898,7 +898,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     /// @todo Implement getSubnet4(interface-name)
 
     // Let's execute all callouts registered for packet_received
-    if (HooksManager::getHooksManager().calloutsPresent(hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
         // We're reusing callout_handle from previous calls
@@ -910,8 +910,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
         callout_handle->setArgument("subnet4collection", CfgMgr::instance().getSubnets4());
 
         // Call user (and server-side) callouts
-        HooksManager::getHooksManager().callCallouts(hook_index_subnet4_select_,
-                                        *callout_handle);
+        HooksManager::callCallouts(hook_index_subnet4_select_, *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet will be
         // selected. Packet processing will continue, but it will be severly limited
@@ -953,8 +952,9 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
     }
 
     // If there is HWAddress set and it is non-empty, then we're good
-    if (pkt->getHWAddr() && !pkt->getHWAddr()->hwaddr_.empty())
+    if (pkt->getHWAddr() && !pkt->getHWAddr()->hwaddr_.empty()) {
         return;
+    }
 
     // There has to be something to uniquely identify the client:
     // either non-zero MAC address or client-id option present (or both)
@@ -989,7 +989,7 @@ isc::hooks::CalloutHandlePtr Dhcpv4Srv::getCalloutHandle(const Pkt4Ptr& pkt) {
         // Remember the pointer to this packet
         old_pointer = pkt;
 
-        callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+        callout_handle = HooksManager::createCalloutHandle();
     }
 
     return (callout_handle);

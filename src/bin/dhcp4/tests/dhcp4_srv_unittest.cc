@@ -89,32 +89,28 @@ public:
     /// @brief fakes packet reception
     /// @param timeout ignored
     ///
-    /// The method receives all packets queued in receive
-    /// queue, one after another. Once the queue is empty,
-    /// it initiates the shutdown procedure.
+    /// The method receives all packets queued in receive queue, one after
+    /// another. Once the queue is empty, it initiates the shutdown procedure.
     ///
     /// See fake_received_ field for description
     virtual Pkt4Ptr receivePacket(int /*timeout*/) {
 
-        // If there is anything prepared as fake incoming
-        // traffic, use it
+        // If there is anything prepared as fake incoming traffic, use it
         if (!fake_received_.empty()) {
             Pkt4Ptr pkt = fake_received_.front();
             fake_received_.pop_front();
             return (pkt);
         }
 
-        // If not, just trigger shutdown and
-        // return immediately
+        // If not, just trigger shutdown and return immediately
         shutdown();
         return (Pkt4Ptr());
     }
 
     /// @brief fake packet sending
     ///
-    /// Pretend to send a packet, but instead just store
-    /// it in fake_send_ list where test can later inspect
-    /// server's response.
+    /// Pretend to send a packet, but instead just store it in fake_send_ list
+    /// where test can later inspect server's response.
     virtual void sendPacket(const Pkt4Ptr& pkt) {
         fake_sent_.push_back(pkt);
     }
@@ -157,11 +153,11 @@ static const char* SRVID_FILE = "server-id-test.txt";
 
 /// @brief Dummy Packet Filtering class.
 ///
-/// This class reports capability to respond directly to the
-/// client which doesn't have address configured yet.
+/// This class reports capability to respond directly to the client which
+/// doesn't have address configured yet.
 ///
-/// All packet and socket handling functions do nothing because
-/// they are not used in unit tests.
+/// All packet and socket handling functions do nothing because they are not
+/// used in unit tests.
 class PktFilterTest : public PktFilter {
 public:
 
@@ -1690,6 +1686,11 @@ public:
 
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
+
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+
         delete srv_;
     }
 
