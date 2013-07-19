@@ -200,6 +200,8 @@ class TestCertGenTool(unittest.TestCase):
         # No such file
         self.run_check(105, None, None, [self.TOOL, '-c', 'foo'])
 
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
     def test_permissions(self):
         """
         Test some combinations of correct and bad permissions.

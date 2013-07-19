@@ -237,6 +237,15 @@ TEST_F(MemorySegmentMappedTest, allocate) {
 }
 
 TEST_F(MemorySegmentMappedTest, badAllocate) {
+    // If the test is run as the root user, the following allocate()
+    // call will result in a successful MemorySegmentGrown exception,
+    // instead of an abort (due to insufficient permissions during
+    // reopen).
+    if (getuid() == 0) {
+        std::cerr << "Skipping test as it's run as the root user" << std::endl;
+        return;
+    }
+
     // Make the mapped file non-writable; managed_mapped_file::grow() will
     // fail, resulting in abort.
     const int ret = chmod(mapped_file, 0444);

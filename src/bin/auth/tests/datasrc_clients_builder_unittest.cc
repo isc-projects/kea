@@ -528,6 +528,13 @@ TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
 }
 
 TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
+    // If the test is run as the root user, it will fail as insufficient
+    // permissions will not stop the root user from using a file.
+    if (getuid() == 0) {
+        std::cerr << "Skipping test as it's run as the root user" << std::endl;
+        return;
+    }
+
     configureZones();
 
     // install the zone file as unreadable
