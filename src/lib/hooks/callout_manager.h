@@ -132,8 +132,7 @@ public:
     ///
     /// @param num_libraries Number of loaded libraries.
     ///
-    /// @throw isc::BadValue if the number of libraries is less than or equal
-    ///        to 0, or if the pointer to the server hooks object is empty.
+    /// @throw isc::BadValue if the number of libraries is less than 0,
     CalloutManager(int num_libraries = 0);
 
     /// @brief Register a callout on a hook for the current library

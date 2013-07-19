@@ -191,7 +191,7 @@ HooksManager::postCalloutsLibraryHandle() {
 
 // Validate libraries
 
-std::string
+std::vector<std::string>
 HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
     return (LibraryManagerCollection::validateLibraries(libraries));
 }
