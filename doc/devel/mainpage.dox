@@ -51,13 +51,11 @@
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
  *   - @subpage dhcpv4Other
- *   - @subpage dhcpv4Hooks
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
  *   - @subpage dhcpv6Other
- *   - @subpage dhcpv6Hooks
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay

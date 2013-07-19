@@ -266,7 +266,8 @@ private:
     /// @param hwaddr client's hardware address
     /// @param addr an address that was selected and is confirmed to be available
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
+    ///        will be executed if this parameter is passed (and there are callouts
+    ///        registered)
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
@@ -288,7 +289,8 @@ private:
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be available
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
-    ///        will be executed if this parameter is passed.
+    ///        will be executed if this parameter is passed (and there are callouts
+    ///        registered)
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just

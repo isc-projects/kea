@@ -1151,13 +1151,13 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
-    HooksManager::getHooksManager().loadLibraries(libraries);
+    HooksManager::loadLibraries(libraries);
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_callout));
 
-    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
                                                false, callout_handle);
@@ -1181,7 +1181,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(callback_subnet6_);
     EXPECT_EQ(subnet_->toText(), callback_subnet6_->toText());
 
-    EXPECT_EQ(callback_fake_allocation_, false);
+    EXPECT_FALSE(callback_fake_allocation_);
 
     // Check if all expected parameters are reported. It's a bit tricky, because
     // order may be different. If the test starts failing, because someone tweaked
@@ -1190,6 +1190,10 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease6");
     expected_argument_names.push_back("subnet6");
+
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 }
 
@@ -1212,7 +1216,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
-    HooksManager::getHooksManager().loadLibraries(libraries);
+    HooksManager::loadLibraries(libraries);
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1220,7 +1224,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Normally, dhcpv6_srv would passed the handle when calling allocateAddress6,
     // but in tests we need to create it on our own.
-    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     // Call allocateAddress6. Callouts should be triggered here.
     Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
@@ -1363,13 +1367,13 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
-    HooksManager::getHooksManager().loadLibraries(libraries);
+    HooksManager::loadLibraries(libraries);
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_select", lease4_select_callout));
 
-    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
@@ -1424,7 +1428,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Initialize Hooks Manager
     vector<string> libraries; // no libraries at this time
-    HooksManager::getHooksManager().loadLibraries(libraries);
+    HooksManager::loadLibraries(libraries);
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1432,7 +1436,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Normally, dhcpv4_srv would passed the handle when calling allocateAddress4,
     // but in tests we need to create it on our own.
-    CalloutHandlePtr callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     // Call allocateAddress4. Callouts should be triggered here.
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),

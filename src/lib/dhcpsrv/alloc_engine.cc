@@ -578,10 +578,10 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 
         // Pass necessary arguments
 
-        // Subnet from which we do the allocation (That's as far as we can go
-        // with using SubnetPtr to point to Subnet4 object. Users should not
-        // be confused with dynamic_pointer_casts. They should get a concrete
-        // pointer (Subnet4Ptr) pointing to a Subnet4 object.
+        // Subnet from which we do the allocation. Convert the general subnet
+        // pointer to a pointer to a Subnet4.  Note that because we are using
+        // boost smart pointers here, we need to do the cast using the boost
+        // version of dynamic_pointer_cast.
         Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
         callout_handle->setArgument("subnet4", subnet4);
 
@@ -637,9 +637,6 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
-
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setSkip(false);
 
         // Pass necessary arguments
 
@@ -722,9 +719,6 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
-
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setSkip(false);
 
         // Pass necessary arguments
 
