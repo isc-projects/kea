@@ -190,13 +190,9 @@ public:
     ///
     /// @param List of libraries to be validated.
     ///
-    /// @return An empty string if all libraries validated.  Otherwise it is
-    ///         the names of the libraries that failed validation, separated
-    ///         by a command and a space.  The configuration code can return
-    ///         this to bindctl as an indication of the problem. (Note that
-    ///         validation failures are logged, so more information can be
-    ///         obtained if necessary.)
-    static std::string validateLibraries(
+    /// @return An empty vector if all libraries validated.  Otherwise it
+    ///         holds the names of the libraries that failed validation.
+    static std::vector<std::string> validateLibraries(
                        const std::vector<std::string>& libraries);
 
     /// Index numbers for pre-defined hooks.

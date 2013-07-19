@@ -111,17 +111,14 @@ LibraryManagerCollection::getLoadedLibraryCount() const {
 }
 
 // Validate the libraries.
-std::string
+std::vector<std::string>
 LibraryManagerCollection::validateLibraries(
                           const std::vector<std::string>& libraries) {
 
-    std::string failures("");
+    std::vector<std::string> failures;
     for (int i = 0; i < libraries.size(); ++i) {
         if (!LibraryManager::validateLibrary(libraries[i])) {
-            if (!failures.empty()) {
-                failures += std::string(", ");
-            }
-            failures += libraries[i];
+            failures.push_back(libraries[i]);
         }
     }
 

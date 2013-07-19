@@ -178,42 +178,48 @@ TEST_F(LibraryManagerCollectionTest, LibraryNames) {
 // Test the library validation function.
 
 TEST_F(LibraryManagerCollectionTest, validateLibraries) {
-    const std::string empty;
-    const std::string separator(", ");
+    // Vector of libraries that failed validation
+    std::vector<std::string> failed;
 
     // Test different vectors of libraries.
 
     // No libraries should return a success.
     std::vector<std::string> libraries;
-    EXPECT_EQ(empty, LibraryManagerCollection::validateLibraries(libraries));
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed.empty());
 
     // Single valid library should validate.
     libraries.clear();
     libraries.push_back(BASIC_CALLOUT_LIBRARY);
-    EXPECT_EQ(empty, LibraryManagerCollection::validateLibraries(libraries));
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed.empty());
 
     // Multiple valid libraries should succeed.
     libraries.clear();
     libraries.push_back(BASIC_CALLOUT_LIBRARY);
     libraries.push_back(FULL_CALLOUT_LIBRARY);
     libraries.push_back(UNLOAD_CALLOUT_LIBRARY);
-    EXPECT_EQ(empty, LibraryManagerCollection::validateLibraries(libraries));
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed.empty());
 
     // Single invalid library should fail.
     libraries.clear();
     libraries.push_back(NOT_PRESENT_LIBRARY);
-    EXPECT_EQ(std::string(NOT_PRESENT_LIBRARY),
-              LibraryManagerCollection::validateLibraries(libraries));
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed == libraries);
 
     // Multiple invalid libraries should fail.
     libraries.clear();
     libraries.push_back(INCORRECT_VERSION_LIBRARY);
     libraries.push_back(NO_VERSION_LIBRARY);
     libraries.push_back(FRAMEWORK_EXCEPTION_LIBRARY);
-    std::string expected = std::string(INCORRECT_VERSION_LIBRARY) + separator +
-                           std::string(NO_VERSION_LIBRARY) + separator +
-                           std::string(FRAMEWORK_EXCEPTION_LIBRARY);
-    EXPECT_EQ(expected, LibraryManagerCollection::validateLibraries(libraries));
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed == libraries);
 
     // Combination of valid and invalid (first one valid) should fail.
     libraries.clear();
@@ -221,9 +227,12 @@ TEST_F(LibraryManagerCollectionTest, validateLibraries) {
     libraries.push_back(INCORRECT_VERSION_LIBRARY);
     libraries.push_back(NO_VERSION_LIBRARY);
 
-    expected = std::string(INCORRECT_VERSION_LIBRARY) + separator +
-               std::string(NO_VERSION_LIBRARY);
-    EXPECT_EQ(expected, LibraryManagerCollection::validateLibraries(libraries));
+    std::vector<std::string> expected_failures;
+    expected_failures.push_back(INCORRECT_VERSION_LIBRARY);
+    expected_failures.push_back(NO_VERSION_LIBRARY);
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed == expected_failures);
 
     // Combination of valid and invalid (first one invalid) should fail.
     libraries.clear();
@@ -231,9 +240,12 @@ TEST_F(LibraryManagerCollectionTest, validateLibraries) {
     libraries.push_back(FULL_CALLOUT_LIBRARY);
     libraries.push_back(INCORRECT_VERSION_LIBRARY);
 
-    expected = std::string(NO_VERSION_LIBRARY) + separator +
-               std::string(INCORRECT_VERSION_LIBRARY);
-    EXPECT_EQ(expected, LibraryManagerCollection::validateLibraries(libraries));
+    expected_failures.clear();
+    expected_failures.push_back(NO_VERSION_LIBRARY);
+    expected_failures.push_back(INCORRECT_VERSION_LIBRARY);
+
+    failed = LibraryManagerCollection::validateLibraries(libraries);
+    EXPECT_TRUE(failed == expected_failures);
 }
 
 } // Anonymous namespace
