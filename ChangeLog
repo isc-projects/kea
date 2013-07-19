@@ -1,3 +1,10 @@
+643.	[bug]		muks
+	When running some unittests as root that depended on insufficient
+	file permissions, the tests used to fail because the root user
+	could still access such files. Such tests are now skipped when
+	they are run as the root user.
+	(Trac #3056, git 92ebabdbcf6168666b03d7f7fbb31f899be39322)
+
 642.	[func]		tomek
 	Added initial set of hooks (pk6_receive, subnet6_select,
 	lease6_select, pkt6_send) to the DHCPv6 server.
