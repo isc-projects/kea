@@ -139,9 +139,9 @@ public:
     ///
     /// @param libraries List of libraries to validate
     ///
-    /// @return Comma-separated list of libraries that faled to validate, or
-    ///         the empty string if all validated.
-    static std::string
+    /// @return Vector of libraries that faled to validate, or an empty vector
+    ///         if all validated.
+    static std::vector<std::string>
     validateLibraries(const std::vector<std::string>& libraries);
 
 protected:
