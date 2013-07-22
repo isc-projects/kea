@@ -76,23 +76,25 @@ used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
 % DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped, because a callout set skip flag.
-This debug message is printed when a callout installed on pkt6_received
-hook point sets skip flag. For this particular hook point, the setting
-of the flag by a callout instructs the server to drop the packet.
+This debug message is printed when a callout installed on the pkt6_receive
+hook point sets the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
 
-% DHCP6_HOOK_PACKET_SEND_SKIP Prepared DHCPv6 response was not sent, because a callout set skip flag.
-This debug message is printed when a callout installed on pkt6_send
-hook point sets skip flag. For this particular hook point, the setting
+% DHCP6_HOOK_PACKET_SEND_SKIP prepared DHCPv6 response was not sent, because a callout set skip flag.
+This debug message is printed when a callout installed on the pkt6_send
+hook point sets the skip flag. For this particular hook point, the setting
 of the flag by a callout instructs the server to drop the packet. This
 effectively means that the client will not get any response, even though
 the server processed client's request and acted on it (e.g. possibly
 allocated a lease).
 
-% DHCP6_HOOK_SUBNET6_SELECT_SKIP No subnet was selected, because a callout set skip flag.
-This debug message is printed when a callout installed on subnet6_select
-hook point sets a skip flag. It means that the server was told that no subnet
-should be selected. This severely limits further processing - server will be only
-able to offer global options. No addresses or prefixes could be assigned.
+% DHCP6_HOOK_SUBNET6_SELECT_SKIP no subnet was selected, because a callout set skip flag.
+This debug message is printed when a callout installed on the
+subnet6_select hook point sets the skip flag. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses or prefixes
+will be assigned.
 
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
@@ -193,10 +195,10 @@ actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
 may give further information.
 
-The most likely cause of this is that the specification file for the server
-(which details the allowable contents of the configuration) is not correct for
-this version of BIND 10.  This former may be the result of an interrupted
-installation of an update to BIND 10.
+The most likely cause of this is that the specification file for the
+server (which details the allowable contents of the configuration) is
+not correct for this version of BIND 10.  This may be the result of an
+interrupted installation of an update to BIND 10.
 
 % DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,

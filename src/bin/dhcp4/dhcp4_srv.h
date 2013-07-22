@@ -20,6 +20,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -336,6 +337,18 @@ protected:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
+    /// @brief dummy wrapper around IfaceMgr::receive4
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual Pkt4Ptr receivePacket(int timeout);
+
+    /// @brief dummy wrapper around IfaceMgr::send()
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates transmission of a packet. For that purpose it is protected.
+    virtual void sendPacket(const Pkt4Ptr& pkt);
+
 private:
 
     /// @brief Constructs netmask option based on subnet4
@@ -353,6 +366,17 @@ private:
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
 
+    /// @brief returns callout handle for specified packet
+    ///
+    /// @param pkt packet for which the handle should be returned
+    ///
+    /// @return a callout handle to be used in hooks related to said packet
+    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt4Ptr& pkt);
+
+    /// Indexes for registered hook points
+    int hook_index_pkt4_receive_;
+    int hook_index_subnet4_select_;
+    int hook_index_pkt4_send_;
 };
 
 }; // namespace isc::dhcp

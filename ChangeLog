@@ -1,3 +1,8 @@
+645.	[func]		tomek
+	Added initial set of hooks (pk4_receive, subnet4_select,
+	lease4_select, pkt4_send) to the DHCPv6 server.
+	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
+
 644.	[func]		marcin
 	b10-dhcp4, b10-dhcp6: Implemented selection of the interfaces
 	that server listens on, using Configuration Manager. It is
