@@ -427,7 +427,7 @@ var/
         <listitem>
           <para>Go into the source and run configure:
             <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
-  $ <userinput>./configure</userinput></screen>
+$ <userinput>./configure</userinput></screen>
           </para>
         </listitem>
 
