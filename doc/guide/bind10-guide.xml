@@ -2619,7 +2619,7 @@ can use various data source backends.
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
 &gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
-          </screen>
+&gt; <userinput>config commit</userinput></screen>
 
         </para>
       </section>
