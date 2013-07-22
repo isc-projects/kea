@@ -75,8 +75,11 @@ Option6ClientFqdnImpl::Option6ClientFqdnImpl(OptionBufferConstIter first,
 Option6ClientFqdnImpl::
 Option6ClientFqdnImpl(const Option6ClientFqdnImpl& source)
     : flags_(source.flags_),
-      domain_name_(new isc::dns::Name(*source.domain_name_)),
+      domain_name_(),
       domain_name_type_(source.domain_name_type_) {
+    if (source.domain_name_) {
+        domain_name_.reset(new isc::dns::Name(*source.domain_name_));
+    }
 }
 
 Option6ClientFqdnImpl&
@@ -258,6 +261,11 @@ Option6ClientFqdn::setFlag(const Flag flag, const bool set_flag) {
     // Check new flags. If they are valid, apply them.
     Option6ClientFqdnImpl::checkFlags(new_flag);
     impl_->flags_ = new_flag;
+}
+
+void
+Option6ClientFqdn::resetFlags() {
+    impl_->flags_ = 0;
 }
 
 std::string

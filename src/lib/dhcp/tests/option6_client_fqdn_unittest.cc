@@ -392,6 +392,31 @@ TEST(Option6ClientFqdnTest, setFlag) {
                  InvalidFqdnOptionFlags);
 }
 
+// This test verifies that flags field of the option is set to 0 when resetFlags
+// function is called.
+TEST(Option6ClientFqdnTest, resetFlags) {
+    boost::scoped_ptr<Option6ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S |
+                                           Option6ClientFqdn::FLAG_O,
+                                           "myhost.example.com",
+                                           Option6ClientFqdn::FULL))
+    );
+    ASSERT_TRUE(option);
+
+    // Check that flags we set in the constructor are set.
+    ASSERT_TRUE(option->getFlag(Option6ClientFqdn::FLAG_S));
+    ASSERT_TRUE(option->getFlag(Option6ClientFqdn::FLAG_O));
+    ASSERT_FALSE(option->getFlag(Option6ClientFqdn::FLAG_N));
+
+    option->resetFlags();
+
+    // After reset, all flags should be 0.
+    EXPECT_FALSE(option->getFlag(Option6ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option6ClientFqdn::FLAG_O));
+    EXPECT_FALSE(option->getFlag(Option6ClientFqdn::FLAG_N));
+}
+
 // This test verifies that current domain-name can be replaced with a new
 // domain-name.
 TEST(Option6ClientFqdnTest, setDomainName) {

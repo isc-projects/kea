@@ -264,6 +264,27 @@ protected:
     /// @param answer server's message (IA_NA options will be added here)
     void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
+    /// @brief Processes Client FQDN Option.
+    ///
+    /// This function retrieves DHCPv6 Client FQDN %Option (if any) from the
+    /// packet sent by a client and takes necessary actions upon this option.
+    /// Received option comprises flags field which controls what DNS updates
+    /// server should do. Server may override client's preference based on
+    /// the current configuration. Server indicates that it has overridden
+    /// the preference by storing DHCPv6 Client Fqdn %Option with the
+    /// appropriate flags in the response to a client. This option is also
+    /// used to communicate the client's domain-name which should be sent
+    /// to the DNS in the update. Again, server may act upon the received
+    /// domain-name, i.e. if the provided domain-name is partial it should
+    /// generate the fully qualified domain-name.
+    ///
+    /// All the logic required to form appropriate answer to the client is
+    /// held in this function.
+    ///
+    /// @param question Client's message.
+    /// @param answer Server's response to the client.
+    void processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
     /// @brief Attempts to renew received addresses
     ///
     /// It iterates through received IA_NA options and attempts to renew
