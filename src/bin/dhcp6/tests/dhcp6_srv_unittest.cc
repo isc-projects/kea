@@ -21,6 +21,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_int_array.h>
@@ -33,6 +34,7 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 
+#include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -52,6 +54,10 @@ using namespace std;
 // Maybe it should be isc::test?
 namespace {
 
+const uint8_t FQDN_FLAG_S = 0x1;
+const uint8_t FQDN_FLAG_O = 0x2;
+const uint8_t FQDN_FLAG_N = 0x4;
+
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal members
 public:
@@ -70,6 +76,7 @@ public:
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
     using Dhcpv6Srv::processRelease;
+    using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
@@ -225,6 +232,8 @@ public:
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
+    // Generates client's packet holding an FQDN option.
+
     virtual ~NakedDhcpv6SrvTest() {
         // Let's clean up if there is such a file.
         unlink(DUID_FILE);
@@ -327,6 +336,95 @@ public:
 
     // A pool used in most tests
     Pool6Ptr pool_;
+};
+
+class FqdnDhcpv6SrvTest : public NakedDhcpv6SrvTest {
+public:
+    FqdnDhcpv6SrvTest() {
+    }
+
+    virtual ~FqdnDhcpv6SrvTest() {
+    }
+
+    Pkt6Ptr generatePktWithFqdn(uint8_t msg_type,
+                                const uint8_t fqdn_flags,
+                                const std::string& fqdn_domain_name,
+                                const Option6ClientFqdn::DomainNameType
+                                fqdn_type,
+                                const bool include_oro,
+                                OptionPtr srvid = OptionPtr()) {
+        Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+        pkt->addOption(generateIA(234, 1500, 3000));
+        OptionPtr clientid = generateClientId();
+        pkt->addOption(clientid);
+        if (srvid && (msg_type != DHCPV6_SOLICIT)) {
+            pkt->addOption(srvid);
+        }
+
+        pkt->addOption(OptionPtr(new Option6ClientFqdn(fqdn_flags,
+                                                       fqdn_domain_name,
+                                                       fqdn_type)));
+
+        if (include_oro) {
+            OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6,
+                                                           D6O_ORO));
+            oro->addValue(D6O_CLIENT_FQDN);
+            pkt->addOption(oro);
+        }
+
+        return (pkt);
+    }
+
+    // Returns an instance of the option carrying FQDN.
+    Option6ClientFqdnPtr getClientFqdnOption(const Pkt6Ptr& pkt) {
+        return (boost::dynamic_pointer_cast<Option6ClientFqdn>
+                (pkt->getOption(D6O_CLIENT_FQDN)));
+    }
+
+    void testFqdn(const uint16_t msg_type,
+                  const bool use_oro,
+                  const uint8_t in_flags,
+                  const std::string& in_domain_name,
+                  const Option6ClientFqdn::DomainNameType in_domain_type,
+                  const uint8_t exp_flags,
+                  const std::string& exp_domain_name) {
+        NakedDhcpv6Srv srv(0);
+        Pkt6Ptr question = generatePktWithFqdn(msg_type,
+                                               in_flags,
+                                               in_domain_name,
+                                               in_domain_type,
+                                               use_oro);
+        ASSERT_TRUE(getClientFqdnOption(question));
+
+        Pkt6Ptr answer;
+        if (msg_type == DHCPV6_SOLICIT) {
+            answer.reset(new Pkt6(DHCPV6_ADVERTISE, 1234));
+
+        } else {
+            answer.reset(new Pkt6(DHCPV6_REPLY, 1234));
+
+        }
+
+        ASSERT_NO_THROW(srv.processClientFqdn(question, answer));
+
+        Option6ClientFqdnPtr answ_fqdn = getClientFqdnOption(answer);
+        ASSERT_TRUE(answ_fqdn);
+
+        const bool flag_n = (exp_flags & Option6ClientFqdn::FLAG_N) != 0 ?
+            true : false;
+        const bool flag_s = (exp_flags & Option6ClientFqdn::FLAG_S) != 0 ?
+            true : false;
+        const bool flag_o = (exp_flags & Option6ClientFqdn::FLAG_O) != 0 ?
+            true : false;
+
+        EXPECT_EQ(flag_n, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_N));
+        EXPECT_EQ(flag_s, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_S));
+        EXPECT_EQ(flag_o, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_O));
+
+        EXPECT_EQ(exp_domain_name, answ_fqdn->getDomainName());
+        EXPECT_EQ(Option6ClientFqdn::FULL, answ_fqdn->getDomainNameType());
+    }
 };
 
 // This test verifies that incoming SOLICIT can be handled properly when
@@ -1754,6 +1852,50 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
     file2.close();
 
     EXPECT_EQ(duid1_text, text);
+}
+
+// A set of tests verifying server's behaviour when it receives the DHCPv6
+// Client Fqdn Option.
+// @todo: Extend these tests once appropriate configuration parameters are
+// implemented (ticket #3034).
+
+// Test server's response when client requests that server performs AAAA update.
+TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
+    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "myhost.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.");
+}
+
+// Test server's response when client provides partial domain-name and requests
+// that server performs AAAA update.
+TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
+    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "myhost",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.");
+}
+
+// Test server's response when client provides empty domain-name and requests
+// that server performs AAAA update.
+TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdateNoName) {
+    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.");
+}
+
+// Test server's response when client requests no DNS update.
+TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
+    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_N, "myhost.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_N,
+             "myhost.example.com.");
+}
+
+// Test server's response when client requests that server delegates the AAAA
+// update to the client and this delegation is not allowed.
+TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
+    SCOPED_TRACE("Client AAAA Update is not allowed");
+    testFqdn(DHCPV6_SOLICIT, true, 0, "myhost.example.com.",
+             Option6ClientFqdn::FULL, FQDN_FLAG_S | FQDN_FLAG_O,
+             "myhost.example.com.");
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

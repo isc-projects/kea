@@ -170,6 +170,9 @@ public:
     /// set (true), or cleared (false).
     void setFlag(const Flag flag, const bool set);
 
+    /// @brief Sets the flag field value to 0.
+    void resetFlags();
+
     /// @brief Returns the domain-name in the text format.
     ///
     /// If domain-name is partial, it lacks the dot at the end (e.g. myhost).
