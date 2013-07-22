@@ -15,9 +15,11 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <d2/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
@@ -128,17 +130,20 @@ protected:
     /// @param request a message received from client
     ///
     /// @return REPLY message or NULL
-    Pkt6Ptr processRequest(const Pkt6Ptr& request);
+    Pkt6Ptr processRequest(const Pkt6Ptr& request,
+                           isc::d2::NameChangeRequestPtr& ncr);
 
     /// @brief Stub function that will handle incoming RENEW messages.
     ///
     /// @param renew message received from client
-    Pkt6Ptr processRenew(const Pkt6Ptr& renew);
+    Pkt6Ptr processRenew(const Pkt6Ptr& renew,
+                         isc::d2::NameChangeRequestPtr& ncr);
 
     /// @brief Stub function that will handle incoming REBIND messages.
     ///
     /// @param rebind message received from client
-    Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
+    Pkt6Ptr processRebind(const Pkt6Ptr& rebind,
+                          isc::d2::NameChangeRequestPtr& ncr);
 
     /// @brief Stub function that will handle incoming CONFIRM messages.
     ///
@@ -148,7 +153,8 @@ protected:
     /// @brief Stub function that will handle incoming RELEASE messages.
     ///
     /// @param release message received from client
-    Pkt6Ptr processRelease(const Pkt6Ptr& release);
+    Pkt6Ptr processRelease(const Pkt6Ptr& release,
+                           isc::d2::NameChangeRequestPtr& ncr);
 
     /// @brief Stub function that will handle incoming DECLINE messages.
     ///
@@ -283,7 +289,23 @@ protected:
     ///
     /// @param question Client's message.
     /// @param answer Server's response to the client.
-    void processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    void processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                           d2::NameChangeRequestPtr& ncr);
+
+    /// @brief Creates a @c isc::d2::NameChangeRequest based on the DHCPv6
+    /// Client FQDN %Option stored in the response to the client.
+    ///
+    /// The @c isc:d2::NameChangeRequest class encapsulates the request from
+    /// the DHCPv6 server to the DHCP-DDNS module to perform DNS Update.
+    ///
+    /// @param answer A response being sent to a client.
+    /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
+    /// response message sent to a client.
+    /// @param [out] ncr A @c isc::d2::NameChangeRequest object to be sent to
+    /// the DHCP-DDNS module as a result of the Client FQDN %Option processing.
+    void createNameChangeRequest(const Pkt6Ptr& answer,
+                                 const Option6ClientFqdnPtr& fqdn_answer,
+                                 isc::d2::NameChangeRequestPtr& ncr);
 
     /// @brief Attempts to renew received addresses
     ///
