@@ -34,7 +34,6 @@
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
-
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 
@@ -1853,26 +1852,6 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_pkt6_received > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
     EXPECT_TRUE(hook_index_pkt6_send > 0);
-}
-
-// This function returns buffer for empty packet (just DHCPv6 header)
-Pkt6* captureEmpty() {
-    Pkt6* pkt;
-    uint8_t data[4];
-    data[0] = 1; // type 1 = SOLICIT
-    data[1] = 0xca; // trans-id = 0xcafe01
-    data[2] = 0xfe;
-    data[3] = 0x01;
-
-    pkt = new Pkt6(data, sizeof(data));
-    pkt->setRemotePort(546);
-    pkt->setRemoteAddr(IOAddress("fe80::1"));
-    pkt->setLocalPort(0);
-    pkt->setLocalAddr(IOAddress("ff02::1:2"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
-
-    return (pkt);
 }
 
 // This function returns buffer for very simple Solicit
