@@ -50,6 +50,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::d2;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace std;
@@ -190,21 +191,22 @@ bool Dhcpv6Srv::run() {
                       .arg(query->toText());
 
             try {
+                NameChangeRequestPtr ncr;
                 switch (query->getType()) {
                 case DHCPV6_SOLICIT:
                     rsp = processSolicit(query);
                     break;
 
                 case DHCPV6_REQUEST:
-                    rsp = processRequest(query);
+                    rsp = processRequest(query, ncr);
                     break;
 
                 case DHCPV6_RENEW:
-                    rsp = processRenew(query);
+                    rsp = processRenew(query, ncr);
                     break;
 
                 case DHCPV6_REBIND:
-                    rsp = processRebind(query);
+                    rsp = processRebind(query, ncr);
                     break;
 
                 case DHCPV6_CONFIRM:
@@ -212,7 +214,7 @@ bool Dhcpv6Srv::run() {
                     break;
 
                 case DHCPV6_RELEASE:
-                    rsp = processRelease(query);
+                    rsp = processRelease(query, ncr);
                     break;
 
                 case DHCPV6_DECLINE:
@@ -269,6 +271,7 @@ bool Dhcpv6Srv::run() {
                     } catch (const std::exception& e) {
                         LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
                     }
+
                 } else {
                     LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
                 }
@@ -661,7 +664,8 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                             NameChangeRequestPtr& ncr) {
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
@@ -751,7 +755,17 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     if (include_fqdn) {
         answer->addOption(fqdn_resp);
     }
+
+    createNameChangeRequest(answer, fqdn_resp, ncr);
 }
+
+void
+Dhcpv6Srv::createNameChangeRequest(const Pkt6Ptr&,
+                                   const Option6ClientFqdnPtr&,
+                                   isc::d2::NameChangeRequestPtr&) {
+    // @todo Create NameChangeRequest here.
+}
+
 
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -1147,13 +1161,15 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     assignLeases(solicit, advertise);
 
-    processClientFqdn(solicit, advertise);
+    NameChangeRequestPtr ncr;
+    processClientFqdn(solicit, advertise, ncr);
 
     return (advertise);
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
+Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
+                          NameChangeRequestPtr& ncr) {
 
     sanityCheck(request, MANDATORY, MANDATORY);
 
@@ -1165,13 +1181,14 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     assignLeases(request, reply);
 
-    processClientFqdn(request, reply);
+    processClientFqdn(request, reply, ncr);
 
     return (reply);
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
+Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
+                        NameChangeRequestPtr& ncr) {
 
     sanityCheck(renew, MANDATORY, MANDATORY);
 
@@ -1181,7 +1198,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
 
-    processClientFqdn(renew, reply);
+    processClientFqdn(renew, reply, ncr);
 
     renewLeases(renew, reply);
 
@@ -1189,7 +1206,8 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
+Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
+                         NameChangeRequestPtr&) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
     return reply;
@@ -1203,7 +1221,8 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
+Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
+                          NameChangeRequestPtr&) {
 
     sanityCheck(release, MANDATORY, MANDATORY);
 
