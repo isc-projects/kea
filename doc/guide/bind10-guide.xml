@@ -445,7 +445,6 @@ $ <userinput>./configure</userinput></screen>
 
         <listitem>
           <para>Create a user for yourself:
-            <screen>$ <userinput>cd /usr/local/etc/bind10/</userinput></screen>
             <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr</userinput></screen>
           </para>
         </listitem>
