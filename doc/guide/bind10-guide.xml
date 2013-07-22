@@ -2639,6 +2639,38 @@ can use various data source backends.
       </para>
       </note>
 
+      <section id='datasrc-static'>
+        <title>Adding a static data source</title>
+        <para>
+          Assuming there is no existing static data source, here is how
+          you can add one, to serve the zones in
+          <filename>static.zone</filename> distributed with BIND 10.
+        </para>
+
+	<para>First, add the CH class if it doesn't exist:
+
+          <screen>&gt; <userinput>config add data_sources/classes CH</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, add a data source of type <emphasis>MasterFiles</emphasis>
+        in the CH class to serve the zones in
+        <filename>static.zone</filename>:
+
+          <screen>&gt; <userinput>config add data_sources/classes/CH</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/type MasterFiles</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/cache-enable true</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/params {"BIND": "/usr/local/bind10/share/bind10/static.zone"}</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, lookup the static data from <filename>static.zone</filename> to test it:
+
+          <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
+&gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
+
+	</para>
+
+      </section>
+
     </section>
 
     <section>
