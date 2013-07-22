@@ -1,3 +1,12 @@
+644.	[func]		marcin
+	b10-dhcp4, b10-dhcp6: Implemented selection of the interfaces
+	that server listens on, using Configuration Manager. It is
+	possible to specify interface names explicitly or use asterisk
+	to specify that server should listen on all available interfaces.
+	Sockets are reopened according to the new configuration as
+	soon as it is committed.
+	(Trac #1555, git f48a3bff3fbbd15584d788a264d5966154394f04)
+
 643.	[bug]		muks
 	When running some unittests as root that depended on insufficient
 	file permissions, the tests used to fail because the root user
