@@ -58,7 +58,8 @@ static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
 // grants those options and a single, fixed, hardcoded lease.
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
-                     const bool direct_response_desired) {
+                     const bool direct_response_desired)
+    : port_(port), use_bcast_(use_bcast) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
         // First call to instance() will create IfaceMgr (it's a singleton)
@@ -73,7 +74,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
         if (port) {
             // open sockets only if port is non-zero. Port 0 is used
             // for non-socket related testing.
-            IfaceMgr::instance().openSockets4(port, use_bcast);
+            IfaceMgr::instance().openSockets4(port_, use_bcast_);
         }
 
         string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
@@ -819,6 +820,50 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
         ;
     }
 }
+
+void
+Dhcpv4Srv::openActiveSockets(const uint16_t port,
+                             const bool use_bcast) {
+    IfaceMgr::instance().closeSockets();
+
+    // Get the reference to the collection of interfaces. This reference should
+    // be valid as long as the program is run because IfaceMgr is a singleton.
+    // Therefore we can safely iterate over instances of all interfaces and
+    // modify their flags. Here we modify flags which indicate whether socket
+    // should be open for a particular interface or not.
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
+        if (iface_ptr == NULL) {
+            isc_throw(isc::Unexpected, "Interface Manager returned NULL"
+                      << " instance of the interface when DHCPv4 server was"
+                      << " trying to reopen sockets after reconfiguration");
+        }
+        if (CfgMgr::instance().isActiveIface(iface->getName())) {
+            iface_ptr->inactive4_ = false;
+            LOG_INFO(dhcp4_logger, DHCP4_ACTIVATE_INTERFACE)
+                .arg(iface->getFullName());
+
+        } else {
+            // For deactivating interface, it should be sufficient to log it
+            // on the debug level because it is more useful to know what
+            // interface is activated which is logged on the info level.
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_DEACTIVATE_INTERFACE).arg(iface->getName());
+            iface_ptr->inactive4_ = true;
+
+        }
+    }
+    // Let's reopen active sockets. openSockets4 will check internally whether
+    // sockets are marked active or inactive.
+    // @todo Optimization: we should not reopen all sockets but rather select
+    // those that have been affected by the new configuration.
+    if (!IfaceMgr::instance().openSockets4(port, use_bcast)) {
+        LOG_WARN(dhcp4_logger, DHCP4_NO_SOCKETS_OPEN);
+    }
+}
+
 
 }   // namespace dhcp
 }   // namespace isc

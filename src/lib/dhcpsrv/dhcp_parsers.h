@@ -47,8 +47,8 @@ typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 /// @brief A template class that stores named elements of a given data type.
 ///
 /// This template class is provides data value storage for configuration parameters
-/// of a given data type.  The values are stored by parameter name and as instances 
-/// of type "ValueType". 
+/// of a given data type.  The values are stored by parameter name and as instances
+/// of type "ValueType".
 ///
 /// @param ValueType is the data type of the elements to store.
 template<typename ValueType>
@@ -57,7 +57,7 @@ class ValueStorage {
         /// @brief  Stores the the parameter and its value in the store.
         ///
         /// If the parameter does not exist in the store, then it will be added,
-        /// otherwise its data value will be updated with the given value. 
+        /// otherwise its data value will be updated with the given value.
         ///
         /// @param name is the name of the paramater to store.
         /// @param value is the data value to store.
@@ -71,10 +71,10 @@ class ValueStorage {
         /// @param name is the name of the parameter for which the data
         /// value is desired.
         ///
-        /// @return The paramater's data value of type <ValueType>.
+        /// @return The paramater's data value of type @c ValueType.
         /// @throw DhcpConfigError if the parameter is not found.
         ValueType getParam(const std::string& name) const {
-            typename std::map<std::string, ValueType>::const_iterator param 
+            typename std::map<std::string, ValueType>::const_iterator param
                 = values_.find(name);
 
             if (param == values_.end()) {
@@ -87,8 +87,8 @@ class ValueStorage {
 
         /// @brief  Remove the parameter from the store.
         ///
-        /// Deletes the entry for the given parameter from the store if it 
-        /// exists. 
+        /// Deletes the entry for the given parameter from the store if it
+        /// exists.
         ///
         /// @param name is the name of the paramater to delete.
         void delParam(const std::string& name) {
@@ -108,7 +108,7 @@ class ValueStorage {
 };
 
 
-/// @brief a collection of elements that store uint32 values 
+/// @brief a collection of elements that store uint32 values
 typedef ValueStorage<uint32_t> Uint32Storage;
 typedef boost::shared_ptr<Uint32Storage> Uint32StoragePtr;
 
@@ -128,9 +128,9 @@ typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 class ParserContext {
 public:
     /// @brief Constructor
-    /// 
+    ///
     /// @param universe is the Option::Universe value of this
-    /// context. 
+    /// context.
     ParserContext(Option::Universe universe);
 
     /// @brief Copy constructor
@@ -161,12 +161,12 @@ public:
 /// @brief Pointer to various parser context.
 typedef boost::shared_ptr<ParserContext> ParserContextPtr;
 
-/// @brief Simple data-type parser template class 
+/// @brief Simple data-type parser template class
 ///
 /// This is the template class for simple data-type parsers. It supports
-/// parsing a configuration parameter with specific data-type for its 
-/// possible values. It provides a common constructor, commit, and templated 
-/// data storage.  The "build" method implementation must be provided by a 
+/// parsing a configuration parameter with specific data-type for its
+/// possible values. It provides a common constructor, commit, and templated
+/// data storage.  The "build" method implementation must be provided by a
 /// declaring type.
 /// @param ValueType is the data type of the configuration paramater value
 /// the parser should handle.
@@ -182,7 +182,7 @@ public:
     /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
     /// name is empty.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    ValueParser(const std::string& param_name, 
+    ValueParser(const std::string& param_name,
         boost::shared_ptr<ValueStorage<ValueType> > storage)
         : storage_(storage), param_name_(param_name), value_() {
         // Empty parameter name is invalid.
@@ -199,12 +199,12 @@ public:
     }
 
 
-    /// @brief Parse a given element into a value of type <ValueType>
+    /// @brief Parse a given element into a value of type @c ValueType
     ///
     /// @param value a value to be parsed.
     ///
     /// @throw isc::BadValue Typically the implementing type will throw
-    /// a BadValue exception when given an invalid Element to parse. 
+    /// a BadValue exception when given an invalid Element to parse.
     void build(isc::data::ConstElementPtr value);
 
     /// @brief Put a parsed value to the storage.
@@ -213,7 +213,7 @@ public:
         // its value. If it doesn't we insert a new element.
         storage_->setParam(param_name_, value_);
     }
-    
+ 
 private:
     /// Pointer to the storage where committed value is stored.
     boost::shared_ptr<ValueStorage<ValueType> > storage_;
@@ -302,8 +302,23 @@ public:
     virtual void commit();
 
 private:
+    /// @brief Check that specified interface exists in
+    /// @c InterfaceListConfigParser::interfaces_.
+    ///
+    /// @param iface A name of the interface.
+    ///
+    /// @return true if specified interface name was found.
+    bool isIfaceAdded(const std::string& iface) const;
+
     /// contains list of network interfaces
-    std::vector<std::string> interfaces_;
+    typedef std::list<std::string> IfaceListStorage;
+    IfaceListStorage interfaces_;
+
+    // Should server listen on all interfaces.
+    bool activate_all_;
+
+    // Parsed parameter name
+    std::string param_name_;
 };
 
 
@@ -332,11 +347,11 @@ public:
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param options is the option storage in which to store the parsed option
-    /// upon "commit". 
-    /// @param global_context is a pointer to the global context which 
-    /// stores global scope parameters, options, option defintions. 
+    /// upon "commit".
+    /// @param global_context is a pointer to the global context which
+    /// stores global scope parameters, options, option defintions.
     /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataParser(const std::string&, OptionStoragePtr options, 
+    OptionDataParser(const std::string& dummy, OptionStoragePtr options,
                     ParserContextPtr global_context);
 
     /// @brief Parses the single option data.
@@ -356,31 +371,31 @@ public:
 
     /// @brief Commits option value.
     ///
-    /// This function adds a new option to the storage or replaces an existing 
+    /// This function adds a new option to the storage or replaces an existing
     /// option with the same code.
     ///
-    /// @throw isc::InvalidOperation if failed to set pointer to storage or 
+    /// @throw isc::InvalidOperation if failed to set pointer to storage or
     /// failed
     /// to call build() prior to commit. If that happens data in the storage
     /// remain un-modified.
     virtual void commit();
 
-    /// @brief virtual destructor to ensure orderly destruction of derivations. 
+    /// @brief virtual destructor to ensure orderly destruction of derivations.
     virtual ~OptionDataParser(){};
 
 protected:
     /// @brief Finds an option definition within the server's option space
-    /// 
-    /// Given an option space and an option code, find the correpsonding 
+    ///
+    /// Given an option space and an option code, find the correpsonding
     /// option defintion within the server's option defintion storage. This
     /// method is pure virtual requiring derivations to manage which option
     /// space(s) is valid for search.
     ///
-    /// @param option_space name of the parameter option space 
-    /// @param option_code numeric value of the parameter to find 
-    /// @return OptionDefintionPtr of the option defintion or an 
+    /// @param option_space name of the parameter option space
+    /// @param option_code numeric value of the parameter to find
+    /// @return OptionDefintionPtr of the option defintion or an
     /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid 
+    /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
     virtual OptionDefinitionPtr findServerSpaceOptionDefinition (
             std::string& option_space, uint32_t option_code) = 0;
@@ -420,13 +435,13 @@ private:
     /// Option space name where the option belongs to.
     std::string option_space_;
 
-    /// Parsing context which contains global values, options and option 
+    /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
 };
 
 ///@brief Function pointer for OptionDataParser factory methods
-typedef OptionDataParser *OptionDataParserFactory(const std::string&, 
+typedef OptionDataParser *OptionDataParserFactory(const std::string&,
                      OptionStoragePtr options, ParserContextPtr global_context);
 
 /// @brief Parser for option data values within a subnet.
@@ -439,15 +454,15 @@ class OptionDataListParser : public DhcpConfigParser {
 public:
     /// @brief Constructor.
     ///
-    /// @param string& nominally would be param name, this is always ignored.
+    /// @param dummy nominally would be param name, this is always ignored.
     /// @param options parsed option storage for options in this list
-    /// @param global_context is a pointer to the global context which 
-    /// stores global scope parameters, options, option defintions. 
-    /// @param optionDataParserFactory factory method for creating individual 
-    /// option parsers 
+    /// @param global_context is a pointer to the global context which
+    /// stores global scope parameters, options, option defintions.
+    /// @param optionDataParserFactory factory method for creating individual
+    /// option parsers
     /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataListParser(const std::string&, OptionStoragePtr options, 
-                        ParserContextPtr global_context, 
+    OptionDataListParser(const std::string& dummy, OptionStoragePtr options,
+                        ParserContextPtr global_context,
                         OptionDataParserFactory *optionDataParserFactory);
 
     /// @brief Parses entries that define options' data for a subnet.
@@ -477,7 +492,7 @@ private:
     /// Collection of parsers;
     ParserCollection parsers_;
 
-    /// Parsing context which contains global values, options and option 
+    /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
 
@@ -495,10 +510,10 @@ public:
     ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param storage is the definition storage in which to store the parsed 
-    /// definition upon "commit". 
+    /// @param storage is the definition storage in which to store the parsed
+    /// definition upon "commit".
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefParser(const std::string&, OptionDefStoragePtr storage);
+    OptionDefParser(const std::string& dummy, OptionDefStoragePtr storage);
 
     /// @brief Parses an entry that describes single option definition.
     ///
@@ -546,10 +561,10 @@ public:
     ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param storage is the definition storage in which to store the parsed 
-    /// definitions in this list 
+    /// @param storage is the definition storage in which to store the parsed
+    /// definitions in this list
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefListParser(const std::string&, OptionDefStoragePtr storage);
+    OptionDefListParser(const std::string& dummy, OptionDefStoragePtr storage);
 
     /// @brief Parse configuration entries.
     ///
@@ -566,7 +581,7 @@ public:
 
 private:
     /// @brief storage for option definitions.
-    OptionDefStoragePtr storage_; 
+    OptionDefStoragePtr storage_;
 };
 
 /// @brief a collection of pools
@@ -587,14 +602,13 @@ class PoolParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor.
-   
-
+    ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param pools is the storage in which to store the parsed pool 
-    /// upon "commit". 
+    /// @param pools is the storage in which to store the parsed pool
+    /// upon "commit".
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolParser(const std::string&,  PoolStoragePtr pools);
+    PoolParser(const std::string& dummy, PoolStoragePtr pools);
 
     /// @brief parses the actual list
     ///
@@ -614,9 +628,9 @@ protected:
     ///
     /// @param addr is the IP  prefix of the pool.
     /// @param len is the prefix length.
-    /// @param ignored dummy parameter to provide symmetry between 
-    /// @return returns a PoolPtr to the new Pool object. 
-    virtual PoolPtr poolMaker(isc::asiolink::IOAddress &addr, uint32_t len, 
+    /// @param ptype is the type of pool to create.
+    /// @return returns a PoolPtr to the new Pool object.
+    virtual PoolPtr poolMaker(isc::asiolink::IOAddress &addr, uint32_t len,
                            int32_t ptype=0) = 0;
 
     /// @brief Creates a Pool object given starting and ending IP addresses.
@@ -625,7 +639,7 @@ protected:
     /// @param max is the last IP address in the pool.
     /// @param ptype is the type of pool to create (not used by all derivations)
     /// @return returns a PoolPtr to the new Pool object.
-    virtual PoolPtr poolMaker(isc::asiolink::IOAddress &min, 
+    virtual PoolPtr poolMaker(isc::asiolink::IOAddress &min,
                            isc::asiolink::IOAddress &max, int32_t ptype=0) = 0;
 
     /// @brief pointer to the actual Pools storage
@@ -654,7 +668,7 @@ public:
     /// @param subnet pointer to the content of subnet definition
     ///
     /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    virtual void build(isc::data::ConstElementPtr subnet); 
+    virtual void build(isc::data::ConstElementPtr subnet);
 
     /// @brief Adds the created subnet to a server's configuration.
     virtual void commit() = 0;
@@ -671,7 +685,7 @@ protected:
                                             const std::string& config_id) = 0;
 
     /// @brief Determines if the given option space name and code describe
-    /// a standard option for the  server. 
+    /// a standard option for the  server.
     ///
     /// @param option_space is the name of the option space to consider
     /// @param code is the numeric option code to consider
@@ -687,20 +701,20 @@ protected:
                                                              uint32_t code) = 0;
 
     /// @brief Issues a server specific warning regarding duplicate subnet
-    /// options. 
-    /// 
+    /// options.
+    ///
     /// @param code is the numeric option code of the duplicate option
-    /// @param addr is the subnet address 
+    /// @param addr is the subnet address
     /// @todo a means to know the correct logger and perhaps a common
     /// message would allow this method to be emitted by the base class.
-    virtual void duplicate_option_warning(uint32_t code, 
+    virtual void duplicate_option_warning(uint32_t code,
         isc::asiolink::IOAddress& addr) = 0;
 
-    /// @brief Instantiates the subnet based on a given IP prefix and prefix 
-    /// length.  
-    /// 
+    /// @brief Instantiates the subnet based on a given IP prefix and prefix
+    /// length.
+    ///
     /// @param addr is the IP prefix of the subnet.
-    /// @param len is the prefix length 
+    /// @param len is the prefix length
     virtual void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) = 0;
 
     /// @brief Returns value for a given parameter (after using inheritance)
@@ -724,7 +738,7 @@ private:
 
     /// @brief Create a new subnet using a data from child parsers.
     ///
-    /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing 
+    /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing
     /// failed.
     void createSubnet();
 
@@ -748,7 +762,7 @@ protected:
     /// Pointer to the created subnet object.
     isc::dhcp::SubnetPtr subnet_;
 
-    /// Parsing context which contains global values, options and option 
+    /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
 };

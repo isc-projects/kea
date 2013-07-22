@@ -88,6 +88,32 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// Typically, server listens on UDP port 547. Other ports are only
+    /// used for testing purposes.
+    ///
+    /// This accessor must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires port parameter
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using this public function.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Open sockets which are marked as active in @c CfgMgr.
+    ///
+    /// This function reopens sockets according to the current settings in the
+    /// Configuration Manager. It holds the list of the interfaces which server
+    /// should listen on. This function will open sockets on these interfaces
+    /// only. This function is not exception safe.
+    ///
+    /// @param port UDP port on which server should listen.
+    static void openActiveSockets(const uint16_t port);
+
 protected:
 
     /// @brief verifies if specified packet meets RFC requirements
@@ -361,6 +387,9 @@ private:
     int hook_index_pkt6_receive_;
     int hook_index_subnet6_select_;
     int hook_index_pkt6_send_;
+
+    /// UDP port number on which server listens.
+    uint16_t port_;
 };
 
 }; // namespace isc::dhcp

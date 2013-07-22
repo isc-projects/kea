@@ -30,7 +30,7 @@ namespace dhcp {
 
 class Dhcpv4Srv;
 
-/// @brief Configure DHCPv4 server (@c Dhcpv4Srv) with a set of configuration 
+/// @brief Configure DHCPv4 server (@c Dhcpv4Srv) with a set of configuration
 /// values.
 ///
 /// This function parses configuration information stored in @c config_set
@@ -44,7 +44,7 @@ class Dhcpv4Srv;
 /// (such as malformed configuration or invalid configuration parameter),
 /// this function returns appropriate error code.
 ///
-/// This function is called every time a new configuration is received. The 
+/// This function is called every time a new configuration is received. The
 /// extra parameter is a reference to DHCPv4 server component. It is currently
 /// not used and CfgMgr::instance() is accessed instead.
 ///
