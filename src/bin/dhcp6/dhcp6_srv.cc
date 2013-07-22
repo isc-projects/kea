@@ -20,6 +20,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaaddr.h>
@@ -55,6 +56,34 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
+
+namespace {
+
+// The following constants describe server's behavior with respect to the
+// DHCPv6 Client FQDN Option sent by a client. They will be removed
+// when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
+
+// Should server always include the FQDN option in its response, regardless
+// if it has been requested in ORO (Disabled).
+const bool FQDN_ALWAYS_INCLUDE = false;
+// Enable AAAA RR update delegation to the client (Disabled).
+const bool FQDN_ALLOW_CLIENT_UPDATE = false;
+// Globally enable updates (Enabled).
+const bool FQDN_ENABLE_UPDATE = true;
+// The partial name generated for the client if empty name has been
+// supplied.
+const char* FQDN_GENERATED_PARTIAL_NAME = "myhost";
+// Do update, even if client requested no updates with N flag (Disabled).
+const bool FQDN_OVERRIDE_NO_UPDATE = false;
+// Server performs an update when client requested delegation (Enabled).
+const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
+// The fully qualified domain-name suffix if partial name provided by
+// a client.
+const char* FQDN_PARTIAL_SUFFIX = "example.com";
+// Should server replace the domain-name supplied by the client (Disabled).
+const bool FQDN_REPLACE_CLIENT_NAME = false;
+
+}
 
 /// @brief file name of a server-id file
 ///
@@ -631,6 +660,99 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
+void
+Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+    // Get Client FQDN Option from the client's message. If this option hasn't
+    // been included, do nothing.
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
+    if (!fqdn) {
+        return;
+    }
+
+    // Prepare the FQDN option which will be included in the response to
+    // the client.
+    Option6ClientFqdnPtr fqdn_resp(new Option6ClientFqdn(*fqdn));
+    // RFC 4704, section 6. - all flags set to 0.
+    fqdn_resp->resetFlags();
+
+    // Conditions when N flag has to be set to indicate that server will not
+    // perform DNS updates:
+    // 1. Updates are globally disabled,
+    // 2. Client requested no update and server respects it,
+    // 3. Client requested that the AAAA update is delegated to the client but
+    //    server neither respects delegation of updates nor it is configured
+    //    to send update on its own when client requested delegation.
+    if (!FQDN_ENABLE_UPDATE ||
+        (fqdn->getFlag(Option6ClientFqdn::FLAG_N) && !FQDN_OVERRIDE_NO_UPDATE) ||
+        (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) && !FQDN_ALLOW_CLIENT_UPDATE &&
+         !FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_N, true);
+
+    // Conditions when S flag is set to indicate that server will perform
+    // DNS update on its own:
+    // 1. Client requested that server performs DNS update and DNS updates are
+    //    globally enabled
+    // 2. Client requested that server delegates AAAA update to the client but
+    //    server doesn't respect delegation and it is configured to perform
+    //    an update on its own when client requested delegation.
+    } else if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) ||
+               (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) &&
+                !FQDN_ALLOW_CLIENT_UPDATE && FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_S, true);
+    }
+
+    // Server MUST set the O flag if it has overridden the client's setting
+    // of S flag.
+    if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) !=
+        fqdn_resp->getFlag(Option6ClientFqdn::FLAG_S)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_O, true);
+    }
+
+    // If client supplied partial or empty domain-name, server should
+    // generate one.
+    if (fqdn->getDomainNameType() == Option6ClientFqdn::PARTIAL) {
+        std::ostringstream name;
+        if (fqdn->getDomainName().empty()) {
+            name << FQDN_GENERATED_PARTIAL_NAME;
+        } else {
+            name << fqdn->getDomainName();
+        }
+        name << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
+
+    // Server may be configured to replace a name supplied by a client,
+    // even if client supplied fully qualified domain-name.
+    } else if (FQDN_REPLACE_CLIENT_NAME) {
+        std::ostringstream name;
+        name << FQDN_GENERATED_PARTIAL_NAME << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
+
+    }
+
+    // Server sends back the FQDN option to the client if client has requested
+    // it using Option Request Option. However, server may be configured to
+    // send the FQDN option in its response, regardless whether client requested
+    // it or not.
+    bool include_fqdn = FQDN_ALWAYS_INCLUDE;
+    if (!include_fqdn) {
+        OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<
+            OptionUint16Array>(question->getOption(D6O_ORO));
+        if (oro) {
+            const std::vector<uint16_t>& values = oro->getValues();
+            for (int i = 0; i < values.size(); ++i) {
+                if (values[i] == D6O_CLIENT_FQDN) {
+                    include_fqdn = true;
+                }
+            }
+        }
+    }
+
+    if (include_fqdn) {
+        answer->addOption(fqdn_resp);
+    }
+}
+
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                        Pkt6Ptr question, boost::shared_ptr<Option6IA> ia) {
@@ -1025,6 +1147,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     assignLeases(solicit, advertise);
 
+    processClientFqdn(solicit, advertise);
+
     return (advertise);
 }
 
@@ -1041,6 +1165,8 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     assignLeases(request, reply);
 
+    processClientFqdn(request, reply);
+
     return (reply);
 }
 
@@ -1054,6 +1180,8 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     copyDefaultOptions(renew, reply);
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
+
+    processClientFqdn(renew, reply);
 
     renewLeases(renew, reply);
 
@@ -1085,6 +1213,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     appendDefaultOptions(release, reply);
 
     releaseLeases(release, reply);
+
+    // @todo If client sent a release and we should remove outstanding
+    // DNS records.
 
     return reply;
 }
