@@ -2601,6 +2601,12 @@ can use various data source backends.
 &gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
+          Unfortunately, due to current technical limitations, the
+          params must be set as one JSON blob. To reload a zone, you the
+          same <command>Auth loadzone</command> command as above.
+	</para>
+
+	<para>
           Initially, a map value has to be set, but this value may be an
           empty map. After that, key/value pairs can be added with 'config
           add' and keys can be removed with 'config remove'. The initial
@@ -2614,8 +2620,6 @@ can use various data source backends.
 &gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
           </screen>
 
-          <command>bindctl</command>. To reload a zone, you the same command
-          as above.
         </para>
       </section>
 
