@@ -445,7 +445,8 @@ $ <userinput>./configure</userinput></screen>
 
         <listitem>
           <para>Create a user for yourself:
-            <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr</userinput></screen>
+            <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr add root</userinput></screen>
+	  and enter a newly chosen password when prompted.
           </para>
         </listitem>
 
