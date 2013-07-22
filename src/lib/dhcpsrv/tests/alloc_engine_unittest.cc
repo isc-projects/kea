@@ -35,6 +35,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include <set>
 #include <time.h>
 
