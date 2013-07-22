@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
+#include <d2/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -45,6 +46,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -244,6 +246,9 @@ public:
 
     int rcode_;
     ConstElementPtr comment_;
+
+    // A NameChangeRequest used in many tests.
+    NameChangeRequestPtr ncr_;
 };
 
 // Provides suport for tests against a preconfigured subnet6
@@ -336,6 +341,7 @@ public:
 
     // A pool used in most tests
     Pool6Ptr pool_;
+
 };
 
 class FqdnDhcpv6SrvTest : public NakedDhcpv6SrvTest {
@@ -406,7 +412,7 @@ public:
 
         }
 
-        ASSERT_NO_THROW(srv.processClientFqdn(question, answer));
+        ASSERT_NO_THROW(srv.processClientFqdn(question, answer, ncr_));
 
         Option6ClientFqdnPtr answ_fqdn = getClientFqdnOption(answer);
         ASSERT_TRUE(answ_fqdn);
@@ -475,7 +481,7 @@ TEST_F(NakedDhcpv6SrvTest, RequestNoSubnet) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRequest(req);
+    Pkt6Ptr reply = srv.processRequest(req, ncr_);
 
     // check that we get the right NAK
     checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoAddrsAvail);
@@ -510,7 +516,7 @@ TEST_F(NakedDhcpv6SrvTest, RenewNoSubnet) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv.processRenew(req, ncr_);
 
     // check that we get the right NAK
     checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
@@ -545,7 +551,7 @@ TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv.processRelease(req, ncr_);
 
     // check that we get the right NAK
     checkNakResponse (reply, DHCPV6_REPLY, 1234, STATUS_NoBinding);
@@ -1013,7 +1019,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRequest(req);
+    Pkt6Ptr reply = srv.processRequest(req, ncr_);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
@@ -1078,9 +1084,9 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req3->addOption(srv.getServerID());
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply1 = srv.processRequest(req1);
-    Pkt6Ptr reply2 = srv.processRequest(req2);
-    Pkt6Ptr reply3 = srv.processRequest(req3);
+    Pkt6Ptr reply1 = srv.processRequest(req1, ncr_);
+    Pkt6Ptr reply2 = srv.processRequest(req2, ncr_);
+    Pkt6Ptr reply3 = srv.processRequest(req3, ncr_);
 
     // check if we get response at all
     checkResponse(reply1, DHCPV6_REPLY, 1234);
@@ -1175,7 +1181,7 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv.processRenew(req, ncr_);
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
@@ -1261,7 +1267,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     // Case 1: No lease known to server
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv.processRenew(req, ncr_);
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, transid);
@@ -1287,7 +1293,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Pass it to the server and hope for a REPLY
-    reply = srv.processRenew(req);
+    reply = srv.processRenew(req, ncr_);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
@@ -1306,7 +1312,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     req->addOption(generateClientId(13)); // generate different DUID
                                           // (with length 13)
 
-    reply = srv.processRenew(req);
+    reply = srv.processRenew(req, ncr_);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
@@ -1369,7 +1375,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv.processRelease(req, ncr_);
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
@@ -1447,7 +1453,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     SCOPED_TRACE("CASE 1: No lease known to server");
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv.processRelease(req, ncr_);
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, transid);
@@ -1471,7 +1477,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Pass it to the server and hope for a REPLY
-    reply = srv.processRelease(req);
+    reply = srv.processRelease(req, ncr_);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
@@ -1494,7 +1500,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     req->addOption(generateClientId(13)); // generate different DUID
                                           // (with length 13)
 
-    reply = srv.processRelease(req);
+    reply = srv.processRelease(req, ncr_);
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(D6O_IA_NA);
     ASSERT_TRUE(tmp);
@@ -1892,7 +1898,6 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 // Test server's response when client requests that server delegates the AAAA
 // update to the client and this delegation is not allowed.
 TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
-    SCOPED_TRACE("Client AAAA Update is not allowed");
     testFqdn(DHCPV6_SOLICIT, true, 0, "myhost.example.com.",
              Option6ClientFqdn::FULL, FQDN_FLAG_S | FQDN_FLAG_O,
              "myhost.example.com.");
