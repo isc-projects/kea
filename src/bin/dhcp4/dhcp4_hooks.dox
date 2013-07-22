@@ -78,8 +78,8 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b subnet4collection, type: const isc::dhcp::Subnet4Collection *, direction: <b>in</b>
 
  - @b Description: this callout is executed when a subnet is being
-   selected for the incoming packet. All parameters, addresses and
-   prefixes will be assigned from that subnet. A callout can select a
+   selected for the incoming packet. All parameters and addresses
+   will be assigned from that subnet. A callout can select a
    different subnet if it wishes so, the list of all subnets currently
    configured being provided as 'subnet4collection'. The list itself must
    not be modified.
