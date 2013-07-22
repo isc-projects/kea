@@ -54,6 +54,10 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 available sooner.
 
+% DHCPSRV_CFGMGR_ADD_IFACE adding listening interface %1
+A debug message issued when new interface is being added to the collection of
+interfaces on which server listens to DHCP messages.
+
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
 specified IPv4 subnet to its database.
@@ -61,6 +65,16 @@ specified IPv4 subnet to its database.
 % DHCPSRV_CFGMGR_ADD_SUBNET6 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
 specified IPv6 subnet to its database.
+
+% DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE enabling listening on all interfaces
+A debug message issued when server is being configured to listen on all
+interfaces.
+
+% DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES stop listening on all interfaces
+A debug message issued when configuration manager clears the internal list
+of active interfaces. This doesn't prevent the server from listening to
+the DHCP traffic through open sockets, but will rather be used by Interface
+Manager to select active interfaces when sockets are re-opened.
 
 % DHCPSRV_CFGMGR_DELETE_SUBNET4 deleting all IPv4 subnets
 A debug message noting that the DHCP configuration manager has deleted all IPv4

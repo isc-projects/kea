@@ -632,7 +632,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2409,7 +2409,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2477,7 +2477,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
