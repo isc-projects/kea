@@ -37,6 +37,8 @@
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  * @section hooksFramework Hooks Framework
  * - @subpage hooksComponentDeveloperGuide
+ * - @subpage dhcpv4Hooks
+ * - @subpage dhcpv6Hooks
  *
  * @section dnsMaintenanceGuide DNS Maintenance Guide
  * - Authoritative DNS (todo)
@@ -48,11 +50,12 @@
  *   - @subpage dhcpv4Session
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
+ *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
- *   - @subpage dhcpv6Hooks
+ *   - @subpage dhcpv6Other
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
