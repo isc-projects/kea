@@ -710,28 +710,37 @@ TEST_F(DataSrcClientsBuilderTest,
     const ElementPtr bad_name = Element::fromJSON(command_args->toWire());
     // Set bad name
     bad_name->set("data-source-name", Element::create("bad"));
-    // Nothing breaks
-    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_name,
-                                  FinishedCallback()));
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_name,
+                                      FinishedCallback()));
+    }, "");
 
     // Another copy with wrong class
     const ElementPtr bad_class = Element::fromJSON(command_args->toWire());
     // Set bad class
     bad_class->set("data-source-class", Element::create("bad"));
-    // Nothing breaks
-    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
-                                  FinishedCallback()));
+    // Aborts (we are out of sync somehow).
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
 
     // Class CH is valid, but not present.
     bad_class->set("data-source-class", Element::create("CH"));
-    // Nothing breaks
-    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
-                                  FinishedCallback()));
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
 
     // And break the segment params
     const ElementPtr bad_params = Element::fromJSON(command_args->toWire());
     bad_params->set("segment-params",
                     Element::fromJSON("{\"mapped-file\": \"/bad/file\"}"));
+
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
 }
 
 } // unnamed namespace

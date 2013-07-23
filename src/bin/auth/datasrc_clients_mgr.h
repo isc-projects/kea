@@ -638,22 +638,29 @@ private:
             const boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
                 list = (**clients_map_)[rrclass];
             if (!list) {
-                LOG_ERROR(auth_logger,
+                LOG_FATAL(auth_logger,
                           AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_UNKNOWN_CLASS)
                     .arg(rrclass);
-                return;
+                std::terminate();
             }
-            list->resetMemorySegment(name,
-                isc::datasrc::memory::ZoneTableSegment::READ_ONLY,
-                segment_params);
+            if (!list->resetMemorySegment(name,
+                    isc::datasrc::memory::ZoneTableSegment::READ_ONLY,
+                    segment_params)) {
+                LOG_FATAL(auth_logger,
+                          AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_NO_DATASRC)
+                    .arg(rrclass).arg(name);
+                std::terminate();
+            }
         } catch (const isc::dns::InvalidRRClass& irce) {
-            LOG_ERROR(auth_logger,
+            LOG_FATAL(auth_logger,
                       AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_BAD_CLASS)
                 .arg(arg->get("data-source-class"));
+            std::terminate();
         } catch (const isc::Exception& e) {
-            LOG_ERROR(auth_logger,
+            LOG_FATAL(auth_logger,
                       AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_ERROR)
                 .arg(e.what());
+            std::terminate();
         }
     }
 
