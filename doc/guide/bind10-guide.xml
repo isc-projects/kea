@@ -2602,7 +2602,7 @@ can use various data source backends.
 &gt; <userinput>config commit</userinput></screen>
 
           Unfortunately, due to current technical limitations, the
-          params must be set as one JSON blob. To reload a zone, you the
+          params must be set as one JSON blob. To reload a zone, use the
           same <command>Auth loadzone</command> command as above.
 	</para>
 
