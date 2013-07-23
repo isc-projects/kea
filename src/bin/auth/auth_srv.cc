@@ -307,7 +307,7 @@ public:
                       const bool done);
 
     /// Are we currently subscribed to the SegmentReader group?
-    bool readers_subscribed_;
+    bool readers_group_subscribed_;
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
@@ -324,7 +324,7 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     datasrc_clients_mgr_(io_service_),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
-    readers_subscribed_(false),
+    readers_group_subscribed_(false),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {}
@@ -970,18 +970,18 @@ hasRemoteSegment(auth::DataSrcClientsMgr& mgr) {
 void
 AuthSrv::listsReconfigured() {
     const bool has_remote = hasRemoteSegment(impl_->datasrc_clients_mgr_);
-    if (has_remote && !impl_->readers_subscribed_) {
+    if (has_remote && !impl_->readers_group_subscribed_) {
         impl_->config_session_->subscribe("SegmentReader");
         impl_->config_session_->
             setUnhandledCallback(boost::bind(&AuthSrv::foreignCommand, this,
                                              _1, _2, _3));
-        impl_->readers_subscribed_ = true;
-    } else if (!has_remote && impl_->readers_subscribed_) {
+        impl_->readers_group_subscribed_ = true;
+    } else if (!has_remote && impl_->readers_group_subscribed_) {
         impl_->config_session_->unsubscribe("SegmentReader");
         impl_->config_session_->
             setUnhandledCallback(isc::config::ModuleCCSession::
                                  UnhandledCallback());
-        impl_->readers_subscribed_ = false;
+        impl_->readers_group_subscribed_ = false;
     }
 }
 
