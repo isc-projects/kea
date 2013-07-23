@@ -278,6 +278,14 @@ public:
         // Let's clean up if there is such a file.
         unlink(DUID_FILE);
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "buffer6_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "buffer6_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "lease6_renew");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
+                                                 "lease6_release");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
                                                  "pkt6_receive");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
                                                  "pkt6_send");
