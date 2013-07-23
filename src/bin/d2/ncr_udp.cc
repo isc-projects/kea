@@ -23,9 +23,8 @@ namespace isc {
 namespace d2 {
 
 //*************************** UDPCallback ***********************
-
-UDPCallback::UDPCallback (RawBufferPtr buffer, size_t buf_size,
-                          UDPEndpointPtr data_source,
+UDPCallback::UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
+                          UDPEndpointPtr& data_source,
                           const UDPCompletionHandler& handler)
     : handler_(handler), data_(new Data(buffer, buf_size, data_source)) {
     if (handler.empty()) {
@@ -78,14 +77,13 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
       port_(port), format_(format), reuse_address_(reuse_address) {
     // Instantiate the receive callback.  This gets passed into each receive.
     // Note that the callback constructor is passed an instance method
-    // pointer to our recv_completion_handler.
+    // pointer to our completion handler method, receiveCompletionHandler.
+    RawBufferPtr buffer(new uint8_t[RECV_BUF_MAX]);
+    UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
     recv_callback_.reset(new
-                         UDPCallback(RawBufferPtr(new uint8_t[RECV_BUF_MAX]),
-                                     RECV_BUF_MAX,
-                                     UDPEndpointPtr(new
-                                                    asiolink::UDPEndpoint()),
+                         UDPCallback(buffer, RECV_BUF_MAX, data_source,
                                      boost::bind(&NameChangeUDPListener::
-                                     recv_completion_handler, this, _1, _2)));
+                                     receiveCompletionHandler, this, _1, _2)));
 }
 
 NameChangeUDPListener::~NameChangeUDPListener() {
@@ -149,8 +147,8 @@ NameChangeUDPListener::close() {
 }
 
 void
-NameChangeUDPListener::recv_completion_handler(bool successful,
-                                               const UDPCallback *callback) {
+NameChangeUDPListener::receiveCompletionHandler(const bool successful,
+                                                const UDPCallback *callback) {
     NameChangeRequestPtr ncr;
     Result result = SUCCESS;
 
@@ -183,27 +181,26 @@ NameChangeUDPListener::recv_completion_handler(bool successful,
 
 //*************************** NameChangeUDPSender ***********************
 
-NameChangeUDPSender::NameChangeUDPSender(
-            const isc::asiolink::IOAddress& ip_address, const uint32_t port,
-            const isc::asiolink::IOAddress& server_address,
-            const uint32_t server_port, const NameChangeFormat format,
-            RequestSendHandler& ncr_send_handler, const size_t send_que_max,
-            const bool reuse_address)
+NameChangeUDPSender::
+NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address, 
+                    const uint32_t port, 
+                    const isc::asiolink::IOAddress& server_address,
+                    const uint32_t server_port, const NameChangeFormat format,
+                    RequestSendHandler& ncr_send_handler, 
+                    const size_t send_que_max, const bool reuse_address)
     : NameChangeSender(ncr_send_handler, send_que_max),
       ip_address_(ip_address), port_(port), server_address_(server_address),
       server_port_(server_port), format_(format),
       reuse_address_(reuse_address) {
     // Instantiate the send callback.  This gets passed into each send.
     // Note that the callback constructor is passed the an instance method
-    // pointer to our send_completion_handler.
-    send_callback_.reset(new UDPCallback(
-                                       RawBufferPtr(new uint8_t[SEND_BUF_MAX]),
-                                       SEND_BUF_MAX,
-                                       UDPEndpointPtr(new asiolink::
-                                                      UDPEndpoint()),
-                                       boost::bind(&NameChangeUDPSender::
-                                       send_completion_handler, this,
-                                       _1, _2)));
+    // pointer to our completion handler, sendCompletionHandler.
+    RawBufferPtr buffer(new uint8_t[SEND_BUF_MAX]);
+    UDPEndpointPtr data_source(new asiolink::UDPEndpoint());
+    send_callback_.reset(new UDPCallback(buffer, SEND_BUF_MAX, data_source,
+                                         boost::bind(&NameChangeUDPSender::
+                                         sendCompletionHandler, this,
+                                         _1, _2)));
 }
 
 NameChangeUDPSender::~NameChangeUDPSender() {
@@ -212,7 +209,7 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 }
 
 void
-NameChangeUDPSender::open(isc::asiolink::IOService & io_service) {
+NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
     // create our endpoint and bind the the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_.getAddress(), port_);
 
@@ -264,7 +261,7 @@ NameChangeUDPSender::close() {
 }
 
 void
-NameChangeUDPSender::doSend(NameChangeRequestPtr ncr) {
+NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
     // Now use the NCR to write JSON to an output buffer.
     isc::util::OutputBuffer ncr_buffer(SEND_BUF_MAX);
     ncr->toFormat(format_, ncr_buffer);
@@ -280,8 +277,8 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr ncr) {
 }
 
 void
-NameChangeUDPSender::send_completion_handler(const bool successful,
-                                             const UDPCallback *send_callback) {
+NameChangeUDPSender::sendCompletionHandler(const bool successful,
+                                           const UDPCallback *send_callback) {
     Result result;
     if (successful) {
         result = SUCCESS;

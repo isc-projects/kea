@@ -131,12 +131,10 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 }
 
 /// @brief Compares two NameChangeRequests for equality.
-bool checkSendVsReceived(NameChangeRequestPtr sent_ncr_,
-                         NameChangeRequestPtr received_ncr_) {
-    // @todo NameChangeRequest message doesn't currently have a comparison
-    // operator, so we will cheat and compare the text form.
-    return ((sent_ncr_ && received_ncr_ ) &&
-        ((sent_ncr_->toText()) == (received_ncr_->toText())));
+bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
+                         NameChangeRequestPtr received_ncr) {
+    return ((sent_ncr && received_ncr) &&
+        (*sent_ncr == *received_ncr));
 }
 
 /// @brief Text fixture for testing NameChangeUDPListener
@@ -147,7 +145,7 @@ public:
     NameChangeListener::Result result_;
     NameChangeRequestPtr sent_ncr_;
     NameChangeRequestPtr received_ncr_;
-    NameChangeUDPListener *listener_;
+    NameChangeListenerPtr listener_;
     isc::asiolink::IntervalTimer test_timer_;
 
     /// @brief Constructor
@@ -158,14 +156,18 @@ public:
         : io_service_(), result_(NameChangeListener::SUCCESS),
           test_timer_(io_service_) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
-        listener_ = new NameChangeUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, *this, true);
+        listener_.reset(new NameChangeUDPListener(addr, LISTENER_PORT,
+                                              FMT_JSON, *this, true));
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(boost::bind(&NameChangeUDPListenerTest::
                                       testTimeoutHandler, this),
                           TEST_TIMEOUT);
     }
+
+    virtual ~NameChangeUDPListenerTest(){
+    }
+    
 
     /// @brief Converts JSON string into an NCR and sends it to the listener.
     ///
@@ -221,7 +223,7 @@ public:
 /// NCRs and delivery them to the "application" layer.
 TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
     // Verify we can enter listening mode.
-    EXPECT_FALSE(listener_->amListening());
+    ASSERT_FALSE(listener_->amListening());
     ASSERT_NO_THROW(listener_->startListening(io_service_));
     ASSERT_TRUE(listener_->amListening());
 
