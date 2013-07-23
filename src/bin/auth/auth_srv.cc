@@ -989,7 +989,7 @@ void
 AuthSrv::reconfigureDone(ConstElementPtr params) {
     // ACK the segment
     impl_->config_session_->
-        groupSendMsg(isc::config::createCommand("sgmtinfo-update-ack",
+        groupSendMsg(isc::config::createCommand("segment_info_update_ack",
                                                 params), "MemMgr");
 }
 
@@ -997,7 +997,7 @@ void
 AuthSrv::foreignCommand(const std::string& command, const std::string&,
                         const ConstElementPtr& params)
 {
-    if (command == "sgmtinfo-update") {
+    if (command == "segment_info_update") {
         impl_->datasrc_clients_mgr_.
             segmentInfoUpdate(params, boost::bind(&AuthSrv::reconfigureDone,
                                                   this, params));
