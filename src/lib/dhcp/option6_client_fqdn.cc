@@ -280,6 +280,20 @@ Option6ClientFqdn::getDomainName() const {
 }
 
 void
+Option6ClientFqdn::packDomainName(isc::util::OutputBuffer& buf) const {
+    // Domain name, encoded as a set of labels.
+    isc::dns::LabelSequence labels(*impl_->domain_name_);
+    if (labels.getDataLength() > 0) {
+        size_t read_len = 0;
+        const uint8_t* data = labels.getData(&read_len);
+        if (impl_->domain_name_type_ == PARTIAL) {
+            --read_len;
+        }
+        buf.writeData(data, read_len);
+    }
+}
+
+void
 Option6ClientFqdn::setDomainName(const std::string& domain_name,
                                  const DomainNameType domain_name_type) {
     impl_->setDomainName(domain_name, domain_name_type);
@@ -301,18 +315,8 @@ Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) {
     packHeader(buf);
     // Flags field.
     buf.writeUint8(impl_->flags_);
-    // Domain name, encoded as a set of labels.
-    isc::dns::LabelSequence labels(*impl_->domain_name_);
-    if (labels.getDataLength() > 0) {
-        size_t read_len = 0;
-        const uint8_t* data = labels.getData(&read_len);
-        if (impl_->domain_name_type_ == PARTIAL) {
-            --read_len;
-        }
-        buf.writeData(data, read_len);
-    }
-
-
+    // Domain name.
+    packDomainName(buf);
 }
 
 void
