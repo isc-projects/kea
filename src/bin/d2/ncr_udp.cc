@@ -22,7 +22,6 @@
 namespace isc {
 namespace d2 {
 
-
 //*************************** UDPCallback ***********************
 
 UDPCallback::UDPCallback (RawBufferPtr buffer, size_t buf_size,
@@ -40,7 +39,7 @@ UDPCallback::UDPCallback (RawBufferPtr buffer, size_t buf_size,
 
 void
 UDPCallback::operator ()(const asio::error_code error_code,
-                             const size_t bytes_transferred) {
+                         const size_t bytes_transferred) {
 
     // Save the result state and number of bytes transferred.
     setErrorCode(error_code);
@@ -70,25 +69,23 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
 
 
 //*************************** NameChangeUDPListener ***********************
-
-NameChangeUDPListener::NameChangeUDPListener(
-            const isc::asiolink::IOAddress& ip_address, const uint32_t port,
-            NameChangeFormat format,
-            const RequestReceiveHandler* ncr_recv_handler,
-            const bool reuse_address)
+NameChangeUDPListener::
+NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address, 
+                      const uint32_t port, NameChangeFormat format, 
+                      RequestReceiveHandler& ncr_recv_handler,
+                      const bool reuse_address)
     : NameChangeListener(ncr_recv_handler), ip_address_(ip_address),
       port_(port), format_(format), reuse_address_(reuse_address) {
     // Instantiate the receive callback.  This gets passed into each receive.
     // Note that the callback constructor is passed an instance method
     // pointer to our recv_completion_handler.
-    recv_callback_.reset(new UDPCallback(
-                                       RawBufferPtr(new uint8_t[RECV_BUF_MAX]),
-                                       RECV_BUF_MAX,
-                                       UDPEndpointPtr(new asiolink::
-                                                      UDPEndpoint()),
-                                       boost::bind(&NameChangeUDPListener::
-                                       recv_completion_handler, this,
-                                       _1, _2)));
+    recv_callback_.reset(new 
+                         UDPCallback(RawBufferPtr(new uint8_t[RECV_BUF_MAX]),
+                                     RECV_BUF_MAX,
+                                     UDPEndpointPtr(new 
+                                                    asiolink::UDPEndpoint()),
+                                     boost::bind(&NameChangeUDPListener::
+                                     recv_completion_handler, this, _1, _2)));
 }
 
 NameChangeUDPListener::~NameChangeUDPListener() {
@@ -113,7 +110,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
             asio_socket_->set_option(asio::socket_base::reuse_address(true));
         }
 
-        // Bind the low leve socket to our endpoint.
+        // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (asio::system_error& ex) {
         isc_throw (NcrUDPError, ex.code().message());
@@ -190,7 +187,7 @@ NameChangeUDPSender::NameChangeUDPSender(
             const isc::asiolink::IOAddress& ip_address, const uint32_t port,
             const isc::asiolink::IOAddress& server_address,
             const uint32_t server_port, const NameChangeFormat format,
-            RequestSendHandler* ncr_send_handler, const size_t send_que_max,
+            RequestSendHandler& ncr_send_handler, const size_t send_que_max,
             const bool reuse_address)
     : NameChangeSender(ncr_send_handler, send_que_max),
       ip_address_(ip_address), port_(port), server_address_(server_address),

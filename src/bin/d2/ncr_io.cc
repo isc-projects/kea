@@ -20,13 +20,9 @@ namespace d2 {
 
 //************************** NameChangeListener ***************************
 
-NameChangeListener::NameChangeListener(const RequestReceiveHandler*
+NameChangeListener::NameChangeListener(RequestReceiveHandler&
                                        recv_handler)
     : listening_(false), recv_handler_(recv_handler) {
-    if (!recv_handler) {
-        isc_throw(NcrListenerError,
-                      "NameChangeListener ctor - recv_handler cannot be null");
-    }
 };
 
 void
@@ -64,41 +60,64 @@ NameChangeListener::stopListening() {
     } catch (const isc::Exception &ex) {
         // Swallow exceptions. If we have some sort of error we'll log
         // it but we won't propagate the throw.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_UDP_LISTEN_CLOSE).arg(ex.what());
+        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR).arg(ex.what());
     }
 
+    // Set it false, no matter what.  This allows us to at least try to
+    // re-open via startListening().
     setListening(false);
 }
 
 void
+#if 0
 NameChangeListener::invokeRecvHandler(Result result, NameChangeRequestPtr ncr) {
+#else
+NameChangeListener::invokeRecvHandler(const Result result, 
+                                      NameChangeRequestPtr& ncr) {
+#endif
     // Call the registered application layer handler.
-    (*(const_cast<RequestReceiveHandler*>(recv_handler_)))(result, ncr);
+    recv_handler_(result, ncr);
 
     // Start the next IO layer asynchronous receive.
-    doReceive();
-};
+    // In the event the handler above intervened and decided to stop listening
+    // we need to check that first.
+    if (amListening()) {
+        try {
+            doReceive();
+        } catch (const isc::Exception& ex) {
+            // It is possible though unlikely, for doReceive to fail without
+            // scheduling the read. While, unlikely, it does mean the callback
+            // will not get called with a failure. A throw here would surface
+            // at the IOService::run (or run variant) invocation.  So we will
+            // close the window by invoking the application handler with
+            // a failed result, and let the application layer sort it out.
+            LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_RECV_NEXT).arg(ex.what());
+#if 0
+            recv_handler_(ERROR, NameChangeRequestPtr());
+#else
+            NameChangeRequestPtr empty;
+            recv_handler_(ERROR, empty);
+#endif
+        }
+    }
+}
 
 //************************* NameChangeSender ******************************
 
-NameChangeSender::NameChangeSender(const RequestSendHandler* send_handler,
-                                   size_t send_que_max)
+NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
+                                   size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
-      send_que_max_(send_que_max) {
-    if (!send_handler) {
-        isc_throw(NcrSenderError,
-                  "NameChangeSender ctor - send_handler cannot be null");
-    }
+      send_queue_max_(send_queue_max) {
 
     // Queue size must be big enough to hold at least 1 entry.
-    if (send_que_max == 0) {
-        isc_throw(NcrSenderError, "NameChangeSender ctor -"
+    if (send_queue_max == 0) {
+        isc_throw(NcrSenderError, "NameChangeSender constructor"
                   " queue size must be greater than zero");
     }
-};
+}
 
 void
-NameChangeSender::startSending(isc::asiolink::IOService & io_service) {
+NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
     if (amSending()) {
         // This amounts to a programmatic error.
         isc_throw(NcrSenderError, "NameChangeSender is already sending");
@@ -112,7 +131,7 @@ NameChangeSender::startSending(isc::asiolink::IOService & io_service) {
         open(io_service);
     } catch (const isc::Exception& ex) {
         stopSending();
-        isc_throw(NcrSenderOpenError, "Open failed:" << ex.what());
+        isc_throw(NcrSenderOpenError, "Open failed: " << ex.what());
     }
 
     // Set our status to sending.
@@ -127,13 +146,16 @@ NameChangeSender::stopSending() {
     } catch (const isc::Exception &ex) {
         // Swallow exceptions. If we have some sort of error we'll log
         // it but we won't propagate the throw.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_UDP_SEND_CLOSE).arg(ex.what());
+        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
+
+    // Set it false, no matter what.  This allows us to at least try to
+    // re-open via startSending().
     setSending(false);
 }
 
 void
-NameChangeSender::sendRequest(NameChangeRequestPtr ncr) {
+NameChangeSender::sendRequest(NameChangeRequestPtr& ncr) {
     if (!amSending()) {
         isc_throw(NcrSenderError, "sender is not ready to send");
     }
@@ -142,13 +164,13 @@ NameChangeSender::sendRequest(NameChangeRequestPtr ncr) {
         isc_throw(NcrSenderError, "request to send is empty");
     }
 
-    if (send_que_.size() >= send_que_max_) {
-        isc_throw(NcrSenderQueFull, "send queue has reached maximum capacity:"
-                  << send_que_max_ );
+    if (send_queue_.size() >= send_queue_max_) {
+        isc_throw(NcrSenderQueueFull, "send queue has reached maximum capacity:"
+                  << send_queue_max_ );
     }
 
     // Put it on the queue.
-    send_que_.push_back(ncr);
+    send_queue_.push_back(ncr);
 
     // Call sendNext to schedule the next one to go.
     sendNext();
@@ -165,8 +187,8 @@ NameChangeSender::sendNext() {
 
     // If queue isn't empty, then get one from the front. Note we leave
     // it on the front of the queue until we successfully send it.
-    if (send_que_.size()) {
-        ncr_to_send_ = send_que_.front();
+    if (send_queue_.size()) {
+        ncr_to_send_ = send_queue_.front();
 
        // @todo start defense timer
        // If a send were to hang and we timed it out, then timeout
@@ -178,39 +200,50 @@ NameChangeSender::sendNext() {
 }
 
 void
-NameChangeSender::invokeSendHandler(NameChangeSender::Result result) {
+NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
     // @todo reset defense timer
     if (result == SUCCESS) {
         // It shipped so pull it off the queue.
-        send_que_.pop_front();
+        send_queue_.pop_front();
     }
 
     // Invoke the completion handler passing in the result and a pointer
     // the request involved.
-    (*(const_cast<RequestSendHandler*>(send_handler_))) (result, ncr_to_send_);
+    send_handler_(result, ncr_to_send_);
 
     // Clear the pending ncr pointer.
     ncr_to_send_.reset();
 
     // Set up the next send
-    sendNext();
-};
-
-void
-NameChangeSender::skipNext() {
-    if (send_que_.size()) {
-        // Discards the request at the front of the queue.
-        send_que_.pop_front();
+    try {
+        sendNext();
+    } catch (const isc::Exception& ex) {
+        // It is possible though unlikely, for sendNext to fail without
+        // scheduling the send. While, unlikely, it does mean the callback
+        // will not get called with a failure. A throw here would surface
+        // at the IOService::run (or run variant) invocation.  So we will
+        // close the window by invoking the application handler with
+        // a failed result, and let the application layer sort it out.
+        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_NEXT).arg(ex.what());
+        send_handler_(ERROR, ncr_to_send_);
     }
 }
 
 void
-NameChangeSender::flushSendQue() {
+NameChangeSender::skipNext() {
+    if (send_queue_.size()) {
+        // Discards the request at the front of the queue.
+        send_queue_.pop_front();
+    }
+}
+
+void
+NameChangeSender::clearSendQueue() {
     if (amSending()) {
-        isc_throw(NcrSenderError, "Cannot flush queue while sending");
+        isc_throw(NcrSenderError, "Cannot clear queue while sending");
     }
 
-    send_que_.clear();
+    send_queue_.clear();
 }
 
 } // namespace isc::d2

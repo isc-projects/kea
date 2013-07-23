@@ -341,7 +341,11 @@ public:
     NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
                           const uint32_t port,
                           const NameChangeFormat format,
+#if 0
                           const RequestReceiveHandler* ncr_recv_handler,
+#else
+                          RequestReceiveHandler& ncr_recv_handler,
+#endif
                           const bool reuse_address = false);
 
     /// @brief Destructor.
@@ -460,16 +464,15 @@ public:
     /// when a send completes.
     /// @param send_que_max sets the maximum number of entries allowed in
     /// the send queue.
-    /// It defaults to NameChangeSender::MAX_QUE_DEFAULT
+    /// It defaults to NameChangeSender::MAX_QUEUE_DEFAULT
     /// @param reuse_address enables IP address sharing when true
     /// It defaults to false.
     ///
-    /// @throw base class throws NcrSenderError if handler is invalid.
     NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
         const uint32_t port, const isc::asiolink::IOAddress& server_address,
         const uint32_t server_port, const NameChangeFormat format,
-        RequestSendHandler * ncr_send_handler,
-        const size_t send_que_max = NameChangeSender::MAX_QUE_DEFAULT,
+        RequestSendHandler& ncr_send_handler,
+        const size_t send_que_max = NameChangeSender::MAX_QUEUE_DEFAULT,
         const bool reuse_address = false);
 
     /// @brief Destructor

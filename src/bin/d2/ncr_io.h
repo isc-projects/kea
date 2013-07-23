@@ -19,18 +19,13 @@
 /// @brief This file defines abstract classes for exchanging NameChangeRequests.
 ///
 /// These classes are used for sending and receiving requests to update DNS
-/// information for FQDNs embodied as NameChangeRequests (aka NCRs). Ultimately,/// NCRs must move through the following three layers in order to implement
+/// information for FQDNs embodied as NameChangeRequests (aka NCRs). Ultimately,
+/// NCRs must move through the following three layers in order to implement
 /// DHCP-DDNS:
 ///
 ///    * Application layer - the business layer which needs to
 ///    transport NameChangeRequests, and is unaware of the means by which
 ///    they are transported.
-///
-///    * IO layer - the low-level layer that is directly responsible for
-///    sending and receiving data asynchronously and is supplied through
-///    other libraries.  This layer is largely unaware of the nature of the
-///    data being transmitted.  In other words, it doesn't know beans about
-///    NCRs.
 ///
 ///    * NameChangeRequest layer - This is the layer which acts as the
 ///    intermediary between the Application layer and the IO layer.  It must
@@ -38,9 +33,15 @@
 ///    raw data from the IO layer in the Application layer as
 ///    NameChangeRequests.
 ///
-/// The abstract classes defined here implement implement the latter, middle
-/// layer, the NameChangeRequest layer.  There are two types of participants
-/// in this middle ground:
+///    * IO layer - the low-level layer that is directly responsible for
+///    sending and receiving data asynchronously and is supplied through
+///    other libraries.  This layer is largely unaware of the nature of the
+///    data being transmitted.  In other words, it doesn't know beans about
+///    NCRs.
+///
+/// The abstract classes defined here implement the latter, middle layer, 
+/// the NameChangeRequest layer.  There are two types of participants in this
+/// middle ground:
 ///
 ///    * listeners - Receive NCRs from one or more sources. The DHCP-DDNS
 ///   application, (aka D2), is a listener. Listeners are embodied by the
@@ -65,7 +66,7 @@
 namespace isc {
 namespace d2 {
 
-/// @brief Exception thrown if an NcrListenerError occurs.
+/// @brief Exception thrown if an NcrListenerError encounters a general error.
 class NcrListenerError : public isc::Exception {
 public:
     NcrListenerError(const char* file, size_t line, const char* what) :
@@ -168,16 +169,15 @@ public:
         /// result is NameChangeListener::SUCCESS.  It is indeterminate other
         /// wise.
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(Result result, NameChangeRequestPtr ncr) = 0;
+        virtual void operator ()(const Result result, 
+                                 NameChangeRequestPtr& ncr) = 0;
     };
 
     /// @brief Constructor
     ///
     /// @param recv_handler is a pointer the application layer handler to be
     /// invoked each time a NCR is received or a receive error occurs.
-    ///
-    /// @throw throws NcrListenerError if recv_handler is NULL.
-    NameChangeListener(const RequestReceiveHandler* recv_handler);
+    NameChangeListener(RequestReceiveHandler& recv_handler);
 
     /// @brief Destructor
     virtual ~NameChangeListener() {
@@ -207,11 +207,27 @@ public:
     /// is called.  This method MUST be invoked by the derivation's
     /// implementation of doReceive.
     ///
+    /// NOTE:
+    /// The handler invoked by this method MUST NOT THROW. The handler is
+    /// at application level and should trap and handle any errors at
+    /// that level, rather than throw exceptions.  If an error has occurred
+    /// prior to invoking the handler, it will be expressed in terms a failed
+    /// result being passed to the handler, not a throw.  Therefore any 
+    /// exceptions at the handler level are application issues and should be 
+    /// dealt with at that level.
+    ///
+    /// If the handler were to throw, the exception will surface at 
+    /// IOService::run (or run variant) method invocation as this occurs as 
+    /// part of the callback chain.  This will cause the invocation of  
+    /// doReceive to be skipped which will break the listen-receive-listen 
+    /// cycle. To restart the cycle it would be necessary to call  
+    /// stopListener() and then startListener().
+    ///
     /// @param result contains that receive outcome status.
     /// @param ncr is a pointer to the newly received NameChangeRequest if
     /// result is NameChangeListener::SUCCESS.  It is indeterminate other
     /// wise.
-    void invokeRecvHandler(Result result, NameChangeRequestPtr ncr);
+    void invokeRecvHandler(const Result result, NameChangeRequestPtr& ncr);
 
     /// @brief Abstract method which opens the IO source for reception.
     ///
@@ -266,7 +282,7 @@ private:
     bool listening_;
 
     /// @brief Application level NCR receive completion handler.
-    const RequestReceiveHandler* recv_handler_;
+    RequestReceiveHandler& recv_handler_;
 };
 
 /// @brief Defines a smart pointer to an instance of a listener.
@@ -288,9 +304,9 @@ public:
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO send.
-class NcrSenderQueFull : public isc::Exception {
+class NcrSenderQueueFull : public isc::Exception {
 public:
-    NcrSenderQueFull(const char* file, size_t line, const char* what) :
+    NcrSenderQueueFull(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -324,7 +340,7 @@ public:
 /// will remain there until one of three things occur:
 ///     * It is successfully delivered
 ///     * @c NameChangeSender::skipNext() is called
-///     * @c NameChangeSender::flushSendQue() is called
+///     * @c NameChangeSender::clearSendQueue() is called
 ///
 /// The queue contents are preserved across start and stop listening
 /// transitions. This is to provide for error recovery without losing
@@ -387,10 +403,10 @@ class NameChangeSender {
 public:
 
     /// @brief Defines the type used for the request send queue.
-    typedef std::deque<NameChangeRequestPtr> SendQue;
+    typedef std::deque<NameChangeRequestPtr> SendQueue;
 
     /// @brief Defines a default maximum number of entries in the send queue.
-    static const size_t MAX_QUE_DEFAULT = 1024;
+    static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the outcome of an asynchronous NCR send.
     enum Result {
@@ -418,20 +434,18 @@ public:
         /// delivered (or attempted).
         ///
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(Result result, NameChangeRequestPtr ncr) = 0;
+        virtual void operator ()(const Result result, NameChangeRequestPtr& ncr) = 0;
     };
 
     /// @brief Constructor
     ///
     /// @param send_handler is a pointer the application layer handler to be
     /// invoked each time a NCR send attempt completes.
-    /// @param send_que_max is the maximum number of entries allowed in the
+    /// @param send_queue_max is the maximum number of entries allowed in the
     /// send queue.  Once the maximum number is reached, all calls to
     /// sendRequest will fail with an exception.
-    ///
-    /// @throw throws NcrSenderError if send_handler is NULL.
-    NameChangeSender(const RequestSendHandler* send_handler,
-            size_t send_que_max = MAX_QUE_DEFAULT);
+    NameChangeSender(RequestSendHandler& send_handler,
+            size_t send_queue_max = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
     virtual ~NameChangeSender() {
@@ -458,13 +472,14 @@ public:
     ///
     /// The given request is placed at the back of the send queue and then
     /// sendNext is invoked.
+
     ///
     /// @param ncr is the NameChangeRequest to send.
     ///
     /// @throw throws NcrSenderError if the sender is not in sending state or
-    /// the request is empty; NcrSenderQueFull if the send queue has reached
+    /// the request is empty; NcrSenderQueueFull if the send queue has reached
     /// capacity.
-    void sendRequest(NameChangeRequestPtr ncr);
+    void sendRequest(NameChangeRequestPtr& ncr);
 
     /// @brief Dequeues and sends the next request on the send queue.
     ///
@@ -484,8 +499,24 @@ public:
     /// If not we leave it there so we can retry it.  After we invoke the
     /// handler we clear the pending ncr value and queue up the next send.
     ///
+    /// NOTE:
+    /// The handler invoked by this method MUST NOT THROW. The handler is
+    /// application level logic and should trap and handle any errors at
+    /// that level, rather than throw exceptions.  If IO errors have occurred
+    /// prior to invoking the handler, they are expressed in terms a failed
+    /// result being passed to the handler.  Therefore any exceptions at the
+    /// handler level are application issues and should be dealt with at that
+    /// level.
+    ///
+    /// If the handler were to throw, the exception will surface at 
+    /// IOService::run (or run variant) method invocation as this occurs as 
+    /// part of the callback chain.  This will cause the invocation of  
+    /// sendNext to be skipped which will interrupt automatic buffer drain 
+    /// cycle.  Assuming there is not a connectivity issue, the cycle will
+    /// resume with the next sendRequest call, or an explicit call to sendNext.
+    ///
     /// @param result contains that send outcome status.
-    void invokeSendHandler(NameChangeSender::Result result);
+    void invokeSendHandler(const NameChangeSender::Result result);
 
     /// @brief Removes the request at the front of the send queue
     ///
@@ -502,11 +533,11 @@ public:
 
     /// @brief Flushes all entries in the send queue
     ///
-    /// This method can be used to flush all of the NCRs currently in the
+    /// This method can be used to discard all of the NCRs currently in the
     /// the send queue.  Note it may not be called while the sender is in
-    /// the sending state.
+    /// the sending state. 
     /// @throw throws NcrSenderError if called and sender is in sending state.
-    void flushSendQue();
+    void clearSendQueue();
 
     /// @brief Abstract method which opens the IO sink for transmission.
     ///
@@ -556,23 +587,14 @@ public:
         return ((ncr_to_send_) ? true : false);
     }
 
-    /// @brief Returns the request that is in the process of being sent.
-    ///
-    /// The pointer returned by this method will be populated with the
-    /// request that has been passed into doSend() and for which the
-    /// completion callback has not yet been invoked.
-    const NameChangeRequestPtr& getNcrToSend() {
-        return (ncr_to_send_);
-    }
-
     /// @brief Returns the maximum number of entries allowed in the send queue.
-    size_t getQueMaxSize() const  {
-        return (send_que_max_);
+    size_t getQueueMaxSize() const  {
+        return (send_queue_max_);
     }
 
     /// @brief Returns the number of entries currently in the send queue.
-    size_t getQueSize() const {
-        return (send_que_.size());
+    size_t getQueueSize() const {
+        return (send_queue_.size());
     }
 
 private:
@@ -590,13 +612,13 @@ private:
     bool sending_;
 
     /// @brief A pointer to regisetered send completion handler.
-    const RequestSendHandler* send_handler_;
+    RequestSendHandler& send_handler_;
 
     /// @brief Maximum number of entries permitted in the send queue.
-    size_t send_que_max_;
+    size_t send_queue_max_;
 
     /// @brief Queue of the requests waiting to be sent.
-    SendQue send_que_;
+    SendQueue send_queue_;
 
     /// @brief Pointer to the request which is in the process of being sent.
     NameChangeRequestPtr ncr_to_send_;
