@@ -946,7 +946,7 @@ AuthSrv::setTCPRecvTimeout(size_t timeout) {
 namespace {
 
 bool
-hasRemoteSegment(auth::DataSrcClientsMgr& mgr) {
+hasMappedSegment(auth::DataSrcClientsMgr& mgr) {
     auth::DataSrcClientsMgr::Holder holder(mgr);
     const std::vector<dns::RRClass>& classes(holder.getClasses());
     BOOST_FOREACH(const dns::RRClass& rrclass, classes) {
@@ -955,7 +955,7 @@ hasRemoteSegment(auth::DataSrcClientsMgr& mgr) {
         const std::vector<DataSourceStatus>& states(list->getStatus());
         BOOST_FOREACH(const datasrc::DataSourceStatus& status, states) {
             if (status.getSegmentState() != datasrc::SEGMENT_UNUSED &&
-                status.getSegmentType() != "local")
+                status.getSegmentType() == "mapped")
                 // We use some segment and it's not a local one, so it
                 // must be remote.
                 return true;
@@ -969,7 +969,7 @@ hasRemoteSegment(auth::DataSrcClientsMgr& mgr) {
 
 void
 AuthSrv::listsReconfigured() {
-    const bool has_remote = hasRemoteSegment(impl_->datasrc_clients_mgr_);
+    const bool has_remote = hasMappedSegment(impl_->datasrc_clients_mgr_);
     if (has_remote && !impl_->readers_group_subscribed_) {
         impl_->config_session_->subscribe("SegmentReader");
         impl_->config_session_->
