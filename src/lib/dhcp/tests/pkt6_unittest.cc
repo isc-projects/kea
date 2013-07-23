@@ -64,8 +64,8 @@ TEST_F(Pkt6Test, constructor) {
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
     scoped_ptr<Pkt6> pkt1(new Pkt6(data, sizeof(data)));
 
-    EXPECT_EQ(6, pkt1->getData().size());
-    EXPECT_EQ(0, memcmp( &pkt1->getData()[0], data, sizeof(data)));
+    EXPECT_EQ(6, pkt1->data_.size());
+    EXPECT_EQ(0, memcmp( &pkt1->data_[0], data, sizeof(data)));
 }
 
 /// @brief returns captured actual SOLICIT packet
