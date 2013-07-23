@@ -182,6 +182,13 @@ public:
     /// @return domain-name in the text format.
     std::string getDomainName() const;
 
+    /// @brief Writes domain-name in the wire format into a buffer.
+    ///
+    /// The data being written are appended at the end of the buffer.
+    ///
+    /// @param [out] buf buffer where domain-name will be written.
+    void packDomainName(isc::util::OutputBuffer& buf) const;
+
     /// @brief Set new domain-name.
     ///
     /// @param domain_name domain name field value in the text format.
