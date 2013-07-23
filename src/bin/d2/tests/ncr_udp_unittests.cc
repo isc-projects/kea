@@ -75,29 +75,23 @@ const long TEST_TIMEOUT = 5 * 1000;
 /// @brief A NOP derivation for constructor test purposes.
 class SimpleListenHandler : public NameChangeListener::RequestReceiveHandler {
 public:
-    virtual void operator ()(NameChangeListener::Result, NameChangeRequestPtr) {
+    virtual void operator ()(const NameChangeListener::Result, 
+                             NameChangeRequestPtr&) {
     }
 };
 
 /// @brief Tests the NameChangeUDPListener constructors.
 /// This test verifies that:
-/// 1. Listener constructor requires valid completion handler
-/// 2. Given valid parameters, the listener constructor works
+/// 1. Given valid parameters, the listener constructor works
 TEST(NameChangeUDPListenerBasicTest, constructionTests) {
     // Verify the default constructor works.
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = LISTENER_PORT;
     isc::asiolink::IOService io_service;
     SimpleListenHandler ncr_handler;
-
-    // Verify that constructing with an empty receive handler is not allowed.
-    EXPECT_THROW(NameChangeUDPListener(ip_address, port, FMT_JSON, NULL),
-                                       NcrListenerError);
-
     // Verify that valid constructor works.
     EXPECT_NO_THROW(NameChangeUDPListener(ip_address, port, FMT_JSON,
-                                          &ncr_handler));
-
+                                          ncr_handler));
 }
 
 /// @brief Tests NameChangeUDPListener starting and stopping listening .
@@ -115,7 +109,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 
     NameChangeListenerPtr listener;
     ASSERT_NO_THROW(listener.reset(
-        new NameChangeUDPListener(ip_address, port, FMT_JSON, &ncr_handler)));
+        new NameChangeUDPListener(ip_address, port, FMT_JSON, ncr_handler)));
 
     // Verify that we can start listening.
     EXPECT_NO_THROW(listener->startListening(io_service));
@@ -165,7 +159,7 @@ public:
           test_timer_(io_service_) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         listener_ = new NameChangeUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, this, true);
+                                              FMT_JSON, *this, true);
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(boost::bind(&NameChangeUDPListenerTest::
@@ -206,8 +200,8 @@ public:
     /// The fixture acts as the "application" layer.  It derives from
     /// RequestReceiveHandler and as such implements operator() in order to
     /// receive NCRs.
-    virtual void operator ()(NameChangeListener::Result result,
-                             NameChangeRequestPtr ncr) {
+    virtual void operator ()(const NameChangeListener::Result result,
+                             NameChangeRequestPtr& ncr) {
         // save the result and the NCR we received
         result_ = result;
         received_ncr_ = ncr;
@@ -256,42 +250,43 @@ TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
 /// @brief A NOP derivation for constructor test purposes.
 class SimpleSendHandler : public NameChangeSender::RequestSendHandler {
 public:
-    virtual void operator ()(NameChangeSender::Result, NameChangeRequestPtr) {
+    virtual void operator ()(const NameChangeSender::Result, 
+                             NameChangeRequestPtr&) {
     }
 };
 
 /// @brief Tests the NameChangeUDPSender constructors.
 /// This test verifies that:
-/// 1. Sender constructor requires valid completion handler
+/// 1. Constructing with a max queue size of 0 is not allowed
 /// 2. Given valid parameters, the sender constructor works
+/// 3. Default construction provides default max queue size 
+/// 4. Construction with a custom max queue size works
 TEST(NameChangeUDPSenderBasicTest, constructionTests) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
     isc::asiolink::IOService io_service;
     SimpleSendHandler ncr_handler;
 
-    // Verify that constructing with an empty send handler is not allowed.
-    EXPECT_THROW(NameChangeUDPSender(ip_address, port,
-        ip_address, port, FMT_JSON, NULL), NcrSenderError);
-
     // Verify that constructing with an queue size of zero is not allowed.
     EXPECT_THROW(NameChangeUDPSender(ip_address, port,
-        ip_address, port, FMT_JSON, &ncr_handler, 0), NcrSenderError);
+        ip_address, port, FMT_JSON, ncr_handler, 0), NcrSenderError);
 
     NameChangeSenderPtr sender;
     // Verify that valid constructor works.
     EXPECT_NO_THROW(sender.reset(
                     new NameChangeUDPSender(ip_address, port, ip_address, port,
-                                            FMT_JSON, &ncr_handler)));
+                                            FMT_JSON, ncr_handler)));
 
     // Verify that send queue default max is correct.
-    size_t expected = NameChangeSender::MAX_QUE_DEFAULT;
-    EXPECT_EQ(expected, sender->getQueMaxSize());
+    size_t expected = NameChangeSender::MAX_QUEUE_DEFAULT;
+    EXPECT_EQ(expected, sender->getQueueMaxSize());
 
     // Verify that constructor with a valid custom queue size works.
     EXPECT_NO_THROW(sender.reset(
                     new NameChangeUDPSender(ip_address, port, ip_address, port,
-                                            FMT_JSON, &ncr_handler, 100)));
+                                            FMT_JSON, ncr_handler, 100)));
+
+    EXPECT_EQ(100, sender->getQueueMaxSize());
 }
 
 /// @brief Tests NameChangeUDPSender basic send functionality
@@ -308,7 +303,7 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
     NameChangeUDPSender sender(ip_address, port, ip_address, port,
-                               FMT_JSON, &ncr_handler, num_msgs);
+                               FMT_JSON, ncr_handler, num_msgs);
 
     // Verify that we can start sending.
     EXPECT_NO_THROW(sender.startSending(io_service));
@@ -336,12 +331,12 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
         // Verify that the queue count increments in step with each send.
-        EXPECT_EQ(i+1, sender.getQueSize());
+        EXPECT_EQ(i+1, sender.getQueueSize());
     }
 
     // Verify that attempting to send an additional message results in a
     // queue full exception.
-    EXPECT_THROW(sender.sendRequest(ncr), NcrSenderQueFull);
+    EXPECT_THROW(sender.sendRequest(ncr), NcrSenderQueueFull);
 
     // Loop for the number of valid messages and invoke IOService::run_one.
     // This should send exactly one message and the queue count should
@@ -349,37 +344,37 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     for (int i = num_msgs; i > 0; i--) {
         io_service.run_one();
         // Verify that the queue count decrements in step with each run.
-        EXPECT_EQ(i-1, sender.getQueSize());
+        EXPECT_EQ(i-1, sender.getQueueSize());
     }
 
     // Verify that the queue is empty.
-    EXPECT_EQ(0, sender.getQueSize());
+    EXPECT_EQ(0, sender.getQueueSize());
 
     // Verify that we can add back to the queue
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueSize());
+    EXPECT_EQ(1, sender.getQueueSize());
 
     // Verify that we can remove the current entry at the front of the queue.
     EXPECT_NO_THROW(sender.skipNext());
-    EXPECT_EQ(0, sender.getQueSize());
+    EXPECT_EQ(0, sender.getQueueSize());
 
     // Verify that flushing the queue is not allowed in sending state.
-    EXPECT_THROW(sender.flushSendQue(), NcrSenderError);
+    EXPECT_THROW(sender.clearSendQueue(), NcrSenderError);
 
     // Put a message on the queue.
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueSize());
+    EXPECT_EQ(1, sender.getQueueSize());
 
     // Verify that we can gracefully stop sending.
     EXPECT_NO_THROW(sender.stopSending());
     EXPECT_FALSE(sender.amSending());
 
     // Verify that the queue is preserved after leaving sending state.
-    EXPECT_EQ(1, sender.getQueSize());
+    EXPECT_EQ(1, sender.getQueueSize());
 
     // Verify that flushing the queue works when not sending.
-    EXPECT_NO_THROW(sender.flushSendQue());
-    EXPECT_EQ(0, sender.getQueSize());
+    EXPECT_NO_THROW(sender.clearSendQueue());
+    EXPECT_EQ(0, sender.getQueueSize());
 }
 
 /// @brief Text fixture that allows testing a listener and sender together
@@ -406,12 +401,12 @@ public:
         // Create our listener instance. Note that reuse_address is true.
         listener_.reset(
             new NameChangeUDPListener(addr, LISTENER_PORT, FMT_JSON,
-                                      this, true));
+                                      *this, true));
 
         // Create our sender instance. Note that reuse_address is true.
         sender_.reset(
             new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
-                                    FMT_JSON, this, 100, true));
+                                    FMT_JSON, *this, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(boost::bind(&NameChangeUDPTest::testTimeoutHandler,
@@ -425,16 +420,16 @@ public:
     }
 
     /// @brief Implements the receive completion handler.
-    virtual void operator ()(NameChangeListener::Result result,
-                             NameChangeRequestPtr ncr) {
+    virtual void operator ()(const NameChangeListener::Result result,
+                             NameChangeRequestPtr& ncr) {
         // save the result and the NCR received.
         recv_result_ = result;
         received_ncrs_.push_back(ncr);
     }
 
     /// @brief Implements the send completion handler.
-    virtual void operator ()(NameChangeSender::Result result,
-                             NameChangeRequestPtr ncr) {
+    virtual void operator ()(const NameChangeSender::Result result,
+                             NameChangeRequestPtr& ncr) {
         // save the result and the NCR sent.
         send_result_ = result;
         sent_ncrs_.push_back(ncr);
@@ -469,16 +464,16 @@ TEST_F (NameChangeUDPTest, roundTripTest) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
-        EXPECT_EQ(i+1, sender_->getQueSize());
+        EXPECT_EQ(i+1, sender_->getQueueSize());
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
+    while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
         EXPECT_NO_THROW(io_service_.run_one());
     }
 
     // Send queue should be empty.
-    EXPECT_EQ(0, sender_->getQueSize());
+    EXPECT_EQ(0, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
     ASSERT_EQ(num_msgs, sent_ncrs_.size());
