@@ -198,6 +198,7 @@ Dhcpv4Srv::run() {
                       .arg(query->getType())
                       .arg(query->getIface());
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
+                      .arg(static_cast<int>(query->getType()))
                       .arg(query->toText());
 
             // Let's execute all callouts registered for packet_received
