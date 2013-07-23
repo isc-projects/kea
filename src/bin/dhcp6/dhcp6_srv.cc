@@ -197,6 +197,8 @@ bool Dhcpv6Srv::run() {
             continue;
         }
 
+        bool skip_unpack = false;
+
         // Let's execute all callouts registered for buffer6_receive
         if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -215,16 +217,18 @@ bool Dhcpv6Srv::run() {
             // stage means drop.
             if (callout_handle->getSkip()) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_RCVD_SKIP);
-                continue;
+                skip_unpack = true;
             }
 
             callout_handle->getArgument("query6", query);
         }
 
-        if (!query->unpack()) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                      DHCP6_PACKET_PARSE_FAIL);
-            continue;
+        if (!skip_unpack) {
+            if (!query->unpack()) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                          DHCP6_PACKET_PARSE_FAIL);
+                continue;
+            }
         }
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
             .arg(query->getName());
