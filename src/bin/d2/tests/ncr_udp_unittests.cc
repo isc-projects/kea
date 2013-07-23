@@ -75,7 +75,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 /// @brief A NOP derivation for constructor test purposes.
 class SimpleListenHandler : public NameChangeListener::RequestReceiveHandler {
 public:
-    virtual void operator ()(const NameChangeListener::Result, 
+    virtual void operator ()(const NameChangeListener::Result,
                              NameChangeRequestPtr&) {
     }
 };
@@ -250,7 +250,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
 /// @brief A NOP derivation for constructor test purposes.
 class SimpleSendHandler : public NameChangeSender::RequestSendHandler {
 public:
-    virtual void operator ()(const NameChangeSender::Result, 
+    virtual void operator ()(const NameChangeSender::Result,
                              NameChangeRequestPtr&) {
     }
 };
@@ -259,7 +259,7 @@ public:
 /// This test verifies that:
 /// 1. Constructing with a max queue size of 0 is not allowed
 /// 2. Given valid parameters, the sender constructor works
-/// 3. Default construction provides default max queue size 
+/// 3. Default construction provides default max queue size
 /// 4. Construction with a custom max queue size works
 TEST(NameChangeUDPSenderBasicTest, constructionTests) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);

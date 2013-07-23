@@ -69,12 +69,8 @@ NameChangeListener::stopListening() {
 }
 
 void
-#if 0
-NameChangeListener::invokeRecvHandler(Result result, NameChangeRequestPtr ncr) {
-#else
-NameChangeListener::invokeRecvHandler(const Result result, 
+NameChangeListener::invokeRecvHandler(const Result result,
                                       NameChangeRequestPtr& ncr) {
-#endif
     // Call the registered application layer handler.
     recv_handler_(result, ncr);
 
@@ -92,12 +88,8 @@ NameChangeListener::invokeRecvHandler(const Result result,
             // close the window by invoking the application handler with
             // a failed result, and let the application layer sort it out.
             LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_RECV_NEXT).arg(ex.what());
-#if 0
-            recv_handler_(ERROR, NameChangeRequestPtr());
-#else
             NameChangeRequestPtr empty;
             recv_handler_(ERROR, empty);
-#endif
         }
     }
 }

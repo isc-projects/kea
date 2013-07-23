@@ -39,7 +39,7 @@
 ///    data being transmitted.  In other words, it doesn't know beans about
 ///    NCRs.
 ///
-/// The abstract classes defined here implement the latter, middle layer, 
+/// The abstract classes defined here implement the latter, middle layer,
 /// the NameChangeRequest layer.  There are two types of participants in this
 /// middle ground:
 ///
@@ -169,7 +169,7 @@ public:
         /// result is NameChangeListener::SUCCESS.  It is indeterminate other
         /// wise.
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(const Result result, 
+        virtual void operator ()(const Result result,
                                  NameChangeRequestPtr& ncr) = 0;
     };
 
@@ -212,15 +212,15 @@ public:
     /// at application level and should trap and handle any errors at
     /// that level, rather than throw exceptions.  If an error has occurred
     /// prior to invoking the handler, it will be expressed in terms a failed
-    /// result being passed to the handler, not a throw.  Therefore any 
-    /// exceptions at the handler level are application issues and should be 
+    /// result being passed to the handler, not a throw.  Therefore any
+    /// exceptions at the handler level are application issues and should be
     /// dealt with at that level.
     ///
-    /// If the handler were to throw, the exception will surface at 
-    /// IOService::run (or run variant) method invocation as this occurs as 
-    /// part of the callback chain.  This will cause the invocation of  
-    /// doReceive to be skipped which will break the listen-receive-listen 
-    /// cycle. To restart the cycle it would be necessary to call  
+    /// If the handler were to throw, the exception will surface at
+    /// IOService::run (or run variant) method invocation as this occurs as
+    /// part of the callback chain.  This will cause the invocation of
+    /// doReceive to be skipped which will break the listen-receive-listen
+    /// cycle. To restart the cycle it would be necessary to call
     /// stopListener() and then startListener().
     ///
     /// @param result contains that receive outcome status.
@@ -508,10 +508,10 @@ public:
     /// handler level are application issues and should be dealt with at that
     /// level.
     ///
-    /// If the handler were to throw, the exception will surface at 
-    /// IOService::run (or run variant) method invocation as this occurs as 
-    /// part of the callback chain.  This will cause the invocation of  
-    /// sendNext to be skipped which will interrupt automatic buffer drain 
+    /// If the handler were to throw, the exception will surface at
+    /// IOService::run (or run variant) method invocation as this occurs as
+    /// part of the callback chain.  This will cause the invocation of
+    /// sendNext to be skipped which will interrupt automatic buffer drain
     /// cycle.  Assuming there is not a connectivity issue, the cycle will
     /// resume with the next sendRequest call, or an explicit call to sendNext.
     ///
@@ -535,7 +535,7 @@ public:
     ///
     /// This method can be used to discard all of the NCRs currently in the
     /// the send queue.  Note it may not be called while the sender is in
-    /// the sending state. 
+    /// the sending state.
     /// @throw throws NcrSenderError if called and sender is in sending state.
     void clearSendQueue();
 
