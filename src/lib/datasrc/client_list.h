@@ -385,7 +385,8 @@ public:
     /// \param datasrc_name The name of the data source whose segment to reset
     /// \param mode The open mode for the new memory segment
     /// \param config_params The configuration for the new memory segment.
-    void resetMemorySegment
+    /// \return If the data source was found and reset.
+    bool resetMemorySegment
         (const std::string& datasrc_name,
          memory::ZoneTableSegment::MemorySegmentOpenMode mode,
          isc::data::ConstElementPtr config_params);
