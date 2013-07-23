@@ -191,7 +191,7 @@ public:
     ///
     /// @param io_service is the IOService that will handle IO event processing.
     ///
-    /// @throw throws NcrListenError if the listener is already "listening" or
+    /// @throw NcrListenError if the listener is already "listening" or
     /// in the event the open or doReceive methods fail.
     void startListening(isc::asiolink::IOService& io_service);
 
@@ -458,7 +458,7 @@ public:
     ///
     /// @param io_service is the IOService that will handle IO event processing.
     ///
-    /// @throw throws NcrSenderError if the sender is already "sending" or
+    /// @throw NcrSenderError if the sender is already "sending" or
     /// NcrSenderOpenError if the open fails.
     void startSending(isc::asiolink::IOService & io_service);
 
@@ -476,7 +476,7 @@ public:
     ///
     /// @param ncr is the NameChangeRequest to send.
     ///
-    /// @throw throws NcrSenderError if the sender is not in sending state or
+    /// @throw NcrSenderError if the sender is not in sending state or
     /// the request is empty; NcrSenderQueueFull if the send queue has reached
     /// capacity.
     void sendRequest(NameChangeRequestPtr& ncr);
@@ -536,7 +536,7 @@ public:
     /// This method can be used to discard all of the NCRs currently in the
     /// the send queue.  Note it may not be called while the sender is in
     /// the sending state.
-    /// @throw throws NcrSenderError if called and sender is in sending state.
+    /// @throw NcrSenderError if called and sender is in sending state.
     void clearSendQueue();
 
     /// @brief Abstract method which opens the IO sink for transmission.
@@ -569,7 +569,7 @@ public:
     ///
     /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
-    virtual void doSend(NameChangeRequestPtr ncr) = 0;
+    virtual void doSend(NameChangeRequestPtr& ncr) = 0;
 
     /// @brief Returns true if the sender is in send mode, false otherwise.
     ///

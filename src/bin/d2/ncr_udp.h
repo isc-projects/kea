@@ -61,7 +61,7 @@
 /// @endcode
 ///
 /// Upon completion of the service, the callback instance's operator() is
-/// invoked by the aiso layer.  It is given both a outcome result and the
+/// invoked by the asio layer.  It is given both a outcome result and the
 /// number of bytes either read or written, to or from the buffer supplied
 /// to the service.
 ///
@@ -168,7 +168,8 @@ public:
         /// send.
         /// @param buf_size is the capacity of the buffer
         /// @param data_source storage for UDP endpoint which supplied the data
-        Data(RawBufferPtr buffer, size_t buf_size, UDPEndpointPtr data_source)
+        Data(RawBufferPtr &buffer, const size_t buf_size, 
+             UDPEndpointPtr& data_source)
             : buffer_(buffer), buf_size_(buf_size), data_source_(data_source),
               put_len_(0), error_code_(), bytes_transferred_(0) {
         };
@@ -208,10 +209,10 @@ public:
     /// @param handler is a method pointer to the completion handler that
     /// is to be called by the operator() implementation.
     ///
-    /// @throw throws a NcrUDPError if either the handler or buffer pointers
+    /// @throw NcrUDPError if either the handler or buffer pointers
     /// are invalid.
-    UDPCallback (RawBufferPtr buffer, size_t buf_size,
-                 UDPEndpointPtr data_source,
+    UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
+                 UDPEndpointPtr& data_source,
                  const UDPCompletionHandler& handler);
 
     /// @brief Operator that will be invoked by the asiolink layer.
@@ -281,7 +282,7 @@ public:
     /// @param src is a pointer to the data source from which to copy
     /// @param len is the number of bytes to copy
     ///
-    /// @throw throws a NcrUDPError if the number of bytes to copy exceeds
+    /// @throw NcrUDPError if the number of bytes to copy exceeds
     /// the buffer capacity or if the source pointer is invalid.
     void putData(const uint8_t* src, size_t len);
 
@@ -329,11 +330,11 @@ public:
     /// @brief Constructor
     ///
     /// @param ip_address is the network address on which to listen
-    /// @param port is the IP port on which to listen
+    /// @param port is the UDP port on which to listen
     /// @param format is the wire format of the inbound requests. Currently
     /// only JSON is supported
     /// @param ncr_recv_handler the receive handler object to notify when
-    /// when a receive completes.
+    /// a receive completes.
     /// @param reuse_address enables IP address sharing when true
     /// It defaults to false.
     ///
@@ -341,11 +342,7 @@ public:
     NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
                           const uint32_t port,
                           const NameChangeFormat format,
-#if 0
-                          const RequestReceiveHandler* ncr_recv_handler,
-#else
                           RequestReceiveHandler& ncr_recv_handler,
-#endif
                           const bool reuse_address = false);
 
     /// @brief Destructor.
@@ -358,7 +355,7 @@ public:
     ///
     /// @param io_service the IOService which will monitor the socket.
     ///
-    /// @throw throws a NcrUDPError if the open fails.
+    /// @throw NcrUDPError if the open fails.
     virtual void open(isc::asiolink::IOService& io_service);
 
     /// @brief Closes the UDPSocket.
@@ -367,7 +364,7 @@ public:
     /// pending read and remove the socket callback from the IOService. It
     /// then calls the socket's close method to actually close the socket.
     ///
-    /// @throw throws a NcrUDPError if the open fails.
+    /// @throw NcrUDPError if the open fails.
     virtual void close();
 
     /// @brief Initiates an asynchronous read on the socket.
@@ -376,7 +373,7 @@ public:
     /// recv_callback_ member's transfer buffer as the receive buffer, and
     /// recv_callback_ itself as the callback object.
     ///
-    /// @throw throws a NcrUDPError if the open fails.
+    /// @throw NcrUDPError if the open fails.
     void doReceive();
 
     /// @brief Implements the NameChangeRequest level receive completion
@@ -403,8 +400,8 @@ public:
     /// socket receive completed without error, false otherwise.
     /// @param recv_callback pointer to the callback instance which handled
     /// the socket receive completion.
-    void recv_completion_handler(bool successful,
-                                 const UDPCallback* recv_callback);
+    void receiveCompletionHandler(const bool successful,
+                                  const UDPCallback* recv_callback);
 private:
     /// @brief IP address on which to listen for requests.
     isc::asiolink::IOAddress ip_address_;
@@ -486,7 +483,7 @@ public:
     ///
     /// @param io_service the IOService which will monitor the socket.
     ///
-    /// @throw throws a NcrUDPError if the open fails.
+    /// @throw NcrUDPError if the open fails.
     virtual void open(isc::asiolink::IOService & io_service);
 
 
@@ -496,7 +493,7 @@ public:
     /// pending send and remove the socket callback from the IOService. It
     /// then calls the socket's close method to actually close the socket.
     ///
-    /// @throw throws a NcrUDPError if the open fails.
+    /// @throw NcrUDPError if the open fails.
     virtual void close();
 
     /// @brief Sends a given request asynchronously over the socket
@@ -506,7 +503,7 @@ public:
     /// asyncSend() method is called, passing in send_callback_ member's
     /// transfer buffer as the send buffer and the send_callback_ itself
     /// as the callback object.
-    virtual void doSend(NameChangeRequestPtr ncr);
+    virtual void doSend(NameChangeRequestPtr& ncr);
 
     /// @brief Implements the NameChangeRequest level send completion handler.
     ///
@@ -525,8 +522,8 @@ public:
     /// socket send completed without error, false otherwise.
     /// @param send_callback pointer to the callback instance which handled
     /// the socket receive completion.
-    void send_completion_handler(const bool successful,
-                                 const UDPCallback* send_callback);
+    void sendCompletionHandler(const bool successful,
+                               const UDPCallback* send_callback);
 
 private:
     /// @brief IP address from which to send.
