@@ -70,8 +70,8 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
 
 //*************************** NameChangeUDPListener ***********************
 NameChangeUDPListener::
-NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address, 
-                      const uint32_t port, NameChangeFormat format, 
+NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
+                      const uint32_t port, NameChangeFormat format,
                       RequestReceiveHandler& ncr_recv_handler,
                       const bool reuse_address)
     : NameChangeListener(ncr_recv_handler), ip_address_(ip_address),
@@ -79,10 +79,10 @@ NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
     // Instantiate the receive callback.  This gets passed into each receive.
     // Note that the callback constructor is passed an instance method
     // pointer to our recv_completion_handler.
-    recv_callback_.reset(new 
+    recv_callback_.reset(new
                          UDPCallback(RawBufferPtr(new uint8_t[RECV_BUF_MAX]),
                                      RECV_BUF_MAX,
-                                     UDPEndpointPtr(new 
+                                     UDPEndpointPtr(new
                                                     asiolink::UDPEndpoint()),
                                      boost::bind(&NameChangeUDPListener::
                                      recv_completion_handler, this, _1, _2)));
