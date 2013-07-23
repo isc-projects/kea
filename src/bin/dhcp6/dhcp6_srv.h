@@ -227,11 +227,11 @@ protected:
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
-    /// @param question client's message
+    /// @param query client's message
     /// @param ia IA_NA option that is being renewed
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         Pkt6Ptr question, boost::shared_ptr<Option6IA> ia);
+                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia);
 
     /// @brief Releases specific IA_NA option
     ///
@@ -246,11 +246,11 @@ protected:
     /// release process fails.
     ///
     /// @param duid client's duid
-    /// @param question client's message
+    /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_NA option that is being renewed
     /// @return IA_NA option (server's response)
-    OptionPtr releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+    OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
                            boost::shared_ptr<Option6IA> ia);
 
@@ -382,11 +382,6 @@ private:
     ///
     /// @return a callout handle to be used in hooks related to said packet
     isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
-
-    /// Indexes for registered hook points
-    int hook_index_pkt6_receive_;
-    int hook_index_subnet6_select_;
-    int hook_index_pkt6_send_;
 
     /// UDP port number on which server listens.
     uint16_t port_;

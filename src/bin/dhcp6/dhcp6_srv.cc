@@ -60,15 +60,23 @@ namespace {
 
 /// Structure that holds registered hook indexes
 struct Dhcp6Hooks {
+    int hook_index_buffer6_receive_;///< index for "buffer6_receive" hook point
     int hook_index_pkt6_receive_;   ///< index for "pkt6_receive" hook point
     int hook_index_subnet6_select_; ///< index for "subnet6_select" hook point
+    int hook_index_lease6_renew_;   ///< index for "lease6_renew" hook point
+    int hook_index_lease6_release_; ///< index for "lease6_release" hook point
     int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
+    int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
+        hook_index_buffer6_receive_= HooksManager::registerHook("buffer6_receive");
         hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
         hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
+        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
         hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
+        hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
     }
 };
 
@@ -94,8 +102,7 @@ namespace dhcp {
 static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-:alloc_engine_(), serverid_(), shutdown_(true), hook_index_pkt6_receive_(-1),
-    hook_index_subnet6_select_(-1), hook_index_pkt6_send_(-1), port_(port)
+:alloc_engine_(), serverid_(), shutdown_(true), port_(port)
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -129,16 +136,10 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
                 LOG_WARN(dhcp6_logger, DHCP6_SERVERID_WRITE_FAIL)
                     .arg(duid_file);
             }
-
         }
 
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
-
-        // Register hook points
-        hook_index_pkt6_receive_   = Hooks.hook_index_pkt6_receive_;
-        hook_index_subnet6_select_ = Hooks.hook_index_subnet6_select_;
-        hook_index_pkt6_send_      = Hooks.hook_index_pkt6_send_;
 
         /// @todo call loadLibraries() when handling configuration changes
 
@@ -191,148 +192,200 @@ bool Dhcpv6Srv::run() {
             LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
-        if (query) {
-            if (!query->unpack()) {
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                          DHCP6_PACKET_PARSE_FAIL);
+        // Timeout may be reached or signal received, which breaks select() with no packet received
+        if (!query) {
+            continue;
+        }
+
+        // Let's execute all callouts registered for buffer6_receive
+        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query6", query);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer6_receive_, *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_RCVD_SKIP);
                 continue;
             }
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
-                      .arg(query->getName());
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
-                      .arg(static_cast<int>(query->getType()))
-                      .arg(query->getBuffer().getLength())
-                      .arg(query->toText());
 
-            // Let's execute all callouts registered for packet_received
-            if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt6_receive_)) {
+            callout_handle->getArgument("query6", query);
+        }
+
+        if (!query->unpack()) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_PACKET_PARSE_FAIL);
+            continue;
+        }
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
+            .arg(query->getName());
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
+            .arg(static_cast<int>(query->getType()))
+            .arg(query->getBuffer().getLength())
+            .arg(query->toText());
+
+        // Let's execute all callouts registered for packet6_receive
+        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query6", query);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to process the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP);
+                continue;
+            }
+
+            callout_handle->getArgument("query6", query);
+        }
+
+        try {
+            switch (query->getType()) {
+            case DHCPV6_SOLICIT:
+                rsp = processSolicit(query);
+                    break;
+
+            case DHCPV6_REQUEST:
+                rsp = processRequest(query);
+                break;
+
+            case DHCPV6_RENEW:
+                rsp = processRenew(query);
+                break;
+
+            case DHCPV6_REBIND:
+                rsp = processRebind(query);
+                break;
+
+            case DHCPV6_CONFIRM:
+                rsp = processConfirm(query);
+                break;
+
+            case DHCPV6_RELEASE:
+                rsp = processRelease(query);
+                break;
+
+            case DHCPV6_DECLINE:
+                rsp = processDecline(query);
+                break;
+
+            case DHCPV6_INFORMATION_REQUEST:
+                rsp = processInfRequest(query);
+                break;
+
+            default:
+                // Only action is to output a message if debug is enabled,
+                // and that will be covered by the debug statement before
+                // the "switch" statement.
+                ;
+            }
+
+        } catch (const RFCViolation& e) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+
+        } catch (const isc::Exception& e) {
+
+            // Catch-all exception (at least for ones based on the isc
+            // Exception class, which covers more or less all that
+            // are explicitly raised in the BIND 10 code).  Just log
+            // the problem and ignore the packet. (The problem is logged
+            // as a debug message because debug is disabled by default -
+            // it prevents a DDOS attack based on the sending of problem
+            // packets.)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+        }
+
+        if (rsp) {
+            rsp->setRemoteAddr(query->getRemoteAddr());
+            rsp->setLocalAddr(query->getLocalAddr());
+            rsp->setRemotePort(DHCP6_CLIENT_PORT);
+            rsp->setLocalPort(DHCP6_SERVER_PORT);
+            rsp->setIndex(query->getIndex());
+            rsp->setIface(query->getIface());
+
+            // Execute all callouts registered for packet6_send
+            if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-                // Delete previously set arguments
+                // Delete all previous arguments
                 callout_handle->deleteAllArguments();
 
-                // Pass incoming packet as argument
-                callout_handle->setArgument("query6", query);
+                // Set our response
+                callout_handle->setArgument("response6", rsp);
 
-                // Call callouts
-                HooksManager::callCallouts(hook_index_pkt6_receive_, *callout_handle);
+                // Call all installed callouts
+                HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
-                // processing step would to process the packet, so skip at this
-                // stage means drop.
+                // processing step would to send the packet, so skip at this
+                // stage means "drop response".
                 if (callout_handle->getSkip()) {
-                    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP);
+                    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP);
                     continue;
                 }
-
-                callout_handle->getArgument("query6", query);
             }
 
-            try {
-                switch (query->getType()) {
-                case DHCPV6_SOLICIT:
-                    rsp = processSolicit(query);
-                    break;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
+                      DHCP6_RESPONSE_DATA)
+                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-                case DHCPV6_REQUEST:
-                    rsp = processRequest(query);
-                    break;
+            if (rsp->pack()) {
+                try {
 
-                case DHCPV6_RENEW:
-                    rsp = processRenew(query);
-                    break;
+                    // Let's execute all callouts registered for buffer6_send
+                    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+                        CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-                case DHCPV6_REBIND:
-                    rsp = processRebind(query);
-                    break;
+                        // Delete previously set arguments
+                        callout_handle->deleteAllArguments();
 
-                case DHCPV6_CONFIRM:
-                    rsp = processConfirm(query);
-                    break;
+                        // Pass incoming packet as argument
+                        callout_handle->setArgument("response6", rsp);
 
-                case DHCPV6_RELEASE:
-                    rsp = processRelease(query);
-                    break;
+                        // Call callouts
+                        HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
 
-                case DHCPV6_DECLINE:
-                    rsp = processDecline(query);
-                    break;
+                        // Callouts decided to skip the next processing step. The next
+                        // processing step would to parse the packet, so skip at this
+                        // stage means drop.
+                        if (callout_handle->getSkip()) {
+                            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP);
+                            continue;
+                        }
 
-                case DHCPV6_INFORMATION_REQUEST:
-                    rsp = processInfRequest(query);
-                    break;
-
-                default:
-                    // Only action is to output a message if debug is enabled,
-                    // and that will be covered by the debug statement before
-                    // the "switch" statement.
-                    ;
-                }
-
-            } catch (const RFCViolation& e) {
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
-                    .arg(query->getName())
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(e.what());
-
-            } catch (const isc::Exception& e) {
-
-                // Catch-all exception (at least for ones based on the isc
-                // Exception class, which covers more or less all that
-                // are explicitly raised in the BIND 10 code).  Just log
-                // the problem and ignore the packet. (The problem is logged
-                // as a debug message because debug is disabled by default -
-                // it prevents a DDOS attack based on the sending of problem
-                // packets.)
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
-                    .arg(query->getName())
-                    .arg(query->getRemoteAddr().toText())
-                    .arg(e.what());
-            }
-
-            if (rsp) {
-                rsp->setRemoteAddr(query->getRemoteAddr());
-                rsp->setLocalAddr(query->getLocalAddr());
-                rsp->setRemotePort(DHCP6_CLIENT_PORT);
-                rsp->setLocalPort(DHCP6_SERVER_PORT);
-                rsp->setIndex(query->getIndex());
-                rsp->setIface(query->getIface());
-
-                // Execute all callouts registered for packet6_send
-                if (HooksManager::getHooksManager().calloutsPresent(hook_index_pkt6_send_)) {
-                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                    // Delete all previous arguments
-                    callout_handle->deleteAllArguments();
-
-                    // Set our response
-                    callout_handle->setArgument("response6", rsp);
-
-                    // Call all installed callouts
-                    HooksManager::callCallouts(hook_index_pkt6_send_, *callout_handle);
-
-                    // Callouts decided to skip the next processing step. The next
-                    // processing step would to send the packet, so skip at this
-                    // stage means "drop response".
-                    if (callout_handle->getSkip()) {
-                        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP);
-                        continue;
+                        callout_handle->getArgument("response6", rsp);
                     }
-                }
 
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
-                          DHCP6_RESPONSE_DATA)
-                    .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
-                if (rsp->pack()) {
-                    try {
-                        sendPacket(rsp);
-                    } catch (const std::exception& e) {
-                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
-                    }
-                } else {
-                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
+                    sendPacket(rsp);
+                } catch (const std::exception& e) {
+                    LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
                 }
+            } else {
+                LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
             }
         }
     }
@@ -650,8 +703,8 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         }
     }
 
-    // Let's execute all callouts registered for packet_received
-    if (HooksManager::getHooksManager().calloutsPresent(hook_index_subnet6_select_)) {
+    // Let's execute all callouts registered for subnet6_receive
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_subnet6_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
         // We're reusing callout_handle from previous calls
@@ -667,7 +720,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
 
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet6_select_, *callout_handle);
+        HooksManager::callCallouts(Hooks.hook_index_subnet6_select_, *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet will be
         // selected. Packet processing will continue, but it will be severly limited
@@ -854,7 +907,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      Pkt6Ptr /* question */, boost::shared_ptr<Option6IA> ia) {
+                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
     if (!subnet) {
         // There's no subnet select for this client. There's nothing to renew.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -897,8 +950,6 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     lease->t2_ = subnet->getT2();
     lease->cltt_ = time(NULL);
 
-    LeaseMgrFactory::instance().updateLease6(lease);
-
     // Create empty IA_NA option with IAID matching the request.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
@@ -909,6 +960,40 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                           lease->addr_, lease->preferred_lft_,
                                           lease->valid_lft_));
     ia_rsp->addOption(addr);
+
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Pass the IA option to be sent in response
+        callout_handle->setArgument("ia_na", ia_rsp);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+        }
+    }
+
+    if (!skip) {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    }
+
     return (ia_rsp);
 }
 
@@ -1027,7 +1112,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
 }
 
 OptionPtr
-Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr /* question */,
+Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                         int& general_status, boost::shared_ptr<Option6IA> ia) {
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
@@ -1111,9 +1196,44 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr /* question */,
     // It is not necessary to check if the address matches as we used
     // getLease6(addr) method that is supposed to return a proper lease.
 
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_release_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_SKIP);
+        }
+    }
+
     // Ok, we've passed all checks. Let's release this address.
 
-    if (!LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+    bool success = false; // did the removal was successful
+
+    if (!skip) {
+        success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    }
+
+    // Here the success should be true if we removed lease successfully
+    // and false if skip flag was set or the removal failed for whatever reason
+
+    if (!success) {
         ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
                           "Server failed to release a lease"));
 
