@@ -56,11 +56,23 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     NakedDhcpv6Srv srv(0);
 
     // check if appropriate hooks are registered
+    int hook_index_buffer6_receive = -1;
+    int hook_index_buffer6_send    = -1;
+    int hook_index_lease6_renew    = -1;
+    int hook_index_lease6_release  = -1;
     int hook_index_pkt6_received = -1;
     int hook_index_select_subnet = -1;
     int hook_index_pkt6_send     = -1;
 
     // check if appropriate indexes are set
+    EXPECT_NO_THROW(hook_index_buffer6_receive = ServerHooks::getServerHooks()
+                    .getIndex("buffer6_receive"));
+    EXPECT_NO_THROW(hook_index_buffer6_send = ServerHooks::getServerHooks()
+                    .getIndex("buffer6_send"));
+    EXPECT_NO_THROW(hook_index_lease6_renew = ServerHooks::getServerHooks()
+                    .getIndex("lease6_renew"));
+    EXPECT_NO_THROW(hook_index_lease6_release = ServerHooks::getServerHooks()
+                    .getIndex("lease6_release"));
     EXPECT_NO_THROW(hook_index_pkt6_received = ServerHooks::getServerHooks()
                     .getIndex("pkt6_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
@@ -71,6 +83,10 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_pkt6_received > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
     EXPECT_TRUE(hook_index_pkt6_send > 0);
+    EXPECT_TRUE(hook_index_buffer6_receive > 0);
+    EXPECT_TRUE(hook_index_buffer6_send > 0);
+    EXPECT_TRUE(hook_index_lease6_renew > 0);
+    EXPECT_TRUE(hook_index_lease6_release > 0);
 }
 
 // This function returns buffer for very simple Solicit
@@ -206,6 +222,80 @@ public:
 
         // carry on as usual
         return pkt6_receive_callout(callout_handle);
+    }
+
+    /// test callback that stores received callout name and pkt6 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer6_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer6_receive");
+
+        callout_handle.getArgument("query6", callback_pkt6_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// test callback that changes first byte of client-id value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer6_receive_change_clientid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("query6", pkt);
+
+        // If there is at least one option with data
+        if (pkt->data_.size()>Pkt6::DHCPV6_PKT_HDR_LEN + Option::OPTION6_HDR_LEN) {
+            pkt->data_[8] = 0xff;
+        }
+
+        // carry on as usual
+        return buffer6_receive_callout(callout_handle);
+    }
+
+    /// test callback that deletes client-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer6_receive_delete_clientid(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("query6", pkt);
+
+        // this is modified SOLICIT (with missing mandatory client-id)
+        uint8_t data[] = {
+        1,  // type 1 = SOLICIT
+        0xca, 0xfe, 0x01, // trans-id = 0xcafe01
+        0, 3, // option type 3 (IA_NA)
+        0, 12, // option length 12
+        0, 0, 0, 1, // iaid = 1
+        0, 0, 0, 0, // T1 = 0
+        0, 0, 0, 0  // T2 = 0
+        };
+
+        OptionBuffer modifiedMsg(data, data + sizeof(data));
+
+        pkt->data_ = modifiedMsg;
+
+        // carry on as usual
+        return buffer6_receive_callout(callout_handle);
+    }
+
+    /// test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer6_receive_skip(CalloutHandle& callout_handle) {
+
+        Pkt6Ptr pkt;
+        callout_handle.getArgument("query6", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return buffer6_receive_callout(callout_handle);
     }
 
     /// Test callback that stores received callout name and pkt6 value
@@ -348,7 +438,128 @@ const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 
 
-// Checks if callouts installed on pkt6_received are indeed called and the
+// Checks if callouts installed on pkt6_receive are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "buffer6_receive".
+TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer6_receive", buffer6_receive_callout));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer6_receive", callback_name_);
+
+    // check that pkt6 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt6_.get() == sol.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query6"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt6_received is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer6_receive", buffer6_receive_change_clientid));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(D6O_CLIENTID);
+
+    ASSERT_TRUE(clientid);
+
+    // ... and check if it is the modified value
+    EXPECT_EQ(0xff, clientid->getData()[0]);
+}
+
+// Checks if callouts installed on buffer6_receive is able to delete
+// existing options and that change impacts server processing (mandatory
+// client-id option is deleted, so the packet is expected to be dropped)
+TEST_F(HooksDhcpv6SrvTest, deleteClientId_buffer6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer6_receive", buffer6_receive_delete_clientid));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not send a response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on buffer6_received is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv6SrvTest, skip_buffer6_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer6_receive", buffer6_receive_skip));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt6_receive are indeed called and the
 // all necessary parameters are passed.
 //
 // Note that the test name does not follow test naming convention,
