@@ -17,4 +17,4 @@
 
 import isc.log
 
-logger = isc.log.Logger("memmgr")
+logger = isc.log.Logger("libmemmgr")
