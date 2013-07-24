@@ -20,6 +20,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -193,13 +194,16 @@ protected:
     /// @param hint a hint that the client provided
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
     allocateAddress4(const SubnetPtr& subnet,
                      const ClientIdPtr& clientid,
                      const HWAddrPtr& hwaddr,
                      const isc::asiolink::IOAddress& hint,
-                     bool fake_allocation);
+                     bool fake_allocation,
+                     const isc::hooks::CalloutHandlePtr& callout_handle);
 
     /// @brief Renews a IPv4 lease
     ///
@@ -235,13 +239,17 @@ protected:
     /// @param hint a hint that the client provided
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
+    ///
     /// @return Allocated IPv6 lease (or NULL if allocation failed)
     Lease6Ptr
     allocateAddress6(const Subnet6Ptr& subnet,
                      const DuidPtr& duid,
                      uint32_t iaid,
                      const isc::asiolink::IOAddress& hint,
-                     bool fake_allocation);
+                     bool fake_allocation,
+                     const isc::hooks::CalloutHandlePtr& callout_handle);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~AllocEngine();
@@ -257,6 +265,9 @@ private:
     /// @param clientid client identifier
     /// @param hwaddr client's hardware address
     /// @param addr an address that was selected and is confirmed to be available
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed (and there are callouts
+    ///        registered)
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
@@ -264,6 +275,7 @@ private:
     Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
                            const HWAddrPtr& hwaddr,
                            const isc::asiolink::IOAddress& addr,
+                           const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
@@ -276,12 +288,16 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be available
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed (and there are callouts
+    ///        registered)
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 
     /// @brief Reuses expired IPv4 lease
@@ -294,6 +310,8 @@ private:
     /// @param subnet subnet the lease is allocated from
     /// @param clientid client identifier
     /// @param hwaddr client's hardware address
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return refreshed lease
@@ -301,6 +319,7 @@ private:
     Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const SubnetPtr& subnet,
                                 const ClientIdPtr& clientid,
                                 const HWAddrPtr& hwaddr,
+                                const isc::hooks::CalloutHandlePtr& callout_handle,
                                 bool fake_allocation = false);
 
     /// @brief Reuses expired IPv6 lease
@@ -313,12 +332,15 @@ private:
     /// @param subnet subnet the lease is allocated from
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
     Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
                                 const DuidPtr& duid, uint32_t iaid,
+                                const isc::hooks::CalloutHandlePtr& callout_handle,
                                 bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator
@@ -326,6 +348,10 @@ private:
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     unsigned int attempts_;
+
+    // hook name indexes (used in hooks callouts)
+    int hook_index_lease4_select_; ///< index for lease4_select hook
+    int hook_index_lease6_select_; ///< index for lease6_select hook
 };
 
 }; // namespace isc::dhcp

@@ -27,9 +27,18 @@ namespace hooks {
 
 // Constructor - register the pre-defined hooks and check that the indexes
 // assigned to them are as expected.
+//
+// Note that there are no logging messages here or in registerHooks().  The
+// recommended way to initialize hook names is to use static initialization.
+// Here, a static object is declared in a file outside of any function or
+// method.  As a result, it is instantiated and its constructor run before the
+// program starts.  By putting calls to ServerHooks::registerHook() in there,
+// hooks names are already registered when the program runs.  However, at that
+// point, the logging system is not initialized, so messages are unable to
+// be output.
 
 ServerHooks::ServerHooks() {
-    reset();
+    initialize();
 }
 
 // Register a hook.  The index assigned to the hook is the current number
@@ -54,17 +63,14 @@ ServerHooks::registerHook(const string& name) {
     // Element was inserted, so add to the inverse hooks collection.
     inverse_hooks_[index] = name;
 
-    // Log it if debug is enabled
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_HOOK_REGISTERED).arg(name);
-
     // ... and return numeric index.
     return (index);
 }
 
-// Reset ServerHooks object to initial state.
+// Set ServerHooks object to initial state.
 
 void
-ServerHooks::reset() {
+ServerHooks::initialize() {
 
     // Clear out the name->index and index->name maps.
     hooks_.clear();
@@ -82,6 +88,15 @@ ServerHooks::reset() {
                   ". context_destroy: expected = " << CONTEXT_DESTROY <<
                   ", actual = " << destroy);
     }
+}
+
+// Reset ServerHooks object to initial state.
+
+void
+ServerHooks::reset() {
+
+    // Clear all hooks then initialize the pre-defined ones.
+    initialize();
 
     // Log a warning - although this is done during testing, it should never be
     // seen in a production system.

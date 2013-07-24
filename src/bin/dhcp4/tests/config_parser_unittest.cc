@@ -51,11 +51,12 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
         srv_.reset(new Dhcpv4Srv(0));
+        CfgMgr::instance().deleteActiveIfaces();
     }
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        const Uint32StoragePtr uint32_defaults = 
+        const Uint32StoragePtr uint32_defaults =
                                         globalContext()->uint32_values_;
         try {
             uint32_t actual_value = uint32_defaults->getParam(name);
@@ -138,7 +139,7 @@ public:
     /// describing an option.
     std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
-        stream << "{ \"interface\": [ \"all\" ],"
+        stream << "{ \"interfaces\": [ \"*\" ],"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"subnet4\": [ { "
@@ -245,7 +246,7 @@ public:
     void resetConfiguration() {
         ConstElementPtr status;
 
-        string config = "{ \"interface\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"*\" ],"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
@@ -322,7 +323,7 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{ \"interface\": [ \"all\" ],"
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet4\": [  ], "
@@ -342,7 +343,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -372,7 +373,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -403,7 +404,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -427,7 +428,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -949,7 +950,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1022,7 +1023,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp4' option space as it is the
     // standard option.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1100,7 +1101,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1149,7 +1150,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1245,7 +1246,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 // option setting.
 TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
@@ -1317,7 +1318,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 // for multiple subnets.
 TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1597,7 +1598,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // In the first stahe we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1650,7 +1651,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1749,5 +1750,69 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     EXPECT_FALSE(desc.option->getOption(3));
 }
 
+// This test verifies that it is possible to select subset of interfaces
+// on which server should listen.
+TEST_F(Dhcp4ParserTest, selectedInterfaces) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
 
-};
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+
+    // Make sure the config manager is clean and there is no hanging
+    // interface configuration.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    // Apply configuration.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // eth0 and eth1 were explicitly selected. eth2 was not.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+// This test verifies that it is possible to configure the server in such a way
+// that it listens on all interfaces.
+TEST_F(Dhcp4ParserTest, allInterfaces) {
+    ConstElementPtr x;
+    // This configuration specifies two interfaces on which server should listen
+    // but it also includes asterisk. The asterisk switches server into the
+    // mode when it listens on all interfaces regardless of what interface names
+    // were specified in the "interfaces" parameter.
+    string config = "{ \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+
+    // Make sure there is no old configuration.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    // Apply configuration.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // All interfaces should be now active.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+
+
+}

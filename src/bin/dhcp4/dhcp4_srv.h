@@ -20,6 +20,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -79,7 +80,7 @@ public:
               const bool direct_response_desired = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
-    ~Dhcpv4Srv();
+    virtual ~Dhcpv4Srv();
 
     /// @brief Main server processing loop.
     ///
@@ -112,6 +113,46 @@ public:
     ///         Note that this string is statically allocated and MUST NOT
     ///         be freed by the caller.
     static const char* serverReceivedPacketName(uint8_t type);
+
+    ///
+    /// @name Public accessors returning values required to (re)open sockets.
+    ///
+    /// These accessors must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires parameters
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using these public functions
+    //@{
+    ///
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// Typically, server listens on UDP port number 67. Other ports are used
+    /// for testing purposes only.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Return bool value indicating that broadcast flags should be set
+    /// on sockets.
+    ///
+    /// @return A bool value indicating that broadcast should be used (if true).
+    bool useBroadcast() const {
+        return (use_bcast_);
+    }
+    //@}
+
+    /// @brief Open sockets which are marked as active in @c CfgMgr.
+    ///
+    /// This function reopens sockets according to the current settings in the
+    /// Configuration Manager. It holds the list of the interfaces which server
+    /// should listen on. This function will open sockets on these interfaces
+    /// only. This function is not exception safe.
+    ///
+    /// @param port UDP port on which server should listen.
+    /// @param use_bcast should broadcast flags be set on the sockets.
+    static void openActiveSockets(const uint16_t port, const bool use_bcast);
 
 protected:
 
@@ -296,6 +337,18 @@ protected:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
+    /// @brief dummy wrapper around IfaceMgr::receive4
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual Pkt4Ptr receivePacket(int timeout);
+
+    /// @brief dummy wrapper around IfaceMgr::send()
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates transmission of a packet. For that purpose it is protected.
+    virtual void sendPacket(const Pkt4Ptr& pkt);
+
 private:
 
     /// @brief Constructs netmask option based on subnet4
@@ -310,6 +363,20 @@ private:
     /// during normal operation (e.g. to use different allocators)
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
+    uint16_t port_;  ///< UDP port number on which server listens.
+    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+
+    /// @brief returns callout handle for specified packet
+    ///
+    /// @param pkt packet for which the handle should be returned
+    ///
+    /// @return a callout handle to be used in hooks related to said packet
+    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt4Ptr& pkt);
+
+    /// Indexes for registered hook points
+    int hook_index_pkt4_receive_;
+    int hook_index_subnet4_select_;
+    int hook_index_pkt4_send_;
 };
 
 }; // namespace isc::dhcp

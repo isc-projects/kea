@@ -15,6 +15,8 @@
 #ifndef LIBRARY_MANAGER_H
 #define LIBRARY_MANAGER_H
 
+#include <exceptions/exceptions.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -22,13 +24,25 @@
 namespace isc {
 namespace hooks {
 
+/// @brief No Callout Manager
+///
+/// Thrown if a library manager is instantiated by an external agency without
+/// specifying a CalloutManager object.
+class NoCalloutManager : public Exception {
+public:
+    NoCalloutManager(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 class CalloutManager;
 class LibraryHandle;
 class LibraryManager;
 
 /// @brief Library manager
 ///
-/// This class handles the loading and unloading of a specific library.
+/// This class handles the loading and unloading of a specific library.  It also
+/// provides a static method for checking that a library is valid (this is used
+/// in configuration parsing).
 ///
 /// On loading, it opens the library using dlopen and checks the version (set
 /// with the "version" method.  If all is OK, it iterates through the list of
@@ -58,22 +72,28 @@ class LibraryManager;
 ///       suspends processing of new requests until all existing ones have
 ///       been serviced and all packet/context structures destroyed before
 ///       reloading the libraries.
+///
+/// When validating a library, only the fact that the library can be opened and
+/// version() exists and returns the correct number is checked.  The library
+/// is closed after the validation.
 
 class LibraryManager {
 public:
     /// @brief Constructor
     ///
-    /// Stores the library name.  The actual loading is done in loadLibrary().
+    /// This constructor is used by external agencies (i.e. the
+    /// LibraryManagerCollection) when instantiating a LibraryManager.  It
+    /// stores the library name - the actual actual loading is done in
+    /// loadLibrary().
     ///
     /// @param name Name of the library to load.  This should be an absolute
     ///        path name.
     /// @param index Index of this library
     /// @param manager CalloutManager object
+    ///
+    /// @throw NoCalloutManager Thrown if the manager argument is NULL.
     LibraryManager(const std::string& name, int index,
-                   const boost::shared_ptr<CalloutManager>& manager)
-        : dl_handle_(NULL), index_(index), manager_(manager),
-          library_name_(name)
-    {}
+                   const boost::shared_ptr<CalloutManager>& manager);
 
     /// @brief Destructor
     ///
@@ -81,9 +101,19 @@ public:
     /// feature to ensure closure in the case of an exception destroying this
     /// object.  However, see the caveat in the class header about when it is
     /// safe to unload libraries.
-    ~LibraryManager() {
-        static_cast<void>(unloadLibrary());
-    }
+    ~LibraryManager();
+
+    /// @brief Validate library
+    ///
+    /// A static method that is used to validate a library.  Validation checks
+    /// that the library can be opened, that "version" exists, and that it
+    /// returns the right number.
+    ///
+    /// @param name Name of the library to validate
+    ///
+    /// @return true if the library validated, false if not.  If the library
+    /// fails to validate, the reason for the failure is logged.
+    static bool validateLibrary(const std::string& name);
 
     /// @brief Loads a library
     ///
@@ -176,6 +206,17 @@ protected:
     bool runUnload();
 
 private:
+    /// @brief Validating constructor
+    ///
+    /// Constructor used when the LibraryManager is instantiated to validate
+    /// a library (i.e. by the "validateLibrary" static method).
+    ///
+    /// @param name Name of the library to load.  This should be an absolute
+    ///        path name.
+    LibraryManager(const std::string& name);
+
+    // Member variables
+
     void*       dl_handle_;     ///< Handle returned by dlopen
     int         index_;         ///< Index associated with this library
     boost::shared_ptr<CalloutManager> manager_;
