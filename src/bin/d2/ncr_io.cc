@@ -72,7 +72,15 @@ void
 NameChangeListener::invokeRecvHandler(const Result result,
                                       NameChangeRequestPtr& ncr) {
     // Call the registered application layer handler.
-    recv_handler_(result, ncr);
+    // Surround the invocation with a try-catch. The invoked handler is
+    // not supposed to throw, but in the event it does we will at least
+    // report it.
+    try {
+        recv_handler_(result, ncr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
+                  .arg(ex.what());
+    }
 
     // Start the next IO layer asynchronous receive.
     // In the event the handler above intervened and decided to stop listening
@@ -87,9 +95,21 @@ NameChangeListener::invokeRecvHandler(const Result result,
             // at the IOService::run (or run variant) invocation.  So we will
             // close the window by invoking the application handler with
             // a failed result, and let the application layer sort it out.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_RECV_NEXT).arg(ex.what());
+            LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
+                      .arg(ex.what());
+
+            // Call the registered application layer handler.
+            // Surround the invocation with a try-catch. The invoked handler is
+            // not supposed to throw, but in the event it does we will at least
+            // report it.
             NameChangeRequestPtr empty;
-            recv_handler_(ERROR, empty);
+            try {
+                recv_handler_(ERROR, empty);
+            } catch (const std::exception& ex) {
+                LOG_ERROR(dctl_logger,
+                          DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
+                          .arg(ex.what());
+            }
         }
     }
 }
@@ -201,7 +221,15 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
 
     // Invoke the completion handler passing in the result and a pointer
     // the request involved.
-    send_handler_(result, ncr_to_send_);
+    // Surround the invocation with a try-catch. The invoked handler is
+    // not supposed to throw, but in the event it does we will at least
+    // report it.
+    try {
+        send_handler_(result, ncr_to_send_);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
+                  .arg(ex.what());
+    }
 
     // Clear the pending ncr pointer.
     ncr_to_send_.reset();
@@ -216,8 +244,19 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
         // at the IOService::run (or run variant) invocation.  So we will
         // close the window by invoking the application handler with
         // a failed result, and let the application layer sort it out.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_NEXT).arg(ex.what());
-        send_handler_(ERROR, ncr_to_send_);
+        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_NEXT_ERROR)
+                  .arg(ex.what());
+
+        // Invoke the completion handler passing in failed result.
+        // Surround the invocation with a try-catch. The invoked handler is
+        // not supposed to throw, but in the event it does we will at least
+        // report it.
+        try {
+            send_handler_(ERROR, ncr_to_send_);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
+                      .arg(ex.what());
+        }
     }
 }
 

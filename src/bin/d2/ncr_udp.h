@@ -168,7 +168,7 @@ public:
         /// send.
         /// @param buf_size is the capacity of the buffer
         /// @param data_source storage for UDP endpoint which supplied the data
-        Data(RawBufferPtr &buffer, const size_t buf_size, 
+        Data(RawBufferPtr& buffer, const size_t buf_size,
              UDPEndpointPtr& data_source)
             : buffer_(buffer), buf_size_(buf_size), data_source_(data_source),
               put_len_(0), error_code_(), bytes_transferred_(0) {
@@ -225,7 +225,7 @@ public:
     /// buffer.  For a write it is the number of bytes read from the
     /// buffer.
     void operator ()(const asio::error_code error_code,
-                             const size_t bytes_transferred);
+                     const size_t bytes_transferred);
 
     /// @brief Returns the number of bytes transferred by the completed IO
     /// service.
@@ -295,12 +295,12 @@ public:
     /// @brief Sets the data source to the given endpoint.
     ///
     /// @param endpoint is the new value to assign to data source.
-    void setDataSource(UDPEndpointPtr endpoint) {
+    void setDataSource(UDPEndpointPtr& endpoint) {
         data_->data_source_ = endpoint;
     }
 
     /// @brief Returns the UDP endpoint that provided the transferred data.
-    UDPEndpointPtr getDataSource() {
+    const UDPEndpointPtr& getDataSource() {
         return (data_->data_source_);
     }
 
@@ -421,8 +421,7 @@ private:
     /// @brief Pointer to the receive callback
     boost::shared_ptr<UDPCallback> recv_callback_;
 
-    /// @brief indicator that signifies listener is being used
-    /// in test mode
+    /// @brief Flag which enables the reuse address socket option if true.
     bool reuse_address_;
 
     ///
@@ -484,7 +483,7 @@ public:
     /// @param io_service the IOService which will monitor the socket.
     ///
     /// @throw NcrUDPError if the open fails.
-    virtual void open(isc::asiolink::IOService & io_service);
+    virtual void open(isc::asiolink::IOService& io_service);
 
 
     /// @brief Closes the UDPSocket.
@@ -553,8 +552,7 @@ private:
     /// @brief Pointer to the send callback
     boost::shared_ptr<UDPCallback> send_callback_;
 
-    /// @brief boolean indicator that signifies sender is being used
-    /// in test mode
+    /// @brief Flag which enables the reuse address socket option if true.
     bool reuse_address_;
 };
 
