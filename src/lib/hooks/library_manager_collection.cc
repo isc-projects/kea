@@ -73,24 +73,18 @@ LibraryManagerCollection::loadLibraries() {
                                    callout_manager_));
 
         // Load the library.  On success, add it to the list of loaded
-        // libraries.  On failure, an error will have been logged and the
-        // library closed.
+        // libraries.  On failure, unload all currently loaded libraries,
+        // leaving the object in the state it was in before loadLibraries was
+        // called.
         if (manager->loadLibrary()) {
             lib_managers_.push_back(manager);
+        } else {
+            static_cast<void>(unloadLibraries());
+            return (false);
         }
     }
 
-    // Update the CalloutManager's idea of the number of libraries it is
-    // handling.
-    callout_manager_->setNumLibraries(lib_managers_.size());
-
-    // Get an indication of whether all libraries loaded successfully.
-    bool status = (library_names_.size() == lib_managers_.size());
-
-    // Don't need the library names any more, so free up the space.
-    library_names_.clear();
-
-    return (status);
+    return (true);
 }
 
 // Unload the libraries.
@@ -108,6 +102,27 @@ LibraryManagerCollection::unloadLibraries() {
     // Get rid of the callout manager. (The other member, the list of library
     // names, was cleared when the libraries were loaded.)
     callout_manager_.reset();
+}
+
+// Return number of loaded libraries.
+int
+LibraryManagerCollection::getLoadedLibraryCount() const {
+    return (lib_managers_.size());
+}
+
+// Validate the libraries.
+std::vector<std::string>
+LibraryManagerCollection::validateLibraries(
+                          const std::vector<std::string>& libraries) {
+
+    std::vector<std::string> failures;
+    for (int i = 0; i < libraries.size(); ++i) {
+        if (!LibraryManager::validateLibrary(libraries[i])) {
+            failures.push_back(libraries[i]);
+        }
+    }
+
+    return (failures);
 }
 
 } // namespace hooks

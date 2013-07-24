@@ -1,3 +1,35 @@
+646.	[func]		stephen
+	Extended the hooks framework to add a "validate libraries" function.
+	This will be used to check libraries specified during BIND 10
+	configuration.
+	(Trac #3054, git 0f845ed94f462dee85b67f056656b2a197878b04)
+
+645.	[func]		tomek
+	Added initial set of hooks (pk4_receive, subnet4_select,
+	lease4_select, pkt4_send) to the DHCPv6 server.
+	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
+
+644.	[func]		marcin
+	b10-dhcp4, b10-dhcp6: Implemented selection of the interfaces
+	that server listens on, using Configuration Manager. It is
+	possible to specify interface names explicitly or use asterisk
+	to specify that server should listen on all available interfaces.
+	Sockets are reopened according to the new configuration as
+	soon as it is committed.
+	(Trac #1555, git f48a3bff3fbbd15584d788a264d5966154394f04)
+
+643.	[bug]		muks
+	When running some unittests as root that depended on insufficient
+	file permissions, the tests used to fail because the root user
+	could still access such files. Such tests are now skipped when
+	they are run as the root user.
+	(Trac #3056, git 92ebabdbcf6168666b03d7f7fbb31f899be39322)
+
+642.	[func]		tomek
+	Added initial set of hooks (pk6_receive, subnet6_select,
+	lease6_select, pkt6_send) to the DHCPv6 server.
+	(Trac #2995, git d6de376f97313ba40fef989e4a437d184fdf70cc)
+
 641.	[func]		stephen
 	Added the hooks framework. This allows shared libraries of
 	user-written functions to be loaded at run-time and the

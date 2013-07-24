@@ -65,6 +65,7 @@ b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp6dir = $(pkgdatadir)
 b10_dhcp6_DATA = dhcp6.spec

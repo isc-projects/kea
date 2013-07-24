@@ -31,6 +31,42 @@ namespace isc {
 namespace hooks {
 
 
+// Constructor (used by external agency)
+LibraryManager::LibraryManager(const std::string& name, int index,
+                               const boost::shared_ptr<CalloutManager>& manager)
+        : dl_handle_(NULL), index_(index), manager_(manager),
+          library_name_(name)
+{
+    if (!manager) {
+        isc_throw(NoCalloutManager, "must specify a CalloutManager when "
+                  "instantiating a LibraryManager object");
+    }
+}
+
+// Constructor (used by "validate" for library validation).  Note that this
+// sets "manager_" to not point to anything, which means that methods such as
+// registerStandardCallout() will fail, probably with a segmentation fault.
+// There are no checks for this condition in those methods: this constructor
+// is declared "private", so can only be executed by a method in this class.
+// The only method to do so is "validateLibrary", which takes care not to call
+// methods requiring a non-NULL manager.
+LibraryManager::LibraryManager(const std::string& name)
+        : dl_handle_(NULL), index_(-1), manager_(), library_name_(name)
+{}
+
+// Destructor.  
+LibraryManager::~LibraryManager() {
+    if (manager_) {
+        // LibraryManager instantiated to load a library, so ensure that
+        // it is unloaded before exiting.
+        static_cast<void>(unloadLibrary());
+    } else {
+        // LibraryManager instantiated to validate a library, so just ensure
+        // that it is closed before exiting.
+        static_cast<void>(closeLibrary());
+    }
+}
+
 // Open the library
 
 bool
@@ -118,8 +154,9 @@ LibraryManager::registerStandardCallouts() {
             // Found a symbol, so register it.
             manager_->getLibraryHandle().registerCallout(hook_names[i],
                                                          pc.calloutPtr());
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_STD_CALLOUT_REGISTERED)
-                .arg(library_name_).arg(hook_names[i]).arg(dlsym_ptr);
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS,
+                      HOOKS_STD_CALLOUT_REGISTERED).arg(library_name_)
+                      .arg(hook_names[i]).arg(dlsym_ptr);
 
         }
     }
@@ -251,41 +288,65 @@ LibraryManager::loadLibrary() {
 }
 
 // The library unloading function.  Call the unload() function (if present),
-// remove callouts from the callout manager, then close the library.
+// remove callouts from the callout manager, then close the library.  This is
+// only run if the library is still loaded and is a no-op if the library is
+// not open.
 
 bool
 LibraryManager::unloadLibrary() {
-    LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_UNLOADING)
-        .arg(library_name_);
+    bool result = true;
+    if (dl_handle_ != NULL) {
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_UNLOADING)
+            .arg(library_name_);
 
-    // Call the unload() function if present.  Note that this is done first -
-    // operations take place in the reverse order to which they were done when
-    // the library was loaded.
-    bool result = runUnload();
+        // Call the unload() function if present.  Note that this is done first
+        // - operations take place in the reverse order to which they were done
+        // when the library was loaded.
+        result = runUnload();
 
-    // Regardless of status, remove all callouts associated with this library
-    // on all hooks.
-    vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
-    manager_->setLibraryIndex(index_);
-    for (int i = 0; i < hooks.size(); ++i) {
-        bool removed = manager_->deregisterAllCallouts(hooks[i]);
-        if (removed) {
-            LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
-                .arg(hooks[i]).arg(library_name_);
+        // Regardless of status, remove all callouts associated with this
+        // library on all hooks.
+        vector<string> hooks = ServerHooks::getServerHooks().getHookNames();
+        manager_->setLibraryIndex(index_);
+        for (int i = 0; i < hooks.size(); ++i) {
+            bool removed = manager_->deregisterAllCallouts(hooks[i]);
+            if (removed) {
+                LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS, HOOKS_CALLOUTS_REMOVED)
+                    .arg(hooks[i]).arg(library_name_);
+            }
+        }
+
+        // ... and close the library.
+        result = closeLibrary() && result;
+        if (result) {
+
+            // Issue the informational message only if the library was unloaded
+            // with no problems.  If there was an issue, an error message would
+            // have been issued.
+            LOG_INFO(hooks_logger, HOOKS_LIBRARY_UNLOADED).arg(library_name_);
         }
     }
-
-    // ... and close the library.
-    result = closeLibrary() && result;
-    if (result) {
-
-        // Issue the informational message only if the library was unloaded
-        // with no problems.  If there was an issue, an error message would
-        // have been issued.
-        LOG_INFO(hooks_logger, HOOKS_LIBRARY_UNLOADED).arg(library_name_);
-    }
-
     return (result);
+}
+
+// Validate the library.  We must be able to open it, and the version function
+// must both exist and return the right number.  Note that this is a static
+// method.
+
+bool
+LibraryManager::validateLibrary(const std::string& name) {
+    // Instantiate a library manager for the validation.  We use the private
+    // constructor as we don't supply a CalloutManager.
+    LibraryManager manager(name);
+
+    // Try to open it and, if we succeed, check the version.
+    bool validated = manager.openLibrary() && manager.checkVersion();
+
+    // Regardless of whether the version checked out, close the library. (This
+    // is a no-op if the library failed to open.)
+    static_cast<void>(manager.closeLibrary());
+
+    return (validated);
 }
 
 } // namespace hooks

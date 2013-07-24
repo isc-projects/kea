@@ -165,6 +165,7 @@ public:
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
+        CfgMgr::instance().deleteActiveIfaces();
     }
 
     /// @brief generates interface-id option based on provided text
@@ -571,6 +572,50 @@ TEST_F(CfgMgrTest, optionSpace6) {
     );
 
     // @todo decide if a duplicate vendor space is allowed.
+}
+
+// This test verifies that it is possible to specify interfaces that server
+// should listen on.
+TEST_F(CfgMgrTest, addActiveIface) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    cfg_mgr.addActiveIface("eth0");
+    cfg_mgr.addActiveIface("eth1");
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+
+    cfg_mgr.deleteActiveIfaces();
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+}
+
+// This test verifies that it is possible to set the flag which configures the
+// server to listen on all interfaces.
+TEST_F(CfgMgrTest, activateAllIfaces) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    cfg_mgr.addActiveIface("eth0");
+    cfg_mgr.addActiveIface("eth1");
+
+    ASSERT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    ASSERT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    ASSERT_FALSE(cfg_mgr.isActiveIface("eth2"));
+
+    cfg_mgr.activateAllIfaces();
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
+
+    cfg_mgr.deleteActiveIfaces();
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 }
 
 // No specific tests for getSubnet6. That method (2 overloaded versions) is tested
