@@ -194,7 +194,7 @@ public:
     /// Initializes common objects used in many tests.
     /// Also sets up initial configuration in CfgMgr.
     Dhcpv4SrvTest() :
-        rcode_(0)
+        rcode_(-1)
     {
         subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                          2000, 3000));
