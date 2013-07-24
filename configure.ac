@@ -1381,6 +1381,8 @@ AC_OUTPUT([doc/version.ent
            src/bin/dbutil/run_dbutil.sh
            src/bin/dbutil/tests/dbutil_test.sh
            src/bin/ddns/ddns.py
+           src/bin/dhcp6/tests/marker_file.h
+           src/bin/dhcp6/tests/test_libraries.h
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/run_b10-xfrin.sh

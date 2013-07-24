@@ -121,6 +121,8 @@ ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr 
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
         return (answer);
+    } else if (command == "libreload") {
+        // TODO Reload libraries
     }
 
     ConstElementPtr answer = isc::config::createAnswer(1,
