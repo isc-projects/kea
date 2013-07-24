@@ -57,7 +57,9 @@ b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
+b10_dhcp_ddns_SOURCES += ncr_io.cc ncr_io.h
 b10_dhcp_ddns_SOURCES += ncr_msg.cc ncr_msg.h
+b10_dhcp_ddns_SOURCES += ncr_udp.cc ncr_udp.h
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes

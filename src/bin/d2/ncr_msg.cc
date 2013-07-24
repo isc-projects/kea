@@ -455,5 +455,23 @@ NameChangeRequest::toText() const {
     return (stream.str());
 }
 
+bool
+NameChangeRequest::operator == (const NameChangeRequest& other) {
+    return ((change_type_ == other.change_type_) &&
+            (forward_change_ == other.forward_change_) &&
+            (reverse_change_ == other.reverse_change_) &&
+            (fqdn_ == other.fqdn_) &&
+            (ip_address_ == other.ip_address_) &&
+            (dhcid_ == other.dhcid_) &&
+            (lease_expires_on_ == other.lease_expires_on_) &&
+            (lease_length_ == other.lease_length_));
+}
+
+bool
+NameChangeRequest::operator != (const NameChangeRequest& other) {
+    return (!(*this == other));
+}
+
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
