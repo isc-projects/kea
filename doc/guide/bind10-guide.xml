@@ -2641,6 +2641,13 @@ can use various data source backends.
 
       <section id='datasrc-static'>
         <title>Adding a static data source</title>
+
+	<para>
+	  BIND 10 provides a zone file for the CH (Chaos) class for
+	  providing information about the server via the AUTHORS.BIND
+	  and VERSION.BIND TXT records.
+	</para>
+
         <para>
           Assuming there is no existing static data source, here is how
           you can add one, to serve the zones in
