@@ -1,3 +1,11 @@
+647.	[func]		tmark
+	Added initial implementation of classes for sending
+	and receiving NameChangeRequests between DHCP-DDNS
+	and its clients such as DHCP. This includes both 
+	abstract classes and a derivation which traffics 
+	requests across UDP sockets.
+	(Trac #3008, git b54530b4539cec4476986442e72c047dddba7b48)
+
 646.	[func]		stephen
 	Extended the hooks framework to add a "validate libraries" function.
 	This will be used to check libraries specified during BIND 10
