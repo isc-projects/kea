@@ -2643,15 +2643,18 @@ can use various data source backends.
         <title>Adding a static data source</title>
 
 	<para>
-	  BIND 10 provides a zone file for the CH (Chaos) class for
+	  BIND 10 includes a zone file named
+	  <filename>static.zone</filename> in the CH (Chaos) class for
 	  providing information about the server via the AUTHORS.BIND
-	  and VERSION.BIND TXT records.
+	  and VERSION.BIND TXT records. By default, this BIND zone is
+	  configured and its records are served.
 	</para>
 
         <para>
-          Assuming there is no existing static data source, here is how
-          you can add one, to serve the zones in
-          <filename>static.zone</filename> distributed with BIND 10.
+          If you have removed this zone from the configuration (e.g., by
+          using the commands in the previous section to disable the
+          "built-in data source"), here is how you can add it back to
+          serve the zones in the <filename>static.zone</filename> file.
         </para>
 
 	<para>First, add the CH class if it doesn't exist:
