@@ -17,10 +17,6 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
-#include <dhcp/option.h>
-#include <dhcp/option_custom.h>
-#include <dhcp/option6_addrlst.h>
-#include <dhcp/iface_mgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>

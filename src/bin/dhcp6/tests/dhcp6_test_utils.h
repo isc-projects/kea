@@ -18,15 +18,18 @@
 
 #include <gtest/gtest.h>
 
-#include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <hooks/hooks_manager.h>
-#include <config/ccsession.h>
-#include <dhcp6/dhcp6_srv.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <hooks/hooks_manager.h>
+#include <config/ccsession.h>
 
 #include <list>
 
@@ -389,10 +392,10 @@ public:
         CfgMgr::instance().deleteSubnets6();
     };
 
-    // A subnet used in most tests
+    /// A subnet used in most tests
     Subnet6Ptr subnet_;
 
-    // A pool used in most tests
+    /// A pool used in most tests
     Pool6Ptr pool_;
 };
 
