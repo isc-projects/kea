@@ -376,13 +376,6 @@ private:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
-    /// @brief returns callout handle for specified packet
-    ///
-    /// @param pkt packet for which the handle should be returned
-    ///
-    /// @return a callout handle to be used in hooks related to said packet
-    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
-
     /// Indexes for registered hook points
     int hook_index_pkt6_receive_;
     int hook_index_subnet6_select_;

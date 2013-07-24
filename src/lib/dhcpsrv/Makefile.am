@@ -35,6 +35,7 @@ lib_LTLIBRARIES = libb10-dhcpsrv.la
 libb10_dhcpsrv_la_SOURCES  =
 libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libb10_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
+libb10_dhcpsrv_la_SOURCES += callout_handle_store.h
 libb10_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h
 libb10_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libb10_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
