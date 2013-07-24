@@ -49,7 +49,7 @@ TESTS += dhcp6_unittests
 
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += hook_unittest.cc
+dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
