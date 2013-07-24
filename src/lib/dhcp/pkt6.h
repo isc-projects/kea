@@ -139,11 +139,6 @@ public:
     /// @return reference to output buffer
     const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
 
-    /// @brief Returns reference to input buffer.
-    ///
-    /// @return reference to input buffer
-    /// const OptionBuffer& getData() const { return(data_); }
-
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
     /// @return protocol type
@@ -347,9 +342,7 @@ public:
 
     /// collection of options present in this message
     ///
-    /// @todo: Text mentions protected, but this is really public
-    ///
-    /// @warning This protected member is accessed by derived
+    /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
     /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
     /// behavior must be taken into consideration before making
