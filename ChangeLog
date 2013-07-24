@@ -1,3 +1,9 @@
+646.	[func]		stephen
+	Extended the hooks framework to add a "validate libraries" function.
+	This will be used to check libraries specified during BIND 10
+	configuration.
+	(Trac #3054, git 0f845ed94f462dee85b67f056656b2a197878b04)
+
 645.	[func]		tomek
 	Added initial set of hooks (pk4_receive, subnet4_select,
 	lease4_select, pkt4_send) to the DHCPv6 server.
