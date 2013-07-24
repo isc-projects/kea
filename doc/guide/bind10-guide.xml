@@ -2674,7 +2674,7 @@ can use various data source backends.
 
         Then, lookup the static data from
         <filename>static.zone</filename> to test it (assuming your
-        resolver is running on <command>localhost</command>):
+        authoritative server is running on <command>localhost</command>):
 
           <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
 &gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
