@@ -262,13 +262,66 @@ void CfgMgr::deleteSubnets6() {
     subnets6_.clear();
 }
 
+
 std::string CfgMgr::getDataDir() {
     return (datadir_);
 }
 
+void
+CfgMgr::addActiveIface(const std::string& iface) {
+    if (isIfaceListedActive(iface)) {
+        isc_throw(DuplicateListeningIface,
+                  "attempt to add duplicate interface '" << iface << "'"
+                  " to the set of interfaces on which server listens");
+    }
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_IFACE)
+        .arg(iface);
+    active_ifaces_.push_back(iface);
+}
+
+void
+CfgMgr::activateAllIfaces() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE);
+    all_ifaces_active_ = true;
+}
+
+void
+CfgMgr::deleteActiveIfaces() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES);
+    active_ifaces_.clear();
+    all_ifaces_active_ = false;
+}
+
+bool
+CfgMgr::isActiveIface(const std::string& iface) const {
+
+    // @todo Verify that the interface with the specified name is
+    // present in the system.
+
+    // If all interfaces are marked active, there is no need to check that
+    // the name of this interface has been explicitly listed.
+    if (all_ifaces_active_) {
+        return (true);
+    }
+    return (isIfaceListedActive(iface));
+}
+
+bool
+CfgMgr::isIfaceListedActive(const std::string& iface) const {
+    for (ActiveIfacesCollection::const_iterator it = active_ifaces_.begin();
+         it != active_ifaces_.end(); ++it) {
+        if (iface == *it) {
+            return (true);
+        }
+    }
+    return (false);
+}
 
 CfgMgr::CfgMgr()
-    :datadir_(DHCP_DATA_DIR) {
+    : datadir_(DHCP_DATA_DIR),
+      all_ifaces_active_(false) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am

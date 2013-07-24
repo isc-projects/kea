@@ -38,13 +38,13 @@ void
 shutdownCheck() {
     // Check for common points on shutdown.  The manager should have acquired
     // the lock, put a SHUTDOWN command to the queue, and should have signaled
-    // the builder.
-    EXPECT_EQ(1, FakeDataSrcClientsBuilder::queue_mutex->lock_count);
+    // the builder. It should check again for the callback queue, with the lock
+    EXPECT_EQ(2, FakeDataSrcClientsBuilder::queue_mutex->lock_count);
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::cond->signal_count);
     EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
     const Command& cmd = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(SHUTDOWN, cmd.first);
-    EXPECT_FALSE(cmd.second);   // no argument
+    EXPECT_EQ(SHUTDOWN, cmd.id);
+    EXPECT_FALSE(cmd.params);   // no argument
 
     // Finally, the manager should wait for the thread to terminate.
     EXPECT_TRUE(FakeDataSrcClientsBuilder::thread_waited);
@@ -130,8 +130,8 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
     // touch or refer to the map, so it shouldn't acquire the map lock.
     checkSharedMembers(1, 1, 0, 0, 1, 1);
     const Command& cmd1 = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(RECONFIGURE, cmd1.first);
-    EXPECT_EQ(reconfigure_arg, cmd1.second);
+    EXPECT_EQ(RECONFIGURE, cmd1.id);
+    EXPECT_EQ(reconfigure_arg, cmd1.params);
 
     // Non-null, but semantically invalid argument.  The manager doesn't do
     // this check, so it should result in the same effect.
@@ -140,8 +140,8 @@ TEST(DataSrcClientsMgrTest, reconfigure) {
     mgr.reconfigure(reconfigure_arg);
     checkSharedMembers(2, 2, 0, 0, 2, 1);
     const Command& cmd2 = FakeDataSrcClientsBuilder::command_queue->front();
-    EXPECT_EQ(RECONFIGURE, cmd2.first);
-    EXPECT_EQ(reconfigure_arg, cmd2.second);
+    EXPECT_EQ(RECONFIGURE, cmd2.id);
+    EXPECT_EQ(reconfigure_arg, cmd2.params);
 
     // Passing NULL argument is immediately rejected
     EXPECT_THROW(mgr.reconfigure(ConstElementPtr()), isc::InvalidParameter);
@@ -245,10 +245,52 @@ TEST(DataSrcClientsMgrTest, reload) {
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
 }
 
+void
+callback(bool* called, int *tag_target, int tag_value) {
+    *called = true;
+    *tag_target = tag_value;
+}
+
+// Test we can wake up the main thread by writing to the file descriptor and
+// that the callbacks are executed and removed when woken up.
+TEST(DataSrcClientsMgrTest, wakeup) {
+    bool called = false;
+    int tag;
+    {
+        TestDataSrcClientsMgr mgr;
+        // There's some real file descriptor (or something that looks so)
+        ASSERT_GT(FakeDataSrcClientsBuilder::wakeup_fd, 0);
+        // Push a callback in and wake the manager
+        FakeDataSrcClientsBuilder::callback_queue->
+            push_back(boost::bind(callback, &called, &tag, 1));
+        EXPECT_EQ(1, write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1));
+        mgr.run_one();
+        EXPECT_TRUE(called);
+        EXPECT_EQ(1, tag);
+        EXPECT_TRUE(FakeDataSrcClientsBuilder::callback_queue->empty());
+
+        called = false;
+        // If we wake up and don't push anything, it doesn't break.
+        EXPECT_EQ(1, write(FakeDataSrcClientsBuilder::wakeup_fd, "w", 1));
+        mgr.run_one();
+        EXPECT_FALSE(called);
+
+        // When we terminate, it should process whatever is left
+        // of the callbacks. So push and terminate (and don't directly
+        // wake).
+        FakeDataSrcClientsBuilder::callback_queue->
+            push_back(boost::bind(callback, &called, &tag, 2));
+    }
+    EXPECT_TRUE(called);
+    EXPECT_EQ(2, tag);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::callback_queue->empty());
+}
+
 TEST(DataSrcClientsMgrTest, realThread) {
     // Using the non-test definition with a real thread.  Just checking
     // no disruption happens.
-    DataSrcClientsMgr mgr;
+    isc::asiolink::IOService service;
+    DataSrcClientsMgr mgr(service);
 }
 
 } // unnamed namespace

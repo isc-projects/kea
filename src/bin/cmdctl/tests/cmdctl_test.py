@@ -680,11 +680,15 @@ class TestSecureHTTPServer(unittest.TestCase):
         # Just some file that we know exists
         file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
         check_file(file_name)
-        with UnreadableFile(file_name):
-            self.assertRaises(CmdctlException, check_file, file_name)
         self.assertRaises(CmdctlException, check_file, '/local/not-exist')
         self.assertRaises(CmdctlException, check_file, '/')
 
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_check_file_for_unreadable(self):
+        file_name = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
+        with UnreadableFile(file_name):
+            self.assertRaises(CmdctlException, check_file, file_name)
 
     def test_check_key_and_cert(self):
         keyfile = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
@@ -702,6 +706,15 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.assertRaises(CmdctlException, self.server._check_key_and_cert,
                          '/', certfile)
 
+        # All OK (also happens to check the context code above works)
+        self.server._check_key_and_cert(keyfile, certfile)
+
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_check_key_and_cert_for_unreadable(self):
+        keyfile = BUILD_FILE_PATH + 'cmdctl-keyfile.pem'
+        certfile = BUILD_FILE_PATH + 'cmdctl-certfile.pem'
+
         # no read permission
         with UnreadableFile(certfile):
             self.assertRaises(CmdctlException,
@@ -712,9 +725,6 @@ class TestSecureHTTPServer(unittest.TestCase):
             self.assertRaises(CmdctlException,
                               self.server._check_key_and_cert,
                               keyfile, certfile)
-
-        # All OK (also happens to check the context code above works)
-        self.server._check_key_and_cert(keyfile, certfile)
 
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()

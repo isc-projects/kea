@@ -54,6 +54,10 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 available sooner.
 
+% DHCPSRV_CFGMGR_ADD_IFACE adding listening interface %1
+A debug message issued when new interface is being added to the collection of
+interfaces on which server listens to DHCP messages.
+
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
 specified IPv4 subnet to its database.
@@ -61,6 +65,16 @@ specified IPv4 subnet to its database.
 % DHCPSRV_CFGMGR_ADD_SUBNET6 adding subnet %1
 A debug message reported when the DHCP configuration manager is adding the
 specified IPv6 subnet to its database.
+
+% DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE enabling listening on all interfaces
+A debug message issued when server is being configured to listen on all
+interfaces.
+
+% DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES stop listening on all interfaces
+A debug message issued when configuration manager clears the internal list
+of active interfaces. This doesn't prevent the server from listening to
+the DHCP traffic through open sockets, but will rather be used by Interface
+Manager to select active interfaces when sockets are re-opened.
 
 % DHCPSRV_CFGMGR_DELETE_SUBNET4 deleting all IPv4 subnets
 A debug message noting that the DHCP configuration manager has deleted all IPv4
@@ -120,6 +134,18 @@ open lease database.  It is issued at program shutdown and whenever
 the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
+
+% DHCPSRV_HOOK_LEASE4_SELECT_SKIP Lease4 creation was skipped, because of callout skip flag.
+This debug message is printed when a callout installed on lease4_select
+hook point sets the skip flag. It means that the server was told that
+no lease4 should be assigned. The server will not put that lease in its
+database and the client will get a NAK packet.
+
+% DHCPSRV_HOOK_LEASE6_SELECT_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
+This debug message is printed when a callout installed on lease6_select
+hook point sets the skip flag. It means that the server was told that
+no lease6 should be assigned. The server will not put that lease in its
+database and the client will get a NoAddrsAvail for that IA_NA option.
 
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string

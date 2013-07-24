@@ -36,9 +36,13 @@
 
 #include <boost/function.hpp>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <cerrno>
 
 using isc::data::ConstElementPtr;
 using namespace isc::dns;
@@ -54,17 +58,24 @@ protected:
     DataSrcClientsBuilderTest() :
         clients_map(new std::map<RRClass,
                     boost::shared_ptr<ConfigurableClientList> >),
-        builder(&command_queue, &cond, &queue_mutex, &clients_map, &map_mutex),
+        write_end(-1), read_end(-1),
+        builder(&command_queue, &callback_queue, &cond, &queue_mutex,
+                &clients_map, &map_mutex, generateSockets()),
         cond(command_queue, delayed_command_queue), rrclass(RRClass::IN()),
-        shutdown_cmd(SHUTDOWN, ConstElementPtr()),
-        noop_cmd(NOOP, ConstElementPtr())
+        shutdown_cmd(SHUTDOWN, ConstElementPtr(), FinishedCallback()),
+        noop_cmd(NOOP, ConstElementPtr(), FinishedCallback())
     {}
+    ~ DataSrcClientsBuilderTest() {
+
+    }
 
     void configureZones();      // used for loadzone related tests
 
     ClientListMapPtr clients_map; // configured clients
     std::list<Command> command_queue; // test command queue
     std::list<Command> delayed_command_queue; // commands available after wait
+    std::list<FinishedCallback> callback_queue; // Callbacks from commands
+    int write_end, read_end;
     TestDataSrcClientsBuilder builder;
     TestCondVar cond;
     TestMutex queue_mutex;
@@ -72,6 +83,15 @@ protected:
     const RRClass rrclass;
     const Command shutdown_cmd;
     const Command noop_cmd;
+private:
+    int generateSockets() {
+        int pair[2];
+        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, pair);
+        assert(result == 0);
+        write_end = pair[0];
+        read_end = pair[1];
+        return write_end;
+    }
 };
 
 TEST_F(DataSrcClientsBuilderTest, runSingleCommand) {
@@ -82,6 +102,45 @@ TEST_F(DataSrcClientsBuilderTest, runSingleCommand) {
     EXPECT_EQ(0, cond.wait_count); // no wait because command queue is not empty
     EXPECT_EQ(1, queue_mutex.lock_count);
     EXPECT_EQ(1, queue_mutex.unlock_count);
+    // No callback scheduled, none called.
+    EXPECT_TRUE(callback_queue.empty());
+    // Not woken up.
+    char c;
+    int result = recv(read_end, &c, 1, MSG_DONTWAIT);
+    EXPECT_EQ(-1, result);
+    EXPECT_TRUE(errno == EAGAIN || errno == EWOULDBLOCK);
+}
+
+// Just to have a valid function callback to pass
+void emptyCallsback() {}
+
+// Check a command finished callback is passed
+TEST_F(DataSrcClientsBuilderTest, commandFinished) {
+    command_queue.push_back(Command(SHUTDOWN, ConstElementPtr(),
+                                    emptyCallsback));
+    builder.run();
+    EXPECT_EQ(0, cond.wait_count); // no wait because command queue is not empty
+    // Once for picking up data, once for putting the callback there
+    EXPECT_EQ(2, queue_mutex.lock_count);
+    EXPECT_EQ(2, queue_mutex.unlock_count);
+    // There's one callback in the queue
+    ASSERT_EQ(1, callback_queue.size());
+    // Not using EXPECT_EQ, as that produces warning in printing out the result
+    EXPECT_TRUE(emptyCallsback == callback_queue.front());
+    // And we are woken up.
+    char c;
+    int result = recv(read_end, &c, 1, MSG_DONTWAIT);
+    EXPECT_EQ(1, result);
+}
+
+// Test that low-level errors with the synchronization socket
+// (an unexpected condition) is detected and program aborted.
+TEST_F(DataSrcClientsBuilderTest, finishedCrash) {
+    command_queue.push_back(Command(SHUTDOWN, ConstElementPtr(),
+                                    emptyCallsback));
+    // Break the socket
+    close(write_end);
+    EXPECT_DEATH_IF_SUPPORTED({builder.run();}, "");
 }
 
 TEST_F(DataSrcClientsBuilderTest, runMultiCommands) {
@@ -138,7 +197,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     // the error handling
 
     // A command structure we'll modify to send different commands
-    Command reconfig_cmd(RECONFIGURE, ConstElementPtr());
+    Command reconfig_cmd(RECONFIGURE, ConstElementPtr(), FinishedCallback());
 
     // Initially, no clients should be there
     EXPECT_TRUE(clients_map->empty());
@@ -166,7 +225,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
         "}"
     );
 
-    reconfig_cmd.second = good_config;
+    reconfig_cmd.params = good_config;
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(1, clients_map->size());
     EXPECT_EQ(1, map_mutex.lock_count);
@@ -177,7 +236,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
     // If a 'bad' command argument got here, the config validation should
     // have failed already, but still, the handler should return true,
     // and the clients_map should not be updated.
-    reconfig_cmd.second = Element::create("{ \"foo\": \"bar\" }");
+    reconfig_cmd.params = Element::create("{ \"foo\": \"bar\" }");
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
     // Building failed, so map mutex should not have been locked again
@@ -185,7 +244,7 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
 
     // The same for a configuration that has bad data for the type it
     // specifies
-    reconfig_cmd.second = bad_config;
+    reconfig_cmd.params = bad_config;
     builder.handleCommand(reconfig_cmd);
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
@@ -194,21 +253,21 @@ TEST_F(DataSrcClientsBuilderTest, reconfigure) {
 
     // The same goes for an empty parameter (it should at least be
     // an empty map)
-    reconfig_cmd.second = ConstElementPtr();
+    reconfig_cmd.params = ConstElementPtr();
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(working_config_clients, clients_map);
     EXPECT_EQ(1, map_mutex.lock_count);
 
     // Reconfigure again with the same good clients, the result should
     // be a different map than the original, but not an empty one.
-    reconfig_cmd.second = good_config;
+    reconfig_cmd.params = good_config;
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_NE(working_config_clients, clients_map);
     EXPECT_EQ(1, clients_map->size());
     EXPECT_EQ(2, map_mutex.lock_count);
 
     // And finally, try an empty config to disable all datasource clients
-    reconfig_cmd.second = Element::createMap();
+    reconfig_cmd.params = Element::createMap();
     EXPECT_TRUE(builder.handleCommand(reconfig_cmd));
     EXPECT_EQ(0, clients_map->size());
     EXPECT_EQ(3, map_mutex.lock_count);
@@ -224,7 +283,8 @@ TEST_F(DataSrcClientsBuilderTest, shutdown) {
 TEST_F(DataSrcClientsBuilderTest, badCommand) {
     // out-of-range command ID
     EXPECT_THROW(builder.handleCommand(Command(NUM_COMMANDS,
-                                               ConstElementPtr())),
+                                               ConstElementPtr(),
+                                               FinishedCallback())),
                  isc::Unexpected);
 }
 
@@ -308,7 +368,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZone) {
 
     const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
-                                   " \"origin\": \"test1.example\"}"));
+                                   " \"origin\": \"test1.example\"}"),
+                               FinishedCallback());
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
 
     // loadZone involves two critical sections: one for getting the zone
@@ -369,7 +430,8 @@ TEST_F(DataSrcClientsBuilderTest,
     // Now send the command to reload it
     const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
-                                   " \"origin\": \"example.org\"}"));
+                                   " \"origin\": \"example.org\"}"),
+                               FinishedCallback());
     EXPECT_TRUE(builder.handleCommand(loadzone_cmd));
     // And now it should be present too.
     EXPECT_EQ(ZoneFinder::SUCCESS,
@@ -380,7 +442,8 @@ TEST_F(DataSrcClientsBuilderTest,
     // An error case: the zone has no configuration. (note .com here)
     const Command nozone_cmd(LOADZONE, Element::fromJSON(
                                  "{\"class\": \"IN\","
-                                 " \"origin\": \"example.com\"}"));
+                                 " \"origin\": \"example.com\"}"),
+                             FinishedCallback());
     EXPECT_THROW(builder.handleCommand(nozone_cmd),
                  TestDataSrcClientsBuilder::InternalCommandError);
     // The previous zone is not hurt in any way
@@ -403,7 +466,8 @@ TEST_F(DataSrcClientsBuilderTest,
     builder.handleCommand(
                      Command(LOADZONE, Element::fromJSON(
                                  "{\"class\": \"IN\","
-                                 " \"origin\": \"example.org\"}")));
+                                 " \"origin\": \"example.org\"}"),
+                             FinishedCallback()));
     // Only one mutex was needed because there was no actual reload.
     EXPECT_EQ(orig_lock_count + 1, map_mutex.lock_count);
     EXPECT_EQ(orig_unlock_count + 1, map_mutex.unlock_count);
@@ -421,7 +485,8 @@ TEST_F(DataSrcClientsBuilderTest,
         builder.handleCommand(
             Command(LOADZONE, Element::fromJSON(
                         "{\"class\": \"IN\","
-                        " \"origin\": \"nosuchzone.example\"}"))),
+                        " \"origin\": \"nosuchzone.example\"}"),
+                    FinishedCallback())),
         TestDataSrcClientsBuilder::InternalCommandError);
 
     // basically impossible case: in-memory cache is completely disabled.
@@ -441,7 +506,8 @@ TEST_F(DataSrcClientsBuilderTest,
     EXPECT_THROW(builder.handleCommand(
                      Command(LOADZONE, Element::fromJSON(
                                  "{\"class\": \"IN\","
-                                 " \"origin\": \"example.org\"}"))),
+                                 " \"origin\": \"example.org\"}"),
+                             FinishedCallback())),
                  TestDataSrcClientsBuilder::InternalCommandError);
 }
 
@@ -454,13 +520,21 @@ TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
     // there's an error in the new zone file.  reload will be rejected.
     const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
-                                   " \"origin\": \"test1.example\"}"));
+                                   " \"origin\": \"test1.example\"}"),
+                               FinishedCallback());
     EXPECT_THROW(builder.handleCommand(loadzone_cmd),
                  TestDataSrcClientsBuilder::InternalCommandError);
     zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
 }
 
 TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
+    // If the test is run as the root user, it will fail as insufficient
+    // permissions will not stop the root user from using a file.
+    if (getuid() == 0) {
+        std::cerr << "Skipping test as it's run as the root user" << std::endl;
+        return;
+    }
+
     configureZones();
 
     // install the zone file as unreadable
@@ -469,7 +543,8 @@ TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
                              TEST_DATA_BUILDDIR "/test1.zone.copied"));
     const Command loadzone_cmd(LOADZONE, Element::fromJSON(
                                    "{\"class\": \"IN\","
-                                   " \"origin\": \"test1.example\"}"));
+                                   " \"origin\": \"test1.example\"}"),
+                               FinishedCallback());
     EXPECT_THROW(builder.handleCommand(loadzone_cmd),
                  TestDataSrcClientsBuilder::InternalCommandError);
     zoneChecks(clients_map, rrclass);     // zone shouldn't be replaced
@@ -482,7 +557,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneWithoutDataSrc) {
                      Command(LOADZONE,
                              Element::fromJSON(
                                  "{\"class\": \"IN\", "
-                                 " \"origin\": \"test1.example\"}"))),
+                                 " \"origin\": \"test1.example\"}"),
+                             FinishedCallback())),
                  TestDataSrcClientsBuilder::InternalCommandError);
 }
 
@@ -492,7 +568,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
     if (!isc::util::unittests::runningOnValgrind()) {
         // null arg: this causes assertion failure
         EXPECT_DEATH_IF_SUPPORTED({
-                builder.handleCommand(Command(LOADZONE, ElementPtr()));
+                builder.handleCommand(Command(LOADZONE, ElementPtr(),
+                                              FinishedCallback()));
             }, "");
     }
 
@@ -501,7 +578,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                      Command(LOADZONE,
                              Element::fromJSON(
                                  "{\"origin\": \"test1.example\","
-                                 " \"class\": \"no_such_class\"}"))),
+                                 " \"class\": \"no_such_class\"}"),
+                             FinishedCallback())),
                  InvalidRRClass);
 
     // not a string
@@ -509,7 +587,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
                      Command(LOADZONE,
                              Element::fromJSON(
                                  "{\"origin\": \"test1.example\","
-                                 " \"class\": 1}"))),
+                                 " \"class\": 1}"),
+                             FinishedCallback())),
                  isc::data::TypeError);
 
     // class or origin is missing: result in assertion failure
@@ -517,7 +596,8 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
         EXPECT_DEATH_IF_SUPPORTED({
                 builder.handleCommand(Command(LOADZONE,
                                               Element::fromJSON(
-                                                  "{\"class\": \"IN\"}")));
+                                                  "{\"class\": \"IN\"}"),
+                                              FinishedCallback()));
             }, "");
     }
 
@@ -525,12 +605,14 @@ TEST_F(DataSrcClientsBuilderTest, loadZoneInvalidParams) {
     EXPECT_THROW(builder.handleCommand(
                      Command(LOADZONE,
                              Element::fromJSON(
-                                 "{\"class\": \"IN\", \"origin\": \"...\"}"))),
+                                 "{\"class\": \"IN\", \"origin\": \"...\"}"),
+                             FinishedCallback())),
                  EmptyLabel);
     EXPECT_THROW(builder.handleCommand(
                      Command(LOADZONE,
                              Element::fromJSON(
-                                 "{\"origin\": 10, \"class\": 1}"))),
+                                 "{\"origin\": 10, \"class\": 1}"),
+                             FinishedCallback())),
                  isc::data::TypeError);
 }
 
@@ -561,7 +643,8 @@ TEST_F(DataSrcClientsBuilderTest,
                      Command(LOADZONE,
                              Element::fromJSON(
                                  "{\"origin\": \"test1.example\","
-                                 " \"class\": \"IN\"}"))),
+                                 " \"class\": \"IN\"}"),
+                             FinishedCallback())),
                  TestDataSrcClientsBuilder::InternalCommandError);
 }
 

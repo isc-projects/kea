@@ -31,8 +31,8 @@ class Dhcpv6Srv;
 
 /// @brief Configures DHCPv6 server
 ///
-/// This function is called every time a new configuration is received. The 
-/// extra parameter is a reference to DHCPv6 server component. It is currently 
+/// This function is called every time a new configuration is received. The
+/// extra parameter is a reference to DHCPv6 server component. It is currently
 /// not used and CfgMgr::instance() is accessed instead.
 ///
 /// This method does not throw. It catches all exceptions and returns them as
@@ -53,7 +53,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 ///
 /// @returns a reference to the global context
 ParserContextPtr& globalContext();
- 
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

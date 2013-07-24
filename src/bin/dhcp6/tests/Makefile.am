@@ -77,10 +77,10 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-
 endif
 
 noinst_PROGRAMS = $(TESTS)
