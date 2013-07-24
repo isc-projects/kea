@@ -1224,7 +1224,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         callout_handle->setArgument("lease6", lease);
 
         // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+        HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
