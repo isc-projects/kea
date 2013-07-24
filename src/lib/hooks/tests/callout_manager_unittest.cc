@@ -199,10 +199,6 @@ TEST_F(CalloutManagerTest, NumberOfLibraries) {
 
     EXPECT_NO_THROW(cm.reset(new CalloutManager(42)));
     EXPECT_EQ(42, cm->getNumLibraries());
-
-    // Check that setting the number of libraries alterns the number reported.
-    EXPECT_NO_THROW(cm->setNumLibraries(27));
-    EXPECT_EQ(27, cm->getNumLibraries());
 }
 
 // Check that we can only set the current library index to the correct values.
