@@ -199,7 +199,7 @@ NameChangeSender::sendNext() {
 
     // If queue isn't empty, then get one from the front. Note we leave
     // it on the front of the queue until we successfully send it.
-    if (send_queue_.size()) {
+    if (!send_queue_.empty()) {
         ncr_to_send_ = send_queue_.front();
 
        // @todo start defense timer
@@ -262,7 +262,7 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
 
 void
 NameChangeSender::skipNext() {
-    if (send_queue_.size()) {
+    if (!send_queue_.empty()) {
         // Discards the request at the front of the queue.
         send_queue_.pop_front();
     }
