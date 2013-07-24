@@ -910,8 +910,15 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    // check that the server send the packet
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // but the sent packet should have 0 length (we told the server to
+    // skip pack(), but did not do packing outselves)
+    Pkt6Ptr sent = srv_->fake_sent_.front();
+
+    // The actual size of sent packet should be 0
+    EXPECT_EQ(0, sent->getBuffer().getLength());
 }
 
 // This test checks if subnet6_select callout is triggered and reports
