@@ -2672,7 +2672,9 @@ can use various data source backends.
 &gt; <userinput>config set data_sources/classes/CH[0]/params {"BIND": "/usr/local/bind10/share/bind10/static.zone"}</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-        Then, lookup the static data from <filename>static.zone</filename> to test it:
+        Then, lookup the static data from
+        <filename>static.zone</filename> to test it (assuming your
+        resolver is running on <command>localhost</command>):
 
           <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
 &gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
