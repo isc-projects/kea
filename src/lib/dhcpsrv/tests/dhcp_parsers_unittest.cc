@@ -600,7 +600,7 @@ TEST_F(ParseConfigTest, noHooksLibrariesTest) {
 
     // Load a single library and repeat the parse.
     vector<string> basic_library;
-    basic_library.push_back(string(BASIC_CALLOUT_LIBRARY));
+    basic_library.push_back(string(CALLOUT_LIBRARY_1));
     HooksManager::loadLibraries(basic_library);
 
     rcode = parseConfiguration(config);
@@ -630,8 +630,8 @@ TEST_F(ParseConfigTest, validHooksLibrariesTest) {
     const std::string config =
         std::string("{ ") +
             std::string("\"hooks-libraries\": [") +
-                quote + std::string(BASIC_CALLOUT_LIBRARY) + quote + comma +
-                quote + std::string(FULL_CALLOUT_LIBRARY)  + quote +
+                quote + std::string(CALLOUT_LIBRARY_1) + quote + comma +
+                quote + std::string(CALLOUT_LIBRARY_2)  + quote +
             std::string("]") +
         std::string("}");
 
@@ -650,8 +650,8 @@ TEST_F(ParseConfigTest, validHooksLibrariesTest) {
     // The expected libraries should be the list of libraries specified
     // in the given order.
     std::vector<std::string> expected;
-    expected.push_back(BASIC_CALLOUT_LIBRARY);
-    expected.push_back(FULL_CALLOUT_LIBRARY);
+    expected.push_back(CALLOUT_LIBRARY_1);
+    expected.push_back(CALLOUT_LIBRARY_2);
     EXPECT_TRUE(expected == libraries);
 
     // Parse the string again.
@@ -677,9 +677,9 @@ TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
     const std::string config =
         std::string("{ ") +
             std::string("\"hooks-libraries\": [") +
-                quote + std::string(BASIC_CALLOUT_LIBRARY) + quote + comma +
+                quote + std::string(CALLOUT_LIBRARY_1) + quote + comma +
                 quote + std::string(NOT_PRESENT_LIBRARY) + quote + comma +
-                quote + std::string(FULL_CALLOUT_LIBRARY)  + quote +
+                quote + std::string(CALLOUT_LIBRARY_2)  + quote +
             std::string("]") +
         std::string("}");
 

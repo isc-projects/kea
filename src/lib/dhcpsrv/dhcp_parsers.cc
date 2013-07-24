@@ -23,7 +23,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <map>
 #include <string>
@@ -247,19 +246,24 @@ HooksLibrariesParser::build(ConstElementPtr value) {
     // - the command "DhcpN libreload" is required to reload the same
     // libraries (this prevents needless reloads when anything else in the
     // configuration is changed).
-/*
     vector<string> current_libraries = HooksManager::getLibraryNames();
     if (current_libraries == libraries_) {
         return;
     }
 
     // Library list has changed, validate each of the libraries specified.
-    string error_libs = HooksManager::validateLibraries(libraries_);
+    vector<string> error_libs = HooksManager::validateLibraries(libraries_);
     if (!error_libs.empty()) {
+
+        // Construct the list of libraries in error for the message.
+        string error_list = error_libs[0];
+        for (int i = 1; i < error_libs.size(); ++i) {
+            error_list += (string(", ") + error_libs[i]);
+        }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
-                  "library or libraries in error are: " + error_libs);
+                  "library or libraries in error are: " + error_list);
     }
-*/
+
     // The library list has changed and the libraries are valid, so flag for
     // update when commit() is called.
     changed_ = true;
