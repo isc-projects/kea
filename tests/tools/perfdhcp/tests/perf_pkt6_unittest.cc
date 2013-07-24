@@ -111,8 +111,8 @@ TEST_F(PerfPkt6Test, Constructor) {
     // Test constructor to be used for incoming messages.
     // Use default (1) offset value and don't specify transaction id.
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data)));
-    EXPECT_EQ(sizeof(data), pkt1->getData().size());
-    EXPECT_EQ(0, memcmp(&pkt1->getData()[0], data, sizeof(data)));
+    EXPECT_EQ(sizeof(data), pkt1->data_.size());
+    EXPECT_EQ(0, memcmp(&pkt1->data_[0], data, sizeof(data)));
     EXPECT_EQ(1, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
@@ -121,8 +121,8 @@ TEST_F(PerfPkt6Test, Constructor) {
     const uint32_t transid = 0x010203;
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data, sizeof(data),
                                                   offset_transid, transid));
-    EXPECT_EQ(sizeof(data), pkt2->getData().size());
-    EXPECT_EQ(0, memcmp(&pkt2->getData()[0], data, sizeof(data)));
+    EXPECT_EQ(sizeof(data), pkt2->data_.size());
+    EXPECT_EQ(0, memcmp(&pkt2->data_[0], data, sizeof(data)));
     EXPECT_EQ(0x010203, pkt2->getTransid());
     EXPECT_EQ(10, pkt2->getTransidOffset());
 }
@@ -163,7 +163,7 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
     // Get output buffer from packet 1 to create new packet
     // that will be later validated.
     util::OutputBuffer pkt1_output = pkt1->getBuffer();
-    ASSERT_EQ(pkt1_output.getLength(), pkt1->getData().size());
+    ASSERT_EQ(pkt1_output.getLength(), pkt1->data_.size());
     const uint8_t* pkt1_output_data = static_cast<const uint8_t*>
         (pkt1_output.getData());
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(pkt1_output_data,
