@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
+from collections import deque
 
 class SegmentInfoError(Exception):
     """An exception raised for general errors in the SegmentInfo class."""
@@ -83,7 +84,7 @@ class SegmentInfo:
         # READY state. This maintains such pending events in the order
         # they arrived. SegmentInfo doesn't have to know the details of
         # the stored data; it only matters for the memmgr.
-        self.__events = []
+        self.__events = deque()
 
     def get_state(self):
         """Returns the state of SegmentInfo (UPDATING, SYNCHRONIZING,
@@ -104,7 +105,7 @@ class SegmentInfo:
 
     def get_events(self):
         """Returns a list of pending events in the order they arrived."""
-        return self.__events
+        return list(self.__events)
 
     # Helper method used in complete_update(), sync_reader() and
     # remove_reader().
@@ -112,9 +113,7 @@ class SegmentInfo:
         if not self.__old_readers:
             self.__state = new_state
             if self.__events:
-                e = self.__events[0]
-                del self.__events[0]
-                return e
+                return self.__events.popleft()
 
         return None
 
