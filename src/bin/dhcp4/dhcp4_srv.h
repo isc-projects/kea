@@ -80,7 +80,7 @@ public:
               const bool direct_response_desired = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
-    ~Dhcpv4Srv();
+    virtual ~Dhcpv4Srv();
 
     /// @brief Main server processing loop.
     ///
