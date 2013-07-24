@@ -17,7 +17,7 @@ import json
 from isc.datasrc import ConfigurableClientList
 from isc.memmgr.datasrc_info import SegmentInfo
 
-from isc.log_messages.memmgr_messages import *
+from isc.log_messages.libmemmgr_messages import *
 from isc.memmgr.logger import logger
 
 class MemorySegmentBuilder:
@@ -69,7 +69,7 @@ class MemorySegmentBuilder:
         # in this case as we are likely running in a different thread
         # from the main thread which would need to be notified. Instead
         # return this in the response queue.
-        logger.error(MEMMGR_BUILDER_BAD_COMMAND_ERROR, bad_command)
+        logger.error(LIBMEMMGR_BUILDER_BAD_COMMAND_ERROR, bad_command)
         self._response_queue.append(('bad_command',))
         self._shutdown = True
 
@@ -110,16 +110,16 @@ class MemorySegmentBuilder:
             result, writer = clist.get_cached_zone_writer(zone_name, catch_load_error,
                                                           dsrc_name)
             if result != ConfigurableClientList.CACHE_STATUS_ZONE_SUCCESS:
-                logger.error(MEMMGR_BUILDER_GET_ZONE_WRITER_ERROR, zone_name, dsrc_name)
+                logger.error(LIBMEMMGR_BUILDER_GET_ZONE_WRITER_ERROR, zone_name, dsrc_name)
                 continue
 
             try:
                 error = writer.load()
                 if error is not None:
-                    logger.error(MEMMGR_BUILDER_ZONE_WRITER_LOAD_1_ERROR, zone_name, dsrc_name, error)
+                    logger.error(LIBMEMMGR_BUILDER_ZONE_WRITER_LOAD_1_ERROR, zone_name, dsrc_name, error)
                     continue
             except Exception as e:
-                logger.error(MEMMGR_BUILDER_ZONE_WRITER_LOAD_2_ERROR, zone_name, dsrc_name, str(e))
+                logger.error(LIBMEMMGR_BUILDER_ZONE_WRITER_LOAD_2_ERROR, zone_name, dsrc_name, str(e))
                 continue
             writer.install()
             writer.cleanup()
