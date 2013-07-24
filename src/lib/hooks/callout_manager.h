@@ -132,19 +132,8 @@ public:
     ///
     /// @param num_libraries Number of loaded libraries.
     ///
-    /// @throw isc::BadValue if the number of libraries is less than or equal
-    ///        to 0, or if the pointer to the server hooks object is empty.
-    CalloutManager(int num_libraries = 0)
-        : current_hook_(-1), current_library_(-1),
-          hook_vector_(ServerHooks::getServerHooks().getCount()),
-          library_handle_(this), pre_library_handle_(this, 0),
-          post_library_handle_(this, INT_MAX), num_libraries_(num_libraries)
-    {
-        // Check that the number of libraries is OK.  (This does a redundant
-        // set of the number of libraries, but it's only a single assignment
-        // and avoids the need for a separate "check" method.
-        setNumLibraries(num_libraries);
-    }
+    /// @throw isc::BadValue if the number of libraries is less than 0,
+    CalloutManager(int num_libraries = 0);
 
     /// @brief Register a callout on a hook for the current library
     ///
@@ -223,22 +212,6 @@ public:
     int getHookIndex() const {
         return (current_hook_);
     }
-
-    /// @brief Set number of libraries
-    ///
-    /// Sets the number of libraries.  Although the value is passed to the
-    /// constructor, in some cases that is only an estimate and the number
-    /// can only be determined after the CalloutManager is created.
-    ///
-    /// @note If the number if libraries is reset, it must be done *before*
-    ///       any callouts are registered.
-    ///
-    /// @param num_libraries Number of libraries served by this CalloutManager.
-    ///
-    /// @throw BadValue Number of libraries must be >= 0.
-    /// @throw LibraryCountChanged Number of libraries has been changed after
-    ///        callouts have been registered.
-    void setNumLibraries(int num_libraries);
 
     /// @brief Get number of libraries
     ///
