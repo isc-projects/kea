@@ -266,24 +266,6 @@ std::string CfgMgr::getDataDir() {
     return (datadir_);
 }
 
-void
-CfgMgr::setHooksLibraries(const std::vector<std::string>& hooks_libraries) {
-    hooks_libraries_.reset(new std::vector<std::string>(hooks_libraries));
-}
-
-boost::shared_ptr<std::vector<std::string> >
-CfgMgr::getAndClearHooksLibraries() {
-    // Create shared pointer pointing to nothing.
-    boost::shared_ptr<std::vector<std::string> > libraries;
-
-    // Set the new variable to point to the stored hooks libraries and clear
-    // the stored value.
-    libraries.swap(hooks_libraries_);
-
-    return (libraries);
-}
-
-
 
 CfgMgr::CfgMgr()
     :datadir_(DHCP_DATA_DIR) {
