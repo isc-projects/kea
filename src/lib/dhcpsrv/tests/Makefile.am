@@ -24,6 +24,18 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+# Build shared libraries for testing.
+lib_LTLIBRARIES = libco1.la libco2.la
+
+libco1_la_SOURCES  = callout_library.cc
+libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+libco2_la_SOURCES  = callout_library.cc
+libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc

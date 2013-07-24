@@ -2057,7 +2057,7 @@ TEST_F(Dhcp6ParserTest, InvalidLibrary) {
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // The status object must not be NULL
-    ASSERT_FALSE(status);
+    ASSERT_TRUE(status);
 
     // Returned value should not be 0
     comment_ = parseAnswer(rcode_, status);
