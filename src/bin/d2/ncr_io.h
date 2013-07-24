@@ -216,12 +216,11 @@ public:
     /// exceptions at the handler level are application issues and should be
     /// dealt with at that level.
     ///
-    /// If the handler were to throw, the exception will surface at
-    /// IOService::run (or run variant) method invocation as this occurs as
-    /// part of the callback chain.  This will cause the invocation of
-    /// doReceive to be skipped which will break the listen-receive-listen
-    /// cycle. To restart the cycle it would be necessary to call
-    /// stopListener() and then startListener().
+    /// This method does wrap the handler invocation within a try-catch
+    /// block as a fail-safe.  The exception will be logged but the
+    /// receive logic will continue.  What this implies is that continued
+    /// operation may or may not succeed as the application has violated
+    /// the interface contract.
     ///
     /// @param result contains that receive outcome status.
     /// @param ncr is a pointer to the newly received NameChangeRequest if
@@ -434,7 +433,8 @@ public:
         /// delivered (or attempted).
         ///
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(const Result result, NameChangeRequestPtr& ncr) = 0;
+        virtual void operator ()(const Result result,
+                                 NameChangeRequestPtr& ncr) = 0;
     };
 
     /// @brief Constructor
@@ -508,12 +508,11 @@ public:
     /// handler level are application issues and should be dealt with at that
     /// level.
     ///
-    /// If the handler were to throw, the exception will surface at
-    /// IOService::run (or run variant) method invocation as this occurs as
-    /// part of the callback chain.  This will cause the invocation of
-    /// sendNext to be skipped which will interrupt automatic buffer drain
-    /// cycle.  Assuming there is not a connectivity issue, the cycle will
-    /// resume with the next sendRequest call, or an explicit call to sendNext.
+    /// This method does wrap the handler invocation within a try-catch
+    /// block as a fail-safe.  The exception will be logged but the
+    /// send logic will continue.  What this implies is that continued
+    /// operation may or may not succeed as the application has violated
+    /// the interface contract.
     ///
     /// @param result contains that send outcome status.
     void invokeSendHandler(const NameChangeSender::Result result);

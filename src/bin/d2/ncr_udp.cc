@@ -103,7 +103,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
                                   (ip_address_.isV4() ? asio::ip::udp::v4() :
                                    asio::ip::udp::v6())));
 
-        // If in test mode, enable address reuse.
+        // Set the socket option to reuse addresses if it is enabled.
         if (reuse_address_) {
             asio_socket_->set_option(asio::socket_base::reuse_address(true));
         }
@@ -182,11 +182,11 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
 //*************************** NameChangeUDPSender ***********************
 
 NameChangeUDPSender::
-NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address, 
-                    const uint32_t port, 
+NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
+                    const uint32_t port,
                     const isc::asiolink::IOAddress& server_address,
                     const uint32_t server_port, const NameChangeFormat format,
-                    RequestSendHandler& ncr_send_handler, 
+                    RequestSendHandler& ncr_send_handler,
                     const size_t send_que_max, const bool reuse_address)
     : NameChangeSender(ncr_send_handler, send_que_max),
       ip_address_(ip_address), port_(port), server_address_(server_address),
@@ -220,7 +220,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
                                   (ip_address_.isV4() ? asio::ip::udp::v4() :
                                    asio::ip::udp::v6())));
 
-        // If in test mode, enable address reuse.
+        // Set the socket option to reuse addresses if it is enabled.
         if (reuse_address_) {
             asio_socket_->set_option(asio::socket_base::reuse_address(true));
         }
