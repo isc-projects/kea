@@ -23,6 +23,8 @@
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -42,11 +44,6 @@ typedef OptionSpaceContainer<Subnet::OptionContainer,
                              Subnet::OptionDescriptor> OptionStorage;
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
-
-/// @brief Storage for hooks libraries
-typedef std::vector<std::string> HooksLibrariesStorage;
-/// @brief Pointer to storage for hooks libraries
-typedef boost::shared_ptr<HooksLibrariesStorage> HooksLibrariesStoragePtr;
 
 
 
@@ -169,13 +166,7 @@ public:
     /// the list of current names can be obtained from the HooksManager) or it
     /// is non-null (this is the new list of names, reload the libraries when
     /// possible).
-    ///
-    /// The same applies to the parser context.  The pointer is null (which
-    /// means that the isc::dhcp::HooksLibrariesParser::build method has
-    /// compared the library list in the configuration against the library
-    /// list in the HooksManager and has found no change) or it is non-null
-    /// (in which case this is the list of new library names).
-    HooksLibrariesStoragePtr hooks_libraries_;
+    boost::shared_ptr<std::vector<std::string> > hooks_libraries_;
 
     /// @brief The parsing universe of this context.
     Option::Universe universe_;
@@ -336,39 +327,71 @@ private:
 ///
 /// This parser handles the list of hooks libraries.  This is an optional list,
 /// which may be empty.
+///
+/// However, the parser does more than just check the list of library names.
+/// It does two other things:
+///
+/// -# The problem faced with the hooks libraries is that we wish to avoid
+/// reloading the libraries if they have not changed.  (This would cause the
+/// "unload" and "load" methods to run.  Although libraries should be written
+/// to cope with this, it is feasible that such an action may be constly in
+/// terms of time and resources, or may cause side effects such as clearning
+/// an internal cache.)  To this end, the parser also checks the list against
+/// the list of libraries current loaded and notes if there are changes.
+/// -# If there are, the parser validates the libraries; it opens them and
+/// checks that the "version" function exists and returns the correct value.
+///
+/// Only if the library list has changed and the libraries are valid will the
+/// change be applied.
 class HooksLibrariesParser : public DhcpConfigParser {
 public:
 
-    /// @brief constructor
+    /// @brief Constructor
     ///
     /// As this is a dedicated parser, it must be used to parse
     /// "hooks_libraries" parameter only. All other types will throw exception.
     ///
     /// @param param_name name of the configuration parameter being parsed.
-    /// @param GERBIL
+    ///
     /// @throw BadValue if supplied parameter name is not "hooks_libraries"
-    HooksLibrariesParser(const std::string& param_name,
-                         ParserContextPtr global_context);
+    HooksLibrariesParser(const std::string& param_name);
 
-    /// @brief parses parameters value
+    /// @brief Parses parameters value
     ///
     /// Parses configuration entry (list of parameters) and adds each element
-    /// to the hooks libraries list.
+    /// to the hooks libraries list.  The  method also checks whether the
+    /// list of libraries is the same as that already loaded.  If not, it
+    /// checks each of the libraries in the list for validity (they exist and
+    /// have a "version" function that returns the correct value).
     ///
     /// @param value pointer to the content of parsed values
     virtual void build(isc::data::ConstElementPtr value);
 
-    /// @brief commits hooks libraries data
+    /// @brief Commits hooks libraries data
+    ///
+    /// Providing that the specified libraries are valid and are different
+    /// to those already loaded, this method loads the new set of libraries
+    /// (and unloads the existing set).
     virtual void commit();
 
-private:
-    /// List of hooks libraries.  This will be NULL if there is no change to
-    /// the list.
-    HooksLibrariesStoragePtr libraries_;
+    /// @brief Returns list of parsed libraries
+    ///
+    /// Principally for testing, this returns the list of libraries as well as
+    /// an indication as to whether the list is different from the list of
+    /// libraries already loaded.
+    ///
+    /// @param libraries (out) List of libraries that were specified in the
+    ///        new configuration.
+    /// @param changed (out) true if the list is different from that currently
+    ///        loaded.
+    void getLibraries(std::vector<std::string>& libraries, bool& changed);
 
-    /// Parsing context which contains global values, options and option 
-    /// definitions.
-    ParserContextPtr global_context_;
+private:
+    /// List of hooks libraries.
+    std::vector<std::string> libraries_;
+
+    /// Indicator flagging that the list of libraries has changed.
+    bool changed_;
 };
 
 /// @brief Parser for option data value.

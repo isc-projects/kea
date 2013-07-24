@@ -165,7 +165,6 @@ public:
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
-        static_cast<void>(CfgMgr::instance().getAndClearHooksLibraries());
     }
 
     /// @brief generates interface-id option based on provided text
@@ -183,7 +182,6 @@ public:
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
-        static_cast<void>(CfgMgr::instance().getAndClearHooksLibraries());
     }
 };
 
@@ -578,36 +576,5 @@ TEST_F(CfgMgrTest, optionSpace6) {
 // No specific tests for getSubnet6. That method (2 overloaded versions) is tested
 // in Dhcpv6SrvTest.selectSubnetAddr and Dhcpv6SrvTest.selectSubnetIface
 // (see src/bin/dhcp6/tests/dhcp6_srv_unittest.cc)
-
-// Checks that the hooks libraries can be set correctly.
-TEST_F(CfgMgrTest, hooksLibraries) {
-    std::vector<std::string> test_libraries;
-    test_libraries.push_back("/usr/lib/alpha.so");
-    test_libraries.push_back("/usr/lib/beta.so");
-
-    std::vector<std::string> no_libraries;
-
-    // The pointer should be empty initially.
-    boost::shared_ptr<std::vector<std::string> > config_libraries =
-        CfgMgr::instance().getAndClearHooksLibraries();
-    EXPECT_FALSE(config_libraries);
-
-    // Set the new set of libraries and get them.
-    CfgMgr::instance().setHooksLibraries(test_libraries);
-    config_libraries = CfgMgr::instance().getAndClearHooksLibraries();
-    ASSERT_TRUE(config_libraries);
-    EXPECT_TRUE(test_libraries == *config_libraries);
-
-    // Expect the get operation to have cleared the stored libraries.
-    config_libraries = CfgMgr::instance().getAndClearHooksLibraries();
-    EXPECT_FALSE(config_libraries);
-
-    // Check that the methods also work with an empty library vector.
-    CfgMgr::instance().setHooksLibraries(no_libraries);
-    config_libraries = CfgMgr::instance().getAndClearHooksLibraries();
-    ASSERT_TRUE(config_libraries);
-    EXPECT_TRUE(config_libraries->empty());
-}
-
 
 } // end of anonymous namespace

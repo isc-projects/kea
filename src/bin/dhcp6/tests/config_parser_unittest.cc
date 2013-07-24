@@ -24,15 +24,23 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <hooks/hooks_manager.h>
+
+#include "test_libraries.h"
+#include "marker_file.h"
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 
 #include <fstream>
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <arpa/inet.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc;
@@ -40,6 +48,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::config;
+using namespace isc::hooks;
 
 namespace {
 
@@ -71,6 +80,10 @@ public:
     ~Dhcp6ParserTest() {
         // Reset configuration database after each test.
         resetConfiguration();
+
+        // ... and delete the hooks library marker files if present
+        unlink(LOAD_MARKER_FILE);
+        unlink(UNLOAD_MARKER_FILE);
     };
 
     // Checks if config_result (result of DHCP server configuration) has
@@ -169,17 +182,66 @@ public:
         return (stream.str());
     }
 
+    /// @brief Parse configuration
+    ///
+    /// Parses a configuration and executes a configuration of the server.
+    /// If the operation fails, the current test will register a failure.
+    ///
+    /// @param config Configuration to parse
+    /// @param operation Operation being performed.  In the case of an error,
+    ///        the error text will include the string "unable to <operation>.".
+    ///
+    /// @return true if the configuration succeeded, false if not.  In the
+    ///         latter case, a failure will have been added to the current test.
+    bool
+    executeConfiguration(const std::string& config, const char* operation) {
+        ConstElementPtr status;
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp6Server(srv_, json);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The following configuration was used: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+            return (false);
+        }
+
+        // The status object must not be NULL
+        if (!status) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned a null pointer.";
+            return (false);
+        }
+
+        // Store the answer if we need it.
+
+        // Returned value should be 0 (configuration success)
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            string reason = "";
+            if (comment_) {
+                reason = string(" (") + comment_->stringValue() + string(")");
+            }
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned error code "
+                   << rcode_ << reason;
+            return (false);
+        }
+
+        return (true);
+    }
+
     /// @brief Reset configuration database.
     ///
-    /// This function resets configuration data base by
-    /// removing all subnets and option-data. Reset must
-    /// be performed after each test to make sure that
-    /// contents of the database do not affect result of
-    /// subsequent tests.
+    /// This function resets configuration data base by removing all subnets
+    /// option-data, and hooks libraries. The reset must be performed after each
+    /// test to make sure that contents of the database do not affect the
+    /// results of subsequent tests.
     void resetConfiguration() {
-        ConstElementPtr status;
-
         string config = "{ \"interface\": [ \"all\" ],"
+            "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -187,32 +249,8 @@ public:
             "\"subnet6\": [ ], "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
-
-        try {
-            ElementPtr json = Element::fromJSON(config);
-            status = configureDhcp6Server(srv_, json);
-        } catch (const std::exception& ex) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. The following configuration was used"
-                   << " to reset database: " << std::endl
-                   << config << std::endl
-                   << " and the following error message was returned:"
-                   << ex.what() << std::endl;
-        }
-
-        // status object must not be NULL
-        if (!status) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " NULL pointer" << std::endl;
-        }
-        comment_ = parseAnswer(rcode_, status);
-        // returned value should be 0 (configuration success)
-        if (rcode_ != 0) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " error code " << rcode_ << std::endl;
-        }
+        static_cast<void>(executeConfiguration(config,
+                                               "reset configuration database"));
     }
 
     /// @brief Test invalid option parameter value.
@@ -277,13 +315,66 @@ public:
                             expected_data_len));
     }
 
-    int rcode_; ///< return core (see @ref isc::config::parseAnswer)
-    Dhcpv6Srv srv_; ///< instance of the Dhcp6Srv used during tests
+    /// @brief Check marker file
+    ///
+    /// Marker files are used by the load/unload functions in the hooks
+    /// libraries in these tests to signal whether they have been loaded or
+    /// unloaded.  The file (if present) contains a single line holding
+    /// a set of characters.
+    ///
+    /// This convenience function checks the file to see if the characters
+    /// are those expected.
+    ///
+    /// @param name Name of the marker file.
+    /// @param expected Characters expected.  If a marker file is present,
+    ///        it is expected to contain characters.  Therefore a value of NULL
+    ///        is used to signify that the marker file is not expected to be
+    ///        present.
+    ///
+    /// @return true if all tests pass, false if not (in which case a failure
+    ///         will have been logged).
+    bool
+    checkMarkerFile(const char* name, const char* expected) {
+        // Open the file for input
+        fstream file(name, fstream::in);
 
-    ConstElementPtr comment_; ///< comment (see @ref isc::config::parseAnswer)
+        // Is it open?
+        if (!file.is_open()) {
 
-    string valid_iface_; ///< name of a valid network interface (present in system)
-    string bogus_iface_; ///< name of a invalid network interface (not present in system)
+            // No.  This is OK if we don't expected is to be present but is
+            // a failure otherwise.
+            if (expected == NULL) {
+                return (true);
+            }
+            ADD_FAILURE() << "Unable to open " << name << ". It was expected "
+                          << "to be present and to contain the string '"
+                          << expected << "'";
+            return (false);
+        } else if (expected == NULL) {
+
+            // File is open but we don't expect it to be present.
+            ADD_FAILURE() << "Opened " << name << " but it is not expected to "
+                          << "be present.";
+            return (false);
+        }
+
+        // OK, is open, so read the data and see what we have.  Compare it
+        // against what is expected.
+        string content;
+        getline(file, content);
+
+        string expected_str(expected);
+        EXPECT_EQ(expected_str, content) << "Data was read from " << name;
+        file.close();
+
+        return (expected_str == content);
+    }
+
+    int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
+    Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
+    ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
+    string valid_iface_; ///< Valid network interface name (present in system)
+    string bogus_iface_; ///< invalid network interface name (not in system)
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -1849,5 +1940,161 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // Option with the code 112 should not be added.
     EXPECT_FALSE(desc.option->getOption(112));
 }
+
+// Tests of the hooks libraries configuration.
+
+// Helper function to return a configuration containing an arbitrary number
+// of hooks libraries.
+std::string
+buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
+    const string quote("\"");
+
+    // Create the first part of the configuration string.
+    string config =
+        "{ \"interface\": [ \"all\" ],"
+            "\"hooks-libraries\": [";
+
+    // Append the libraries (separated by commas if needed)
+    for (int i = 0; i < libraries.size(); ++i) {
+        if (i > 0) {
+            config += string(", ");
+        }
+        config += (quote + libraries[i] + quote);
+    }
+
+    // Append the remainder of the configuration.
+    config += string(
+        "],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}");
+
+    return (config);
+}
+
+// Convenience function for creating hooks library configuration with one or
+// two character string constants.
+std::string
+buildHooksLibrariesConfig(const char* library1 = NULL,
+                          const char* library2 = NULL) {
+    std::vector<std::string> libraries;
+    if (library1 != NULL) {
+        libraries.push_back(string(library1));
+        if (library2 != NULL) {
+            libraries.push_back(string(library2));
+        }
+    }
+    return (buildHooksLibrariesConfig(libraries));
+}
+
+
+// The goal of this test is to verify the configuration of hooks libraries if
+// none are specified.
+TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
+//    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+//   ASSERT_TRUE(libraries.empty());
+
+    // Parse a configuration containing no names.
+    string config = buildHooksLibrariesConfig();
+    if (!executeConfiguration(config,
+                              "set configuration with no hooks libraries")) {
+        return;
+    }
+//    libraries = HooksManager::getLibraryNames();
+//   ASSERT_TRUE(libraries.empty());
+}
+
+// Verify parsing fails with one library that will fail validation.
+TEST_F(Dhcp6ParserTest, InvalidLibrary) {
+//    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+//   ASSERT_TRUE(libraries.empty());
+
+    // Parse a configuration containing a failing library.
+    string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // The status object must not be NULL
+    ASSERT_FALSE(status);
+
+    // Returned value should not be 0
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_NE(0, rcode_);
+    std::cerr << "Reason for success: " << comment_;
+}
+
+// Verify the configuration of hooks libraries with two being specified.
+TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
+//    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+//   ASSERT_TRUE(libraries.empty());
+
+    // Marker files should not be present.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, NULL));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, NULL));
+
+    // Set up the configuration with two libraries and load them.
+    string config = buildHooksLibrariesConfig(CALLOUT_LIBRARY_1,
+                                              CALLOUT_LIBRARY_2);
+    ASSERT_TRUE(executeConfiguration(config,
+                                     "loading two valid libraries"));
+
+    // Expect two libraries to be loaded in the correct order (load marker file
+    // is present, no unload marker file).
+//   std::vector<std::string> libraries = HooksManager::getLibraryNames();
+//   ASSERT_EQ(2, libraries.size());
+     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, NULL));
+
+    // Unload the libraries.  The load file should not have changed, but
+    // the unload one should indicate the unload() functions have been run.
+    config = buildHooksLibrariesConfig();
+    ASSERT_TRUE(executeConfiguration(config, "unloading libraries"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+
+    // Expect the hooks system to say that none are loaded.
+    // libraries = HooksManager::getLibraryNames();
+    // EXPECT_TRUE(libraries.empty());
+
+    }
+//    libraries = HooksManager::getLibraryNames();
+//   ASSERT_TRUE(libraries.empty());
+
+
+
 
 };

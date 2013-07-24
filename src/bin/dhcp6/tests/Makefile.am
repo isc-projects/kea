@@ -27,7 +27,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -44,9 +45,18 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+# Build shared libraries for testing.
+lib_LTLIBRARIES = libco1.la libco2.la
+
+libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
+libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
+libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 TESTS += dhcp6_unittests
-
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
@@ -55,7 +65,9 @@ dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
-nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
+
+nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
+nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -68,6 +80,7 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+
 endif
 
 noinst_PROGRAMS = $(TESTS)
