@@ -948,6 +948,9 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         return (ia_rsp);
     }
 
+    // Keep the old data in case the callout tells us to skip update
+    Lease6 old_data = *lease;
+
     lease->preferred_lft_ = subnet->getPreferred();
     lease->valid_lft_ = subnet->getValid();
     lease->t1_ = subnet->getT1();
@@ -996,6 +999,12 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     if (!skip) {
         LeaseMgrFactory::instance().updateLease6(lease);
+    } else {
+        // Copy back the original date to the lease. For MySQL it doesn't make
+        // much sense, but for memfile, the Lease6Ptr points to the actual lease
+        // in memfile, so the actual update is performed when we manipulate fields
+        // of returned Lease6Ptr, the actual updateLease6() is no-op.
+        *lease = old_data;
     }
 
     return (ia_rsp);
