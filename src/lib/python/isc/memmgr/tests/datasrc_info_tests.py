@@ -134,25 +134,22 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertTupleEqual(e, (42,))
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
 
-        # in UPDATING state, it should always return None and not change
-        # state.
+        # in UPDATING state, it should always raise an exception and not
+        # change state.
         self.__si_to_updating_state()
-        e = self.__sgmt_info.start_update()
-        self.assertIsNone(e)
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
 
-        # in SYNCHRONIZING state, it should always return None and not
-        # change state.
+        # in SYNCHRONIZING state, it should always raise an exception
+        # and not change state.
         self.__si_to_synchronizing_state()
-        e = self.__sgmt_info.start_update()
-        self.assertIsNone(e)
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
 
-        # in COPYING state, it should always return None and not
+        # in COPYING state, it should always raise an exception and not
         # change state.
         self.__si_to_copying_state()
-        e = self.__sgmt_info.start_update()
-        self.assertIsNone(e)
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
 
     def test_complete_update(self):
