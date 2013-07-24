@@ -331,6 +331,9 @@ bool Dhcpv6Srv::run() {
             rsp->setIndex(query->getIndex());
             rsp->setIface(query->getIface());
 
+            // specifies if server should do the packing
+            bool skip_pack = false;
+
             // Execute all callouts registered for packet6_send
             if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -349,7 +352,7 @@ bool Dhcpv6Srv::run() {
                 // stage means "drop response".
                 if (callout_handle->getSkip()) {
                     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP);
-                    continue;
+                    skip_pack = true;
                 }
             }
 
@@ -357,41 +360,44 @@ bool Dhcpv6Srv::run() {
                       DHCP6_RESPONSE_DATA)
                 .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-            if (rsp->pack()) {
-                try {
-
-                    // Let's execute all callouts registered for buffer6_send
-                    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
-                        CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                        // Delete previously set arguments
-                        callout_handle->deleteAllArguments();
-
-                        // Pass incoming packet as argument
-                        callout_handle->setArgument("response6", rsp);
-
-                        // Call callouts
-                        HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
-
-                        // Callouts decided to skip the next processing step. The next
-                        // processing step would to parse the packet, so skip at this
-                        // stage means drop.
-                        if (callout_handle->getSkip()) {
-                            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP);
-                            continue;
-                        }
-
-                        callout_handle->getArgument("response6", rsp);
-                    }
-
-                    sendPacket(rsp);
-                } catch (const std::exception& e) {
-                    LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
+            if (!skip_pack) {
+                if (!rsp->pack()) {
+                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
+                    continue;
                 }
-            } else {
-                LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
             }
-        }
+
+            try {
+
+                // Let's execute all callouts registered for buffer6_send
+                if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                    // Delete previously set arguments
+                    callout_handle->deleteAllArguments();
+
+                    // Pass incoming packet as argument
+                    callout_handle->setArgument("response6", rsp);
+                    
+                    // Call callouts
+                    HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
+                    
+                    // Callouts decided to skip the next processing step. The next
+                    // processing step would to parse the packet, so skip at this
+                    // stage means drop.
+                    if (callout_handle->getSkip()) {
+                        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP);
+                        continue;
+                    }
+                    
+                    callout_handle->getArgument("response6", rsp);
+                }
+                
+                sendPacket(rsp);
+            } catch (const std::exception& e) {
+                LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
+            }
+        } 
     }
 
     return (true);
