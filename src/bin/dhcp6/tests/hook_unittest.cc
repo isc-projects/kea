@@ -1201,5 +1201,74 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
 }
 
+// This test verifies that incoming (positive) RENEW can be handled properly,
+// and the lease6_renew callouts are able to set the skip flag that will
+// reject the renewal
+TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_renew", lease6_renew_skip_callout));
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during RENEW.
+    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(), 0));
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set and not using
+    // previous (500, 501, etc.) values
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+
+    // Let's create a RENEW
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+
+    OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(renewed_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Server-id is mandatory in RENEW
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRenew(req);
+    ASSERT_TRUE(reply);
+
+    // Check that our callback was called
+    EXPECT_EQ("lease6_renew", callback_name_);
+
+    l = LeaseMgrFactory::instance().getLease6(addr);
+
+    // Check that the old values are still there and they were not
+    // updated by the renewal
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+}
+
 
 }   // end of anonymous namespace
