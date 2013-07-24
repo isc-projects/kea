@@ -1,5 +1,10 @@
+6XX.	[func]		tomek
+	Additional hooks (buffer6_receive, lease6_renew,
+	lease6_release, buffer6_send) added to the DHCPv6 server.
+	(Trac #2984, git ABCD)
+
 645.	[func]		tomek
-	Added initial set of hooks (pk4_receive, subnet4_select,
+	Added initial set of hooks (pkt4_receive, subnet4_select,
 	lease4_select, pkt4_send) to the DHCPv6 server.
 	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
 
@@ -20,7 +25,7 @@
 	(Trac #3056, git 92ebabdbcf6168666b03d7f7fbb31f899be39322)
 
 642.	[func]		tomek
-	Added initial set of hooks (pk6_receive, subnet6_select,
+	Added initial set of hooks (pkt6_receive, subnet6_select,
 	lease6_select, pkt6_send) to the DHCPv6 server.
 	(Trac #2995, git d6de376f97313ba40fef989e4a437d184fdf70cc)
 
