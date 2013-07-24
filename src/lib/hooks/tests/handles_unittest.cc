@@ -841,6 +841,24 @@ TEST_F(HandlesTest, ReturnSkipClear) {
     EXPECT_FALSE(callout_handle.getSkip());
 }
 
+// Check that the skip flag is cleared when callouts are called - even if
+// there are no callouts.
+
+TEST_F(HandlesTest, NoCalloutsSkipTest) {
+    // Note - no callouts are registered on any hook.
+    CalloutHandle callout_handle(getCalloutManager());
+
+    // Clear the skip flag and call a hook with no callouts.
+    callout_handle.setSkip(false);
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+    EXPECT_FALSE(callout_handle.getSkip());
+
+    // Set the skip flag and call a hook with no callouts.
+    callout_handle.setSkip(true);
+    getCalloutManager()->callCallouts(alpha_index_, callout_handle);
+    EXPECT_FALSE(callout_handle.getSkip());
+}
+
 // The next set of callouts do a similar thing to the above "skip" tests,
 // but alter the value of a string argument.  This is for testing that the
 // a callout is able to change an argument and return it to the caller.
