@@ -105,7 +105,7 @@ public:
     }
 
     /// @brief Compares two D2Dhcids for inequality
-    bool operator!=(const D2Dhcid other) const {
+    bool operator!=(const D2Dhcid& other) const {
         return (this->bytes_ != other.bytes_);
 }
 
