@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 
@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /********************************* D2Dhcid ************************************/
 

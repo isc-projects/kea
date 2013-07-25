@@ -13,8 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/interval_timer.h>
-#include <d2/ncr_io.h>
-#include <d2/ncr_udp.h>
+#include <dhcp_ddns/ncr_io.h>
+#include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
 
 #include <asio/ip/udp.hpp>
@@ -25,7 +25,7 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::d2;
+using namespace isc::dhcp_ddns;
 
 namespace {
 
