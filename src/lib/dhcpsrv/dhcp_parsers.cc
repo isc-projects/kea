@@ -274,6 +274,8 @@ HooksLibrariesParser::commit() {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
     if (changed_) {
+        // TODO Delete any stored CalloutHandles before reloading the
+        // libraries
         HooksManager::loadLibraries(libraries_);
     }
 }
