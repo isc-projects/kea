@@ -24,5 +24,9 @@ const char* LOAD_MARKER_FILE = "@abs_builddir@/load_marker.txt";
 const char* UNLOAD_MARKER_FILE = "@abs_builddir@/unload_marker.txt";
 }
 
+namespace isc {
+namespace dhcp {
+namespace test {
+
 #endif // MARKER_FILE_H
 

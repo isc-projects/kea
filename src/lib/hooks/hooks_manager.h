@@ -86,13 +86,6 @@ public:
     ///         In the latter case, an error message will have been output.
     static void unloadLibraries();
 
-    /// @brief Reload libraries
-    ///
-    /// Reloads the current libraries.  This causes all the libraries' "unload"
-    /// functions to run, the libraries to be closed, reopened, and all the
-    /// "load" functions run.
-    static void reloadLibraries();
-
     /// @brief Are callouts present?
     ///
     /// Checks loaded libraries and returns true if at lease one callout

@@ -226,6 +226,11 @@ a different hardware address. One possible reason for using different
 hardware address is that a cloned virtual machine was not updated and
 both clones use the same client-id.
 
+% DHCP4_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
+
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.
 
