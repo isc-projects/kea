@@ -169,7 +169,7 @@ class SegmentInfo:
             self.__state = self.SYNCHRONIZING
             self.__old_readers = self.__readers
             self.__readers = set()
-            return self.__sync_reader_helper(self.SYNCHRONIZING)
+            return self.__sync_reader_helper(self.READY)
         elif self.__state == self.COPYING:
             self.__state = self.READY
             return None
