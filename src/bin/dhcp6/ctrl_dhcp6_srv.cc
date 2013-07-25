@@ -26,16 +26,20 @@
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/spec_config.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
 #include <util/buffer.h>
 
 #include <cassert>
 #include <iostream>
+#include <string>
+#include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::util;
 using namespace std;
@@ -142,7 +146,19 @@ ControlledDhcpv6Srv::dhcp6CommandHandler(const string& command, ConstElementPtr 
                                  "Shutting down.");
         return (answer);
     } else if (command == "libreload") {
-        // TODO - add library reloading
+        // TODO delete any stored CalloutHandles referring to the old libraries
+        // Get list of currently loaded libraries and reload them.
+        vector<string> loaded = HooksManager::getLibraryNames();
+        bool status = HooksManager::loadLibraries(loaded);
+        if (!status) {
+            LOG_ERROR(dhcp6_logger, DHCP6_RELOAD_FAIL);
+            ConstElementPtr answer = isc::config::createAnswer(1,
+                                     "Failed to reload hooks libraries.");
+            return (answer);
+        }
+        ConstElementPtr answer = isc::config::createAnswer(0,
+                                 "Hooks libraries successfully reloaded.");
+        return (answer);
     }
 
     ConstElementPtr answer = isc::config::createAnswer(1,

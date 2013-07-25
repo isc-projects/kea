@@ -137,7 +137,7 @@ TEST_F(CtrlDhcpv4SrvTest, libreload) {
     ConstElementPtr result =
         ControlledDhcpv4Srv::execDhcpv4ServerCommand("libreload", params);
     ConstElementPtr comment = parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode); // expect success
+    EXPECT_EQ(0, rcode); // Expect success
 
     // Check that the libraries have unloaded and reloaded.  The libraries are
     // unloaded in the reverse order to which they are loaded.  When they load,
