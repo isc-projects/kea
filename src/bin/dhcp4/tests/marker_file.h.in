@@ -42,9 +42,7 @@ namespace test {
 ///
 /// @param name Name of the marker file.
 /// @param expected Characters expected.  If a marker file is present,
-///        it is expected to contain characters.  Therefore a value of NULL
-///        is used to signify that the marker file is not expected to be
-///        present.
+///        it is expected to contain characters.
 ///
 /// @return true if all tests pass, false if not (in which case a failure
 ///         will have been logged).

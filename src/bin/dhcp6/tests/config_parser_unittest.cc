@@ -1985,12 +1985,13 @@ TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
     string config = buildHooksLibrariesConfig();
     if (!executeConfiguration(config,
                               "set configuration with no hooks libraries")) {
-        return;
-    }
+        FAIL() << "Unable to execute configuration";
 
-    // No libraries should be loaded at the end of the test.
-    libraries = HooksManager::getLibraryNames();
-    ASSERT_TRUE(libraries.empty());
+    } else {
+        // No libraries should be loaded at the end of the test.
+        libraries = HooksManager::getLibraryNames();
+        EXPECT_TRUE(libraries.empty());
+    }
 }
 
 // Verify parsing fails with one library that will fail validation.
@@ -2021,8 +2022,8 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
     ASSERT_TRUE(libraries.empty());
 
     // Marker files should not be present.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, NULL));
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, NULL));
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Set up the configuration with two libraries and load them.
     string config = buildHooksLibrariesConfig(CALLOUT_LIBRARY_1,
@@ -2035,7 +2036,7 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
      libraries = HooksManager::getLibraryNames();
      ASSERT_EQ(2, libraries.size());
      EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
-     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, NULL));
+     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Unload the libraries.  The load file should not have changed, but
     // the unload one should indicate the unload() functions have been run.

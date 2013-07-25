@@ -34,21 +34,9 @@ checkMarkerFile(const char* name, const char* expected) {
 
     // Is it open?
     if (!file.is_open()) {
-
-        // No.  This is OK if we don't expected is to be present but is
-        // a failure otherwise.
-        if (expected == NULL) {
-            return (true);
-        }
         ADD_FAILURE() << "Unable to open " << name << ". It was expected "
                       << "to be present and to contain the string '"
                       << expected << "'";
-        return (false);
-    } else if (expected == NULL) {
-
-        // File is open but we don't expect it to be present.
-        ADD_FAILURE() << "Opened " << name << " but it is not expected to "
-                      << "be present.";
         return (false);
     }
 
@@ -58,7 +46,8 @@ checkMarkerFile(const char* name, const char* expected) {
     getline(file, content);
 
     string expected_str(expected);
-    EXPECT_EQ(expected_str, content) << "Data was read from " << name;
+    EXPECT_EQ(expected_str, content) << "Marker file " << name
+        << "did not contain the expected data";
     file.close();
 
     return (expected_str == content);
