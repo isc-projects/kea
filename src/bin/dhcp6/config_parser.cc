@@ -596,7 +596,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     }
 
     // Now commit any changes that have been validated but not yet committed,
-    // but which can't be rolled back.
+    // and which can't be rolled back.
     if (hooks_parser) {
         hooks_parser->commit();
     }
