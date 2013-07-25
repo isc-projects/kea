@@ -123,7 +123,9 @@ TEST_F(CtrlDhcpv4SrvTest, libreload) {
     ASSERT_TRUE(libraries == loaded_libraries);
 
     // ... which also included checking that the marker file created by the
-    // load functions exists.
+    // load functions exists and holds the correct value (of "12" - the
+    // first library appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
