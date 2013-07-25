@@ -30,7 +30,7 @@
 #include <string>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /// @brief Exception thrown when NameChangeRequest marshalling error occurs.
 class NcrMessageError : public isc::Exception {
@@ -105,7 +105,7 @@ public:
     }
 
     /// @brief Compares two D2Dhcids for inequality
-    bool operator!=(const D2Dhcid other) const {
+    bool operator!=(const D2Dhcid& other) const {
         return (this->bytes_ != other.bytes_);
 }
 
@@ -494,7 +494,7 @@ private:
 };
 
 
-}; // end of isc::d2 namespace
+}; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
 
 #endif

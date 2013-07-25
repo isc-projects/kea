@@ -58,13 +58,13 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
 #include <deque>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /// @brief Exception thrown if an NcrListenerError encounters a general error.
 class NcrListenerError : public isc::Exception {
@@ -171,6 +171,9 @@ public:
         /// @throw This method MUST NOT throw.
         virtual void operator ()(const Result result,
                                  NameChangeRequestPtr& ncr) = 0;
+
+        virtual ~RequestReceiveHandler() {
+        }
     };
 
     /// @brief Constructor
@@ -435,6 +438,9 @@ public:
         /// @throw This method MUST NOT throw.
         virtual void operator ()(const Result result,
                                  NameChangeRequestPtr& ncr) = 0;
+
+        virtual ~RequestSendHandler() {
+        }
     };
 
     /// @brief Constructor
@@ -626,7 +632,7 @@ private:
 /// @brief Defines a smart pointer to an instance of a sender.
 typedef boost::shared_ptr<NameChangeSender> NameChangeSenderPtr;
 
-} // namespace isc::d2
+} // namespace isc::dhcp_ddns
 } // namespace isc
 
 #endif

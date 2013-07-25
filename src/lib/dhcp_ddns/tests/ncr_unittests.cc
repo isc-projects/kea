@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
@@ -20,7 +20,7 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::d2;
+using namespace isc::dhcp_ddns;
 
 namespace {
 
