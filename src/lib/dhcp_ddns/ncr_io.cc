@@ -12,11 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/d2_log.h>
-#include <d2/ncr_io.h>
+#include <dhcp_ddns/dhcp_ddns_log.h>
+#include <dhcp_ddns/ncr_io.h>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 //************************** NameChangeListener ***************************
 
@@ -60,7 +60,8 @@ NameChangeListener::stopListening() {
     } catch (const isc::Exception &ex) {
         // Swallow exceptions. If we have some sort of error we'll log
         // it but we won't propagate the throw.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR).arg(ex.what());
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR)
+                  .arg(ex.what());
     }
 
     // Set it false, no matter what.  This allows us to at least try to
@@ -78,7 +79,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     try {
         recv_handler_(result, ncr);
     } catch (const std::exception& ex) {
-        LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
                   .arg(ex.what());
     }
 
@@ -95,7 +96,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             // at the IOService::run (or run variant) invocation.  So we will
             // close the window by invoking the application handler with
             // a failed result, and let the application layer sort it out.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
                       .arg(ex.what());
 
             // Call the registered application layer handler.
@@ -106,7 +107,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             try {
                 recv_handler_(ERROR, empty);
             } catch (const std::exception& ex) {
-                LOG_ERROR(dctl_logger,
+                LOG_ERROR(dhcp_ddns_logger,
                           DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
                           .arg(ex.what());
             }
@@ -158,7 +159,8 @@ NameChangeSender::stopSending() {
     } catch (const isc::Exception &ex) {
         // Swallow exceptions. If we have some sort of error we'll log
         // it but we won't propagate the throw.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
+        LOG_ERROR(dhcp_ddns_logger, 
+                  DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
 
     // Set it false, no matter what.  This allows us to at least try to
@@ -199,7 +201,7 @@ NameChangeSender::sendNext() {
 
     // If queue isn't empty, then get one from the front. Note we leave
     // it on the front of the queue until we successfully send it.
-    if (send_queue_.size()) {
+    if (!send_queue_.empty()) {
         ncr_to_send_ = send_queue_.front();
 
        // @todo start defense timer
@@ -227,7 +229,7 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
     try {
         send_handler_(result, ncr_to_send_);
     } catch (const std::exception& ex) {
-        LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
                   .arg(ex.what());
     }
 
@@ -244,7 +246,7 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
         // at the IOService::run (or run variant) invocation.  So we will
         // close the window by invoking the application handler with
         // a failed result, and let the application layer sort it out.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_SEND_NEXT_ERROR)
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_SEND_NEXT_ERROR)
                   .arg(ex.what());
 
         // Invoke the completion handler passing in failed result.
@@ -254,15 +256,15 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
         try {
             send_handler_(ERROR, ncr_to_send_);
         } catch (const std::exception& ex) {
-            LOG_ERROR(dctl_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
-                      .arg(ex.what());
+            LOG_ERROR(dhcp_ddns_logger, 
+                      DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(ex.what());
         }
     }
 }
 
 void
 NameChangeSender::skipNext() {
-    if (send_queue_.size()) {
+    if (!send_queue_.empty()) {
         // Discards the request at the front of the queue.
         send_queue_.pop_front();
     }
@@ -277,5 +279,5 @@ NameChangeSender::clearSendQueue() {
     send_queue_.clear();
 }
 
-} // namespace isc::d2
+} // namespace isc::dhcp_ddns
 } // namespace isc

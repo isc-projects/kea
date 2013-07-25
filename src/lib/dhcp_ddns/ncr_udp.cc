@@ -12,15 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/d2_log.h>
-#include <d2/ncr_udp.h>
+#include <dhcp_ddns/dhcp_ddns_log.h>
+#include <dhcp_ddns/ncr_udp.h>
 
 #include <asio/ip/udp.hpp>
 #include <asio/error_code.hpp>
 #include <boost/bind.hpp>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 //*************************** UDPCallback ***********************
 UDPCallback::UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
@@ -161,7 +161,7 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
             ncr = NameChangeRequest::fromFormat(format_, input_buffer);
         } catch (const NcrMessageError& ex) {
             // log it and go back to listening
-            LOG_ERROR(dctl_logger, DHCP_DDNS_INVALID_NCR).arg(ex.what());
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_INVALID_NCR).arg(ex.what());
 
             // Queue up the next recieve.
             doReceive();
@@ -169,7 +169,7 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
         }
     } else {
         asio::error_code error_code = callback->getErrorCode();
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
                   .arg(error_code.message());
         result = ERROR;
     }
@@ -286,7 +286,7 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     else {
         // On a failure, log the error and set the result to ERROR.
         asio::error_code error_code = send_callback->getErrorCode();
-        LOG_ERROR(dctl_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
                   .arg(error_code.message());
 
         result = ERROR;
@@ -295,5 +295,5 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     // Call the application's registered request send handler.
     invokeSendHandler(result);
 }
-}; // end of isc::d2 namespace
+}; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
