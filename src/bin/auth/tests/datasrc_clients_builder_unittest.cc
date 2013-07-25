@@ -86,7 +86,7 @@ protected:
 private:
     int generateSockets() {
         int pair[2];
-        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, pair);
+        int result = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
         assert(result == 0);
         write_end = pair[0];
         read_end = pair[1];

@@ -407,7 +407,7 @@ private:
 
     int createFds() {
         int fds[2];
-        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, fds);
+        int result = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
         if (result != 0) {
             isc_throw(Unexpected, "Can't create socket pair: " <<
                       strerror(errno));
