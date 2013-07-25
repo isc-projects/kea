@@ -175,6 +175,18 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertIsNone(e) # old_readers is not empty
         self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
 
+        # c) with no readers, complete_update() from UPDATING must go
+        # directly to READY state
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+        e = self.__sgmt_info.complete_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
         # in SYNCHRONIZING state
         self.__si_to_synchronizing_state()
         self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
