@@ -43,6 +43,7 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace std;
 
@@ -314,61 +315,6 @@ public:
             "\"option-data\": [ ] }";
         static_cast<void>(executeConfiguration(config,
                                                "reset configuration database"));
-    }
-
-    /// @brief Check marker file
-    ///
-    /// Marker files are used by the load/unload functions in the hooks
-    /// libraries in these tests to signal whether they have been loaded or
-    /// unloaded.  The file (if present) contains a single line holding
-    /// a set of characters.
-    ///
-    /// This convenience function checks the file to see if the characters
-    /// are those expected.
-    ///
-    /// @param name Name of the marker file.
-    /// @param expected Characters expected.  If a marker file is present,
-    ///        it is expected to contain characters.  Therefore a value of NULL
-    ///        is used to signify that the marker file is not expected to be
-    ///        present.
-    ///
-    /// @return true if all tests pass, false if not (in which case a failure
-    ///         will have been logged).
-    bool
-    checkMarkerFile(const char* name, const char* expected) {
-        // Open the file for input
-        fstream file(name, fstream::in);
-
-        // Is it open?
-        if (!file.is_open()) {
-
-            // No.  This is OK if we don't expected is to be present but is
-            // a failure otherwise.
-            if (expected == NULL) {
-                return (true);
-            }
-            ADD_FAILURE() << "Unable to open " << name << ". It was expected "
-                          << "to be present and to contain the string '"
-                          << expected << "'";
-            return (false);
-        } else if (expected == NULL) {
-
-            // File is open but we don't expect it to be present.
-            ADD_FAILURE() << "Opened " << name << " but it is not expected to "
-                          << "be present.";
-            return (false);
-        }
-
-        // OK, is open, so read the data and see what we have.  Compare it
-        // against what is expected.
-        string content;
-        getline(file, content);
-
-        string expected_str(expected);
-        EXPECT_EQ(expected_str, content) << "Data was read from " << name;
-        file.close();
-
-        return (expected_str == content);
     }
 
     boost::scoped_ptr<Dhcpv4Srv> srv_;

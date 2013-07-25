@@ -17,12 +17,55 @@
 
 /// @file
 /// Define a marker file that is used in tests to prove that an "unload"
-/// function has been called.
+/// function has been called
 
 namespace {
-const char* LOAD_MARKER_FILE = "@abs_builddir@/load_marker.txt";
-const char* UNLOAD_MARKER_FILE = "@abs_builddir@/unload_marker.txt";
+const char* const LOAD_MARKER_FILE = "@abs_builddir@/load_marker.txt";
+const char* const UNLOAD_MARKER_FILE = "@abs_builddir@/unload_marker.txt";
 }
+
+namespace isc {
+namespace dhcp {
+namespace test {
+
+/// @brief Check marker file
+///
+/// This function is used in some of the DHCP server tests.
+///
+/// Marker files are used by the load/unload functions in the hooks
+/// libraries in these tests to signal whether they have been loaded or
+/// unloaded.  The file (if present) contains a single line holding
+/// a set of characters.
+///
+/// This convenience function checks the file to see if the characters
+/// are those expected.
+///
+/// @param name Name of the marker file.
+/// @param expected Characters expected.  If a marker file is present,
+///        it is expected to contain characters.  Therefore a value of NULL
+///        is used to signify that the marker file is not expected to be
+///        present.
+///
+/// @return true if all tests pass, false if not (in which case a failure
+///         will have been logged).
+bool
+checkMarkerFile(const char* name, const char* expected);
+
+/// @brief Check marker file exists
+///
+/// This function is used in some of the DHCP server tests.
+///
+/// Checkes that the specified file does NOT exist.
+///
+/// @param name Name of the marker file.
+///
+/// @return true if file exists, false if not.
+bool
+checkMarkerFileExists(const char* name);
+
+} // namespace test
+} // namespace dhcp
+} // namespace isc
 
 #endif // MARKER_FILE_H
 
