@@ -1132,6 +1132,11 @@ if test "x$enable_generate_docs" != xno ; then
     fi
     AC_MSG_RESULT(yes)
   fi
+
+  AC_PATH_PROG([ELINKS], [elinks])
+  if test -z "$ELINKS"; then
+    AC_MSG_ERROR("elinks not found; it is required for --enable-generate-docs")
+  fi
 fi
 
 
