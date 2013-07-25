@@ -246,6 +246,11 @@ mandatory client-id option. This is most likely caused by a buggy client
 (or a relay that malformed forwarded message). This request will not be
 processed and a response with error status code will be sent back.
 
+% DHCP6_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
+
 % DHCP6_RENEW_UNKNOWN_SUBNET RENEW message received from client on unknown subnet (duid=%1, iaid=%2)
 A warning message indicating that a client is attempting to renew his lease,
 but the server does not have any information about the subnet this client belongs
