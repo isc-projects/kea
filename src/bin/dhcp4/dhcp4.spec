@@ -3,6 +3,19 @@
     "module_name": "Dhcp4",
     "module_description": "DHCPv4 server daemon",
     "config_data": [
+      {
+        "item_name": "hooks-libraries",
+        "item_type": "list",
+        "item_optional": true,
+        "item_default": [],
+        "list_item_spec":
+        {
+          "item_name": "hooks-library",
+          "item_type": "string",
+          "item_optional": true,
+        }
+      },
+ 
       { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
@@ -272,7 +285,13 @@
                     "item_optional": true
                 }
             ]
+        },
+
+        {
+            "command_name": "libreload",
+            "command_description": "Reloads the current hooks libraries.", 
         }
+
     ]
   }
 }
