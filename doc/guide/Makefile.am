@@ -21,10 +21,8 @@ bind10-guide.html: bind10-guide.xml
 		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
 		$(srcdir)/bind10-guide.xml
 
-HTML2TXT = elinks -dump -no-numbering -no-references
-
 bind10-guide.txt: bind10-guide.html
-	$(HTML2TXT) bind10-guide.html > $@
+	@ELINKS@ -dump -no-numbering -no-references bind10-guide.html > $@
 
 bind10-messages.html: bind10-messages.xml
 	@XSLTPROC@ --novalid --xinclude --nonet \
