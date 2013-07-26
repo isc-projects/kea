@@ -168,6 +168,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
                               const IOAddress& hint,
+                              const bool fwd_dns_update,
+                              const bool rev_dns_update,
+                              const std::string& hostname,
                               bool fake_allocation /* = false */ ) {
 
     try {
@@ -201,7 +204,10 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 /// implemented
 
                 // the hint is valid and not currently used, let's create a lease for it
-                Lease6Ptr lease = createLease6(subnet, duid, iaid, hint, fake_allocation);
+                Lease6Ptr lease = createLease6(subnet, duid, iaid,
+                                               hint, fwd_dns_update,
+                                               rev_dns_update, hostname,
+                                               fake_allocation);
 
                 // It can happen that the lease allocation failed (we could have lost
                 // the race condition. That means that the hint is lo longer usable and
@@ -212,7 +218,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (existing->expired()) {
                     return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                              fake_allocation));
+                                              fwd_dns_update, rev_dns_update,
+                                              hostname, fake_allocation));
                 }
 
             }
@@ -246,7 +253,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
                 Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                              fake_allocation);
+                                               fwd_dns_update, rev_dns_update,
+                                               hostname, fake_allocation);
                 if (lease) {
                     return (lease);
                 }
@@ -257,7 +265,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (existing->expired()) {
                     return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                              fake_allocation));
+                                              fwd_dns_update, rev_dns_update,
+                                              hostname, fake_allocation));
                 }
             }
 
@@ -438,6 +447,9 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
                                          const Subnet6Ptr& subnet,
                                          const DuidPtr& duid,
                                          uint32_t iaid,
+                                         const bool fwd_dns_update,
+                                         const bool rev_dns_update,
+                                         const std::string& hostname,
                                          bool fake_allocation /*= false */ ) {
 
     if (!expired->expired()) {
@@ -454,9 +466,9 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = subnet->getID();
     expired->fixed_ = false;
-    expired->hostname_ = std::string("");
-    expired->fqdn_fwd_ = false;
-    expired->fqdn_rev_ = false;
+    expired->hostname_ = hostname;
+    expired->fqdn_fwd_ = fwd_dns_update;
+    expired->fqdn_rev_ = rev_dns_update;
 
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
@@ -517,11 +529,18 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const DuidPtr& duid,
                                     uint32_t iaid,
                                     const IOAddress& addr,
+                                    const bool fwd_dns_update,
+                                    const bool rev_dns_update,
+                                    const std::string& hostname,
                                     bool fake_allocation /*= false */ ) {
 
     Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID()));
+
+    lease->fqdn_fwd_ = fwd_dns_update;
+    lease->fqdn_rev_ = rev_dns_update;
+    lease->hostname_ = hostname;
 
     if (!fake_allocation) {
         // That is a real (REQUEST) allocation

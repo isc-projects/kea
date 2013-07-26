@@ -54,6 +54,11 @@ b10_dhcp6_SOURCES += config_parser.cc config_parser.h
 b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
 b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 
+# Temporarily compile this file here. It will be removed once libdhcp-ddns
+# is implemented which will include this file and other files required
+# by DHCPv6.
+b10_dhcp6_SOURCES += ../d2/ncr_msg.cc ../d2/ncr_msg.h
+
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
