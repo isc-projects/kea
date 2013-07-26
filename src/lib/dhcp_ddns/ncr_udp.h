@@ -111,7 +111,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
-#include <d2/ncr_io.h>
+#include <dhcp_ddns/ncr_io.h>
 #include <util/buffer.h>
 
 #include <boost/shared_array.hpp>
@@ -121,7 +121,7 @@
 /// UDPCallback operator implementation is mostly a pass through.
 ///
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /// @brief Thrown when a UDP level exception occurs.
 class NcrUDPError : public isc::Exception {
@@ -556,7 +556,7 @@ private:
     bool reuse_address_;
 };
 
-} // namespace isc::d2
+} // namespace isc::dhcp_ddns
 } // namespace isc
 
 #endif
