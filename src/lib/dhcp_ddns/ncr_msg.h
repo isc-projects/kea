@@ -50,7 +50,7 @@ enum NameChangeStatus  {
   ST_NEW,
   ST_PENDING,
   ST_COMPLETED,
-  ST_FAILED,
+  ST_FAILED
 };
 
 /// @brief Defines the list of data wire formats supported.
