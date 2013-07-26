@@ -248,7 +248,7 @@ public:
     void setMaxQueueSize(const size_t max_queue_size);
 
     /// @brief Returns the current state.
-    const State getMgrState() const {
+    State getMgrState() const {
         return (mgr_state_);
     }
 
