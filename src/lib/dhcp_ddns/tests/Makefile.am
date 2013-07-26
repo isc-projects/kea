@@ -52,6 +52,7 @@ libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libdhcp_ddns_unittests_LDADD += $(GTEST_LDADD)
 endif
 
