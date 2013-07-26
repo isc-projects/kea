@@ -54,6 +54,7 @@ b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
 b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
 b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
+b10_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
