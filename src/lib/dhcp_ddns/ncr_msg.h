@@ -30,7 +30,7 @@
 #include <string>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /// @brief Exception thrown when NameChangeRequest marshalling error occurs.
 class NcrMessageError : public isc::Exception {
@@ -494,7 +494,7 @@ private:
 };
 
 
-}; // end of isc::d2 namespace
+}; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
 
 #endif
