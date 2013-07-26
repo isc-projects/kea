@@ -70,7 +70,8 @@ import isc.config
 from isc.statistics import counters
 
 class _Statistics():
-    """Statistics data set"""
+    """Statistics data set. This class will be removed in the future
+    release."""
     # default statistics data
     _data = {}
     # default statistics spec used in case the specfile is omitted when
