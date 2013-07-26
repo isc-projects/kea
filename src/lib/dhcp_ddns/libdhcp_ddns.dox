@@ -1,0 +1,47 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+@page libdhcp_ddns DHCP_DDNS Request IO Library
+
+@section libdhcp_ddnsIntro Libdhcp_ddns Library Introduction
+
+libdhcp_ddns is a library of classes for sending and receiving requests used
+by ISC's  DHCP-DDNS service for carrying out DHCP-driven DDNS.  These requests
+are implemented in this library by the class, NameChangeRequest.
+
+This class provides services for constructing the requests as well as
+marshalling them to and from various transport formats.  Currently, the only
+format supported is JSON, however the design of the classes in this library is such that supporting additional formats will be easy to add.
+
+For sending and receiving NameChangeRequests, this library supplies an abstract
+pair of classes, NameChangeSender and NameChangeListener.  NameChangeSender
+defines the public interface that DHCP_DDNS clients, such as DHCP servers use
+for sending requests to DHCP_DDNS.   NameChangeListener is used by request
+consumers, primarily the DHCP_DDNS service, for receiving the requests.
+
+By providing abstract interfaces, the implementation isolates the senders and
+listeners from any underlying details of request transportation.  This was done
+to allow support for a variety of transportation mechanisms.  Currently, the
+only transport supported is via UDP Sockets, though support for TCP/IP sockets
+is forthcoming.  There may eventually be an implementation which is driven
+through an RDBMS.
+
+The UDP implementation is provided by NameChangeUDPSender and NameChangeUPDListener.
+The implementation is strictly unidirectional.  This means that there is no explicit
+acknowledgement of receipt of a request, and as it is UDP there is no guarantee of
+delivery.  Once provided, transport via TCP/IP sockets will provide a more reliable
+mechanism.
+
+*/

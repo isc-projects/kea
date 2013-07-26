@@ -20,7 +20,7 @@ dhcp_ddns_messages.h dhcp_ddns_messages.cc: dhcp_ddns_messages.mes
 BUILT_SOURCES = dhcp_ddns_messages.h dhcp_ddns_messages.cc
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = dhcp_ddns_messages.mes
+EXTRA_DIST = dhcp_ddns_messages.mes libdhcp_ddns.dox
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda dhcp_ddns_messages.h dhcp_ddns_messages.cc

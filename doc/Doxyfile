@@ -690,6 +690,7 @@ INPUT                  = ../src/lib/exceptions \
                          ../src/lib/dhcp \
                          ../src/lib/dhcpsrv \
                          ../src/bin/dhcp4 \
+                         ../src/lib/dhcp_ddns \
                          ../src/bin/d2 \
                          ../tests/tools/perfdhcp \
                          devel

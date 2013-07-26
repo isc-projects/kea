@@ -66,6 +66,7 @@
  *   - @subpage allocengine
  * - @subpage dhcpDatabaseBackends
  * - @subpage perfdhcpInternals
+ * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous topics
  * - @subpage LoggingApi
