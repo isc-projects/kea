@@ -1,3 +1,11 @@
+648.	[func]		tmark
+	Moved classes pertaining to sending and receiving
+	NameChangeRequests from src/bin/d2 into their own library,
+	libdhcp_ddns, in src/lib/dhcp_ddns.  This allows the
+	classes to be shared between DHDCP-DDNS and its clients,
+	such as the DHCP servers.
+	(Trac# 3065, git 3d39bccaf3f0565152ef73ec3e2cd03e77572c56)
+
 647.	[func]		tmark
 	Added initial implementation of classes for sending
 	and receiving NameChangeRequests between DHCP-DDNS
@@ -63,13 +71,13 @@
 	structure of per-zone statistics.
 	(Trac #2884, git c0153581c3533ef045a92e68e0464aab00947cbb)
 
-637.	[func]		[tmark]
+637.	[func]		tmark
 	Added initial implementation of NameChangeRequest,
 	which embodies DNS update requests sent to DHCP-DDNS
 	by its clients.
 	(trac3007 git f33bdd59c6a8c8ea883f11578b463277d01c2b70)
 
-636.	[func]		[tmark]
+636.	[func]		tmark
 	Added the initial implementation of configuration parsing for
 	DCHP-DDNS.
 	(Trac #2957, git c04fb71fa44c2a458aac57ae54eeb1711c017a49)
