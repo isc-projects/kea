@@ -14,8 +14,6 @@
 
 #include <config.h>
 
-#include <log/dummylog.h>
-
 #include <util/buffer.h>
 
 #include <asio.hpp>
