@@ -152,7 +152,8 @@ def _concat(*args, sep='/'):
     return sep.join(args)
 
 class _Statistics():
-    """Statistics data set"""
+    """Statistics data set. This class will be remove in the future
+    release."""
     # default statistics data
     _data = {}
     # default statistics spec used in case the specfile is omitted when
@@ -182,7 +183,8 @@ class Counters():
         statistics spec can be accumulated if spec_file_name is
         specified. If omitted, a default statistics spec is used. The
         default statistics spec is defined in a hidden class named
-        _Statistics().
+        _Statistics(). But the hidden class won't be used and
+        spec_file_name will be required in the future release.
         """
         self._zones_item_list = []
         self._start_time = {}
