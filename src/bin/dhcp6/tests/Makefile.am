@@ -55,6 +55,11 @@ dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+
+# Temporarily compile this file here. It will be removed once libdhcp-ddns
+# is implemented which will include this file and other files required
+# by DHCPv6.
+dhcp6_unittests_SOURCES += ../../d2/ncr_msg.cc ../../d2/ncr_msg.h
 nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

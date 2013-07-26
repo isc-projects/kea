@@ -65,6 +65,18 @@ This informational message is printed every time the IPv6 DHCP server
 is started.  It indicates what database backend type is being to store
 lease and other information.
 
+% DHCP6_DDNS_REMOVE_EMPTY_HOSTNAME FQDN for the lease being deleted is empty: %1
+This error message is issued when a lease being deleted contains an indication
+that the DNS Update has been performed for it, but the FQDN is missing for this
+lease. This is an indication that someone may have messed up in the lease
+database.
+
+% DHCP6_DDNS_REMOVE_INVALID_HOSTNAME FQDN for the lease being deleted has invalid format: %1
+This error message is issued when a lease being deleted contains an indication
+that the DNS Update has been performed for it, but the FQDN held in the lease
+database has invalid format and can't be transformed to the canonical on-wire
+format.
+
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of the

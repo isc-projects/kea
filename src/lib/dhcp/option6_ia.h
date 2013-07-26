@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +16,16 @@
 #define OPTION_IA_H
 
 #include <dhcp/option.h>
-
+#include <boost/shared_ptr.hpp>
 #include <stdint.h>
 
 namespace isc {
 namespace dhcp {
+
+class Option6IA;
+
+/// A pointer to the @c Option6IA object.
+typedef boost::shared_ptr<Option6IA> Option6IAPtr;
 
 class Option6IA: public Option {
 

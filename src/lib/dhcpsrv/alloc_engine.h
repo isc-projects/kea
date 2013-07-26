@@ -233,6 +233,11 @@ protected:
     /// @param duid Client's DUID
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
+    /// @param fwd_dns_update A boolean value which indicates that server takes
+    /// responisibility for the forward DNS Update for this lease (if true).
+    /// @param rev_dns_update A boolean value which indicates that server takes
+    /// responibility for the reverse DNS Update for this lease (if true).
+    /// @param hostname A fully qualified domain-name of the client.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return Allocated IPv6 lease (or NULL if allocation failed)
@@ -241,6 +246,9 @@ protected:
                      const DuidPtr& duid,
                      uint32_t iaid,
                      const isc::asiolink::IOAddress& hint,
+                     const bool fwd_dns_update,
+                     const bool rev_dns_update,
+                     const std::string& hostname,
                      bool fake_allocation);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
@@ -275,13 +283,21 @@ private:
     /// @param subnet subnet the lease is allocated from
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
-    /// @param addr an address that was selected and is confirmed to be available
+    /// @param addr an address that was selected and is confirmed to be
+    /// available
+    /// @param fwd_dns_update A boolean value which indicates that server takes
+    /// responisibility for the forward DNS Update for this lease (if true).
+    /// @param rev_dns_update A boolean value which indicates that server takes
+    /// responibility for the reverse DNS Update for this lease (if true).
+    /// @param hostname A fully qualified domain-name of the client.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           const bool fwd_dns_update, const bool rev_dns_update,
+                           const std::string& hostname,
                            bool fake_allocation = false);
 
     /// @brief Reuses expired IPv4 lease
@@ -313,12 +329,20 @@ private:
     /// @param subnet subnet the lease is allocated from
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param fwd_dns_update A boolean value which indicates that server takes
+    /// responisibility for the forward DNS Update for this lease (if true).
+    /// @param rev_dns_update A boolean value which indicates that server takes
+    /// responibility for the reverse DNS Update for this lease (if true).
+    /// @param hostname A fully qualified domain-name of the client.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
     Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
                                 const DuidPtr& duid, uint32_t iaid,
+                                const bool fwd_dns_update,
+                                const bool rev_dns_update,
+                                const std::string& hostname,
                                 bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator

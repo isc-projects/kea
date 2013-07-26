@@ -17,9 +17,15 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
+
+class Option6IAAddr;
+
+/// A pointer to the @c isc::dhcp::Option6IAAddr object.
+typedef boost::shared_ptr<Option6IAAddr> Option6IAAddrPtr;
 
 class Option6IAAddr: public Option {
 
