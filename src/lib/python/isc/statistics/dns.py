@@ -64,7 +64,7 @@ isc.notify.notify_out, in this example, empty methods would be invoked,
 which is directly defined in `counter.py`.
 
 This module basically inherits isc.statistics.counters.  Also see
-isc.statistics.counters.__doc__ for details."""
+documentation for isc.statistics.counters for details."""
 
 import isc.config
 from isc.statistics import counters
@@ -127,7 +127,8 @@ class _Statistics():
 
 class Counters(counters.Counters):
     """A list of counters which can be handled in the class are like
-    the following. Also see counters.Counters.__doc__ for details.
+    the following. Also see documentation for
+    isc.statistics.counters.Counters for details.
 
         zones/IN/example.com./notifyoutv4
         zones/IN/example.com./notifyoutv6
@@ -180,8 +181,8 @@ class Counters(counters.Counters):
     def __init__(self, spec_file_name=None):
         """If the item `zones` is defined in the spec file, it obtains a
         list of counter names under it when initiating.  For behaviors
-        other than this, see
-        isc.statistics.counters.Counters.__init__.__doc__."""
+        other than this, see documentation for
+        isc.statistics.counters.Counters.__init__()"""
         counters.Counters.__init__(self, spec_file_name)
         if self._perzone_prefix in \
                 isc.config.spec_name_list(self._statistics._spec):
