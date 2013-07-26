@@ -70,7 +70,7 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
 //*************************** NameChangeUDPListener ***********************
 NameChangeUDPListener::
 NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
-                      const uint32_t port, NameChangeFormat format,
+                      const uint32_t port, const NameChangeFormat format,
                       RequestReceiveHandler& ncr_recv_handler,
                       const bool reuse_address)
     : NameChangeListener(ncr_recv_handler), ip_address_(ip_address),
