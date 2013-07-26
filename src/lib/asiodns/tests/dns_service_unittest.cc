@@ -81,7 +81,7 @@ protected:
     UDPDNSServiceTest() :
         first_buffer_(NULL), second_buffer_(NULL),
         lookup(&first_buffer_, &second_buffer_, io_service),
-        dns_service(io_service, NULL, &lookup, NULL),
+        dns_service(io_service, &lookup, NULL),
         client_socket(io_service.get_io_service(), asio::ip::udp::v6()),
         server_ep(asio::ip::address::from_string(TEST_IPV6_ADDR),
                   lexical_cast<uint16_t>(TEST_SERVER_PORT)),
