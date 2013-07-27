@@ -677,6 +677,10 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question) {
         return (fqdn);
     }
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+              DHCP6_DDNS_RECEIVE_FQDN).arg(fqdn->toText());
+
+
     // Prepare the FQDN option which will be included in the response to
     // the client.
     Option6ClientFqdnPtr fqdn_resp(new Option6ClientFqdn(*fqdn));
@@ -775,6 +779,8 @@ Dhcpv6Srv::appendClientFqdn(const Pkt6Ptr& question,
     }
 
     if (include_fqdn) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_SEND_FQDN).arg(fqdn->toText());
         answer->addOption(fqdn);
     }
 
@@ -849,6 +855,9 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // the code and all requests from this queue will be sent to the
         // D2 module.
         name_change_reqs_.push(ncr);
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr.toText());
     }
 }
 
@@ -899,6 +908,10 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
                           lease->addr_.toText(),
                           dhcid, 0, lease->valid_lft_);
     name_change_reqs_.push(ncr);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+              DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr.toText());
+
 }
 
 
@@ -1019,6 +1032,13 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // DNS records and update the lease with the new settings.
         if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
             (lease->fqdn_rev_ != do_rev)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
+                .arg(lease->toText())
+                .arg(hostname)
+                .arg(do_rev ? "true" : "false")
+                .arg(do_fwd ? "true" : "false");
+
             // Schedule removal of the existing lease.
             createRemovalNameChangeRequest(lease);
             // Set the new lease properties and update.
@@ -1110,6 +1130,13 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // delete any existing FQDN records for this lease.
     if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
         (lease->fqdn_rev_ != do_rev)) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
+            .arg(lease->toText())
+            .arg(hostname)
+            .arg(do_rev ? "true" : "false")
+            .arg(do_fwd ? "true" : "false");
+
         createRemovalNameChangeRequest(lease);
     }
 
