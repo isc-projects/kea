@@ -42,3 +42,4 @@ if USE_CLANGPP
 libb10_asiolink_la_CXXFLAGS += -Wno-error
 endif
 libb10_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
+libb10_asiolink_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
