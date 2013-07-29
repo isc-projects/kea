@@ -72,8 +72,8 @@ public:
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in bufferOut_.
     ///
-    /// @return true if packing procedure was successful
-    bool
+    /// @throw InvalidOperation if packing fails
+    void
     pack();
 
     /// @brief Parses on-wire form of DHCPv4 packet.
