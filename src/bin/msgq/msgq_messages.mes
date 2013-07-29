@@ -119,6 +119,11 @@ on shutdown unless there's really something unexpected.
 % MSGQ_RECV_HDR Received header: %1
 Debug message. This message includes the whole routing header of a packet.
 
+% MSGQ_SELECT_ERROR Error while waiting for events: %1
+A low-level error happened when waiting for events, the error is logged. The
+reason for this varies, but it usually means the system is short on some
+resources.
+
 % MSGQ_SEND_ERROR Error while sending to socket %1: %2
 There was a low-level error when sending data to a socket. The error is logged
 and the corresponding socket is dropped.
