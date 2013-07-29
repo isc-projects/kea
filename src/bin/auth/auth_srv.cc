@@ -306,6 +306,8 @@ public:
                       MessageAttributes& stats_attrs,
                       const bool done);
 
+    /// Are we currently subscribed to the SegmentReader group?
+    bool readers_group_subscribed_;
 private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
@@ -322,6 +324,7 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
     datasrc_clients_mgr_(io_service_),
     ddns_base_forwarder_(ddns_forwarder),
     ddns_forwarder_(NULL),
+    readers_group_subscribed_(false),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {}
@@ -938,4 +941,65 @@ AuthSrv::destroyDDNSForwarder() {
 void
 AuthSrv::setTCPRecvTimeout(size_t timeout) {
     dnss_->setTCPRecvTimeout(timeout);
+}
+
+namespace {
+
+bool
+hasMappedSegment(auth::DataSrcClientsMgr& mgr) {
+    auth::DataSrcClientsMgr::Holder holder(mgr);
+    const std::vector<dns::RRClass>& classes(holder.getClasses());
+    BOOST_FOREACH(const dns::RRClass& rrclass, classes) {
+        const boost::shared_ptr<datasrc::ConfigurableClientList>&
+            list(holder.findClientList(rrclass));
+        const std::vector<DataSourceStatus>& states(list->getStatus());
+        BOOST_FOREACH(const datasrc::DataSourceStatus& status, states) {
+            if (status.getSegmentState() != datasrc::SEGMENT_UNUSED &&
+                status.getSegmentType() == "mapped")
+                // We use some segment and it's not a local one, so it
+                // must be remote.
+                return true;
+        }
+    }
+    // No remote segment found in any of the lists
+    return false;
+}
+
+}
+
+void
+AuthSrv::listsReconfigured() {
+    const bool has_remote = hasMappedSegment(impl_->datasrc_clients_mgr_);
+    if (has_remote && !impl_->readers_group_subscribed_) {
+        impl_->config_session_->subscribe("SegmentReader");
+        impl_->config_session_->
+            setUnhandledCallback(boost::bind(&AuthSrv::foreignCommand, this,
+                                             _1, _2, _3));
+        impl_->readers_group_subscribed_ = true;
+    } else if (!has_remote && impl_->readers_group_subscribed_) {
+        impl_->config_session_->unsubscribe("SegmentReader");
+        impl_->config_session_->
+            setUnhandledCallback(isc::config::ModuleCCSession::
+                                 UnhandledCallback());
+        impl_->readers_group_subscribed_ = false;
+    }
+}
+
+void
+AuthSrv::reconfigureDone(ConstElementPtr params) {
+    // ACK the segment
+    impl_->config_session_->
+        groupSendMsg(isc::config::createCommand("segment_info_update_ack",
+                                                params), "MemMgr");
+}
+
+void
+AuthSrv::foreignCommand(const std::string& command, const std::string&,
+                        const ConstElementPtr& params)
+{
+    if (command == "segment_info_update") {
+        impl_->datasrc_clients_mgr_.
+            segmentInfoUpdate(params, boost::bind(&AuthSrv::reconfigureDone,
+                                                  this, params));
+    }
 }
