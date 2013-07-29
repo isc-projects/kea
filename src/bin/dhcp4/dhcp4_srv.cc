@@ -320,14 +320,12 @@ Dhcpv4Srv::run() {
                           DHCP4_RESPONSE_DATA)
                           .arg(rsp->getType()).arg(rsp->toText());
 
-                if (rsp->pack()) {
-                    try {
-                        sendPacket(rsp);
-                    } catch (const std::exception& e) {
-                        LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL).arg(e.what());
-                    }
-                } else {
-                    LOG_ERROR(dhcp4_logger, DHCP4_PACK_FAIL);
+                try {
+                    rsp->pack();
+                    sendPacket(rsp);
+                } catch (const std::exception& e) {
+                    LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
+                              .arg(e.what());
                 }
             }
         }
