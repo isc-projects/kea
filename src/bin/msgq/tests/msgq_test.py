@@ -579,7 +579,6 @@ class SendNonblock(unittest.TestCase):
         '''
         msgq = MsgQ()
         # We do only partial setup, so we don't create the listening socket
-        msgq.setup_poller()
         (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         msgq.register_socket(write)
         self.assertEqual(1, len(msgq.lnames))
@@ -677,7 +676,6 @@ class SendNonblock(unittest.TestCase):
             queue_pid = os.fork()
             if queue_pid == 0:
                 signal.alarm(120)
-                msgq.setup_poller()
                 msgq.setup_signalsock()
                 msgq.register_socket(queue)
                 msgq.run()
@@ -754,7 +752,6 @@ class SendNonblock(unittest.TestCase):
         msgq = MsgQ()
         # Don't need a listen_socket
         msgq.listen_socket = DummySocket
-        msgq.setup_poller()
         msgq.setup_signalsock()
         msgq.register_socket(write)
         msgq.register_socket(control_write)
@@ -1046,32 +1043,6 @@ class SocketTests(unittest.TestCase):
                 expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_warns, self.__logger.warn_called)
-
-    def test_process_fd_read_after_bad_write(self):
-        '''Check the specific case of write fail followed by read attempt.
-
-        The write failure results in kill_socket, then read shouldn't tried.
-
-        '''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq.process_socket = None # if called, trigger an exception
-        self.__msgq._process_fd(42, True, True, False) # shouldn't crash
-
-        # check the socket is deleted from the fileno=>sock dictionary
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_close_after_bad_write(self):
-        '''Similar to the previous, but for checking dup'ed kill attempt'''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq._process_fd(42, True, False, True) # shouldn't crash
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_writer_after_close(self):
-        '''Emulate a "writable" socket has been already closed and killed.'''
-        # This just shouldn't crash
-        self.__msgq._process_fd(4200, True, False, False)
 
     def test_process_packet(self):
         '''Check some failure cases in handling an incoming message.'''
