@@ -236,7 +236,8 @@ image::auth-mapped.png[Sequence diagram for auth server using mapped memory segm
    argument and the segment mode of `READ_ONLY`.
    Note that the auth module handles the command argument as mostly
    opaque data; it's not expected to deal with details of segment
-   type-specific behavior.
+   type-specific behavior. If the reset fails, auth aborts (as there's
+   no clear way to handle the failure).
 
 6. `ConfigurableClientList::resetMemorySegment()` subsequently calls
    `reset()` method on the corresponding `ZoneTableSegment` with the
@@ -254,7 +255,8 @@ image::auth-mapped.png[Sequence diagram for auth server using mapped memory segm
    underlying memory segment is swapped with a new one.  The old
    memory segment object is destroyed.  Note that
    this "destroy" just means unmapping the memory region; the data
-   stored in the file are intact.
+   stored in the file are intact. Again, if mapping fails, auth
+   aborts.
 
 8. If the auth module happens to receive a reload command from other
    module, it could call
