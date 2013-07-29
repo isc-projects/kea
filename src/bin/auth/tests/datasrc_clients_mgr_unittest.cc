@@ -156,6 +156,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_FALSE(holder.findClientList(RRClass::IN()));
         EXPECT_FALSE(holder.findClientList(RRClass::CH()));
+        EXPECT_TRUE(holder.getClasses().empty());
         // map should be protected here
         EXPECT_EQ(1, FakeDataSrcClientsBuilder::map_mutex->lock_count);
         EXPECT_EQ(0, FakeDataSrcClientsBuilder::map_mutex->unlock_count);
@@ -174,6 +175,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_TRUE(holder.findClientList(RRClass::IN()));
         EXPECT_TRUE(holder.findClientList(RRClass::CH()));
+        EXPECT_EQ(2, holder.getClasses().size());
     }
     // We need to clear command queue by hand
     FakeDataSrcClientsBuilder::command_queue->clear();
@@ -188,6 +190,7 @@ TEST(DataSrcClientsMgrTest, holder) {
         TestDataSrcClientsMgr::Holder holder(mgr);
         EXPECT_TRUE(holder.findClientList(RRClass::IN()));
         EXPECT_FALSE(holder.findClientList(RRClass::CH()));
+        EXPECT_EQ(RRClass::IN(), holder.getClasses()[0]);
     }
 
     // Duplicate lock acquisition is prohibited (only test mgr can detect
@@ -243,6 +246,30 @@ TEST(DataSrcClientsMgrTest, reload) {
     EXPECT_THROW(mgr.loadZone(isc::data::ConstElementPtr()), CommandError);
     EXPECT_THROW(mgr.loadZone(isc::data::Element::createList()), CommandError);
     EXPECT_EQ(3, FakeDataSrcClientsBuilder::command_queue->size());
+}
+
+TEST(DataSrcClientsMgrTest, segmentUpdate) {
+    TestDataSrcClientsMgr mgr;
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::started);
+    EXPECT_TRUE(FakeDataSrcClientsBuilder::command_queue->empty());
+
+    isc::data::ElementPtr args =
+        isc::data::Element::fromJSON("{\"data-source-class\": \"IN\","
+                                     " \"data-source-name\": \"sqlite3\","
+                                     " \"segment-params\": {}}");
+    mgr.segmentInfoUpdate(args);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
+    // Some invalid inputs
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-class\": \"IN\","
+        " \"data-source-name\": \"sqlite3\"}")), CommandError);
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-name\": \"sqlite3\","
+        " \"segment-params\": {}}")), CommandError);
+    EXPECT_THROW(mgr.segmentInfoUpdate(isc::data::Element::fromJSON(
+        "{\"data-source-class\": \"IN\","
+        " \"segment-params\": {}}")), CommandError);
+    EXPECT_EQ(1, FakeDataSrcClientsBuilder::command_queue->size());
 }
 
 void
