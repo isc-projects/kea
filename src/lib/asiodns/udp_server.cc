@@ -21,8 +21,6 @@
 
 #include <config.h>
 
-#include <log/dummylog.h>
-
 #include <asio.hpp>
 #include <asio/error.hpp>
 #include <asiolink/dummy_io_cb.h>
@@ -35,7 +33,6 @@
 
 using namespace asio;
 using asio::ip::udp;
-using isc::log::dlog;
 
 using namespace std;
 using namespace isc::dns;
