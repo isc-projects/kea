@@ -221,7 +221,7 @@ TEST_F(Pkt6Test, packUnpack) {
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
 
-    EXPECT_TRUE(parent->pack());
+    EXPECT_NO_THROW(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
@@ -515,7 +515,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     EXPECT_EQ(DHCPV6_ADVERTISE, parent->getType());
 
-    EXPECT_TRUE(parent->pack());
+    EXPECT_NO_THROW(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
               + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
