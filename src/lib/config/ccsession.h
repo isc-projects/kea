@@ -575,6 +575,50 @@ public:
     /// \param id The id of request as returned by groupRecvMsgAsync.
     void cancelAsyncRecv(const AsyncRecvRequestID& id);
 
+    /// \brief Subscribe to a group
+    ///
+    /// Wrapper around the CCSession::subscribe.
+    void subscribe(const std::string& group) {
+        session_.subscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
+    /// \brief Unsubscribe from a group.
+    ///
+    /// Wrapper around the CCSession::unsubscribe.
+    void unsubscribe(const std::string& group) {
+        session_.unsubscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
+    /// \brief Callback type for unhandled commands
+    ///
+    /// The type of functions that are not handled by the ModuleCCSession
+    /// because they are not aimed at the module.
+    ///
+    /// The parameters are:
+    /// - Name of the command.
+    /// - The module it was aimed for (may be empty).
+    /// - The parameters of the command.
+    typedef boost::function<void (const std::string&, const std::string&,
+                                  const isc::data::ConstElementPtr&)>
+        UnhandledCallback;
+
+    /// \brief Register a callback for messages sent to foreign modules.
+    ///
+    /// Usually, a command aimed at foreign module (or sent directly)
+    /// is discarded. By registering a callback here, these can be
+    /// examined.
+    ///
+    /// \note A callback overwrites the previous one set.
+    /// \todo This is a temporary, unclean, solution. A more generic
+    ///     one needs to be designed. Also, a solution that is able
+    ///     to send an answer would be great.
+    ///
+    /// \param callback The new callback to use. It may be an empty
+    ///     function.
+    void setUnhandledCallback(const UnhandledCallback& callback) {
+        unhandled_callback_ = callback;
+    }
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
@@ -624,6 +668,8 @@ private:
                             isc::data::ConstElementPtr new_config);
 
     ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
+
+    UnhandledCallback unhandled_callback_;
 };
 
 /// \brief Default handler for logging config updates
