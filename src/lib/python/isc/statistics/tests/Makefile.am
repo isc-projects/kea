@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
-PYTESTS = counters_test.py
+PYTESTS = counters_test.py dns_test.py
 EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += testdata/test_spec1.spec
 EXTRA_DIST += testdata/test_spec2.spec
