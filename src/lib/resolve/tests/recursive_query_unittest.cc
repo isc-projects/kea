@@ -56,7 +56,6 @@
 #include <asiolink/io_service.h>
 #include <asiolink/io_message.h>
 #include <asiolink/io_error.h>
-#include <asiolink/simple_callback.h>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -333,8 +332,7 @@ protected:
     // Set up empty DNS Service
     // Set up an IO Service queue without any addresses
     void setDNSService() {
-        dns_service_.reset(new DNSService(io_service_, callback_.get(), NULL,
-                                          NULL));
+        dns_service_.reset(new DNSService(io_service_, callback_.get(), NULL));
     }
 
     // Run a simple server test, on either IPv4 or IPv6, and over either
@@ -478,10 +476,12 @@ protected:
     };
 
 private:
-    class ASIOCallBack : public SimpleCallback {
+    class ASIOCallBack : public DNSLookup {
     public:
         ASIOCallBack(RecursiveQueryTest* test_obj) : test_obj_(test_obj) {}
-        void operator()(const IOMessage& io_message) const {
+        void operator()(const IOMessage& io_message,
+                        isc::dns::MessagePtr, isc::dns::MessagePtr,
+                        isc::util::OutputBufferPtr, DNSServer*) const {
             test_obj_->callBack(io_message);
         }
     private:
