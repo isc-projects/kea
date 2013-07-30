@@ -28,7 +28,7 @@ import time
 from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
-from isc.statistics import Counters
+from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
 from isc.util.address_formatter import AddressFormatter
