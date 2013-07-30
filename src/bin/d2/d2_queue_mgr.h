@@ -49,18 +49,26 @@ public:
 
 
 /// @brief Thrown if the request queue is full when an enqueue is attempted.
-class D2QueueMgrQueFull : public isc::Exception {
+class D2QueueMgrQueueFull : public isc::Exception {
 public:
-    D2QueueMgrQueFull(const char* file, size_t line, const char* what) :
+    D2QueueMgrQueueFull(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
 /// @brief Thrown if the request queue empty and a read is attempted.
-class D2QueueMgrQueEmpty : public isc::Exception {
+class D2QueueMgrQueueEmpty : public isc::Exception {
 public:
-    D2QueueMgrQueEmpty(const char* file, size_t line, const char* what) :
+    D2QueueMgrQueueEmpty(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Thrown if a queue index is beyond the end of the queue
+class D2QueueMgrInvalidIndex : public isc::Exception {
+public:
+    D2QueueMgrInvalidIndex(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief D2QueueMgr creates and manages a queue of DNS update requests.
 ///
@@ -216,7 +224,7 @@ public:
     ///
     /// @param stop_state is one of the three stopped state values.
     ///
-    /// @throw Throws D2QueueMgrError if stop_state is a valid stop state.
+    /// @throw D2QueueMgrError if stop_state is a valid stop state.
     void stopListening(const State stop_state = STOPPED);
 
     /// @brief Deletes the current listener
@@ -242,7 +250,7 @@ public:
     ///
     /// @param max_queue_size is the new maximum size of the queue.
     ///
-    /// @throw Throws D2QueueMgrError if the new value is less than one or if
+    /// @throw D2QueueMgrError if the new value is less than one or if
     /// the new value is less than the number of entries currently in the
     /// queue.
     void setMaxQueueSize(const size_t max_queue_size);
@@ -258,12 +266,35 @@ public:
     /// approach to task selection.  Note, the entry is not removed from the
     /// queue.
     ///
-    /// @throw Throws D2QueueMgrQueEmpty if there are no entries in the queue.
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw D2QueueMgrQueEmpty if there are no entries in the queue.
     const dhcp_ddns::NameChangeRequestPtr& peek() const;
+
+    /// @brief Returns the entry at a given position in the queue.
+    ///
+    /// Note that the entry is not removed from the queue.
+    /// @param index the index of the entry in the queue to fetch.
+    /// Valid values are 0 (front of the queue) to (queue size - 1).
+    ///
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw D2QueueMgrInvalidIndex if the given index is beyond the
+    /// end of the queue.
+    const dhcp_ddns::NameChangeRequestPtr& peekAt(size_t index) const;
+
+    /// @brief Removes the entry at a given position in the queue.
+    ///
+    /// @param index the index of the entry in the queue to remove.
+    /// Valid values are 0 (front of the queue) to (queue size - 1).
+    ///
+    /// @throw D2QueueMgrInvalidIndex if the given index is beyond the
+    /// end of the queue.
+    void dequeueAt(size_t index);
 
     /// @brief Removes the entry at the front of the queue.
     ///
-    /// @throw Throws D2QueueMgrQueEmpty if there are no entries in the queue.
+    /// @throw D2QueueMgrQueEmpty if there are no entries in the queue.
     void dequeue();
 
     /// @brief Adds a request to the end of the queue.

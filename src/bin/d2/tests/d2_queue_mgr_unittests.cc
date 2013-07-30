@@ -84,7 +84,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 TEST(D2QueueMgrBasicTest, constructionTests) {
     isc::asiolink::IOService io_service;
 
-    // Verify that constructing with max queue size of zero is not allowed. 
+    // Verify that constructing with max queue size of zero is not allowed.
     EXPECT_THROW(D2QueueMgr(io_service, 0), D2QueueMgrError);
 
     // Verify that valid constructor works.
@@ -104,7 +104,7 @@ TEST(D2QueueMgrBasicTest, constructionTests) {
 /// 1. Following construction queue is empty
 /// 2. Attempting to peek at an empty queue is not allowed
 /// 3. Attempting to dequeue an empty queue is not allowed
-/// 4. Peek returns the first entry on the queue without altering queue content 
+/// 4. Peek returns the first entry on the queue without altering queue content
 /// 5. Dequeue removes the first entry on the queue
 TEST(D2QueueMgrBasicTest, basicQueueTests) {
     isc::asiolink::IOService io_service;
@@ -119,19 +119,19 @@ TEST(D2QueueMgrBasicTest, basicQueueTests) {
     EXPECT_EQ(0, queue_mgr->getQueueSize());
 
     // Verify that peek and dequeue both throw when queue is empty.
-    EXPECT_THROW(queue_mgr->peek(), D2QueueMgrQueEmpty);
-    EXPECT_THROW(queue_mgr->dequeue(), D2QueueMgrQueEmpty);
+    EXPECT_THROW(queue_mgr->peek(), D2QueueMgrQueueEmpty);
+    EXPECT_THROW(queue_mgr->dequeue(), D2QueueMgrQueueEmpty);
 
     // Vector to keep track of the NCRs we que.
     std::vector<NameChangeRequestPtr>ref_msgs;
-    NameChangeRequestPtr ncr; 
+    NameChangeRequestPtr ncr;
 
     // Iterate over the list of requests and add each to the queue.
     for (int i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
-        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i])); 
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ref_msgs.push_back(ncr);
-        
+
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
         EXPECT_NO_THROW(queue_mgr->enqueue(ncr));
@@ -139,7 +139,7 @@ TEST(D2QueueMgrBasicTest, basicQueueTests) {
     }
 
     // Loop through and verify that the queue contents match the
-    // reference list.    
+    // reference list.
     for (int i = 0; i < VALID_MSG_CNT; i++) {
         // Verify that peek on a non-empty queue returns first entry
         // without altering queue content.
@@ -154,10 +154,36 @@ TEST(D2QueueMgrBasicTest, basicQueueTests) {
 
         // Verify the dequeueing from non-empty queue works
         EXPECT_NO_THROW(queue_mgr->dequeue());
-   
-        // Verify queue size decrements following dequeue. 
+
+        // Verify queue size decrements following dequeue.
         EXPECT_EQ(VALID_MSG_CNT-(i+1), queue_mgr->getQueueSize());
     }
+
+    // Iterate over the list of requests and add each to the queue.
+    for (int i = 0; i < VALID_MSG_CNT; i++) {
+        // Create the ncr and add to our reference list.
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        ref_msgs.push_back(ncr);
+        EXPECT_NO_THROW(queue_mgr->enqueue(ncr));
+    }
+
+    // Verify queue count is correct.
+    EXPECT_EQ(VALID_MSG_CNT, queue_mgr->getQueueSize());
+
+    // Verfiy that peekAt returns the correct entry.
+    EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
+    EXPECT_TRUE (*(ref_msgs[1]) == *ncr);
+
+    // Verfiy that dequeueAt removes the correct entry.
+    // Removing it, this should shift the queued entries forward by one.
+    EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
+    EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
+    EXPECT_TRUE (*(ref_msgs[2]) == *ncr);
+
+    // Verify the peekAt and dequeueAt throw when given indexes beyond the end.
+    EXPECT_THROW(queue_mgr->peekAt(VALID_MSG_CNT + 1), D2QueueMgrInvalidIndex);
+    EXPECT_THROW(queue_mgr->dequeueAt(VALID_MSG_CNT + 1),
+                 D2QueueMgrInvalidIndex);
 }
 
 /// @brief Compares two NameChangeRequests for equality.
@@ -178,14 +204,14 @@ public:
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;
 
-    NameChangeSender::Result send_result_; 
+    NameChangeSender::Result send_result_;
     std::vector<NameChangeRequestPtr> sent_ncrs_;
     std::vector<NameChangeRequestPtr> received_ncrs_;
 
     QueueMgrUDPTest() : io_service_(), test_timer_(io_service_) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         // Create our sender instance. Note that reuse_address is true.
-        sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT, 
+        sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
                                               addr, LISTENER_PORT,
                                               FMT_JSON, *this, 100, true));
 
@@ -218,11 +244,11 @@ public:
 };
 
 /// @brief Tests D2QueueMgr's state model.
-/// This test verifies that: 
+/// This test verifies that:
 /// 1. Upon construction, initial state is NOT_INITTED.
 /// 2. Cannot start listening from while state is NOT_INITTED.
 /// 3. Successful listener initialization transitions from NOT_INITTED
-/// to INITTED. 
+/// to INITTED.
 /// 4. Attempting to initialize the listener from INITTED state is not
 /// allowed.
 /// 5. Starting listener from INITTED transitions to RUNNING.
@@ -230,7 +256,7 @@ public:
 /// 7. Starting listener from STOPPED transitions to RUNNING.
 TEST_F (QueueMgrUDPTest, stateModelTest) {
     // Create the queue manager.
-    EXPECT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_, 
+    EXPECT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
                                      VALID_MSG_CNT)));
 
     // Verify that the initial state is NOT_INITTED.
@@ -248,9 +274,9 @@ TEST_F (QueueMgrUDPTest, stateModelTest) {
     // Verify that attempting to initialize the listener, from INITTED
     // is not allowed.
     EXPECT_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true), 
+                                              FMT_JSON, true),
                  D2QueueMgrError);
-   
+
     // Verify that we can enter the RUNNING from INITTED by starting the
     // listener.
     EXPECT_NO_THROW(queue_mgr_->startListening());
@@ -279,8 +305,8 @@ TEST_F (QueueMgrUDPTest, stateModelTest) {
     EXPECT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 }
 
-/// @brief Tests D2QueueMgr's ability to manage received requests 
-/// This test verifies that: 
+/// @brief Tests D2QueueMgr's ability to manage received requests
+/// This test verifies that:
 /// 1. Requests can be received, queued, and dequeued
 /// 2. Once the queue is full, a subsequent request transitions
 /// manager to STOPPED_QUEUE_FULL state.
@@ -295,7 +321,7 @@ TEST_F (QueueMgrUDPTest, liveFeedTest) {
     NameChangeRequestPtr received_ncr;
 
     // Create the queue manager and start listening..
-    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_, 
+    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
                                                     VALID_MSG_CNT)));
     ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 
@@ -319,7 +345,7 @@ TEST_F (QueueMgrUDPTest, liveFeedTest) {
     // each one.  Verify and dequeue as they arrive.
     for (int i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
-        ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i])); 
+        ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
@@ -343,7 +369,7 @@ TEST_F (QueueMgrUDPTest, liveFeedTest) {
     // each one. Allow them to accumulate in the queue.
     for (int i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
-        ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i])); 
+        ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
@@ -364,11 +390,11 @@ TEST_F (QueueMgrUDPTest, liveFeedTest) {
     EXPECT_NO_THROW(io_service_.run_one());
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
 
-    // Verify queue size did not increase beyond max. 
+    // Verify queue size did not increase beyond max.
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
 
     // Verify that setting max queue size to a value less than current size of
-    // the queue is not allowed. 
+    // the queue is not allowed.
     EXPECT_THROW(queue_mgr_->setMaxQueueSize(VALID_MSG_CNT-1), D2QueueMgrError);
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
 
