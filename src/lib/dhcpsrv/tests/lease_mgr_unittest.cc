@@ -487,6 +487,10 @@ TEST(Lease6, OperatorEquals) {
                                subnet_id);
     Lease6 lease2(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
+
+    // cltt_ constructs with time(NULL), make sure they are always equal
+    lease1.cltt_ = lease2.cltt_;
+
     EXPECT_TRUE(lease1 == lease2);
     EXPECT_FALSE(lease1 != lease2);
 
