@@ -142,17 +142,39 @@ D2QueueMgr::removeListener() {
 const dhcp_ddns::NameChangeRequestPtr&
 D2QueueMgr::peek() const {
     if (getQueueSize() ==  0) {
-        isc_throw(D2QueueMgrQueEmpty,
+        isc_throw(D2QueueMgrQueueEmpty,
                   "D2QueueMgr peek attempted on an empty queue");
     }
 
     return (ncr_queue_.front());
 }
 
+const dhcp_ddns::NameChangeRequestPtr&
+D2QueueMgr::peekAt(size_t index) const {
+    if (index >= getQueueSize()) {
+        isc_throw(D2QueueMgrInvalidIndex,
+                  "D2QueueMgr peek beyond end of queue attempted");
+    }
+
+    return (ncr_queue_.at(index));
+}
+
+void
+D2QueueMgr::dequeueAt(size_t index) {
+    if (index >= getQueueSize()) {
+        isc_throw(D2QueueMgrInvalidIndex,
+                  "D2QueueMgr dequeue beyond end of queue attempted");
+    }
+
+    RequestQueue::iterator pos = ncr_queue_.begin() + index;
+    ncr_queue_.erase(pos);
+}
+
+
 void
 D2QueueMgr::dequeue() {
     if (getQueueSize() ==  0) {
-        isc_throw(D2QueueMgrQueEmpty,
+        isc_throw(D2QueueMgrQueueEmpty,
                   "D2QueueMgr dequeue attempted on an empty queue");
     }
 
