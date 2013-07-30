@@ -393,7 +393,6 @@ AuthSrv::AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
     dnss_(NULL)
 {
     impl_ = new AuthSrvImpl(xfrout_client, ddns_forwarder);
-    checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
 }
@@ -405,7 +404,6 @@ AuthSrv::stop() {
 
 AuthSrv::~AuthSrv() {
     delete impl_;
-    delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
 }
