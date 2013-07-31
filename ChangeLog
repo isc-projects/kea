@@ -1,3 +1,8 @@
+649.	[func]		muks
+	The default b10-xfrout also_notify port has been changed from
+	0 to 53.
+	(Trac# 2925, git 8acbf043daf590a9f2ad003e715cd4ffb0b3f979)
+
 648.	[func]		tmark
 	Moved classes pertaining to sending and receiving
 	NameChangeRequests from src/bin/d2 into their own library,
