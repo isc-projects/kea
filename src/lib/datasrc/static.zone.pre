@@ -1,10 +1,10 @@
-;; This is the content of the BIND./CH zone. It contains the version and
-;; authors (called VERSION.BIND. and AUTHORS.BIND.). You can add more or
-;; modify the zone. Then you can reload the zone by issuing the command
+;; This file contains records for the BIND./CH zone. It contains version
+;; (VERSION.BIND.) and authors (AUTHORS.BIND.) information. You can add
+;; more records or modify this zone file like any other zone file. If
+;; you modify this file, you can reload the zone by issuing the
+;; following command in the bindctl program:
 ;;
-;;   loadzone CH BIND
-;;
-;; in the bindctl.
+;;     Auth loadzone CH BIND
 
 ;; This is here mostly for technical reasons.
 BIND.           0   CH  SOA bind. authors.bind. 0 28800 7200 604800 86400
