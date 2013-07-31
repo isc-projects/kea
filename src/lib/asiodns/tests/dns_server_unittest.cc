@@ -103,14 +103,6 @@ class ServerStopper {
         DNSServer* server_to_stop_;
 };
 
-// \brief no check logic at all,just provide a checkpoint to stop the server
-class DummyChecker : public SimpleCallback, public ServerStopper {
-    public:
-        virtual void operator()(const IOMessage&) const {
-            stopServer();
-        }
-};
-
 // \brief no lookup logic at all,just provide a checkpoint to stop the server
 class DummyLookup : public DNSLookup, public ServerStopper {
 public:
@@ -369,7 +361,6 @@ class DNSServerTestBase : public::testing::Test {
     protected:
         DNSServerTestBase() :
             server_address_(ip::address::from_string(server_ip)),
-            checker_(new DummyChecker()),
             lookup_(new DummyLookup()),
             sync_lookup_(new SyncDummyLookup()),
             answer_(new SimpleAnswer()),
@@ -390,7 +381,6 @@ class DNSServerTestBase : public::testing::Test {
             if (tcp_server_) {
                 tcp_server_->stop();
             }
-            delete checker_;
             delete lookup_;
             delete sync_lookup_;
             delete answer_;
@@ -436,7 +426,6 @@ class DNSServerTestBase : public::testing::Test {
 
         asio::io_service service;
         const ip::address server_address_;
-        DummyChecker* const checker_;
         DummyLookup* lookup_;     // we need to replace it in some cases
         SyncDummyLookup*  const sync_lookup_;
         SimpleAnswer* const answer_;
@@ -507,7 +496,7 @@ protected:
         this->tcp_server_ =
             boost::shared_ptr<TCPServer>(new TCPServer(
                                              this->service, fd_tcp, AF_INET6,
-                                             this->checker_, this->lookup_,
+                                             this->lookup_,
                                              this->answer_));
     }
 
@@ -516,7 +505,7 @@ protected:
     boost::shared_ptr<UDPServerClass> createServer(int fd, int af) {
         return (boost::shared_ptr<UDPServerClass>(
                     new UDPServerClass(this->service, fd, af,
-                                       this->checker_, this->lookup_,
+                                       this->lookup_,
                                        this->answer_)));
     }
 };
@@ -567,16 +556,6 @@ TYPED_TEST(DNSServerTest, stopUDPServerBeforeItStartServing) {
     this->udp_server_->stop();
     this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
                                   this->udp_client_);
-    EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
-    EXPECT_TRUE(this->serverStopSucceed());
-}
-
-// Test whether udp server stopped successfully during message check.
-// This only works for non-sync server; SyncUDPServer doesn't use checkin
-// callback.
-TEST_F(AsyncServerTest, stopUDPServerDuringMessageCheck) {
-    this->testStopServerByStopper(*this->udp_server_, this->udp_client_,
-                                  this->checker_);
     EXPECT_EQ(std::string(""), this->udp_client_->getReceivedData());
     EXPECT_TRUE(this->serverStopSucceed());
 }
@@ -665,14 +644,6 @@ TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {
 }
 
 
-// Test whether tcp server stopped successfully during message check
-TYPED_TEST(DNSServerTest, stopTCPServerDuringMessageCheck) {
-    this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
-                                  this->checker_);
-    EXPECT_EQ(std::string(""), this->tcp_client_->getReceivedData());
-    EXPECT_TRUE(this->serverStopSucceed());
-}
-
 // Test whether tcp server stopped successfully during query lookup
 TYPED_TEST(DNSServerTest, stopTCPServerDuringQueryLookup) {
     this->testStopServerByStopper(*this->tcp_server_, this->tcp_client_,
@@ -709,7 +680,7 @@ TYPED_TEST(DNSServerTest, stopTCPServeMoreThanOnce) {
 TYPED_TEST(DNSServerTestBase, invalidFamily) {
     // We abuse DNSServerTestBase for this test, as we don't need the
     // initialization.
-    EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX, this->checker_,
+    EXPECT_THROW(TCPServer(this->service, 0, AF_UNIX,
                            this->lookup_, this->answer_),
                  isc::InvalidParameter);
 }
@@ -728,10 +699,10 @@ TYPED_TEST(DNSServerTestBase, invalidTCPFD) {
      asio backend does fail as it tries to insert it right away, but
      not the others, maybe we could make it run this at last on epoll-based
      systems).
-    EXPECT_THROW(UDPServer(service, -1, AF_INET, checker_, lookup_,
+    EXPECT_THROW(UDPServer(service, -1, AF_INET, lookup_,
                            answer_), isc::asiolink::IOError);
     */
-    EXPECT_THROW(TCPServer(this->service, -1, AF_INET, this->checker_,
+    EXPECT_THROW(TCPServer(this->service, -1, AF_INET,
                            this->lookup_, this->answer_),
                  isc::asiolink::IOError);
 }

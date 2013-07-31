@@ -141,7 +141,7 @@ public:
     /// \brief Constructor
     RecursiveQueryTest3() :
         service_(),
-        dns_service_(service_, NULL, NULL, NULL),
+        dns_service_(service_, NULL, NULL),
         question_(new Question(Name("ednsfallback"),
                   RRClass::IN(), RRType::A())),
         last_(NONE),

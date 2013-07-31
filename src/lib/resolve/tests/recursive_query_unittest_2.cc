@@ -159,7 +159,7 @@ public:
     RecursiveQueryTest2() :
         debug_(DEBUG_PRINT),
         service_(),
-        dns_service_(service_, NULL, NULL, NULL),
+        dns_service_(service_, NULL, NULL),
         question_(new Question(Name("www.example.org"), RRClass::IN(), RRType::A())),
         last_(NONE),
         expected_(NONE),

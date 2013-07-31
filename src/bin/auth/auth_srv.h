@@ -190,9 +190,6 @@ public:
     /// \brief Return pointer to the DNS Answer callback function
     isc::asiodns::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
 
-    /// \brief Return pointer to the Checkin callback function
-    isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
-
     /// \brief Return data source clients manager.
     ///
     /// \throw None
@@ -286,7 +283,6 @@ private:
     void foreignCommand(const std::string& command, const std::string&,
                         const isc::data::ConstElementPtr& params);
     AuthSrvImpl* impl_;
-    isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;
     isc::asiodns::DNSServiceBase* dnss_;
