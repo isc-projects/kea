@@ -338,21 +338,6 @@ public:
     }
 };
 
-// This is a derived class of \c SimpleCallback, to serve
-// as a callback in the asiolink module.  It checks for queued
-// configuration messages, and executes them if found.
-class ConfigCheck : public SimpleCallback {
-public:
-    ConfigCheck(Resolver* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
-        }
-    }
-private:
-    Resolver* server_;
-};
-
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
     dnss_(NULL),
