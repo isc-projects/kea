@@ -2144,7 +2144,11 @@ TEST_F(AuthSrvTest, loadZoneCommand) {
 
 // Test that the auth server subscribes to the segment readers group when
 // there's a remotely mapped segment.
+#ifdef USE_SHARED_MEMORY
 TEST_F(AuthSrvTest, postReconfigure) {
+#else
+TEST_F(AuthSrvTest, DISABLED_postReconfigure) {
+#endif
     FakeSession session(ElementPtr(new ListElement),
                         ElementPtr(new ListElement),
                         ElementPtr(new ListElement));
