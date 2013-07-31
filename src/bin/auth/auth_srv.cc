@@ -375,28 +375,11 @@ public:
     {}
 };
 
-// This is a derived class of \c SimpleCallback, to serve
-// as a callback in the asiolink module.  It checks for queued
-// configuration messages, and executes them if found.
-class ConfigChecker : public SimpleCallback {
-public:
-    ConfigChecker(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage&) const {
-        ModuleCCSession* cfg_session = server_->getConfigSession();
-        if (cfg_session != NULL && cfg_session->hasQueuedMsgs()) {
-            cfg_session->checkCommand();
-        }
-    }
-private:
-    AuthSrv* server_;
-};
-
 AuthSrv::AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
                  isc::util::io::BaseSocketSessionForwarder& ddns_forwarder) :
     dnss_(NULL)
 {
     impl_ = new AuthSrvImpl(xfrout_client, ddns_forwarder);
-    checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
 }
@@ -408,7 +391,6 @@ AuthSrv::stop() {
 
 AuthSrv::~AuthSrv() {
     delete impl_;
-    delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
 }

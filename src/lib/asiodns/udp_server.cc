@@ -57,9 +57,9 @@ struct UDPServer::Data {
      * first packet. But we do initialize the socket in here.
      */
     Data(io_service& io_service, const ip::address& addr, const uint16_t port,
-        SimpleCallback* checkin, DNSLookup* lookup, DNSAnswer* answer) :
+         DNSLookup* lookup, DNSAnswer* answer) :
         io_(io_service), bytes_(0), done_(false),
-        checkin_callback_(checkin),lookup_callback_(lookup),
+        lookup_callback_(lookup),
         answer_callback_(answer)
     {
         // We must use different instantiations for v4 and v6;
@@ -72,10 +72,10 @@ struct UDPServer::Data {
         }
         socket_->bind(udp::endpoint(addr, port));
     }
-    Data(io_service& io_service, int fd, int af, SimpleCallback* checkin,
+    Data(io_service& io_service, int fd, int af,
          DNSLookup* lookup, DNSAnswer* answer) :
          io_(io_service), bytes_(0), done_(false),
-         checkin_callback_(checkin),lookup_callback_(lookup),
+         lookup_callback_(lookup),
          answer_callback_(answer)
     {
         if (af != AF_INET && af != AF_INET6) {
@@ -102,7 +102,6 @@ struct UDPServer::Data {
      */
     Data(const Data& other) :
         io_(other.io_), socket_(other.socket_), bytes_(0), done_(false),
-        checkin_callback_(other.checkin_callback_),
         lookup_callback_(other.lookup_callback_),
         answer_callback_(other.answer_callback_)
     {
@@ -166,7 +165,6 @@ struct UDPServer::Data {
     bool done_;
 
     // Callback functions provided by the caller
-    const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
 
@@ -179,9 +177,9 @@ struct UDPServer::Data {
 /// The constructor. It just creates new internal state object
 /// and lets it handle the initialization.
 UDPServer::UDPServer(io_service& io_service, int fd, int af,
-                     SimpleCallback* checkin, DNSLookup* lookup,
+                     DNSLookup* lookup,
                      DNSAnswer* answer) :
-    data_(new Data(io_service, fd, af, checkin, lookup, answer))
+    data_(new Data(io_service, fd, af, lookup, answer))
 { }
 
 /// The function operator is implemented with the "stackless coroutine"
@@ -259,15 +257,6 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
 
         data_->io_message_.reset(new IOMessage(data_->data_.get(),
             data_->bytes_, *data_->iosock_, *data_->peer_));
-
-        // Perform any necessary operations prior to processing an incoming
-        // query (e.g., checking for queued configuration messages).
-        //
-        // (XXX: it may be a performance issue to check in for every single
-        // incoming query; we may wish to throttle this in the future.)
-        if (data_->checkin_callback_ != NULL) {
-            (*data_->checkin_callback_)(*data_->io_message_);
-        }
 
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.

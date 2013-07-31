@@ -26,9 +26,6 @@ So, in simplified form, the behavior of a DNS Server is:
       if not parent:
         break
 
-    # This callback informs the caller that a packet has arrived, and
-    # gives it a chance to update configuration, etc
-    SimpleCallback(packet)
     YIELD answer = DNSLookup(packet, this)
     response = DNSAnswer(answer)
     YIELD send(response)
@@ -37,7 +34,7 @@ At each "YIELD" point, the coroutine initiates an asynchronous operation,
 then pauses and turns over control to some other task on the ASIO service
 queue.  When the operation completes, the coroutine resumes.
 
-DNSLookup, DNSAnswer and SimpleCallback define callback methods
+DNSLookup and DNSAnswer define callback methods
 used by a DNS Server to communicate with the module that called it.
 They are abstract-only classes whose concrete implementations
 are supplied by the calling module.
