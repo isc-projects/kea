@@ -107,8 +107,8 @@ public:
 /// DNSService is the service that handles DNS queries and answers with
 /// a given IOService. This class is mainly intended to hold all the
 /// logic that is shared between the authoritative and the recursive
-/// server implementations. As such, it handles asio, including config
-/// updates (through the 'Checkinprovider'), and listening sockets.
+/// server implementations. As such, it handles asio and listening
+/// sockets.
 class DNSService : public DNSServiceBase {
     ///
     /// \name Constructors and Destructor
@@ -132,11 +132,9 @@ public:
     /// Use addServerTCPFromFD() or addServerUDPFromFD() to add some servers.
     ///
     /// \param io_service The IOService to work with
-    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
     /// \param lookup The lookup provider (see \c DNSLookup)
     /// \param answer The answer provider (see \c DNSAnswer)
     DNSService(asiolink::IOService& io_service,
-               isc::asiolink::SimpleCallback* checkin,
                DNSLookup* lookup, DNSAnswer* answer);
 
     /// \brief The destructor.

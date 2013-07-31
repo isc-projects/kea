@@ -175,12 +175,11 @@ main(int argc, char* argv[]) {
         auth_server = auth_server_.get();
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
-        SimpleCallback* checkin = auth_server->getCheckinProvider();
         IOService& io_service = auth_server->getIOService();
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
-        DNSService dns_service(io_service, checkin, lookup, answer);
+        DNSService dns_service(io_service, lookup, answer);
         auth_server->setDNSService(dns_service);
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNS_SERVICES_CREATED);
 
