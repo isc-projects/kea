@@ -2609,21 +2609,26 @@ can use various data source backends.
 &gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
+          Unfortunately, due to current technical limitations, the
+          params must be set as one JSON blob. To reload a zone, use the
+          same <command>Auth loadzone</command> command as above.
+	</para>
+
+	<para>
           Initially, a map value has to be set, but this value may be an
-          empty map. After that, key/value pairs can be added with 'config
-          add' and keys can be removed with 'config remove'. The initial
-          value may be an empty map, but it has to be set before zones are
-          added or removed.
+          empty map. After that, key/value pairs can be added with
+          <command>config add</command> and keys can be removed with
+          <command>config remove</command>. The initial value may be an
+          empty map, but it has to be set before zones are added or
+          removed.
 
           <screen>
 &gt; <userinput>config set data_sources/classes/IN[1]/params {}</userinput>
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
 &gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
-          </screen>
+&gt; <userinput>config commit</userinput></screen>
 
-          <command>bindctl</command>. To reload a zone, you the same command
-          as above.
         </para>
       </section>
 
@@ -2641,6 +2646,50 @@ can use various data source backends.
         good.
       </para>
       </note>
+
+      <section id='datasrc-static'>
+        <title>Adding a static data source</title>
+
+	<para>
+	  BIND 10 includes a zone file named
+	  <filename>static.zone</filename> in the CH (Chaos) class for
+	  providing information about the server via the AUTHORS.BIND
+	  and VERSION.BIND TXT records. By default, this BIND zone is
+	  configured and its records are served.
+	</para>
+
+        <para>
+          If you have removed this zone from the configuration (e.g., by
+          using the commands in the previous section to disable the
+          "built-in data source"), here is how you can add it back to
+          serve the zones in the <filename>static.zone</filename> file.
+        </para>
+
+	<para>First, add the CH class if it doesn't exist:
+
+          <screen>&gt; <userinput>config add data_sources/classes CH</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, add a data source of type <emphasis>MasterFiles</emphasis>
+        in the CH class to serve the zones in
+        <filename>static.zone</filename>:
+
+          <screen>&gt; <userinput>config add data_sources/classes/CH</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/type MasterFiles</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/cache-enable true</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/params {"BIND": "/usr/local/bind10/share/bind10/static.zone"}</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, lookup the static data from
+        <filename>static.zone</filename> to test it (assuming your
+        authoritative server is running on <command>localhost</command>):
+
+          <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
+&gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
+
+	</para>
+
+      </section>
 
     </section>
 
