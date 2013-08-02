@@ -324,14 +324,12 @@ bool Dhcpv6Srv::run() {
                           DHCP6_RESPONSE_DATA)
                     .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-                if (rsp->pack()) {
-                    try {
-                        sendPacket(rsp);
-                    } catch (const std::exception& e) {
-                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
-                    }
-                } else {
-                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
+                try {
+                    rsp->pack();
+                    sendPacket(rsp);
+                } catch (const std::exception& e) {
+                    LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL)
+                              .arg(e.what());
                 }
             }
         }

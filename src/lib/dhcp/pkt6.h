@@ -116,8 +116,10 @@ public:
     /// Output buffer will be stored in data_. Length
     /// will be set in data_len_.
     ///
-    /// @return true if packing procedure was successful
-    bool pack();
+    /// @throw BadValue if packet protocol is invalid, InvalidOperation
+    /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
+    /// not yet supported).
+    void pack();
 
     /// @brief Dispatch method that handles binary packet parsing.
     ///
@@ -415,13 +417,13 @@ protected:
     ///
     /// TODO This function is not implemented yet.
     ///
-    /// @return true, if build was successful
-    bool packTCP();
+    /// @throw NotImplemented, IPv6 over TCP is not yet supported.
+    void packTCP();
 
     /// Builds on wire packet for UDP transmission.
     ///
-    /// @return true, if build was successful
-    bool packUDP();
+    /// @throw InvalidOperation if packing fails
+    void packUDP();
 
     /// @brief Parses on-wire form of TCP DHCPv6 packet.
     ///
