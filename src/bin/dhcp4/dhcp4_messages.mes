@@ -149,11 +149,6 @@ This error is output if the IPv4 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
 
-% DHCP4_PACK_FAIL failed to assemble response correctly
-This error is output if the server failed to assemble the data to be
-returned to the client into a valid packet.  The cause is most likely
-to be a programming error: please raise a bug report.
-
 % DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
 On receipt of message containing details to a change of the IPv4 DHCP
 server configuration, a set of parsers were successfully created, but one

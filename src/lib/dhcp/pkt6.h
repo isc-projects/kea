@@ -117,7 +117,7 @@ public:
     /// will be set in data_len_.
     ///
     /// @throw BadValue if packet protocol is invalid, InvalidOperation
-    /// if packing fails, or Unexpected if protocol is TCP (IPv6 over TCP is 
+    /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
     /// not yet supported).
     void pack();
 
@@ -417,12 +417,12 @@ protected:
     ///
     /// TODO This function is not implemented yet.
     ///
-    /// Method with throw exception if build fails
+    /// @throw NotImplemented, IPv6 over TCP is not yet supported.
     void packTCP();
 
     /// Builds on wire packet for UDP transmission.
     ///
-    /// Method with throw exception if build fails
+    /// @throw InvalidOperation if packing fails
     void packUDP();
 
     /// @brief Parses on-wire form of TCP DHCPv6 packet.
