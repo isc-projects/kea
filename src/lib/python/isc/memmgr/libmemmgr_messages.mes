@@ -1,0 +1,35 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the config_messages python module.
+
+% LIBMEMMGR_BUILDER_BAD_COMMAND_ERROR MemorySegmentBuilder received bad command '%1'
+The MemorySegmentBuilder has received a bad command in its input command
+queue. This is likely a programming error. If the builder runs in a
+separate thread, this would cause it to exit the thread.
+
+% LIBMEMMGR_BUILDER_GET_ZONE_WRITER_ERROR Unable to get zone writer for zone '%1', data source '%2'. Skipping.
+The MemorySegmentBuilder was unable to get a ZoneWriter for the
+specified zone when handling the load command. This zone will be
+skipped.
+
+% LIBMEMMGR_BUILDER_ZONE_WRITER_LOAD_1_ERROR Error loading zone '%1', data source '%2': '%3'
+The MemorySegmentBuilder failed to load the specified zone when handling
+the load command. This zone will be skipped.
+
+% LIBMEMMGR_BUILDER_ZONE_WRITER_LOAD_2_ERROR Error loading zone '%1', data source '%2': '%3'
+An exception occured when the MemorySegmentBuilder tried to load the
+specified zone when handling the load command. This zone will be
+skipped.

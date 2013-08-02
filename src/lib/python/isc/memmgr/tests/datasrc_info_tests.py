@@ -34,7 +34,7 @@ class MockConfigData:
 
 class TestSegmentInfo(unittest.TestCase):
     def setUp(self):
-        self.__mapped_file_dir = os.environ['TESTDATA_PATH']
+        self.__mapped_file_dir = os.environ['TESTDATA_WRITE_PATH']
         self.__sgmt_info = SegmentInfo.create('mapped', 0, RRClass.IN,
                                               'sqlite3',
                                               {'mapped_file_dir':
@@ -60,7 +60,284 @@ class TestSegmentInfo(unittest.TestCase):
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 0)
         self.__check_sgmt_reset_param(SegmentInfo.READER, None)
 
-    def test_swtich_versions(self):
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+        self.assertEqual(len(self.__sgmt_info.get_readers()), 0)
+        self.assertEqual(len(self.__sgmt_info.get_old_readers()), 0)
+        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
+
+    def __si_to_ready_state(self):
+        # Go to a default starting state
+        self.__sgmt_info = SegmentInfo.create('mapped', 0, RRClass.IN,
+                                              'sqlite3',
+                                              {'mapped_file_dir':
+                                                   self.__mapped_file_dir})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+    def __si_to_updating_state(self):
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_reader(3)
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+    def __si_to_synchronizing_state(self):
+        self.__si_to_updating_state()
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+    def __si_to_copying_state(self):
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.sync_reader(3)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+    def test_add_event(self):
+        self.assertEqual(len(self.__sgmt_info.get_events()), 0)
+        self.__sgmt_info.add_event(None)
+        self.assertEqual(len(self.__sgmt_info.get_events()), 1)
+        self.assertListEqual(self.__sgmt_info.get_events(), [None])
+
+    def test_add_reader(self):
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+        self.__sgmt_info.add_reader(1)
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {1})
+        self.__sgmt_info.add_reader(3)
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 3})
+        self.__sgmt_info.add_reader(2)
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 2, 3})
+
+        # adding the same existing reader must throw
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.add_reader, (1))
+        # but the existing readers must be untouched
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {1, 3, 2})
+
+        # none of this touches the old readers
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+
+    def test_start_update(self):
+        # in READY state
+        # a) there are no events
+        self.__si_to_ready_state()
+        e = self.__sgmt_info.start_update()
+        self.assertIsNone(e)
+        # if there are no events, there is nothing to update
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # b) there are events. this is the same as calling
+        # self.__si_to_updating_state(), but let's try to be
+        # descriptive.
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in UPDATING state, it should always raise an exception and not
+        # change state.
+        self.__si_to_updating_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in SYNCHRONIZING state, it should always raise an exception
+        # and not change state.
+        self.__si_to_synchronizing_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # in COPYING state, it should always raise an exception and not
+        # change state.
+        self.__si_to_copying_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.start_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+    def test_complete_update(self):
+        # in READY state
+        self.__si_to_ready_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # in UPDATING state this is the same as calling
+        # self.__si_to_synchronizing_state(), but let's try to be
+        # descriptive.
+        #
+        # a) with no events
+        self.__si_to_updating_state()
+        e = self.__sgmt_info.complete_update()
+        self.assertIsNone(e)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # b) with events
+        self.__si_to_updating_state()
+        self.__sgmt_info.add_event((81,))
+        e = self.__sgmt_info.complete_update()
+        self.assertIsNone(e) # old_readers is not empty
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # c) with no readers, complete_update() from UPDATING must go
+        # directly to READY state
+        self.__si_to_ready_state()
+        self.__sgmt_info.add_event((42,))
+        e = self.__sgmt_info.start_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+        e = self.__sgmt_info.complete_update()
+        self.assertTupleEqual(e, (42,))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # in SYNCHRONIZING state
+        self.__si_to_synchronizing_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.complete_update)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # in COPYING state
+        self.__si_to_copying_state()
+        e = self.__sgmt_info.complete_update()
+        self.assertIsNone(e)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+    def test_sync_reader(self):
+        # in READY state, it must raise an exception
+        self.__si_to_ready_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # in UPDATING state, it must raise an exception
+        self.__si_to_updating_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in COPYING state, it must raise an exception
+        self.__si_to_copying_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # in SYNCHRONIZING state:
+        #
+        # a) ID is not in old readers set. The following call sets up ID 3
+        # to be in the old readers set.
+        self.__si_to_synchronizing_state()
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (1))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # b) ID is in old readers set, but also in readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(3)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.sync_reader, (3))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # c) ID is in old readers set, but not in readers set, and
+        # old_readers becomes empty.
+        self.__si_to_synchronizing_state()
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.sync_reader(3)
+        self.assertTupleEqual(e, (42,))
+        # the ID should be moved from old readers to readers set
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # d) ID is in old readers set, but not in readers set, and
+        # old_readers doesn't become empty.
+        self.__si_to_updating_state()
+        self.__sgmt_info.add_reader(4)
+        self.__sgmt_info.complete_update()
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3, 4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.sync_reader(3)
+        self.assertIsNone(e)
+        # the ID should be moved from old readers to readers set
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {3})
+        # we should be left in SYNCHRONIZING state
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+    def test_remove_reader(self):
+        # in READY state, it must raise an exception
+        self.__si_to_ready_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.READY)
+
+        # in UPDATING state, it must raise an exception
+        self.__si_to_updating_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.UPDATING)
+
+        # in COPYING state, it must raise an exception
+        self.__si_to_copying_state()
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (0))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # in SYNCHRONIZING state:
+        #
+        # a) ID is not in old readers set or readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        self.assertRaises(SegmentInfoError, self.__sgmt_info.remove_reader, (1))
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # b) ID is in readers set.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(4)
+        self.assertIsNone(e)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), set())
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+        # c) ID is in old_readers set and it becomes empty.
+        self.__si_to_synchronizing_state()
+        self.__sgmt_info.add_reader(4)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(3)
+        self.assertTupleEqual(e, (42,))
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), set())
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {4})
+        self.assertListEqual(self.__sgmt_info.get_events(), [])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.COPYING)
+
+        # d) ID is in old_readers set and it doesn't become empty.
+        self.__si_to_updating_state()
+        self.__sgmt_info.add_reader(4)
+        self.__sgmt_info.complete_update()
+        self.__sgmt_info.add_reader(5)
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {3, 4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {5})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        e = self.__sgmt_info.remove_reader(3)
+        self.assertIsNone(e)
+        self.assertSetEqual(self.__sgmt_info.get_old_readers(), {4})
+        self.assertSetEqual(self.__sgmt_info.get_readers(), {5})
+        self.assertListEqual(self.__sgmt_info.get_events(), [(42,)])
+        # we only change state if it was removed from old_readers
+        # specifically and it became empty.
+        self.assertEqual(self.__sgmt_info.get_state(), SegmentInfo.SYNCHRONIZING)
+
+    def test_switch_versions(self):
         self.__sgmt_info.switch_versions()
         self.__check_sgmt_reset_param(SegmentInfo.WRITER, 1)
         self.__check_sgmt_reset_param(SegmentInfo.READER, 0)
@@ -103,9 +380,9 @@ class MockClientList:
 
 class TestDataSrcInfo(unittest.TestCase):
     def setUp(self):
-        self.__mapped_file_dir = os.environ['TESTDATA_PATH']
+        self.__mapped_file_dir = os.environ['TESTDATA_WRITE_PATH']
         self.__mgr_config = {'mapped_file_dir': self.__mapped_file_dir}
-        self.__sqlite3_dbfile = os.environ['TESTDATA_PATH'] + '/' + 'zone.db'
+        self.__sqlite3_dbfile = os.environ['TESTDATA_WRITE_PATH'] + '/' + 'zone.db'
         self.__clients_map = {
             # mixture of 'local' and 'mapped' and 'unused' (type =None)
             # segments
