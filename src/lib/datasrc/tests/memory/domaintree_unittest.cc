@@ -224,13 +224,13 @@ TEST_F(DomainTreeTest, checkDistanceSorted) {
     // Make a large million+ node top-level domain tree, i.e., the
     // following code inserts names such as:
     //
-    //   name000000.
-    //   name000001.
-    //   name000002.
-    //   name000003.
+    //   name00000000.
+    //   name00000001.
+    //   name00000002.
+    //   name00000003.
     //
     for (int i = 0; i < (1 << log_num_nodes); i++) {
-        const string namestr(boost::str(boost::format("name%06x.") % i));
+        const string namestr(boost::str(boost::format("name%08x.") % i));
         mytree.insert(mem_sgmt_, Name(namestr), &dtnode);
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
