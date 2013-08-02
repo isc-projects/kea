@@ -131,7 +131,15 @@ class SegmentInfo:
         that are using the "current" reader version of the segment. It
         must be called by memmgr when it first gets the pre-existing
         readers or when it's notified of a new reader. No state
-        transition happens."""
+        transition happens.
+
+        When the SegmentInfo is not in the READY state, if memmgr gets
+        notified of a new reader (such as b10-auth) subscribing to the
+        readers group and calls add_reader(), we assume the new reader
+        is using the new mapped file and not the old one. For making
+        sure there is no race, memmgr should make SegmentInfo updates in
+        the main thread itself (which also handles communications) and
+        only have the builder in a different thread."""
         if reader_session_id in self.__readers:
             raise SegmentInfoError('Reader session ID is already in readers set: ' +
                                    str(reader_session_id))
