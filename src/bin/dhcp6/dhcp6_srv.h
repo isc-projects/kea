@@ -81,7 +81,7 @@ public:
     ///
     /// Main server processing loop. Receives incoming packets, verifies
     /// their correctness, generates appropriate answer (if needed) and
-    /// transmits respones.
+    /// transmits responses.
     ///
     /// @return true, if being shut down gracefully, fail if experienced
     ///         critical error.
@@ -108,7 +108,7 @@ protected:
     ///
     /// Processes received SOLICIT message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
-    /// with to-be assinged addresses, temporary addresses and delegated
+    /// with to-be assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. In the usual 4 message exchange, server is
     /// expected to respond with ADVERTISE message. However, if client
     /// requests rapid-commit and server supports it, REPLY will be sent
@@ -124,7 +124,7 @@ protected:
     ///
     /// Processes incoming REQUEST message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
-    /// with assinged addresses, temporary addresses and delegated
+    /// with assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
     /// leases.
     ///
@@ -340,7 +340,7 @@ protected:
     /// this function will not remove the entries which server hadn't added.
     /// This is the case, when client performs forward DNS update on its own.
     ///
-    /// @param lease A lease for which the the removal of correponding DNS
+    /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.
     void createRemovalNameChangeRequest(const Lease6Ptr& lease);
 
