@@ -102,55 +102,60 @@ Pkt4::len() {
     return (length);
 }
 
-bool
+void
 Pkt4::pack() {
     if (!hwaddr_) {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
 
-    size_t hw_len = hwaddr_->hwaddr_.size();
+    try {
+        size_t hw_len = hwaddr_->hwaddr_.size();
 
-    bufferOut_.writeUint8(op_);
-    bufferOut_.writeUint8(hwaddr_->htype_);
-    bufferOut_.writeUint8(hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN);
-    bufferOut_.writeUint8(hops_);
-    bufferOut_.writeUint32(transid_);
-    bufferOut_.writeUint16(secs_);
-    bufferOut_.writeUint16(flags_);
-    bufferOut_.writeUint32(ciaddr_);
-    bufferOut_.writeUint32(yiaddr_);
-    bufferOut_.writeUint32(siaddr_);
-    bufferOut_.writeUint32(giaddr_);
+        bufferOut_.writeUint8(op_);
+        bufferOut_.writeUint8(hwaddr_->htype_);
+        bufferOut_.writeUint8(hw_len < MAX_CHADDR_LEN ? 
+                              hw_len : MAX_CHADDR_LEN);
+        bufferOut_.writeUint8(hops_);
+        bufferOut_.writeUint32(transid_);
+        bufferOut_.writeUint16(secs_);
+        bufferOut_.writeUint16(flags_);
+        bufferOut_.writeUint32(ciaddr_);
+        bufferOut_.writeUint32(yiaddr_);
+        bufferOut_.writeUint32(siaddr_);
+        bufferOut_.writeUint32(giaddr_);
 
 
-    if (hw_len <= MAX_CHADDR_LEN) {
-        // write up to 16 bytes of the hardware address (CHADDR field is 16
-        // bytes long in DHCPv4 message).
-        bufferOut_.writeData(&hwaddr_->hwaddr_[0],
-                             (hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN) );
-        hw_len = MAX_CHADDR_LEN - hw_len;
-    } else {
-        hw_len = MAX_CHADDR_LEN;
+        if (hw_len <= MAX_CHADDR_LEN) {
+            // write up to 16 bytes of the hardware address (CHADDR field is 16
+            // bytes long in DHCPv4 message).
+            bufferOut_.writeData(&hwaddr_->hwaddr_[0], 
+                                 (hw_len < MAX_CHADDR_LEN ? 
+                                  hw_len : MAX_CHADDR_LEN) );
+            hw_len = MAX_CHADDR_LEN - hw_len;
+        } else {
+            hw_len = MAX_CHADDR_LEN;
+        }
+
+        // write (len) bytes of padding
+        vector<uint8_t> zeros(hw_len, 0);
+        bufferOut_.writeData(&zeros[0], hw_len);
+        // bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+
+        bufferOut_.writeData(sname_, MAX_SNAME_LEN);
+        bufferOut_.writeData(file_, MAX_FILE_LEN);
+
+        // write DHCP magic cookie
+        bufferOut_.writeUint32(DHCP_OPTIONS_COOKIE);
+
+        LibDHCP::packOptions(bufferOut_, options_);
+
+        // add END option that indicates end of options
+        // (End option is very simple, just a 255 octet)
+         bufferOut_.writeUint8(DHO_END);
+     } catch(const Exception& e) {
+        // An exception is thrown and message will be written to Logger
+         isc_throw(InvalidOperation, e.what());
     }
-
-    // write (len) bytes of padding
-    vector<uint8_t> zeros(hw_len, 0);
-    bufferOut_.writeData(&zeros[0], hw_len);
-    // bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
-
-    bufferOut_.writeData(sname_, MAX_SNAME_LEN);
-    bufferOut_.writeData(file_, MAX_FILE_LEN);
-
-    // write DHCP magic cookie
-    bufferOut_.writeUint32(DHCP_OPTIONS_COOKIE);
-
-    LibDHCP::packOptions(bufferOut_, options_);
-
-    // add END option that indicates end of options
-    // (End option is very simple, just a 255 octet)
-    bufferOut_.writeUint8(DHO_END);
-
-    return (true);
 }
 
 void
