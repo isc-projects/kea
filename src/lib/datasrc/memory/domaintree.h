@@ -356,6 +356,16 @@ private:
         }
     }
 
+    /// \brief Returns if the node color is black
+    bool isBlack() const {
+        return (getColor() == BLACK);
+    }
+
+    /// \brief Returns if the node color is red
+    bool isRed() const {
+        return (!isBlack());
+    }
+
     /// \brief Sets the color of this node
     void setColor(const DomainTreeNodeColor color) {
         if (color == RED) {
@@ -1976,14 +1986,14 @@ DomainTree<T>::insertRebalance
         // subtree root to its children colored BLACK) but doesn't
         // change the red-black properties.
         DomainTreeNode<T>* parent = node->getParent();
-        if (parent->getColor() == DomainTreeNode<T>::BLACK) {
+        if (parent->isBlack()) {
             break;
         }
 
         DomainTreeNode<T>* uncle = node->getUncle();
         DomainTreeNode<T>* grandparent = node->getGrandParent();
 
-        if ((uncle != NULL) && (uncle->getColor() == DomainTreeNode<T>::RED)) {
+        if ((uncle != NULL) && uncle->isRed()) {
             // Case 3. Here, the node's parent is colored RED and the
             // uncle node is also RED. In this case, the grandparent
             // must be BLACK (due to existing red-black state).  We set
@@ -2171,7 +2181,7 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os,
 
     indent(os, depth);
     os << node->getLabels() << " ("
-       << ((node->getColor() == DomainTreeNode<T>::BLACK) ? "black" : "red")
+       << (node->isBlack() ? "black" : "red")
        << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
@@ -2235,7 +2245,7 @@ DomainTree<T>::dumpDotHelper(std::ostream& os,
     }
     os << "\"] [";
 
-    if (node->getColor() == DomainTreeNode<T>::RED) {
+    if (node->isRed()) {
         os << "color=red";
     } else {
         os << "color=black";
