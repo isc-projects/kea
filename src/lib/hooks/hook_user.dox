@@ -122,7 +122,7 @@ is built
 - load - called when the library is loaded by the server.
 - unload - called when the library is unloaded by the server.
 
-Of these, only "version" is mandatory, although our in our example, all three
+Of these, only "version" is mandatory, although in our example, all three
 are used.
 
 @subsubsection hooksdgVersionFunction The "version" Function
