@@ -101,7 +101,7 @@ public:
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
 
-    /// @brief Sets the DHCID value based on the DUID.
+    /// @brief Sets the DHCID value based on the DUID and FQDN.
     ///
     /// @param duid A @c isc::dhcp::DUID object encapsulating DUID.
     /// @param wire_fqdn A on-wire canonical representation of the FQDN.
