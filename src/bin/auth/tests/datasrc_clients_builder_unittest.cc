@@ -43,6 +43,7 @@
 #include <string>
 #include <sstream>
 #include <cerrno>
+#include <unistd.h>
 
 using isc::data::ConstElementPtr;
 using namespace isc::dns;
@@ -67,6 +68,11 @@ protected:
     {}
     ~ DataSrcClientsBuilderTest() {
 
+    }
+
+    void TearDown() {
+        // Some tests create this file. Delete it if it exists.
+        unlink(TEST_DATA_BUILDDIR "/test1.zone.image");
     }
 
     void configureZones();      // used for loadzone related tests
