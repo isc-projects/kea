@@ -76,25 +76,32 @@ const uint32_t LISTENER_PORT = 5301;
 const uint32_t SENDER_PORT = LISTENER_PORT+1;
 const long TEST_TIMEOUT = 5 * 1000;
 
-/// @brief Tests the D2QueueMgr constructors.
-/// This test verifies that:
-/// 1. Construction with max queue size of zero is not allowed
-/// 2. Default construction works and max queue size is defaulted properly
-/// 3. Construction with custom queue size works properly
-TEST(D2QueueMgrBasicTest, constructionTests) {
+/// @brief Tests that construction with max queue size of zero is not allowed.
+TEST(D2QueueMgrBasicTest, construction1) {
     isc::asiolink::IOService io_service;
 
     // Verify that constructing with max queue size of zero is not allowed.
     EXPECT_THROW(D2QueueMgr(io_service, 0), D2QueueMgrError);
+}
+
+/// @brief Tests default construction works.
+TEST(D2QueueMgrBasicTest, construction2) {
+    isc::asiolink::IOService io_service;
 
     // Verify that valid constructor works.
     D2QueueMgrPtr queue_mgr;
-    EXPECT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service)));
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service)));
     // Verify queue max is defaulted correctly.
     EXPECT_EQ(D2QueueMgr::MAX_QUEUE_DEFAULT, queue_mgr->getMaxQueueSize());
+}
+
+/// @brief Tests construction with custom queue size works properly
+TEST(D2QueueMgrBasicTest, construction3) {
+    isc::asiolink::IOService io_service;
 
     // Verify that custom queue size constructor works.
-    EXPECT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+    D2QueueMgrPtr queue_mgr;
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
     // Verify queue max is the custom value.
     EXPECT_EQ(100, queue_mgr->getMaxQueueSize());
 }
@@ -106,7 +113,7 @@ TEST(D2QueueMgrBasicTest, constructionTests) {
 /// 3. Attempting to dequeue an empty queue is not allowed
 /// 4. Peek returns the first entry on the queue without altering queue content
 /// 5. Dequeue removes the first entry on the queue
-TEST(D2QueueMgrBasicTest, basicQueueTests) {
+TEST(D2QueueMgrBasicTest, basicQueue) {
     isc::asiolink::IOService io_service;
 
     // Construct the manager with max queue size set to number of messages
