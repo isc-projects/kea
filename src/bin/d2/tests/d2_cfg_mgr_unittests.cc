@@ -1190,14 +1190,22 @@ TEST_F(D2CfgMgrTest, matchReverse) {
                         "\"forward_ddns\" : {}, "
                         "\"reverse_ddns\" : {"
                         "\"ddns_domains\": [ "
-                        "{ \"name\": \"100.168.192.in-addr.arpa\" , "
+                        "{ \"name\": \"5.100.168.192.in-addr.arpa.\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] }, "
-                        "{ \"name\": \"168.192.in-addr.arpa\" , "
+                        "{ \"name\": \"100.200.192.in-addr.arpa.\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] }, "
+                        "{ \"name\": \"170.192.in-addr.arpa.\" , "
+                        "  \"dns_servers\" : [ "
+                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  ] }, "
+                        "{ \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                        "  \"dns_servers\" : [ "
+                        "  { \"ip_address\": \"127.0.0.1\" } "
+                        "  ] },"
                         "{ \"name\": \"*\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
@@ -1215,23 +1223,32 @@ TEST_F(D2CfgMgrTest, matchReverse) {
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
 
     DdnsDomainPtr match;
+
     // Verify an exact match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("100.168.192.in-addr.arpa", match));
-    EXPECT_EQ("100.168.192.in-addr.arpa", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchReverse("192.168.100.5", match));
+    EXPECT_EQ("5.100.168.192.in-addr.arpa.", match->getName());
 
     // Verify a sub-domain match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("27.100.168.192.in-addr.arpa", match));
-    EXPECT_EQ("100.168.192.in-addr.arpa", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchReverse("192.200.100.27", match));
+    EXPECT_EQ("100.200.192.in-addr.arpa.", match->getName());
 
     // Verify a sub-domain match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("30.133.168.192.in-addr.arpa", match));
-    EXPECT_EQ("168.192.in-addr.arpa", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchReverse("192.170.50.30", match));
+    EXPECT_EQ("170.192.in-addr.arpa.", match->getName());
 
     // Verify a wild card match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("shouldbe.wildcard", match));
+    EXPECT_TRUE(cfg_mgr_->matchReverse("1.1.1.1", match));
     EXPECT_EQ("*", match->getName());
 
-    // Verify that an attempt to match an empty FQDN throws.
+    // Verify a IPv6 match.
+    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::",match));
+    EXPECT_EQ("2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.", match->getName());
+
+    // Verify a IPv6 wild card match. 
+    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::",match));
+    EXPECT_EQ("*", match->getName());
+
+    // Verify that an attempt to match an invalid IP address throws.
     ASSERT_THROW(cfg_mgr_->matchReverse("", match), D2CfgError);
 }
 

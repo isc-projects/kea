@@ -162,3 +162,26 @@ in event loop.
 % DHCP_DDNS_SHUTDOWN application is performing a normal shut down
 This is a debug message issued when the application has been instructed
 to shut down by the controller.
+
+% DHCP_DDNS_AT_MAX_TRANSACTIONS application has: %1 queued requests but has reached maximum number of: %2 concurrent transactions
+This is a debug message that indicates that the application has DHCP_DDNS
+requests in the queue but is working as many concurrent requests as allowed.
+
+% DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each Queue count: %1  Transaction count: %2
+This is a debug messge issued when all of the queued requests represent clients
+for which there is a an update already in progress.  This may occur under
+normal operations but should be temporary situation.
+
+% DHCP_DDNS_NO_FWD_MATCH_ERROR the configured list of forward DDNS domains does not contain a match for FQDN: %1  The request has been discarded.
+This is an error message that indicates that DHCP_DDNS received a request to
+update a the forward DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.
+
+% DHCP_DDNS_NO_REV_MATCH_ERROR the configured list of reverse DDNS domains does not contain a match for FQDN: %1  The request has been discarded.
+This is an error message that indicates that DHCP_DDNS received a request to
+update a the reverse DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.

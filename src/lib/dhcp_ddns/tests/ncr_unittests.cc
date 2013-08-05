@@ -240,6 +240,7 @@ TEST(NameChangeRequestTest, constructionTests) {
 /// 2. DHCID input strings must contain only hexadecimal character digits
 /// 3. A valid DHCID string converts correctly.
 /// 4. Converting a D2Dhcid to a string works correctly.
+/// 5. Equality, inequality, and less-than-equal operators work.
 TEST(NameChangeRequestTest, dhcidTest) {
     D2Dhcid dhcid;
 
@@ -271,6 +272,20 @@ TEST(NameChangeRequestTest, dhcidTest) {
     // DHCID input string.
     std::string next_str = dhcid.toStr();
     EXPECT_EQ(test_str, next_str);
+
+    // Test equality, inequality, and less-than-equal operators
+    test_str="AABBCCDD";
+    EXPECT_NO_THROW(dhcid.fromStr(test_str));
+
+    D2Dhcid other_dhcid;
+    EXPECT_NO_THROW(other_dhcid.fromStr(test_str));
+
+    EXPECT_TRUE(dhcid == other_dhcid);
+    EXPECT_FALSE(dhcid != other_dhcid);
+
+    EXPECT_NO_THROW(other_dhcid.fromStr("BBCCDDEE"));
+    EXPECT_TRUE(dhcid < other_dhcid);
+
 }
 
 /// @brief Verifies the fundamentals of converting from and to JSON.
