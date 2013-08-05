@@ -36,9 +36,10 @@
  * Regardless of your field of expertise, you are encouraged to visit
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  * @section hooksFramework Hooks Framework
- * - @subpage hooksComponentDeveloperGuide
+ * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
  * - @subpage dhcpv6Hooks
+ * - @subpage hooksComponentDeveloperGuide
  *
  * @section dnsMaintenanceGuide DNS Maintenance Guide
  * - Authoritative DNS (todo)
