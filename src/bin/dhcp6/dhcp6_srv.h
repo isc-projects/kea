@@ -344,6 +344,17 @@ protected:
     /// records will be performed.
     void createRemovalNameChangeRequest(const Lease6Ptr& lease);
 
+    /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
+    ///
+    /// The purpose of this function is to pick all outstanding
+    /// NameChangeRequests from the FIFO queue and send them to bind10-d2
+    /// module.
+    ///
+    /// @todo Currently this function simply removes all requests from the
+    /// queue but doesn't send them anywhere. In the future, the
+    /// NameChangeSender will be used to deliver requests to the other module.
+    void sendNameChangeRequests();
+
     /// @brief Attempts to renew received addresses
     ///
     /// It iterates through received IA_NA options and attempts to renew

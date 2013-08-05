@@ -277,6 +277,11 @@ bool Dhcpv6Srv::run() {
                     LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
                 }
             }
+
+            // Although we don't support sending the NameChangeRequests to
+            // bind10-d2 module, we already call sendNameChangeRequets() here
+            // to empty the queue. Otherwise, the queue would bloat.
+            sendNameChangeRequests();
         }
     }
 
@@ -912,6 +917,16 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
               DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr.toText());
 
+}
+
+void
+Dhcpv6Srv::sendNameChangeRequests() {
+    while (!name_change_reqs_.empty()) {
+        // @todo Once next NameChangeRequest is picked from the queue
+        // we should send it to the bind10-d2 module. Currently we
+        // just drop it.
+        name_change_reqs_.pop();
+    }
 }
 
 
