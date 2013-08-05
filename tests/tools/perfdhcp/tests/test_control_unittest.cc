@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -241,8 +241,9 @@ public:
         size_t matched_num = 0;
         for (size_t i = 0; i < buf.size(); i += 2) {
             for (int j = 0; j < requested_options.size(); j += 2) {
-                uint16_t opt_i = buf[i + 1] << 8 + buf[i] & 0xFF;
-                uint16_t opt_j = requested_options[j + 1] << 8 + requested_options[j] & 0xFF;
+                uint16_t opt_i = (buf[i + 1] << 8) + (buf[i] & 0xFF);
+                uint16_t opt_j = (requested_options[j + 1] << 8)
+                    + (requested_options[j] & 0xFF);
                 if (opt_i == opt_j) {
                     // Requested option has been found.
                     ++matched_num;
@@ -817,10 +818,12 @@ TEST_F(TestControlTest, Options6) {
     // Prepare the reference buffer with requested options.
     const uint8_t requested_options[] = {
         0, D6O_NAME_SERVERS,
-        0, D6O_DOMAIN_SEARCH,
+        0, D6O_DOMAIN_SEARCH
     };
-    int requested_options_num =
-        sizeof(requested_options) / sizeof(requested_options[0]);
+    // Each option code in ORO is 2 bytes long. We calculate the number of
+    // requested options by dividing the size of the buffer holding options
+    // by the size of each individual option.
+    int requested_options_num = sizeof(requested_options) / sizeof(uint16_t);
     OptionBuffer
         requested_options_ref(requested_options,
                               requested_options + sizeof(requested_options));
