@@ -1,3 +1,8 @@
+651.	[bug]		muks
+	A race condition when creating cmdctl certificates caused corruption
+	of these certificates in rare cases. This has now been fixed.
+	(Trac# 2962, git 09f557d871faef090ed444ebeee7f13e142184a0)
+
 650.	[func]		muks
 	The DomainTree rebalancing code has been updated to be more
 	understandable. This ChangeLog entry is made just to make a note
