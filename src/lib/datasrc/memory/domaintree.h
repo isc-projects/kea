@@ -2082,6 +2082,12 @@ DomainTree<T>::insertRebalance
             } else {
                 leftRotate(subtree_root, grandparent);
             }
+
+            // In this case, the tree is ready now and we explicitly
+            // break out of the loop here. Even if we continue the loop,
+            // it will exit the loop in case 2 above, but that's not so
+            // obvious.
+            break;
         }
     }
 
