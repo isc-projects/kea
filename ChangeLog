@@ -1,3 +1,10 @@
+653.	[func]		tmark
+	Added initial implementation of D2QueueMgr to
+	DHCP_DDNS.  This class manages the receipt and
+	queueing of requests received by DHCP_DDNS from
+	its clients (e.g. DHCP servers)
+	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
+
 652.	[doc]		stephen
 	Added the "Hook Developer's Guide" to the BIND 10 developer
 	documentation.
