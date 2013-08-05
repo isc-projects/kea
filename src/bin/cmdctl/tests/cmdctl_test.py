@@ -15,7 +15,7 @@
 
 
 import unittest
-import socket
+import ssl, socket
 import tempfile
 import time
 import stat
@@ -729,16 +729,15 @@ class TestSecureHTTPServer(unittest.TestCase):
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
 
-        # Bad files should result in a socket.error raised by our own
-        # code in the basic file checks
-        self.assertRaises(socket.error,
+        # Bad files should result in a CmdctlException in the basic file
+        # checks
+        self.assertRaises(CmdctlException,
                           self.server._wrap_socket_in_ssl_context,
                           sock,
                           'no_such_file', 'no_such_file')
 
-        # Using a non-certificate file would cause an SSLError, which
-        # is caught by our code which then raises a basic socket.error
-        self.assertRaises(socket.error,
+        # Using a non-certificate file would cause an SSLError
+        self.assertRaises(ssl.SSLError,
                           self.server._wrap_socket_in_ssl_context,
                           sock,
                           BUILD_FILE_PATH + 'cmdctl.py',
