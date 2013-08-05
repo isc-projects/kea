@@ -737,7 +737,7 @@ class TestSecureHTTPServer(unittest.TestCase):
                           'no_such_file', 'no_such_file')
 
         # Using a non-certificate file would cause an SSLError
-        self.assertRaises(ssl.SSLError,
+        self.assertRaises(socket.error,
                           self.server._wrap_socket_in_ssl_context,
                           sock,
                           BUILD_FILE_PATH + 'cmdctl.py',
@@ -756,7 +756,7 @@ class TestSecureHTTPServer(unittest.TestCase):
         orig_check_func = self.server._check_key_and_cert
         try:
             self.server._check_key_and_cert = lambda x,y: None
-            self.assertRaises(socket.error,
+            self.assertRaises(IOError,
                               self.server._wrap_socket_in_ssl_context,
                               sock,
                               'no_such_file', 'no_such_file')
