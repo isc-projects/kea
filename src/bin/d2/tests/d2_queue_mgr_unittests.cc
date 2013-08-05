@@ -112,8 +112,8 @@ TEST(D2QueueMgrBasicTest, basicQueueTests) {
     // Construct the manager with max queue size set to number of messages
     // we'll use.
     D2QueueMgrPtr queue_mgr;
-    EXPECT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, VALID_MSG_CNT)));
-    EXPECT_EQ(VALID_MSG_CNT, queue_mgr->getMaxQueueSize());
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, VALID_MSG_CNT)));
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr->getMaxQueueSize());
 
     // Verify queue is empty after construction.
     EXPECT_EQ(0, queue_mgr->getQueueSize());
@@ -150,13 +150,13 @@ TEST(D2QueueMgrBasicTest, basicQueueTests) {
         EXPECT_TRUE (*(ref_msgs[i]) == *ncr);
 
         // Verify that peek did not alter the queue size.
-        EXPECT_EQ(VALID_MSG_CNT-(i), queue_mgr->getQueueSize());
+        EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
 
         // Verify the dequeueing from non-empty queue works
         EXPECT_NO_THROW(queue_mgr->dequeue());
 
         // Verify queue size decrements following dequeue.
-        EXPECT_EQ(VALID_MSG_CNT-(i+1), queue_mgr->getQueueSize());
+        EXPECT_EQ(VALID_MSG_CNT - (i + 1), queue_mgr->getQueueSize());
     }
 
     // Iterate over the list of requests and add each to the queue.
@@ -254,9 +254,9 @@ public:
 /// 5. Starting listener from INITTED transitions to RUNNING.
 /// 6. Stopping the  listener transitions from RUNNING to STOPPED.
 /// 7. Starting listener from STOPPED transitions to RUNNING.
-TEST_F (QueueMgrUDPTest, stateModelTest) {
+TEST_F (QueueMgrUDPTest, stateModel) {
     // Create the queue manager.
-    EXPECT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
+    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
                                      VALID_MSG_CNT)));
 
     // Verify that the initial state is NOT_INITTED.
@@ -316,7 +316,7 @@ TEST_F (QueueMgrUDPTest, stateModelTest) {
 /// 6. Requests can be received and queued normally after the queue
 /// has been emptied.
 /// 7. setQueueMax disallows values of 0 or less than current queue size.
-TEST_F (QueueMgrUDPTest, liveFeedTest) {
+TEST_F (QueueMgrUDPTest, liveFeed) {
     NameChangeRequestPtr send_ncr;
     NameChangeRequestPtr received_ncr;
 
