@@ -23,6 +23,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp_ddns/ncr_io.h>
 
+#include <boost/noncopyable.hpp>
 #include <deque>
 
 namespace isc {
@@ -32,7 +33,7 @@ namespace d2 {
 /// @todo This may be replaced with an actual class in the future.
 typedef std::deque<dhcp_ddns::NameChangeRequestPtr> RequestQueue;
 
-/// @brief Thrown if the queue manager encounters an general error.
+/// @brief Thrown if the queue manager encounters a general error.
 class D2QueueMgrError : public isc::Exception {
 public:
     D2QueueMgrError(const char* file, size_t line, const char* what) :
@@ -128,14 +129,15 @@ public:
 /// It is important to note that the queue contents are preserved between
 /// state transitions.  In other words entries in the queue remain there
 /// until they are removed explicitly via the deque() or implicitly by
-/// via the flushQue() method.
+/// via the clearQueue() method.
 ///
-class D2QueueMgr : public dhcp_ddns::NameChangeListener::RequestReceiveHandler {
+class D2QueueMgr : public dhcp_ddns::NameChangeListener::RequestReceiveHandler,
+                   boost::noncopyable {
 public:
     /// @brief Maximum number of entries allowed in the request queue.
     /// NOTE that 1024 is an arbitrary choice picked for the initial
     /// implementation.
-    static const size_t MAX_QUEUE_DEFAULT=  1024;
+    static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the list of possible states for D2QueueMgr.
     enum State {
@@ -158,12 +160,12 @@ public:
     /// queue.
     /// This value must be greater than zero. It defaults to MAX_QUEUE_DEFAULT.
     ///
-    /// @throw D2QueueMgr error if max_queue_size is zero.
+    /// @throw D2QueueMgrError if max_queue_size is zero.
     D2QueueMgr(isc::asiolink::IOService& io_service,
                const size_t max_queue_size = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
-    ~D2QueueMgr();
+    virtual ~D2QueueMgr();
 
     /// @brief Initializes the listener as a UDP listener.
     ///
@@ -177,9 +179,9 @@ public:
     /// @param reuse_address enables IP address sharing when true
     /// It defaults to false.
     void initUDPListener(const isc::asiolink::IOAddress& ip_address,
-                         const uint32_t& port,
-                         dhcp_ddns::NameChangeFormat format,
-                         bool reuse_address = false);
+                         const uint32_t port,
+                         const dhcp_ddns::NameChangeFormat format,
+                         const bool reuse_address = false);
 
     /// @brief Starts actively listening for requests.
     ///
@@ -281,7 +283,7 @@ public:
     ///
     /// @throw D2QueueMgrInvalidIndex if the given index is beyond the
     /// end of the queue.
-    const dhcp_ddns::NameChangeRequestPtr& peekAt(size_t index) const;
+    const dhcp_ddns::NameChangeRequestPtr& peekAt(const size_t index) const;
 
     /// @brief Removes the entry at a given position in the queue.
     ///
@@ -290,7 +292,7 @@ public:
     ///
     /// @throw D2QueueMgrInvalidIndex if the given index is beyond the
     /// end of the queue.
-    void dequeueAt(size_t index);
+    void dequeueAt(const size_t index);
 
     /// @brief Removes the entry at the front of the queue.
     ///

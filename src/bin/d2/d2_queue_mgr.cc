@@ -32,7 +32,12 @@ D2QueueMgr::D2QueueMgr(isc::asiolink::IOService& io_service,
 
 D2QueueMgr::~D2QueueMgr() {
     // clean up
-    stopListening();
+    try {
+        stopListening();
+    } catch (...) {
+        // This catch is strictly for safety's sake, in case a future
+        // implementation isn't tidy or careful. 
+    }
 }
 
 void
@@ -67,9 +72,9 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
 
 void
 D2QueueMgr::initUDPListener(const isc::asiolink::IOAddress& ip_address,
-                            const uint32_t& port,
-                            dhcp_ddns::NameChangeFormat format,
-                            bool reuse_address) {
+                            const uint32_t port,
+                            const dhcp_ddns::NameChangeFormat format,
+                            const bool reuse_address) {
 
     if (listener_) {
         isc_throw(D2QueueMgrError,
@@ -150,20 +155,22 @@ D2QueueMgr::peek() const {
 }
 
 const dhcp_ddns::NameChangeRequestPtr&
-D2QueueMgr::peekAt(size_t index) const {
+D2QueueMgr::peekAt(const size_t index) const {
     if (index >= getQueueSize()) {
         isc_throw(D2QueueMgrInvalidIndex,
-                  "D2QueueMgr peek beyond end of queue attempted");
+                  "D2QueueMgr peek beyond end of queue attempted"
+                  << " index: " << index << " queue size: " << getQueueSize());
     }
 
     return (ncr_queue_.at(index));
 }
 
 void
-D2QueueMgr::dequeueAt(size_t index) {
+D2QueueMgr::dequeueAt(const size_t index) {
     if (index >= getQueueSize()) {
         isc_throw(D2QueueMgrInvalidIndex,
-                  "D2QueueMgr dequeue beyond end of queue attempted");
+                  "D2QueueMgr dequeue beyond end of queue attempted"
+                  << " index: " << index << " queue size: " << getQueueSize());
     }
 
     RequestQueue::iterator pos = ncr_queue_.begin() + index;
