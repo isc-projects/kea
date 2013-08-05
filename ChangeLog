@@ -1,3 +1,10 @@
+650.	[func]		muks
+	The DomainTree rebalancing code has been updated to be more
+	understandable. This ChangeLog entry is made just to make a note
+	of this change. The change should not cause any observable
+	difference whatsoever.
+	(Trac# 2811, git 7c0bad1643af13dedf9356e9fb3a51264b7481de)
+
 649.	[func]		muks
 	The default b10-xfrout also_notify port has been changed from
 	0 to 53.
