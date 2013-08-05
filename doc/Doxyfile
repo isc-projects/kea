@@ -661,37 +661,37 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../src/lib/exceptions \
+INPUT                  = ../src/bin/auth \
+                         ../src/bin/d2 \
+                         ../src/bin/dhcp4 \
+                         ../src/bin/dhcp6 \
+                         ../src/bin/resolver \
+                         ../src/bin/sockcreator \
+                         ../src/lib/acl \
+                         ../src/lib/asiolink \
+                         ../src/lib/bench \
+                         ../src/lib/cache \
                          ../src/lib/cc \
                          ../src/lib/config \
                          ../src/lib/cryptolink \
-                         ../src/lib/dns \
                          ../src/lib/datasrc \
                          ../src/lib/datasrc/memory \
-                         ../src/bin/auth \
-                         ../src/bin/resolver \
-                         ../src/lib/bench \
+                         ../src/lib/dhcp \
+                         ../src/lib/dhcp_ddns \
+                         ../src/lib/dhcpsrv \
+                         ../src/lib/dns \
+                         ../src/lib/exceptions \
+                         ../src/lib/hooks \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
-                         ../src/lib/asiolink/ \
                          ../src/lib/nsas \
-                         ../src/lib/testutils \
-                         ../src/lib/cache \
-                         ../src/lib/server_common/ \
-                         ../src/bin/sockcreator/ \
-                         ../src/lib/hooks/ \
-                         ../src/lib/util/ \
-                         ../src/lib/util/io/ \
-                         ../src/lib/util/threads/ \
                          ../src/lib/resolve \
-                         ../src/lib/acl \
+                         ../src/lib/server_common \
                          ../src/lib/statistics \
-                         ../src/bin/dhcp6 \
-                         ../src/lib/dhcp \
-                         ../src/lib/dhcpsrv \
-                         ../src/bin/dhcp4 \
-                         ../src/lib/dhcp_ddns \
-                         ../src/bin/d2 \
+                         ../src/lib/testutils \
+                         ../src/lib/util \
+                         ../src/lib/util/io \
+                         ../src/lib/util/threads \
                          ../tests/tools/perfdhcp \
                          devel
 
@@ -778,7 +778,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = ../doc/images
+IMAGE_PATH             = ../doc/images ../src/lib/hooks/images
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
