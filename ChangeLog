@@ -1,3 +1,8 @@
+652.	[doc]		stephen
+	Added the "Hook Developer's Guide" to the BIND 10 developer
+	documentation.
+	(Trac# 2982, git 26a805c7e49a9ec85ee825f179cda41a2358f4c6)
+
 651.	[bug]		muks
 	A race condition when creating cmdctl certificates caused corruption
 	of these certificates in rare cases. This has now been fixed.
