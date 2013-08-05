@@ -138,6 +138,19 @@ request for the FQDN cannot be processed.
 This is a debug message issued when the Dhcp-Ddns application enters
 its init method.
 
+% DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries: %1
+This an error message indicating that DHCP-DDNS is receiving DNS update
+requests faster than they can be processed.  This may mean the maximum queue
+needs to be increased, the DHCP-DDNS clients are simply generating too many
+requests too quickly, or perhaps upstream DNS servers are experiencing
+load issues.
+
+% DHCP_DDNS_QUEUE_MGR_RECV_ERROR application's queue manager was notified of a request receive error by its listener.
+This is an error message indicating that the NameChangeRequest listener used by
+DHCP-DDNS to receive requests encountered a IO error.  There should be
+corresponding log messages from the listener layer with more details. This may
+indicate a network connectivity or system resource issue.
+
 % DHCP_DDNS_RUN_ENTER application has entered the event loop
 This is a debug message issued when the Dhcp-Ddns application enters
 its run method.
