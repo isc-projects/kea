@@ -205,7 +205,9 @@ testGetValueInt() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(1, el->intValue());
+    });
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
@@ -220,25 +222,33 @@ testGetValueInt() {
     EXPECT_EQ(1, i);
 
     el = Element::create(9223372036854775807LL);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(9223372036854775807LL, el->intValue());
+    });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(9223372036854775807LL, i);
 
     ll = 9223372036854775807LL;
     el = Element::create(ll);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(ll, el->intValue());
+    });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(ll, i);
 
     i32 = 2147483647L;
     el = Element::create(i32);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(i32, el->intValue());
+    });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(i32, i);
 
     l = 2147483647L;
     el = Element::create(l);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(l, el->intValue());
+    });
     EXPECT_TRUE(el->getValue(i));
     EXPECT_EQ(l, i);
 }
