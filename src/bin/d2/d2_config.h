@@ -321,8 +321,8 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// it.  It's primary use is to map a domain to the DNS server(s) responsible
 /// for it.
 /// @todo Currently the name entry for a domain is just an std::string. It
-/// may be worthwhile to change this to a dns::Name for purposes of better 
-/// validation and matching capabilities. 
+/// may be worthwhile to change this to a dns::Name for purposes of better
+/// validation and matching capabilities.
 class DdnsDomain {
 public:
     /// @brief Constructor
@@ -385,7 +385,11 @@ typedef boost::shared_ptr<DdnsDomainMap> DdnsDomainMapPtr;
 /// services.  These services are used to match a FQDN to a domain.  Currently
 /// it supports a single matching service, which will return the matching
 /// domain or a wild card domain if one is specified.  The wild card domain is
-/// specified as a domain whose name is "*".
+/// specified as a domain whose name is "*".  The wild card domain will match
+/// any entry and is provided for flexibility in FQDNs  If for instance, all
+/// forward requests are handled by the same servers, the configuration could
+/// specify the wild card domain as the only forward domain. All forward DNS
+/// updates would be sent to that one list of servers, regardless of the FQDN.
 /// As matching capabilities evolve this class is expected to expand.
 class DdnsDomainListMgr {
 public:

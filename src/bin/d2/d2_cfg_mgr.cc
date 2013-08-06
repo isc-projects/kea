@@ -97,21 +97,21 @@ D2CfgMgr::reverseIpAddress(const std::string& address) {
         // Convert string address into an IOAddress and invoke the
         // appropriate reverse method.
         isc::asiolink::IOAddress ioaddr(address);
-        if (ioaddr.getFamily() == AF_INET) {
+        if (ioaddr.isV4()) {
             return (reverseV4Address(ioaddr));
         }
 
         return (reverseV6Address(ioaddr));
 
     } catch (const isc::Exception& ex) {
-        isc_throw(D2CfgError, "D2CfgMgr cannot reverse address :"
-                              << address << " : " << ex.what());
+        isc_throw(D2CfgError, "D2CfgMgr cannot reverse address: "
+                               << address << " : " << ex.what());
     }
 }
 
 std::string
 D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
-    if (ioaddr.getFamily() != AF_INET) {
+    if (!ioaddr.isV4()) {
         isc_throw(D2CfgError, "D2CfgMgr address is not IPv4 address :"
                               << ioaddr.toText());
     }
@@ -121,8 +121,10 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
 
     // Walk backwards through vector outputting each octet and a dot.
     std::ostringstream stream;
-    for (int i = 3; i >= 0; i--) {
-        stream << (unsigned int)(bytes[i]) << ".";
+    std::vector<uint8_t>::const_reverse_iterator rit;
+
+    for (rit = bytes.rbegin(); rit != bytes.rend(); ++rit) {
+        stream << static_cast<unsigned int>(*rit) << ".";
     }
 
     // Tack on the suffix and we're done.
@@ -132,8 +134,8 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
 
 std::string
 D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
-    if (ioaddr.getFamily() != AF_INET6) {
-        isc_throw(D2CfgError, "D2Cfg address is not IPv6 address :"
+    if (!ioaddr.isV6()) {
+        isc_throw(D2CfgError, "D2Cfg address is not IPv6 address: "
                               << ioaddr.toText());
     }
 
@@ -146,7 +148,7 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     std::ostringstream stream;
     std::string::const_reverse_iterator rit;
     for (rit = digits.rbegin(); rit != digits.rend(); ++rit) {
-        stream << (char)(*rit) << ".";
+        stream << static_cast<char>(*rit) << ".";
     }
 
     // Tack on the suffix and we're done.

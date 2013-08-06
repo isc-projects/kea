@@ -1,4 +1,3 @@
-/Users/tmark/ddns/build/trac3059/bind10
 # Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -113,7 +112,7 @@ service first starts.
 This is an informational message issued when the controller is exiting
 following a shut down (normal or otherwise) of the service.
 
-% DHCP_DDNS_AT_MAX_TRANSACTIONS application has: %1 queued requests but has reached maximum number of: %2 concurrent transactions
+% DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
 This is a debug message that indicates that the application has DHCP_DDNS
 requests in the queue but is working as many concurrent requests as allowed.
 
@@ -139,19 +138,19 @@ This is a debug messge issued when all of the queued requests represent clients
 for which there is a an update already in progress.  This may occur under
 normal operations but should be temporary situation.
 
-% DHCP_DDNS_NO_FWD_MATCH_ERROR the configured list of forward DDNS domains does not contain a match for FQDN: %1  The request has been discarded.
+% DHCP_DDNS_NO_FWD_MATCH_ERROR the configured list of forward DDNS domains does not contain a match for FQDN %1  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
 update a the forward DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.
 
-% DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
+% DHCP_DDNS_NO_MATCH No DNS servers match FQDN %1
 This is warning message issued when there are no domains in the configuration
 which match the cited fully qualified domain name (FQDN).  The DNS Update
 request for the FQDN cannot be processed.
 
-% DHCP_DDNS_NO_REV_MATCH_ERROR the configured list of reverse DDNS domains does not contain a match for FQDN: %1  The request has been discarded.
+% DHCP_DDNS_NO_REV_MATCH_ERROR the configured list of reverse DDNS domains does not contain a match for FQDN %1  The request has been discarded.
 This is an error message that indicates that DHCP_DDNS received a request to
 update a the reverse DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
@@ -162,7 +161,7 @@ investigated.
 This is a debug message issued when the Dhcp-Ddns application enters
 its init method.
 
-% DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries: %1
+% DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
 This an error message indicating that DHCP-DDNS is receiving DNS update
 requests faster than they can be processed.  This may mean the maximum queue
 needs to be increased, the DHCP-DDNS clients are simply generating too many
