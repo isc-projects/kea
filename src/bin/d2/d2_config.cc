@@ -118,7 +118,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
         // If the lengths are identical and the names match we're done.
         if (req_len == dom_len) {
-            if (memcmp(req_name, domain_name.c_str(), req_len) == 0) {
+            if (req_name == domain_name) {
                 // exact match, done
                 domain = map_pair.second;
                 return (true);
@@ -130,7 +130,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
             // prevents "onetwo.net" from matching "two.net".
             size_t offset = req_len - dom_len;
             if ((req_name[offset - 1] == '.')  &&
-               (memcmp(&req_name[offset], domain_name.c_str(), dom_len) == 0)) {
+               (fqdn.compare(offset, std::string::npos, domain_name) == 0)) {
                 // Fqdn contains domain name, keep it if its better than
                 // any we have matched so far.
                 if (dom_len > match_len) {

@@ -23,6 +23,7 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_cfg_mgr.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
 
@@ -117,15 +118,15 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// The upper layer(s) are responsible for calling sweep in a timely and cyclic
 /// manner.
 ///
-class D2UpdateMgr {
+class D2UpdateMgr : public boost::noncopyable {
 public:
     /// @brief Maximum number of concurrent transactions
     /// NOTE that 32 is an arbitrary choice picked for the initial
     /// implementation.
     static const size_t MAX_TRANSACTIONS_DEFAULT = 32;
 
-#if 0
-    // @todo This is here as a reminder to add statistics.
+    // @todo This structure is not yet used. It is here in anticipation of
+    // enabled statistics capture.
     struct Stats {
         uint64_t start_time_;
         uint64_t stop_time_;
@@ -134,8 +135,7 @@ public:
         uint64_t max_update_time_;
         uint64_t server_rejects_;
         uint64_t server_timeouts_;
-    }
-#endif
+    };
 
     /// @brief Constructor
     ///
@@ -235,6 +235,8 @@ public:
 
     /// @brief Convenience method that checks transaction list for the given key
     ///
+    /// @param key the transaction key value for which to search.
+    ///
     /// @return Returns true if the key is found within the list, false
     /// otherwise.
     bool hasTransaction(const TransactionKey& key);
@@ -254,10 +256,10 @@ public:
     void clearTransactionList();
 
     /// @brief Convenience method that returns the number of requests queued.
-    size_t getQueueCount();
+    size_t getQueueCount() const;
 
     /// @brief Returns the current number of transactions.
-    size_t getTransactionCount();
+    size_t getTransactionCount() const;
 
 private:
     /// @brief Pointer to the queue manager.

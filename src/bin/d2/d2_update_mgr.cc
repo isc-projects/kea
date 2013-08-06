@@ -100,7 +100,7 @@ void D2UpdateMgr::pickNextJob() {
     // the same DHCID as a transaction, they are presumed to be for the same
     // "end user".
     size_t queue_count = getQueueCount();
-    for (size_t index = 0; index < queue_count; index++) {
+    for (size_t index = 0; index < queue_count; ++index) {
         dhcp_ddns::NameChangeRequestPtr found_ncr = queue_mgr_->peekAt(index);
         if (!hasTransaction(found_ncr->getDhcid())) {
             queue_mgr_->dequeueAt(index);
@@ -213,12 +213,12 @@ D2UpdateMgr::setMaxTransactions(const size_t new_trans_max) {
 }
 
 size_t
-D2UpdateMgr::getQueueCount() {
+D2UpdateMgr::getQueueCount() const {
     return (queue_mgr_->getQueueSize());
 }
 
 size_t
-D2UpdateMgr::getTransactionCount() {
+D2UpdateMgr::getTransactionCount() const {
     return (transaction_list_.size());
 }
 

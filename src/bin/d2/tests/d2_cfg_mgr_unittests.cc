@@ -53,7 +53,7 @@ public:
 /// @brief Tests that the spec file is valid.
 /// Verifies that the BIND10 DHCP-DDNS configuration specification file
 //  is valid.
-TEST(D2SpecTest, basicSpecTest) {
+TEST(D2SpecTest, basicSpec) {
     ASSERT_NO_THROW(isc::config::
                     moduleSpecFromFile(specfile("dhcp-ddns.spec")));
 }
@@ -252,7 +252,7 @@ public:
 /// 3. Secret cannot be blank.
 /// @TODO TSIG keys are not fully functional. Only basic validation is
 /// currently supported. This test will need to expand as they evolve.
-TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
+TEST_F(TSIGKeyInfoTest, invalidEntry) {
     // Config with a blank name entry.
     std::string config = "{"
                          " \"name\": \"\" , "
@@ -294,7 +294,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntryTests) {
 
 /// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
 /// when given a valid combination of entries.
-TEST_F(TSIGKeyInfoTest, validEntryTests) {
+TEST_F(TSIGKeyInfoTest, validEntry) {
     // Valid entries for TSIG key, all items are required.
     std::string config = "{"
                          " \"name\": \"d2_key_one\" , "
@@ -448,7 +448,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 /// 1. Specifying both a hostname and an ip address is not allowed.
 /// 2. Specifying both blank a hostname and blank ip address is not allowed.
 /// 3. Specifying a negative port number is not allowed.
-TEST_F(DnsServerInfoTest, invalidEntryTests) {
+TEST_F(DnsServerInfoTest, invalidEntry) {
     // Create a config in which both host and ip address are supplied.
     // Verify that it builds without throwing but commit fails.
     std::string config = "{ \"hostname\": \"pegasus.tmark\", "
@@ -480,7 +480,7 @@ TEST_F(DnsServerInfoTest, invalidEntryTests) {
 /// 1. A DnsServerInfo entry is correctly made, when given only a hostname.
 /// 2. A DnsServerInfo entry is correctly made, when given ip address and port.
 /// 3. A DnsServerInfo entry is correctly made, when given only an ip address.
-TEST_F(DnsServerInfoTest, validEntryTests) {
+TEST_F(DnsServerInfoTest, validEntry) {
     // Valid entries for dynamic host
     std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
     ASSERT_TRUE(fromJSON(config));
@@ -831,7 +831,7 @@ TEST_F(DdnsDomainTest, DdnsDomainListParsing) {
 }
 
 /// @brief Tests that a domain list configuration cannot contain duplicates.
-TEST_F(DdnsDomainTest, duplicateDomainTest) {
+TEST_F(DdnsDomainTest, duplicateDomain) {
     // Create a domain list configuration that contains two domains with
     // the same name.
     std::string config =
@@ -885,7 +885,7 @@ TEST(D2CfgMgr, construction) {
 /// This tests passes the configuration into an instance of D2CfgMgr just
 /// as it would be done by d2_process in response to a configuration update
 /// event.
-TEST_F(D2CfgMgrTest, fullConfigTest) {
+TEST_F(D2CfgMgrTest, fullConfig) {
     // Create a configuration with all of application level parameters, plus
     // both the forward and reverse ddns managers.  Both managers have two
     // domains with three servers per domain.
@@ -1018,7 +1018,7 @@ TEST_F(D2CfgMgrTest, fullConfigTest) {
 /// 2. Given a FQDN for sub-domain in the list, returns the proper match.
 /// 3. Given a FQDN that matches no domain name, returns the wild card domain
 /// as a match.
-TEST_F(D2CfgMgrTest, forwardMatchTest) {
+TEST_F(D2CfgMgrTest, forwardMatch) {
     // Create  configuration with one domain, one sub domain, and the wild
     // card.
     std::string config = "{ "
@@ -1244,7 +1244,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::",match));
     EXPECT_EQ("2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.", match->getName());
 
-    // Verify a IPv6 wild card match. 
+    // Verify a IPv6 wild card match.
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::",match));
     EXPECT_EQ("*", match->getName());
 

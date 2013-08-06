@@ -165,7 +165,7 @@ public:
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if given an invalid address.
-    std::string reverseIpAddress(const std::string& address);
+    static std::string reverseIpAddress(const std::string& address);
 
     /// @brief Generate a reverse order string for the given IP address
     ///
@@ -184,7 +184,7 @@ public:
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if not given an IPv4  address.
-    std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr);
+    static std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr);
 
     /// @brief Generate a reverse order string for the given IP address
     ///
@@ -204,7 +204,7 @@ public:
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if not given an IPv6 address.
-    std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
+    static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
 
 protected:
     /// @brief Given an element_id returns an instance of the appropriate
