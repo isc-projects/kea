@@ -30,7 +30,7 @@
 namespace isc {
 namespace d2 {
 
-/// @brief Thrown if the update manager encounters an general error.
+/// @brief Thrown if the update manager encounters a general error.
 class D2UpdateMgrError : public isc::Exception {
 public:
     D2UpdateMgrError(const char* file, size_t line, const char* what) :
