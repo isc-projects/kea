@@ -414,8 +414,8 @@ public:
     /// it will be returned immediately for any FQDN.
     ///
     /// @param fqdn is the name for which to look.
-    /// @param domain receives the matching domain. Note that it will be reset
-    /// upon entry and only set if a match is subsequently found.
+    /// @param domain receives the matching domain. If no match is found its
+    /// contents will be unchanged.
     ///
     /// @return returns true if a match is found, false otherwise.
     /// @todo This is a very basic match method, which expects valid FQDNs
