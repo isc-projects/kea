@@ -30,7 +30,6 @@ from isc.statistics import dns
 class BaseTestCounters(counters_test.BaseTestCounters):
 
     def setUp(self):
-        imp.reload(dns)
         self._statistics_data = {}
         self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
         self._entire_server    = self.counters._entire_server
@@ -142,18 +141,12 @@ class TestCounters2(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 class TestCounters3(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
     @classmethod
-    def setUpClass(cls):
-        imp.reload(dns)
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 class BaseDummyModule():
     """A base dummy class"""
@@ -163,9 +156,6 @@ class BaseDummyModule():
 
     def get_counters(self):
         return self.counters.get_statistics()
-
-    def clear_counters(self):
-        self.counters.clear_all()
 
 class DummyNotifyOut(BaseDummyModule):
     """A dummy class equivalent to notify.notify_out.NotifyOut"""
@@ -213,12 +203,8 @@ class TestDummyXfroutServer(unittest.TestCase):
     """Tests counters are incremented or decremented in which the same
     spec file is multiply loaded in each child class"""
     def setUp(self):
-        imp.reload(dns)
         self.xfrout_server = DummyXfroutServer()
         self.xfrout_server.inc_counters()
-
-    def tearDown(self):
-        self.xfrout_server.clear_counters()
 
     def test_counters(self):
         self.assertEqual(
