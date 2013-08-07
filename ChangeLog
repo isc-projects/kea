@@ -1,11 +1,18 @@
+655.	[func]	tmark
+	Added D2UpdateMgr class to b10-dhcp-ddns. This class is the b10-dhcp-ddns
+	task master, instantiating and supervising transactions that carry out the
+	DNS updates needed to fulfill the requests (NameChangeRequests) received
+	from b10-dhcp-ddns clients (e.g. DHCP servers).
+	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba) 
+
 654.	[bug]		stephen
 	Always clear "skip" flag before calling any callouts on a hook.
 	(Trac# 3050, git ff0b9b45869b1d9a4b99e785fbce421e184c2e93)
 
 653.	[func]		tmark
 	Added initial implementation of D2QueueMgr to
-	DHCP_DDNS.  This class manages the receipt and
-	queueing of requests received by DHCP_DDNS from
+	b10-dhcp-ddns.  This class manages the receipt and
+	queueing of requests received by b10-dhcp-ddns from
 	its clients (e.g. DHCP servers)
 	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
 
