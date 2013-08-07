@@ -74,21 +74,24 @@ D2UpdateMgr::checkFinishedTransactions() {
     // for finished transactions.
     // At the moment all we do is remove them from the list. This is likely
     // to expand as DHCP_DDNS matures.
+    // NOTE: One must use postfix increments of the iterator on the calls
+    // to erase.  This replaces the old iterator which becomes invalid by the
+    // erase with a the next valid iterator.  Prefix incrementing will not
+    // work. 
     TransactionList::iterator it = transaction_list_.begin();
     while (it != transaction_list_.end()) {
         NameChangeTransactionPtr trans = (*it).second;
         switch (trans->getNcrStatus())  {
         case dhcp_ddns::ST_COMPLETED:
-            transaction_list_.erase(it);
+            transaction_list_.erase(it++);
             break;
         case dhcp_ddns::ST_FAILED:
-            transaction_list_.erase(it);
+            transaction_list_.erase(it++);
             break;
         default:
+            ++it;
             break;
         }
-
-        ++it;
     }
 }
 
