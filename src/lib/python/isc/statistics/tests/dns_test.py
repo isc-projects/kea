@@ -158,8 +158,8 @@ class TestCounters3(unittest.TestCase, BaseTestCounters):
 class BaseDummyModule():
     """A base dummy class"""
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
-    def __init__(self):
-        self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
+    def __init__(self, counters):
+        self.counters = counters
 
     def get_counters(self):
         return self.counters.get_statistics()
@@ -169,9 +169,6 @@ class BaseDummyModule():
 
 class DummyNotifyOut(BaseDummyModule):
     """A dummy class equivalent to notify.notify_out.NotifyOut"""
-    def __init__(self):
-        self.counters = dns.Counters()
-
     def inc_counters(self):
         """increments counters"""
         self.counters.inc('zones', TEST_ZONE_CLASS_STR,
@@ -202,10 +199,10 @@ class DummyUnixSockServer(BaseDummyModule):
 class DummyXfroutServer(BaseDummyModule):
     """A dummy class equivalent to XfroutServer in b10-xfrout"""
     def __init__(self):
-        super().__init__()
-        self.xfrout_sess = DummyXfroutSession()
-        self.unix_socket_server = DummyUnixSockServer()
-        self.notifier = DummyNotifyOut()
+        self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
+        self.xfrout_sess = DummyXfroutSession(self.counters)
+        self.unix_socket_server = DummyUnixSockServer(self.counters)
+        self.notifier = DummyNotifyOut(self.counters)
 
     def inc_counters(self):
         self.xfrout_sess.inc_counters()
