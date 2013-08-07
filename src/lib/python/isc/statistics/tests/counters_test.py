@@ -131,15 +131,15 @@ class TestBasicMethods(unittest.TestCase):
         start_functor(concurrency, number, self.counters.inc,
                       counter_name)
         counters._stop_timer(start_time,
-                            self.counters._statistics._data,
-                            self.counters._statistics._spec,
+                            self.counters._statistics_data,
+                            self.counters._statistics_spec,
                             timer_name)
         self.assertEqual(
-            counters._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics_data,
                                  counter_name),
             concurrency * number)
         self.assertGreaterEqual(
-            counters._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics_data,
                                  timer_name), 0.0)
 
     def test_concat(self):
@@ -186,7 +186,7 @@ class BaseTestCounters():
         else:
             self.assertTrue(isc.config.ModuleSpec(
                     {'module_name': 'Foo',
-                     'statistics': self.counters._statistics._spec}
+                     'statistics': self.counters._statistics_spec}
                     ).validate_statistics(
                     False, self._statistics_data))
 

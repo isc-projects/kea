@@ -69,63 +69,6 @@ documentation for isc.statistics.counters for details."""
 import isc.config
 from isc.statistics import counters
 
-class _Statistics():
-    """Statistics data set. This class will be removed in the future
-    release."""
-    # default statistics data
-    _data = {}
-    # default statistics spec used in case the specfile is omitted when
-    # constructing a Counters() object
-    _spec = [
-      {
-        "item_name": "zones",
-        "item_type": "named_set",
-        "item_optional": False,
-        "item_default": {
-          "_SERVER_" : {
-            "notifyoutv4" : 0,
-            "notifyoutv6" : 0
-          }
-        },
-        "item_title": "Zone names",
-        "item_description": "Zone names",
-        "named_set_item_spec": {
-          "item_name": "classname",
-          "item_type": "named_set",
-          "item_optional": False,
-          "item_default": {},
-          "item_title": "RR class name",
-          "item_description": "RR class name",
-          "named_set_item_spec": {
-            "item_name": "zonename",
-            "item_type": "map",
-            "item_optional": False,
-            "item_default": {},
-            "item_title": "Zone name",
-            "item_description": "Zone name",
-            "map_item_spec": [
-              {
-                "item_name": "notifyoutv4",
-                "item_type": "integer",
-                "item_optional": False,
-                "item_default": 0,
-                "item_title": "IPv4 notifies",
-                "item_description": "Number of IPv4 notifies per zone name sent out"
-              },
-              {
-                "item_name": "notifyoutv6",
-                "item_type": "integer",
-                "item_optional": False,
-                "item_default": 0,
-                "item_title": "IPv6 notifies",
-                "item_description": "Number of IPv6 notifies per zone name sent out"
-              }
-            ]
-          }
-        }
-      }
-    ]
-
 class Counters(counters.Counters):
     """A list of counters which can be handled in the class are like
     the following. Also see documentation for
@@ -176,8 +119,6 @@ class Counters(counters.Counters):
     _entire_server = '_SERVER_'
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
-    # default statistics data set
-    _statistics = _Statistics()
 
     def __init__(self, spec_file_name=None):
         """If the item `zones` is defined in the spec file, it obtains a
@@ -186,10 +127,10 @@ class Counters(counters.Counters):
         isc.statistics.counters.Counters.__init__()"""
         counters.Counters.__init__(self, spec_file_name)
         if self._perzone_prefix in \
-                isc.config.spec_name_list(self._statistics._spec):
+                isc.config.spec_name_list(self._statistics_spec):
             self._zones_item_list = isc.config.spec_name_list(
                 isc.config.find_spec_part(
-                    self._statistics._spec,
+                    self._statistics_spec,
                     '%s/%s/%s' % (self._perzone_prefix,
                                   '_CLASS_', self._entire_server)))
 
@@ -199,7 +140,7 @@ class Counters(counters.Counters):
         counter. If nothing is counted yet, then it returns an empty
         dictionary."""
         # entire copy
-        statistics_data = self._statistics._data.copy()
+        statistics_data = self._statistics_data.copy()
         # If there is no 'zones' found in statistics_data,
         # i.e. statistics_data contains no per-zone counter, it just
         # returns statistics_data because calculating total counts
@@ -208,7 +149,7 @@ class Counters(counters.Counters):
             return statistics_data
         zones = statistics_data[self._perzone_prefix]
         # Start calculation for '_SERVER_' counts
-        zones_spec = isc.config.find_spec_part(self._statistics._spec,
+        zones_spec = isc.config.find_spec_part(self._statistics_spec,
                                                self._perzone_prefix)
         zones_data = {}
         for cls in zones.keys():
