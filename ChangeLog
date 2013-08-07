@@ -1,3 +1,7 @@
+654.	[bug]		stephen
+	Always clear "skip" flag before calling any callouts on a hook.
+	(Trac# 3050, git ff0b9b45869b1d9a4b99e785fbce421e184c2e93)
+
 653.	[func]		tmark
 	Added initial implementation of D2QueueMgr to
 	DHCP_DDNS.  This class manages the receipt and
