@@ -209,25 +209,6 @@ class DummyXfroutServer(BaseDummyModule):
         self.unix_socket_server.inc_counters()
         self.notifier.inc_counters()
 
-class TestDummyNotifyOut(unittest.TestCase):
-    """Tests counters are incremented in which the spec file is not
-    loaded"""
-    def setUp(self):
-        imp.reload(dns)
-        self.notifier = DummyNotifyOut()
-        self.notifier.inc_counters()
-
-    def tearDown(self):
-        self.notifier.clear_counters()
-
-    def test_counters(self):
-        self.assertEqual(
-            {'zones': {TEST_ZONE_CLASS_STR: { '_SERVER_':
-                           {'notifyoutv4': 1, 'notifyoutv6': 1},
-                                              TEST_ZONE_NAME_STR:
-                           {'notifyoutv4': 1, 'notifyoutv6': 1}}}},
-            self.notifier.get_counters())
-
 class TestDummyXfroutServer(unittest.TestCase):
     """Tests counters are incremented or decremented in which the same
     spec file is multiply loaded in each child class"""
