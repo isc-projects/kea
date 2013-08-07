@@ -21,6 +21,12 @@
 namespace isc {
 namespace d2 {
 
+namespace {
+
+typedef std::vector<uint8_t> ByteAddress;
+
+} // end of unnamed namespace
+
 // *********************** D2CfgContext  *************************
 
 D2CfgContext::D2CfgContext()
@@ -117,13 +123,20 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
     }
 
     // Get the address in byte vector form.
-    std::vector<uint8_t> bytes = ioaddr.toBytes();
+    const ByteAddress bytes = ioaddr.toBytes();
 
     // Walk backwards through vector outputting each octet and a dot.
     std::ostringstream stream;
-    std::vector<uint8_t>::const_reverse_iterator rit;
 
-    for (rit = bytes.rbegin(); rit != bytes.rend(); ++rit) {
+    // We have to set the following variable to get
+    // const_reverse_iterator type of rend(), otherwise Solaris GCC
+    // complains on operator!= by trying to use the non-const variant.
+    const ByteAddress::const_reverse_iterator end = bytes.rend();
+
+    for (ByteAddress::const_reverse_iterator rit = bytes.rbegin();
+         rit != end;
+         ++rit)
+    {
         stream << static_cast<unsigned int>(*rit) << ".";
     }
 
@@ -140,14 +153,21 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     }
 
     // Turn the address into a string of digits.
-    std::vector<uint8_t> bytes = ioaddr.toBytes();
-    std::string digits;
-    digits = isc::util::encode::encodeHex(bytes);
+    const ByteAddress bytes = ioaddr.toBytes();
+    const std::string digits = isc::util::encode::encodeHex(bytes);
 
     // Walk backwards through string outputting each digits and a dot.
     std::ostringstream stream;
-    std::string::const_reverse_iterator rit;
-    for (rit = digits.rbegin(); rit != digits.rend(); ++rit) {
+
+    // We have to set the following variable to get
+    // const_reverse_iterator type of rend(), otherwise Solaris GCC
+    // complains on operator!= by trying to use the non-const variant.
+    const std::string::const_reverse_iterator end = digits.rend();
+
+    for (std::string::const_reverse_iterator rit = digits.rbegin();
+         rit != end;
+         ++rit)
+    {
         stream << static_cast<char>(*rit) << ".";
     }
 
@@ -192,4 +212,3 @@ D2CfgMgr::createConfigParser(const std::string& config_id) {
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
-
