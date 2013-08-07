@@ -372,6 +372,12 @@ to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
 
+% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %d) on interface %2
+This debug message is printed when server receives a message of unknown type.
+That could either mean missing functionality or invalid or broken relay or client.
+The list of formally defined message types is available here:
+www.iana.org/assignments/dhcpv6-parameters.
+
 % DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
 This warning message is printed when client attempts to release a lease,
 but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW for

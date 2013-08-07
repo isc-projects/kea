@@ -199,7 +199,8 @@ bool Dhcpv6Srv::run() {
 
         bool skip_unpack = false;
 
-        // Let's execute all callouts registered for buffer6_receive
+        // The packet has just been received so contains the uninterpreted wire
+        // data; execute callouts registered for buffer6_receive.
         if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -214,7 +215,8 @@ bool Dhcpv6Srv::run() {
 
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
-            // stage means drop.
+            // stage means that callouts did the parsing already, so server
+            // should skip parsing.
             if (callout_handle->getSkip()) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_RCVD_SKIP);
                 skip_unpack = true;
@@ -223,6 +225,8 @@ bool Dhcpv6Srv::run() {
             callout_handle->getArgument("query6", query);
         }
 
+        // Unpack the packet information unless the buffer6_receive callouts
+        // indicated they did it
         if (!skip_unpack) {
             if (!query->unpack()) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
@@ -237,7 +241,9 @@ bool Dhcpv6Srv::run() {
             .arg(query->getBuffer().getLength())
             .arg(query->toText());
 
-        // Let's execute all callouts registered for packet6_receive
+        // At this point the information in the packet has been unpacked into
+        // the various packet fields and option objects has been cretated.
+        // Execute callouts registered for packet6_receive.
         if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -296,6 +302,10 @@ bool Dhcpv6Srv::run() {
                 break;
 
             default:
+                // We received a packet type that we do not recognize.
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+                    .arg(static_cast<int>(query->getType()))
+                    .arg(query->getIface());
                 // Only action is to output a message if debug is enabled,
                 // and that will be covered by the debug statement before
                 // the "switch" statement.
@@ -331,9 +341,12 @@ bool Dhcpv6Srv::run() {
             rsp->setIndex(query->getIndex());
             rsp->setIface(query->getIface());
 
-            // specifies if server should do the packing
+            // Specifies if server should do the packing
             bool skip_pack = false;
 
+            // Server's reply packet now has all options and fields set.
+            // Options are represented by individual objects, but the
+            // output wire data has not been prepared yet.
             // Execute all callouts registered for packet6_send
             if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -348,8 +361,10 @@ bool Dhcpv6Srv::run() {
                 HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
-                // processing step would to send the packet, so skip at this
-                // stage means "drop response".
+                // processing step would to pack the packet (create wire data).
+                // That step will be skipped if any callout sets skip flag.
+                // It essentially means that the callout already did packing,
+                // so the server does not have to do it again.
                 if (callout_handle->getSkip()) {
                     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP);
                     skip_pack = true;
@@ -369,6 +384,9 @@ bool Dhcpv6Srv::run() {
 
             try {
 
+                // Now all fields and options are constructed into output wire buffer.
+                // Option objects modification does not make sense anymore. Hooks
+                // can only manipulate wire buffer at this stage.
                 // Let's execute all callouts registered for buffer6_send
                 if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
                     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -995,8 +1013,8 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
-        // processing step would to send the packet, so skip at this
-        // stage means "drop response".
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
         if (callout_handle->getSkip()) {
             skip = true;
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
@@ -1242,8 +1260,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     }
 
     // Ok, we've passed all checks. Let's release this address.
-
-    bool success = false; // did the removal was successful
+    bool success = false; // was the removal operation succeessful?
 
     if (!skip) {
         success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
