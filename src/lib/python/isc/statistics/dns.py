@@ -120,7 +120,7 @@ class Counters(counters.Counters):
     # zone names are contained under this dirname in the spec file.
     _perzone_prefix = 'zones'
 
-    def __init__(self, spec_file_name=None):
+    def __init__(self, spec_file_name):
         """If the item `zones` is defined in the spec file, it obtains a
         list of counter names under it when initiating.  For behaviors
         other than this, see documentation for

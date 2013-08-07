@@ -165,14 +165,13 @@ class Counters():
     timers can be temporarily disabled.  If disabled, counter values are
     not changed even if methods to update them are invoked."""
 
-    def __init__(self, spec_file_name=None):
+    def __init__(self, spec_file_name):
         """A constructor for the Counters class. A path to the spec file
-        can be specified in spec_file_name. Statistics data based on
-        statistics spec can be accumulated if spec_file_name is
+        can be specified in spec_file_name, which is required. Statistics data
+        based on statistics spec can be accumulated if spec_file_name is
         specified. If omitted, a default statistics spec is used. The
         default statistics spec is defined in a hidden class named
-        _Statistics(). But the hidden class won't be used and
-        spec_file_name will be required in the future release.
+        _Statistics().
         """
         self._zones_item_list = []
         self._start_time = {}
