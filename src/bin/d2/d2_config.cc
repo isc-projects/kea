@@ -91,44 +91,67 @@ DdnsDomainListMgr::setDomains(DdnsDomainMapPtr domains) {
 
 bool
 DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
-    // Clear the return parameter.
-    domain.reset();
-
     // First check the case of one domain to rule them all.
     if ((size() == 1) && (wildcard_domain_)) {
         domain = wildcard_domain_;
         return (true);
     }
 
-    // Start with the longest version of the fqdn and search the list.
-    // Continue looking for shorter versions of fqdn so long as no match is
-    // found.
-    // @todo This can surely be optimized, time permitting.
-    std::string match_name = fqdn;
-    std::size_t start_pos = 0;
-    while (start_pos != std::string::npos) {
-        match_name = match_name.substr(start_pos, std::string::npos);
-        DdnsDomainMap::iterator gotit = domains_->find(match_name);
-        if (gotit != domains_->end()) {
-            domain = gotit->second;
+    // Iterate over the domain map looking for the domain which matches
+    // the longest portion of the given fqdn.
+
+    size_t req_len = fqdn.size();
+    size_t match_len = 0;
+    DdnsDomainMapPair map_pair;
+    DdnsDomainPtr best_match;
+    BOOST_FOREACH (map_pair, *domains_) {
+        std::string domain_name = map_pair.first;
+        size_t dom_len = domain_name.size();
+
+        // If the domain name is longer than the fqdn, then it cant be match.
+        if (req_len < dom_len) {
+            continue;
+        }
+
+        // If the lengths are identical and the names match we're done.
+        if (req_len == dom_len) {
+            if (fqdn == domain_name) {
+                // exact match, done
+                domain = map_pair.second;
+                return (true);
+            }
+        } else {
+            // The fqdn is longer than the domain name.  Adjust the start
+            // point of comparison by the excess in length.  Only do the
+            // comparison if the adjustment lands on a boundary. This
+            // prevents "onetwo.net" from matching "two.net".
+            size_t offset = req_len - dom_len;
+            if ((fqdn[offset - 1] == '.')  &&
+               (fqdn.compare(offset, std::string::npos, domain_name) == 0)) {
+                // Fqdn contains domain name, keep it if its better than
+                // any we have matched so far.
+                if (dom_len > match_len) {
+                    match_len = dom_len;
+                    best_match = map_pair.second;
+                }
+            }
+        }
+    }
+
+    if (!best_match) {
+        // There's no match. If they specified a wild card domain use it
+        // otherwise there's no domain for this entry.
+        if (wildcard_domain_) {
+            domain = wildcard_domain_;
             return (true);
         }
 
-        start_pos = match_name.find_first_of(".");
-        if (start_pos != std::string::npos) {
-            ++start_pos;
-        }
+        LOG_WARN(dctl_logger, DHCP_DDNS_NO_MATCH).arg(fqdn);
+        return (false);
     }
 
-    // There's no match. If they specified a wild card domain use it
-    // otherwise there's no domain for this entry.
-    if (wildcard_domain_) {
-        domain = wildcard_domain_;
-        return (true);
-    }
-
-    LOG_WARN(dctl_logger, DHCP_DDNS_NO_MATCH).arg(fqdn);
-    return (false);
+    domain = best_match;
+    return (true);
 }
 
 // *************************** PARSERS ***********************************

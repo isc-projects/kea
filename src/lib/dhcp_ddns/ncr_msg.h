@@ -107,7 +107,12 @@ public:
     /// @brief Compares two D2Dhcids for inequality
     bool operator!=(const D2Dhcid& other) const {
         return (this->bytes_ != other.bytes_);
-}
+    }
+
+    /// @brief Compares two D2Dhcids lexcially
+    bool operator<(const D2Dhcid& other) const {
+        return (this->bytes_ < other.bytes_);
+    }
 
 private:
     /// @brief Storage for the DHCID value in unsigned bytes.
