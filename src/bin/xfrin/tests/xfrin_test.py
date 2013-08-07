@@ -2130,8 +2130,6 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
     and methods related to statistics tests'''
     def setUp(self):
         super().setUp()
-        # clear all statistics counters before each test
-        self.conn._counters.clear_all()
         # fake datetime
         self.__orig_datetime = isc.statistics.counters.datetime
         self.__orig_start_timer = isc.statistics.counters._start_timer
