@@ -49,11 +49,7 @@ class TestBasicMethods(unittest.TestCase):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
     def setUp(self):
-        imp.reload(counters)
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
-
-    def tearDown(self):
-        self.counters.clear_all()
 
     def test_clear_counters(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
@@ -161,12 +157,8 @@ class TestBasicMethods(unittest.TestCase):
 class BaseTestCounters():
 
     def setUp(self):
-        imp.reload(counters)
         self._statistics_data = {}
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
-
-    def tearDown(self):
-        self.counters.clear_all()
 
     def check_get_statistics(self):
         """Checks no differences between the value returned from
@@ -207,15 +199,11 @@ class TestCounters0(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = None
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 if __name__== "__main__":
     unittest.main()
